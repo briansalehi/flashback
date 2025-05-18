@@ -1,6 +1,7 @@
-# ![flashback logo](doc/flashback.png) Flashback
+![](doc/flashback.png)
+# Flashback
 
-A program for experts to study resources, review references, and practice subjects.
+A platform for experts to transform complex technical subjects into muscle memory.
 
 ## USAGE
 
@@ -23,10 +24,11 @@ Alternatively, the project can be natively built on your system assuming you alr
 
 * `CMake` > 3.27.0
 * `GCC` > 4.2.0
-* `Boost` > 1.80.0
+* `Boost` > 1.83.0
 * `Qt` > 6.9.0
 * `gRPC` > 1.48.0
 * `Protobuf` > 3.19.0
+* `GTest` > 1.15.0
 
 Clone the project and build as follows:
 

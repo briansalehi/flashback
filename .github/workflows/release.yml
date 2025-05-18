@@ -1,0 +1,26 @@
+name: Release
+permissions:
+  contents: write
+  packages: write
+on:
+  push:
+    branches: release
+  workflow_dispatch:
+jobs:
+  checkout:
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+  server:
+    runs-on: ubuntu-latest
+    needs: checkout
+    steps:
+      - name: build server
+        run: cmake --workflow --preset server
+  client:
+    runs-on: ubuntu-latest
+    needs: checkout
+    steps:
+      - name: build client
+        run: cmake --workflow --preset client

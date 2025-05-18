@@ -1,0 +1,201 @@
+@startuml
+
+rectangle Server {
+
+    class Network {
+    }
+}
+
+rectangle Client {
+
+    rectangle User {
+
+        enum user_role {
+            - editor
+                - maintainer
+        }
+
+        enum user_state {
+            - active
+                - inactive
+        }
+
+        class user {
+            - id: std::uint64_t
+                - first_name: std::string
+                - last_name: std::string
+                - email: std::string
+                - roadmaps: std::vector<roadmap>
+                - role: user_role
+                - state: user_state
+                - joined: datetime
+                - email_verified: bool
+        }
+    }
+
+    rectangle Data {
+
+        enum expertise_level {
+            - surface
+                - depth
+                - origin
+        }
+
+        class roadmap {
+            - id: std::uint64_t
+                - name: std::string
+                - subjects: std::vector<milestone>
+        }
+
+        class milestone {
+            - subject_id: std::uint64_t
+                - level: expertise_level
+        }
+
+        class subject {
+            - id: std::uint64_t
+                - name: std::string
+                - topics: std::vector<topic>
+                - resource_in_use: resource
+        }
+
+        class topic {
+            - id: std::uint64_t
+                - name: std::string
+                - cards: std::vector<card>
+                - level: expertise_level
+        }
+
+        class resource {
+            - id: std::uint64_t
+                - name: std::string
+                - sections: std::vector<section>
+        }
+
+        class section {
+            - id: std::uint64_t
+                - name: std::string
+                - cards: std::vector<card>
+        }
+
+        class card {
+            - id: std::uint64_t
+                - question: std::string
+                - blocks: std::vector<block>
+        }
+
+        enum block_type {
+            - text
+                - code
+        }
+
+        class block {
+            - id: std::uint64_t
+                - body: std::string
+                - type: block_type
+        }
+    }
+
+    rectangle Logging {
+
+        enum action_type {
+            - read
+                - create
+                - modify
+                - remove
+                - merge
+                - split
+                - finish
+        }
+
+        abstract action_log {
+        }
+
+        class roadmap_log {
+            - roadmap_id: std::uint64_t
+                - user_id: std::uint64_t
+                - action: action_type
+        }
+
+        class subject_log {
+            - subject_id: std::uint64_t
+                - user_id: std::uint64_t
+                - action: action_type
+                - time_point: std::chrono::time_point
+        }
+
+        class topic_log {
+            - topic_id: std::uint64_t
+                - user_id: std::uint64_t
+                - time_point: std::chrono::time_point
+                - action: action_type
+        }
+
+        class resource_log {
+            - resource_id: std::uint64_t
+                - user_id: std::uint64_t
+                - time_point: std::chrono::time_point
+                - action: action_type
+        }
+
+        class section_log {
+            - section_id: std::uint64_t
+                - user_id: std::uint64_t
+                - time_point: std::chrono::time_point
+                - action: action_type
+        }
+
+        class card_log {
+            - card_id: std::uint64_t
+                - user_id: std::uint64_t
+                - time_point: std::chrono::time_point
+                - action: action_type
+        }
+
+        class log_sender {
+        }
+    }
+
+    rectangle Screen {
+        interface page {
+            + {abstract} display(): void
+        }
+
+        class roadmap_page {
+        }
+
+        class milestone_page {
+        }
+
+        class topic_page {
+        }
+
+        page --> roadmap_page
+            page --> milestone_page
+            page --> topic_page
+    }
+
+    action_log ---> roadmap_log
+        action_log ---> subject_log
+        action_log ---> resource_log
+        action_log ---> topic_log
+        action_log ---> section_log
+        action_log ---> card_log
+
+        user "1" *-- "n" roadmap: has many >
+        roadmap "1" *-- "n" milestone: has many >
+        milestone "1" o-- "3" subject: has only 3 >
+        subject "1" *-- "n" topic: has many >
+        topic "1" *-- "n" card: has many >
+        resource "1" *-- "n" section: has many >
+        section "1" *-- "n" card: has many >
+        card "1" *-- "n" block: has many >
+        block .> block_type
+        subject o- resource: refers to only one >
+        user .> user_role
+        user_state <. user
+        action_type --* action_log
+        milestone *- expertise_level
+}
+
+@enduml

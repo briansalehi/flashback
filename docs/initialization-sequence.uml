@@ -1,0 +1,19 @@
+@startuml
+
+skinparam responseMessageBelowArray true
+
+participant "User Interface" as ui
+participant Client as client
+participant Server as server
+participant Database as db
+
+== Initialization ==
+[-> ui : start application
+ui <- client : show_loader()
+client -> server : initiate https connection
+client <- server : connection initialized
+client -> server : login(email, credentials)
+client <- server : notify_login_result()
+ui <- client : stop_loader()
+[<- ui : close application
+@enduml

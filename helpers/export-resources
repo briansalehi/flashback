@@ -1,0 +1,56 @@
+#!/usr/bin/env bash
+
+while read -rp "What is the resource name: " pattern
+do
+    while IFS="|" read -r id name type condition presenter provider link
+    do
+        if [ -n "$id" ] && [ -n "$name" ] && [ "$name" == "$pattern" ]
+        then
+            echo -e "\e[1;35m$id\e[0m \e[1;33m$name\e[0m \e[2;38m($type $condition)\e[0m from \e[1;34m($presenter)\e[0m by \e[1;34m($provider)\e[0m"
+
+            if [ -n "$presenter" ] && [ -n "$provider" ] && [ -n "$link" ]
+            then
+                echo -e "\e[1;32mResource already exists\e[0m\n\n"
+                continue 2
+            fi
+
+            if [ -z "$presenter" ]
+            then
+                read -rp "Resource exists but with no presenter, enter the presenter: " presenter </dev/tty
+                psql -U flashback -d flashback -c "call edit_resource_presenter($id, '${presenter//\'/\'\'}')"
+            fi
+
+            if [ -z "$provider" ]
+            then
+                read -rp "Resource exists but with no provider, enter the provider: " provider </dev/tty
+                psql -U flashback -d flashback -c "call edit_resource_provider($id, '${provider//\'/\'\'}')"
+            fi
+
+            if [ -z "$link" ]
+            then
+                read -rp "Resource exists but with no link, enter the link: " link </dev/tty
+                psql -U flashback -d flashback -c "update resources set link = '${link//\'/\'\'}' where id = $id"
+            fi
+
+            echo -e "\n\n"
+            continue 2
+        fi
+    done < <(psql -U flashback -d flashback -c "select id, name, type, condition, presenter, provider, link from resources where name ilike '%${pattern//\'/\'\'}%'" -At)
+
+    name="$pattern"
+    echo -e "Resource \e[1;33m$pattern\e[0m will be created because it does not already exist"
+    read -rp "Enter the type of $name: " resource_type </dev/tty
+    read -rp "Enter the section pattern of $name: " section_pattern </dev/tty
+    read -rp "Enter the presenter of $name: " presenter </dev/tty
+    read -rp "Enter the provider of $name: " provider </dev/tty
+    read -rp "Enter the link of $name: " link </dev/tty
+
+    if id="$(psql -U flashback -d flashback -c "select * from create_resource('${name//\'/\'\'}', '${resource_type//\'/\'\'}'::resource_type, '${section_pattern//\'/\'\'}'::section_pattern, '${presenter//\'/\'\'}', '${provider//\'/\'\'}', '${link//\'/\'\'}')" -At)"
+    then
+        echo -e "New resource \e[1;32m$name\e[0m with ID \e[1;32m$id\e[0m created"
+    else
+        echo -e "Failed to create the new resource \e[1;31m$name\e[0m"
+        exit 2
+    fi
+    echo -e "\n\n"
+done </dev/tty

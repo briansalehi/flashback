@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+
+declare -A subjects; while IFS="|" read -r id name; do subjects[$id]="$name"; done < <(psql -U flashback -d flashback -c "select id, name from subjects order by id" -At); echo; while IFS="|" read -r id name type; do for subject in "${!subjects[@]}"; do printf '%3d %s\n' $subject "${subjects[$subject]}"; done | sort -k2 | column; echo; read -rp "Select a subject for '$name': " subject < /dev/tty; if [ -n "$subject" ] && [ -n "${subjects[$subject]}" ]; then psql -U flashback -d flashback -c "call add_resource_to_subject($id, $subject)"; fi; done < <(psql -U flashback -d flashback -c "select r.id, r.name, r.type from resources r where r.id not in (select resource from shelves) order by r.id" -At)

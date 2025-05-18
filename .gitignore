@@ -1,3 +1,5 @@
 *build*/
 .idea/
 CMakeUserPresets.txt
+*.user
+*.keystore

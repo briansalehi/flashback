@@ -1,0 +1,65 @@
+@startuml
+
+skinparam responseMessageBelowArray true
+
+participant "User Interface" as ui
+participant Client as client
+participant Server as server
+participant Database as db
+
+== Load Roadmaps ==
+client -> server : get_roadmaps()
+server -> db : get_roadmaps(user_id)
+server <- db : roadmaps
+client <- server : show_roadmaps()
+ui <- client : show_roadmaps()
+== Create Roadmap ==
+loop create roadmap
+ui -> client : create_roadmap()
+ui -> client : set_roadmap_name(name)
+ui -> client : set_roadmap_definition()
+|||
+loop create subject then add to roadmap
+ui -> client : create_subject()
+ui -> client : set_subject_name(name)
+ui -> client : reorder_subject(subject, after)
+client -> server : create_subject(subject)
+server -> db : create_subject(name)
+end
+loop add already existing subject to roadmap
+ui -> client : search_subject(name)
+client <- server : search_subject(name)
+server -> db : search_subject(subject_name)
+server <- db : subjects
+client <- server : subjects
+ui <- client : show_subjects()
+ui -> client : assign_subject(subject)
+end
+client -> server : create_roadmap(roadmap)
+server -> db : create_roadmap(roadmap)
+end
+|||
+== Remove Roadmap ==
+ui -> client : remove_roadmap(roadmap)
+client -> server : remove_roadmap(roadmap)
+server -> db : remove_roadmap(roadmap)
+server -> db : get_roadmaps(user_id)
+server <- db : roadmaps
+client <- server : show_roadmaps()
+ui <- client : show_roadmaps()
+|||
+== Rename Roadmap ==
+ui -> client : rename_roadmap(roadmap, name)
+client -> server : rename_roadmap(roadmap, name)
+|||
+== Define Roadmap ==
+ui -> client : define_roadmap(roadmap, name)
+client -> server : define_roadmap(roadmap, definition)
+server -> db : define_roadmap(roadmap, definition)
+|||
+== Reorder Subjects ==
+ui -> client : reorder_roadmap(roadmap, after)
+client -> server : reorder_roadmap(roadmap, after)
+server -> client : reorder_roadmap(roadmap, after)
+
+@enduml

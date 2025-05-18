@@ -1,0 +1,77 @@
+@startuml
+
+skinparam responseMessageBelowArray true
+
+participant "User Interface" as ui
+participant Client as client
+participant Server as server
+participant Database as db
+
+== Initialization ==
+[-> ui : start application
+ui <- client : show_loader()
+client -> server : initiate https connection
+client <- server : connection initialized
+client -> server : login(email, credentials)
+client <- server : notify_login_result()
+ui <- client : stop_loader()
+== Roadmaps ==
+client -> server : get_roadmaps()
+server -> db : get_roadmaps(user_id)
+server <- db : roadmaps
+client <- server : roadmaps
+ui <- client : show_roadmaps()
+ui -> client : create_roadmap()
+ui <- client : get_roadmap_name()
+ui -> client : set_roadmap_name(name)
+ui <- client : get_roadmap_definition()
+ui -> client : set_roadmap_definition()
+loop add subjects to roadmap
+ui <- client : add_subject_node()
+loop create subject then add to roadmap
+ui -> client : create_subject()
+client -> server : create_subject(subject)
+server -> db : create_subject(name)
+end
+loop add already existing subject to roadmap
+ui -> client : assign_subject_node(name)
+client <- server : search_subject(name)
+server -> db : search_subject(subject_name)
+db <- server : subjects
+client <- server : subjects
+ui <- client : list_subjects()
+end
+end
+== Subjects ==
+client -> server : get_subjects(roadmap)
+server -> db : get_subjects(roadmap_id)
+server <- db : subjects
+client <- server : subjects
+== Resources ==
+client -> server : get_resource(subject)
+server -> db : get_resource(subject_id)
+server <- db : resource
+client <- server : resource
+== Topics ==
+client -> server : get_topics(resource)
+server -> db : get_topics(resource_id)
+server <- db : topics
+client <- server : topics
+== Cards ==
+client -> server : get_cards(topic)
+server -> db : get_topic_cards(topic_id)
+server <- db : cards
+client <- server : cards
+== Sections ==
+client -> server : get_sections(resource)
+server -> db : get_sections(resource_id)
+server <- db : sections
+client <- server : sections
+== Cards ==
+client -> server : get_cards(section)
+server -> db : get_section_cards(section_id)
+server <- db : cards
+client <- server : cards
+
+[<- ui : close application
+@enduml

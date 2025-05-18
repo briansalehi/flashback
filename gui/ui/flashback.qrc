@@ -1,0 +1,9 @@
+<RCC>
+    <qresource prefix="/">
+        <file>res/flashback.png</file>
+        <file>res/landscape.png</file>
+        <file>res/portrait.png</file>
+        <file>Main.qml</file>
+        <file>Scene.qml</file>
+    </qresource>
+</RCC>

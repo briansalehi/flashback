@@ -1,0 +1,14 @@
+cmake_minimum_required(VERSION 4.0.0)
+
+project(Flashback
+    VERSION 0.1
+    LANGUAGES CXX
+    DESCRIPTION "A program to transform complex technical subjects into muscle memory"
+    HOMEPAGE_URL "https://flashback.eu.com"
+)
+
+add_subdirectory(common)
+add_subdirectory(database)
+add_subdirectory(server)
+add_subdirectory(cli)
+add_subdirectory(gui)
