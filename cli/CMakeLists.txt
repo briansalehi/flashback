@@ -14,7 +14,7 @@ include(CMakePackageConfigHelpers)
 # dependencies
 find_package(Boost 1.83.0 REQUIRED COMPONENTS program_options)
 find_package(ftxui 5.0.0 CONFIG REQUIRED COMPONENTS component dom screen)
-#find_package(Protobuf 3.19.0 REQUIRED)
+find_package(Protobuf 3.19.0 REQUIRED)
 find_package(gRPC 1.48.0 REQUIRED)
 find_package(GTest 1.15.0)
 
