@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 4.0.0)
 
-project(Flashback
+project(flashback-cli
     VERSION 0.2
     LANGUAGES CXX
     DESCRIPTION "A program to transform complex technical subjects into muscle memory"
@@ -25,7 +25,8 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_COMPILE_WARNING_AS_ERROR ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_INSTALL_RPATH $<INSTALL_INTERFACE:${CMAKE_INSTALL_LIBDIR}>)
-set(CPACK_PACKAGE_NAME "flashback-cli")
+string(TOLOWER "${CMAKE_SYSTEM_NAME}" CPACK_SYSTEM_NAME)
+set(CPACK_PACKAGE_FILE_NAME "${PROJECT_NAME}-${PROJECT_VERSION}-${CPACK_SYSTEM_NAME}")
 set(CPACK_PACKAGE_VENDOR "Brian Salehi <briansalehi@proton.me>")
 set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE.md")
 set(CPACK_RESOURCE_FILE_README "${CMAKE_CURRENT_SOURCE_DIR}/README.md")
@@ -43,7 +44,6 @@ set(CPACK_DEBIAN_PACKAGE_DEPENDS
 	libgrpc-dev (>= 1.48.0),
 	protobuf-compiler (>= 3.19.0)"
 )
-string(TOLOWER CPACK_SYSTEM_NAME "${CMAKE_SYSTEM_NAME}")
 
 file(GLOB source_files RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} src/*.cpp)
 file(GLOB header_files RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} include/flashback/*.hpp)
