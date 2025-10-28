@@ -1,4 +1,3 @@
-![](doc/flashback.png)
 # Flashback
 
 A platform for experts to transform complex technical subjects into muscle memory.

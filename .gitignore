@@ -3,3 +3,4 @@
 CMakeUserPresets.txt
 *.user
 *.keystore
+_CPack_Packages/
