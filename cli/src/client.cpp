@@ -1,5 +1,6 @@
 #include <flashback/client.hpp>
-#include <print>
+#include <iostream>
+#include <format>
 
 using namespace flashback;
 
@@ -19,7 +20,7 @@ client::client(flashback::options const& opts)
         }
     }
 
-    std::println("Connected to [{}]:{}", server.remote_endpoint().address().to_string(), server.remote_endpoint().port());
+    std::clog << std::format("Connected to [{}]:{}", server.remote_endpoint().address().to_string(), server.remote_endpoint().port());
 }
 
 client::~client()

@@ -13,10 +13,13 @@ include(CMakePackageConfigHelpers)
 
 # dependencies
 find_package(Boost 1.83.0 REQUIRED COMPONENTS program_options)
-find_package(ftxui 5.0.0 CONFIG REQUIRED COMPONENTS component dom screen)
+#find_package(ftxui 5.0.0 CONFIG REQUIRED COMPONENTS component dom screen)
 find_package(Protobuf 3.19.0 REQUIRED)
 find_package(gRPC 1.48.0 REQUIRED)
 find_package(GTest 1.15.0)
+
+FetchContent_Declare(ftxui GIT_REPOSITORY https://github.com/arthursonzogni/ftxui GIT_TAG v5.0.0)
+FetchContent_MakeAvailable(ftxui)
 
 # configurations
 set(CMAKE_CXX_STANDARD 23)

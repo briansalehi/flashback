@@ -4,7 +4,7 @@
 #include <iostream>
 #include <vector>
 #include <string>
-#include <print>
+#include <format>
 
 int main(int const argc, char** argv)
 {
@@ -16,16 +16,16 @@ int main(int const argc, char** argv)
     }
     catch (flashback::descriptive_option const& opt)
     {
-        std::println(std::cerr, "{}", opt.what());
+        std::cerr << std::format("{}", opt.what());
     }
     catch (boost::system::system_error const& err)
     {
-        std::println(std::cerr, "{}", err.code().message());
+        std::cerr << std::format("{}", err.code().message());
         return err.code().value();
     }
     catch (std::exception const& exp)
     {
-        std::println(std::cerr, "error: {}", exp.what());
+        std::cerr << std::format("error: {}", exp.what());
         return 1;
     }
 }

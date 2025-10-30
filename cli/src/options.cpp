@@ -3,11 +3,11 @@
 #include <iostream>
 #include <sstream>
 #include <numeric>
-#include <print>
+#include <format>
 
 using namespace flashback;
 
-constexpr auto server_domain_name{"https://flashback.training"};
+constexpr auto server_domain_name{"https://flashback.eu.com"};
 constexpr auto server_port_number{"9821"};
 
 options::options(std::vector<std::string> const& args)
@@ -31,7 +31,7 @@ options::options(std::vector<std::string> const& args)
     }
     catch (boost::system::system_error const& exp)
     {
-        std::println(std::cerr, "{}", exp.what());
+        std::cerr << std::format("{}", exp.what());
     }
 
     if (vmap.contains("help"))
