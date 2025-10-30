@@ -5,14 +5,15 @@
 #include <vector>
 #include <string>
 #include <format>
+#include <memory>
 
 int main(int const argc, char** argv)
 {
     try
     {
         std::vector<std::string> const args(argv + 1, argv + argc);
-        flashback::options const options(args);
-        flashback::client client{options};
+        auto options(std::make_shared<flashback::options>(args));
+        // flashback::client client{options};
     }
     catch (flashback::descriptive_option const& opt)
     {

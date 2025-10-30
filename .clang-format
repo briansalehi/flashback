@@ -1,4 +1,3 @@
-# Generated from CLion C/C++ Code Style settings
 ---
 Language: Cpp
 BasedOnStyle: LLVM
@@ -44,7 +43,7 @@ InsertNewlineAtEOF: true
 MacroBlockBegin: ''
 MacroBlockEnd: ''
 MaxEmptyLinesToKeep: 2
-NamespaceIndentation: All
+NamespaceIndentation: None
 PointerAlignment: Left
 SpaceInEmptyParentheses: false
 SpacesInAngles: false

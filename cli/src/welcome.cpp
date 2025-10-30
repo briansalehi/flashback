@@ -1,11 +1,8 @@
-#include <ftxui/screen/screen.hpp>
+#include <flashback/welcome.hpp>
 
-namespace flashback
-{
-class welcome
-{
-public:
+using namespace flashback;
 
-private:
-};
-} // flashback
+welcome::welcome(std::shared_ptr<ftxui::Screen> screen)
+    : m_screen{screen}
+{
+}
