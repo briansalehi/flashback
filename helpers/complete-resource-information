@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+
+while IFS="|" read -r id name type pattern presenter provider link
+do
+    echo "($id) $name ($type $pattern) presented by '$presenter' provided by '$provider' at '$link'"
+    if [ -z "$presenter" ]
+    then
+        read -rp "Presenter: " presenter </dev/tty
+
+        read -r -n 1 -p "Resource ($id) '$name' will have the presenter '$presenter', confirm? " confirmation </dev/tty
+        if [ -n "$confirmation" ] && [ "$confirmation" == "y" ]
+        then
+            psql -U flashback -d flashback -c "update resources set presenter = '$presenter' where id = $id"
+        fi
+    fi
+
+    if [ -z "$provider" ]
+    then
+        read -rp "Provider: " provider </dev/tty
+
+        read -r -n 1 -p "Resource ($id) '$name' will have the provider '$provider', confirm? " confirmation </dev/tty
+        if [ -n "$confirmation" ] && [ "$confirmation" == "y" ]
+        then
+            psql -U flashback -d flashback -c "update resources set provider = '$provider' where id = $id"
+        fi
+    fi
+
+    if [ -z "$link" ]
+    then
+        read -rp "Link: " link </dev/tty
+
+        read -r -n 1 -p "Resource ($id) '$name' will have the link '$link', confirm? " confirmation </dev/tty
+        if [ -n "$confirmation" ] && [ "$confirmation" == "y" ]
+        then
+            psql -U flashback -d flashback -c "update resources set link = '$link' where id = $id"
+        fi
+    fi
+done < <(psql -U flashback -d flashback -c "select r.id, r.name, r.type, r.pattern, r.presenter, r.provider, r.link from resources r where r.presenter is null or r.provider is null or r.link is null" -At)

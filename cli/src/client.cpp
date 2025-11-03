@@ -1,31 +1,31 @@
 #include <flashback/client.hpp>
-#include <print>
+#include <iostream>
+#include <format>
 
 using namespace flashback;
 
-client::client(flashback::options const& opts)
-    : context{}
-    , server{context}
+client::client(std::shared_ptr<options> opts)
+    : m_server{m_context}
 {
-    boost::asio::ip::tcp::resolver::query const query{opts.server_address, opts.server_port};
+    boost::asio::ip::tcp::resolver::query const query{opts->server_address, opts->server_port};
 
-    for (boost::asio::ip::tcp::resolver resolver{context};
+    for (boost::asio::ip::tcp::resolver resolver{m_context};
          boost::asio::ip::tcp::endpoint endpoint : resolver.resolve(query))
     {
-        server.connect(endpoint);
-        if (server.is_open())
+        m_server.connect(endpoint);
+        if (m_server.is_open())
         {
             break;
         }
     }
 
-    std::println("Connected to [{}]:{}", server.remote_endpoint().address().to_string(), server.remote_endpoint().port());
+    std::clog << std::format("Connected to [{}]:{}", m_server.remote_endpoint().address().to_string(), m_server.remote_endpoint().port());
 }
 
 client::~client()
 {
-    if (server.is_open())
+    if (m_server.is_open())
     {
-        server.close();
+        m_server.close();
     }
 }

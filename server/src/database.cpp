@@ -1,5 +1,1 @@
 #include <flashback/database.hpp>
-
-int main()
-{
-}

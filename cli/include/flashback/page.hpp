@@ -1,10 +1,28 @@
 #pragma once
 
+#include <ftxui/dom/elements.hpp>
+#include <ftxui/component/component.hpp>
+#include <ftxui/component/screen_interactive.hpp>
+
 namespace flashback
 {
 class page
 {
 public:
-    virtual void display() const noexcept = 0;
+    explicit page();
+    virtual ~page() = default;
+
+protected:
+    virtual void display();
+    virtual void heading(ftxui::Element element);
+    virtual void content(ftxui::Element element);
+
+private:
+    [[nodiscard]] bool onEvent(ftxui::Event const& event);
+
+    ftxui::Element m_heading;
+    ftxui::Element m_content;
+    ftxui::ScreenInteractive m_screen;
+    ftxui::Component m_renderer;
 };
 } // flashback

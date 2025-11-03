@@ -3,3 +3,7 @@
 CMakeUserPresets.txt
 *.user
 *.keystore
+*.zip
+*.rpm
+*.deb
+_CPack_Packages/

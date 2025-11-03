@@ -1,10 +1,10 @@
 cmake_minimum_required(VERSION 4.0.0)
 
-project(Flashback
-    VERSION 0.1
+project(flashback-cli
+    VERSION 0.2
     LANGUAGES CXX
     DESCRIPTION "A program to transform complex technical subjects into muscle memory"
-    HOMEPAGE_URL "flashback.eu.com"
+    HOMEPAGE_URL "https://flashback.eu.com"
 )
 
 include(FetchContent)
@@ -13,10 +13,13 @@ include(CMakePackageConfigHelpers)
 
 # dependencies
 find_package(Boost 1.83.0 REQUIRED COMPONENTS program_options)
-find_package(ftxui 5.0.0 CONFIG REQUIRED COMPONENTS component dom screen)
-#find_package(Protobuf 3.19.0 REQUIRED)
+#find_package(ftxui 5.0.0 CONFIG REQUIRED COMPONENTS component dom screen)
+find_package(Protobuf 3.19.0 REQUIRED)
 find_package(gRPC 1.48.0 REQUIRED)
 find_package(GTest 1.15.0)
+
+FetchContent_Declare(ftxui GIT_REPOSITORY https://github.com/arthursonzogni/ftxui GIT_TAG v5.0.0)
+FetchContent_MakeAvailable(ftxui)
 
 # configurations
 set(CMAKE_CXX_STANDARD 23)
@@ -25,8 +28,11 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_COMPILE_WARNING_AS_ERROR ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_INSTALL_RPATH $<INSTALL_INTERFACE:${CMAKE_INSTALL_LIBDIR}>)
-set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "${PROJECT_DESCRIPTION}")
-set(CPACK_PROJECT_NAME "flashback-cli")
+string(TOLOWER "${CMAKE_SYSTEM_NAME}" CPACK_SYSTEM_NAME)
+set(CPACK_PACKAGE_FILE_NAME "${PROJECT_NAME}-${PROJECT_VERSION}-${CPACK_SYSTEM_NAME}")
+set(CPACK_PACKAGE_VENDOR "Brian Salehi <briansalehi@proton.me>")
+set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE.md")
+set(CPACK_RESOURCE_FILE_README "${CMAKE_CURRENT_SOURCE_DIR}/README.md")
 set(CPACK_RPM_PACKAGE_REQUIRES
     "g++ >= 5.1,
     boost-devel >= 1.83.0,
@@ -41,7 +47,6 @@ set(CPACK_DEBIAN_PACKAGE_DEPENDS
 	libgrpc-dev (>= 1.48.0),
 	protobuf-compiler (>= 3.19.0)"
 )
-string(TOLOWER CPACK_SYSTEM_NAME "${CMAKE_SYSTEM_NAME}")
 
 file(GLOB source_files RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} src/*.cpp)
 file(GLOB header_files RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} include/flashback/*.hpp)
@@ -58,7 +63,7 @@ target_include_directories(flashback
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
-target_link_libraries(flashback PRIVATE Boost::program_options ftxui::component ftxui::dom ftxui::screen)
+target_link_libraries(flashback PRIVATE Boost::program_options ftxui::screen ftxui::dom ftxui::component)
 target_compile_definitions(flashback PRIVATE PROGRAM_VERSION="${PROJECT_VERSION}")
 
 # client test
@@ -66,7 +71,7 @@ enable_testing()
 add_executable(flashback-test ${test_files})
 #protobuf_generate(TARGET flashback-test PROTOS ${proto_files})
 target_include_directories(flashback-test PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include> $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
-target_link_libraries(flashback-test PRIVATE Boost::program_options gtest gtest_main)
+target_link_libraries(flashback-test PRIVATE Boost::program_options ftxui::screen ftxui::dom ftxui::component gtest gtest_main)
 target_compile_definitions(flashback-test PRIVATE PROGRAM_VERSION="${PROJECT_VERSION}")
 add_test(NAME flashback-test COMMAND flashback-test)
 
