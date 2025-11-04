@@ -7,7 +7,7 @@ project(Flashback
     HOMEPAGE_URL "https://flashback.eu.com"
 )
 
-#add_subdirectory(common)
+add_subdirectory(common)
 #add_subdirectory(database)
 add_subdirectory(server)
 add_subdirectory(cli)

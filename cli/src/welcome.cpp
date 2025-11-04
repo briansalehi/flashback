@@ -1,22 +1,30 @@
 #include <algorithm>
-#include <functional>
+#include <memory>
 #include <utility>
+#include <iostream>
+#include <format>
 #include <flashback/welcome.hpp>
 
 constexpr std::chrono::milliseconds refresh_rate{1000};
 
 using namespace flashback;
 
-welcome::welcome(std::shared_ptr<server> server)
-    : m_server{server}
+welcome::welcome(std::shared_ptr<client> client)
+    : m_client{client}
 {
-    add_roadmaps(server->roadmaps(2));
+    std::shared_ptr<user> current_user{std::make_shared<user>()};
+    current_user->set_id(2);
+    add_roadmaps(m_client->get_roadmaps(current_user));
     display();
 }
 
-void welcome::add_roadmaps(std::set<roadmap> const& roadmaps)
+void welcome::add_roadmaps(std::shared_ptr<roadmaps> input)
 {
-    std::ranges::for_each(roadmaps, std::bind_front(&welcome::add_roadmap, this));
+    std::ranges::for_each(input->roadmap(), std::bind_front(&welcome::add_roadmap, this));
+    for (roadmap const& r: input->roadmap())
+    {
+        std::clog << std::format("Welcome Page: resource ({}) {}\n", r.id(), r.name());
+    }
 }
 
 void welcome::add_roadmap(roadmap const& r)
@@ -24,9 +32,9 @@ void welcome::add_roadmap(roadmap const& r)
     ftxui::Element element{
         ftxui::border(
             ftxui::hbox(
-                ftxui::text(std::to_string(r.id)),
+                ftxui::text(std::to_string(r.id())),
                 ftxui::separatorEmpty(),
-                ftxui::text(r.name)
+                ftxui::text(r.name())
             )
         )
     };

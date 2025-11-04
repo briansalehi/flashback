@@ -1,19 +1,22 @@
 #pragma once
 
 #include <memory>
+#include <grpcpp/grpcpp.h>
 #include <flashback/options.hpp>
-#include <boost/asio.hpp>
+#include <types.pb.h>
+#include <server.grpc.pb.h>
 
 namespace flashback
 {
 class client final
 {
 public:
-    explicit client(std::shared_ptr<options> opts);
+    explicit client(std::shared_ptr<options> opts, std::shared_ptr<grpc::Channel> channel);
     ~client();
 
+    std::shared_ptr<roadmaps> get_roadmaps(std::shared_ptr<user> requester);
+
 private:
-    boost::asio::io_context m_context;
-    boost::asio::ip::tcp::socket m_server;
+    std::unique_ptr<server::Stub> m_stub;
 };
 } // flashback

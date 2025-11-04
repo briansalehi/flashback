@@ -13,10 +13,9 @@ include(CMakePackageConfigHelpers)
 
 # dependencies
 find_package(Boost 1.83.0 REQUIRED COMPONENTS program_options)
-#find_package(ftxui 5.0.0 CONFIG REQUIRED COMPONENTS component dom screen)
-find_package(Protobuf 3.19.0 REQUIRED)
-find_package(gRPC 1.48.0 REQUIRED)
 find_package(GTest 1.15.0)
+
+enable_testing()
 
 FetchContent_Declare(ftxui GIT_REPOSITORY https://github.com/arthursonzogni/ftxui GIT_TAG v5.0.0)
 FetchContent_MakeAvailable(ftxui)
@@ -51,27 +50,35 @@ set(CPACK_DEBIAN_PACKAGE_DEPENDS
 file(GLOB source_files RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} src/*.cpp)
 file(GLOB header_files RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} include/flashback/*.hpp)
 file(GLOB test_files RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} test/*.cpp)
-file(GLOB proto_files RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} proto/*.proto)
 list(APPEND test_files ${source_files})
 list(REMOVE_ITEM test_files src/main.cpp)
 
+set(proto_files
+    ${CMAKE_SOURCE_DIR}/common/proto/types.proto
+    ${CMAKE_SOURCE_DIR}/server/proto/server.proto
+)
+
+set(client_sources
+    ${CMAKE_CURRENT_BINARY_DIR}/server.pb.h
+    ${CMAKE_CURRENT_BINARY_DIR}/server.pb.cpp
+    ${CMAKE_CURRENT_BINARY_DIR}/server.grpc.pb.h
+    ${CMAKE_CURRENT_BINARY_DIR}/server.grpc.pb.cpp
+)
+
 # client executable
 add_executable(flashback ${source_files} ${header_files})
-#protobuf_generate(TARGET flashback PROTOS ${proto_files})
 target_include_directories(flashback
     PRIVATE
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
-target_link_libraries(flashback PRIVATE Boost::program_options ftxui::screen ftxui::dom ftxui::component)
+target_link_libraries(flashback PRIVATE common Boost::program_options ftxui::screen ftxui::dom ftxui::component)
 target_compile_definitions(flashback PRIVATE PROGRAM_VERSION="${PROJECT_VERSION}")
 
 # client test
-enable_testing()
 add_executable(flashback-test ${test_files})
-#protobuf_generate(TARGET flashback-test PROTOS ${proto_files})
 target_include_directories(flashback-test PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include> $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
-target_link_libraries(flashback-test PRIVATE Boost::program_options ftxui::screen ftxui::dom ftxui::component gtest gtest_main)
+target_link_libraries(flashback-test PRIVATE common Boost::program_options ftxui::screen ftxui::dom ftxui::component gtest gtest_main)
 target_compile_definitions(flashback-test PRIVATE PROGRAM_VERSION="${PROJECT_VERSION}")
 add_test(NAME flashback-test COMMAND flashback-test)
 

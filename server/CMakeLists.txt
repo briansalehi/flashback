@@ -13,8 +13,6 @@ include(CMakePackageConfigHelpers)
 
 find_package(Boost 1.83.0 CONFIG REQUIRED COMPONENTS system program_options)
 find_package(PostgreSQL 7.10 REQUIRED)
-find_package(Protobuf 3.19.0 REQUIRED)
-find_package(gRPC 1.48.0 REQUIRED)
 find_package(GTest 1.15.0)
 
 set(CMAKE_CXX_STANDARD 23)
@@ -47,18 +45,23 @@ file(GLOB source_files RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} src/*.cpp)
 file(GLOB header_files RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} include/flashback/*.hpp)
 file(GLOB test_files RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} test/*.cpp)
 
-add_executable(flashbackd ${source_files})
-#target_sources(flashbackd PRIVATE )
-target_include_directories(flashbackd PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
-target_link_libraries(flashbackd PRIVATE Boost::system Boost::program_options pq pqxx)
+add_executable(flashbackd ${source_files} ${server_sources})
+target_include_directories(flashbackd
+    PRIVATE
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+)
+target_link_libraries(flashbackd PRIVATE common Boost::system Boost::program_options pq pqxx)
 
 enable_testing()
-#list(APPEND test_files ${source_files})
-#list(REMOVE_ITEM test_files src/main.cpp)
-#add_executable(test-flashbackd ${test_files})
-##target_sources(test-flashbackd PRIVATE )
-#target_include_directories(test-flashbackd PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
-#target_link_libraries(test-flashbackd PRIVATE Boost::system Boost::program_options pq pqxx gtest gtest_main)
-#add_test(NAME test-flashbackd COMMAND test-flashbackd)
+
+list(APPEND test_files ${source_files})
+list(REMOVE_ITEM test_files src/main.cpp)
+
+add_executable(flashbackd-test ${test_files})
+#target_sources(flashbackd-test PRIVATE )
+target_include_directories(flashbackd-test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(flashbackd-test PRIVATE Boost::system Boost::program_options pq pqxx gtest gtest_main)
+add_test(NAME flashbackd-test COMMAND flashbackd-test)
 
 install(TARGETS flashbackd RUNTIME CONFIGURATIONS Release MinSizeRel)

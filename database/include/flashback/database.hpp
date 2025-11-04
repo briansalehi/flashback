@@ -1,16 +1,17 @@
 #pragma once
 
-#include <pqxx/pqxx>
-#include <boost/asio.hpp>
 #include <string>
+#include <pqxx/pqxx>
 
 namespace flashback
 {
 class database
 {
-private:
-    pqxx::connection connection;
 public:
-    explicit database(std::string address = "localhost", std::string port = "5432");
+    database(std::string address, std::string port);
+
+private:
+    pqxx::connection m_connection;
 };
+
 } // flashback

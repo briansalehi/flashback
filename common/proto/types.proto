@@ -1,0 +1,138 @@
+syntax = "proto3";
+
+package flashback;
+
+import "google/protobuf/timestamp.proto";
+
+message roadmap {
+  uint64 id = 1;
+  string name = 2;
+}
+
+message roadmaps {
+  repeated roadmap roadmap = 1;
+}
+
+message subject {
+  uint64 id = 1;
+  string name = 2;
+}
+
+message subjects {
+  repeated subject subject = 1;
+}
+
+message milestone {
+  enum expertise_level {
+    surface = 0;
+    depth = 1;
+    origin = 2;
+  }
+
+  uint64 position = 1;
+  uint64 id = 2;
+  string name = 3;
+  expertise_level level = 4;
+}
+
+message milestones {
+  repeated milestone milestone = 1;
+}
+
+message resource {
+  enum resource_type {
+    book = 0;
+    website = 1;
+    course = 2;
+    video = 3;
+    channel = 4;
+    mailing_list = 5;
+    manual = 6;
+    slides = 7;
+    user = 8;
+  }
+
+  enum section_pattern {
+    chapter = 0;
+    page = 1;
+    session = 2;
+    segment = 3;
+    post = 4;
+    synapse = 5;
+  }
+
+  enum resource_condition {
+    draft = 0;
+    relevant = 1;
+    outdated = 2;
+    canonical = 3;
+    abandoned = 4;
+  }
+
+  uint64 id = 1;
+  string name = 2;
+  string presenter = 3;
+  string provider = 4;
+  string link = 5;
+  resource_type type = 6;
+  section_pattern pattern = 7;
+  resource_condition condition = 8;
+  uint64 days = 9;
+}
+
+message resources {
+  repeated resource resource = 1;
+}
+
+message topic {
+  uint64 position = 1;
+  string name = 2;
+}
+
+message topics {
+  repeated topic topic = 1;
+}
+
+message section {
+  uint64 id = 1;
+  string name = 2;
+}
+
+message sections {
+  repeated section section = 1;
+}
+
+message card {
+  enum card_state {
+    draft = 0;
+    completed = 1;
+    review = 2;
+    approved = 3;
+    released = 4;
+    rejected = 5;
+  }
+
+  uint64 id = 1;
+  card_state state = 2;
+  string heading = 3;
+}
+
+message cards {
+  repeated card card = 1;
+}
+
+message user {
+  enum user_state {
+    active = 0;
+    inactive = 1;
+    suspended = 2;
+    banned = 3;
+  }
+
+  uint64 id = 1;
+  string name = 2;
+  string email = 3;
+  user_state state = 4;
+  bool verified = 5;
+  google.protobuf.Timestamp joined = 6;
+}

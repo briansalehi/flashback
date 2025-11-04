@@ -1,31 +1,33 @@
-#include <flashback/client.hpp>
 #include <iostream>
 #include <format>
+#include <memory>
+#include <flashback/client.hpp>
 
 using namespace flashback;
 
-client::client(std::shared_ptr<options> opts)
-    : m_server{m_context}
+client::client(std::shared_ptr<options> opts, std::shared_ptr<grpc::Channel> channel)
+    : m_stub{server::NewStub(channel)}
 {
-    boost::asio::ip::tcp::resolver::query const query{opts->server_address, opts->server_port};
-
-    for (boost::asio::ip::tcp::resolver resolver{m_context};
-         boost::asio::ip::tcp::endpoint endpoint : resolver.resolve(query))
-    {
-        m_server.connect(endpoint);
-        if (m_server.is_open())
-        {
-            break;
-        }
-    }
-
-    std::clog << std::format("Connected to [{}]:{}", m_server.remote_endpoint().address().to_string(), m_server.remote_endpoint().port());
+    std::clog << std::format("Connecting to {}:{}\n", opts->server_address, opts->server_port);
 }
 
 client::~client()
 {
-    if (m_server.is_open())
+}
+
+std::shared_ptr<roadmaps> client::get_roadmaps(std::shared_ptr<user> requester)
+{
+    std::shared_ptr<roadmaps> data{std::make_shared<roadmaps>()};
+    grpc::ClientContext context{};
+
+    if (grpc::Status const status{m_stub->get_roadmaps(&context, *requester, data.get())}; status.ok())
     {
-        m_server.close();
+        std::clog << std::format("Client: retrieved {} roadmaps\n", data->roadmap().size());
     }
+    else
+    {
+        std::cerr << "Client: failed to retrieve roadmaps from server\n";
+    }
+
+    return data;
 }
