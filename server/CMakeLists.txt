@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 4.0.0)
+cmake_minimum_required(VERSION 3.31.0)
 
 project(flashbackd
     VERSION 0.2
@@ -7,12 +7,14 @@ project(flashbackd
     HOMEPAGE_URL "https://flashback.eu.com"
 )
 
+set(CMAKE_MESSAGE_CONTEXT "server")
+
 include(FetchContent)
 include(GNUInstallDirs)
 include(CMakePackageConfigHelpers)
 
 find_package(Boost 1.83.0 CONFIG REQUIRED COMPONENTS system program_options)
-find_package(PostgreSQL 7.10 REQUIRED)
+find_package(PostgreSQL 8.0 REQUIRED)
 find_package(GTest 1.15.0)
 
 set(CMAKE_CXX_STANDARD 23)

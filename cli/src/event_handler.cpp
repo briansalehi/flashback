@@ -8,9 +8,16 @@ event_handler::event_handler(std::shared_ptr<options> options)
     , m_client{std::make_shared<client>(options, m_channel)}
     , m_page{nullptr}
 {
-    // bool credentials_valid{server->check_user_credentials()};
-    // std::set<roadmap> const roadmaps{m_server->roadmaps(2)};
-    m_page = std::make_shared<welcome>(m_client);
+    try
+    {
+        // bool credentials_valid{server->check_user_credentials()};
+        // std::set<roadmap> const roadmaps{m_server->roadmaps(2)};
+        m_page = std::make_shared<welcome>(m_client);
+    }
+    catch (std::runtime_error const& exp)
+    {
+        std::cerr << exp.what() << std::endl;
+    }
 }
 
 event_handler::~event_handler()

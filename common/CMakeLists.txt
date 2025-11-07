@@ -7,6 +7,8 @@ project(common
     HOMEPAGE_URL "https://flashback.eu.com"
 )
 
+set(CMAKE_MESSAGE_CONTEXT "common")
+
 include(GNUInstallDirs)
 include(CMakePackageConfigHelpers)
 
@@ -63,7 +65,6 @@ target_sources(common PUBLIC
     FILE_SET HEADERS BASE_DIRS ${CMAKE_CURRENT_SOURCE_DIR} FILES ${header_files}
 )
 target_include_directories(common PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include ${CMAKE_CURRENT_BINARY_DIR} ${Protobuf_INCLUDE_DIRS})
-message(NOTICE "Protobuf Libraries: ${Protobuf_LIBRARIES}")
 target_link_libraries(common PUBLIC protobuf::libprotobuf gRPC::grpc++)
 
 add_executable(common-test ${test_files})

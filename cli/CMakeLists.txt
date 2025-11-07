@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 4.0.0)
+cmake_minimum_required(VERSION 3.31.0)
 
 project(flashback-cli
     VERSION 0.2
@@ -7,18 +7,24 @@ project(flashback-cli
     HOMEPAGE_URL "https://flashback.eu.com"
 )
 
+set(CMAKE_MESSAGE_CONTEXT "cli")
+
 include(FetchContent)
 include(GNUInstallDirs)
 include(CMakePackageConfigHelpers)
 
 # dependencies
 find_package(Boost 1.83.0 REQUIRED COMPONENTS program_options)
+find_package(ftxui 5.0.0 COMPONENTS screen dom component)
 find_package(GTest 1.15.0)
 
-enable_testing()
+if(NOT ftxui_FOUND)
+    message(STATUS "ftxui library falls back to cloning with git")
+    FetchContent_Declare(ftxui GIT_REPOSITORY https://github.com/arthursonzogni/ftxui GIT_TAG v6.1.9)
+    FetchContent_MakeAvailable(ftxui)
+endif()
 
-FetchContent_Declare(ftxui GIT_REPOSITORY https://github.com/arthursonzogni/ftxui GIT_TAG v5.0.0)
-FetchContent_MakeAvailable(ftxui)
+enable_testing()
 
 # configurations
 set(CMAKE_CXX_STANDARD 23)
