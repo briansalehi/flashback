@@ -90,8 +90,8 @@ add_test(NAME flashback-test COMMAND flashback-test)
 
 # installation
 write_basic_package_version_file(${CMAKE_BINARY_DIR}/FlashbackCliVersion.cmake VERSION ${PROJECT_VERSION} COMPATIBILITY SameMajorVersion)
-install(TARGETS flashback RUNTIME)
-install(FILES ${CMAKE_BINARY_DIR}/FlashbackCliVersion.cmake DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake)
+install(TARGETS flashback RUNTIME CONFIGURATIONS Release MinSizeRel COMPONENT client)
+install(FILES ${CMAKE_BINARY_DIR}/FlashbackCliVersion.cmake CONFIGURATIONS Release MinSizeRel COMPONENT client DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake)
 
 # packaging
 include(CPack)

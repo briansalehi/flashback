@@ -7,7 +7,6 @@
 #include <flashback/exceptions.hpp>
 #include <flashback/options.hpp>
 #include <flashback/event_handler.hpp>
-#include <flashback/client.hpp>
 
 int main(int const argc, char** argv)
 {

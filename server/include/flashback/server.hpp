@@ -12,8 +12,8 @@ namespace flashback
 class server_impl: public server::Service
 {
 public:
-    explicit server_impl(boost::asio::ip::port_type const port, std::shared_ptr<database> database);
-    ~server_impl();
+    explicit server_impl(boost::asio::ip::port_type port, std::shared_ptr<database> database);
+    ~server_impl() override;
 
     grpc::Status get_roadmaps(grpc::ServerContext* context, user const* request, roadmaps* response) override;
 

@@ -61,9 +61,8 @@ list(APPEND test_files ${source_files})
 list(REMOVE_ITEM test_files src/main.cpp)
 
 add_executable(flashbackd-test ${test_files})
-#target_sources(flashbackd-test PRIVATE )
 target_include_directories(flashbackd-test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(flashbackd-test PRIVATE Boost::system Boost::program_options pq pqxx gtest gtest_main)
 add_test(NAME flashbackd-test COMMAND flashbackd-test)
 
-install(TARGETS flashbackd RUNTIME CONFIGURATIONS Release MinSizeRel)
+install(TARGETS flashbackd RUNTIME CONFIGURATIONS Release MinSizeRel COMPONENT server)
