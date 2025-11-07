@@ -1,6 +1,14 @@
-cmake_minimum_required(VERSION 4.0.0)
+cmake_minimum_required(VERSION 3.31.0)
+project(
+    VERSION 0.2
+    LANGUAGES CXX
+    DESCRIPTION "A program to transform complex technical subjects into muscle memory"
+    HOMEPAGE_URL "https://flashback.eu.com"
+)
 
 find_package(Qt6 6.10.0 REQUIRED COMPONENTS Core Quick)
+
+set(CMAKE_MESSAGE_CONTEXT "gui")
 
 include(GNUInstallDirs)
 include(CMakePackageConfigHelpers)
