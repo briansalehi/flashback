@@ -8,7 +8,7 @@
 
 using namespace flashback;
 
-constexpr auto server_domain_name{"https://flashback.eu.com"};
+constexpr auto server_domain_name{"flashback.eu.com"};
 constexpr auto server_port_number{"9821"};
 
 options::options(std::vector<std::string> const& args)
