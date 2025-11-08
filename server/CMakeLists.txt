@@ -66,4 +66,4 @@ target_link_libraries(flashbackd-test PRIVATE Boost::system Boost::program_optio
 add_test(NAME flashbackd-test COMMAND flashbackd-test)
 
 install(TARGETS flashbackd RUNTIME CONFIGURATIONS Release MinSizeRel COMPONENT server)
-install(FILES res/flashbackd.service CONFIGURATIONS Release MinSizeRel COMPONENT server DESTINATION ${CMAKE_INSTALL_LIBDIR}/systemd/system)
+install(FILES res/flashbackd.service CONFIGURATIONS Release MinSizeRel COMPONENT server DESTINATION /usr/local/lib/systemd/system)
