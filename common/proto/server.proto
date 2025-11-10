@@ -8,98 +8,229 @@ service server {
   rpc get_roadmaps (user) returns (roadmaps);
 }
 
-/**
- * Server handles the following requests:
- *
- * Welcome
- *
- * - Get roadmaps
- * - Create a roadmap
- * - Reorder a roadmap
- * - Remove a roadmap
- *
- * Roadmap
- *
- * - Get milestones
- * - Rename the roadmap
- * - Add a milestone
- * - Reorder a milestone
- * - Drop a milestone from the roadmap
- * - Edit the level of a milestone
- *
- * Subject
- *
- * - Get resources
- * - Add the resource to a subject
- * - Create a resource
- * - Reorder a resource
- * - Drop a resource from the subject
- * - Merge two resources
- *
- * Resource
- *
- * - Get sections
- * - Rename the resource
- * - Remove the resource
- * - Edit the provider of resource
- * - Edit the presenter of resource
- * - Edit the link of resource
- * - Change resource type
- * - Change section pattern
- * - Change condition
- * - Create a section
- * - Reorder a section
- * - Remove a section
- * - Merge two sections
- * - Rename a section
- * - Move a section to another resource
- *
- * Subject
- *
- * - Get topics
- * - Add a resource to the subject
- * - Rename the subject
- * - Remove the subject
- * - Create a topic
- * - Reorder a topic
- * - Remove a topic
- * - Merge two topics
- * - Rename a topic
- * - Move a topic to another subject
- *
- * Section
- *
- * - Get study cards
- * - Create a new card
- * - Reorder cards
- * - Remove a card
- * - Merge two cards
- * - Rename the section
- * - Remove the section
- * - Move a card to another resource/section
- *
- * Topic
- *
- * - Get practice cards
- * - Create a new card
- * - Reorder cards
- * - Remove a card
- * - Merge two cards
- * - Rename the topic
- * - Remove the topic
- * - Move a card to another subject/topic
- *
- * Card
- *
- * - Edit heading
- * - Create a block
- * - Edit a block
- * - Remove a block
- * - Edit the extension of a block
- * - Edit the language of a block
- * - Edit the metadata of a block
- * - Reorder blocks
- * - Merge two blocks
- * - Split a block into two
- *
- */
+/*
+message SignUpRequest {
+  string email = 1;
+  string password = 2; // see notes below
+}
+
+message SignUpResponse {
+  bool success = 1;
+  string error_message = 2;
+}
+
+message LoginRequest {
+  string email = 1;
+  string password = 2;
+}
+
+message LoginResponse {
+  bool success = 1;
+  string token = 2; // e.g. JWT or random opaque token
+  string error_message = 3;
+}
+
+service AuthService {
+  rpc SignUp(SignUpRequest) returns (SignUpResponse);
+  rpc Login(LoginRequest) returns (LoginResponse);
+}
+*/
+
+/*
+2. Server-side
+
+Use Argon2, scrypt, or bcrypt.
+
+std::string hash = argon2_hash(password);
+db.insert_user(email, hash);
+
+A naive SHA-256 hash is not acceptable.
+
+std::string token = generate_secure_random();
+db.store_session(user_id, token, expiration_time);
+
+3. Client-side
+
+SignUpRequest req;
+req.set_email("user@example.com");
+req.set_password("secret123");
+auto response = stub->SignUp(ctx, req);
+
+LoginRequest r;
+r.set_email("user@example.com");
+r.set_password("secret123");
+
+LoginResponse resp;
+stub->Login(&ctx, r, &resp);
+
+std::string token = resp.token();  // store it
+
+Use token in future calls
+
+ClientContext ctx;
+ctx.AddMetadata("authorization", token);
+stub->GetRoadmap(&ctx, request, &response);
+
+4. Server: validate token on every RPC
+
+Status RoadmapServiceImpl::GetRoadmap(
+    ServerContext* ctx,
+    const RoadmapRequest* req,
+    Roadmap* resp)
+{
+    auto auth = ctx->client_metadata().find("authorization");
+    if (auth == ctx->client_metadata().end()) {
+        return Status(grpc::UNAUTHENTICATED, "Missing token");
+    }
+
+    std::string token = std::string(auth->second.begin(), auth->second.end());
+    auto user = db.lookup_session(token);
+
+    if (!user) {
+        return Status(grpc::PERMISSION_DENIED, "Invalid token");
+    }
+
+    // Proceed with business logic
+}
+
+5. You must use TLS
+
+Without it, all the above leaks over the wire.
+
+gRPC makes TLS trivial:
+
+grpc::SslServerCredentialsOptions opts;
+opts.pem_key_cert_pairs.push_back({key, cert});
+auto creds = grpc::SslServerCredentials(opts);
+
+builder.AddListeningPort("0.0.0.0:50051", creds);
+
+Clients similarly use SslCredentials.
+
+DB tables:
+
+users(id, email UNIQUE, password_hash, created_at)
+
+sessions(id, user_id, token, expires_at)
+
+Password hashing:
+
+argon2id
+
+1-second target computation time
+
+Per-user random salt
+
+Tokens:
+
+32 bytes securely generated via std::random_device + openssl RAND_bytes
+
+Expiration:
+
+Session lifetime ≈ 1 week or whatever your app requires
+
+Refresh token logic optional
+
+Authorization:
+
+gRPC metadata
+
+Verified inside every RPC handler
+
+This is the minimal production-worthy skeleton.
+*/
+
+/*
+Server handles the following requests:
+
+Welcome
+
+- Get roadmaps
+- Create a roadmap
+- Reorder a roadmap
+- Remove a roadmap
+
+Roadmap
+
+- Get milestones
+- Rename the roadmap
+- Add a milestone
+- Reorder a milestone
+- Drop a milestone from the roadmap
+- Edit the level of a milestone
+
+Subject
+
+- Get resources
+- Add the resource to a subject
+- Create a resource
+- Reorder a resource
+- Drop a resource from the subject
+- Merge two resources
+
+Resource
+
+- Get sections
+- Rename the resource
+- Remove the resource
+- Edit the provider of resource
+- Edit the presenter of resource
+- Edit the link of resource
+- Change resource type
+- Change section pattern
+- Change condition
+- Create a section
+- Reorder a section
+- Remove a section
+- Merge two sections
+- Rename a section
+- Move a section to another resource
+
+Subject
+
+- Get topics
+- Add a resource to the subject
+- Rename the subject
+- Remove the subject
+- Create a topic
+- Reorder a topic
+- Remove a topic
+- Merge two topics
+- Rename a topic
+- Move a topic to another subject
+
+Section
+
+- Get study cards
+- Create a new card
+- Reorder cards
+- Remove a card
+- Merge two cards
+- Rename the section
+- Remove the section
+- Move a card to another resource/section
+
+Topic
+
+- Get practice cards
+- Create a new card
+- Reorder cards
+- Remove a card
+- Merge two cards
+- Rename the topic
+- Remove the topic
+- Move a card to another subject/topic
+
+Card
+
+- Edit heading
+- Create a block
+- Edit a block
+- Remove a block
+- Edit the extension of a block
+- Edit the language of a block
+- Edit the metadata of a block
+- Reorder blocks
+- Merge two blocks
+- Split a block into two
+*/
