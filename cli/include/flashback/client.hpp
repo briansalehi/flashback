@@ -12,11 +12,13 @@ class client final
 {
 public:
     explicit client(std::shared_ptr<options> opts, std::shared_ptr<grpc::Channel> channel);
-    ~client();
+    ~client() = default;
 
-    std::shared_ptr<roadmaps> get_roadmaps(std::shared_ptr<user> requester);
+    std::shared_ptr<Roadmaps> get_roadmaps(std::shared_ptr<User> requester);
+    std::shared_ptr<SignInResponse> signin(std::shared_ptr<SignInRequest> request);
+    std::shared_ptr<SignUpResponse> signup(std::shared_ptr<SignUpRequest> request);
 
 private:
-    std::unique_ptr<server::Stub> m_stub;
+    std::unique_ptr<Server::Stub> m_stub;
 };
 } // flashback

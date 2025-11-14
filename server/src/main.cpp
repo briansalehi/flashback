@@ -1,22 +1,26 @@
 #include <memory>
+#include <format>
+#include <string>
 #include <iostream>
 #include <exception>
-#include <cstdlib>
 #include <flashback/server.hpp>
 #include <flashback/database.hpp>
 #include <grpcpp/grpcpp.h>
+
+constexpr uint16_t server_port{9821};
+constexpr std::string server_address{"localhost"};
 
 int main()
 {
     try
     {
         auto database{std::make_shared<flashback::database>()};
-        auto server_impl{std::make_shared<flashback::server_impl>(9821, database)};
-        grpc::ServerBuilder builder{};
-        builder.AddListeningPort("[::]:9821", grpc::InsecureServerCredentials());
-        builder.RegisterService(server_impl.get());
-        std::unique_ptr<grpc::Server> server{builder.BuildAndStart()};
-        server->Wait();
+        auto server{std::make_shared<flashback::server>(database)};
+        auto builder{std::make_unique<grpc::ServerBuilder>()};
+        builder->AddListeningPort(std::format("{}:{}", server_address, server_port), grpc::InsecureServerCredentials());
+        builder->RegisterService(server.get());
+        std::unique_ptr<grpc::Server> service{builder->BuildAndStart()};
+        service->Wait();
     }
     catch (std::exception const& exp)
     {

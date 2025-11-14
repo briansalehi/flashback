@@ -1,24 +1,23 @@
 #pragma once
 
 #include <memory>
-#include <thread>
-#include <boost/asio.hpp>
 #include <types.pb.h>
 #include <server.grpc.pb.h>
 #include <flashback/database.hpp>
 
 namespace flashback
 {
-class server_impl: public server::Service
+class server final: public Server::Service
 {
 public:
-    explicit server_impl(boost::asio::ip::port_type port, std::shared_ptr<database> database);
-    ~server_impl() override;
+    explicit server(std::shared_ptr<database> database);
+    ~server() override = default;
 
-    grpc::Status get_roadmaps(grpc::ServerContext* context, user const* request, roadmaps* response) override;
+    grpc::Status GetRoadmaps(grpc::ServerContext* context, User const* request, Roadmaps* response) override;
+    grpc::Status SignIn(grpc::ServerContext* context, const SignInRequest* request, SignInResponse* response) override;
+    grpc::Status SignUp(grpc::ServerContext* context, SignUpRequest const* request, SignUpResponse* response) override;
 
 private:
     std::shared_ptr<database> m_database;
-    std::unique_ptr<std::jthread> m_runner;
 };
 } // flashback

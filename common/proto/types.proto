@@ -4,13 +4,13 @@ package flashback;
 
 import "google/protobuf/timestamp.proto";
 
-message roadmap {
+message Roadmap {
   uint64 id = 1;
   string name = 2;
 }
 
-message roadmaps {
-  repeated roadmap roadmap = 1;
+message Roadmaps {
+  repeated Roadmap roadmaps = 1;
 }
 
 message subject {
@@ -121,7 +121,7 @@ message cards {
   repeated card card = 1;
 }
 
-message user {
+message User {
   enum user_state {
     active = 0;
     inactive = 1;

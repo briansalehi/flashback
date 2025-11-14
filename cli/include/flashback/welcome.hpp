@@ -14,8 +14,8 @@ public:
     explicit welcome(std::shared_ptr<client> server);
     ~welcome() override = default;
 
-    void add_roadmaps(std::shared_ptr<roadmaps> roadmaps);
-    void add_roadmap(roadmap const& r);
+    void add_roadmaps(std::shared_ptr<Roadmaps> roadmaps);
+    void add_roadmap(Roadmap const& r);
 
 protected:
     void display() override;

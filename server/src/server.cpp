@@ -1,20 +1,20 @@
 #include <iostream>
 #include <format>
 #include <flashback/server.hpp>
+#include <sodium.h>
 
 using namespace flashback;
 
-server_impl::server_impl(boost::asio::ip::port_type const port, std::shared_ptr<database> database)
+server::server(std::shared_ptr<database> database)
     : m_database{database}
-    , m_runner{nullptr}
 {
+    if (sodium_init() < 0)
+    {
+        throw std::runtime_error("Server: sodium library cannot be initialized");
+    }
 }
 
-server_impl::~server_impl()
-{
-}
-
-grpc::Status server_impl::get_roadmaps(grpc::ServerContext* context, user const* request, roadmaps* response)
+grpc::Status server::GetRoadmaps(grpc::ServerContext* context, User const* request, Roadmaps* response)
 {
     std::clog << std::format("Server: user {} requests for roadmaps\n", request->id());
     pqxx::result const result{m_database->query(std::format("select id, name from get_roadmaps({})", request->id()))};
@@ -22,10 +22,41 @@ grpc::Status server_impl::get_roadmaps(grpc::ServerContext* context, user const*
 
     for (pqxx::row row : result)
     {
-        roadmap* r{response->add_roadmap()};
+        Roadmap* r{response->add_roadmaps()};
         r->set_id(row.at("id").as<std::uint64_t>());
         r->set_name(row.at("name").as<std::string>());
     }
+
+    return grpc::Status::OK;
+}
+
+grpc::Status server::SignIn(grpc::ServerContext* context, const SignInRequest* request, SignInResponse* response)
+{
+    /*
+    uint64_t opslimit{crypto_pwhash_OPSLIMIT_MODERATE};
+    size_t memlimit{crypto_pwhash_MEMLIMIT_MODERATE};
+    char buffer[crypto_pwhash_STRBYTES];
+
+    if (crypto_pwhash_str(buffer, request->password().c_str(), request->password().size(), opslimit, memlimit) != 0)
+    {
+        throw std::runtime_error("Server: sodium cannot create hash");
+    }
+
+    std::string hash{buffer};
+    std::clog << std::format("generated hash: {}\n", hash);
+
+    */
+    response->set_success(true);
+    response->set_token("****");
+    response->set_details("signin successful");
+
+    return grpc::Status::OK;
+}
+
+grpc::Status server::SignUp(grpc::ServerContext* context, const SignUpRequest* request, SignUpResponse* response)
+{
+    response->set_success(true);
+    response->set_details("signup successful");
 
     return grpc::Status::OK;
 }

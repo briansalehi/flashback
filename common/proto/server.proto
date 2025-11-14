@@ -1,40 +1,35 @@
-  syntax = "proto3";
+syntax = "proto3";
 
 package flashback;
 
 import "types.proto";
 
-service server {
-  rpc get_roadmaps (user) returns (roadmaps);
-}
-
-/*
-message SignUpRequest {
-  string email = 1;
-  string password = 2; // see notes below
-}
-
-message SignUpResponse {
-  bool success = 1;
-  string error_message = 2;
-}
-
-message LoginRequest {
+message SignInRequest {
   string email = 1;
   string password = 2;
 }
 
-message LoginResponse {
+message SignInResponse {
   bool success = 1;
-  string token = 2; // e.g. JWT or random opaque token
-  string error_message = 3;
+  string details = 2;
+  string token = 3;
 }
 
-service AuthService {
-  rpc SignUp(SignUpRequest) returns (SignUpResponse);
-  rpc Login(LoginRequest) returns (LoginResponse);
+message SignUpRequest {
+  string email = 1;
+  string password = 2;
 }
-*/
+
+message SignUpResponse {
+  bool success = 1;
+  string details = 2;
+}
+
+service Server {
+  rpc GetRoadmaps(User) returns (Roadmaps);
+  rpc SignIn(SignInRequest) returns (SignInResponse);
+  rpc SignUp(SignUpRequest) returns (SignUpResponse);
+}
 
 /*
 2. Server-side

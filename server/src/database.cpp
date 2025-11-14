@@ -41,4 +41,3 @@ pqxx::result database::query(std::string_view const statement) const
     work.commit();
     return result;
 }
-
