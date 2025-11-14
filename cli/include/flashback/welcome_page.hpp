@@ -8,11 +8,11 @@
 
 namespace flashback
 {
-class welcome final: public page
+class welcome_page final: public page
 {
 public:
-    explicit welcome(std::shared_ptr<client> server);
-    ~welcome() override = default;
+    explicit welcome_page(std::shared_ptr<client> server);
+    ~welcome_page() override = default;
 
     void add_roadmaps(std::shared_ptr<Roadmaps> roadmaps);
     void add_roadmap(Roadmap const& r);

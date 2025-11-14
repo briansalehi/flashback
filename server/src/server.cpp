@@ -32,22 +32,21 @@ grpc::Status server::GetRoadmaps(grpc::ServerContext* context, User const* reque
 
 grpc::Status server::SignIn(grpc::ServerContext* context, const SignInRequest* request, SignInResponse* response)
 {
-    /*
-    uint64_t opslimit{crypto_pwhash_OPSLIMIT_MODERATE};
-    size_t memlimit{crypto_pwhash_MEMLIMIT_MODERATE};
+    uint64_t const opslimit{crypto_pwhash_OPSLIMIT_MODERATE};
+    size_t const memlimit{crypto_pwhash_MEMLIMIT_MODERATE};
     char buffer[crypto_pwhash_STRBYTES];
 
-    if (crypto_pwhash_str(buffer, request->password().c_str(), request->password().size(), opslimit, memlimit) != 0)
+    if (crypto_pwhash_str(buffer, request->user().password().c_str(), request->user().password().size(), opslimit, memlimit) != 0)
     {
         throw std::runtime_error("Server: sodium cannot create hash");
     }
 
     std::string hash{buffer};
-    std::clog << std::format("generated hash: {}\n", hash);
 
-    */
+    pqxx::result result = m_database->query(std::format("call create_session('{}', '{}')", request->user().email(), request->user().password()));
+
     response->set_success(true);
-    response->set_token("****");
+    response->set_token(hash);
     response->set_details("signin successful");
 
     return grpc::Status::OK;

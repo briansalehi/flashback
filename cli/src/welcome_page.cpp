@@ -3,13 +3,11 @@
 #include <utility>
 #include <iostream>
 #include <format>
-#include <flashback/welcome.hpp>
-
-constexpr std::chrono::milliseconds refresh_rate{1000};
+#include <flashback/welcome_page.hpp>
 
 using namespace flashback;
 
-welcome::welcome(std::shared_ptr<client> client)
+welcome_page::welcome_page(std::shared_ptr<client> client)
     : m_client{client}
 {
     std::shared_ptr<User> current_user{std::make_shared<User>()};
@@ -18,12 +16,12 @@ welcome::welcome(std::shared_ptr<client> client)
     display();
 }
 
-void welcome::add_roadmaps(std::shared_ptr<Roadmaps> input)
+void welcome_page::add_roadmaps(std::shared_ptr<Roadmaps> input)
 {
-    std::ranges::for_each(input->roadmaps(), std::bind_front(&welcome::add_roadmap, this));
+    std::ranges::for_each(input->roadmaps(), std::bind_front(&welcome_page::add_roadmap, this));
 }
 
-void welcome::add_roadmap(Roadmap const& r)
+void welcome_page::add_roadmap(Roadmap const& r)
 {
     std::clog << std::format("Welcome Page: resource ({}) {}\n", r.id(), r.name());
     ftxui::Element element{
@@ -39,7 +37,7 @@ void welcome::add_roadmap(Roadmap const& r)
     m_elements.push_back(std::move(element));
 }
 
-void welcome::display()
+void welcome_page::display()
 {
     content(ftxui::hbox(ftxui::vbox(m_elements, ftxui::flex), ftxui::flex));
     page::display();

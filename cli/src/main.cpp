@@ -6,7 +6,7 @@
 #include <boost/asio.hpp>
 #include <flashback/exceptions.hpp>
 #include <flashback/options.hpp>
-#include <flashback/event_handler.hpp>
+#include <flashback/window_manager.hpp>
 
 int main(int const argc, char** argv)
 {
@@ -14,7 +14,11 @@ int main(int const argc, char** argv)
     {
         std::vector<std::string> const args(argv + 1, argv + argc);
         auto options{std::make_shared<flashback::options>(args)};
-        auto event_handler{std::make_unique<flashback::event_handler>(options)};
+        auto client{std::make_shared<flashback::client>(options)};
+        auto user{std::make_shared<flashback::User>()};
+        user->set_name("Brian Salehi");
+        user->set_email("briansalehi@proton.me");
+        auto window_manager{std::make_unique<flashback::window_manager>(client, user)};
     }
     catch (flashback::descriptive_option const& opt)
     {

@@ -135,4 +135,6 @@ message User {
   user_state state = 4;
   bool verified = 5;
   google.protobuf.Timestamp joined = 6;
+  string password = 7;
+  string hash = 8;
 }

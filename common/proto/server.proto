@@ -5,8 +5,7 @@ package flashback;
 import "types.proto";
 
 message SignInRequest {
-  string email = 1;
-  string password = 2;
+  User user = 1;
 }
 
 message SignInResponse {
@@ -16,8 +15,7 @@ message SignInResponse {
 }
 
 message SignUpRequest {
-  string email = 1;
-  string password = 2;
+  User user = 1;
 }
 
 message SignUpResponse {
