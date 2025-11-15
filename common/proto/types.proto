@@ -122,7 +122,7 @@ message cards {
 }
 
 message User {
-  enum user_state {
+  enum State {
     active = 0;
     inactive = 1;
     suspended = 2;
@@ -132,9 +132,10 @@ message User {
   uint64 id = 1;
   string name = 2;
   string email = 3;
-  user_state state = 4;
+  State state = 4;
   bool verified = 5;
-  google.protobuf.Timestamp joined = 6;
-  string password = 7;
-  string hash = 8;
+  string password = 6;
+  string hash = 7;
+  google.protobuf.Timestamp joined = 8;
+  string device = 9;
 }

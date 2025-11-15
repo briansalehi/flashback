@@ -13,26 +13,22 @@ client::client(std::shared_ptr<options> opts)
     , m_stub{Server::NewStub(m_channel)}
     , m_user{nullptr}
 {
-    m_user = std::make_shared<User>();
-    m_user->set_name("Brian Salehi");
-    m_user->set_email("briansalehi@proton.me");
-    m_user->set_password("1234");
-
     std::clog << std::format("Client: connecting to {}:{}\n", opts->server_address, opts->server_port);
+}
 
-    if (user_is_defined())
-    {
-    }
-
-    if (m_token.empty())
-    {
-        signin();
-    }
+client::~client()
+{
+    m_user.release();
 }
 
 bool client::user_is_defined() const noexcept
 {
     return m_user != nullptr;
+}
+
+void client::set_user(std::unique_ptr<User> user)
+{
+    m_user = std::move(user);
 }
 
 std::shared_ptr<Roadmaps> client::get_roadmaps()
@@ -60,17 +56,25 @@ std::shared_ptr<SignInResponse> client::signin()
     auto request{std::make_unique<SignInRequest>()};
     auto response{std::make_shared<SignInResponse>()};
 
-    request->set_allocated_user(m_user.get());
-    std::clog << std::format("Client: signing in {}\n", m_user->email());
-
-    if (grpc::Status const status{m_stub->SignIn(context.get(), *request, response.get())}; status.ok())
+    if (m_user == nullptr)
     {
-        std::clog << std::format("Client: {} with token {}\n", response->details(), response->token());
-        m_token = response->token();
+        response->set_success(false);
+        response->set_details("invalid user");
     }
     else
     {
-        throw std::runtime_error{"Client: failed to sign in"};
+        std::clog << std::format("Client: signing in as {}\n", m_user->email());
+        request->set_allocated_user(m_user.release());
+
+        if (grpc::Status const status{m_stub->SignIn(context.get(), *request, response.get())}; status.ok())
+        {
+            std::clog << std::format("Client: {} with token {}\n", response->details(), response->token());
+            m_token = response->token();
+        }
+        else
+        {
+            throw std::runtime_error{std::format("Client: {}", response->details())};
+        }
     }
 
     return response;
@@ -82,16 +86,24 @@ std::shared_ptr<SignUpResponse> client::signup()
     auto request{std::make_shared<SignUpRequest>()};
     auto response{std::make_shared<SignUpResponse>()};
 
-    request->set_allocated_user(m_user.get());
-    std::clog << std::format("Client: signing up {}\n", m_user->email());
-
-    if (grpc::Status const status{m_stub->SignUp(context.get(), *request, response.get())}; status.ok())
+    if (m_user == nullptr)
     {
-        std::clog << std::format("Client: {}\n", response->details());
+        response->set_success(false);
+        response->set_details("invalid user");
     }
     else
     {
-        throw std::runtime_error{"Client: failed to sign up"};
+        request->set_allocated_user(m_user.release());
+        std::clog << std::format("Client: signing up {}\n", m_user->email());
+
+        if (grpc::Status const status{m_stub->SignUp(context.get(), *request, response.get())}; status.ok())
+        {
+            std::clog << std::format("Client: {}\n", response->details());
+        }
+        else
+        {
+            throw std::runtime_error{"Client: failed to sign up"};
+        }
     }
 
     return response;

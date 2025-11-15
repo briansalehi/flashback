@@ -12,6 +12,7 @@ message SignInResponse {
   bool success = 1;
   string details = 2;
   string token = 3;
+  User user = 4;
 }
 
 message SignUpRequest {

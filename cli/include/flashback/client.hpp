@@ -13,19 +13,19 @@ class client final
 {
 public:
     explicit client(std::shared_ptr<options> opts);
-    ~client() = default;
+    ~client();
 
     [[nodiscard]] bool user_is_defined() const noexcept;
+    void set_user(std::unique_ptr<User> user);
 
     std::shared_ptr<Roadmaps> get_roadmaps();
     std::shared_ptr<SignInResponse> signin();
     std::shared_ptr<SignUpResponse> signup();
 
 private:
-
     std::shared_ptr<grpc::Channel> m_channel;
     std::unique_ptr<Server::Stub> m_stub;
-    std::shared_ptr<User> m_user;
+    std::unique_ptr<User> m_user;
     std::string m_token;
 };
 } // flashback

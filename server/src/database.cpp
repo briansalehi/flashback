@@ -34,10 +34,17 @@ database::database(std::string address, std::string port)
     }
 }
 
-pqxx::result database::query(std::string_view const statement) const
+pqxx::result database::query(std::string_view statement) const
 {
     pqxx::work work{*m_connection};
     pqxx::result result{work.exec(statement)};
     work.commit();
     return result;
+}
+
+void database::exec(std::string_view statement) const
+{
+    pqxx::work work{*m_connection};
+    work.exec(statement);
+    work.commit();
 }

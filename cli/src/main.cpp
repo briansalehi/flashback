@@ -15,10 +15,6 @@ int main(int const argc, char** argv)
         std::vector<std::string> const args(argv + 1, argv + argc);
         auto options{std::make_shared<flashback::options>(args)};
         auto client{std::make_shared<flashback::client>(options)};
-        auto user{std::make_shared<flashback::User>()};
-        user->set_name("Brian Salehi");
-        user->set_email("briansalehi@proton.me");
-        user->set_password("1234");
         auto window_manager{std::make_unique<flashback::window_manager>(client)};
     }
     catch (flashback::descriptive_option const& opt)

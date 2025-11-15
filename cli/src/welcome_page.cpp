@@ -1,20 +1,36 @@
-#include <algorithm>
 #include <memory>
-#include <utility>
-#include <iostream>
-#include <format>
 #include <flashback/welcome_page.hpp>
+#include <grpc/grpc.h>
 
 using namespace flashback;
 
 welcome_page::welcome_page(std::shared_ptr<client> client)
     : m_client{client}
 {
-    // bool credentials_valid{server->check_user_credentials()};
-    // std::set<roadmap> const roadmaps{m_server->roadmaps(2)};
-    // m_page = std::make_shared<welcome_page>(m_client);
+    try
+    {
+        if (!m_client->user_is_defined())
+        {
+            auto user{std::make_unique<flashback::User>()};
+            user->set_email("briansalehi@proton.me");
+            user->set_hash("****");
+            user->set_id(2);
+            user->set_name("Brian Salehi");
+            user->set_password("1234");
+            user->set_verified(false);
+            user->set_state(User_State_active);
+            user->set_device("fedora");
 
-    display();
+            m_client->set_user(std::move(user));
+            std::shared_ptr<SignInResponse> signin_response{m_client->signin()};
+        }
+        // std::shared_ptr<SignUpResponse> signup_response{m_client->signup()};
+        // display();
+    }
+    catch (std::runtime_error const& exp)
+    {
+        std::cerr << exp.what() << std::endl;
+    }
 }
 
 void welcome_page::display()
