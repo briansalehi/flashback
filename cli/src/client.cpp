@@ -20,24 +20,29 @@ client::client(std::shared_ptr<options> opts)
 
     std::clog << std::format("Client: connecting to {}:{}\n", opts->server_address, opts->server_port);
 
-    if (m_user != nullptr)
+    if (user_is_defined())
     {
     }
 
     if (m_token.empty())
     {
-        signin(m_user);
+        signin();
     }
 }
 
-std::shared_ptr<Roadmaps> client::get_roadmaps(std::shared_ptr<User> user)
+bool client::user_is_defined() const noexcept
+{
+    return m_user != nullptr;
+}
+
+std::shared_ptr<Roadmaps> client::get_roadmaps()
 {
     auto context{std::make_unique<grpc::ClientContext>()};
     context->AddMetadata("authorization", m_token);
 
     std::shared_ptr<Roadmaps> data{std::make_shared<Roadmaps>()};
 
-    if (grpc::Status const status{m_stub->GetRoadmaps(context.get(), *user, data.get())}; status.ok())
+    if (grpc::Status const status{m_stub->GetRoadmaps(context.get(), *m_user, data.get())}; status.ok())
     {
         std::clog << std::format("Client: retrieved {} roadmaps\n", data->roadmaps().size());
     }
@@ -49,14 +54,14 @@ std::shared_ptr<Roadmaps> client::get_roadmaps(std::shared_ptr<User> user)
     return data;
 }
 
-std::shared_ptr<SignInResponse> client::signin(std::shared_ptr<User> user)
+std::shared_ptr<SignInResponse> client::signin()
 {
     auto context{std::make_unique<grpc::ClientContext>()};
     auto request{std::make_unique<SignInRequest>()};
     auto response{std::make_shared<SignInResponse>()};
 
-    request->set_allocated_user(user.get());
-    std::clog << std::format("Client: signing in {}\n", user->email());
+    request->set_allocated_user(m_user.get());
+    std::clog << std::format("Client: signing in {}\n", m_user->email());
 
     if (grpc::Status const status{m_stub->SignIn(context.get(), *request, response.get())}; status.ok())
     {
@@ -71,14 +76,14 @@ std::shared_ptr<SignInResponse> client::signin(std::shared_ptr<User> user)
     return response;
 }
 
-std::shared_ptr<SignUpResponse> client::signup(std::shared_ptr<User> user)
+std::shared_ptr<SignUpResponse> client::signup()
 {
     auto context{std::make_unique<grpc::ClientContext>()};
     auto request{std::make_shared<SignUpRequest>()};
     auto response{std::make_shared<SignUpResponse>()};
 
-    request->set_allocated_user(user.get());
-    std::clog << std::format("Client: signing up {}\n", user->email());
+    request->set_allocated_user(m_user.get());
+    std::clog << std::format("Client: signing up {}\n", m_user->email());
 
     if (grpc::Status const status{m_stub->SignUp(context.get(), *request, response.get())}; status.ok())
     {

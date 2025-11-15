@@ -1,0 +1,25 @@
+#pragma once
+
+#include <memory>
+#include <filesystem>
+#include <types.pb.h>
+
+namespace flashback
+{
+class basic_config_manager
+{
+public:
+    basic_config_manager() = default;
+    virtual ~basic_config_manager() = default;
+
+    [[nodiscard]] virtual std::filesystem::path base_path() const noexcept = 0;
+    [[nodiscard]] virtual std::filesystem::path config_path() const noexcept = 0;
+    virtual void base_path(std::filesystem::path path) = 0;
+    virtual void reload() = 0;
+
+    [[nodiscard]] virtual std::shared_ptr<User> get_user() const = 0;
+
+protected:
+    virtual void load_user() = 0;
+};
+} // flashback

@@ -15,11 +15,14 @@ public:
     explicit client(std::shared_ptr<options> opts);
     ~client() = default;
 
-    std::shared_ptr<Roadmaps> get_roadmaps(std::shared_ptr<User> user);
-    std::shared_ptr<SignInResponse> signin(std::shared_ptr<User> user);
-    std::shared_ptr<SignUpResponse> signup(std::shared_ptr<User> user);
+    [[nodiscard]] bool user_is_defined() const noexcept;
+
+    std::shared_ptr<Roadmaps> get_roadmaps();
+    std::shared_ptr<SignInResponse> signin();
+    std::shared_ptr<SignUpResponse> signup();
 
 private:
+
     std::shared_ptr<grpc::Channel> m_channel;
     std::unique_ptr<Server::Stub> m_stub;
     std::shared_ptr<User> m_user;

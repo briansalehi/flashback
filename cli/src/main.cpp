@@ -18,7 +18,8 @@ int main(int const argc, char** argv)
         auto user{std::make_shared<flashback::User>()};
         user->set_name("Brian Salehi");
         user->set_email("briansalehi@proton.me");
-        auto window_manager{std::make_unique<flashback::window_manager>(client, user)};
+        user->set_password("1234");
+        auto window_manager{std::make_unique<flashback::window_manager>(client)};
     }
     catch (flashback::descriptive_option const& opt)
     {
