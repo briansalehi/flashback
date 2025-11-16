@@ -16,6 +16,7 @@ public:
     ~client();
 
     [[nodiscard]] bool user_is_defined() const noexcept;
+    [[nodiscard]] bool session_is_valid() const noexcept;
     void set_user(std::unique_ptr<User> user);
 
     std::shared_ptr<Roadmaps> get_roadmaps();

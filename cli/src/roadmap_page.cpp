@@ -1,11 +1,15 @@
 #include <flashback/roadmap_page.hpp>
+#include <thread>
+#include <chrono>
 
 using namespace flashback;
 
 roadmap_page::roadmap_page(std::shared_ptr<client> client)
     : m_client{client}
 {
+    std::this_thread::sleep_for(std::chrono::seconds(2));
     add_roadmaps();
+    page::display(ftxui::hbox(ftxui::vbox(m_elements), ftxui::flex));
 }
 
 void roadmap_page::add_roadmaps()
@@ -27,10 +31,4 @@ void roadmap_page::add_roadmap(Roadmap const& r)
     };
 
     m_elements.push_back(std::move(element));
-}
-
-void roadmap_page::display()
-{
-    content(ftxui::hbox(ftxui::vbox(m_elements, ftxui::flex), ftxui::flex));
-    page::display();
 }

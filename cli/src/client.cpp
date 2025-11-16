@@ -25,6 +25,11 @@ bool client::user_is_defined() const noexcept
     return m_user != nullptr;
 }
 
+bool client::session_is_valid() const noexcept
+{
+    return false;
+}
+
 void client::set_user(std::unique_ptr<User> user)
 {
     m_user = std::move(user);

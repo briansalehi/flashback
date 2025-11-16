@@ -12,10 +12,12 @@ public:
     explicit page();
     virtual ~page() = default;
 
+    void render();
+    void close();
+
 protected:
-    virtual void display();
+    virtual void display(ftxui::Element element);
     virtual void heading(ftxui::Element element);
-    virtual void content(ftxui::Element element);
 
 private:
     [[nodiscard]] bool onEvent(ftxui::Event const& event);

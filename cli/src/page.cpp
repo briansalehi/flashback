@@ -13,21 +13,14 @@ flashback::page::page()
 {
 }
 
-void flashback::page::display()
+void flashback::page::display(ftxui::Element element)
 {
-    m_renderer = ftxui::Renderer([this] -> ftxui::Element { return m_content; });
-    m_renderer = ftxui::CatchEvent(m_renderer, std::bind_front(&page::onEvent, this));
-    m_screen.Loop(m_renderer);
+    m_content = ftxui::vbox(m_heading, element);
 }
 
 void flashback::page::heading(ftxui::Element element)
 {
     m_heading = std::move(element);
-}
-
-void flashback::page::content(ftxui::Element element)
-{
-    m_content = ftxui::vbox(m_heading, ftxui::hbox(element, ftxui::flex), ftxui::flex);
 }
 
 bool flashback::page::onEvent(ftxui::Event const& event)
@@ -38,4 +31,16 @@ bool flashback::page::onEvent(ftxui::Event const& event)
         return true;
     }
     return false;
+}
+
+void flashback::page::render()
+{
+    m_renderer = ftxui::Renderer([this] -> ftxui::Element { return m_content; });
+    m_renderer = ftxui::CatchEvent(m_renderer, std::bind_front(&page::onEvent, this));
+    m_screen.Loop(m_renderer);
+}
+
+void flashback::page::close()
+{
+    m_screen.Exit();
 }
