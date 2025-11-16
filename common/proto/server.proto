@@ -24,10 +24,24 @@ message SignUpResponse {
   string details = 2;
 }
 
+message ResetPasswordRequest {
+  User user = 1;
+}
+
+message ResetPasswordResponse {
+  bool success = 1;
+  string details = 2;
+}
+
+message RoadmapsRequest {
+  User user = 1;
+}
+
 service Server {
-  rpc GetRoadmaps(User) returns (Roadmaps);
+  rpc GetRoadmaps(RoadmapsRequest) returns (Roadmaps);
   rpc SignIn(SignInRequest) returns (SignInResponse);
   rpc SignUp(SignUpRequest) returns (SignUpResponse);
+  rpc ResetPassword(ResetPasswordRequest) returns (ResetPasswordResponse);
 }
 
 /*

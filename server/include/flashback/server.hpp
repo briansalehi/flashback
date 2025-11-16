@@ -13,11 +13,15 @@ public:
     explicit server(std::shared_ptr<database> database);
     ~server() override = default;
 
-    grpc::Status GetRoadmaps(grpc::ServerContext* context, User const* request, Roadmaps* response) override;
+    grpc::Status GetRoadmaps(grpc::ServerContext* context, RoadmapsRequest const* request, Roadmaps* response) override;
     grpc::Status SignIn(grpc::ServerContext* context, const SignInRequest* request, SignInResponse* response) override;
     grpc::Status SignUp(grpc::ServerContext* context, SignUpRequest const* request, SignUpResponse* response) override;
+    grpc::Status ResetPassword(grpc::ServerContext* context, ResetPasswordRequest const* request, ResetPasswordResponse* response) override;
 
 private:
+    [[nodiscard]] static std::string calculate_hash(std::string_view password);
+    [[nodiscard]] static std::string generate_token(std::string_view password);
+
     std::shared_ptr<database> m_database;
 };
 } // flashback

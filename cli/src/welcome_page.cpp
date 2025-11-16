@@ -16,7 +16,7 @@ welcome_page::welcome_page(std::shared_ptr<client> client)
             user->set_hash("****");
             user->set_id(2);
             user->set_name("Brian Salehi");
-            user->set_password("1234");
+            user->set_password("abcdef");
             user->set_verified(false);
             user->set_state(User_State_active);
             user->set_device("fedora");
@@ -29,7 +29,7 @@ welcome_page::welcome_page(std::shared_ptr<client> client)
     }
     catch (std::runtime_error const& exp)
     {
-        std::cerr << exp.what() << std::endl;
+        std::cerr << "Client: " << exp.what() << std::endl;
     }
 }
 

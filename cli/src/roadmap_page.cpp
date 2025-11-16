@@ -10,7 +10,7 @@ roadmap_page::roadmap_page(std::shared_ptr<client> client)
 
 void roadmap_page::add_roadmaps()
 {
-    std::ranges::for_each(m_client->get_roadmaps()->roadmaps(), std::bind_front(&roadmap_page::add_roadmap, this));
+    std::ranges::for_each(m_client->get_roadmaps()->roadmap(), std::bind_front(&roadmap_page::add_roadmap, this));
 }
 
 void roadmap_page::add_roadmap(Roadmap const& r)

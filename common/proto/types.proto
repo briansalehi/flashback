@@ -10,7 +10,7 @@ message Roadmap {
 }
 
 message Roadmaps {
-  repeated Roadmap roadmaps = 1;
+  repeated Roadmap roadmap = 1;
 }
 
 message subject {

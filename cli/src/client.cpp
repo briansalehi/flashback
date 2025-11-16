@@ -13,7 +13,6 @@ client::client(std::shared_ptr<options> opts)
     , m_stub{Server::NewStub(m_channel)}
     , m_user{nullptr}
 {
-    std::clog << std::format("Client: connecting to {}:{}\n", opts->server_address, opts->server_port);
 }
 
 client::~client()
@@ -37,10 +36,14 @@ std::shared_ptr<Roadmaps> client::get_roadmaps()
     context->AddMetadata("authorization", m_token);
 
     std::shared_ptr<Roadmaps> data{std::make_shared<Roadmaps>()};
+    std::unique_ptr<User> user{std::make_unique<User>(*m_user)};
 
-    if (grpc::Status const status{m_stub->GetRoadmaps(context.get(), *m_user, data.get())}; status.ok())
+    auto request{std::make_shared<RoadmapsRequest>()};
+    request->set_allocated_user(user.release());
+
+    if (grpc::Status const status{m_stub->GetRoadmaps(context.get(), *request, data.get())}; status.ok())
     {
-        std::clog << std::format("Client: retrieved {} roadmaps\n", data->roadmaps().size());
+        std::clog << std::format("Client: retrieved {} roadmaps\n", data->roadmap().size());
     }
     else
     {
@@ -68,12 +71,25 @@ std::shared_ptr<SignInResponse> client::signin()
 
         if (grpc::Status const status{m_stub->SignIn(context.get(), *request, response.get())}; status.ok())
         {
-            std::clog << std::format("Client: {} with token {}\n", response->details(), response->token());
-            m_token = response->token();
+            std::clog << std::format("Client: token {}\n", response->details(), response->token());
+            if (response->success())
+            {
+                std::clog << std::format("Client: {} with token {}\n", response->details(), response->token());
+                m_token = response->token();
+            }
+            else
+            {
+                if (response->details() == "UD001")
+                    throw std::runtime_error("account does not exist");
+                else if (response->details() == "UD002")
+                    throw std::runtime_error("incorrect password");
+                else if (response->details() == "UD003")
+                    throw std::runtime_error("already logged in");
+            }
         }
         else
         {
-            throw std::runtime_error{std::format("Client: {}", response->details())};
+            throw std::runtime_error{std::format("Client: server error")};
         }
     }
 
