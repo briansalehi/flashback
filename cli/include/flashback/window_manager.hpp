@@ -16,9 +16,11 @@ public:
 
 private:
     void display();
+    void swap_page(std::shared_ptr<page> next_page);
 
     std::shared_ptr<client> m_client;
     std::shared_ptr<page> m_page;
+    std::shared_ptr<page> m_next_page;
     std::unique_ptr<std::mutex> m_window_lock;
     std::unique_ptr<std::jthread> m_window_runner;
 };

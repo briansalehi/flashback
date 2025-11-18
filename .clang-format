@@ -19,7 +19,7 @@ BraceWrapping:
   AfterExternBlock: false
   BeforeCatch: true
   BeforeElse: true
-  BeforeLambdaBody: true
+  BeforeLambdaBody: false
   BeforeWhile: true
   SplitEmptyFunction: true
   SplitEmptyRecord: true

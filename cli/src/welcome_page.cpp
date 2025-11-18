@@ -1,4 +1,5 @@
 #include <memory>
+#include <functional>
 #include <flashback/welcome_page.hpp>
 
 using namespace flashback;
@@ -8,7 +9,11 @@ welcome_page::welcome_page()
     try
     {
         ftxui::Element title{ftxui::paragraphAlignCenter("LOADING") | ftxui::blink | ftxui::dim | ftxui::bold};
-        ftxui::Element content{ftxui::vbox(ftxui::flex, title)};
+        std::function<ftxui::Element()> content{
+            [title] {
+                return ftxui::vbox(ftxui::filler(), title, ftxui::filler());
+            }
+        };
         page::display(content);
     }
     catch (std::runtime_error const& exp)

@@ -17,9 +17,10 @@ public:
 
     [[nodiscard]] bool user_is_defined() const noexcept;
     [[nodiscard]] bool session_is_valid() const noexcept;
-    void set_user(std::unique_ptr<User> user);
+    void user(std::unique_ptr<User> user);
+    void token(std::string user);
 
-    std::shared_ptr<Roadmaps> get_roadmaps();
+    std::shared_ptr<Roadmaps> roadmaps();
     std::shared_ptr<SignInResponse> signin();
     std::shared_ptr<SignUpResponse> signup();
 

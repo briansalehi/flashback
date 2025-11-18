@@ -13,9 +13,15 @@ flashback::page::page()
 {
 }
 
-void flashback::page::display(ftxui::Element element)
+void flashback::page::display(std::function<ftxui::Element()> const& content)
 {
-    m_content = ftxui::vbox(m_heading, element);
+    m_content = content;
+}
+
+void flashback::page::display(ftxui::Component component, std::function<ftxui::Element()> const& content)
+{
+    m_component = component;
+    m_content = content;
 }
 
 void flashback::page::heading(ftxui::Element element)
@@ -23,11 +29,11 @@ void flashback::page::heading(ftxui::Element element)
     m_heading = std::move(element);
 }
 
-bool flashback::page::onEvent(ftxui::Event const& event)
+bool flashback::page::handle_event(ftxui::Event const& event)
 {
     if (event == ftxui::Event::Escape)
     {
-        m_screen.ExitLoopClosure()();
+        m_screen.Exit();
         return true;
     }
     return false;
@@ -35,8 +41,15 @@ bool flashback::page::onEvent(ftxui::Event const& event)
 
 void flashback::page::render()
 {
-    m_renderer = ftxui::Renderer([this] -> ftxui::Element { return m_content; });
-    m_renderer = ftxui::CatchEvent(m_renderer, std::bind_front(&page::onEvent, this));
+    if (m_component == nullptr)
+    {
+        m_renderer = ftxui::Renderer(m_content);
+    }
+    else
+    {
+        m_renderer = ftxui::Renderer(m_component, m_content);
+    }
+    m_renderer = ftxui::CatchEvent(m_renderer, std::bind_front(&page::handle_event, this));
     m_screen.Loop(m_renderer);
 }
 

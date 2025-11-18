@@ -16,14 +16,16 @@ public:
     void close();
 
 protected:
-    virtual void display(ftxui::Element element);
+    virtual void display(std::function<ftxui::Element()> const&  element);
+    virtual void display(ftxui::Component component, std::function<ftxui::Element()> const&  element);
     virtual void heading(ftxui::Element element);
 
 private:
-    [[nodiscard]] bool onEvent(ftxui::Event const& event);
+    [[nodiscard]] bool handle_event(ftxui::Event const& event);
 
     ftxui::Element m_heading;
-    ftxui::Element m_content;
+    std::function<ftxui::Element()> m_content;
+    ftxui::Component m_component;
     ftxui::ScreenInteractive m_screen;
     ftxui::Component m_renderer;
 };

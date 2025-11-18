@@ -27,15 +27,20 @@ bool client::user_is_defined() const noexcept
 
 bool client::session_is_valid() const noexcept
 {
-    return false;
+    return !m_token.empty();
 }
 
-void client::set_user(std::unique_ptr<User> user)
+void client::user(std::unique_ptr<User> user)
 {
     m_user = std::move(user);
 }
 
-std::shared_ptr<Roadmaps> client::get_roadmaps()
+void client::token(std::string token)
+{
+    m_token = std::move(token);
+}
+
+std::shared_ptr<Roadmaps> client::roadmaps()
 {
     auto context{std::make_unique<grpc::ClientContext>()};
     context->AddMetadata("authorization", m_token);
@@ -114,8 +119,8 @@ std::shared_ptr<SignUpResponse> client::signup()
     }
     else
     {
-        request->set_allocated_user(m_user.release());
         std::clog << std::format("Client: signing up {}\n", m_user->email());
+        request->set_allocated_user(m_user.release());
 
         if (grpc::Status const status{m_stub->SignUp(context.get(), *request, response.get())}; status.ok())
         {

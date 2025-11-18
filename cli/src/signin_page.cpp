@@ -1,37 +1,22 @@
 #include <functional>
-#include <flashback/signup_page.hpp>
-#include <ftxui/screen/color.hpp>
-#include <ftxui/dom/elements.hpp>
+#include <flashback/signin_page.hpp>
 #include <ftxui/component/component.hpp>
-#include <types.pb.h>
 
 using namespace flashback;
 
-signup_page::signup_page(std::shared_ptr<client> client)
+signin_page::signin_page(std::shared_ptr<client> client)
     : m_client{client}
 {
-    ftxui::InputOption name_traits{};
-    name_traits.on_enter = std::bind(&signup_page::verify_submit, this);
-    ftxui::Component name{ftxui::Input(&m_name, name_traits)};
-    name |= ftxui::CatchEvent([](ftxui::Event event) { return event.is_character(); });
-
     ftxui::InputOption email_traits{};
-    email_traits.on_enter = std::bind(&signup_page::verify_submit, this);
+    email_traits.on_enter = std::bind(&signin_page::verify_submit, this);
     ftxui::Component email_field{ftxui::Input(&m_email, email_traits)};
-    email_field |= ftxui::CatchEvent([](ftxui::Event event) { return event.is_character(); });
+    email_field = ftxui::CatchEvent(email_field, [](ftxui::Event event) { return event.is_character(); });
 
     ftxui::InputOption password_traits{};
     password_traits.password = true;
-    password_traits.on_enter = std::bind(&signup_page::verify_submit, this);
+    password_traits.on_enter = std::bind(&signin_page::verify_submit, this);
     ftxui::Component password{ftxui::Input(&m_password, password_traits)};
-    ftxui::Component verify_password{ftxui::Input(&m_verify_password, password_traits)};
-    password |= ftxui::CatchEvent([](ftxui::Event event) { return event.is_character(); });
-    verify_password |= ftxui::CatchEvent([](ftxui::Event event) { return event.is_character(); });
-
-    ftxui::Element unmatched_password{
-        ftxui::text("password does not match") | ftxui::color(ftxui::Color::Red) | ftxui::bold
-    };
-    // unmatched_password = ftxui::Maybe(unmatched_password, [&] -> bool { return password != verify_password; });
+    password = ftxui::CatchEvent(password, [](ftxui::Event event) { return event.is_character(); });
 
     ftxui::ButtonOption button_style{ftxui::ButtonOption::Animated()};
     button_style.transform = [](const ftxui::EntryState& s) {
@@ -44,29 +29,25 @@ signup_page::signup_page(std::shared_ptr<client> client)
     };
 
     ftxui::Component submit_button{
-        ftxui::Button("Create Account", [this] {
+        ftxui::Button("Sign In", [this] {
             verify_submit();
         }, button_style)
     };
 
     ftxui::Component component{
         ftxui::Container::Vertical({
-            name,
             email_field,
             password,
-            verify_password,
             submit_button
         })
     };
 
     std::function<ftxui::Element()> content{
-        [name, email_field, password, verify_password, submit_button] {
+        [email_field, password, submit_button] {
             return ftxui::vbox(
                 ftxui::vbox(
-                    ftxui::hbox(ftxui::text("Full Name: "), name->Render()),
                     ftxui::hbox(ftxui::text("Email: "), email_field->Render()),
                     ftxui::hbox(ftxui::text("Password: "), password->Render()),
-                    ftxui::hbox(ftxui::text("Verify Password: "), verify_password->Render()),
                     submit_button->Render()
                 ) | ftxui::borderEmpty,
                 ftxui::borderEmpty
@@ -77,24 +58,22 @@ signup_page::signup_page(std::shared_ptr<client> client)
     page::display(component, content);
 }
 
-bool signup_page::verify()
+bool signin_page::verify()
 {
-    return !m_name.empty() &&
-        !m_email.empty() &&
-        !m_password.empty() &&
-        m_password == m_verify_password;
+    return !m_email.empty() &&
+        !m_password.empty();
 }
 
-void signup_page::submit()
+void signin_page::submit()
 {
     try
     {
         auto user{std::make_unique<User>()};
-        user->set_name(m_name);
         user->set_email(m_email);
         user->set_password(m_password);
         m_client->user(std::move(user));
-        std::shared_ptr<SignUpResponse> response{m_client->signup()};
+        std::shared_ptr<SignInResponse> response{m_client->signin()};
+        m_client->user(std::make_unique<User>(response->user()));
 
         if (response->success())
         {
@@ -111,7 +90,7 @@ void signup_page::submit()
     }
 }
 
-void signup_page::verify_submit()
+void signin_page::verify_submit()
 {
     if (verify())
     {

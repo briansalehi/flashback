@@ -1,16 +1,15 @@
 #pragma once
 
 #include <memory>
-#include <flashback/client.hpp>
 #include <flashback/page.hpp>
+#include <flashback/client.hpp>
 
 namespace flashback
 {
-class signup_page : public page
+class signin_page final: public page
 {
 public:
-    explicit signup_page(std::shared_ptr<client> client);
-    ~signup_page() override = default;
+    explicit signin_page(std::shared_ptr<client> client);
 
 private:
     bool verify();
@@ -18,9 +17,7 @@ private:
     void verify_submit();
 
     std::shared_ptr<client> m_client;
-    std::string m_name;
     std::string m_email;
     std::string m_password;
-    std::string m_verify_password;
 };
 } // flashback
