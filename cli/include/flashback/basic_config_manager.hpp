@@ -15,11 +15,12 @@ public:
     [[nodiscard]] virtual std::filesystem::path base_path() const noexcept = 0;
     [[nodiscard]] virtual std::filesystem::path config_path() const noexcept = 0;
     virtual void base_path(std::filesystem::path path) = 0;
-    virtual void reload() = 0;
+    virtual void load() = 0;
+    virtual void store(std::shared_ptr<User> user) = 0;
 
     [[nodiscard]] virtual std::shared_ptr<User> get_user() const = 0;
 
 protected:
-    virtual void load_user() = 0;
+    virtual void make_base() = 0;
 };
 } // flashback

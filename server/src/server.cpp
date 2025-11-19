@@ -2,6 +2,7 @@
 #include <format>
 #include <chrono>
 #include <sstream>
+#include <cstring>
 #include <algorithm>
 #include <flashback/server.hpp>
 #include <sodium.h>
@@ -23,7 +24,8 @@ grpc::Status server::GetRoadmaps(grpc::ServerContext* context, RoadmapsRequest c
     {
         std::clog << std::format("Server: user {} requests for roadmaps\n", request->user().id());
         std::shared_ptr<Roadmaps> result{m_database->get_roadmaps(request->user().id())};
-        std::clog << std::format("Server: collected {} roadmaps for user {}\n", result->roadmap().size(), request->user().id());
+        std::clog << std::format("Server: collected {} roadmaps for user {}\n", result->roadmap().size(),
+                                 request->user().id());
 
         for (Roadmap const& r : result->roadmap())
         {
@@ -44,13 +46,24 @@ grpc::Status server::SignIn(grpc::ServerContext* context, const SignInRequest* r
 {
     try
     {
-        std::string hash{calculate_hash(request->user().password())};
-        std::string token{generate_token(request->user().password())};
-        std::string email{request->user().email()};
+        std::unique_ptr<User> user{m_database->get_user(request->user().email())};
+
+        if (user == nullptr)
+        {
+            throw client_exception("user is not registered");
+        }
+
+        if (!password_is_valid(user->hash(), request->user().password()))
+        {
+            throw client_exception("invalid credentials");
+        }
+
+        std::string token{generate_token()};
         std::string device{request->user().device()};
 
-        std::pair<bool, std::string> session_result{m_database->create_session(email, hash, token, device)};
-        std::unique_ptr<User> user{ m_database->get_user(request->user().email())};
+        std::cerr << std::format("Server: user {} signed in with device {}\n", user->id(), device);
+
+        std::pair<bool, std::string> session_result{m_database->create_session(user->id(), token, device)};
 
         response->set_success(true);
         response->set_token(token);
@@ -61,12 +74,13 @@ grpc::Status server::SignIn(grpc::ServerContext* context, const SignInRequest* r
     {
         response->set_success(false);
         response->set_details(exp.code());
+        std::cerr << std::format("Server: {}\n", exp.what());
     }
     catch (std::exception const& exp)
     {
         response->set_success(false);
         response->set_details("internal error");
-        std::cerr << exp.what() << std::endl;
+        std::cerr << std::format("Server: {}\n", exp.what());
     }
 
     return grpc::Status::OK;
@@ -100,7 +114,18 @@ std::string server::calculate_hash(std::string_view password)
     return buffer;
 }
 
-std::string server::generate_token(std::string_view password)
+bool server::password_is_valid(std::string_view hash, std::string_view password)
 {
-    return {"dummy-token"};
+    return crypto_pwhash_str_verify(hash.data(), password.data(), password.size()) == 0;
+}
+
+std::string server::generate_token()
+{
+    unsigned char entropy[32];
+    char token[64];
+
+    randombytes_buf(entropy, sizeof(entropy));
+    sodium_bin2base64(token, sizeof(token), entropy, sizeof(entropy), sodium_base64_VARIANT_ORIGINAL_NO_PADDING);
+
+    return std::string{token};
 }

@@ -20,7 +20,8 @@ public:
 
 private:
     [[nodiscard]] static std::string calculate_hash(std::string_view password);
-    [[nodiscard]] static std::string generate_token(std::string_view password);
+    [[nodiscard]] static bool password_is_valid(std::string_view lhs, std::string_view rhs);
+    [[nodiscard]] static std::string generate_token();
 
     std::shared_ptr<database> m_database;
 };

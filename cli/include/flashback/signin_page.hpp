@@ -19,5 +19,6 @@ private:
     std::shared_ptr<client> m_client;
     std::string m_email;
     std::string m_password;
+    std::string m_device;
 };
 } // flashback

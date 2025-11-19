@@ -135,7 +135,8 @@ message User {
   State state = 4;
   bool verified = 5;
   string password = 6;
-  string hash = 7;
+  string token = 7;
   google.protobuf.Timestamp joined = 8;
   string device = 9;
+  string hash = 10;
 }

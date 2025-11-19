@@ -13,20 +13,16 @@ signup_page::signup_page(std::shared_ptr<client> client)
     ftxui::InputOption name_traits{};
     name_traits.on_enter = std::bind(&signup_page::verify_submit, this);
     ftxui::Component name{ftxui::Input(&m_name, name_traits)};
-    name |= ftxui::CatchEvent([](ftxui::Event event) { return event.is_character(); });
 
     ftxui::InputOption email_traits{};
     email_traits.on_enter = std::bind(&signup_page::verify_submit, this);
     ftxui::Component email_field{ftxui::Input(&m_email, email_traits)};
-    email_field |= ftxui::CatchEvent([](ftxui::Event event) { return event.is_character(); });
 
     ftxui::InputOption password_traits{};
     password_traits.password = true;
     password_traits.on_enter = std::bind(&signup_page::verify_submit, this);
     ftxui::Component password{ftxui::Input(&m_password, password_traits)};
     ftxui::Component verify_password{ftxui::Input(&m_verify_password, password_traits)};
-    password |= ftxui::CatchEvent([](ftxui::Event event) { return event.is_character(); });
-    verify_password |= ftxui::CatchEvent([](ftxui::Event event) { return event.is_character(); });
 
     ftxui::Element unmatched_password{
         ftxui::text("password does not match") | ftxui::color(ftxui::Color::Red) | ftxui::bold

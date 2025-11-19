@@ -14,12 +14,15 @@ public:
     [[nodiscard]] std::filesystem::path base_path() const noexcept override;
     [[nodiscard]] std::filesystem::path config_path() const noexcept override;
     void base_path(std::filesystem::path path) override;
-    void reload() override;
+    void load() override;
+    void store(std::shared_ptr<User> user) override;
 
     [[nodiscard]] std::shared_ptr<User> get_user() const override;
 
 protected:
-    void load_user() override;
+    void make_base() override;
+
+    [[nodiscard]] static std::string create_device_id();
 
 private:
     std::filesystem::path m_base_path;

@@ -10,13 +10,11 @@ signin_page::signin_page(std::shared_ptr<client> client)
     ftxui::InputOption email_traits{};
     email_traits.on_enter = std::bind(&signin_page::verify_submit, this);
     ftxui::Component email_field{ftxui::Input(&m_email, email_traits)};
-    email_field = ftxui::CatchEvent(email_field, [](ftxui::Event event) { return event.is_character(); });
 
     ftxui::InputOption password_traits{};
     password_traits.password = true;
     password_traits.on_enter = std::bind(&signin_page::verify_submit, this);
     ftxui::Component password{ftxui::Input(&m_password, password_traits)};
-    password = ftxui::CatchEvent(password, [](ftxui::Event event) { return event.is_character(); });
 
     ftxui::ButtonOption button_style{ftxui::ButtonOption::Animated()};
     button_style.transform = [](const ftxui::EntryState& s) {

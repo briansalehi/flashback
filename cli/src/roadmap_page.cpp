@@ -23,7 +23,6 @@ void roadmap_page::add_roadmaps()
 
 void roadmap_page::add_roadmap(Roadmap const& r)
 {
-    std::clog << std::format("Welcome Page: resource ({}) {}\n", r.id(), r.name());
     ftxui::Element element{
         ftxui::border(
             ftxui::hbox(

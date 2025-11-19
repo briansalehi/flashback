@@ -38,8 +38,8 @@ public:
 
     [[nodiscard]] std::shared_ptr<Roadmaps> get_roadmaps(uint64_t user_id);
 
-    [[nodiscard]] std::pair<bool, std::string> create_session(std::string_view email, std::string_view hash,
-                                                              std::string_view token, std::string_view device);
+    [[nodiscard]] std::pair<bool, std::string> create_session(uint64_t user_id, std::string_view token,
+                                                              std::string_view device);
     [[nodiscard]] std::unique_ptr<User> get_user(std::string_view email);
 
 private:
