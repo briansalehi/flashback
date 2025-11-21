@@ -1,16 +1,15 @@
-#include <iostream>
-#include <format>
-#include <chrono>
-#include <sstream>
-#include <cstring>
 #include <algorithm>
+#include <chrono>
+#include <cstring>
 #include <flashback/server.hpp>
+#include <format>
+#include <iostream>
 #include <sodium.h>
+#include <sstream>
 
 using namespace flashback;
 
-server::server(std::shared_ptr<database> database)
-    : m_database{database}
+server::server(std::shared_ptr<database> database) : m_database{database}
 {
     if (sodium_init() < 0)
     {
@@ -53,22 +52,34 @@ grpc::Status server::SignIn(grpc::ServerContext* context, const SignInRequest* r
             throw client_exception("user is not registered");
         }
 
+        if (request->user().email().empty() || request->user().password().empty() || request->user().device().empty())
+        {
+            throw client_exception("incomplete credentials");
+        }
+
         if (!password_is_valid(user->hash(), request->user().password()))
         {
             throw client_exception("invalid credentials");
         }
 
-        std::string token{generate_token()};
-        std::string device{request->user().device()};
+        user->set_token(generate_token());
+        user->set_device(request->user().device());
 
-        std::cerr << std::format("Server: user {} signed in with device {}\n", user->id(), device);
+        std::pair<bool, std::string> session_result{
+            m_database->create_session(user->id(), user->token(), user->device())};
 
-        std::pair<bool, std::string> session_result{m_database->create_session(user->id(), token, device)};
+        if (!session_result.first)
+        {
+            throw client_exception(session_result.second);
+        }
+
+        std::cerr << std::format("Server: user {} signed in with device {}\n", user->id(), user->device());
+
+        auto returning_user{std::make_unique<User>(*user)};
 
         response->set_success(true);
-        response->set_token(token);
         response->set_details("sign in successful");
-        response->set_allocated_user(user.release());
+        response->set_allocated_user(returning_user.release());
     }
     catch (client_exception const& exp)
     {
@@ -88,15 +99,95 @@ grpc::Status server::SignIn(grpc::ServerContext* context, const SignInRequest* r
 
 grpc::Status server::SignUp(grpc::ServerContext* context, const SignUpRequest* request, SignUpResponse* response)
 {
-    response->set_success(true);
-    response->set_details("signup successful");
+    try
+    {
+        std::unique_ptr<User> user{m_database->get_user(request->user().email())};
+
+        if (user != nullptr)
+        {
+            throw client_exception(std::format("user {} is already registered", user->id()));
+        }
+
+        if (request->user().name().empty() || request->user().email().empty() || request->user().password().empty())
+        {
+            throw client_exception("incomplete credentials");
+        }
+
+        user = std::make_unique<User>();
+        user->set_name(request->user().name());
+        user->set_email(request->user().email());
+        user->set_device(request->user().device());
+        user->set_hash(calculate_hash(request->user().password()));
+
+        uint64_t user_id{m_database->create_user(user->name(), user->email(), user->hash())};
+        user->set_id(user_id);
+
+        if (user->id() > 0)
+        {
+            response->set_success(true);
+            response->set_details("signup successful");
+            response->set_allocated_user(user.release());
+        }
+        else
+        {
+            response->set_success(false);
+            response->set_details("signup failed");
+        }
+    }
+    catch (client_exception const& exp)
+    {
+        response->set_success(false);
+        response->set_details(exp.code());
+        std::cerr << std::format("Client: {}\n", exp.what());
+    }
+    catch (std::exception const& exp)
+    {
+        response->set_success(false);
+        response->set_details("internal error");
+        std::cerr << std::format("Server: {}\n", exp.what());
+    }
 
     return grpc::Status::OK;
 }
 
-grpc::Status server::ResetPassword(grpc::ServerContext* context, ResetPasswordRequest const* request,
-                                   ResetPasswordResponse* response)
+grpc::Status server::ResetPassword(grpc::ServerContext* context, ResetPasswordRequest const* request, ResetPasswordResponse* response)
 {
+    try
+    {
+        if (request->user().id() == 0 || request->user().email().empty() || request->user().password().empty() || request->user().device().empty())
+        {
+            throw client_exception("incomplete credentials");
+        }
+
+        std::string hash{calculate_hash(request->user().password())};
+
+        auto user{std::make_unique<User>(request->user())};
+        user->clear_password();
+        user->clear_device();
+
+        m_database->reset_password(user->id(), hash);
+
+        response->set_allocated_user(user.release());
+    }
+    catch (std::exception const& exp)
+    {
+        std::cerr << exp.what() << std::endl;
+    }
+
+    return grpc::Status::OK;
+}
+
+grpc::Status server::VerifySession(grpc::ServerContext* context, VerifySessionRequest const* request, VerifySessionResponse* response)
+{
+    try
+    {
+        response->set_valid(session_is_valid(request->email(), request->device(), request->token()));
+    }
+    catch (std::exception const& exp)
+    {
+        response->set_valid(false);
+    }
+
     return grpc::Status::OK;
 }
 
@@ -128,4 +219,18 @@ std::string server::generate_token()
     sodium_bin2base64(token, sizeof(token), entropy, sizeof(entropy), sodium_base64_VARIANT_ORIGINAL_NO_PADDING);
 
     return std::string{token};
+}
+
+bool server::session_is_valid(std::string_view email, std::string_view device, std::string_view token) const
+{
+    std::unique_ptr<User> user{m_database->get_user(email, device)};
+
+    if (user == nullptr)
+    {
+        throw client_exception("user is not registered");
+    }
+
+    std::string stored_token{user->token()};
+
+    return stored_token == token;
 }

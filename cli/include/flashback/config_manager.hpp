@@ -2,6 +2,7 @@
 
 #include <fstream>
 #include <flashback/basic_config_manager.hpp>
+#include <types.pb.h>
 
 namespace flashback
 {
@@ -11,18 +12,17 @@ public:
     config_manager();
     ~config_manager() override = default;
 
+    [[nodiscard]] static std::string create_device_id();
+
     [[nodiscard]] std::filesystem::path base_path() const noexcept override;
     [[nodiscard]] std::filesystem::path config_path() const noexcept override;
+    [[nodiscard]] std::shared_ptr<User> get_user() const override;
     void base_path(std::filesystem::path path) override;
     void load() override;
     void store(std::shared_ptr<User> user) override;
 
-    [[nodiscard]] std::shared_ptr<User> get_user() const override;
-
 protected:
     void make_base() override;
-
-    [[nodiscard]] static std::string create_device_id();
 
 private:
     std::filesystem::path m_base_path;

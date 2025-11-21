@@ -7,7 +7,7 @@ using namespace flashback;
 
 config_manager::config_manager()
     : m_loaded_user{nullptr}
-    , m_base_path{"/home/brian/.config/flashback"}
+    , m_base_path{"/home/hsalehipour/.config/flashback"}
     , m_config_path{m_base_path / "flashback.conf"}
 {
     config_manager::make_base();
@@ -43,6 +43,8 @@ void config_manager::store(std::shared_ptr<User> user)
     m_config << std::format("email={}\n", user->email());
     m_config << std::format("token={}\n", user->token());
     m_config << std::format("device={}\n", user->device());
+
+    m_config.close();
 }
 
 std::shared_ptr<User> config_manager::get_user() const
@@ -89,6 +91,8 @@ void config_manager::load()
             else if (key == "device")
                 m_loaded_user->set_device(value);
         }
+
+        m_config.close();
     }
 }
 
@@ -96,7 +100,7 @@ void config_manager::make_base()
 {
     if (!std::filesystem::exists(m_base_path))
     {
-        std::filesystem::create_directory(m_base_path);
+        std::filesystem::create_directories(m_base_path);
     }
 }
 

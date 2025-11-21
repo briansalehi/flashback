@@ -24,6 +24,7 @@ public:
     std::shared_ptr<Roadmaps> roadmaps();
     std::shared_ptr<SignInResponse> signin();
     std::shared_ptr<SignUpResponse> signup();
+    std::shared_ptr<ResetPasswordResponse> reset_password();
 
 private:
     std::shared_ptr<grpc::Channel> m_channel;

@@ -1,5 +1,6 @@
 #include <memory>
 #include <functional>
+#include <iostream>
 #include <flashback/welcome_page.hpp>
 
 using namespace flashback;

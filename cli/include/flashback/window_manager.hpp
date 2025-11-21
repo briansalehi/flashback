@@ -12,7 +12,7 @@ class window_manager
 {
 public:
     explicit window_manager(std::shared_ptr<client> client);
-    ~window_manager() = default;
+    ~window_manager();
 
 private:
     void display();

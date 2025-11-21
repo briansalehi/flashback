@@ -11,8 +11,7 @@ message SignInRequest {
 message SignInResponse {
   bool success = 1;
   string details = 2;
-  string token = 3;
-  User user = 4;
+  User user = 3;
 }
 
 message SignUpRequest {
@@ -22,6 +21,7 @@ message SignUpRequest {
 message SignUpResponse {
   bool success = 1;
   string details = 2;
+  User user = 3;
 }
 
 message ResetPasswordRequest {
@@ -31,10 +31,21 @@ message ResetPasswordRequest {
 message ResetPasswordResponse {
   bool success = 1;
   string details = 2;
+  User user = 3;
 }
 
 message RoadmapsRequest {
   User user = 1;
+}
+
+message VerifySessionRequest {
+  string email = 1;
+  string device = 2;
+  string token = 3;
+}
+
+message VerifySessionResponse {
+  bool valid = 1;
 }
 
 service Server {
@@ -42,6 +53,7 @@ service Server {
   rpc SignIn(SignInRequest) returns (SignInResponse);
   rpc SignUp(SignUpRequest) returns (SignUpResponse);
   rpc ResetPassword(ResetPasswordRequest) returns (ResetPasswordResponse);
+  rpc VerifySession(VerifySessionRequest) returns (VerifySessionResponse);
 }
 
 /*
