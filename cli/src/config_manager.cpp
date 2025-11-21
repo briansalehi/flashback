@@ -1,13 +1,14 @@
 #include <random>
 #include <format>
 #include <sstream>
+#include <cstdlib>
 #include <flashback/config_manager.hpp>
 
 using namespace flashback;
 
 config_manager::config_manager()
     : m_loaded_user{nullptr}
-    , m_base_path{"/home/hsalehipour/.config/flashback"}
+    , m_base_path{std::filesystem::path{std::getenv("HOME")} / ".config/flashback"}
     , m_config_path{m_base_path / "flashback.conf"}
 {
     config_manager::make_base();

@@ -16,23 +16,24 @@ window_manager::window_manager(std::shared_ptr<client> client)
     {
         // swap_page(std::make_shared<welcome_page>());
 
+        if (!m_client->user_is_defined() || !m_client->session_is_valid())
+        {
+            swap_page(std::make_shared<signin_page>(m_client));
+            m_window_runner->join();
+        }
+
         if (!m_client->user_is_defined())
         {
             swap_page(std::make_shared<signup_page>(m_client));
             m_window_runner->join();
-            if (!m_client->user_is_defined())
+
+            if (m_client->user_is_defined())
+            {
+                swap_page(std::make_shared<signin_page>(m_client));
+            }
+            else
             {
                 throw std::runtime_error("Client: sign up cancelled");
-            }
-        }
-
-        if (!m_client->session_is_valid())
-        {
-            swap_page(std::make_shared<signin_page>(m_client));
-            m_window_runner->join();
-            if (!m_client->session_is_valid())
-            {
-                throw std::runtime_error("Client: sign in failed");
             }
         }
 
