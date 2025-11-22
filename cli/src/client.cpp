@@ -1,7 +1,6 @@
 #include <flashback/client.hpp>
 #include <format>
 #include <fstream>
-#include <grpcpp/grpcpp.h>
 #include <iostream>
 #include <memory>
 
@@ -48,8 +47,7 @@ void client::token(std::string token) { m_user->set_token(std::move(token)); }
 
 std::shared_ptr<Roadmaps> client::roadmaps()
 {
-    auto context{std::make_unique<grpc::ClientContext>()};
-    context->AddMetadata("authorization", m_user->token());
+    auto context{create_context()};
 
     std::shared_ptr<Roadmaps> data{std::make_shared<Roadmaps>()};
     std::unique_ptr<User> user{std::make_unique<User>(*m_user)};
@@ -185,4 +183,14 @@ std::shared_ptr<ResetPasswordResponse> client::reset_password()
     }
 
     return response;
+}
+
+std::unique_ptr<grpc::ClientContext> client::create_context()
+{
+    auto context{std::make_unique<grpc::ClientContext>()};
+    context->AddMetadata("email", m_user->email());
+    context->AddMetadata("device", m_user->device());
+    context->AddMetadata("token", m_user->token());
+
+    return context;
 }

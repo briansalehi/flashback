@@ -27,6 +27,8 @@ public:
     std::shared_ptr<ResetPasswordResponse> reset_password();
 
 private:
+    std::unique_ptr<grpc::ClientContext> create_context();
+
     std::shared_ptr<grpc::Channel> m_channel;
     std::unique_ptr<Server::Stub> m_stub;
     std::shared_ptr<config_manager> m_config;

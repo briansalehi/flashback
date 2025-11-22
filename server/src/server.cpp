@@ -21,10 +21,23 @@ grpc::Status server::GetRoadmaps(grpc::ServerContext* context, RoadmapsRequest c
 {
     try
     {
-        std::clog << std::format("Server: user {} requests for roadmaps\n", request->user().id());
+        std::multimap<grpc::string_ref, grpc::string_ref> metadata = context->client_metadata();
+        std::string email, device, token;
+
+        for (std::pair<grpc::string_ref, grpc::string_ref> const field: metadata)
+        {
+            if (field.first == "email") email = std::string{field.second.begin(), field.second.end()};
+            else if (field.first == "device") device = std::string{field.second.begin(), field.second.end()};
+            else if (field.first == "token") token = std::string{field.second.begin(), field.second.end()};
+        }
+
+        if (email.empty() || device.empty() || token.empty() || !session_is_valid(email, device, token))
+        {
+            throw client_exception("unauthorized user requested for roadmaps");
+        }
+
         std::shared_ptr<Roadmaps> result{m_database->get_roadmaps(request->user().id())};
-        std::clog << std::format("Server: collected {} roadmaps for user {}\n", result->roadmap().size(),
-                                 request->user().id());
+        std::clog << std::format("Client {}: collected {} roadmaps for\n", request->user().id(), result->roadmap().size());
 
         for (Roadmap const& r : result->roadmap())
         {
@@ -33,9 +46,13 @@ grpc::Status server::GetRoadmaps(grpc::ServerContext* context, RoadmapsRequest c
             roadmap->set_name(r.name());
         }
     }
+    catch (client_exception const& exp)
+    {
+        std::cerr << std::format("Client {}: {}\n", request->user().id(), exp.what());
+    }
     catch (std::exception const& exp)
     {
-        std::cerr << std::format("Server: failed to collect roadmaps for client {}", request->user().id());
+        std::cerr << std::format("Server: failed to collect roadmaps for client {}\n", request->user().id());
     }
 
     return grpc::Status::OK;
