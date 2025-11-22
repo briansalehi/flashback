@@ -1,6 +1,5 @@
 #include <algorithm>
 #include <chrono>
-#include <cstring>
 #include <flashback/server.hpp>
 #include <format>
 #include <iostream>
@@ -33,11 +32,11 @@ grpc::Status server::GetRoadmaps(grpc::ServerContext* context, RoadmapsRequest c
 
         if (email.empty() || device.empty() || token.empty() || !session_is_valid(email, device, token))
         {
-            throw client_exception("unauthorized user requested for roadmaps");
+            throw client_exception("unauthorized request for roadmaps");
         }
 
         std::shared_ptr<Roadmaps> result{m_database->get_roadmaps(request->user().id())};
-        std::clog << std::format("Client {}: collected {} roadmaps for\n", request->user().id(), result->roadmap().size());
+        std::clog << std::format("Client {}: collected {} roadmaps\n", request->user().id(), result->roadmap().size());
 
         for (Roadmap const& r : result->roadmap())
         {
