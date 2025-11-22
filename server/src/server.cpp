@@ -90,7 +90,7 @@ grpc::Status server::SignIn(grpc::ServerContext* context, const SignInRequest* r
             throw client_exception(session_result.second);
         }
 
-        std::cerr << std::format("Server: user {} signed in with device {}\n", user->id(), user->device());
+        std::cerr << std::format("Client {}: signed in with device {}\n", user->id(), user->device());
 
         auto returning_user{std::make_unique<User>(*user)};
 
@@ -102,7 +102,7 @@ grpc::Status server::SignIn(grpc::ServerContext* context, const SignInRequest* r
     {
         response->set_success(false);
         response->set_details(exp.code());
-        std::cerr << std::format("Server: {}\n", exp.what());
+        std::cerr << std::format("Client: {}\n", exp.what());
     }
     catch (std::exception const& exp)
     {
