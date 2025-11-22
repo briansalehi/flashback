@@ -13,10 +13,12 @@ include(FetchContent)
 include(GNUInstallDirs)
 include(CMakePackageConfigHelpers)
 
-FetchContent_Declare(pqxx GIT_REPOSITORY https://github.com/jtv/libpqxx GIT_TAG 7.10.3)
+#FetchContent_Declare(pqxx GIT_REPOSITORY https://github.com/jtv/libpqxx GIT_TAG 7.10.3)
 
 find_package(Boost 1.83.0 CONFIG REQUIRED COMPONENTS system program_options)
+find_package(PostgreSQL 18.0 REQUIRED)
 find_package(GTest 1.15.0)
+find_library(pqxx NAMES pqxx REQUIRED)
 find_library(sodium NAMES sodium REQUIRED)
 find_path(SODIUM_INCLUDE_DIR sodium)
 
@@ -52,7 +54,7 @@ file(GLOB source_files RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} src/*.cpp)
 file(GLOB header_files RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} include/flashback/*.hpp)
 file(GLOB test_files RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} test/*.cpp)
 
-FetchContent_MakeAvailable(pqxx)
+#FetchContent_MakeAvailable(pqxx)
 
 add_executable(flashbackd ${source_files} ${server_sources})
 target_include_directories(flashbackd
