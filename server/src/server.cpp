@@ -52,7 +52,7 @@ grpc::Status server::GetRoadmaps(grpc::ServerContext* context, RoadmapsRequest c
     }
     catch (std::exception const& exp)
     {
-        std::cerr << std::format("Server: failed to collect roadmaps for client {}\n", request->user().id());
+        std::cerr << std::format("Server: failed to collect roadmaps for client {} because:\n{}\n", request->user().id(), exp.what());
     }
 
     return grpc::Status::OK;
