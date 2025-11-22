@@ -13,8 +13,6 @@ include(FetchContent)
 include(GNUInstallDirs)
 include(CMakePackageConfigHelpers)
 
-#FetchContent_Declare(pqxx GIT_REPOSITORY https://github.com/jtv/libpqxx GIT_TAG 7.10.3)
-
 find_package(Boost 1.83.0 CONFIG REQUIRED COMPONENTS system program_options)
 find_package(PostgreSQL 18.0 REQUIRED)
 find_package(GTest 1.15.0)
@@ -36,7 +34,8 @@ set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE.md")
 set(CPACK_RESOURCE_FILE_README "${CMAKE_CURRENT_SOURCE_DIR}/README.md")
 set(CPACK_RPM_PACKAGE_REQUIRES
     "boost-devel >= 1.83.0,
-    libpq-devel >= 16.0.0,
+    libpq-devel >= 18.0.0,
+    libpqxx-devel >= 7.0.0,
     libsodium-devel >= 1.0.0,
     grpc-devel >= 1.48.0,
     protobuf-compiler >= 3.19.0"
@@ -44,7 +43,8 @@ set(CPACK_RPM_PACKAGE_REQUIRES
 set(CPACK_DEBIAN_PACKAGE_DEPENDS
     "libboost-system-dev (>= 1.83.0),
 	libboost-program-options-dev (>= 1.83.0),
-    libpq-dev (>= 16.0.0),
+    libpq-dev (>= 18.0.0),
+    libpqxx-devel (>= 7.0.0),
     libsodium-dev (>= 1.0.0),
 	libgrpc-dev (>= 1.48.0),
 	protobuf-compiler (>= 3.19.0)"
@@ -53,8 +53,6 @@ set(CPACK_DEBIAN_PACKAGE_DEPENDS
 file(GLOB source_files RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} src/*.cpp)
 file(GLOB header_files RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} include/flashback/*.hpp)
 file(GLOB test_files RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} test/*.cpp)
-
-#FetchContent_MakeAvailable(pqxx)
 
 add_executable(flashbackd ${source_files} ${server_sources})
 target_include_directories(flashbackd

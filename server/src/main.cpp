@@ -8,7 +8,7 @@
 #include <grpcpp/grpcpp.h>
 
 constexpr uint16_t server_port{9821};
-constexpr std::string server_address{"localhost"};
+constexpr std::string server_address{"*"};
 
 int main()
 {
