@@ -7,6 +7,8 @@ project(Flashback
     HOMEPAGE_URL "https://flashback.eu.com"
 )
 
+include(cmake/test_utils.cmake)
+
 add_subdirectory(common)
 add_subdirectory(database)
 add_subdirectory(server)

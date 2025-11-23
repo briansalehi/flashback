@@ -40,6 +40,4 @@ target_sources(database PUBLIC ${source_files})
 target_include_directories(database PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include> $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
 target_link_libraries(database PUBLIC common pq pqxx)
 
-add_executable(database-test ${test_files})
-target_link_libraries(database-test PRIVATE common database gtest gtest_main)
-add_test(NAME database-test COMMAND flashback-database-test)
+define_tests()

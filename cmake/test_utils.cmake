@@ -1,0 +1,73 @@
+cmake_minimum_required(VERSION 3.31)
+
+macro(define_tests)
+    set(module_path "${CMAKE_CURRENT_LIST_DIR}")
+
+    if("${ARGV0}" STREQUAL "")
+        get_filename_component(module_name "${module_path}" NAME)
+    else()
+        set(module_name "${ARGV0}")
+    endif()
+
+    message(STATUS "Preparing ${module_name} unit tests")
+
+    if(NOT EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/test/mocks)
+        message(FATAL_ERROR "The test/mocks/ directory structure does not exist in ${CMAKE_CURRENT_SOURCE_DIR}")
+    elseif(NOT EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/test/units)
+        message(FATAL_ERROR "The test/units/ directory structure does not exist in ${CMAKE_CURRENT_SOURCE_DIR}")
+    endif()
+
+    if(NOT TARGET ${module_name})
+        message(FATAL_ERROR "${module_name} is not a target, but define_tests macro requires an executable or a library target")
+    endif()
+
+    if(DEFINED test_files)
+        get_target_property(module_type ${module_name} TYPE)
+    else()
+        message(FATAL_ERROR "The list test_files must be defined and only include test source files")
+    endif()
+
+    # defines an individual target for each unit test
+    foreach(test_file ${test_files})
+        get_filename_component(test_unit ${test_file} NAME_WE)
+        add_executable(${test_unit} ${test_file})
+        target_include_directories(${test_unit} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/test/mocks)
+        if(module_type STREQUAL "STATIC_LIBRARY")
+            target_link_libraries(${test_unit} PRIVATE ${module_name} gtest gtest_main)
+        else()
+            target_link_libraries(${test_unit} PRIVATE gtest gtest_main)
+        endif()
+        add_test(NAME ${test_unit} COMMAND ${test_unit})
+        list(APPEND unit_tests ${test_unit})
+    endforeach()
+
+    # defines a target running all unit tests in this module
+    add_executable(${module_name}-tests ${test_files})
+    if(module_type STREQUAL "STATIC_LIBRARY")
+        target_link_libraries(${module_name}-tests PRIVATE ${module_name} gtest gtest_main)
+        target_include_directories(${module_name}-tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/test/mocks)
+    else()
+        get_target_property(test_sources ${module_name} SOURCES)
+        get_target_property(test_dependencies ${module_name} LINK_LIBRARIES)
+        get_target_property(test_include_dirs ${module_name} INCLUDE_DIRECTORIES)
+        get_target_property(test_definitions ${module_name} COMPILE_DEFINITIONS)
+        get_target_property(test_features ${module_name} COMPILE_FEATURES)
+        get_target_property(test_options ${module_name} COMPILE_OPTIONS)
+        target_sources(${module_name}-tests PRIVATE ${test_sources})
+        target_include_directories(${module_name}-tests PRIVATE ${test_include_dirs} ${CMAKE_CURRENT_SOURCE_DIR}/test/mocks)
+        target_link_libraries(${module_name}-tests PRIVATE ${test_dependencies} gtest gtest_main)
+
+        if(test_definitions)
+            target_compile_definitions(${module_name}-tests PRIVATE ${test_definitions})
+        endif()
+
+        if(test_features)
+            target_compile_features(${module_name}-tests PRIVATE ${test_features})
+        endif()
+
+        if(test_options)
+            target_compile_options(${module_name}-tests PRIVATE ${test_options})
+        endif()
+    endif()
+    add_test(NAME ${module_name}-tests COMMAND ${module_name}-tests)
+endmacro()

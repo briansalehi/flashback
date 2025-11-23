@@ -27,9 +27,8 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 file(GLOB source_files RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} src/*.cpp)
 file(GLOB header_files RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} include/flashback/*.hpp)
-file(GLOB test_files RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} test/*.cpp)
+file(GLOB test_files RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} test/units/*.cpp)
 file(GLOB proto_files ${CMAKE_CURRENT_SOURCE_DIR}/proto/*.proto)
-list(APPEND test_files ${source_files})
 
 set(server_headers
     ${CMAKE_CURRENT_BINARY_DIR}/types.pb.h
@@ -59,7 +58,8 @@ add_custom_command(
         ${proto_files}
 )
 
-add_library(common STATIC ${source_files} ${header_files} ${server_sources} ${server_headers})
+add_library(common STATIC)
+target_sources(common PUBLIC ${source_files} ${server_sources})
 target_sources(common PUBLIC
     FILE_SET HEADERS BASE_DIRS ${CMAKE_CURRENT_BINARY_DIR} FILES ${server_headers}
     FILE_SET HEADERS BASE_DIRS ${CMAKE_CURRENT_SOURCE_DIR} FILES ${header_files}
@@ -67,6 +67,4 @@ target_sources(common PUBLIC
 target_include_directories(common PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include ${CMAKE_CURRENT_BINARY_DIR} ${Protobuf_INCLUDE_DIRS})
 target_link_libraries(common PUBLIC protobuf::libprotobuf gRPC::grpc++)
 
-add_executable(common-test ${test_files})
-target_include_directories(common-test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
-target_link_libraries(common-test PRIVATE common gtest gtest_main)
+define_tests()
