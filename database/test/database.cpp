@@ -1,17 +1,24 @@
 #include <gtest/gtest.h>
-#include <boost/process.hpp>
 #include <string>
 #include <filesystem>
 #include <flashback/database.hpp>
 
-class database_test : public testing::Test
+class DatabaseTest: public testing::Test
 {
 protected:
-    flashback::database database;
-    boost::asio::io_context context;
-
-protected:
-    database_test(): database{}
+    explicit DatabaseTest()
+        : m_database{}
     {
     }
+
+    void SetUp()
+    {
+    }
+
+private:
+    flashback::database m_database;
 };
+
+TEST_F(DatabaseTest, Construction)
+{
+}

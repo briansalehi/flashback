@@ -8,7 +8,7 @@
 #include <grpcpp/grpcpp.h>
 
 constexpr uint16_t server_port{9821};
-constexpr std::string server_address{"*"};
+constexpr std::string listen_address{"::"};
 
 int main()
 {
@@ -17,7 +17,7 @@ int main()
         auto database{std::make_shared<flashback::database>()};
         auto server{std::make_shared<flashback::server>(database)};
         auto builder{std::make_unique<grpc::ServerBuilder>()};
-        builder->AddListeningPort(std::format("{}:{}", server_address, server_port), grpc::InsecureServerCredentials());
+        builder->AddListeningPort(std::format("{}:{}", listen_address, server_port), grpc::InsecureServerCredentials());
         builder->RegisterService(server.get());
         std::unique_ptr<grpc::Server> service{builder->BuildAndStart()};
         service->Wait();
