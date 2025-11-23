@@ -6,4 +6,5 @@ CMakeUserPresets.txt
 *.zip
 *.rpm
 *.deb
+*.tar
 _CPack_Packages/

@@ -32,26 +32,14 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_COMPILE_WARNING_AS_ERROR ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-set(CMAKE_INSTALL_RPATH $<INSTALL_INTERFACE:${CMAKE_INSTALL_LIBDIR}>)
 string(TOLOWER "${CMAKE_SYSTEM_NAME}" CPACK_SYSTEM_NAME)
 set(CPACK_PACKAGE_FILE_NAME "${PROJECT_NAME}-${PROJECT_VERSION}-${CPACK_SYSTEM_NAME}")
 set(CPACK_PACKAGE_VENDOR "Brian Salehi <briansalehi@proton.me>")
+set(CPACK_PACKAGE_CONTACT "Brian Salehi <briansalehi@proton.me>")
 set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE.md")
 set(CPACK_RESOURCE_FILE_README "${CMAKE_CURRENT_SOURCE_DIR}/README.md")
-set(CPACK_RPM_PACKAGE_REQUIRES
-    "g++ >= 5.1,
-    boost-devel >= 1.83.0,
-    ftxui-devel >= 5.0.0,
-    grpc-devel >= 1.48.0,
-    protobuf-compiler >= 3.19.0"
-)
-set(CPACK_DEBIAN_PACKAGE_DEPENDS
-    "g++ (>= 5.1),
-	libboost-dev (>= 1.83.0),
-	ftxui-dev (>= 5.0.0),
-	libgrpc-dev (>= 1.48.0),
-	protobuf-compiler (>= 3.19.0)"
-)
+set(CPACK_RPM_PACKAGE_REQUIRES "boost >= 1.83.0 ftxui >= 5.0.0 grpc >= 1.48.0 libpq >= 18.0.0 libpqxx >= 7.0.0")
+set(CPACK_DEBIAN_PACKAGE_DEPENDS "libboost (>= 1.83.0), ftxui (>= 5.0.0), libgrpc (>= 1.48.0), libpq (>= 18.0.0), libpqxx (>= 7.0.0)")
 
 file(GLOB source_files RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} src/*.cpp)
 file(GLOB header_files RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} include/flashback/*.hpp)

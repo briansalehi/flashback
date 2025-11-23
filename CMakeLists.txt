@@ -8,7 +8,7 @@ project(Flashback
 )
 
 add_subdirectory(common)
-#add_subdirectory(database)
+add_subdirectory(database)
 add_subdirectory(server)
 add_subdirectory(cli)
 #add_subdirectory(gui)
