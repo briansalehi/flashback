@@ -12,7 +12,7 @@ namespace flashback
 class database
 {
 public:
-    explicit database(std::string address = "flashback.eu.com", std::string port = "5432");
+    explicit database(std::string address = "localhost", std::string port = "5432");
 
     [[nodiscard]] std::shared_ptr<Roadmaps> get_roadmaps(uint64_t user_id);
     [[nodiscard]] std::pair<bool, std::string> create_session(uint64_t user_id, std::string_view token,
