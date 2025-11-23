@@ -2,6 +2,7 @@
 #include <iostream>
 #include <chrono>
 #include <flashback/database.hpp>
+#include <flashback/exception.hpp>
 #include <google/protobuf/util/time_util.h>
 
 using namespace flashback;

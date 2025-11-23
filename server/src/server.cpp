@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <chrono>
 #include <flashback/server.hpp>
+#include <flashback/exception.hpp>
 #include <format>
 #include <iostream>
 #include <sodium.h>

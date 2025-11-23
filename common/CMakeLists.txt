@@ -59,7 +59,7 @@ add_custom_command(
         ${proto_files}
 )
 
-add_library(common STATIC ${server_sources} ${server_headers})
+add_library(common STATIC ${source_files} ${header_files} ${server_sources} ${server_headers})
 target_sources(common PUBLIC
     FILE_SET HEADERS BASE_DIRS ${CMAKE_CURRENT_BINARY_DIR} FILES ${server_headers}
     FILE_SET HEADERS BASE_DIRS ${CMAKE_CURRENT_SOURCE_DIR} FILES ${header_files}
