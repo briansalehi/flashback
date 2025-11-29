@@ -67,7 +67,7 @@ target_sources(common PUBLIC
 )
 target_include_directories(common PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include ${CMAKE_CURRENT_BINARY_DIR} ${Protobuf_INCLUDE_DIRS})
 target_link_libraries(common PUBLIC protobuf::libprotobuf gRPC::grpc++)
-target_compile_definitions(common PRIVATE PROGRAM_VERSION="${PROJECT_VERSION}")
+target_compile_definitions(common PUBLIC PROGRAM_VERSION="${PROJECT_VERSION}")
 
 define_tests(LIBRARY
     NAME common
