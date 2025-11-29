@@ -33,11 +33,28 @@ set(CPACK_RPM_PACKAGE_REQUIRES "")
 set(CPACK_DEBIAN_PACKAGE_DEPENDS "")
 
 file(GLOB source_files RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} src/*.cpp)
-file(GLOB test_files RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} test/*.cpp)
+file(GLOB header_files RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} include/flashback/*.hpp)
+file(GLOB test_files RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} test/units/*.cpp)
+file(GLOB mock_files RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} test/mocks/flashback/*.hpp)
 
 add_library(database STATIC)
-target_sources(database PUBLIC ${source_files})
-target_include_directories(database PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include> $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
+target_sources(database PRIVATE ${source_files})
+target_sources(database PUBLIC
+    FILE_SET database_headers
+    TYPE HEADERS
+    BASE_DIRS include test/mocks
+    NAMESPACE flashback::
+    FILES ${header_files} ${mock_files}
+)
+target_include_directories(database PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include ${CMAKE_CURRENT_SOURCE_DIR}/test/mocks>
+    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+)
 target_link_libraries(database PUBLIC common pq pqxx)
 
-define_tests()
+define_tests(LIBRARY
+    NAME database
+    TARGET database
+    SOURCES ${test_files}
+    INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include ${CMAKE_CURRENT_SOURCE_DIR}/test/mocks
+)

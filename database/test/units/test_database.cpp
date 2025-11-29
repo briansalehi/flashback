@@ -1,13 +1,13 @@
-#include <gtest/gtest.h>
-#include <string>
+#include <memory>
 #include <filesystem>
+#include <gtest/gtest.h>
 #include <flashback/database.hpp>
 
-class DatabaseTest: public testing::Test
+class test_database: public testing::Test
 {
 protected:
-    explicit DatabaseTest()
-        : m_database{}
+    explicit test_database()
+        : m_database{nullptr}
     {
     }
 
@@ -16,9 +16,9 @@ protected:
     }
 
 private:
-    flashback::database m_database;
+    std::shared_ptr<flashback::database> m_database;
 };
 
-TEST_F(DatabaseTest, Construction)
+TEST_F(test_database, Construction)
 {
 }

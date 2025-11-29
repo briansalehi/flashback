@@ -27,8 +27,9 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 file(GLOB source_files RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} src/*.cpp)
 file(GLOB header_files RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} include/flashback/*.hpp)
-file(GLOB test_files RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} test/units/*.cpp)
 file(GLOB proto_files ${CMAKE_CURRENT_SOURCE_DIR}/proto/*.proto)
+file(GLOB test_files RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} test/units/*.cpp)
+file(GLOB mock_files RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} test/mocks/flashback/*.hpp)
 
 set(server_headers
     ${CMAKE_CURRENT_BINARY_DIR}/types.pb.h
@@ -66,5 +67,11 @@ target_sources(common PUBLIC
 )
 target_include_directories(common PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include ${CMAKE_CURRENT_BINARY_DIR} ${Protobuf_INCLUDE_DIRS})
 target_link_libraries(common PUBLIC protobuf::libprotobuf gRPC::grpc++)
+target_compile_definitions(common PRIVATE PROGRAM_VERSION="${PROJECT_VERSION}")
 
-define_tests()
+define_tests(LIBRARY
+    NAME common
+    TARGET common
+    SOURCES ${test_files}
+    INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include ${CMAKE_CURRENT_SOURCE_DIR}/test/mocks
+)

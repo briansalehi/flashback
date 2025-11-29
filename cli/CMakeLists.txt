@@ -43,7 +43,8 @@ set(CPACK_DEBIAN_PACKAGE_DEPENDS "libboost (>= 1.83.0), ftxui (>= 5.0.0), libgrp
 
 file(GLOB source_files RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} src/*.cpp)
 file(GLOB header_files RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} include/flashback/*.hpp)
-file(GLOB test_files RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} test/*.cpp)
+file(GLOB test_files RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} test/units/*.cpp)
+file(GLOB mock_files RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} test/mocks/flashback/*.hpp)
 
 # client executable
 add_executable(flashback ${source_files} ${header_files})
@@ -52,10 +53,14 @@ target_include_directories(flashback PRIVATE
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
 target_link_libraries(flashback PRIVATE common Boost::program_options ftxui::screen ftxui::dom ftxui::component)
-target_compile_definitions(flashback PRIVATE PROGRAM_VERSION="${PROJECT_VERSION}")
 
 # client test
-define_tests(flashback)
+define_tests(EXECUTABLE
+    NAME flashback
+    TARGET flashback
+    SOURCES ${test_files}
+    INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include ${CMAKE_CURRENT_SOURCE_DIR}/test/mocks
+)
 
 # installation
 write_basic_package_version_file(${CMAKE_BINARY_DIR}/FlashbackCliVersion.cmake VERSION ${PROJECT_VERSION} COMPATIBILITY SameMajorVersion)
