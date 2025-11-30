@@ -35,25 +35,24 @@ set(CPACK_RPM_PACKAGE_REQUIRES "boost >= 1.83.0 libsodium >= 1.0.0 grpc >= 1.48.
 set(CPACK_DEBIAN_PACKAGE_DEPENDS "libboost-system (>= 1.83.0), libboost-program-options (>= 1.83.0), libsodium (>= 1.0.0), libgrpc (>= 1.48.0)")
 
 file(GLOB source_files RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} src/*.cpp)
+list(REMOVE_ITEM source_files src/main.cpp)
 file(GLOB header_files RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} include/flashback/*.hpp)
 file(GLOB test_files RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} test/units/*.cpp)
 file(GLOB mock_files RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} test/mocks/flashback/*.hpp)
 
-add_executable(flashbackd ${source_files} ${server_sources})
-target_include_directories(flashbackd PRIVATE
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
-)
-target_link_libraries(flashbackd PRIVATE common database sodium Boost::system Boost::program_options)
-target_compile_definitions(flashbackd PRIVATE INSTALL_RPATH="$ORIGIN")
+# server library
+add_library(server)
+target_sources(server PUBLIC ${source_files})
+target_include_directories(server PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(server PUBLIC common database sodium Boost::system Boost::program_options)
+target_compile_definitions(server PUBLIC INSTALL_RPATH="$ORIGIN")
 
-define_tests(
-    EXECUTABLE
-    NAME server
-    TARGET flashbackd
-    SOURCES "${test_files}"
-    INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include ${CMAKE_CURRENT_SOURCE_DIR}/test/mocks
-)
+# server executable
+add_executable(flashbackd)
+target_sources(flashbackd PRIVATE src/main.cpp)
+target_link_libraries(flashbackd PRIVATE server)
+
+define_tests(TARGET server FILES "${test_files}" MOCK_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/test/mocks)
 
 install(TARGETS flashbackd RUNTIME CONFIGURATIONS Release MinSizeRel COMPONENT server)
 install(FILES res/flashbackd.service CONFIGURATIONS Release MinSizeRel COMPONENT server DESTINATION ${CMAKE_INSTALL_LIBDIR}/lib/systemd/system)

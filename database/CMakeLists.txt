@@ -46,15 +46,7 @@ target_sources(database PUBLIC
     NAMESPACE flashback::
     FILES ${header_files} ${mock_files}
 )
-target_include_directories(database PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include ${CMAKE_CURRENT_SOURCE_DIR}/test/mocks>
-    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
-)
+target_include_directories(database PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/test/mocks)
 target_link_libraries(database PUBLIC common pq pqxx)
 
-define_tests(LIBRARY
-    NAME database
-    TARGET database
-    SOURCES ${test_files}
-    INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include ${CMAKE_CURRENT_SOURCE_DIR}/test/mocks
-)
+define_tests(TARGET database FILES ${test_files} MOCK_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/test/mocks)

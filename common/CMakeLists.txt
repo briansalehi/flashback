@@ -69,9 +69,4 @@ target_include_directories(common PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include ${C
 target_link_libraries(common PUBLIC protobuf::libprotobuf gRPC::grpc++)
 target_compile_definitions(common PUBLIC PROGRAM_VERSION="${PROJECT_VERSION}")
 
-define_tests(LIBRARY
-    NAME common
-    TARGET common
-    SOURCES ${test_files}
-    INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include ${CMAKE_CURRENT_SOURCE_DIR}/test/mocks
-)
+define_tests(TARGET common FILES ${test_files} MOCK_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/test/mocks)

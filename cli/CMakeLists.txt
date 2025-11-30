@@ -42,25 +42,24 @@ set(CPACK_RPM_PACKAGE_REQUIRES "boost >= 1.83.0 ftxui >= 5.0.0 grpc >= 1.48.0 li
 set(CPACK_DEBIAN_PACKAGE_DEPENDS "libboost (>= 1.83.0), ftxui (>= 5.0.0), libgrpc (>= 1.48.0), libpq (>= 18.0.0), libpqxx (>= 7.0.0)")
 
 file(GLOB source_files RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} src/*.cpp)
+list(REMOVE_ITEM source_files src/main.cpp)
 file(GLOB header_files RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} include/flashback/*.hpp)
 file(GLOB test_files RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} test/units/*.cpp)
 file(GLOB mock_files RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} test/mocks/flashback/*.hpp)
 
+# client backend
+add_library(client STATIC)
+target_sources(client PUBLIC ${source_files})
+target_include_directories(client PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(client PUBLIC common Boost::program_options ftxui::screen ftxui::dom ftxui::component)
+
 # client executable
-add_executable(flashback ${source_files} ${header_files})
-target_include_directories(flashback PRIVATE
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
-)
-target_link_libraries(flashback PRIVATE common Boost::program_options ftxui::screen ftxui::dom ftxui::component)
+add_executable(flashback)
+target_sources(flashback PRIVATE src/main.cpp)
+target_link_libraries(flashback PRIVATE client)
 
 # client test
-define_tests(EXECUTABLE
-    NAME flashback
-    TARGET flashback
-    SOURCES ${test_files}
-    INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include ${CMAKE_CURRENT_SOURCE_DIR}/test/mocks
-)
+define_tests(TARGET client FILES ${test_files} MOCK_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/test/mocks)
 
 # installation
 write_basic_package_version_file(${CMAKE_BINARY_DIR}/FlashbackCliVersion.cmake VERSION ${PROJECT_VERSION} COMPATIBILITY SameMajorVersion)
