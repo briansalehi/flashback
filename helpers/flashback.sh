@@ -395,8 +395,6 @@ start_practice()
         subject_name="$(psql -U flashback -d flashback -c "select name from subjects where id = $subject" -At)"
         topic_name="$(psql -U flashback -d flashback -c "select name from topics where subject = $subject and level = '$level' and position = $topic" -At)"
 
-        starting_time=$(date +%s)
-
         unset cards
         readarray -t cards < <(psql -At -U flashback -d flashback -c "select c.id from topics_cards t join cards c on c.id = t.card where t.subject = $subject and t.level = '$level' and t.topic = $topic order by t.position")
 
@@ -405,6 +403,7 @@ start_practice()
         while [ ${#cards[*]} -gt 0 ]
         do
             card="${cards[$card_index]}"
+            starting_time=$(date +%s)
 
             show_topic_card
 
@@ -434,13 +433,15 @@ start_practice()
                 case "$key" in
                     R) move_card_to_section; break ;;
                     M) move_card_to_topic; card_index=$((card_index - 1)); break ;;
-                    n) card_index=$((card_index + 1)); [ $card_index -ge ${#cards[*]} ] && break 2; break ;;
+                    n) card_index=$((card_index + 1)); break ;;
                     p) card_index=$((card_index - 1)); break ;;
                 esac
             done
-        done
 
-        make_topic_progress
+            make_progress
+
+            [ $card_index -ge ${#cards[*]} ] && break; 
+        done
 
     done < <(psql -U flashback -d flashback -c "select milestone, level, subject, topic from get_practice_topics($user, $roadmap ${subject:+,} ${subject}) order by level, milestone, subject, topic" -At)
     echo
@@ -892,7 +893,7 @@ move_card_to_section()
     readarray -t cards < <(psql -At -U flashback -d flashback -c "select c.id from sections_cards t join cards c on c.id = t.card where resource = $resource and section = $section order by position")
 }
 
-make_section_progress()
+make_progress()
 {
     if [ $section_counter -gt 0 ]
     then
@@ -900,7 +901,7 @@ make_section_progress()
         duration=$((ending_time - starting_time))
         current_time="$(date --rfc-3339=seconds)"
 
-        psql -U flashback -d flashback -c "call make_section_progress($user, '$current_time', $resource, $section, $duration)" -At;
+        psql -U flashback -d flashback -c "call make_progress($user, $card, $duration)" -At;
     fi
 }
 
@@ -955,7 +956,6 @@ start_study()
         while IFS="|" read -r section section_name
         do
             section_counter=0
-            starting_time=$(date +%s)
 
             if [ -n "$section_name" ]
             then
@@ -972,6 +972,7 @@ start_study()
             while [ ${#cards[*]} -gt 0 ]
             do
                 card="${cards[$card_index]}"
+                starting_time=$(date +%s)
 
                 show_section_card
 
@@ -1001,13 +1002,15 @@ start_study()
                     case "$key" in
                         A) assign_card_to_topic "$card" "$subject"; break ;;
                         M) move_card_to_section "$resource"; unset cards[$card]; card_index=$((card_index - 1)); break ;;
-                        n) card_index=$((card_index + 1)); [ $card_index -ge ${#cards[*]} ] && break 2; break ;;
+                        n) card_index=$((card_index + 1)); break ;;
                         p) card_index=$((card_index - 1)); break ;;
                     esac
                 done
-            done
 
-            make_section_progress
+                make_progress
+
+                [ $card_index -ge ${#cards[*]} ] && break; 
+            done
 
         done < <(psql -U flashback -d flashback -c "select position, name from sections where resource = $resource and position in ( $(tr ' ' ',' <<< "${selected_sections[*]}") ) order by position" -At)
     done < <(psql -U flashback -d flashback -c "select name, type, pattern, condition, presenter, provider from resources where id = $resource order by name" -At)
