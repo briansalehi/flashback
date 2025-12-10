@@ -176,11 +176,16 @@ show_blocks()
 show_topic_card()
 {
     topic_counter=$((topic_counter + 1))
-    topic_count="$(psql -U flashback -d flashback -c "select count(position) from topics where subject = $subject" -At)"
 
     IFS="|" read -r state position heading < <(psql -U flashback -d flashback -c "select c.state, t.position, c.heading from topics_cards t join cards c on c.id = t.card where t.subject = $subject and t.topic = $topic and t.card = $card order by t.position" -At)
 
     heading="$(pandoc -f markdown -t plain <<< "$heading" | xargs)"
+
+    case "$mode" in
+        aggressive) mode_color="\e[1;31m";;
+        progressive) mode_color="\e[1;32m";;
+        selective) mode_color="\e[1;35m";;
+    esac
 
     case "$state" in
         draft) state_color="\e[1;2;31m" ;;
@@ -193,8 +198,8 @@ show_topic_card()
 
     clear
     {
-        printf "\e[1;36m%s\e[0m \e[1;35m»\e[0m \e[1;36m%s\e[0m \e[2;37m(%d)\e[0m \e[1;35m»\e[0m \e[1;36m%s\e[0m \e[2;37m(%d)\e[0m \e[1;35m»\e[0m \e[1;36m%s\e[0m \e[2;37m(%d / %d)\e[0m\n\n" "Flashback" "${roadmaps[$roadmap]}" "$roadmap" "$subject_name" "$milestone" "$topic_name" "$topic" "$topic_count"
-        printf "\e[1;35m%d/%d\e[0m \e[1;33m%s\e[0m \e[2;37m%s\e[0m $state_color(%s)\e[0m\n" "$position" "${#cards[*]}" "$heading" "$card" "$state"
+        printf "${mode_color}%sly practicing\e[0m \e[1;36m%s\e[0m \e[2;37m(%d)\e[0m \e[1;35m»\e[0m \e[1;36m%s\e[0m \e[2;37m(%d)\e[0m \e[1;35m»\e[0m \e[1;36m%s\e[0m \e[2;37m(%d / %d)\e[0m\n\n" "${mode^}" "${roadmaps[$roadmap]}" "$roadmap" "$subject_name" "$subject" "$topic_name" "$topic" "$total_topics"
+        printf "\e[1;35m%d/%d\e[0m \e[1;33m%s\e[0m \e[2;37m%s\e[0m $state_color(%s)\e[0m\n" "$position" "$total_cards" "$heading" "$card" "$state"
 
         show_blocks "$card"
     } | custom_pager
@@ -219,7 +224,7 @@ show_section_card()
 
     clear
     {
-        printf "\e[1;36m%s\e[0m \e[1;35m»\e[0m \e[1;36m%s\e[0m \e[2;37m(%d)\e[0m \e[1;35m»\e[0m \e[1;36m%s\e[0m \e[2;37m(%d)\e[0m \e[1;35m»\e[0m \e[1;36m%s\e[0m \e[2;37m(%d %s %s)\e[0m \e[1;35m»\e[0m \e[1;36m%s / %d\e[0m \e[2;37mpresented by\e[0m \e[1;36m%s\e[0m \e[2;37mprovided by\e[0m \e[1;36m%s\e[0m\n\n" "Flashback" "${roadmaps[$roadmap]}" "$roadmap" "${subjects[$subject]}" "$subject" "${resource_name}" "${resource}" "${resource_type}" "${condition}" "$section_name" ${#sections[*]} "${author}" "${publisher}"
+        printf "\e[1;36m%s\e[0m \e[2;37m(%d)\e[0m \e[1;35m»\e[0m \e[1;36m%s\e[0m \e[2;37m(%d)\e[0m \e[1;35m»\e[0m \e[1;36m%s\e[0m \e[2;37m(%d %s %s)\e[0m \e[1;35m»\e[0m \e[1;36m%s / %d\e[0m \e[2;37mpresented by\e[0m \e[1;36m%s\e[0m \e[2;37mprovided by\e[0m \e[1;36m%s\e[0m\n\n" "${roadmaps[$roadmap]}" "$roadmap" "${subjects[$subject]}" "$subject" "${resource_name}" "${resource}" "${resource_type}" "${condition}" "$section_name" ${#sections[*]} "${author}" "${publisher}"
         printf "\e[1;35m%d/%d\e[0m \e[1;33m%s\e[0m \e[2;37m%s\e[0m $state_color(%s)\e[0m\n" "$position" "${#cards[*]}" "$heading" "$card" "$state"
 
         show_blocks "$card"
@@ -274,7 +279,7 @@ load_resources()
 
     clear
     {
-        printf "\e[1;36m%s\e[0m \e[1;35m»\e[0m \e[1;36m%s\e[0m \e[2;37m%d\e[0m \e[1;35m»\e[0m \e[1;36m%s\e[0m \e[2;37m%d\e[0m\n\n" "Flashback" "${roadmaps[$roadmap]}" "$roadmap" "${subjects[$subject]}" "$subject"
+        printf "\e[1;36m%s\e[0m \e[2;37m(%d)\e[0m \e[1;35m»\e[0m \e[1;36m%s\e[0m \e[2;37mresources (%d)\e[0m\n\n" "${roadmaps[$roadmap]}" "$roadmap" "${subjects[$subject]}" "$subject"
         {
             while IFS='|' read -r id name type condition presenter provider last_read
             do
@@ -286,15 +291,64 @@ load_resources()
     while true
     do
         echo
-        read -r -p "Select a resource to study or type [p] to begin practicing ${subjects[$subject]}: " resource
+        read -r -p "Select a resource to study, type [t] to switch to topics, or type [p] to begin practicing ${subjects[$subject]}: " resource
 
         if [ "${resource,,}" == "p" ]
         then
-            start_practice "$roadmap" "$subject"
+            practice_subject "$roadmap" "$subject"
+            break
+        elif [ "${resource,,}" == "t" ]
+        then
+            load_topics "$subject"
             break
         elif [ -n "${resources[$resource]}" ]
         then
             start_study "$resource" "$subject"
+            break
+        fi
+    done
+}
+
+load_topics()
+{
+    subject="$1"
+    declare -A topics
+    declare -A levels
+
+    while IFS='|' read -r id level
+    do
+        levels[$id]="$level"
+    done < <(psql -U flashback -d flashback -c "select subject, level from milestones where roadmap = $roadmap and subject = $subject" -At)
+
+    level=${levels[$subject]}
+
+    while IFS='|' read -r position name
+    do
+        topics[$position]="$name"
+    done < <(psql -U flashback -d flashback -c "select position, name from get_topics($subject, '$level'::expertise_level)" -At)
+
+    clear
+    {
+        printf "\e[1;36m%s\e[0m \e[2;37m(%d)\e[0m \e[1;35m»\e[0m \e[1;36m%s\e[0m \e[2;37m(%d)\e[0m\n\n" "${roadmaps[$roadmap]}" "$roadmap" "${subjects[$subject]}" "$subject"
+        list_topics
+    } | custom_pager
+
+    while true
+    do
+        echo
+        read -r -p "Select a topic, type [r] to switch to ${subjects[$subject]} resources, or type [p] to practice ${subjects[$subject]}: " topic
+
+        if [ "${topic,,}" == "r" ]
+        then
+            load_resources "$roadmap" "$subject"
+            break
+        elif [ "${topic,,}" == "p" ]
+        then
+            practice_subject "$roadmap" "$subject"
+            break
+        elif [ -n "${topics[$topic]}" ]
+        then
+            practice_topic "$roadmap" "$milestone" "$topic"
             break
         fi
     done
@@ -345,17 +399,17 @@ load_roadmaps()
 
     clear
     {
-        printf "\e[1;36m%s\e[0m \e[1;35m»\e[0m \e[1;36m%s\e[0m \e[2;37m%d\e[0m\n\n" "Flashback" "${roadmaps[$roadmap]}" "$roadmap"
+        printf "\e[1;36m%s\e[0m \e[2;37m(%d)\e[0m\n\n" "${roadmaps[$roadmap]}" "$roadmap"
         {
-            while IFS='|' read -r level position id name
+            while IFS='|' read -r position id name level
             do
                 case "$level" in
-                    surface) level_symbol="$(echo -e "\e[1;32m\u2a\u01\u01\e[0m")" ;;
+                    surface) level_symbol="$(echo -e "\e[1;32m\u2a\e[0m")" ;;
                     depth) level_symbol="$(echo -e "\e[1;33m\u2051\e[0m")" ;;
                     origin) level_symbol="$(echo -e "\e[1;31m\u2042\e[0m")" ;;
                 esac
                 printf "\e[1;35m%5d\e[0m \e[1;33m%s\e[0m \e[2;37m%s\e[0m\n" "$position" "$name" "$level_symbol"
-            done < <(psql -U flashback -d flashback -c "select level, position, id, name from get_subjects($roadmap) order by level, position" -At)
+            done < <(psql -U flashback -d flashback -c "select position, id, name, level from get_subjects($roadmap) order by position" -At)
         } | dense_column
     } | custom_pager
 
@@ -364,39 +418,43 @@ load_roadmaps()
         echo
         read -r -p "Select a subject number or type [p] to begin practicing all subjects: " milestone
 
-        if [ "${milestone,,}" == "p" ]
+        #if [ "${milestone,,}" == "p" ]
+        #then
+        #    start_practice "$roadmap"
+        #    break
+        if [ -n "${milestones[$milestone]}" ]
         then
-            start_practice "$roadmap"
-            break
-        elif [ -n "${milestones[$milestone]}" ]
-        then
-            load_resources "$roadmap" "${milestones[$milestone]}"
+            subject=${milestones[$milestone]}
+            load_topics "$subject"
             break
         fi
     done
 }
 
-start_practice()
+practice_subject()
 {
-    local roadmap="$1"
-    local subject="$2"
-    local milestone
-    local level
-    local subject
-    local topic
-    local card
-    local position
-    local state
-    local heading
+    total_topics="$(psql -At -U flashback -d flashback -c "select count(*) from topics where subject = $subject")"
 
-    while IFS="|" read -r milestone level subject topic
+    while IFS="|" read -r topic level
     do
-        topic_counter=0
-        subject_name="$(psql -U flashback -d flashback -c "select name from subjects where id = $subject" -At)"
-        topic_name="$(psql -U flashback -d flashback -c "select name from topics where subject = $subject and level = '$level' and position = $topic" -At)"
-
         unset cards
-        readarray -t cards < <(psql -At -U flashback -d flashback -c "select c.id from topics_cards t join cards c on c.id = t.card where t.subject = $subject and t.level = '$level' and t.topic = $topic order by t.position")
+        unset assessment
+        topic_counter=0
+
+        subject_name="$(psql -U flashback -d flashback -c "select name from subjects where id = $subject" -At)"
+        topic_name="$(psql -U flashback -d flashback -c "select name from topics where subject = $subject and position = $topic" -At)"
+        mode="$(psql -U flashback -d flashback -c "select * from get_practice_mode($user, $subject, '$level'::expertise_level)" -At)"
+
+        assessment="$(psql -At -U flashback -d flashback -c "select assessment from get_assessments($user, $subject, $topic, '$level'::expertise_level) where assimilations >= 3 order by level desc, assimilations desc limit 1;")"
+
+        if [ -n "$assessment" ]
+        then
+            cards=( $assessment )
+            total_cards=1
+        else
+            readarray -t cards < <(psql -At -U flashback -d flashback -c "select card from get_practice_cards($user, $subject, '$level'::expertise_level) where topic = $topic and level = '$level'::expertise_level order by position")
+            total_cards="$(psql -At -U flashback -d flashback -c "select count(*) from topics_cards where subject = $subject and topic = $topic")"
+        fi
 
         card_index=0
 
@@ -430,6 +488,8 @@ start_practice()
             do
                 get_key "${available_keys[@]}"
 
+                if ! slip_guard; then continue; fi
+
                 case "$key" in
                     R) move_card_to_section; break ;;
                     M) move_card_to_topic; card_index=$((card_index - 1)); break ;;
@@ -442,21 +502,75 @@ start_practice()
 
             [ $card_index -ge ${#cards[*]} ] && break; 
         done
-
-    done < <(psql -U flashback -d flashback -c "select milestone, level, subject, topic from get_practice_topics($user, $roadmap ${subject:+,} ${subject}) order by level, milestone, subject, topic" -At)
+    done < <(psql -U flashback -d flashback -c "select topic, level from get_practice_cards($user, $subject, '$level'::expertise_level) group by topic, level order by topic" -At)
     echo
 }
 
-make_topic_progress()
+practice_topic()
 {
-    if [ $topic_counter -gt 0 ]
-    then
-        ending_time=$(date +%s)
-        duration=$((ending_time - starting_time))
-        current_time="$(date --rfc-3339=seconds)"
+    total_topics="$(psql -At -U flashback -d flashback -c "select count(*) from topics where subject = $subject")"
 
-        psql -U flashback -d flashback -c "call make_topic_progress($user, '$current_time', $roadmap, $milestone, $topic, $duration)" -At;
-    fi
+    while IFS="|" read -r topic level
+    do
+        unset cards
+        unset assessment
+        topic_counter=0
+
+        subject_name="$(psql -U flashback -d flashback -c "select name from subjects where id = $subject" -At)"
+        topic_name="$(psql -U flashback -d flashback -c "select name from topics where subject = $subject and position = $topic" -At)"
+        mode="selective"
+
+        readarray -t cards < <(psql -At -U flashback -d flashback -c "select card from get_topics_cards($roadmap, $subject, $topic) order by position")
+        total_cards="$(psql -At -U flashback -d flashback -c "select count(*) from topics_cards where subject = $subject and topic = $topic")"
+
+        card_index=0
+
+        while [ ${#cards[*]} -gt 0 ]
+        do
+            card="${cards[$card_index]}"
+            starting_time=$(date +%s)
+
+            show_topic_card
+
+            available_keys=( "n" )
+            available_keys+=( "move forward" )
+
+            if [ $card_index -gt 0 ]
+            then
+                available_keys+=( "p" )
+                available_keys+=( "move backward" )
+            fi
+
+            if [ "$state" == "draft" ]
+            then
+                available_keys+=( "R" )
+                available_keys+=( "assign card to a resource" )
+            elif [ "$state" == "review" ]
+            then
+                available_keys+=( "M" )
+                available_keys+=( "move card to another topic" )
+            fi
+
+            while true
+            do
+                get_key "${available_keys[@]}"
+
+                if ! slip_guard; then continue; fi
+
+                case "$key" in
+                    R) move_card_to_section; break ;;
+                    M) move_card_to_topic; card_index=$((card_index - 1)); break ;;
+                    n) card_index=$((card_index + 1)); break ;;
+                    p) card_index=$((card_index - 1)); break ;;
+                esac
+            done
+
+            make_progress
+
+            [ $card_index -ge ${#cards[*]} ] && break; 
+        done
+    done < <(psql -U flashback -d flashback -c "select position, level from topics where subject = $subject and position = $topic order by position" -At)
+    echo
 }
 
 prompt()
@@ -549,7 +663,7 @@ list_sections()
         fi
 
         printf "\e[1;34m%d\e[0m $selection_color%s\e[0m\n" "$position" "${name}"
-    done < <(psql -U flashback -d flashback -c "select s.position, s.name, r.pattern from sections s join resources r on r.id = s.resource where s.resource = $resource order by s.position" -At) | dense_column
+    done < <(psql -U flashback -d flashback -c "select s.position, s.name, r.pattern from sections s join resources r on r.id = s.resource where s.resource = $resource order by s.position" -At) | dense_column | custom_pager
 
     capture_line
 }
@@ -893,16 +1007,23 @@ move_card_to_section()
     readarray -t cards < <(psql -At -U flashback -d flashback -c "select c.id from sections_cards t join cards c on c.id = t.card where resource = $resource and section = $section order by position")
 }
 
+slip_guard()
+{
+    local lapse
+
+    lapse=$(date +%s)
+    if [ $((lapse - starting_time)) -lt 3 ]
+    then
+        return 1
+    fi
+}
+
 make_progress()
 {
-    if [ $section_counter -gt 0 ]
-    then
-        ending_time=$(date +%s)
-        duration=$((ending_time - starting_time))
-        current_time="$(date --rfc-3339=seconds)"
+    ending_time=$(date +%s)
+    duration=$((ending_time - starting_time))
 
-        psql -U flashback -d flashback -c "call make_progress($user, $card, $duration)" -At;
-    fi
+    psql -U flashback -d flashback -c "call make_progress($user, $card, $duration, '$mode'::practice_mode)" -At;
 }
 
 start_study()
@@ -912,6 +1033,7 @@ start_study()
     local -A sections
     local -a available_keys
     local -a cards
+    mode="selective"
 
     while IFS="|" read -r position name pattern
     do
@@ -920,7 +1042,7 @@ start_study()
 
     clear
     {
-        printf "\e[1;36m%s\e[0m \e[1;35m»\e[0m \e[1;36m%s\e[0m \e[2;37m(%d)\e[0m \e[1;35m»\e[0m \e[1;36m%s\e[0m \e[2;37m(%d)\e[0m \e[1;35m»\e[0m \e[1;36m%s\e[0m \e[2;37m(%d)\e[0m\n\n" "Flashback" "${roadmaps[$roadmap]}" "$roadmap" "${subjects[$subject]}" "$subject" "${resources[$resource]}" "$resource"
+        printf "\e[1;36m%s\e[0m \e[2;37m(%d)\e[0m \e[1;35m»\e[0m \e[1;36m%s\e[0m \e[2;37m(%d)\e[0m \e[1;35m»\e[0m \e[1;36m%s\e[0m \e[2;37m(%d)\e[0m\n\n" "${roadmaps[$roadmap]}" "$roadmap" "${subjects[$subject]}" "$subject" "${resources[$resource]}" "$resource"
         {
             while IFS="|" read -r position name pattern total exported
             do
@@ -998,6 +1120,8 @@ start_study()
                 while true
                 do
                     get_key "${available_keys[@]}"
+
+                    if ! slip_guard; then continue; fi
 
                     case "$key" in
                         A) assign_card_to_topic "$card" "$subject"; break ;;
