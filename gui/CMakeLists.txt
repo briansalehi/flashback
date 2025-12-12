@@ -13,9 +13,6 @@ set(CMAKE_MESSAGE_CONTEXT "gui")
 include(GNUInstallDirs)
 include(CMakePackageConfigHelpers)
 
-set(CMAKE_CXX_STANDARD 23)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
@@ -41,7 +38,6 @@ list(REMOVE_ITEM test_files src/main.cpp)
 
 qt_standard_project_setup(REQUIRES 6.9.0)
 qt_add_executable(${PROJECT_NAME})
-
 set_target_properties(${PROJECT_NAME}
     PROPERTIES QT_ANDROID_PACKAGE_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/android
     MACOSX_BUNDLE_GUI_IDENTIFIER com.eu.flashback
@@ -51,17 +47,17 @@ set_target_properties(${PROJECT_NAME}
     MACOSX_BUNDLE TRUE
     WIN32_EXECUTABLE TRUE
 )
-
 qt_add_qml_module(${PROJECT_NAME}
     URI flashback
     VERSION ${PROJECT_VERSION}
     QML_FILES ${qml_files}
     RESOURCES ui/flashback.qrc
 )
-
-target_sources(${PROJECT_NAME} PRIVATE ${source_files} ${app_icon} ${asset_catalog_path})
-target_sources(${PROJECT_NAME} PRIVATE FILE_SET HEADERS FILES ${header_files})
-#target_sources(${PROJECT_NAME} PRIVATE FILE_SET modules TYPE CXX_MODULES FILES ${module_files})
+target_sources(${PROJECT_NAME}
+    PRIVATE ${source_files} ${app_icon} ${asset_catalog_path}
+    PUBLIC FILE_SET HEADERS FILES ${header_files}
+    PUBLIC FILE_SET modules TYPE CXX_MODULES FILES ${module_files}
+)
 target_link_libraries(${PROJECT_NAME} PRIVATE Qt6::Core Qt6::Quick)
 
 install(TARGETS ${PROJECT_NAME}

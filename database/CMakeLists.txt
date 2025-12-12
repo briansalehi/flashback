@@ -12,10 +12,13 @@ set(CMAKE_MESSAGE_CONTEXT "database")
 enable_testing()
 
 include(GNUInstallDirs)
+include(FetchContent)
 
 find_package(PostgreSQL 16.0.0 REQUIRED)
-find_library(pqxx NAMES pqxx REQUIRED)
 find_package(GTest 1.15.0)
+
+FetchContent_Declare(pqxx GIT_REPOSITORY https://github.com/jtv/libpqxx GIT_TAG 7.10.4)
+FetchContent_MakeAvailable(pqxx)
 
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -37,15 +40,12 @@ file(GLOB test_files RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} test/units/*.cpp)
 file(GLOB mock_files RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} test/mocks/flashback/*.hpp)
 
 add_library(database STATIC)
-target_sources(database PRIVATE ${source_files})
-target_sources(database PUBLIC
-    FILE_SET database_headers
-    TYPE HEADERS
-    BASE_DIRS include test/mocks
-    NAMESPACE flashback::
-    FILES ${header_files} ${mock_files}
+target_sources(database
+    PRIVATE ${source_files}
+    PUBLIC FILE_SET HEADERS BASE_DIRS include test/mocks NAMESPACE flashback:: FILES ${header_files} ${mock_files}
 )
-target_include_directories(database PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/test/mocks)
+target_include_directories(database PUBLIC ${PQXX_INCLUDE_DIR} test/mocks)
 target_link_libraries(database PUBLIC common pq pqxx)
+target_compile_features(database PUBLIC cxx_std_23)
 
-define_tests(TARGET database FILES ${test_files} MOCK_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/test/mocks)
+define_tests(TARGET database FILES ${test_files} MOCK_DIRS test/mocks)

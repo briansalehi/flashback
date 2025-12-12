@@ -15,14 +15,10 @@ include(CMakePackageConfigHelpers)
 
 # dependencies
 find_package(Boost 1.83.0 REQUIRED COMPONENTS program_options)
-find_package(ftxui 5.0.0 COMPONENTS screen dom component)
 find_package(GTest 1.15.0)
 
-if(NOT ftxui_FOUND)
-    message(STATUS "ftxui library falls back to cloning with git")
-    FetchContent_Declare(ftxui GIT_REPOSITORY https://github.com/arthursonzogni/ftxui GIT_TAG v6.1.9)
-    FetchContent_MakeAvailable(ftxui)
-endif()
+FetchContent_Declare(ftxui GIT_REPOSITORY https://github.com/arthursonzogni/ftxui GIT_TAG v6.1.9)
+FetchContent_MakeAvailable(ftxui)
 
 enable_testing()
 
@@ -51,6 +47,7 @@ add_library(client STATIC)
 target_sources(client PUBLIC ${source_files})
 target_include_directories(client PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(client PUBLIC common Boost::program_options ftxui::screen ftxui::dom ftxui::component)
+target_compile_features(client PUBLIC cxx_std_23)
 
 # client executable
 add_executable(flashback)

@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict fKCo1esYMaZQjSWqrdWwMCNY6kB2dcHMCpDuY48B3a0ItbvqPgMIavQn4ISOQno
+\restrict JtqLvA5Lyhu7txfOEEOtOmPdKrwvBVgTHYSLtzWvNK7yJccHubRQJPvicF3ulMO
 
 -- Dumped from database version 18.0
 -- Dumped by pg_dump version 18.0
@@ -100,16 +100,17 @@ CREATE TYPE flashback.network_activity AS ENUM (
 ALTER TYPE flashback.network_activity OWNER TO flashback;
 
 --
--- Name: practice_mode; Type: TYPE; Schema: flashback; Owner: brian
+-- Name: practice_mode; Type: TYPE; Schema: flashback; Owner: flashback
 --
 
 CREATE TYPE flashback.practice_mode AS ENUM (
     'aggressive',
-    'progressive'
+    'progressive',
+    'selective'
 );
 
 
-ALTER TYPE flashback.practice_mode OWNER TO brian;
+ALTER TYPE flashback.practice_mode OWNER TO flashback;
 
 --
 -- Name: resource_type; Type: TYPE; Schema: flashback; Owner: flashback
@@ -788,10 +789,28 @@ end; $$;
 ALTER FUNCTION flashback.estimate_read_time(card_id integer) OWNER TO flashback;
 
 --
+-- Name: get_assessment_coverage(integer); Type: FUNCTION; Schema: flashback; Owner: flashback
+--
+
+CREATE FUNCTION flashback.get_assessment_coverage(assessment_id integer) RETURNS TABLE(subject integer, topic integer, level flashback.expertise_level)
+    LANGUAGE plpgsql
+    AS $$
+begin
+    return query
+    select a.subject, a.topic, a.level
+    from assessments a
+    where a.card = assessment_id;
+end;
+$$;
+
+
+ALTER FUNCTION flashback.get_assessment_coverage(assessment_id integer) OWNER TO flashback;
+
+--
 -- Name: get_assessment_coverage(integer, integer, flashback.expertise_level); Type: FUNCTION; Schema: flashback; Owner: flashback
 --
 
-CREATE FUNCTION flashback.get_assessment_coverage(subject integer, topic integer, level flashback.expertise_level) RETURNS TABLE(card integer, coverage bigint)
+CREATE FUNCTION flashback.get_assessment_coverage(subject_id integer, topic_position integer, max_level flashback.expertise_level) RETURNS TABLE(card integer, coverage bigint)
     LANGUAGE plpgsql
     AS $$
 begin
@@ -801,15 +820,57 @@ begin
     where a.card in (
         select aa.card
         from assessments aa
-        where aa.subject = get_assessment_coverage.subject
-        and aa.topic = get_assessment_coverage.topic
-        and aa.level = get_assessment_coverage.level::expertise_level
+        where aa.subject = subject_id
+        and aa.topic = topic_position
+        and aa.level <= max_level::expertise_level
     ) group by a.card;
 end;
 $$;
 
 
-ALTER FUNCTION flashback.get_assessment_coverage(subject integer, topic integer, level flashback.expertise_level) OWNER TO flashback;
+ALTER FUNCTION flashback.get_assessment_coverage(subject_id integer, topic_position integer, max_level flashback.expertise_level) OWNER TO flashback;
+
+--
+-- Name: get_assessments(integer, integer, integer, flashback.expertise_level); Type: FUNCTION; Schema: flashback; Owner: flashback
+--
+
+CREATE FUNCTION flashback.get_assessments(user_id integer, subject_id integer, topic_position integer, max_level flashback.expertise_level) RETURNS TABLE(level flashback.expertise_level, assessment integer, assimilations bigint)
+    LANGUAGE plpgsql
+    AS $$
+begin 
+    -- 1. find assessment cards covering selected topic: requires get_topic_assessments(user_id, subject_id, topic_position, max_level) returns TABLE(level expertise_level, assessment integer)
+    -- 2. find how many topics each of these assessment cards cover: requires get_assessment_coverage(assessment_id) returns TABLE(subject integer, topic integer, level expertise_level)
+    -- 3. find which of these topics are assimilated by user: requires get_assimilation_coverage(user_id, assessment_id) returns TABLE(subject integer, topic integer, level expertise_level, assimilated boolean)
+    -- 4. find the assessment card that has the widest coverage of topics that user has assimilated: returned by this function
+
+    return query
+    select ta.level, ta.assessment, count(*) filter (where ac.assimilated) as assimilations
+    from get_topic_assessments(user_id, subject_id, topic_position, 'origin') ta
+    cross join lateral get_assimilation_coverage(user_id, ta.assessment) as ac
+    group by ta.level, ta.assessment;
+end; $$;
+
+
+ALTER FUNCTION flashback.get_assessments(user_id integer, subject_id integer, topic_position integer, max_level flashback.expertise_level) OWNER TO flashback;
+
+--
+-- Name: get_assimilation_coverage(integer, integer); Type: FUNCTION; Schema: flashback; Owner: flashback
+--
+
+CREATE FUNCTION flashback.get_assimilation_coverage(user_id integer, assessment_id integer) RETURNS TABLE(subject integer, topic integer, level flashback.expertise_level, assimilated boolean)
+    LANGUAGE plpgsql
+    AS $$
+begin
+    return query
+    select ac.subject, ac.topic, ac.level, bool_and(coalesce(p.progression, 0) >= 3) as assimilated
+    from get_assessment_coverage(assessment_id) ac
+    join topics_cards tc on tc.subject = ac.subject and tc.topic = ac.topic and tc.level = ac.level
+    left join progress p on p.user = user_id and p.card = tc.card
+    group by ac.subject, ac.topic, ac.level;
+end; $$;
+
+
+ALTER FUNCTION flashback.get_assimilation_coverage(user_id integer, assessment_id integer) OWNER TO flashback;
 
 --
 -- Name: get_blocks(integer); Type: FUNCTION; Schema: flashback; Owner: flashback
@@ -823,15 +884,15 @@ CREATE FUNCTION flashback.get_blocks(card integer) RETURNS TABLE("position" inte
 ALTER FUNCTION flashback.get_blocks(card integer) OWNER TO flashback;
 
 --
--- Name: get_cards(integer, integer, flashback.expertise_level); Type: FUNCTION; Schema: flashback; Owner: brian
+-- Name: get_cards(integer, integer, flashback.expertise_level); Type: FUNCTION; Schema: flashback; Owner: flashback
 --
 
-CREATE FUNCTION flashback.get_cards(user_id integer, subject_id integer, max_level flashback.expertise_level) RETURNS TABLE(topic integer, level flashback.expertise_level, card integer, last_practice timestamp with time zone, duration integer)
+CREATE FUNCTION flashback.get_cards(user_id integer, subject_id integer, max_level flashback.expertise_level) RETURNS TABLE(topic integer, level flashback.expertise_level, card integer, "position" integer, last_practice timestamp with time zone, duration integer)
     LANGUAGE plpgsql
     AS $$
 begin
     return query
-    select tc.topic, tc.level, tc.card, p.last_practice, p.duration
+    select tc.topic, tc.level, tc.card, tc.position, p.last_practice, p.duration
     from topics_cards tc
     left join progress p on p.user = user_id  and p.card = tc.card
     where tc.subject = subject_id and tc.level <= max_level::expertise_level;
@@ -839,7 +900,7 @@ end;
 $$;
 
 
-ALTER FUNCTION flashback.get_cards(user_id integer, subject_id integer, max_level flashback.expertise_level) OWNER TO brian;
+ALTER FUNCTION flashback.get_cards(user_id integer, subject_id integer, max_level flashback.expertise_level) OWNER TO flashback;
 
 --
 -- Name: get_duplicate_card(integer); Type: FUNCTION; Schema: flashback; Owner: flashback
@@ -902,32 +963,33 @@ CREATE FUNCTION flashback.get_out_of_shelves() RETURNS TABLE(id integer, name ch
 ALTER FUNCTION flashback.get_out_of_shelves() OWNER TO flashback;
 
 --
--- Name: get_practice_cards(integer, integer, flashback.expertise_level); Type: FUNCTION; Schema: flashback; Owner: brian
+-- Name: get_practice_cards(integer, integer, flashback.expertise_level); Type: FUNCTION; Schema: flashback; Owner: flashback
 --
 
-CREATE FUNCTION flashback.get_practice_cards(user_id integer, subject_id integer, subject_level flashback.expertise_level) RETURNS TABLE(topic integer, level flashback.expertise_level, card integer, last_practice timestamp with time zone, duration integer)
+CREATE FUNCTION flashback.get_practice_cards(user_id integer, subject_id integer, subject_level flashback.expertise_level) RETURNS TABLE(topic integer, level flashback.expertise_level, card integer, "position" integer, last_practice timestamp with time zone, duration integer)
     LANGUAGE plpgsql
     AS $$
 declare last_acceptable_read timestamp with time zone = now() - interval '7 days';
+declare long_time_ago timestamp with time zone = now() - interval '100 days';
 begin
     if get_practice_mode(user_id, subject_id, subject_level) = 'aggressive'::practice_mode
     then
         return query
-        select g.topic, g.level, g.card, null::timestamp with time zone, null::integer
+        select g.topic, g.level, g.card, g.position, null::timestamp with time zone, null::integer
         from get_cards(user_id, subject_id, subject_level) g
-        where g.last_practice < last_acceptable_read;
+        where coalesce(g.last_practice, long_time_ago) < last_acceptable_read;
     else
         return query
-        select g.topic, g.level, g.card, g.last_practice, g.duration
+        select g.topic, g.level, g.card, g.position, g.last_practice, g.duration
         from get_cards(user_id, subject_id, subject_level) g;
     end if;
 end; $$;
 
 
-ALTER FUNCTION flashback.get_practice_cards(user_id integer, subject_id integer, subject_level flashback.expertise_level) OWNER TO brian;
+ALTER FUNCTION flashback.get_practice_cards(user_id integer, subject_id integer, subject_level flashback.expertise_level) OWNER TO flashback;
 
 --
--- Name: get_practice_mode(integer, integer, flashback.expertise_level); Type: FUNCTION; Schema: flashback; Owner: brian
+-- Name: get_practice_mode(integer, integer, flashback.expertise_level); Type: FUNCTION; Schema: flashback; Owner: flashback
 --
 
 CREATE FUNCTION flashback.get_practice_mode(user_id integer, subject_id integer, subject_level flashback.expertise_level) RETURNS flashback.practice_mode
@@ -965,73 +1027,45 @@ begin
 end; $$;
 
 
-ALTER FUNCTION flashback.get_practice_mode(user_id integer, subject_id integer, subject_level flashback.expertise_level) OWNER TO brian;
+ALTER FUNCTION flashback.get_practice_mode(user_id integer, subject_id integer, subject_level flashback.expertise_level) OWNER TO flashback;
+
+--
+-- Name: get_practice_topics(integer); Type: FUNCTION; Schema: flashback; Owner: flashback
+--
+
+CREATE FUNCTION flashback.get_practice_topics(roadmap_id integer) RETURNS TABLE(milestone integer, subject integer, topic integer, level flashback.expertise_level)
+    LANGUAGE plpgsql
+    AS $$
+begin
+    return query
+    select m.position as milestone, m.subject, t.position as topic, m.level
+    from milestones m
+    join topics t on t.subject = m.subject and t.level <= m.level
+    where m.roadmap = roadmap_id;
+end;
+$$;
+
+
+ALTER FUNCTION flashback.get_practice_topics(roadmap_id integer) OWNER TO flashback;
 
 --
 -- Name: get_practice_topics(integer, integer); Type: FUNCTION; Schema: flashback; Owner: flashback
 --
 
-CREATE FUNCTION flashback.get_practice_topics("user" integer, roadmap integer) RETURNS TABLE(milestone integer, level flashback.expertise_level, subject integer, topic integer)
+CREATE FUNCTION flashback.get_practice_topics(roadmap_id integer, subject_id integer) RETURNS TABLE(milestone integer, subject integer, topic integer, level flashback.expertise_level)
     LANGUAGE plpgsql
     AS $$
 begin
     return query
-    select m.position as milestone, m.level, m.subject, t.position as topic
+    select m.position as milestone, m.subject, t.position as topic, m.level
     from milestones m
-    join topics t on t.subject = m.subject and t.level = m.level
-    where m.roadmap = get_practice_topics.roadmap
-    and (m.position, m.level, m.subject, t.position) not in (
-        select g.milestone, g.level, g.subject, g.topic
-        from get_practiced_topics(get_practice_topics."user", get_practice_topics.roadmap) g
-    );
+    join topics t on t.subject = m.subject and t.level <= m.level
+    where m.roadmap = roadmap_id and m.subject = subject_id;
 end;
 $$;
 
 
-ALTER FUNCTION flashback.get_practice_topics("user" integer, roadmap integer) OWNER TO flashback;
-
---
--- Name: get_practice_topics(integer, integer, integer); Type: FUNCTION; Schema: flashback; Owner: flashback
---
-
-CREATE FUNCTION flashback.get_practice_topics("user" integer, roadmap integer, selected_subject integer) RETURNS TABLE(milestone integer, level flashback.expertise_level, subject integer, topic integer)
-    LANGUAGE plpgsql
-    AS $$
-begin
-    return query
-    select m.position as milestone, m.level, m.subject, t.position as topic
-    from milestones m
-    join topics t on t.subject = m.subject and t.level = m.level
-    where m.roadmap = get_practice_topics.roadmap
-    and m.subject = selected_subject
-    and (m.position, m.level, m.subject, t.position) not in (
-        select g.milestone, g.level, g.subject, g.topic
-        from get_practiced_topics(get_practice_topics."user", get_practice_topics.roadmap) g
-    );
-end;
-$$;
-
-
-ALTER FUNCTION flashback.get_practice_topics("user" integer, roadmap integer, selected_subject integer) OWNER TO flashback;
-
---
--- Name: get_practiced_topics(integer, integer); Type: FUNCTION; Schema: flashback; Owner: flashback
---
-
-CREATE FUNCTION flashback.get_practiced_topics("user" integer, roadmap integer) RETURNS TABLE(milestone integer, level flashback.expertise_level, subject integer, topic integer)
-    LANGUAGE plpgsql
-    AS $$
-begin
-    return query
-    select m.position as milestone, m.level, tp.subject, tp.topic
-    from milestones m
-    join topics_progress tp on m.subject = tp.subject and tp.level = m.level
-    where tp."user" = get_practiced_topics."user" and m.roadmap = get_practiced_topics.roadmap and tp.time::date = CURRENT_DATE;
-end;
-$$;
-
-
-ALTER FUNCTION flashback.get_practiced_topics("user" integer, roadmap integer) OWNER TO flashback;
+ALTER FUNCTION flashback.get_practice_topics(roadmap_id integer, subject_id integer) OWNER TO flashback;
 
 --
 -- Name: get_resources(integer); Type: FUNCTION; Schema: flashback; Owner: flashback
@@ -1144,15 +1178,21 @@ CREATE FUNCTION flashback.get_subjects(roadmap integer) RETURNS TABLE(level flas
 ALTER FUNCTION flashback.get_subjects(roadmap integer) OWNER TO flashback;
 
 --
--- Name: get_subjects(integer, flashback.expertise_level); Type: FUNCTION; Schema: flashback; Owner: flashback
+-- Name: get_topic_assessments(integer, integer, integer, flashback.expertise_level); Type: FUNCTION; Schema: flashback; Owner: flashback
 --
 
-CREATE FUNCTION flashback.get_subjects(roadmap integer, level flashback.expertise_level) RETURNS TABLE("position" integer, id integer, name character varying)
+CREATE FUNCTION flashback.get_topic_assessments(user_id integer, subject_id integer, topic_position integer, max_level flashback.expertise_level) RETURNS TABLE(level flashback.expertise_level, assessment integer)
     LANGUAGE plpgsql
-    AS $$ begin return query select milestones.position, subjects.id, subjects.name from milestones join subjects on milestones.subject = subjects.id where milestones.roadmap = get_subjects.roadmap and milestones.level = get_subjects.level; end; $$;
+    AS $$
+begin
+    return query
+    select a.level, a.card
+    from assessments a
+    where a.subject = subject_id and a.topic = topic_position and a.level <= max_level;
+end; $$;
 
 
-ALTER FUNCTION flashback.get_subjects(roadmap integer, level flashback.expertise_level) OWNER TO flashback;
+ALTER FUNCTION flashback.get_topic_assessments(user_id integer, subject_id integer, topic_position integer, max_level flashback.expertise_level) OWNER TO flashback;
 
 --
 -- Name: get_topics(integer, flashback.expertise_level); Type: FUNCTION; Schema: flashback; Owner: flashback
@@ -1160,7 +1200,13 @@ ALTER FUNCTION flashback.get_subjects(roadmap integer, level flashback.expertise
 
 CREATE FUNCTION flashback.get_topics(subject integer, level flashback.expertise_level) RETURNS TABLE("position" integer, name character varying)
     LANGUAGE plpgsql
-    AS $$ begin return query select topics.position, topics.name from topics where topics.subject = get_topics.subject and topics.level = get_topics.level; end; $$;
+    AS $$
+begin
+    return query
+    select topics.position, topics.name
+    from topics
+    where topics.subject = get_topics.subject and topics.level <= get_topics.level;
+end; $$;
 
 
 ALTER FUNCTION flashback.get_topics(subject integer, level flashback.expertise_level) OWNER TO flashback;
@@ -1188,7 +1234,7 @@ ALTER FUNCTION flashback.get_topics(roadmap integer, milestone integer) OWNER TO
 -- Name: get_topics_cards(integer, integer, integer); Type: FUNCTION; Schema: flashback; Owner: flashback
 --
 
-CREATE FUNCTION flashback.get_topics_cards(roadmap integer, milestone integer, topic integer) RETURNS TABLE(id integer, "position" integer, state flashback.card_state, heading text)
+CREATE FUNCTION flashback.get_topics_cards(roadmap_id integer, subject_id integer, topic_position integer) RETURNS TABLE(card integer, "position" integer, state flashback.card_state, heading text)
     LANGUAGE plpgsql
     AS $$
 begin
@@ -1197,14 +1243,14 @@ begin
     from milestones m
     join topics_cards tc on tc.subject = m.subject
     join cards on cards.id = tc.card
-    where m.roadmap = get_topics_cards.roadmap
-    and m.position = get_topics_cards.milestone
-    and tc.topic = get_topics_cards.topic;
+    where m.roadmap = roadmap_id
+    and m.subject = subject_id
+    and tc.topic = topic_position;
 end;
 $$;
 
 
-ALTER FUNCTION flashback.get_topics_cards(roadmap integer, milestone integer, topic integer) OWNER TO flashback;
+ALTER FUNCTION flashback.get_topics_cards(roadmap_id integer, subject_id integer, topic_position integer) OWNER TO flashback;
 
 --
 -- Name: get_unreviewed_sections_cards(); Type: FUNCTION; Schema: flashback; Owner: flashback
@@ -1340,58 +1386,26 @@ $$;
 ALTER PROCEDURE flashback.log_sections_activities(IN user_id integer, IN address character varying, IN section integer, IN action flashback.user_action) OWNER TO flashback;
 
 --
--- Name: make_progress(integer, integer, integer); Type: PROCEDURE; Schema: flashback; Owner: flashback
+-- Name: make_progress(integer, integer, integer, flashback.practice_mode); Type: PROCEDURE; Schema: flashback; Owner: flashback
 --
 
-CREATE PROCEDURE flashback.make_progress(IN user_id integer, IN card_id integer, IN time_duration integer)
+CREATE PROCEDURE flashback.make_progress(IN user_id integer, IN card_id integer, IN time_duration integer, IN mode flashback.practice_mode)
     LANGUAGE plpgsql
     AS $$
 begin
-    insert into progress ("user", card, duration) values (user_id, card_id, time_duration)
-    on conflict on constraint progress_pkey do update set duration = time_duration, time = now() where progress."user" = user_id and progress.card = card_id;
+    insert into progress ("user", card, duration, progression)
+    values (user_id, card_id, time_duration, 0)
+    on conflict on constraint progress_pkey
+    do update set
+        duration = time_duration,
+        last_practice = now(),
+        progression = case when mode = 'progressive'::practice_mode and now() - progress.last_practice > interval '1 hour' then progress.progression + 1 else progress.progression end
+    where progress."user" = user_id and progress.card = card_id;
 end;
 $$;
 
 
-ALTER PROCEDURE flashback.make_progress(IN user_id integer, IN card_id integer, IN time_duration integer) OWNER TO flashback;
-
---
--- Name: make_section_progress(integer, timestamp with time zone, integer, integer, integer); Type: PROCEDURE; Schema: flashback; Owner: flashback
---
-
-CREATE PROCEDURE flashback.make_section_progress(IN "user" integer, IN "time" timestamp with time zone, IN resource integer, IN section integer, IN duration integer)
-    LANGUAGE plpgsql
-    AS $$
-begin
-    insert into sections_progress (resource, section, "user", time, duration)
-    values (resource, section, make_section_progress."user", make_section_progress."time", duration);
-end;
-$$;
-
-
-ALTER PROCEDURE flashback.make_section_progress(IN "user" integer, IN "time" timestamp with time zone, IN resource integer, IN section integer, IN duration integer) OWNER TO flashback;
-
---
--- Name: make_topic_progress(integer, timestamp with time zone, integer, integer, integer, integer); Type: PROCEDURE; Schema: flashback; Owner: flashback
---
-
-CREATE PROCEDURE flashback.make_topic_progress(IN "user" integer, IN "time" timestamp with time zone, IN roadmap integer, IN milestone integer, IN topic integer, IN duration integer)
-    LANGUAGE plpgsql
-    AS $$
-declare subject integer;
-declare level expertise_level;
-begin
-    select milestones.subject, milestones.level into subject, level
-    from milestones
-    where milestones.roadmap = make_topic_progress.roadmap and milestones.position = make_topic_progress.milestone;
-
-    insert into topics_progress(subject, level, topic, "user", "time", duration)
-    values (subject, level, topic, make_topic_progress."user", make_topic_progress."time", duration);
-end;
-$$;
-
-
-ALTER PROCEDURE flashback.make_topic_progress(IN "user" integer, IN "time" timestamp with time zone, IN roadmap integer, IN milestone integer, IN topic integer, IN duration integer) OWNER TO flashback;
+ALTER PROCEDURE flashback.make_progress(IN user_id integer, IN card_id integer, IN time_duration integer, IN mode flashback.practice_mode) OWNER TO flashback;
 
 --
 -- Name: merge_blocks(integer); Type: PROCEDURE; Schema: flashback; Owner: flashback
@@ -2014,8 +2028,7 @@ CREATE TABLE flashback.milestones_activities (
     action flashback.user_action NOT NULL,
     "time" timestamp with time zone DEFAULT now() NOT NULL,
     subject integer NOT NULL,
-    roadmap integer NOT NULL,
-    level flashback.expertise_level NOT NULL
+    roadmap integer NOT NULL
 );
 
 
@@ -2036,7 +2049,7 @@ ALTER TABLE flashback.milestones_activities ALTER COLUMN id ADD GENERATED ALWAYS
 
 
 --
--- Name: most_recent; Type: TABLE; Schema: flashback; Owner: brian
+-- Name: most_recent; Type: TABLE; Schema: flashback; Owner: flashback
 --
 
 CREATE TABLE flashback.most_recent (
@@ -2044,7 +2057,7 @@ CREATE TABLE flashback.most_recent (
 );
 
 
-ALTER TABLE flashback.most_recent OWNER TO brian;
+ALTER TABLE flashback.most_recent OWNER TO flashback;
 
 --
 -- Name: network_activities; Type: TABLE; Schema: flashback; Owner: flashback
@@ -2109,7 +2122,8 @@ CREATE TABLE flashback.progress (
     "user" integer NOT NULL,
     card integer NOT NULL,
     last_practice timestamp with time zone DEFAULT now() CONSTRAINT progress_time_not_null NOT NULL,
-    duration integer NOT NULL
+    duration integer NOT NULL,
+    progression integer DEFAULT 0 NOT NULL
 );
 
 
@@ -2597,7 +2611,7 @@ ALTER TABLE ONLY flashback.milestones_activities
 --
 
 ALTER TABLE ONLY flashback.milestones
-    ADD CONSTRAINT milestones_pkey PRIMARY KEY (roadmap, subject, level);
+    ADD CONSTRAINT milestones_pkey PRIMARY KEY (roadmap, subject);
 
 
 --
@@ -2841,11 +2855,11 @@ ALTER TABLE ONLY flashback.cards_activities
 
 
 --
--- Name: milestones_activities milestones_activities_roadmap_subject_level_fkey; Type: FK CONSTRAINT; Schema: flashback; Owner: flashback
+-- Name: milestones_activities milestones_activities_roadmap_subject_fkey; Type: FK CONSTRAINT; Schema: flashback; Owner: flashback
 --
 
 ALTER TABLE ONLY flashback.milestones_activities
-    ADD CONSTRAINT milestones_activities_roadmap_subject_level_fkey FOREIGN KEY (roadmap, subject, level) REFERENCES flashback.milestones(roadmap, subject, level) ON UPDATE CASCADE;
+    ADD CONSTRAINT milestones_activities_roadmap_subject_fkey FOREIGN KEY (roadmap, subject) REFERENCES flashback.milestones(roadmap, subject) ON UPDATE CASCADE ON DELETE SET NULL;
 
 
 --
@@ -3097,43 +3111,8 @@ ALTER TABLE ONLY flashback.users_roadmaps
 
 
 --
--- Name: TABLE most_recent; Type: ACL; Schema: flashback; Owner: brian
---
-
-GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE flashback.most_recent TO flashback;
-
-
---
--- Name: DEFAULT PRIVILEGES FOR SEQUENCES; Type: DEFAULT ACL; Schema: flashback; Owner: brian
---
-
-ALTER DEFAULT PRIVILEGES FOR ROLE brian IN SCHEMA flashback GRANT USAGE ON SEQUENCES TO flashback;
-
-
---
--- Name: DEFAULT PRIVILEGES FOR SEQUENCES; Type: DEFAULT ACL; Schema: flashback; Owner: postgres
---
-
-ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA flashback GRANT USAGE ON SEQUENCES TO flashback;
-
-
---
--- Name: DEFAULT PRIVILEGES FOR TABLES; Type: DEFAULT ACL; Schema: flashback; Owner: brian
---
-
-ALTER DEFAULT PRIVILEGES FOR ROLE brian IN SCHEMA flashback GRANT SELECT,INSERT,DELETE,UPDATE ON TABLES TO flashback;
-
-
---
--- Name: DEFAULT PRIVILEGES FOR TABLES; Type: DEFAULT ACL; Schema: flashback; Owner: postgres
---
-
-ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA flashback GRANT SELECT,INSERT,DELETE,UPDATE ON TABLES TO flashback;
-
-
---
 -- PostgreSQL database dump complete
 --
 
-\unrestrict fKCo1esYMaZQjSWqrdWwMCNY6kB2dcHMCpDuY48B3a0ItbvqPgMIavQn4ISOQno
+\unrestrict JtqLvA5Lyhu7txfOEEOtOmPdKrwvBVgTHYSLtzWvNK7yJccHubRQJPvicF3ulMO
 

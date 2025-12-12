@@ -7,13 +7,13 @@
 
 using namespace flashback;
 
-database::database(std::string address, std::string port)
+database::database(std::string name, std::string address, std::string port)
     : m_connection{nullptr}
 {
     try
     {
         m_connection = std::make_unique<pqxx::connection>(
-            std::format("postgres://flashback@{}:{}/flashback", address, port));
+            std::format("postgres://flashback@{}:{}/{}", address, port, name));
     }
     catch (pqxx::broken_connection const& exp)
     {
@@ -76,14 +76,14 @@ uint64_t database::create_user(std::string_view name, std::string_view email, st
 
     try
     {
-        pqxx::row result{query(std::format("select * from create_user('{}', '{}', '{}')", name, email, hash)).one_row()};
+        pqxx::result result{query(std::format("select * from create_user('{}', '{}', '{}')", name, email, hash))};
 
         if (result.size() != 1)
         {
             throw std::runtime_error(std::format("Server: could not create user because no user id was returned for {}", email));
         }
 
-        user_id = result.at(0).as<uint64_t>();
+        user_id = result.at(0).at(0).as<uint64_t>();
     }
     catch (std::exception const& exp)
     {
