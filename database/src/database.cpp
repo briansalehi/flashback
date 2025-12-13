@@ -54,15 +54,15 @@ std::shared_ptr<Roadmaps> database::get_roadmaps(uint64_t user_id)
 
 std::pair<bool, std::string> database::create_session(uint64_t user_id, std::string_view token, std::string_view device)
 {
-    std::pair<bool, std::string> result{true, {}};
+    std::pair<bool, std::string> result{false, {}};
 
     try
     {
         exec(std::format("call create_session({}, '{}', '{}')", user_id, token, device));
+        result.first = true;
     }
     catch (std::exception const& exp)
     {
-        result.first = false;
         result.second = "internal error";
         std::cerr << exp.what() << std::endl;
     }
