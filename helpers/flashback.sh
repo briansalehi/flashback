@@ -283,8 +283,7 @@ load_resources()
         {
             while IFS='|' read -r id name type condition presenter provider last_read
             do
-                IFS="|" read -r total_sections drafts reviews completed published < <(psql -U flashback -d flashback -c "select count(section) as sections, sum(drafts) as drafts, sum(reviews) as reviews, sum(completed) as completed, sum(published) as published from get_section_coverage($id) group by resource" -At)
-                printf "\e[1;35m%5d\e[0m \e[1;33m%s\e[0m \e[2;37m(%s)\e[0m %s %s \e[2;37m(all %d d %d r %d c %d p %d)\e[0m \e[2;37m(%s)\e[0m\n" "$id" "$name" "$type" "$(get_time_difference "$last_read")" "$(get_credits "$provider" "$presenter")" "${total_sections:-0}" "${drafts:-0}" "${reviews:-0}" "${completed:-0}" "${published:-0}" "$condition"
+                printf "\e[1;35m%5d\e[0m \e[1;33m%s\e[0m \e[2;37m(%s)\e[0m %s %s \e[2;37m(%s)\e[0m\n" "$id" "$name" "$type" "$(get_time_difference "$last_read")" "$(get_credits "$provider" "$presenter")" "$condition"
             done < <(psql -U flashback -d flashback -c "select id, name, type, condition, presenter, provider, last_read from get_resources($user, $subject) order by name" -At)
         } | dense_column
     } | custom_pager

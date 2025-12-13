@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict JtqLvA5Lyhu7txfOEEOtOmPdKrwvBVgTHYSLtzWvNK7yJccHubRQJPvicF3ulMO
+\restrict wsYzoR5aXIvBKn528vch41vsh09cDyOM47iYCWmw8evOhXaYFz2ty9RTTOPhwnk
 
 -- Dumped from database version 18.0
 -- Dumped by pg_dump version 18.0
@@ -1091,21 +1091,22 @@ ALTER FUNCTION flashback.get_resources("user" integer) OWNER TO flashback;
 -- Name: get_resources(integer, integer); Type: FUNCTION; Schema: flashback; Owner: flashback
 --
 
-CREATE FUNCTION flashback.get_resources("user" integer, subject integer) RETURNS TABLE(id integer, name character varying, type flashback.resource_type, condition flashback.condition, presenter character varying, provider character varying, link character varying, last_read timestamp with time zone)
+CREATE FUNCTION flashback.get_resources(user_id integer, subject_id integer) RETURNS TABLE(id integer, name character varying, type flashback.resource_type, condition flashback.condition, presenter character varying, provider character varying, link character varying, last_read timestamp with time zone)
     LANGUAGE plpgsql
     AS $$
 begin
     return query
-    select resources.id, resources.name, resources.type, resources.condition, resources.presenter, resources.provider, resources.link, max(sections_progress.time)
-    from resources
-    join shelves on shelves.resource = resources.id and shelves.subject = get_resources.subject
-    left join sections_progress on sections_progress.resource = resources.id and sections_progress."user" = get_resources."user"
-    group by resources.id, resources.name, resources.type, resources.condition, resources.presenter, resources.provider, resources.link;
+    select r.id, r.name, r.type, r.condition, r.presenter, r.provider, r.link, max(p.last_practice) filter (where p.last_practice is not null)
+    from resources r
+    join shelves s on s.resource = r.id and s.subject = subject_id
+    join sections_cards sc on sc.resource = r.id
+    left join progress p on p."user" = user_id and p.card = sc.card
+    group by r.id, r.name, r.type, r.condition, r.presenter, r.provider, r.link;
 end;
 $$;
 
 
-ALTER FUNCTION flashback.get_resources("user" integer, subject integer) OWNER TO flashback;
+ALTER FUNCTION flashback.get_resources(user_id integer, subject_id integer) OWNER TO flashback;
 
 --
 -- Name: get_roadmaps(integer); Type: FUNCTION; Schema: flashback; Owner: flashback
@@ -2314,36 +2315,6 @@ CREATE TABLE flashback.sections_cards (
 ALTER TABLE flashback.sections_cards OWNER TO flashback;
 
 --
--- Name: sections_progress; Type: TABLE; Schema: flashback; Owner: flashback
---
-
-CREATE TABLE flashback.sections_progress (
-    resource integer NOT NULL,
-    section integer NOT NULL,
-    "user" integer NOT NULL,
-    "time" timestamp with time zone DEFAULT now() NOT NULL,
-    duration integer DEFAULT 0 NOT NULL,
-    id integer NOT NULL
-);
-
-
-ALTER TABLE flashback.sections_progress OWNER TO flashback;
-
---
--- Name: sections_progress_id_seq; Type: SEQUENCE; Schema: flashback; Owner: flashback
---
-
-ALTER TABLE flashback.sections_progress ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
-    SEQUENCE NAME flashback.sections_progress_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1
-);
-
-
---
 -- Name: sessions; Type: TABLE; Schema: flashback; Owner: flashback
 --
 
@@ -2483,37 +2454,6 @@ CREATE TABLE flashback.topics_cards (
 
 
 ALTER TABLE flashback.topics_cards OWNER TO flashback;
-
---
--- Name: topics_progress; Type: TABLE; Schema: flashback; Owner: flashback
---
-
-CREATE TABLE flashback.topics_progress (
-    "user" integer NOT NULL,
-    topic integer NOT NULL,
-    "time" timestamp with time zone DEFAULT now() NOT NULL,
-    duration integer DEFAULT 0 NOT NULL,
-    subject integer NOT NULL,
-    level flashback.expertise_level NOT NULL,
-    id integer NOT NULL
-);
-
-
-ALTER TABLE flashback.topics_progress OWNER TO flashback;
-
---
--- Name: topics_progress_id_seq; Type: SEQUENCE; Schema: flashback; Owner: flashback
---
-
-ALTER TABLE flashback.topics_progress ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
-    SEQUENCE NAME flashback.topics_progress_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1
-);
-
 
 --
 -- Name: users; Type: TABLE; Schema: flashback; Owner: flashback
@@ -2687,14 +2627,6 @@ ALTER TABLE ONLY flashback.sections
 
 
 --
--- Name: sections_progress sections_progress_pkey; Type: CONSTRAINT; Schema: flashback; Owner: flashback
---
-
-ALTER TABLE ONLY flashback.sections_progress
-    ADD CONSTRAINT sections_progress_pkey PRIMARY KEY (id);
-
-
---
 -- Name: shelves shelves_pkey; Type: CONSTRAINT; Schema: flashback; Owner: flashback
 --
 
@@ -2748,14 +2680,6 @@ ALTER TABLE ONLY flashback.topics_cards
 
 ALTER TABLE ONLY flashback.topics
     ADD CONSTRAINT topics_pkey PRIMARY KEY (subject, level, "position");
-
-
---
--- Name: topics_progress topics_progress_pkey; Type: CONSTRAINT; Schema: flashback; Owner: flashback
---
-
-ALTER TABLE ONLY flashback.topics_progress
-    ADD CONSTRAINT topics_progress_pkey PRIMARY KEY (id);
 
 
 --
@@ -2983,22 +2907,6 @@ ALTER TABLE ONLY flashback.sections_cards
 
 
 --
--- Name: sections_progress sections_progress_resource_position_fkey; Type: FK CONSTRAINT; Schema: flashback; Owner: flashback
---
-
-ALTER TABLE ONLY flashback.sections_progress
-    ADD CONSTRAINT sections_progress_resource_position_fkey FOREIGN KEY (resource, section) REFERENCES flashback.sections(resource, "position") ON UPDATE CASCADE ON DELETE CASCADE;
-
-
---
--- Name: sections_progress sections_progress_user_fkey; Type: FK CONSTRAINT; Schema: flashback; Owner: flashback
---
-
-ALTER TABLE ONLY flashback.sections_progress
-    ADD CONSTRAINT sections_progress_user_fkey FOREIGN KEY ("user") REFERENCES flashback.users(id) ON UPDATE CASCADE;
-
-
---
 -- Name: sections sections_resource_fkey; Type: FK CONSTRAINT; Schema: flashback; Owner: flashback
 --
 
@@ -3079,22 +2987,6 @@ ALTER TABLE ONLY flashback.topics_cards
 
 
 --
--- Name: topics_progress topics_progress_subject_level_position_fkey; Type: FK CONSTRAINT; Schema: flashback; Owner: flashback
---
-
-ALTER TABLE ONLY flashback.topics_progress
-    ADD CONSTRAINT topics_progress_subject_level_position_fkey FOREIGN KEY (subject, level, topic) REFERENCES flashback.topics(subject, level, "position") ON UPDATE CASCADE;
-
-
---
--- Name: topics_progress topics_progress_user_fkey; Type: FK CONSTRAINT; Schema: flashback; Owner: flashback
---
-
-ALTER TABLE ONLY flashback.topics_progress
-    ADD CONSTRAINT topics_progress_user_fkey FOREIGN KEY ("user") REFERENCES flashback.users(id) ON UPDATE CASCADE;
-
-
---
 -- Name: users_roadmaps user_roadmaps_roadmap_fkey; Type: FK CONSTRAINT; Schema: flashback; Owner: flashback
 --
 
@@ -3114,5 +3006,5 @@ ALTER TABLE ONLY flashback.users_roadmaps
 -- PostgreSQL database dump complete
 --
 
-\unrestrict JtqLvA5Lyhu7txfOEEOtOmPdKrwvBVgTHYSLtzWvNK7yJccHubRQJPvicF3ulMO
+\unrestrict wsYzoR5aXIvBKn528vch41vsh09cDyOM47iYCWmw8evOhXaYFz2ty9RTTOPhwnk
 
