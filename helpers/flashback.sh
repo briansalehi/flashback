@@ -291,11 +291,15 @@ load_resources()
     while true
     do
         echo
-        read -r -p "Select a resource to study, type [t] to switch to topics, or type [p] to begin practicing ${subjects[$subject]}: " resource
+        read -r -p "Select a resource to study, type [t] to switch to topics, or type [p] to begin practicing ${subjects[$subject]}, or [P] to start over: " resource
 
-        if [ "${resource,,}" == "p" ]
+        if [ "${resource}" == "p" ]
         then
-            practice_subject "$roadmap" "$subject"
+            practice_subject 1
+            break
+        elif [ "${resource}" == "P" ]
+        then
+            practice_subject
             break
         elif [ "${resource,,}" == "t" ]
         then
@@ -336,15 +340,19 @@ load_topics()
     while true
     do
         echo
-        read -r -p "Select a topic, type [r] to switch to ${subjects[$subject]} resources, or type [p] to practice ${subjects[$subject]}: " topic
+        read -r -p "Select a topic, type [r] to switch to ${subjects[$subject]} resources, or type [p] to practice ${subjects[$subject]}, or [P] to start over: " topic
 
         if [ "${topic,,}" == "r" ]
         then
             load_resources "$roadmap" "$subject"
             break
-        elif [ "${topic,,}" == "p" ]
+        elif [ "${topic}" == "p" ]
         then
-            practice_subject "$roadmap" "$subject"
+            practice_subject 1
+            break
+        elif [ "${topic}" == "P" ]
+        then
+            practice_subject
             break
         elif [ -n "${topics[$topic]}" ]
         then
@@ -404,9 +412,9 @@ load_roadmaps()
             while IFS='|' read -r position id name level
             do
                 case "$level" in
-                    surface) level_symbol="$(echo -e "\e[1;32m\u2a\e[0m")" ;;
+                    surface) level_symbol="$(echo -e "\e[1;32m\u2a\u01\u01\e[0m")" ;;
                     depth) level_symbol="$(echo -e "\e[1;33m\u2051\e[0m")" ;;
-                    origin) level_symbol="$(echo -e "\e[1;31m\u2042\e[0m")" ;;
+                    origin) level_symbol="$(echo -e "\e[1;31m\u2042\u01\e[0m")" ;;
                 esac
                 printf "\e[1;35m%5d\e[0m \e[1;33m%s\e[0m \e[2;37m%s\e[0m\n" "$position" "$name" "$level_symbol"
             done < <(psql -U flashback -d flashback -c "select position, id, name, level from get_subjects($roadmap) order by position" -At)
@@ -433,6 +441,7 @@ load_roadmaps()
 
 practice_subject()
 {
+    local start_over="$1"
     total_topics="$(psql -At -U flashback -d flashback -c "select count(*) from topics where subject = $subject")"
 
     while IFS="|" read -r topic level
@@ -443,7 +452,14 @@ practice_subject()
 
         subject_name="$(psql -U flashback -d flashback -c "select name from subjects where id = $subject" -At)"
         topic_name="$(psql -U flashback -d flashback -c "select name from topics where subject = $subject and position = $topic" -At)"
-        mode="$(psql -U flashback -d flashback -c "select * from get_practice_mode($user, $subject, '$level'::expertise_level)" -At)"
+
+        if [ ${start_over:-0} -eq 1 ]
+        then
+            mode="$(psql -U flashback -d flashback -c "select * from get_practice_mode($user, $subject, '$level'::expertise_level)" -At)"
+        else
+            filter="where now() - last_practice > '1 day'"
+            mode="selective"
+        fi
 
         assessment="$(psql -At -U flashback -d flashback -c "select assessment from get_assessments($user, $subject, $topic, '$level'::expertise_level) where assimilations >= 3 order by level desc, assimilations desc limit 1;")"
 
@@ -502,7 +518,7 @@ practice_subject()
 
             [ $card_index -ge ${#cards[*]} ] && break; 
         done
-    done < <(psql -U flashback -d flashback -c "select topic, level from get_practice_cards($user, $subject, '$level'::expertise_level) group by topic, level order by topic" -At)
+    done < <(psql -U flashback -d flashback -c "select topic, level from get_practice_cards($user, $subject, '$level'::expertise_level) ${filter} group by topic, level order by topic" -At)
     echo
 }
 
