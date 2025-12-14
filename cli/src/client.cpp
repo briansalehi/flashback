@@ -26,11 +26,10 @@ bool client::session_is_valid() const noexcept
     auto request{std::make_shared<VerifySessionRequest>()};
     auto response{std::make_shared<VerifySessionResponse>()};
 
-    if (user_is_defined() && !m_user->token().empty() && !m_user->email().empty())
+    if (user_is_defined() && !m_user->token().empty() && m_user->id() > 0)
     {
-        request->set_email(m_user->email());
-        request->set_device(m_user->device());
-        request->set_token(m_user->token());
+        std::unique_ptr<User> user{std::make_unique<User>(*m_user)};
+        request->set_allocated_user(user.release());
 
         if (grpc::Status const status{m_stub->VerifySession(context.get(), *request, response.get())}; status.ok())
         {

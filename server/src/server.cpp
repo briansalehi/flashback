@@ -240,14 +240,12 @@ std::string server::generate_token()
 
 bool server::session_is_valid(std::string_view email, std::string_view device, std::string_view token) const
 {
-    std::unique_ptr<User> user{m_database->get_user(email, device)};
+    bool is_valid{false};
 
-    if (user == nullptr)
+    if (std::unique_ptr<User> user{m_database->get_user(email, device)}; user != nullptr)
     {
-        throw client_exception("user is not registered");
+        is_valid = user->token() == token;
     }
 
-    std::string stored_token{user->token()};
-
-    return stored_token == token;
+    return is_valid;
 }

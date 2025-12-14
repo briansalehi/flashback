@@ -98,55 +98,11 @@ void database::reset_password(uint64_t user_id, std::string_view hash)
     exec(std::format("call reset_password({}, '{}')", user_id, hash));
 }
 
-std::unique_ptr<User> database::get_user(std::string_view email)
+std::unique_ptr<User> database::get_user(uint64_t user_id, std::string_view device)
 {
     std::unique_ptr<User> user{nullptr};
 
-    pqxx::result result_set{query(std::format("select * from get_user('{}')", email))};
-
-    if (result_set.size() == 1)
-    {
-        pqxx::row result{result_set.at(0)};
-        user = std::make_unique<User>();
-
-        user->set_id(result.at("id").as<uint64_t>());
-        user->set_name(result.at("name").as<std::string>());
-        user->set_email(result.at("email").as<std::string>());
-        user->set_hash(result.at("hash").as<std::string>());
-        user->set_verified(result.at("verified").as<bool>());
-
-        std::tm tm{};
-
-        std::string date_str{result.at("joined").as<std::string>()};
-        std::istringstream stream{date_str};
-
-        stream >> std::get_time(&tm, "%Y-%m-%d");
-        time_t epoch{std::mktime(&tm)};
-
-        auto timestamp{std::make_unique<google::protobuf::Timestamp>(google::protobuf::util::TimeUtil::SecondsToTimestamp(epoch))};
-        user->set_allocated_joined(timestamp.release());
-
-        std::string state_str{result.at("state").as<std::string>()};
-        if (state_str == "active")
-            user->set_state(User::active);
-        else if (state_str == "inactive")
-            user->set_state(User::inactive);
-        else if (state_str == "suspended")
-            user->set_state(User::suspended);
-        else if (state_str == "banned")
-            user->set_state(User::banned);
-        else
-            throw std::runtime_error("unhandled user state");
-    }
-
-    return user;
-}
-
-std::unique_ptr<User> database::get_user(std::string_view email, std::string_view device)
-{
-    std::unique_ptr<User> user{nullptr};
-
-    pqxx::result result_set{query(std::format("select * from get_user('{}', '{}')", email, device))};
+    pqxx::result result_set{query(std::format("select * from get_user({}, '{}'::character varying)", user_id, device))};
 
     if (result_set.size() == 1)
     {
