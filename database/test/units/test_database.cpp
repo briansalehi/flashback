@@ -154,4 +154,19 @@ TEST_F(test_database, RevokeSingleSession)
 
 TEST_F(test_database, ResetPassword)
 {
+    std::unique_ptr<flashback::User> user{nullptr};
+    std::string hash{R"($argon2id$v=19$m=262144,t=3,p=1$faiJerPACLb2TEdTbGv8AQ$M0j9j6ojyIjD9yZ4+lAANR/WAiWpImUcEcUhCL3u9gc)"};
+
+    ASSERT_TRUE(m_database->create_session(m_user->id(), m_user->token(), m_user->device()));
+
+    user = m_database->get_user(m_user->id(), m_user->device());
+
+    ASSERT_NE(user, nullptr);
+    EXPECT_EQ(user->hash(), m_user->hash());
+
+    m_database->reset_password(m_user->id(), hash);
+
+    user = m_database->get_user(m_user->id(), m_user->device());
+    ASSERT_NE(user, nullptr);
+    EXPECT_EQ(user->hash(), hash);
 }
