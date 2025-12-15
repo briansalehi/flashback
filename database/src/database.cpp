@@ -144,6 +144,11 @@ std::unique_ptr<User> database::get_user(uint64_t user_id, std::string_view devi
     return user;
 }
 
+void database::revoke_sessions_except(uint64_t user_id, std::string_view token)
+{
+    exec(std::format("call revoke_sessions_except({}, '{}'::character varying)", user_id, token));
+}
+
 pqxx::result database::query(std::string_view statement)
 {
     pqxx::work work{*m_connection};
