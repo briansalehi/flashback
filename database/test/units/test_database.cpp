@@ -62,9 +62,13 @@ TEST_F(test_database, CreateDuplicateUser)
 
 TEST_F(test_database, CreateSession)
 {
-    auto [success, reason] = m_database->create_session(m_user->id(), m_user->token(), m_user->device());
+    ASSERT_TRUE(m_database->create_session(m_user->id(), m_user->token(), m_user->device()));
+}
 
-    ASSERT_TRUE(success);
+TEST_F(test_database, CreateSessionForNonExistingUser)
+{
+    uint64_t non_existing_user{};
+    ASSERT_FALSE(m_database->create_session(non_existing_user, m_user->token(), m_user->device()));
 }
 
 TEST_F(test_database, GetUser)
@@ -77,9 +81,7 @@ TEST_F(test_database, GetUser)
     user = m_database->get_user(m_user->id(), m_user->device());
 
     ASSERT_EQ(user, nullptr);
-
-    auto [success, reason] = m_database->create_session(m_user->id(), m_user->token(), m_user->device());
-    ASSERT_TRUE(success);
+    ASSERT_TRUE(m_database->create_session(m_user->id(), m_user->token(), m_user->device()));
 
     user = m_database->get_user(m_user->id(), m_user->device());
 
@@ -104,14 +106,9 @@ TEST_F(test_database, RevokeSessionsExceptSelectedToken)
     bool session1_success;
     bool session2_success;
 
-    auto [success, reason] = m_database->create_session(m_user->id(), m_user->token(), m_user->device());
-    ASSERT_TRUE(success);
-
-    std::tie(session1_success, std::ignore) = m_database->create_session(m_user->id(), token1, device1);
-    ASSERT_TRUE(session1_success);
-
-    std::tie(session2_success, std::ignore) = m_database->create_session(m_user->id(), token2, device2);
-    ASSERT_TRUE(session2_success);
+    ASSERT_TRUE(m_database->create_session(m_user->id(), m_user->token(), m_user->device()));
+    ASSERT_TRUE(m_database->create_session(m_user->id(), token1, device1));
+    ASSERT_TRUE(m_database->create_session(m_user->id(), token2, device2));
 
     m_database->revoke_sessions_except(m_user->id(), m_user->token());
 
@@ -129,8 +126,7 @@ TEST_F(test_database, RevokeSessionsWithNonExistingToken)
 {
     std::string non_existing_token{R"(3333333333+q42gM9lNVbB13v0odiLy6WnHbInbuvvE)"};
 
-    auto [success, reason] = m_database->create_session(m_user->id(), m_user->token(), m_user->device());
-    ASSERT_TRUE(success);
+    ASSERT_TRUE(m_database->create_session(m_user->id(), m_user->token(), m_user->device()));
 
     m_database->revoke_sessions_except(m_user->id(), non_existing_token);
 
@@ -143,13 +139,9 @@ TEST_F(test_database, RevokeSingleSession)
     std::unique_ptr<flashback::User> user{nullptr};
     std::string token{R"(1111111111+q42gM9lNVbB13v0odiLy6WnHbInbuvvE)"};
     std::string device{R"(11111111-1111-1111-1111-111111111111)"};
-    bool session_success;
 
-    auto [success, reason] = m_database->create_session(m_user->id(), m_user->token(), m_user->device());
-    ASSERT_TRUE(success);
-
-    std::tie(session_success, std::ignore) = m_database->create_session(m_user->id(), token, device);
-    ASSERT_TRUE(session_success);
+    ASSERT_TRUE(m_database->create_session(m_user->id(), m_user->token(), m_user->device()));
+    ASSERT_TRUE(m_database->create_session(m_user->id(), token, device));
 
     m_database->revoke_session(m_user->id(), token);
 
