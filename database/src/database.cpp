@@ -144,6 +144,11 @@ std::unique_ptr<User> database::get_user(uint64_t user_id, std::string_view devi
     return user;
 }
 
+void database::revoke_session(uint64_t user_id, std::string_view token)
+{
+    exec(std::format("call revoke_session({}, '{}'::character varying)", user_id, token));
+}
+
 void database::revoke_sessions_except(uint64_t user_id, std::string_view token)
 {
     exec(std::format("call revoke_sessions_except({}, '{}'::character varying)", user_id, token));

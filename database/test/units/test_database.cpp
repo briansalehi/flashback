@@ -101,12 +101,11 @@ TEST_F(test_database, RevokeSessionsExceptSelectedToken)
     std::string token2{R"(2222222222+q42gM9lNVbB13v0odiLy6WnHbInbuvvE)"};
     std::string device1{R"(11111111-1111-1111-1111-111111111111)"};
     std::string device2{R"(22222222-2222-2222-2222-222222222222)"};
-    bool session0_success;
     bool session1_success;
     bool session2_success;
 
-    std::tie(session0_success, std::ignore) = m_database->create_session(m_user->id(), m_user->token(), m_user->device());
-    ASSERT_TRUE(session0_success);
+    auto [success, reason] = m_database->create_session(m_user->id(), m_user->token(), m_user->device());
+    ASSERT_TRUE(success);
 
     std::tie(session1_success, std::ignore) = m_database->create_session(m_user->id(), token1, device1);
     ASSERT_TRUE(session1_success);
@@ -114,21 +113,13 @@ TEST_F(test_database, RevokeSessionsExceptSelectedToken)
     std::tie(session2_success, std::ignore) = m_database->create_session(m_user->id(), token2, device2);
     ASSERT_TRUE(session2_success);
 
-    m_database->revoke_sessions_except(m_user->id(), token1);
+    m_database->revoke_sessions_except(m_user->id(), m_user->token());
 
     user = m_database->get_user(m_user->id(), m_user->device());
-    EXPECT_EQ(user, nullptr);
+    EXPECT_NE(user, nullptr);
 
     user = m_database->get_user(m_user->id(), device1);
-    ASSERT_NE(user, nullptr);
-    EXPECT_GT(user->id(), 0);
-    EXPECT_EQ(user->name(), m_user->name());
-    EXPECT_EQ(user->email(), m_user->email());
-    EXPECT_EQ(user->hash(), m_user->hash());
-    EXPECT_EQ(user->token(), token1);
-    EXPECT_EQ(user->device(), device1);
-    EXPECT_TRUE(user->password().empty());
-    EXPECT_FALSE(user->verified());
+    ASSERT_EQ(user, nullptr);
 
     user = m_database->get_user(m_user->id(), device2);
     EXPECT_EQ(user, nullptr);
@@ -142,17 +133,31 @@ TEST_F(test_database, RevokeSessionsWithNonExistingToken)
     ASSERT_TRUE(success);
 
     m_database->revoke_sessions_except(m_user->id(), non_existing_token);
-    std::unique_ptr<flashback::User> user = m_database->get_user(m_user->id(), m_user->device());
 
+    std::unique_ptr<flashback::User> user = m_database->get_user(m_user->id(), m_user->device());
     ASSERT_NE(user, nullptr);
-    EXPECT_GT(user->id(), 0);
-    EXPECT_EQ(user->name(), m_user->name());
-    EXPECT_EQ(user->email(), m_user->email());
-    EXPECT_EQ(user->hash(), m_user->hash());
-    EXPECT_EQ(user->token(), m_user->token());
-    EXPECT_EQ(user->device(), m_user->device());
-    EXPECT_TRUE(user->password().empty());
-    EXPECT_FALSE(user->verified());
+}
+
+TEST_F(test_database, RevokeSingleSession)
+{
+    std::unique_ptr<flashback::User> user{nullptr};
+    std::string token{R"(1111111111+q42gM9lNVbB13v0odiLy6WnHbInbuvvE)"};
+    std::string device{R"(11111111-1111-1111-1111-111111111111)"};
+    bool session_success;
+
+    auto [success, reason] = m_database->create_session(m_user->id(), m_user->token(), m_user->device());
+    ASSERT_TRUE(success);
+
+    std::tie(session_success, std::ignore) = m_database->create_session(m_user->id(), token, device);
+    ASSERT_TRUE(session_success);
+
+    m_database->revoke_session(m_user->id(), token);
+
+    user = m_database->get_user(m_user->id(), device);
+    ASSERT_EQ(user, nullptr);
+
+    user = m_database->get_user(m_user->id(), m_user->device());
+    EXPECT_NE(user, nullptr);
 }
 
 TEST_F(test_database, ResetPassword)
