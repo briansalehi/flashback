@@ -13,11 +13,31 @@ public:
     explicit server(std::shared_ptr<database> database);
     ~server() override = default;
 
-    grpc::Status GetRoadmaps(grpc::ServerContext* context, RoadmapsRequest const* request, Roadmaps* response) override;
-    grpc::Status SignIn(grpc::ServerContext* context, const SignInRequest* request, SignInResponse* response) override;
+    // entry page requests
     grpc::Status SignUp(grpc::ServerContext* context, SignUpRequest const* request, SignUpResponse* response) override;
-    grpc::Status ResetPassword(grpc::ServerContext* context, ResetPasswordRequest const* request, ResetPasswordResponse* response) override;
+    grpc::Status SignIn(grpc::ServerContext* context, SignInRequest const* request, SignInResponse* response) override;
     grpc::Status VerifySession(grpc::ServerContext* context, VerifySessionRequest const* request, VerifySessionResponse* response) override;
+    grpc::Status ResetPassword(grpc::ServerContext* context, ResetPasswordRequest const* request, ResetPasswordResponse* response) override;
+    // RenameUser
+    // ChangeUserEmail
+    // VerifyUser
+    // DeactivateUser
+
+    // welcome page requests
+    grpc::Status GetRoadmaps(grpc::ServerContext* context, GetRoadmapsRequest const* request, GetRoadmapsResponse* response) override;
+    // CreateRoadmap
+    // ReorderRoadmap
+    // RemoveRoadmap
+
+    // roadmap page requests
+    // RenameRoadmap
+    // GetMilestones
+    // AddMilestone
+    // ReorderMilestone
+    // RemoveMilestone
+    // ChangeMilestoneLevel
+
+    //
 
 private:
     [[nodiscard]] static std::string calculate_hash(std::string_view password);

@@ -1,0 +1,165 @@
+syntax = "proto3";
+
+import "types.proto";
+
+package flashback;
+
+// entry page requests
+message SignInRequest { User user = 1; }
+message SignInResponse { bool success = 1; string details = 2; User user = 3; }
+message SignUpRequest { User user = 1; }
+message SignUpResponse { bool success = 1; string details = 2; User user = 3; }
+message VerifySessionRequest { User user = 1; }
+message VerifySessionResponse { bool valid = 1; }
+
+// account page requests
+message ResetPasswordRequest { User user = 1; }
+message ResetPasswordResponse { bool success = 1; string details = 2; User user = 3; }
+message RenameUserRequest { }
+message RenameUserResponse { }
+message ChangeUserEmailRequest { }
+message ChangeUserEmailResponse { }
+message VerifyUserRequest { }
+message VerifyUserResponse { }
+message DeactivateUserRequest { }
+message DeactivateUserResponse { }
+
+// welcome page requests
+message GetRoadmapsRequest { User user = 1; }
+message GetRoadmapsResponse { repeated Roadmap roadmap = 1; }
+message CreateRoadmapRequest { }
+message CreateRoadmapResponse { }
+message ReorderRoadmapRequest { }
+message ReorderRoadmapResponse { }
+message RemoveRoadmapRequest { }
+message RemoveRoadmapResponse { }
+
+// roadmap page requests
+message RenameRoadmapRequest { }
+message RenameRoadmapResponse { }
+message GetMilestonesRequest { }
+message GetMilestonesResponse { }
+message AddMilestoneRequest { }
+message AddMilestoneResponse { }
+message SearchSubjectRequest { }
+message SearchSubjectResponse { }
+message CreateSubjectRequest { }
+message CreateSubjectResponse { }
+message ReorderMilestoneRequest { }
+message ReorderMilestoneResponse { }
+message RemoveMilestoneRequest { }
+message RemoveMilestoneResponse { }
+message ChangeMilestoneLevelRequest { }
+message ChangeMilestoneLevelResponse { }
+
+// subject page
+message RenameSubjectRequest { }
+message RenameSubjectResponse { }
+message RemoveSubjectRequest { }
+message RemoveSubjectResponse { }
+
+// subject page resource view
+message GetResourcesRequest { }
+message GetResourcesResponse { }
+message AddResourceToSubjectRequest { }
+message AddResourceToSubjectResponse { }
+message CreateResourceRequest { }
+message CreateResourceResponse { }
+message ReorderResourceRequest { }
+message ReorderResourceResponse { }
+message DropResourceFromSubjectRequest { }
+message DropResourceFromSubjectResponse { }
+message MergeResourcesRequest { }
+message MergeResourcesResponse { }
+
+// subject page topic view
+message GetTopicsRequest { }
+message GetTopicsResponse { }
+message CreateTopicRequest { }
+message CreateTopicResponse { }
+message ReorderTopicRequest { }
+message ReorderTopicResponse { }
+message RemoveTopicRequest { }
+message RemoveTopicResponse { }
+message MergeTopicsRequest { }
+message MergeTopicsResponse { }
+message MoveTopicRequest { }
+message MoveTopicResponse { }
+
+// resource page requests
+message GetSectionsRequest { }
+message GetSectionsResponse { }
+message RenameResourceRequest { }
+message RenameResourceResponse { }
+message RemoveResourceRequest { }
+message RemoveResourceResponse { }
+message EditResourceProviderRequest { }
+message EditResourceProviderResponse { }
+message EditResourcePresenterRequest { }
+message EditResourcePresenterResponse { }
+message EditResourceLinkRequest { }
+message EditResourceLinkResponse { }
+message ChangeResourceTypeRequest { }
+message ChangeResourceTypeResponse { }
+message ChangeSectionPatternRequest { }
+message ChangeSectionPatternResponse { }
+message ChangeConditionRequest { }
+message ChangeConditionResponse { }
+message CreateSectionRequest { }
+message CreateSectionResponse { }
+message ReorderSectionRequest { }
+message ReorderSectionResponse { }
+message RemoveSectionRequest { }
+message RemoveSectionResponse { }
+message MergeSectionsRequest { }
+message MergeSectionsResponse { }
+message MoveSectionRequest { }
+message MoveSectionResponse { }
+
+// section/topic page
+message CreateCardRequest { }
+message CreateCardResponse { }
+message ReorderCardRequest { }
+message ReorderCardResponse { }
+message RemoveCardRequest { }
+message RemoveCardResponse { }
+message MergeCardsRequest { }
+message MergeCardsResponse { }
+
+// section page
+message GetStudyCardsRequest { }
+message GetStudyCardsResponse { }
+message RenameSectionRequest { }
+message RenameSectionResponse { }
+message MoveCardToSectionRequest { Resource resource = 1; Section section = 2; }
+message MoveCardToSectionResponse { }
+
+// topic page
+message GetPracticeCardsRequest { }
+message GetPracticeCardsResponse { }
+message RenameTopicRequest { }
+message RenameTopicResponse { }
+message MoveCardToTopicRequest { Subject subject = 1; Topic topic = 2; }
+message MoveCardToTopicResponse { }
+
+// card page
+message EditHeadlineRequest { }
+message EditHeadlineResponse { }
+message CreateBlockRequest { }
+message CreateBlockResponse { }
+message EditBlockRequest { }
+message EditBlockResponse { }
+message RemoveBlockRequest { }
+message RemoveBlockResponse { }
+message EditBlockExtensionRequest { }
+message EditBlockExtensionResponse { }
+message EditBlockTypeRequest { }
+message EditBlockTypeResponse { }
+message EditBlockMetaDataRequest { }
+message EditBlockMetaDataResponse { }
+message ReorderBlockRequest { }
+message ReorderBlockResponse { }
+message MergeBlocksRequest { }
+message MergeBlocksResponse { }
+message SplitBlockRequest { }
+message SplitBlockResponse { }

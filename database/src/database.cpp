@@ -37,19 +37,19 @@ database::database(std::string name, std::string address, std::string port)
     }
 }
 
-std::shared_ptr<Roadmaps> database::get_roadmaps(uint64_t user_id)
+std::shared_ptr<GetRoadmapsResponse> database::get_roadmaps(uint64_t user_id)
 {
     pqxx::result const result{query(std::format("select id, name from get_roadmaps({})", user_id))};
-    auto roadmaps{std::make_shared<Roadmaps>()};
+    auto response{std::make_shared<GetRoadmapsResponse>()};
 
     for (pqxx::row row : result)
     {
-        Roadmap* r{roadmaps->add_roadmap()};
+        Roadmap* r{response->add_roadmap()};
         r->set_id(row.at("id").as<std::uint64_t>());
         r->set_name(row.at("name").as<std::string>());
     }
 
-    return roadmaps;
+    return response;
 }
 
 bool database::create_session(uint64_t user_id, std::string_view token, std::string_view device)

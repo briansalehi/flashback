@@ -33,6 +33,8 @@ file(GLOB mock_files RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} test/mocks/flashback/*
 set(server_headers
     ${CMAKE_CURRENT_BINARY_DIR}/types.pb.h
     ${CMAKE_CURRENT_BINARY_DIR}/types.grpc.pb.h
+    ${CMAKE_CURRENT_BINARY_DIR}/requests.pb.h
+    ${CMAKE_CURRENT_BINARY_DIR}/requests.grpc.pb.h
     ${CMAKE_CURRENT_BINARY_DIR}/server.pb.h
     ${CMAKE_CURRENT_BINARY_DIR}/server.grpc.pb.h
 )
@@ -40,6 +42,8 @@ set(server_headers
 set(server_sources
     ${CMAKE_CURRENT_BINARY_DIR}/types.pb.cc
     ${CMAKE_CURRENT_BINARY_DIR}/types.grpc.pb.cc
+    ${CMAKE_CURRENT_BINARY_DIR}/requests.pb.cc
+    ${CMAKE_CURRENT_BINARY_DIR}/requests.grpc.pb.cc
     ${CMAKE_CURRENT_BINARY_DIR}/server.pb.cc
     ${CMAKE_CURRENT_BINARY_DIR}/server.grpc.pb.cc
 )

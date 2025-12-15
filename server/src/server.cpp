@@ -17,7 +17,7 @@ server::server(std::shared_ptr<database> database) : m_database{database}
     }
 }
 
-grpc::Status server::GetRoadmaps(grpc::ServerContext* context, RoadmapsRequest const* request, Roadmaps* response)
+grpc::Status server::GetRoadmaps(grpc::ServerContext* context, GetRoadmapsRequest const* request, GetRoadmapsResponse* response)
 {
     try
     {

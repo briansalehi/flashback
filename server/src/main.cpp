@@ -17,7 +17,13 @@ int main()
         auto database{std::make_shared<flashback::database>()};
         auto server{std::make_shared<flashback::server>(database)};
         auto builder{std::make_unique<grpc::ServerBuilder>()};
-        builder->AddListeningPort(std::format("{}:{}", listen_address, server_port), grpc::InsecureServerCredentials());
+
+        // grpc::SslServerCredentialsOptions opts;
+        // opts.pem_key_cert_pairs.push_back({key, cert});
+        // std::shared_ptr<grpc::ServerCredentials> credentials{grpc::SslServerCredentials(opts)};
+        std::shared_ptr<grpc::ServerCredentials> credentials{grpc::InsecureServerCredentials()};
+
+        builder->AddListeningPort(std::format("{}:{}", listen_address, server_port), credentials);
         builder->RegisterService(server.get());
         std::unique_ptr<grpc::Server> service{builder->BuildAndStart()};
         service->Wait();

@@ -2,253 +2,102 @@ syntax = "proto3";
 
 package flashback;
 
-import "types.proto";
-
-message SignInRequest {
-  User user = 1;
-}
-
-message SignInResponse {
-  bool success = 1;
-  string details = 2;
-  User user = 3;
-}
-
-message SignUpRequest {
-  User user = 1;
-}
-
-message SignUpResponse {
-  bool success = 1;
-  string details = 2;
-  User user = 3;
-}
-
-message ResetPasswordRequest {
-  User user = 1;
-}
-
-message ResetPasswordResponse {
-  bool success = 1;
-  string details = 2;
-  User user = 3;
-}
-
-message RoadmapsRequest {
-  User user = 1;
-}
-
-message VerifySessionRequest {
-  User user = 1;
-}
-
-message VerifySessionResponse {
-  bool valid = 1;
-}
+import "requests.proto";
 
 service Server {
-  rpc GetRoadmaps(RoadmapsRequest) returns (Roadmaps);
+  // entry page requests
   rpc SignIn(SignInRequest) returns (SignInResponse);
   rpc SignUp(SignUpRequest) returns (SignUpResponse);
-  rpc ResetPassword(ResetPasswordRequest) returns (ResetPasswordResponse);
   rpc VerifySession(VerifySessionRequest) returns (VerifySessionResponse);
+  //rpc VerifyUser(VerifyUserRequest) returns (VerifyUserResponse);
+
+  // account page requests
+  rpc ResetPassword(ResetPasswordRequest) returns (ResetPasswordResponse);
+  //rpc RenameUser(RenameUserRequest) returns (RenameUserResponse);
+  //rpc ChangeUserEmail(ChangeUserEmailRequest) returns (ChangeUserEmailResponse);
+  //rpc DeactivateUser(DeactivateUserRequest) returns (DeactivateUserResponse);
+
+  // welcome page requests
+  rpc GetRoadmaps(GetRoadmapsRequest) returns (GetRoadmapsResponse);
+  //rpc CreateRoadmap(CreateRoadmapRequest) returns (CreateRoadmapResponse);
+  //rpc ReorderRoadmap(ReorderRoadmapRequest) returns (ReorderRoadmapResponse);
+  //rpc RemoveRoadmap(RemoveRoadmapRequest) returns (RemoveRoadmapResponse);
+
+  // roadmap page requests
+  //rpc RenameRoadmap(RenameRoadmapRequest) returns (RenameRoadmapResponse);
+  //rpc GetMilestones(GetMilestonesRequest) returns (GetMilestonesResponse);
+  //rpc AddMilestone(AddMilestoneRequest) returns (AddMilestoneResponse);
+  //rpc SearchSubject(SearchSubjectRequest) returns (SearchSubjectResponse);
+  //rpc CreateSubject(CreateSubjectRequest) returns (CreateSubjectResponse);
+  //rpc ReorderMilestone(ReorderMilestoneRequest) returns (ReorderMilestoneResponse);
+  //rpc RemoveMilestone(RemoveMilestoneRequest) returns (RemoveMilestoneResponse);
+  //rpc ChangeMilestoneLevel(ChangeMilestoneLevelRequest) returns (ChangeMilestoneLevelResponse);
+
+  // subject page
+  //rpc RenameSubject(RenameSubjectRequest) returns (RenameSubjectResponse);
+  //rpc RemoveSubject(RemoveSubjectRequest) returns (RemoveSubjectResponse);
+
+  // subject page resource view
+  //rpc GetResources(GetResourcesRequest) returns (GetResourcesResponse);
+  //rpc AddResourceToSubject(AddResourceToSubjectRequest) returns (AddResourceToSubjectResponse);
+  //rpc CreateResource(CreateResourceRequest) returns (CreateResourceResponse);
+  //rpc ReorderResource(ReorderResourceRequest) returns (ReorderResourceResponse);
+  //rpc DropResourceFromSubject(DropResourceFromSubjectRequest) returns (DropResourceFromSubjectResponse);
+  //rpc MergeResources(MergeResourcesRequest) returns (MergeResourcesResponse);
+
+  // subject page topic view
+  //rpc GetTopics(GetTopicsRequest) returns (GetTopicsResponse);
+  //rpc CreateTopic(CreateTopicRequest) returns (CreateTopicResponse);
+  //rpc ReorderTopic(ReorderTopicRequest) returns (ReorderTopicResponse);
+  //rpc RemoveTopic(RemoveTopicRequest) returns (RemoveTopicResponse);
+  //rpc MergeTopics(MergeTopicsRequest) returns (MergeTopicsResponse);
+  //rpc RenameTopic(RenameTopicRequest) returns (RenameTopicResponse);
+  //rpc MoveTopic(MoveTopicRequest) returns (MoveTopicResponse);
+
+  // resource page requests
+  //rpc GetSections(GetSectionsRequest) returns (GetSectionsResponse);
+  //rpc RenameResource(RenameResourceRequest) returns (RenameResourceResponse);
+  //rpc RemoveResource(RemoveResourceRequest) returns (RemoveResourceResponse);
+  //rpc EditResourceProvider(EditResourceProviderRequest) returns (EditResourceProviderResponse);
+  //rpc EditResourcePresenter(EditResourcePresenterRequest) returns (EditResourcePresenterResponse);
+  //rpc EditResourceLink(EditResourceLinkRequest) returns (EditResourceLinkResponse);
+  //rpc ChangeResourceType(ChangeResourceTypeRequest) returns (ChangeResourceTypeResponse);
+  //rpc ChangeSectionPattern(ChangeSectionPatternRequest) returns (ChangeSectionPatternResponse);
+  //rpc ChangeCondition(ChangeConditionRequest) returns (ChangeConditionResponse);
+  //rpc CreateSection(CreateSectionRequest) returns (CreateSectionResponse);
+  //rpc ReorderSection(ReorderSectionRequest) returns (ReorderSectionResponse);
+  //rpc RemoveSection(RemoveSectionRequest) returns (RemoveSectionResponse);
+  //rpc MergeSections(MergeSectionsRequest) returns (MergeSectionsResponse);
+  //rpc RenameSection(RenameSectionRequest) returns (RenameSectionResponse);
+  //rpc MoveSection(MoveSectionRequest) returns (MoveSectionResponse);
+
+  // section/topic page
+  //rpc CreateCard(CreateCardRequest) returns (CreateCardResponse);
+  //rpc ReorderCard(ReorderCardRequest) returns (ReorderCardResponse);
+  //rpc RemoveCard(RemoveCardRequest) returns (RemoveCardResponse);
+  //rpc MergeCards(MergeCardsRequest) returns (MergeCardsResponse);
+
+  // section page
+  //rpc GetStudyCards(GetStudyCardsRequest) returns (GetStudyCardsResponse);
+  //rpc RenameSection(RenameSectionRequest) returns (RenameSectionResponse);
+  //rpc RemoveSection(RemoveSectionRequest) returns (RemoveSectionResponse);
+  //rpc MoveCardToSection(MoveCardToSectionRequest) returns (MoveCardToSectionResponse);
+
+  // topic page
+  //rpc GetPracticeCards(GetPracticeCardsRequest) returns (GetPracticeCardsResponse);
+  //rpc RenameTopic(RenameTopicRequest) returns (RenameTopicResponse);
+  //rpc RemoveTopic(RemoveTopicRequest) returns (RemoveTopicResponse);
+  //rpc MoveCardToTopic(MoveCardToTopicRequest) returns (MoveCardToTopicResponse);
+
+  // card page
+  //rpc EditHeadline(EditHeadlineRequest) returns (EditHeadlineResponse);
+  //rpc CreateBlock(CreateBlockRequest) returns (CreateBlockResponse);
+  //rpc EditBlock(EditBlockRequest) returns (EditBlockResponse);
+  //rpc RemoveBlock(RemoveBlockRequest) returns (RemoveBlockResponse);
+  //rpc EditBlockExtension(EditBlockExtensionRequest) returns (EditBlockExtensionResponse);
+  //rpc EditBlockType(EditBlockTypeRequest) returns (EditBlockTypeResponse);
+  //rpc EditBlockMetaData(EditBlockMetaDataRequest) returns (EditBlockMetaDataResponse);
+  //rpc ReorderBlock(ReorderBlockRequest) returns (ReorderBlockResponse);
+  //rpc MergeBlocks(MergeBlocksRequest) returns (MergeBlocksResponse);
+  //rpc SplitBlock(SplitBlockRequest) returns (SplitBlockResponse);
 }
-
-/*
-2. Server-side
-
-Use Argon2, scrypt, or bcrypt.
-
-std::string hash = argon2_hash(password);
-db.insert_user(email, hash);
-
-A naive SHA-256 hash is not acceptable.
-
-std::string token = generate_secure_random();
-db.store_session(user_id, token, expiration_time);
-
-3. Client-side
-
-SignUpRequest req;
-req.set_email("user@example.com");
-req.set_password("secret123");
-auto response = stub->SignUp(ctx, req);
-
-LoginRequest r;
-r.set_email("user@example.com");
-r.set_password("secret123");
-
-LoginResponse resp;
-stub->Login(&ctx, r, &resp);
-
-std::string token = resp.token();  // store it
-
-Use token in future calls
-
-ClientContext ctx;
-ctx.AddMetadata("authorization", token);
-stub->GetRoadmap(&ctx, request, &response);
-
-4. Server: validate token on every RPC
-
-Status RoadmapServiceImpl::GetRoadmap(
-    ServerContext* ctx,
-    const RoadmapRequest* req,
-    Roadmap* resp)
-{
-    auto auth = ctx->client_metadata().find("authorization");
-    if (auth == ctx->client_metadata().end()) {
-        return Status(grpc::UNAUTHENTICATED, "Missing token");
-    }
-
-    std::string token = std::string(auth->second.begin(), auth->second.end());
-    auto user = db.lookup_session(token);
-
-    if (!user) {
-        return Status(grpc::PERMISSION_DENIED, "Invalid token");
-    }
-
-    // Proceed with business logic
-}
-
-5. You must use TLS
-
-Without it, all the above leaks over the wire.
-
-gRPC makes TLS trivial:
-
-grpc::SslServerCredentialsOptions opts;
-opts.pem_key_cert_pairs.push_back({key, cert});
-auto creds = grpc::SslServerCredentials(opts);
-
-builder.AddListeningPort("0.0.0.0:50051", creds);
-
-Clients similarly use SslCredentials.
-
-DB tables:
-
-users(id, email UNIQUE, password_hash, created_at)
-
-sessions(id, user_id, token, expires_at)
-
-Password hashing:
-
-argon2id
-
-1-second target computation time
-
-Per-user random salt
-
-Tokens:
-
-32 bytes securely generated via std::random_device + openssl RAND_bytes
-
-Expiration:
-
-Session lifetime ≈ 1 week or whatever your app requires
-
-Refresh token logic optional
-
-Authorization:
-
-gRPC metadata
-
-Verified inside every RPC handler
-
-This is the minimal production-worthy skeleton.
-*/
-
-/*
-Server handles the following requests:
-
-Welcome
-
-- Get roadmaps
-- Create a roadmap
-- Reorder a roadmap
-- Remove a roadmap
-
-Roadmap
-
-- Get milestones
-- Rename the roadmap
-- Add a milestone
-- Reorder a milestone
-- Drop a milestone from the roadmap
-- Edit the level of a milestone
-
-Subject
-
-- Get resources
-- Add the resource to a subject
-- Create a resource
-- Reorder a resource
-- Drop a resource from the subject
-- Merge two resources
-
-Resource
-
-- Get sections
-- Rename the resource
-- Remove the resource
-- Edit the provider of resource
-- Edit the presenter of resource
-- Edit the link of resource
-- Change resource type
-- Change section pattern
-- Change condition
-- Create a section
-- Reorder a section
-- Remove a section
-- Merge two sections
-- Rename a section
-- Move a section to another resource
-
-Subject
-
-- Get topics
-- Add a resource to the subject
-- Rename the subject
-- Remove the subject
-- Create a topic
-- Reorder a topic
-- Remove a topic
-- Merge two topics
-- Rename a topic
-- Move a topic to another subject
-
-Section
-
-- Get study cards
-- Create a new card
-- Reorder cards
-- Remove a card
-- Merge two cards
-- Rename the section
-- Remove the section
-- Move a card to another resource/section
-
-Topic
-
-- Get practice cards
-- Create a new card
-- Reorder cards
-- Remove a card
-- Merge two cards
-- Rename the topic
-- Remove the topic
-- Move a card to another subject/topic
-
-Card
-
-- Edit heading
-- Create a block
-- Edit a block
-- Remove a block
-- Edit the extension of a block
-- Edit the language of a block
-- Edit the metadata of a block
-- Reorder blocks
-- Merge two blocks
-- Split a block into two
-*/

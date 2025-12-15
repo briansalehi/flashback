@@ -9,20 +9,12 @@ message Roadmap {
   string name = 2;
 }
 
-message Roadmaps {
-  repeated Roadmap roadmap = 1;
-}
-
-message subject {
+message Subject {
   uint64 id = 1;
   string name = 2;
 }
 
-message subjects {
-  repeated subject subject = 1;
-}
-
-message milestone {
+message Milestone {
   enum expertise_level {
     surface = 0;
     depth = 1;
@@ -35,11 +27,7 @@ message milestone {
   expertise_level level = 4;
 }
 
-message milestones {
-  repeated milestone milestone = 1;
-}
-
-message resource {
+message Resource {
   enum resource_type {
     book = 0;
     website = 1;
@@ -80,29 +68,17 @@ message resource {
   uint64 days = 9;
 }
 
-message resources {
-  repeated resource resource = 1;
-}
-
-message topic {
+message Topic {
   uint64 position = 1;
   string name = 2;
 }
 
-message topics {
-  repeated topic topic = 1;
-}
-
-message section {
+message Section {
   uint64 id = 1;
   string name = 2;
 }
 
-message sections {
-  repeated section section = 1;
-}
-
-message card {
+message Card {
   enum card_state {
     draft = 0;
     completed = 1;
@@ -115,10 +91,6 @@ message card {
   uint64 id = 1;
   card_state state = 2;
   string heading = 3;
-}
-
-message cards {
-  repeated card card = 1;
 }
 
 message User {
