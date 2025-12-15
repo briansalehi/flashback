@@ -9,10 +9,6 @@
 class test_database: public testing::Test
 {
 protected:
-    test_database()
-    {
-    }
-
     void SetUp() override
     {
         m_connection = std::make_unique<pqxx::connection>("postgres://flashback@localhost:5432/flashback_test");
