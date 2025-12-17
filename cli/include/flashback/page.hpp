@@ -18,12 +18,12 @@ public:
 protected:
     virtual void display(std::function<ftxui::Element()> const&  element);
     virtual void display(ftxui::Component component, std::function<ftxui::Element()> const&  element);
-    virtual void heading(ftxui::Element element);
+    virtual void headline(ftxui::Element element);
 
 private:
     [[nodiscard]] bool handle_event(ftxui::Event const& event);
 
-    ftxui::Element m_heading;
+    ftxui::Element m_headline;
     std::function<ftxui::Element()> m_content;
     ftxui::Component m_component;
     ftxui::ScreenInteractive m_screen;

@@ -22,9 +22,9 @@ service Server {
   //rpc CreateRoadmap(CreateRoadmapRequest) returns (CreateRoadmapResponse);
   //rpc ReorderRoadmap(ReorderRoadmapRequest) returns (ReorderRoadmapResponse);
   //rpc RemoveRoadmap(RemoveRoadmapRequest) returns (RemoveRoadmapResponse);
+  //rpc RenameRoadmap(RenameRoadmapRequest) returns (RenameRoadmapResponse);
 
   // roadmap page requests
-  //rpc RenameRoadmap(RenameRoadmapRequest) returns (RenameRoadmapResponse);
   //rpc GetMilestones(GetMilestonesRequest) returns (GetMilestonesResponse);
   //rpc AddMilestone(AddMilestoneRequest) returns (AddMilestoneResponse);
   //rpc SearchSubject(SearchSubjectRequest) returns (SearchSubjectResponse);

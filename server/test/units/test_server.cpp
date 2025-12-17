@@ -3,24 +3,20 @@
 #include <flashback/mock_database.hpp>
 #include <flashback/server.hpp>
 
-class ServerTest: public testing::Test
+class test_server : public testing::Test
 {
 public:
-    ServerTest()
-        :m_server{nullptr}
-    {
-    }
-
     void SetUp() override
     {
+        m_mock_database = std::make_shared<flashback::mock_database>();
+        m_server = std::make_shared<flashback::server>(m_mock_database);
     }
 
 private:
-    std::shared_ptr<flashback::server> m_server;
-    std::shared_ptr<flashback::mock_database> m_mock_database;
+    std::shared_ptr<flashback::server> m_server{nullptr};
+    std::shared_ptr<flashback::mock_database> m_mock_database{nullptr};
 };
 
-TEST_F(ServerTest, Construction)
+TEST_F(test_server, SignUp)
 {
-    // m_server = std::make_shared<flashback::server>(m_mock_database);
 }

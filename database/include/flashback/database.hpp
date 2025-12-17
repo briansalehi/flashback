@@ -15,6 +15,8 @@ public:
     bool create_session(uint64_t user_id, std::string_view token, std::string_view device) override;
     [[nodiscard]] uint64_t create_user(std::string_view name, std::string_view email, std::string_view hash) override;
     void reset_password(uint64_t user_id, std::string_view hash) override;
+    [[nodiscard]] std::optional<std::shared_ptr<User>> user_exists(std::string_view email) override;
+    [[nodiscard]] std::unique_ptr<User> get_user(std::string_view email) override;
     [[nodiscard]] std::unique_ptr<User> get_user(uint64_t user_id, std::string_view device) override;
     void revoke_session(uint64_t user_id, std::string_view token) override;
     void revoke_sessions_except(uint64_t user_id, std::string_view token) override;

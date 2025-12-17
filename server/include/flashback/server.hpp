@@ -10,7 +10,7 @@ namespace flashback
 class server final: public Server::Service
 {
 public:
-    explicit server(std::shared_ptr<database> database);
+    explicit server(std::shared_ptr<basic_database> database);
     ~server() override = default;
 
     // entry page requests
@@ -28,23 +28,85 @@ public:
     // CreateRoadmap
     // ReorderRoadmap
     // RemoveRoadmap
+    // RenameRoadmap
 
     // roadmap page requests
-    // RenameRoadmap
     // GetMilestones
     // AddMilestone
     // ReorderMilestone
     // RemoveMilestone
     // ChangeMilestoneLevel
 
-    //
+    // subject page requests
+    // RenameSubject
+    // RemoveSubject
+    // GetResources
+    // AddResourceToSubject
+    // CreateResource
+    // ReorderResource
+    // DropResourceFromSubject
+    // MergeResources
+    // GetTopics
+    // CreateTopic
+    // ReorderTopic
+    // RemoveTopic
+    // MergeTopics
+    // RenameTopic
+    // MoveTopic
 
-private:
+    // resource page requests
+    // GetSections
+    // RenameResource
+    // RemoveResource
+    // EditResourceProvider
+    // EditResourcePresenter
+    // EditResourceLink
+    // ChangeResourceType
+    // ChangeSectionPattern
+    // ChangeCondition
+    // CreateSection
+    // ReorderSection
+    // RemoveSection
+    // MergeSections
+    // RenameSection
+    // MoveSection
+
+    // section/topic page
+    // CreateCard
+    // ReorderCard
+    // RemoveCard
+    // MergeCards
+
+    // section page
+    // GetStudyCards
+    // RenameSection
+    // RemoveSection
+    // MoveCardToSection
+
+    // topic page
+    // GetPracticeCards
+    // RenameTopic
+    // RemoveTopic
+    // MoveCardToTopic
+
+    // card page
+    // EditHeadline
+    // CreateBlock
+    // EditBlock
+    // RemoveBlock
+    // EditBlockExtension
+    // EditBlockType
+    // EditBlockMetaData
+    // ReorderBlock
+    // MergeBlocks
+    // SplitBlock
+
+protected:
     [[nodiscard]] static std::string calculate_hash(std::string_view password);
     [[nodiscard]] static bool password_is_valid(std::string_view lhs, std::string_view rhs);
     [[nodiscard]] static std::string generate_token();
-    [[nodiscard]] bool session_is_valid(std::string_view email, std::string_view device, std::string_view token) const;
+    [[nodiscard]] bool session_is_valid(grpc::ServerContext* context, std::string_view user_provided_token);
 
-    std::shared_ptr<database> m_database;
+    std::shared_ptr<basic_database> m_database;
 };
 } // flashback

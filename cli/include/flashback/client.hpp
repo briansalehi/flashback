@@ -21,7 +21,7 @@ public:
     void user(std::shared_ptr<User> user);
     void token(std::string user);
 
-    std::shared_ptr<Roadmaps> roadmaps();
+    std::shared_ptr<GetRoadmapsResponse> roadmaps();
     std::shared_ptr<SignInResponse> signin();
     std::shared_ptr<SignUpResponse> signup();
     std::shared_ptr<ResetPasswordResponse> reset_password();

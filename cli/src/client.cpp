@@ -44,14 +44,14 @@ void client::user(std::shared_ptr<User> user) { m_user = user; }
 
 void client::token(std::string token) { m_user->set_token(std::move(token)); }
 
-std::shared_ptr<Roadmaps> client::roadmaps()
+std::shared_ptr<GetRoadmapsResponse> client::roadmaps()
 {
     auto context{create_context()};
 
-    std::shared_ptr<Roadmaps> data{std::make_shared<Roadmaps>()};
+    std::shared_ptr<GetRoadmapsResponse> data{std::make_shared<GetRoadmapsResponse>()};
     std::unique_ptr<User> user{std::make_unique<User>(*m_user)};
 
-    auto request{std::make_shared<RoadmapsRequest>()};
+    auto request{std::make_shared<GetRoadmapsRequest>()};
     request->set_allocated_user(user.release());
 
     if (grpc::Status const status{m_stub->GetRoadmaps(context.get(), *request, data.get())}; !status.ok())

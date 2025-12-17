@@ -3,7 +3,7 @@
 #include <ftxui/dom/elements.hpp>
 
 flashback::page::page()
-    : m_heading{
+    : m_headline{
         ftxui::vbox(
             ftxui::paragraphAlignCenter("Flashback") | ftxui::color(ftxui::Color::Red) | ftxui::bold,
             ftxui::separator() | ftxui::color(ftxui::Color::GrayDark)
@@ -24,9 +24,9 @@ void flashback::page::display(ftxui::Component component, std::function<ftxui::E
     m_content = content;
 }
 
-void flashback::page::heading(ftxui::Element element)
+void flashback::page::headline(ftxui::Element element)
 {
-    m_heading = std::move(element);
+    m_headline = std::move(element);
 }
 
 bool flashback::page::handle_event(ftxui::Event const& event)

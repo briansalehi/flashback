@@ -67,7 +67,7 @@ TEST_F(test_database, CreateSessionForNonExistingUser)
     ASSERT_FALSE(m_database->create_session(non_existing_user, m_user->token(), m_user->device()));
 }
 
-TEST_F(test_database, GetUser)
+TEST_F(test_database, GetUserWithDevice)
 {
     std::unique_ptr<flashback::User> user = m_database->get_user(m_user->id(), m_user->device());
 
@@ -88,6 +88,26 @@ TEST_F(test_database, GetUser)
     EXPECT_EQ(user->hash(), m_user->hash());
     EXPECT_EQ(user->token(), m_user->token());
     EXPECT_EQ(user->device(), m_user->device());
+    EXPECT_TRUE(user->password().empty());
+    EXPECT_FALSE(user->verified());
+}
+
+TEST_F(test_database, GetUserWithEmail)
+{
+    std::string non_existing_email{"non_existing_user@flashback.eu.com"};
+    std::unique_ptr<flashback::User> user{m_database->get_user(non_existing_email)};
+
+    ASSERT_EQ(user, nullptr);
+
+    user = m_database->get_user(m_user->email());
+
+    ASSERT_NE(user, nullptr);
+    EXPECT_GT(user->id(), 0);
+    EXPECT_EQ(user->name(), m_user->name());
+    EXPECT_EQ(user->email(), m_user->email());
+    EXPECT_EQ(user->hash(), m_user->hash());
+    EXPECT_TRUE(user->token().empty());
+    EXPECT_TRUE(user->device().empty());
     EXPECT_TRUE(user->password().empty());
     EXPECT_FALSE(user->verified());
 }
@@ -165,4 +185,12 @@ TEST_F(test_database, ResetPassword)
     user = m_database->get_user(m_user->id(), m_user->device());
     ASSERT_NE(user, nullptr);
     EXPECT_EQ(user->hash(), hash);
+}
+
+TEST_F(test_database, UserExists)
+{
+    EXPECT_FALSE(m_database->user_exists("non-existing-user@flashback.eu.com"));
+    EXPECT_TRUE(m_database->user_exists(m_user->email()));
+    EXPECT_TRUE(m_database->create_session(m_user->id(), m_user->token(), m_user->device()));
+    EXPECT_TRUE(m_database->user_exists(m_user->email()));
 }
