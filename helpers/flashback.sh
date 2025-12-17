@@ -177,9 +177,9 @@ show_topic_card()
 {
     topic_counter=$((topic_counter + 1))
 
-    IFS="|" read -r state position heading < <(psql -U flashback -d flashback -c "select c.state, t.position, c.heading from topics_cards t join cards c on c.id = t.card where t.subject = $subject and t.topic = $topic and t.card = $card order by t.position" -At)
+    IFS="|" read -r state position headline < <(psql -U flashback -d flashback -c "select c.state, t.position, c.headline from topics_cards t join cards c on c.id = t.card where t.subject = $subject and t.topic = $topic and t.card = $card order by t.position" -At)
 
-    heading="$(pandoc -f markdown -t plain <<< "$heading" | xargs)"
+    headline="$(pandoc -f markdown -t plain <<< "$headline" | xargs)"
 
     case "$mode" in
         aggressive) mode_color="\e[1;31m";;
@@ -199,7 +199,7 @@ show_topic_card()
     clear
     {
         printf "${mode_color}%sly practicing\e[0m \e[1;36m%s\e[0m \e[2;37m(%d)\e[0m \e[1;35m»\e[0m \e[1;36m%s\e[0m \e[2;37m(%d)\e[0m \e[1;35m»\e[0m \e[1;36m%s\e[0m \e[2;37m(%d / %d)\e[0m\n\n" "${mode^}" "${roadmaps[$roadmap]}" "$roadmap" "$subject_name" "$subject" "$topic_name" "$topic" "$total_topics"
-        printf "\e[1;35m%d/%d\e[0m \e[1;33m%s\e[0m \e[2;37m%s\e[0m $state_color(%s)\e[0m\n" "$position" "$total_cards" "$heading" "$card" "$state"
+        printf "\e[1;35m%d/%d\e[0m \e[1;33m%s\e[0m \e[2;37m%s\e[0m $state_color(%s)\e[0m\n" "$position" "$total_cards" "$headline" "$card" "$state"
 
         show_blocks "$card"
     } | custom_pager
@@ -209,9 +209,9 @@ show_section_card()
 {
     section_counter=$((section_counter + 1))
 
-    IFS="|" read -r state position heading < <(psql -U flashback -d flashback -c "select c.state, t.position, c.heading from sections_cards t join cards c on c.id = t.card where t.resource = $resource and t.section = $section and t.card = $card order by position" -At)
+    IFS="|" read -r state position headline < <(psql -U flashback -d flashback -c "select c.state, t.position, c.headline from sections_cards t join cards c on c.id = t.card where t.resource = $resource and t.section = $section and t.card = $card order by position" -At)
 
-    heading="$(pandoc -f markdown -t plain <<< "$heading" | xargs)"
+    headline="$(pandoc -f markdown -t plain <<< "$headline" | xargs)"
 
     case "$state" in
         draft) state_color="\e[1;2;31m" ;;
@@ -225,7 +225,7 @@ show_section_card()
     clear
     {
         printf "\e[1;36m%s\e[0m \e[2;37m(%d)\e[0m \e[1;35m»\e[0m \e[1;36m%s\e[0m \e[2;37m(%d)\e[0m \e[1;35m»\e[0m \e[1;36m%s\e[0m \e[2;37m(%d %s %s)\e[0m \e[1;35m»\e[0m \e[1;36m%s / %d\e[0m \e[2;37mpresented by\e[0m \e[1;36m%s\e[0m \e[2;37mprovided by\e[0m \e[1;36m%s\e[0m\n\n" "${roadmaps[$roadmap]}" "$roadmap" "${subjects[$subject]}" "$subject" "${resource_name}" "${resource}" "${resource_type}" "${condition}" "$section_name" ${#sections[*]} "${author}" "${publisher}"
-        printf "\e[1;35m%d/%d\e[0m \e[1;33m%s\e[0m \e[2;37m%s\e[0m $state_color(%s)\e[0m\n" "$position" "${#cards[*]}" "$heading" "$card" "$state"
+        printf "\e[1;35m%d/%d\e[0m \e[1;33m%s\e[0m \e[2;37m%s\e[0m $state_color(%s)\e[0m\n" "$position" "${#cards[*]}" "$headline" "$card" "$state"
 
         show_blocks "$card"
     } | custom_pager
