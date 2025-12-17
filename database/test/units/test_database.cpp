@@ -15,7 +15,7 @@ protected:
         m_database = std::make_unique<flashback::database>("flashback_test");
         m_user = std::make_unique<flashback::User>();
         m_user->set_name("Flashback Test User");
-        m_user->set_email("test@flashback.eu.com");
+        m_user->set_email("user@flashback.eu.com");
         m_user->set_hash(R"($argon2id$v=19$m=262144,t=3,p=1$faiJerPBCLb2TEdTbGv8BQ$M0j9j6ojyIjD9yZ4+lBBNR/WAiWpImUcEcUhCL3u9gc)");
         m_user->set_token(R"(iNFzgSaY2W+q42gM9lNVbB13v0odiLy6WnHbInbuvvE)");
         m_user->set_device(R"(aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee)");

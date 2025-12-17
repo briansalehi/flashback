@@ -97,17 +97,14 @@ void database::reset_password(uint64_t user_id, std::string_view hash)
     exec(std::format("call reset_password({}, '{}')", user_id, hash));
 }
 
-std::optional<std::shared_ptr<User>> database::user_exists(std::string_view email)
+bool database::user_exists(std::string_view email)
 {
-    std::optional<std::shared_ptr<User>> exists{};
-    std::shared_ptr<User> user{nullptr};
-    pqxx::result result{query(std::format("select * from user_exists('{}')", email))};
+    bool exists{false};
 
-    if (!result.empty())
+    if (pqxx::result result{query(std::format("select * from user_exists('{}')", email))}; !result.empty())
     {
         auto const user_id = result.at(0).at(0).as<uint64_t>();
-        user->set_id(user_id);
-        exists = user;
+        exists = user_id > 0;
     }
 
     return exists;

@@ -82,6 +82,7 @@ grpc::Status server::SignUp(grpc::ServerContext* context, const SignUpRequest* r
         if (!request->has_user() ||
             request->user().name().empty() ||
             request->user().email().empty() ||
+            request->user().device().empty() ||
             request->user().password().empty()
         )
         {
@@ -90,17 +91,13 @@ grpc::Status server::SignUp(grpc::ServerContext* context, const SignUpRequest* r
 
         if (m_database->user_exists(request->user().email()))
         {
-            throw client_exception(std::format("user {} is already registered", request->user().id()));
+            throw client_exception(std::format("user {} is already registered", request->user().email()));
         }
 
-        auto user{std::make_unique<User>()};
-        user->set_name(request->user().name());
-        user->set_email(request->user().email());
-        user->set_device(request->user().device());
-        user->set_hash(calculate_hash(request->user().password()));
-
-        uint64_t user_id{m_database->create_user(user->name(), user->email(), user->hash())};
-        user->set_id(user_id);
+        auto user{std::make_unique<User>(request->user())};
+        user->set_hash(calculate_hash(user->password()));
+        user->set_id(m_database->create_user(user->name(), user->email(), user->hash()));
+        user->clear_password();
 
         if (user->id() > 0)
         {
