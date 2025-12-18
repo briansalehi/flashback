@@ -103,8 +103,7 @@ bool database::user_exists(std::string_view email)
 
     if (pqxx::result result{query(std::format("select * from user_exists('{}')", email))}; !result.empty())
     {
-        auto const user_id = result.at(0).at(0).as<uint64_t>();
-        exists = user_id > 0;
+        exists = result.at(0).at(0).as<bool>();
     }
 
     return exists;
@@ -114,9 +113,7 @@ std::unique_ptr<User> database::get_user(std::string_view email)
 {
     std::unique_ptr<User> user{nullptr};
 
-    pqxx::result result_set{query(std::format("select * from get_user('{}'::character varying)", email))};
-
-    if (result_set.size() == 1)
+    if (pqxx::result result_set{query(std::format("select * from get_user('{}'::character varying)", email))}; !result_set.empty())
     {
         pqxx::row result{result_set.at(0)};
         user = std::make_unique<User>();
@@ -124,10 +121,16 @@ std::unique_ptr<User> database::get_user(std::string_view email)
         user->set_id(result.at("id").as<uint64_t>());
         user->set_name(result.at("name").as<std::string>());
         user->set_email(result.at("email").as<std::string>());
-        user->set_hash(result.at("hash").as<std::string>());
-        user->set_token(result.at("token").as<std::string>());
-        user->set_device(result.at("device").as<std::string>());
         user->set_verified(result.at("verified").as<bool>());
+
+        if (!result.at("hash").is_null())
+            user->set_hash(result.at("hash").as<std::string>());
+
+        if (!result.at("token").is_null())
+            user->set_token(result.at("token").as<std::string>());
+
+        if (!result.at("device").is_null())
+            user->set_device(result.at("device").as<std::string>());
 
         std::tm tm{};
 
@@ -170,10 +173,16 @@ std::unique_ptr<User> database::get_user(uint64_t user_id, std::string_view devi
         user->set_id(result.at("id").as<uint64_t>());
         user->set_name(result.at("name").as<std::string>());
         user->set_email(result.at("email").as<std::string>());
-        user->set_hash(result.at("hash").as<std::string>());
-        user->set_token(result.at("token").as<std::string>());
-        user->set_device(result.at("device").as<std::string>());
         user->set_verified(result.at("verified").as<bool>());
+
+        if (!result.at("hash").is_null())
+            user->set_hash(result.at("hash").as<std::string>());
+
+        if (!result.at("token").is_null())
+            user->set_token(result.at("token").as<std::string>());
+
+        if (!result.at("device").is_null())
+            user->set_device(result.at("device").as<std::string>());
 
         std::tm tm{};
 
