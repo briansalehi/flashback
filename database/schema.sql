@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict tldWQT8VBT619tt91iPaHZcXgXNz0geRBscm6fBv5meVf6WEthKVjO7nYyxJUir
+\restrict dHsAuPNl5S2gyLXAa0tXwuvlJiXS56WIhDR1Tlcuasees7fAl7jt5OuqDpjl7aw
 
 -- Dumped from database version 18.0
 -- Dumped by pg_dump version 18.0
@@ -27,6 +27,34 @@ CREATE SCHEMA flashback;
 
 
 ALTER SCHEMA flashback OWNER TO flashback;
+
+--
+-- Name: citext; Type: EXTENSION; Schema: -; Owner: -
+--
+
+CREATE EXTENSION IF NOT EXISTS citext WITH SCHEMA flashback;
+
+
+--
+-- Name: EXTENSION citext; Type: COMMENT; Schema: -; Owner: 
+--
+
+COMMENT ON EXTENSION citext IS 'data type for case-insensitive character strings';
+
+
+--
+-- Name: pg_trgm; Type: EXTENSION; Schema: -; Owner: -
+--
+
+CREATE EXTENSION IF NOT EXISTS pg_trgm WITH SCHEMA flashback;
+
+
+--
+-- Name: EXTENSION pg_trgm; Type: COMMENT; Schema: -; Owner: 
+--
+
+COMMENT ON EXTENSION pg_trgm IS 'text similarity measurement and index searching based on trigrams';
+
 
 --
 -- Name: card_state; Type: TYPE; Schema: flashback; Owner: flashback
@@ -140,6 +168,7 @@ CREATE TYPE flashback.section_pattern AS ENUM (
     'page',
     'session',
     'episode',
+    'playlist',
     'post',
     'synapse'
 );
@@ -2164,6 +2193,18 @@ ALTER TABLE flashback.presenters ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTIT
 
 
 --
+-- Name: producers; Type: TABLE; Schema: flashback; Owner: flashback
+--
+
+CREATE TABLE flashback.producers (
+    resource integer NOT NULL,
+    provider integer NOT NULL
+);
+
+
+ALTER TABLE flashback.producers OWNER TO flashback;
+
+--
 -- Name: progress; Type: TABLE; Schema: flashback; Owner: flashback
 --
 
@@ -2179,6 +2220,32 @@ CREATE TABLE flashback.progress (
 ALTER TABLE flashback.progress OWNER TO flashback;
 
 --
+-- Name: providers; Type: TABLE; Schema: flashback; Owner: flashback
+--
+
+CREATE TABLE flashback.providers (
+    id integer NOT NULL,
+    name flashback.citext NOT NULL
+);
+
+
+ALTER TABLE flashback.providers OWNER TO flashback;
+
+--
+-- Name: providers_id_seq; Type: SEQUENCE; Schema: flashback; Owner: flashback
+--
+
+ALTER TABLE flashback.providers ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
+    SEQUENCE NAME flashback.providers_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+
+--
 -- Name: resources; Type: TABLE; Schema: flashback; Owner: flashback
 --
 
@@ -2188,8 +2255,6 @@ CREATE TABLE flashback.resources (
     type flashback.resource_type NOT NULL,
     pattern flashback.section_pattern NOT NULL,
     condition flashback.condition NOT NULL,
-    presenter character varying(60),
-    provider character varying(60),
     link character varying(2000)
 );
 
@@ -2575,6 +2640,14 @@ ALTER TABLE ONLY flashback.assessments
 
 
 --
+-- Name: authors authors_pkey; Type: CONSTRAINT; Schema: flashback; Owner: flashback
+--
+
+ALTER TABLE ONLY flashback.authors
+    ADD CONSTRAINT authors_pkey PRIMARY KEY (resource, presenter);
+
+
+--
 -- Name: blocks_activities blocks_activities_pkey; Type: CONSTRAINT; Schema: flashback; Owner: flashback
 --
 
@@ -2647,11 +2720,35 @@ ALTER TABLE ONLY flashback.presenters
 
 
 --
+-- Name: producers producers_pkey; Type: CONSTRAINT; Schema: flashback; Owner: flashback
+--
+
+ALTER TABLE ONLY flashback.producers
+    ADD CONSTRAINT producers_pkey PRIMARY KEY (resource, provider);
+
+
+--
 -- Name: progress progress_pkey; Type: CONSTRAINT; Schema: flashback; Owner: flashback
 --
 
 ALTER TABLE ONLY flashback.progress
     ADD CONSTRAINT progress_pkey PRIMARY KEY ("user", card);
+
+
+--
+-- Name: providers providers_name_key; Type: CONSTRAINT; Schema: flashback; Owner: flashback
+--
+
+ALTER TABLE ONLY flashback.providers
+    ADD CONSTRAINT providers_name_key UNIQUE (name);
+
+
+--
+-- Name: providers providers_pkey; Type: CONSTRAINT; Schema: flashback; Owner: flashback
+--
+
+ALTER TABLE ONLY flashback.providers
+    ADD CONSTRAINT providers_pkey PRIMARY KEY (id);
 
 
 --
@@ -2943,6 +3040,22 @@ ALTER TABLE ONLY flashback.network_activities
 
 
 --
+-- Name: producers producers_provider_fkey; Type: FK CONSTRAINT; Schema: flashback; Owner: flashback
+--
+
+ALTER TABLE ONLY flashback.producers
+    ADD CONSTRAINT producers_provider_fkey FOREIGN KEY (provider) REFERENCES flashback.providers(id) ON UPDATE CASCADE ON DELETE CASCADE;
+
+
+--
+-- Name: producers producers_resource_fkey; Type: FK CONSTRAINT; Schema: flashback; Owner: flashback
+--
+
+ALTER TABLE ONLY flashback.producers
+    ADD CONSTRAINT producers_resource_fkey FOREIGN KEY (resource) REFERENCES flashback.resources(id) ON UPDATE CASCADE ON DELETE CASCADE;
+
+
+--
 -- Name: progress progress_card_fkey; Type: FK CONSTRAINT; Schema: flashback; Owner: flashback
 --
 
@@ -3154,5 +3267,5 @@ ALTER TABLE ONLY flashback.users_roadmaps
 -- PostgreSQL database dump complete
 --
 
-\unrestrict tldWQT8VBT619tt91iPaHZcXgXNz0geRBscm6fBv5meVf6WEthKVjO7nYyxJUir
+\unrestrict dHsAuPNl5S2gyLXAa0tXwuvlJiXS56WIhDR1Tlcuasees7fAl7jt5OuqDpjl7aw
 
