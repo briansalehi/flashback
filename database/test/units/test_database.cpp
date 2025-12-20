@@ -194,3 +194,8 @@ TEST_F(test_database, UserExists)
     EXPECT_TRUE(m_database->create_session(m_user->id(), m_user->token(), m_user->device()));
     EXPECT_TRUE(m_database->user_exists(m_user->email()));
 }
+
+TEST_F(test_database, GetRoadmaps)
+{
+    std::shared_ptr<flashback::GetRoadmapsResponse> roadmaps{m_database->get_roadmaps(m_user->id())};
+}

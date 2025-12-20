@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict dGsHx9ipa2gODb2S9cKl6h2eqF1cIWxNxqwFxazD2Qp4zcIwKBbbxjjQBrh6Alf
+\restrict tldWQT8VBT619tt91iPaHZcXgXNz0geRBscm6fBv5meVf6WEthKVjO7nYyxJUir
 
 -- Dumped from database version 18.0
 -- Dumped by pg_dump version 18.0
@@ -427,23 +427,55 @@ $$;
 ALTER FUNCTION flashback.create_card(headline text) OWNER TO flashback;
 
 --
+-- Name: create_nerve(integer, integer); Type: FUNCTION; Schema: flashback; Owner: flashback
+--
+
+CREATE FUNCTION flashback.create_nerve(user_id integer, subject_id integer) RETURNS integer
+    LANGUAGE plpgsql
+    AS $$
+declare user_name character varying;
+declare user_resource integer;
+begin
+    select name into user_name from users where id = user_id;
+
+    user_resource := create_resource(user_name, 'nerve'::resource_type, 'synapse'::section_patern, user_name, 'Flashback'::character varying, null::character varying);
+
+    insert into shelves (resource, subject) values (user_resource, subject_id);
+
+    insert into nerves ("user", resource, subject) values (user_id, user_resource, subject_id);
+
+    return user_resource;
+end; $$;
+
+
+ALTER FUNCTION flashback.create_nerve(user_id integer, subject_id integer) OWNER TO flashback;
+
+--
 -- Name: create_resource(character varying, flashback.resource_type, flashback.section_pattern, character varying, character varying, character varying); Type: FUNCTION; Schema: flashback; Owner: flashback
 --
 
-CREATE FUNCTION flashback.create_resource(name character varying, type flashback.resource_type, pattern flashback.section_pattern, author character varying, publisher character varying, link character varying) RETURNS integer
+CREATE FUNCTION flashback.create_resource(name character varying, type flashback.resource_type, pattern flashback.section_pattern, presenter character varying, provider character varying, link character varying) RETURNS integer
     LANGUAGE plpgsql
     AS $$
 declare resource integer;
 begin
     insert into resources (name, type, pattern, condition, presenter, provider, link)
-    values (name, type, pattern, 'relevant'::condition, nullif(author, ''), nullif(publisher, ''), nullif(link, '')) returning id into resource;
+    values (
+        create_resource.name,
+        create_resource.type, 
+        create_resource.pattern, 
+        'relevant'::condition, 
+        nullif(create_resource.presenter, ''),
+        nullif(create_resource.provider, ''),
+        nullif(create_resource.link, '')
+    ) returning id into resource;
 
     return resource;
 end;
 $$;
 
 
-ALTER FUNCTION flashback.create_resource(name character varying, type flashback.resource_type, pattern flashback.section_pattern, author character varying, publisher character varying, link character varying) OWNER TO flashback;
+ALTER FUNCTION flashback.create_resource(name character varying, type flashback.resource_type, pattern flashback.section_pattern, presenter character varying, provider character varying, link character varying) OWNER TO flashback;
 
 --
 -- Name: create_roadmap(integer, character varying); Type: FUNCTION; Schema: flashback; Owner: flashback
@@ -468,24 +500,20 @@ ALTER FUNCTION flashback.create_roadmap(user_id integer, name character varying)
 -- Name: create_section(integer, character varying); Type: FUNCTION; Schema: flashback; Owner: flashback
 --
 
-CREATE FUNCTION flashback.create_section(resource integer, name character varying) RETURNS integer
+CREATE FUNCTION flashback.create_section(resource_id integer, resource_name character varying) RETURNS integer
     LANGUAGE plpgsql
     AS $$
 declare last_position integer;
 begin
-    if not exists (select 1 from resources where id = create_section.resource) then
-        raise notice 'Resource does not exist';
-    end if;
+    select coalesce(max(position), 0) + 1 into last_position from sections where sections.resource = resource_id;
 
-    select coalesce(max(position), 0) + 1 into last_position from sections where sections.resource = create_section.resource;
-
-    insert into sections (resource, position, name) values (create_section.resource, last_position, nullif(create_section.name, ''));
+    insert into sections (resource, position, name) values (resource_id, last_position, nullif(resource_name, ''));
 
     return last_position;
 end; $$;
 
 
-ALTER FUNCTION flashback.create_section(resource integer, name character varying) OWNER TO flashback;
+ALTER FUNCTION flashback.create_section(resource_id integer, resource_name character varying) OWNER TO flashback;
 
 --
 -- Name: create_section(integer, character varying, integer); Type: PROCEDURE; Schema: flashback; Owner: flashback
@@ -941,7 +969,7 @@ ALTER FUNCTION flashback.get_lost_cards() OWNER TO flashback;
 
 CREATE FUNCTION flashback.get_out_of_shelves() RETURNS TABLE(id integer, name character varying)
     LANGUAGE plpgsql
-    AS $$ begin return query select resources.id, resources.name from resources where resources.id not in (select resource from shelves); end; $$;
+    AS $$ begin return query select resources.id, resources.name from resources where provider <> 'Flashback'::character varying and resources.id not in (select resource from shelves); end; $$;
 
 
 ALTER FUNCTION flashback.get_out_of_shelves() OWNER TO flashback;
@@ -2068,6 +2096,19 @@ ALTER TABLE flashback.milestones_activities ALTER COLUMN id ADD GENERATED ALWAYS
 
 
 --
+-- Name: nerves; Type: TABLE; Schema: flashback; Owner: flashback
+--
+
+CREATE TABLE flashback.nerves (
+    "user" integer CONSTRAINT knowledge_user_not_null NOT NULL,
+    resource integer CONSTRAINT knowledge_resource_not_null NOT NULL,
+    subject integer NOT NULL
+);
+
+
+ALTER TABLE flashback.nerves OWNER TO flashback;
+
+--
 -- Name: network_activities; Type: TABLE; Schema: flashback; Owner: flashback
 --
 
@@ -2582,6 +2623,14 @@ ALTER TABLE ONLY flashback.milestones
 
 
 --
+-- Name: nerves nerves_pkey; Type: CONSTRAINT; Schema: flashback; Owner: flashback
+--
+
+ALTER TABLE ONLY flashback.nerves
+    ADD CONSTRAINT nerves_pkey PRIMARY KEY ("user", resource, subject);
+
+
+--
 -- Name: network_activities network_activities_pkey; Type: CONSTRAINT; Schema: flashback; Owner: flashback
 --
 
@@ -2862,6 +2911,30 @@ ALTER TABLE ONLY flashback.milestones
 
 
 --
+-- Name: nerves nerves_resource_fkey; Type: FK CONSTRAINT; Schema: flashback; Owner: flashback
+--
+
+ALTER TABLE ONLY flashback.nerves
+    ADD CONSTRAINT nerves_resource_fkey FOREIGN KEY (resource) REFERENCES flashback.resources(id) ON UPDATE CASCADE ON DELETE CASCADE;
+
+
+--
+-- Name: nerves nerves_subject_fkey; Type: FK CONSTRAINT; Schema: flashback; Owner: flashback
+--
+
+ALTER TABLE ONLY flashback.nerves
+    ADD CONSTRAINT nerves_subject_fkey FOREIGN KEY (subject) REFERENCES flashback.subjects(id) ON UPDATE CASCADE ON DELETE CASCADE;
+
+
+--
+-- Name: nerves nerves_user_fkey; Type: FK CONSTRAINT; Schema: flashback; Owner: flashback
+--
+
+ALTER TABLE ONLY flashback.nerves
+    ADD CONSTRAINT nerves_user_fkey FOREIGN KEY ("user") REFERENCES flashback.users(id) ON UPDATE CASCADE ON DELETE CASCADE;
+
+
+--
 -- Name: network_activities network_activities_user_fkey; Type: FK CONSTRAINT; Schema: flashback; Owner: flashback
 --
 
@@ -3081,5 +3154,5 @@ ALTER TABLE ONLY flashback.users_roadmaps
 -- PostgreSQL database dump complete
 --
 
-\unrestrict dGsHx9ipa2gODb2S9cKl6h2eqF1cIWxNxqwFxazD2Qp4zcIwKBbbxjjQBrh6Alf
+\unrestrict tldWQT8VBT619tt91iPaHZcXgXNz0geRBscm6fBv5meVf6WEthKVjO7nYyxJUir
 
