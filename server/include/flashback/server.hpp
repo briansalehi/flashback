@@ -29,6 +29,7 @@ public:
     // ReorderRoadmap
     // RemoveRoadmap
     // RenameRoadmap
+    // AbandonRoadmap
 
     // roadmap page requests
     // GetMilestones
@@ -40,10 +41,10 @@ public:
     // subject page requests
     // RenameSubject
     // RemoveSubject
+    // MergeSubjects
     // GetResources
     // AddResourceToSubject
     // CreateResource
-    // ReorderResource
     // DropResourceFromSubject
     // MergeResources
     // GetTopics

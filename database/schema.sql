@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict dHsAuPNl5S2gyLXAa0tXwuvlJiXS56WIhDR1Tlcuasees7fAl7jt5OuqDpjl7aw
+\restrict o4RDaOTVlwzmwHcmIFZsAWaCrez0CyLh2JmFOVYjg7V9S2Hxjza9VCmXDDmJT0E
 
 -- Dumped from database version 18.0
 -- Dumped by pg_dump version 18.0
@@ -363,6 +363,21 @@ $$;
 ALTER PROCEDURE flashback.add_subject_to_roadmap(IN subject integer, IN level flashback.expertise_level, IN roadmap integer, IN "position" integer) OWNER TO flashback;
 
 --
+-- Name: assign_roadmap_to_user(integer, integer); Type: PROCEDURE; Schema: flashback; Owner: flashback
+--
+
+CREATE PROCEDURE flashback.assign_roadmap_to_user(IN user_id integer, IN roadmap_id integer)
+    LANGUAGE plpgsql
+    AS $$
+begin
+    insert into users_roadmaps("user", roadmap) values (user_id, roadmap_id);
+end;
+$$;
+
+
+ALTER PROCEDURE flashback.assign_roadmap_to_user(IN user_id integer, IN roadmap_id integer) OWNER TO flashback;
+
+--
 -- Name: change_block_extension(integer, integer, character varying); Type: PROCEDURE; Schema: flashback; Owner: flashback
 --
 
@@ -480,31 +495,30 @@ end; $$;
 ALTER FUNCTION flashback.create_nerve(user_id integer, subject_id integer) OWNER TO flashback;
 
 --
--- Name: create_resource(character varying, flashback.resource_type, flashback.section_pattern, character varying, character varying, character varying); Type: FUNCTION; Schema: flashback; Owner: flashback
+-- Name: create_resource(character varying, flashback.resource_type, flashback.section_pattern, integer, integer, character varying); Type: FUNCTION; Schema: flashback; Owner: flashback
 --
 
-CREATE FUNCTION flashback.create_resource(name character varying, type flashback.resource_type, pattern flashback.section_pattern, presenter character varying, provider character varying, link character varying) RETURNS integer
+CREATE FUNCTION flashback.create_resource(resource_name character varying, resource_type flashback.resource_type, resource_pattern flashback.section_pattern, presenter_id integer, provider_id integer, resource_link character varying) RETURNS integer
     LANGUAGE plpgsql
     AS $$
-declare resource integer;
+declare resource_id integer;
+declare presenter_id integer;
+declare provider_id integer;
 begin
-    insert into resources (name, type, pattern, condition, presenter, provider, link)
-    values (
-        create_resource.name,
-        create_resource.type, 
-        create_resource.pattern, 
-        'relevant'::condition, 
-        nullif(create_resource.presenter, ''),
-        nullif(create_resource.provider, ''),
-        nullif(create_resource.link, '')
-    ) returning id into resource;
+    insert into resources (name, type, pattern, condition, link)
+    values (resource_name, resource_type, resource_pattern, 'relevant'::condition, nullif(create_resource.link, ''))
+    returning id into resource_id;
 
-    return resource;
+    insert into authors (resource, presenter) values (resource_id, presenter_id);
+
+    insert into producers (resource, provider) values (resource_id, producere_id);
+
+    return resource_id;
 end;
 $$;
 
 
-ALTER FUNCTION flashback.create_resource(name character varying, type flashback.resource_type, pattern flashback.section_pattern, presenter character varying, provider character varying, link character varying) OWNER TO flashback;
+ALTER FUNCTION flashback.create_resource(resource_name character varying, resource_type flashback.resource_type, resource_pattern flashback.section_pattern, presenter_id integer, provider_id integer, resource_link character varying) OWNER TO flashback;
 
 --
 -- Name: create_roadmap(integer, character varying); Type: FUNCTION; Schema: flashback; Owner: flashback
@@ -1862,6 +1876,69 @@ end; $$;
 ALTER PROCEDURE flashback.revoke_sessions_except(IN user_id integer, IN active_token character varying) OWNER TO flashback;
 
 --
+-- Name: search_presenters(character varying); Type: FUNCTION; Schema: flashback; Owner: flashback
+--
+
+CREATE FUNCTION flashback.search_presenters(token character varying) RETURNS TABLE(presenter integer, name flashback.citext)
+    LANGUAGE plpgsql
+    AS $$
+begin
+    set pg_trgm.similarity_threshold = 0.1;
+
+    return query
+    select p.id, p.name
+    from presenters p
+    where p.name % token
+    order by p.name <-> token
+    limit 5;
+end; $$;
+
+
+ALTER FUNCTION flashback.search_presenters(token character varying) OWNER TO flashback;
+
+--
+-- Name: search_providers(character varying); Type: FUNCTION; Schema: flashback; Owner: flashback
+--
+
+CREATE FUNCTION flashback.search_providers(token character varying) RETURNS TABLE(provider integer, name flashback.citext)
+    LANGUAGE plpgsql
+    AS $$
+begin
+    set pg_trgm.similarity_threshold = 0.1;
+
+    return query
+    select p.id, p.name
+    from providers p
+    where p.name % token and p.name <> 'Flashback'
+    order by p.name <-> token
+    limit 5;
+end; $$;
+
+
+ALTER FUNCTION flashback.search_providers(token character varying) OWNER TO flashback;
+
+--
+-- Name: search_roadmaps(character varying); Type: FUNCTION; Schema: flashback; Owner: flashback
+--
+
+CREATE FUNCTION flashback.search_roadmaps(token character varying) RETURNS TABLE(roadmap integer, name flashback.citext)
+    LANGUAGE plpgsql
+    AS $$
+begin
+    set pg_trgm.similarity_threshold = 0.1;
+
+    return query
+    select r.id, r.name
+    from roadmaps r
+    where r.name % token
+    order by r.name <-> token
+    limit 5;
+end; $$;
+
+
+ALTER FUNCTION flashback.search_roadmaps(token character varying) OWNER TO flashback;
+
+--
 -- Name: split_block(integer, integer); Type: PROCEDURE; Schema: flashback; Owner: flashback
 --
 
@@ -2172,7 +2249,7 @@ ALTER TABLE flashback.network_activities ALTER COLUMN id ADD GENERATED ALWAYS AS
 
 CREATE TABLE flashback.presenters (
     id integer NOT NULL,
-    name character varying NOT NULL
+    name flashback.citext NOT NULL
 );
 
 
@@ -2310,7 +2387,7 @@ ALTER TABLE flashback.resources ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY
 
 CREATE TABLE flashback.roadmaps (
     id integer NOT NULL,
-    name character varying(200) NOT NULL
+    name flashback.citext NOT NULL
 );
 
 
@@ -2712,6 +2789,14 @@ ALTER TABLE ONLY flashback.network_activities
 
 
 --
+-- Name: presenters presenters_name_key; Type: CONSTRAINT; Schema: flashback; Owner: flashback
+--
+
+ALTER TABLE ONLY flashback.presenters
+    ADD CONSTRAINT presenters_name_key UNIQUE (name);
+
+
+--
 -- Name: presenters presenters_pkey; Type: CONSTRAINT; Schema: flashback; Owner: flashback
 --
 
@@ -2765,6 +2850,14 @@ ALTER TABLE ONLY flashback.resources
 
 ALTER TABLE ONLY flashback.roadmaps_activities
     ADD CONSTRAINT roadmaps_activities_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: roadmaps roadmaps_name_key; Type: CONSTRAINT; Schema: flashback; Owner: flashback
+--
+
+ALTER TABLE ONLY flashback.roadmaps
+    ADD CONSTRAINT roadmaps_name_key UNIQUE (name);
 
 
 --
@@ -2901,6 +2994,27 @@ ALTER TABLE ONLY flashback.users
 
 ALTER TABLE ONLY flashback.users
     ADD CONSTRAINT users_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: presenters_name_trigram; Type: INDEX; Schema: flashback; Owner: flashback
+--
+
+CREATE INDEX presenters_name_trigram ON flashback.presenters USING gin (name flashback.gin_trgm_ops);
+
+
+--
+-- Name: providers_name_trigram; Type: INDEX; Schema: flashback; Owner: flashback
+--
+
+CREATE INDEX providers_name_trigram ON flashback.providers USING gin (name flashback.gin_trgm_ops);
+
+
+--
+-- Name: roadmaps_name_trigram; Type: INDEX; Schema: flashback; Owner: flashback
+--
+
+CREATE INDEX roadmaps_name_trigram ON flashback.roadmaps USING gin (name flashback.gin_trgm_ops);
 
 
 --
@@ -3267,5 +3381,5 @@ ALTER TABLE ONLY flashback.users_roadmaps
 -- PostgreSQL database dump complete
 --
 
-\unrestrict dHsAuPNl5S2gyLXAa0tXwuvlJiXS56WIhDR1Tlcuasees7fAl7jt5OuqDpjl7aw
+\unrestrict o4RDaOTVlwzmwHcmIFZsAWaCrez0CyLh2JmFOVYjg7V9S2Hxjza9VCmXDDmJT0E
 

@@ -1,4 +1,5 @@
 #include <memory>
+#include <vector>
 #include <utility>
 #include <exception>
 #include <filesystem>
@@ -195,7 +196,15 @@ TEST_F(test_database, UserExists)
     EXPECT_TRUE(m_database->user_exists(m_user->email()));
 }
 
+TEST_F(test_database, CreateRoadmap)
+{
+}
+
+TEST_F(test_database, AssignRoadmapToUser)
+{
+}
+
 TEST_F(test_database, GetRoadmaps)
 {
-    std::shared_ptr<flashback::GetRoadmapsResponse> roadmaps{m_database->get_roadmaps(m_user->id())};
+    std::vector<flashback::Roadmap> roadmaps{m_database->get_roadmaps(m_user->id())};
 }

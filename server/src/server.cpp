@@ -193,14 +193,14 @@ grpc::Status server::GetRoadmaps(grpc::ServerContext* context, GetRoadmapsReques
             throw client_exception("unauthorized request for roadmaps");
         }
 
-        std::shared_ptr<GetRoadmapsResponse> result{m_database->get_roadmaps(user->id())};
-        std::clog << std::format("Client {}: collected {} roadmaps\n", request->user().id(), result->roadmap().size());
+        std::vector<Roadmap> roadmaps{m_database->get_roadmaps(user->id())};
+        std::clog << std::format("Client {}: collected {} roadmaps\n", request->user().id(), roadmaps.size());
 
-        for (Roadmap const& r : result->roadmap())
+        for (Roadmap roadmap: roadmaps)
         {
-            Roadmap* roadmap{response->add_roadmap()};
-            roadmap->set_id(r.id());
-            roadmap->set_name(r.name());
+            auto allocated_roadmap = response->add_roadmap();
+            allocated_roadmap->set_id(roadmap.id());
+            allocated_roadmap->set_name(roadmap.name());
         }
     }
     catch (client_exception const& exp)

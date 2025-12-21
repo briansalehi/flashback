@@ -37,21 +37,6 @@ database::database(std::string name, std::string address, std::string port)
     }
 }
 
-std::shared_ptr<GetRoadmapsResponse> database::get_roadmaps(uint64_t user_id)
-{
-    pqxx::result const result{query(std::format("select id, name from get_roadmaps({})", user_id))};
-    auto response{std::make_shared<GetRoadmapsResponse>()};
-
-    for (pqxx::row row : result)
-    {
-        Roadmap* r{response->add_roadmap()};
-        r->set_id(row.at("id").as<std::uint64_t>());
-        r->set_name(row.at("name").as<std::string>());
-    }
-
-    return response;
-}
-
 bool database::create_session(uint64_t user_id, std::string_view token, std::string_view device)
 {
     bool result{};
@@ -219,6 +204,31 @@ void database::revoke_session(uint64_t user_id, std::string_view token)
 void database::revoke_sessions_except(uint64_t user_id, std::string_view token)
 {
     exec(std::format("call revoke_sessions_except({}, '{}'::character varying)", user_id, token));
+}
+
+uint64_t database::create_roadmap(std::string_view name)
+{
+    return {};
+}
+
+void database::assign_roadmap_to_user(uint64_t user_id, uint64_t roadmap_id)
+{
+}
+
+std::vector<Roadmap> database::get_roadmaps(uint64_t user_id)
+{
+    pqxx::result const result{query(std::format("select id, name from get_roadmaps({})", user_id))};
+    std::vector<Roadmap> roadmaps{};
+
+    for (pqxx::row row : result)
+    {
+        Roadmap roadmap{};
+        roadmap.set_id(row.at("id").as<std::uint64_t>());
+        roadmap.set_name(row.at("name").as<std::string>());
+        roadmaps.push_back(std::move(roadmap));
+    }
+
+    return roadmaps;
 }
 
 pqxx::result database::query(std::string_view statement)
