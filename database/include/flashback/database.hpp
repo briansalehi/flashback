@@ -26,6 +26,7 @@ public:
     uint64_t create_roadmap(std::string_view name) override;
     void assign_roadmap_to_user(uint64_t user_id, uint64_t roadmap_id) override;
     [[nodiscard]] std::vector<Roadmap> get_roadmaps(uint64_t user_id) override;
+    void rename_roadmap(uint64_t roadmap_id, std::string_view modified_name) override;
 
 private:
     template <typename... Args>
@@ -45,6 +46,7 @@ private:
         work.commit();
     }
 
+private:
     std::unique_ptr<pqxx::connection> m_connection;
 };
 } // flashback

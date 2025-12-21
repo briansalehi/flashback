@@ -289,5 +289,33 @@ TEST_F(test_database, GetRoadmaps)
 
     roadmaps = m_database->get_roadmaps(m_user->id());
     EXPECT_THAT(roadmaps, testing::SizeIs(2)) << "Both of the existing roadmaps was assigned to user, so container should contain both";
+}
 
+TEST_F(test_database, RenameRoadmap)
+{
+    uint64_t roadmap_id{};
+    std::string roadmap_name{"Over Engineering Expert"};
+    std::string modified_name{"Task Procrastination Engineer"};
+    std::string name_with_quotes{"Underestimated Tasks' Deadline Scheduler"};
+    std::string empty_name{""};
+    std::vector<flashback::Roadmap> roadmaps{};
+    flashback::Roadmap roadmap{};
+
+    ASSERT_NO_THROW(roadmap_id = m_database->create_roadmap(roadmap_name));
+    ASSERT_GT(roadmap_id, 0);
+    ASSERT_NO_THROW(m_database->assign_roadmap_to_user(m_user->id(), roadmap_id));
+
+    EXPECT_NO_THROW(m_database->rename_roadmap(roadmap_id, modified_name));
+    ASSERT_NO_THROW(roadmaps = m_database->get_roadmaps(m_user->id()));
+    EXPECT_EQ(roadmaps.size(), 1);
+    ASSERT_NO_THROW(roadmap = roadmaps.at(0));
+    EXPECT_EQ(roadmaps.at(0).name(), modified_name);
+
+    EXPECT_NO_THROW(m_database->rename_roadmap(roadmap_id, name_with_quotes));
+    ASSERT_NO_THROW(roadmaps = m_database->get_roadmaps(m_user->id()));
+    EXPECT_EQ(roadmaps.size(), 1);
+    ASSERT_NO_THROW(roadmap = roadmaps.at(0));
+    EXPECT_EQ(roadmap.name(), name_with_quotes);
+
+    EXPECT_THROW(m_database->rename_roadmap(roadmap_id, empty_name), flashback::client_exception);
 }

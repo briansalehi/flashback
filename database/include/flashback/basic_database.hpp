@@ -26,7 +26,7 @@ public:
     virtual uint64_t create_roadmap(std::string_view name) = 0;
     virtual void assign_roadmap_to_user(uint64_t user_id, uint64_t roadmap_id) = 0;
     [[nodiscard]] virtual std::vector<Roadmap> get_roadmaps(uint64_t user_id) = 0;
-    //rename_roadmap
+    virtual void rename_roadmap(uint64_t roadmap_id, std::string_view modified_name) = 0;
     //remove_roadmap
     //abandon_roadmap
     //search_roadmaps

@@ -226,7 +226,7 @@ void database::assign_roadmap_to_user(uint64_t user_id, uint64_t roadmap_id)
 
 std::vector<Roadmap> database::get_roadmaps(uint64_t user_id)
 {
-    pqxx::result const result{query(std::format("select id, name from get_roadmaps({})", user_id))};
+    pqxx::result const result{query("select id, name from get_roadmaps($1)", user_id)};
     std::vector<Roadmap> roadmaps{};
 
     for (pqxx::row row : result)
@@ -238,5 +238,15 @@ std::vector<Roadmap> database::get_roadmaps(uint64_t user_id)
     }
 
     return roadmaps;
+}
+
+void database::rename_roadmap(uint64_t roadmap_id, std::string_view modified_name)
+{
+    if (modified_name.empty())
+    {
+        throw client_exception("roadmap modified name is empty");
+    }
+
+    exec("call rename_roadmap($1, $2)", roadmap_id, modified_name);
 }
 
