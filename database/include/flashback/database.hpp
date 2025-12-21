@@ -6,7 +6,7 @@
 
 namespace flashback
 {
-class database: public basic_database
+class database : public basic_database
 {
 public:
     explicit database(std::string name = "flashback", std::string address = "localhost", std::string port = "5432");
@@ -28,8 +28,22 @@ public:
     [[nodiscard]] std::vector<Roadmap> get_roadmaps(uint64_t user_id) override;
 
 private:
-    [[nodiscard]] pqxx::result query(std::string_view statement);
-    void exec(std::string_view statement);
+    template <typename... Args>
+    [[nodiscard]] pqxx::result query(std::string_view format, Args&&... args) const
+    {
+        pqxx::work work{*m_connection};
+        pqxx::result result{work.exec(format, pqxx::params{std::forward<Args>(args)...})};
+        work.commit();
+        return result;
+    }
+
+    template <typename... Args>
+    void exec(std::string_view format, Args&&... args) const
+    {
+        pqxx::work work{*m_connection};
+        work.exec(format, pqxx::params{std::forward<Args>(args)...});
+        work.commit();
+    }
 
     std::unique_ptr<pqxx::connection> m_connection;
 };

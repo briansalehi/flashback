@@ -2,12 +2,15 @@
 #include <vector>
 #include <utility>
 #include <exception>
+#include <algorithm>
 #include <filesystem>
 #include <gtest/gtest.h>
+#include <gmock/gmock.h>
 #include <pqxx/pqxx>
 #include <flashback/database.hpp>
+#include <flashback/exception.hpp>
 
-class test_database: public testing::Test
+class test_database : public testing::Test
 {
 protected:
     void SetUp() override
@@ -17,7 +20,8 @@ protected:
         m_user = std::make_unique<flashback::User>();
         m_user->set_name("Flashback Test User");
         m_user->set_email("user@flashback.eu.com");
-        m_user->set_hash(R"($argon2id$v=19$m=262144,t=3,p=1$faiJerPBCLb2TEdTbGv8BQ$M0j9j6ojyIjD9yZ4+lBBNR/WAiWpImUcEcUhCL3u9gc)");
+        m_user->set_hash(
+            R"($argon2id$v=19$m=262144,t=3,p=1$faiJerPBCLb2TEdTbGv8BQ$M0j9j6ojyIjD9yZ4+lBBNR/WAiWpImUcEcUhCL3u9gc)");
         m_user->set_token(R"(iNFzgSaY2W+q42gM9lNVbB13v0odiLy6WnHbInbuvvE)");
         m_user->set_device(R"(aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee)");
         m_user->set_id(create_user());
@@ -26,9 +30,10 @@ protected:
     void TearDown() override
     {
         remove_users();
+        remove_roadmaps();
     }
 
-    uint64_t create_user()
+    uint64_t create_user() const
     {
         uint64_t user_id{};
 
@@ -38,11 +43,18 @@ protected:
         return user_id;
     }
 
-    void remove_users()
+    void remove_users() const
     {
         pqxx::work remove_user{*m_connection};
         remove_user.exec("delete from users");
         remove_user.commit();
+    }
+
+    void remove_roadmaps()
+    {
+        pqxx::work removal(*m_connection);
+        removal.exec("delete from roadmaps");
+        removal.commit();
     }
 
     std::unique_ptr<pqxx::connection> m_connection{nullptr};
@@ -172,7 +184,9 @@ TEST_F(test_database, RevokeSingleSession)
 TEST_F(test_database, ResetPassword)
 {
     std::unique_ptr<flashback::User> user{nullptr};
-    std::string hash{R"($argon2id$v=19$m=262144,t=3,p=1$faiJerPACLb2TEdTbGv8AQ$M0j9j6ojyIjD9yZ4+lAANR/WAiWpImUcEcUhCL3u9gc)"};
+    std::string hash{
+        R"($argon2id$v=19$m=262144,t=3,p=1$faiJerPACLb2TEdTbGv8AQ$M0j9j6ojyIjD9yZ4+lAANR/WAiWpImUcEcUhCL3u9gc)"
+    };
 
     ASSERT_TRUE(m_database->create_session(m_user->id(), m_user->token(), m_user->device()));
 
@@ -196,15 +210,84 @@ TEST_F(test_database, UserExists)
     EXPECT_TRUE(m_database->user_exists(m_user->email()));
 }
 
-TEST_F(test_database, CreateRoadmap)
+TEST_F(test_database, CreateDuplicateRoadmap)
 {
+    uint64_t primary_id{};
+    uint64_t secondary_id{};
+    uint64_t quoted_id{};
+    std::string primary_name{"Social Anxiety Expert"};
+    std::string secondary_name{"Pointless Speech Specialist"};
+    std::string name_with_quotes{"O'Reilly Technical Editor"};
+    std::string empty_name{""};
+
+    EXPECT_NO_THROW(primary_id = m_database->create_roadmap(primary_name));
+    EXPECT_GT(primary_id, 0);
+
+    EXPECT_NO_THROW(secondary_id = m_database->create_roadmap(secondary_name));
+    EXPECT_GT(secondary_id, 0);
+
+    EXPECT_THROW(m_database->create_roadmap(primary_name), pqxx::unique_violation);
+
+    EXPECT_NO_THROW(quoted_id = m_database->create_roadmap(name_with_quotes));
+    EXPECT_GT(quoted_id, 0);
+
+    EXPECT_THROW(m_database->create_roadmap(empty_name), flashback::client_exception);
 }
 
 TEST_F(test_database, AssignRoadmapToUser)
 {
+    uint64_t primary_id{};
+    uint64_t secondary_id{};
+    std::string primary_name{"Social Anxiety Expert"};
+    std::string secondary_name{"Pointless Speech Specialist"};
+
+    ASSERT_NO_THROW(primary_id = m_database->create_roadmap(primary_name));
+    ASSERT_GT(primary_id, 0);
+
+    ASSERT_NO_THROW(secondary_id = m_database->create_roadmap(secondary_name));
+    ASSERT_GT(secondary_id, 0);
+
+    EXPECT_NO_THROW(m_database->assign_roadmap_to_user(m_user->id(), primary_id));
+    EXPECT_NO_THROW(m_database->assign_roadmap_to_user(m_user->id(), secondary_id));
 }
 
 TEST_F(test_database, GetRoadmaps)
 {
-    std::vector<flashback::Roadmap> roadmaps{m_database->get_roadmaps(m_user->id())};
+    uint64_t primary_id{};
+    uint64_t secondary_id{};
+    std::string primary_name{"Social Anxiety Expert"};
+    std::string secondary_name{"Pointless Speech Specialist"};
+    flashback::Roadmap primary_roadmap{};
+    flashback::Roadmap secondary_roadmap{};
+    std::vector<flashback::Roadmap> roadmaps;
+
+    primary_roadmap.set_name(primary_name);
+
+    EXPECT_NO_THROW(roadmaps = m_database->get_roadmaps(m_user->id()));
+    EXPECT_THAT(roadmaps, testing::IsEmpty()) << "No roadmap was created so far, container should be empty";
+
+    ASSERT_NO_THROW(primary_id = m_database->create_roadmap(primary_name));
+    ASSERT_GT(primary_id, 0);
+    primary_roadmap.set_id(primary_id);
+
+    EXPECT_NO_THROW(roadmaps = m_database->get_roadmaps(m_user->id()));
+    EXPECT_THAT(roadmaps, testing::IsEmpty()) << "A roadmap was created but is not assigned to the user yet, container should be empty";
+
+    ASSERT_NO_THROW(secondary_id = m_database->create_roadmap(secondary_name));
+    ASSERT_GT(secondary_id, 0);
+    secondary_roadmap.set_id(secondary_id);
+
+    EXPECT_NO_THROW(roadmaps = m_database->get_roadmaps(m_user->id()));
+    EXPECT_THAT(roadmaps, testing::IsEmpty()) << "Regardless of how many roadmaps exist, only the assigned roadmaps should return which is none so far";
+
+    EXPECT_NO_THROW(m_database->assign_roadmap_to_user(m_user->id(), primary_id));
+
+    roadmaps = m_database->get_roadmaps(m_user->id());
+    EXPECT_THAT(roadmaps, testing::SizeIs(1)) << "One of the two existing roadmaps assigned to the user, so container should hold one roadmap";
+
+    EXPECT_NO_THROW(m_database->assign_roadmap_to_user(m_user->id(), secondary_id));
+
+    roadmaps = m_database->get_roadmaps(m_user->id());
+    EXPECT_THAT(roadmaps, testing::SizeIs(2)) << "Both of the existing roadmaps was assigned to user, so container should contain both";
+
 }

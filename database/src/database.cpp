@@ -43,7 +43,7 @@ bool database::create_session(uint64_t user_id, std::string_view token, std::str
 
     try
     {
-        exec(std::format("call create_session({}, '{}', '{}')", user_id, token, device));
+        exec("call create_session($1, $2, $3)", user_id, token, device);
         result = true;
     }
     catch (std::exception const& exp)
@@ -60,7 +60,7 @@ uint64_t database::create_user(std::string_view name, std::string_view email, st
 
     try
     {
-        pqxx::result result{query(std::format("select * from create_user('{}', '{}', '{}')", name, email, hash))};
+        pqxx::result result{query("select * from create_user($1, $2, $3)", name, email, hash)};
 
         if (result.size() != 1)
         {
@@ -79,14 +79,14 @@ uint64_t database::create_user(std::string_view name, std::string_view email, st
 
 void database::reset_password(uint64_t user_id, std::string_view hash)
 {
-    exec(std::format("call reset_password({}, '{}')", user_id, hash));
+    exec("call reset_password($1, $2)", user_id, hash);
 }
 
 bool database::user_exists(std::string_view email)
 {
     bool exists{false};
 
-    if (pqxx::result result{query(std::format("select * from user_exists('{}')", email))}; !result.empty())
+    if (pqxx::result result{query("select * from user_exists($1)", email)}; !result.empty())
     {
         exists = result.at(0).at(0).as<bool>();
     }
@@ -98,7 +98,7 @@ std::unique_ptr<User> database::get_user(std::string_view email)
 {
     std::unique_ptr<User> user{nullptr};
 
-    if (pqxx::result result_set{query(std::format("select * from get_user('{}'::character varying)", email))}; !result_set.empty())
+    if (pqxx::result result_set{query("select * from get_user($1)", email)}; !result_set.empty())
     {
         pqxx::row result{result_set.at(0)};
         user = std::make_unique<User>();
@@ -148,7 +148,7 @@ std::unique_ptr<User> database::get_user(uint64_t user_id, std::string_view devi
 {
     std::unique_ptr<User> user{nullptr};
 
-    pqxx::result result_set{query(std::format("select * from get_user({}, '{}'::character varying)", user_id, device))};
+    pqxx::result result_set{query("select * from get_user($1, $2)", user_id, device)};
 
     if (result_set.size() == 1)
     {
@@ -198,21 +198,30 @@ std::unique_ptr<User> database::get_user(uint64_t user_id, std::string_view devi
 
 void database::revoke_session(uint64_t user_id, std::string_view token)
 {
-    exec(std::format("call revoke_session({}, '{}'::character varying)", user_id, token));
+    exec("call revoke_session($1, $2)", user_id, token);
 }
 
 void database::revoke_sessions_except(uint64_t user_id, std::string_view token)
 {
-    exec(std::format("call revoke_sessions_except({}, '{}'::character varying)", user_id, token));
+    exec("call revoke_sessions_except($1, $2)", user_id, token);
 }
 
 uint64_t database::create_roadmap(std::string_view name)
 {
-    return {};
+    if (name.empty())
+    {
+        throw client_exception("roadmap name is empty");
+    }
+
+    pqxx::result result{query("select create_roadmap($1)", name)};
+    uint64_t roadmap_id = result.at(0).at(0).as<uint64_t>();
+
+    return roadmap_id;
 }
 
 void database::assign_roadmap_to_user(uint64_t user_id, uint64_t roadmap_id)
 {
+    exec("call assign_roadmap_to_user($1, $2)", user_id, roadmap_id);
 }
 
 std::vector<Roadmap> database::get_roadmaps(uint64_t user_id)
@@ -231,17 +240,3 @@ std::vector<Roadmap> database::get_roadmaps(uint64_t user_id)
     return roadmaps;
 }
 
-pqxx::result database::query(std::string_view statement)
-{
-    pqxx::work work{*m_connection};
-    pqxx::result result{work.exec(statement)};
-    work.commit();
-    return result;
-}
-
-void database::exec(std::string_view statement)
-{
-    pqxx::work work{*m_connection};
-    work.exec(statement);
-    work.commit();
-}
