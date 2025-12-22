@@ -7,7 +7,7 @@
 #include <flashback/exception.hpp>
 #include <flashback/server.hpp>
 
-class test_server : public testing::Test
+class test_server: public testing::Test
 {
 public:
     void SetUp() override
@@ -167,4 +167,28 @@ TEST_F(test_server, SignUpWithIncompleteCredentials)
     EXPECT_TRUE(status.ok());
     EXPECT_FALSE(response->success());
     EXPECT_FALSE(response->has_user());
+}
+
+TEST_F(test_server, CreateRoadmap)
+{
+}
+
+TEST_F(test_server, AssignRoadmap)
+{
+}
+
+TEST_F(test_server, GetRoadmaps)
+{
+}
+
+TEST_F(test_server, RenameRoadmap)
+{
+}
+
+TEST_F(test_server, RemoveRoadmap)
+{
+}
+
+TEST_F(test_server, SearchRoadmaps)
+{
 }

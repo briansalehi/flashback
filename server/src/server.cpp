@@ -22,14 +22,9 @@ grpc::Status server::SignIn(grpc::ServerContext* context, const SignInRequest* r
 {
     try
     {
-        if (!request->has_user() ||
-            request->user().id() == 0 ||
-            request->user().password().empty() ||
-            request->user().device().empty()
-        )
+        if (!request->has_user() || request->user().id() == 0 || request->user().password().empty() || request->user().device().empty())
         {
-            throw client_exception(
-                "incomplete credentials: either user is not defined, id or device is not set, or password is empty");
+            throw client_exception("incomplete credentials: either user is not defined, id or device is not set, or password is empty");
         }
 
         if (!m_database->user_exists(request->user().email()))
@@ -79,12 +74,8 @@ grpc::Status server::SignUp(grpc::ServerContext* context, const SignUpRequest* r
 {
     try
     {
-        if (!request->has_user() ||
-            request->user().name().empty() ||
-            request->user().email().empty() ||
-            request->user().device().empty() ||
-            request->user().password().empty()
-        )
+        if (!request->has_user() || request->user().name().empty() || request->user().email().empty() || request->user().device().empty() ||
+            request->user().password().empty())
         {
             throw client_exception("incomplete credentials");
         }
@@ -127,18 +118,12 @@ grpc::Status server::SignUp(grpc::ServerContext* context, const SignUpRequest* r
     return grpc::Status::OK;
 }
 
-grpc::Status server::ResetPassword(grpc::ServerContext* context, ResetPasswordRequest const* request,
-                                   ResetPasswordResponse* response)
+grpc::Status server::ResetPassword(grpc::ServerContext* context, ResetPasswordRequest const* request, ResetPasswordResponse* response)
 {
     try
     {
-        if (request->has_user() && (
-                request->user().id() == 0 ||
-                request->user().email().empty() ||
-                request->user().password().empty() ||
-                request->user().device().empty()
-            )
-        )
+        if (request->has_user() && (request->user().id() == 0 || request->user().email().empty() || request->user().password().empty() ||
+            request->user().device().empty()))
         {
             throw client_exception("incomplete credentials");
         }
@@ -161,8 +146,7 @@ grpc::Status server::ResetPassword(grpc::ServerContext* context, ResetPasswordRe
     return grpc::Status::OK;
 }
 
-grpc::Status server::VerifySession(grpc::ServerContext* context, VerifySessionRequest const* request,
-                                   VerifySessionResponse* response)
+grpc::Status server::VerifySession(grpc::ServerContext* context, VerifySessionRequest const* request, VerifySessionResponse* response)
 {
     try
     {
@@ -176,8 +160,17 @@ grpc::Status server::VerifySession(grpc::ServerContext* context, VerifySessionRe
     return grpc::Status::OK;
 }
 
-grpc::Status server::GetRoadmaps(grpc::ServerContext* context, GetRoadmapsRequest const* request,
-                                 GetRoadmapsResponse* response)
+grpc::Status server::CreateRoadmap(grpc::ServerContext* context, CreateRoadmapRequest const* request, CreateRoadmapResponse* response)
+{
+    return Service::CreateRoadmap(context, request, response);
+}
+
+grpc::Status server::AssignRoadmap(grpc::ServerContext* context, AssignRoadmapRequest const* request, AssignRoadmapResponse* response)
+{
+    return Service::AssignRoadmap(context, request, response);
+}
+
+grpc::Status server::GetRoadmaps(grpc::ServerContext* context, GetRoadmapsRequest const* request, GetRoadmapsResponse* response)
 {
     try
     {
@@ -209,10 +202,24 @@ grpc::Status server::GetRoadmaps(grpc::ServerContext* context, GetRoadmapsReques
     }
     catch (std::exception const& exp)
     {
-        std::cerr << std::format("Server: failed to collect roadmaps for client {} because:\n{}\n",
-                                 request->user().id(), exp.what());
+        std::cerr << std::format("Server: failed to collect roadmaps for client {} because:\n{}\n", request->user().id(), exp.what());
     }
 
+    return grpc::Status::OK;
+}
+
+grpc::Status server::RenameRoadmap(grpc::ServerContext* context, RenameRoadmapRequest const* request, RenameRoadmapResponse* response)
+{
+    return grpc::Status::OK;
+}
+
+grpc::Status server::RemoveRoadmap(grpc::ServerContext* context, RemoveRoadmapRequest const* request, RemoveRoadmapResponse* response)
+{
+    return grpc::Status::OK;
+}
+
+grpc::Status server::SearchRoadmaps(grpc::ServerContext* context, SearchRoadmapsRequest const* request, SearchRoadmapsResponse* response)
+{
     return grpc::Status::OK;
 }
 
@@ -250,11 +257,11 @@ bool server::session_is_valid(grpc::ServerContext* context, std::string_view use
 {
     bool is_valid{false};
 
-    for (std::pair<grpc::string_ref, grpc::string_ref> const field : context->client_metadata())
+    for (std::pair<grpc::string_ref, grpc::string_ref> const field: context->client_metadata())
     {
         if (field.first == "token")
         {
-            is_valid = user_provided_token == std::string{field.second.begin(), field.second.end()};
+            is_valid = (user_provided_token == std::string{field.second.begin(), field.second.end()});
             break;
         }
     }

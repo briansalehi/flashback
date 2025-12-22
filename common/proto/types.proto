@@ -5,110 +5,110 @@ package flashback;
 import "google/protobuf/timestamp.proto";
 
 message Roadmap {
-  uint64 id = 1;
-  string name = 2;
+    uint64 id = 1;
+    string name = 2;
 }
 
 message Subject {
-  uint64 id = 1;
-  string name = 2;
+    uint64 id = 1;
+    string name = 2;
 }
 
 message Milestone {
-  enum expertise_level {
-    surface = 0;
-    depth = 1;
-    origin = 2;
-  }
+    enum expertise_level {
+        surface = 0;
+        depth = 1;
+        origin = 2;
+    }
 
-  uint64 position = 1;
-  uint64 id = 2;
-  string name = 3;
-  expertise_level level = 4;
+    uint64 position = 1;
+    uint64 id = 2;
+    string name = 3;
+    expertise_level level = 4;
 }
 
 message Resource {
-  enum resource_type {
-    book = 0;
-    website = 1;
-    course = 2;
-    video = 3;
-    channel = 4;
-    mailing_list = 5;
-    manual = 6;
-    slides = 7;
-    user = 8;
-  }
+    enum resource_type {
+        book = 0;
+        website = 1;
+        course = 2;
+        video = 3;
+        channel = 4;
+        mailing_list = 5;
+        manual = 6;
+        slides = 7;
+        user = 8;
+    }
 
-  enum section_pattern {
-    chapter = 0;
-    page = 1;
-    session = 2;
-    segment = 3;
-    post = 4;
-    synapse = 5;
-  }
+    enum section_pattern {
+        chapter = 0;
+        page = 1;
+        session = 2;
+        segment = 3;
+        post = 4;
+        synapse = 5;
+    }
 
-  enum resource_condition {
-    draft = 0;
-    relevant = 1;
-    outdated = 2;
-    canonical = 3;
-    abandoned = 4;
-  }
+    enum resource_condition {
+        draft = 0;
+        relevant = 1;
+        outdated = 2;
+        canonical = 3;
+        abandoned = 4;
+    }
 
-  uint64 id = 1;
-  string name = 2;
-  string presenter = 3;
-  string provider = 4;
-  string link = 5;
-  resource_type type = 6;
-  section_pattern pattern = 7;
-  resource_condition condition = 8;
-  uint64 days = 9;
+    uint64 id = 1;
+    string name = 2;
+    string presenter = 3;
+    string provider = 4;
+    string link = 5;
+    resource_type type = 6;
+    section_pattern pattern = 7;
+    resource_condition condition = 8;
+    uint64 days = 9;
 }
 
 message Topic {
-  uint64 position = 1;
-  string name = 2;
+    uint64 position = 1;
+    string name = 2;
 }
 
 message Section {
-  uint64 id = 1;
-  string name = 2;
+    uint64 id = 1;
+    string name = 2;
 }
 
 message Card {
-  enum card_state {
-    draft = 0;
-    completed = 1;
-    review = 2;
-    approved = 3;
-    released = 4;
-    rejected = 5;
-  }
+    enum card_state {
+        draft = 0;
+        completed = 1;
+        review = 2;
+        approved = 3;
+        released = 4;
+        rejected = 5;
+    }
 
-  uint64 id = 1;
-  card_state state = 2;
-  string heading = 3;
+    uint64 id = 1;
+    card_state state = 2;
+    string heading = 3;
 }
 
 message User {
-  enum State {
-    active = 0;
-    inactive = 1;
-    suspended = 2;
-    banned = 3;
-  }
+    enum State {
+        active = 0;
+        inactive = 1;
+        suspended = 2;
+        banned = 3;
+    }
 
-  uint64 id = 1;
-  string name = 2;
-  string email = 3;
-  State state = 4;
-  bool verified = 5;
-  string password = 6;
-  string token = 7;
-  google.protobuf.Timestamp joined = 8;
-  string device = 9;
-  string hash = 10;
+    uint64 id = 1;
+    string name = 2;
+    string email = 3;
+    State state = 4;
+    bool verified = 5;
+    string password = 6;
+    string token = 7;
+    google.protobuf.Timestamp joined = 8;
+    string device = 9;
+    string hash = 10;
 }

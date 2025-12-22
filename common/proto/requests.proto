@@ -25,18 +25,20 @@ message DeactivateUserRequest { }
 message DeactivateUserResponse { }
 
 // welcome page requests
+message CreateRoadmapRequest { string name = 1; }
+message CreateRoadmapResponse { Roadmap roadmap = 1; }
+message AssignRoadmapRequest { User user = 1; Roadmap roadmap = 2; }
+message AssignRoadmapResponse { }
 message GetRoadmapsRequest { User user = 1; }
 message GetRoadmapsResponse { repeated Roadmap roadmap = 1; }
-message CreateRoadmapRequest { }
-message CreateRoadmapResponse { }
-message ReorderRoadmapRequest { }
-message ReorderRoadmapResponse { }
-message RemoveRoadmapRequest { }
+message RenameRoadmapRequest { Roadmap roadmap = 1; }
+message RenameRoadmapResponse { }
+message RemoveRoadmapRequest { Roadmap roadmap = 1; }
 message RemoveRoadmapResponse { }
+message SearchRoadmapsRequest { string token = 1; }
+message SearchRoadmapsResponse { repeated Roadmap roadmap = 1; }
 
 // roadmap page requests
-message RenameRoadmapRequest { }
-message RenameRoadmapResponse { }
 message GetMilestonesRequest { }
 message GetMilestonesResponse { }
 message AddMilestoneRequest { }
