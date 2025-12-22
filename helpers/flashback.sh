@@ -1074,9 +1074,10 @@ start_study()
     while true
     do
         echo
-        read -r -p "Select a section or type all to study all sections or type open to open the link to resource: " section
+        link="$(psql -U flashback -d flashback -c "select link from resources where id = $resource" -At)"
+        read -r -p "Select a section or type all to study all sections${link+:" or type open to visit resource link"}: " section
         { [ -n "${sections[$section]}" ] || [ "$section" == "all" ]; } && break
-        [ "$section" == "open" ] && xdg-open "$(psql -U flashback -d flashback -c "select link from resources where id = $resource" -At)" &>/dev/null &
+        [ -n "$link" ] && [ "$section" == "open" ] && xdg-open "$link" &>/dev/null &
     done
     echo
 
@@ -1089,7 +1090,7 @@ start_study()
 
     [ ${#selected_sections[*]} -eq 0 ] && return
 
-    while IFS="|" read -r resource_name resource_type pattern condition author publisher
+    while IFS="|" read -r resource resource_name resource_type pattern condition author publisher link last_read
     do
         while IFS="|" read -r section section_name
         do
@@ -1153,7 +1154,7 @@ start_study()
             done
 
         done < <(psql -U flashback -d flashback -c "select position, name from sections where resource = $resource and position in ( $(tr ' ' ',' <<< "${selected_sections[*]}") ) order by position" -At)
-    done < <(psql -U flashback -d flashback -c "select name, type, pattern, condition, presenter, provider from resources where id = $resource order by name" -At)
+    done < <(psql -U flashback -d flashback -c "select id, name, type, pattern, condition, presenter, provider, link, last_read from get_resources($user, $subject) where id = $resource order by name" -At)
     echo
 }
 
