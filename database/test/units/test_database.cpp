@@ -238,6 +238,7 @@ TEST_F(test_database, AssignRoadmapToUser)
 {
     uint64_t primary_id{};
     uint64_t secondary_id{};
+    uint64_t non_existing_id{1000};
     std::string primary_name{"Social Anxiety Expert"};
     std::string secondary_name{"Pointless Speech Specialist"};
 
@@ -249,6 +250,7 @@ TEST_F(test_database, AssignRoadmapToUser)
 
     EXPECT_NO_THROW(m_database->assign_roadmap_to_user(m_user->id(), primary_id));
     EXPECT_NO_THROW(m_database->assign_roadmap_to_user(m_user->id(), secondary_id));
+    EXPECT_THROW(m_database->assign_roadmap_to_user(m_user->id(), non_existing_id), pqxx::foreign_key_violation);
 }
 
 TEST_F(test_database, GetRoadmaps)
@@ -318,4 +320,27 @@ TEST_F(test_database, RenameRoadmap)
     EXPECT_EQ(roadmap.name(), name_with_quotes);
 
     EXPECT_THROW(m_database->rename_roadmap(roadmap_id, empty_name), flashback::client_exception);
+}
+
+TEST_F(test_database, RemoveRoadmap)
+{
+    std::string primary_name{"Useless Meetings Creational Engineer"};
+    std::string secondary_name{"Variable Naming Specialist"};
+    uint64_t primary_id{};
+    uint64_t secondary_id{};
+    flashback::Roadmap roadmap{};
+
+    ASSERT_NO_THROW(primary_id = m_database->create_roadmap(primary_name));
+    ASSERT_NO_THROW(secondary_id = m_database->create_roadmap(secondary_name));
+    ASSERT_GT(primary_id, 0);
+    ASSERT_GT(secondary_id, 0);
+    ASSERT_NO_THROW(m_database->assign_roadmap_to_user(m_user->id(), primary_id));
+    ASSERT_NO_THROW(m_database->assign_roadmap_to_user(m_user->id(), secondary_id));
+
+    EXPECT_NO_THROW(m_database->remove_roadmap(primary_id));
+    ASSERT_THAT(m_database->get_roadmaps(m_user->id()), testing::SizeIs(1)) << "Of two existing roadmaps, one should remain";
+    EXPECT_NO_THROW(roadmap = m_database->get_roadmaps(m_user->id()).at(0));
+    EXPECT_EQ(roadmap.name(), secondary_name);
+
+    EXPECT_NO_THROW(m_database->remove_roadmap(primary_id)) << "Deleting non-existing roadmap should not throw an exception";
 }

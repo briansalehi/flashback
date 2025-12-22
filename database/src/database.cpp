@@ -250,3 +250,8 @@ void database::rename_roadmap(uint64_t roadmap_id, std::string_view modified_nam
     exec("call rename_roadmap($1, $2)", roadmap_id, modified_name);
 }
 
+void database::remove_roadmap(uint64_t roadmap_id)
+{
+    exec("call remove_roadmap($1)", roadmap_id);
+}
+

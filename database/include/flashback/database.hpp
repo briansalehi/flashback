@@ -27,6 +27,7 @@ public:
     void assign_roadmap_to_user(uint64_t user_id, uint64_t roadmap_id) override;
     [[nodiscard]] std::vector<Roadmap> get_roadmaps(uint64_t user_id) override;
     void rename_roadmap(uint64_t roadmap_id, std::string_view modified_name) override;
+    void remove_roadmap(uint64_t roadmap_id) override;
 
 private:
     template <typename... Args>
