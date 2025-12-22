@@ -28,8 +28,7 @@ public:
     [[nodiscard]] virtual std::vector<Roadmap> get_roadmaps(uint64_t user_id) = 0;
     virtual void rename_roadmap(uint64_t roadmap_id, std::string_view modified_name) = 0;
     virtual void remove_roadmap(uint64_t roadmap_id) = 0;
-    //abandon_roadmap
-    //search_roadmaps
+    [[nodiscard]] virtual std::vector<Roadmap> search_roadmaps(std::string_view token) = 0;
 
     // milestones
     //add_milestone

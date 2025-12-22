@@ -64,7 +64,8 @@ uint64_t database::create_user(std::string_view name, std::string_view email, st
 
         if (result.size() != 1)
         {
-            throw std::runtime_error(std::format("Server: could not create user because no user id was returned for {}", email));
+            throw std::runtime_error(std::format("Server: could not create user because no user id was returned for {}",
+                                                 email));
         }
 
         user_id = result.at(0).at(0).as<uint64_t>();
@@ -125,7 +126,9 @@ std::unique_ptr<User> database::get_user(std::string_view email)
         stream >> std::get_time(&tm, "%Y-%m-%d");
         time_t epoch{std::mktime(&tm)};
 
-        auto timestamp{std::make_unique<google::protobuf::Timestamp>(google::protobuf::util::TimeUtil::SecondsToTimestamp(epoch))};
+        auto timestamp{
+            std::make_unique<google::protobuf::Timestamp>(google::protobuf::util::TimeUtil::SecondsToTimestamp(epoch))
+        };
         user->set_allocated_joined(timestamp.release());
 
         std::string state_str{result.at("state").as<std::string>()};
@@ -177,7 +180,9 @@ std::unique_ptr<User> database::get_user(uint64_t user_id, std::string_view devi
         stream >> std::get_time(&tm, "%Y-%m-%d");
         time_t epoch{std::mktime(&tm)};
 
-        auto timestamp{std::make_unique<google::protobuf::Timestamp>(google::protobuf::util::TimeUtil::SecondsToTimestamp(epoch))};
+        auto timestamp{
+            std::make_unique<google::protobuf::Timestamp>(google::protobuf::util::TimeUtil::SecondsToTimestamp(epoch))
+        };
         user->set_allocated_joined(timestamp.release());
 
         std::string state_str{result.at("state").as<std::string>()};
@@ -255,3 +260,20 @@ void database::remove_roadmap(uint64_t roadmap_id)
     exec("call remove_roadmap($1)", roadmap_id);
 }
 
+std::vector<Roadmap> database::search_roadmaps(std::string_view token)
+{
+    std::vector<Roadmap> roadmaps;
+    roadmaps.reserve(5);
+
+    pqxx::result result = query("select roadmap, name from search_roadmaps($1)", token);
+
+    for (pqxx::row row : result)
+    {
+        Roadmap roadmap{};
+        roadmap.set_id(row.at("roadmap").as<uint64_t>());
+        roadmap.set_name(row.at("name").as<std::string>());
+        roadmaps.push_back(std::move(roadmap));
+    }
+
+    return roadmaps;
+}

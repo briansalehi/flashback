@@ -273,24 +273,28 @@ TEST_F(test_database, GetRoadmaps)
     primary_roadmap.set_id(primary_id);
 
     EXPECT_NO_THROW(roadmaps = m_database->get_roadmaps(m_user->id()));
-    EXPECT_THAT(roadmaps, testing::IsEmpty()) << "A roadmap was created but is not assigned to the user yet, container should be empty";
+    EXPECT_THAT(roadmaps, testing::IsEmpty()) <<
+ "A roadmap was created but is not assigned to the user yet, container should be empty";
 
     ASSERT_NO_THROW(secondary_id = m_database->create_roadmap(secondary_name));
     ASSERT_GT(secondary_id, 0);
     secondary_roadmap.set_id(secondary_id);
 
     EXPECT_NO_THROW(roadmaps = m_database->get_roadmaps(m_user->id()));
-    EXPECT_THAT(roadmaps, testing::IsEmpty()) << "Regardless of how many roadmaps exist, only the assigned roadmaps should return which is none so far";
+    EXPECT_THAT(roadmaps, testing::IsEmpty()) <<
+ "Regardless of how many roadmaps exist, only the assigned roadmaps should return which is none so far";
 
     EXPECT_NO_THROW(m_database->assign_roadmap_to_user(m_user->id(), primary_id));
 
     roadmaps = m_database->get_roadmaps(m_user->id());
-    EXPECT_THAT(roadmaps, testing::SizeIs(1)) << "One of the two existing roadmaps assigned to the user, so container should hold one roadmap";
+    EXPECT_THAT(roadmaps, testing::SizeIs(1)) <<
+ "One of the two existing roadmaps assigned to the user, so container should hold one roadmap";
 
     EXPECT_NO_THROW(m_database->assign_roadmap_to_user(m_user->id(), secondary_id));
 
     roadmaps = m_database->get_roadmaps(m_user->id());
-    EXPECT_THAT(roadmaps, testing::SizeIs(2)) << "Both of the existing roadmaps was assigned to user, so container should contain both";
+    EXPECT_THAT(roadmaps, testing::SizeIs(2)) <<
+ "Both of the existing roadmaps was assigned to user, so container should contain both";
 }
 
 TEST_F(test_database, RenameRoadmap)
@@ -338,9 +342,37 @@ TEST_F(test_database, RemoveRoadmap)
     ASSERT_NO_THROW(m_database->assign_roadmap_to_user(m_user->id(), secondary_id));
 
     EXPECT_NO_THROW(m_database->remove_roadmap(primary_id));
-    ASSERT_THAT(m_database->get_roadmaps(m_user->id()), testing::SizeIs(1)) << "Of two existing roadmaps, one should remain";
+    ASSERT_THAT(m_database->get_roadmaps(m_user->id()), testing::SizeIs(1)) <<
+ "Of two existing roadmaps, one should remain";
     EXPECT_NO_THROW(roadmap = m_database->get_roadmaps(m_user->id()).at(0));
     EXPECT_EQ(roadmap.name(), secondary_name);
 
-    EXPECT_NO_THROW(m_database->remove_roadmap(primary_id)) << "Deleting non-existing roadmap should not throw an exception";
+    EXPECT_NO_THROW(m_database->remove_roadmap(primary_id)) <<
+ "Deleting non-existing roadmap should not throw an exception";
+}
+
+TEST_F(test_database, SearchRoadmaps)
+{
+    std::vector<std::string> const names{
+        "Cloud Infrastructure", "Quantitative Finance", "Database Optimization", "Forensic Accounting",
+        "Cybersecurity Governance", "Data Visualization", "Talent Acquisition", "Supply Chain Logistics",
+        "Intellectual Property Law", "Agile Project Management", "Full-Stack Development", "Backend Development",
+        "Digital Marketing", "Content Marketing", "Financial Analysis", "Risk Analysis", "Product Management",
+        "Project Management", "Brand Strategy", "Growth Strategy"
+    };
+    std::vector<flashback::Roadmap> search_results;
+    search_results.reserve(names.size());
+
+    for (std::string const& roadmap_name : names)
+    {
+        uint64_t roadmap_id{};
+        ASSERT_NO_THROW(roadmap_id = m_database->create_roadmap(roadmap_name));
+        ASSERT_NO_THROW(m_database->assign_roadmap_to_user(m_user->id(), roadmap_id));
+    }
+
+    EXPECT_NO_THROW(search_results = m_database->search_roadmaps("Management"));
+    EXPECT_THAT(search_results, testing::SizeIs(testing::Ge(3)));
+
+    EXPECT_NO_THROW(search_results = m_database->search_roadmaps("Prompt Engineering"));
+    EXPECT_THAT(search_results, testing::IsEmpty()) << "Should not exist!";
 }
