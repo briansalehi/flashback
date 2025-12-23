@@ -19,23 +19,23 @@ message RenameUserRequest { }
 message RenameUserResponse { }
 message ChangeUserEmailRequest { }
 message ChangeUserEmailResponse { }
-message VerifyUserRequest { }
-message VerifyUserResponse { }
+//message VerifyUserRequest { }
+//message VerifyUserResponse { }
 message DeactivateUserRequest { }
 message DeactivateUserResponse { }
 
 // welcome page requests
-message CreateRoadmapRequest { string name = 1; }
+message CreateRoadmapRequest { User user = 1; string name = 2; }
 message CreateRoadmapResponse { Roadmap roadmap = 1; }
 message AssignRoadmapRequest { User user = 1; Roadmap roadmap = 2; }
 message AssignRoadmapResponse { }
 message GetRoadmapsRequest { User user = 1; }
 message GetRoadmapsResponse { repeated Roadmap roadmap = 1; }
-message RenameRoadmapRequest { Roadmap roadmap = 1; }
+message RenameRoadmapRequest { User user = 1; Roadmap roadmap = 2; }
 message RenameRoadmapResponse { }
-message RemoveRoadmapRequest { Roadmap roadmap = 1; }
+message RemoveRoadmapRequest { User user = 1; Roadmap roadmap = 2; }
 message RemoveRoadmapResponse { }
-message SearchRoadmapsRequest { string token = 1; }
+message SearchRoadmapsRequest { User user = 1; string token = 2; }
 message SearchRoadmapsResponse { repeated Roadmap roadmap = 1; }
 
 // roadmap page requests

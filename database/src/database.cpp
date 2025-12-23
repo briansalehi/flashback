@@ -147,11 +147,11 @@ std::unique_ptr<User> database::get_user(std::string_view email)
     return user;
 }
 
-std::unique_ptr<User> database::get_user(uint64_t user_id, std::string_view device)
+std::unique_ptr<User> database::get_user(std::string_view token, std::string_view device)
 {
     std::unique_ptr<User> user{nullptr};
 
-    pqxx::result result_set{query("select * from get_user($1, $2)", user_id, device)};
+    pqxx::result result_set{query("select * from get_user($1, $2)", token, device)};
 
     if (result_set.size() == 1)
     {

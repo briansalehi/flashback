@@ -82,17 +82,17 @@ TEST_F(test_database, CreateSessionForNonExistingUser)
 
 TEST_F(test_database, GetUserWithDevice)
 {
-    std::unique_ptr<flashback::User> user = m_database->get_user(m_user->id(), m_user->device());
+    std::unique_ptr<flashback::User> user = m_database->get_user(m_user->token(), m_user->device());
 
     ASSERT_EQ(user, nullptr);
 
     std::string unknown_device{R"(33333333-3333-3333-3333-333333333333)"};
-    user = m_database->get_user(m_user->id(), m_user->device());
+    user = m_database->get_user(m_user->token(), m_user->device());
 
     ASSERT_EQ(user, nullptr);
     ASSERT_TRUE(m_database->create_session(m_user->id(), m_user->token(), m_user->device()));
 
-    user = m_database->get_user(m_user->id(), m_user->device());
+    user = m_database->get_user(m_user->token(), m_user->device());
 
     ASSERT_NE(user, nullptr);
     EXPECT_GT(user->id(), 0);
@@ -141,26 +141,30 @@ TEST_F(test_database, RevokeSessionsExceptSelectedToken)
 
     m_database->revoke_sessions_except(m_user->id(), m_user->token());
 
-    user = m_database->get_user(m_user->id(), m_user->device());
+    user = m_database->get_user(m_user->token(), m_user->device());
     EXPECT_NE(user, nullptr);
 
-    user = m_database->get_user(m_user->id(), device1);
+    user = m_database->get_user(token1, device1);
     ASSERT_EQ(user, nullptr);
 
-    user = m_database->get_user(m_user->id(), device2);
+    user = m_database->get_user(token2, device2);
     EXPECT_EQ(user, nullptr);
 }
 
 TEST_F(test_database, RevokeSessionsWithNonExistingToken)
 {
     std::string non_existing_token{R"(3333333333+q42gM9lNVbB13v0odiLy6WnHbInbuvvE)"};
+    std::unique_ptr<flashback::User> user{nullptr};
 
     ASSERT_TRUE(m_database->create_session(m_user->id(), m_user->token(), m_user->device()));
 
     m_database->revoke_sessions_except(m_user->id(), non_existing_token);
 
-    std::unique_ptr<flashback::User> user = m_database->get_user(m_user->id(), m_user->device());
-    ASSERT_NE(user, nullptr);
+    user = m_database->get_user(non_existing_token, m_user->device());
+    ASSERT_EQ(user, nullptr) << "Invalid token should not get us any user";
+
+    user = m_database->get_user(m_user->token(), m_user->device());
+    ASSERT_NE(user, nullptr) << "Revoking any token should not interfere with other existing tokens";
 }
 
 TEST_F(test_database, RevokeSingleSession)
@@ -174,10 +178,10 @@ TEST_F(test_database, RevokeSingleSession)
 
     m_database->revoke_session(m_user->id(), token);
 
-    user = m_database->get_user(m_user->id(), device);
+    user = m_database->get_user(token, device);
     ASSERT_EQ(user, nullptr);
 
-    user = m_database->get_user(m_user->id(), m_user->device());
+    user = m_database->get_user(m_user->token(), m_user->device());
     EXPECT_NE(user, nullptr);
 }
 
@@ -190,14 +194,14 @@ TEST_F(test_database, ResetPassword)
 
     ASSERT_TRUE(m_database->create_session(m_user->id(), m_user->token(), m_user->device()));
 
-    user = m_database->get_user(m_user->id(), m_user->device());
+    user = m_database->get_user(m_user->token(), m_user->device());
 
     ASSERT_NE(user, nullptr);
     EXPECT_EQ(user->hash(), m_user->hash());
 
     m_database->reset_password(m_user->id(), hash);
 
-    user = m_database->get_user(m_user->id(), m_user->device());
+    user = m_database->get_user(m_user->token(), m_user->device());
     ASSERT_NE(user, nullptr);
     EXPECT_EQ(user->hash(), hash);
 }
@@ -210,7 +214,7 @@ TEST_F(test_database, UserExists)
     EXPECT_TRUE(m_database->user_exists(m_user->email()));
 }
 
-TEST_F(test_database, CreateDuplicateRoadmap)
+TEST_F(test_database, CreateRoadmap)
 {
     uint64_t primary_id{};
     uint64_t secondary_id{};
