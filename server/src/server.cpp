@@ -22,12 +22,7 @@ grpc::Status server::SignIn(grpc::ServerContext* context, const SignInRequest* r
 {
     try
     {
-        bool const user_is_valid{request->has_user()};
-        bool const email_is_set{!request->user().email().empty()};
-        bool const password_is_set{!request->user().password().empty()};
-        bool const device_is_set{!request->user().device().empty()};
-
-        if (!user_is_valid || !email_is_set || !password_is_set || !device_is_set)
+        if (!request->has_user() || request->user().name().empty() || request->user().email().empty() || request->user().password().empty() || request->user().device().empty())
         {
             throw client_exception("incomplete credentials");
         }
@@ -64,12 +59,14 @@ grpc::Status server::SignIn(grpc::ServerContext* context, const SignInRequest* r
     {
         response->set_success(false);
         response->set_details(exp.code());
+        response->clear_user();
         std::cerr << std::format("Client: {}\n", exp.what());
     }
     catch (std::exception const& exp)
     {
         response->set_success(false);
         response->set_details("internal error");
+        response->clear_user();
         std::cerr << std::format("Server: {}\n", exp.what());
     }
 
