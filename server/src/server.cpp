@@ -22,9 +22,14 @@ grpc::Status server::SignIn(grpc::ServerContext* context, const SignInRequest* r
 {
     try
     {
-        if (!request->has_user() || request->user().id() == 0 || request->user().password().empty() || request->user().device().empty())
+        bool const user_is_valid{request->has_user()};
+        bool const email_is_set{!request->user().email().empty()};
+        bool const password_is_set{!request->user().password().empty()};
+        bool const device_is_set{!request->user().device().empty()};
+
+        if (!user_is_valid || !email_is_set || !password_is_set || !device_is_set)
         {
-            throw client_exception("incomplete credentials: either user is not defined, id or device is not set, or password is empty");
+            throw client_exception("incomplete credentials");
         }
 
         if (!m_database->user_exists(request->user().email()))
@@ -32,14 +37,14 @@ grpc::Status server::SignIn(grpc::ServerContext* context, const SignInRequest* r
             throw client_exception(std::format("user is not registered with email {}", request->user().email()));
         }
 
-        if (!password_is_valid(request->user().hash(), request->user().password()))
+        auto user{m_database->get_user(request->user().email())};
+        user->set_token(generate_token());
+        user->set_device(request->user().device());
+
+        if (!password_is_valid(user->hash(), request->user().password()))
         {
             throw client_exception("invalid credentials");
         }
-
-        auto user{std::make_unique<User>()};
-        user->set_token(generate_token());
-        user->set_device(request->user().device());
 
         if (!m_database->create_session(user->id(), user->token(), user->device()))
         {
@@ -48,11 +53,12 @@ grpc::Status server::SignIn(grpc::ServerContext* context, const SignInRequest* r
 
         std::cerr << std::format("Client {}: signed in with device {}\n", user->id(), user->device());
 
-        auto returning_user{std::make_unique<User>(*user)};
-
+        user->clear_id();
+        user->clear_hash();
+        user->clear_password();
         response->set_success(true);
         response->set_details("sign in successful");
-        response->set_allocated_user(returning_user.release());
+        response->set_allocated_user(user.release());
     }
     catch (client_exception const& exp)
     {
@@ -87,10 +93,12 @@ grpc::Status server::SignUp(grpc::ServerContext* context, const SignUpRequest* r
 
         auto user{std::make_unique<User>(request->user())};
         user->set_hash(calculate_hash(user->password()));
-        user->set_id(m_database->create_user(user->name(), user->email(), user->hash()));
+        uint64_t user_id{m_database->create_user(user->name(), user->email(), user->hash())};
         user->clear_password();
+        user->clear_hash();
+        user->clear_id();
 
-        if (user->id() > 0)
+        if (user_id > 0)
         {
             response->set_success(true);
             response->set_details("signup successful");
@@ -150,7 +158,7 @@ grpc::Status server::VerifySession(grpc::ServerContext* context, VerifySessionRe
 {
     try
     {
-        response->set_valid(request->has_user() && session_is_valid(context, request->user().token()));
+        response->set_valid(request->has_user() && session_is_valid(request->user()));
     }
     catch (std::exception const& exp)
     {
@@ -162,26 +170,47 @@ grpc::Status server::VerifySession(grpc::ServerContext* context, VerifySessionRe
 
 grpc::Status server::CreateRoadmap(grpc::ServerContext* context, CreateRoadmapRequest const* request, CreateRoadmapResponse* response)
 {
-    return Service::CreateRoadmap(context, request, response);
+    response->clear_roadmap();
+
+    try
+    {
+        if (request->has_user() && session_is_valid(request->user()))
+        {
+            auto roadmap{std::make_unique<Roadmap>()};
+            roadmap->set_name(request->name());
+            roadmap->set_id(m_database->create_roadmap(request->name()));
+            response->set_allocated_roadmap(roadmap.release());
+        }
+    }
+    catch (client_exception const& exp)
+    {
+        std::cerr << std::format("Client: {}", exp.what());
+    }
+    catch (pqxx::unique_violation const& exp)
+    {
+        std::cerr << std::format("Server: {}", exp.what());
+    }
+
+    return grpc::Status::OK;
 }
 
 grpc::Status server::AssignRoadmap(grpc::ServerContext* context, AssignRoadmapRequest const* request, AssignRoadmapResponse* response)
 {
-    return Service::AssignRoadmap(context, request, response);
+    return grpc::Status::OK;
 }
 
 grpc::Status server::GetRoadmaps(grpc::ServerContext* context, GetRoadmapsRequest const* request, GetRoadmapsResponse* response)
 {
     try
     {
-        if (!request->has_user() || request->user().email().empty() || request->user().device().empty())
+        if (!request->has_user() || request->user().token().empty() || request->user().device().empty())
         {
             throw client_exception("incomplete credentials");
         }
 
-        std::shared_ptr<User> user{m_database->get_user(request->user().email())};
+        std::shared_ptr<User> user{m_database->get_user(request->user().token(), request->user().device())};
 
-        if (user == nullptr || !session_is_valid(context, user->token()))
+        if (nullptr == user)
         {
             throw client_exception("unauthorized request for roadmaps");
         }
@@ -225,11 +254,9 @@ grpc::Status server::SearchRoadmaps(grpc::ServerContext* context, SearchRoadmaps
 
 std::string server::calculate_hash(std::string_view password)
 {
-    uint64_t const opslimit{crypto_pwhash_OPSLIMIT_MODERATE};
-    size_t const memlimit{crypto_pwhash_MEMLIMIT_MODERATE};
     char buffer[crypto_pwhash_STRBYTES];
 
-    if (crypto_pwhash_str(buffer, password.data(), password.size(), opslimit, memlimit) != 0)
+    if (crypto_pwhash_str(buffer, password.data(), password.size(), crypto_pwhash_OPSLIMIT_MODERATE, crypto_pwhash_MEMLIMIT_MODERATE) != 0)
     {
         throw std::runtime_error("Server: sodium cannot create hash");
     }
@@ -253,18 +280,8 @@ std::string server::generate_token()
     return std::string{token};
 }
 
-bool server::session_is_valid(grpc::ServerContext* context, std::string_view user_provided_token)
+bool server::session_is_valid(User const& user) const
 {
-    bool is_valid{false};
-
-    for (std::pair<grpc::string_ref, grpc::string_ref> const field: context->client_metadata())
-    {
-        if (field.first == "token")
-        {
-            is_valid = (user_provided_token == std::string{field.second.begin(), field.second.end()});
-            break;
-        }
-    }
-
-    return is_valid;
+    return nullptr != m_database->get_user(user.token(), user.device());
 }
+

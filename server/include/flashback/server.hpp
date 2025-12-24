@@ -106,7 +106,7 @@ protected:
     [[nodiscard]] static std::string calculate_hash(std::string_view password);
     [[nodiscard]] static bool password_is_valid(std::string_view lhs, std::string_view rhs);
     [[nodiscard]] static std::string generate_token();
-    [[nodiscard]] static bool session_is_valid(grpc::ServerContext* context, std::string_view user_provided_token);
+    [[nodiscard]] bool session_is_valid(User const& user) const;
 
     std::shared_ptr<basic_database> m_database;
 };
