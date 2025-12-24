@@ -193,6 +193,22 @@ grpc::Status server::CreateRoadmap(grpc::ServerContext* context, CreateRoadmapRe
 
 grpc::Status server::AssignRoadmap(grpc::ServerContext* context, AssignRoadmapRequest const* request, AssignRoadmapResponse* response)
 {
+    try
+    {
+        if (request->has_user() && request->has_roadmap() && session_is_valid(request->user()))
+        {
+            m_database->assign_roadmap(request->user().id(), request->roadmap().id());
+        }
+    }
+    catch (flashback::client_exception const& exp)
+    {
+        std::cerr << std::format("Client: {}", exp.what());
+    }
+    catch (std::exception const& exp)
+    {
+        std::cerr << std::format("Server: {}", exp.what());
+    }
+
     return grpc::Status::OK;
 }
 
@@ -200,22 +216,17 @@ grpc::Status server::GetRoadmaps(grpc::ServerContext* context, GetRoadmapsReques
 {
     try
     {
-        if (!request->has_user() || request->user().token().empty() || request->user().device().empty())
-        {
-            throw client_exception("incomplete credentials");
-        }
+        std::shared_ptr<User> const user{m_database->get_user(request->user().token(), request->user().device())};
 
-        std::shared_ptr<User> user{m_database->get_user(request->user().token(), request->user().device())};
-
-        if (nullptr == user)
+        if (!request->has_user() || user == nullptr)
         {
             throw client_exception("unauthorized request for roadmaps");
         }
 
-        std::vector<Roadmap> roadmaps{m_database->get_roadmaps(user->id())};
+        std::vector<Roadmap> const roadmaps{m_database->get_roadmaps(user->id())};
         std::clog << std::format("Client {}: collected {} roadmaps\n", request->user().id(), roadmaps.size());
 
-        for (Roadmap roadmap: roadmaps)
+        for (Roadmap const& roadmap: roadmaps)
         {
             auto allocated_roadmap = response->add_roadmap();
             allocated_roadmap->set_id(roadmap.id());
@@ -236,16 +247,69 @@ grpc::Status server::GetRoadmaps(grpc::ServerContext* context, GetRoadmapsReques
 
 grpc::Status server::RenameRoadmap(grpc::ServerContext* context, RenameRoadmapRequest const* request, RenameRoadmapResponse* response)
 {
+    try
+    {
+        if (request->has_user() && request->has_roadmap() && session_is_valid(request->user()))
+        {
+            m_database->rename_roadmap(request->roadmap().id(), request->roadmap().name());
+        }
+    }
+    catch (flashback::client_exception const& exp)
+    {
+        std::cerr << std::format("Client: {}", exp.what());
+    }
+    catch (std::exception const& exp)
+    {
+        std::cerr << std::format("Server: {}", exp.what());
+    }
+
     return grpc::Status::OK;
 }
 
 grpc::Status server::RemoveRoadmap(grpc::ServerContext* context, RemoveRoadmapRequest const* request, RemoveRoadmapResponse* response)
 {
+    try
+    {
+        if (request->has_user() && request->has_roadmap() && session_is_valid(request->user()))
+        {
+            m_database->remove_roadmap(request->user().id());
+        }
+    }
+    catch (flashback::client_exception const& exp)
+    {
+        std::cerr << std::format("Client: {}", exp.what());
+    }
+    catch (std::exception const& exp)
+    {
+        std::cerr << std::format("Server: {}", exp.what());
+    }
+
     return grpc::Status::OK;
 }
 
 grpc::Status server::SearchRoadmaps(grpc::ServerContext* context, SearchRoadmapsRequest const* request, SearchRoadmapsResponse* response)
 {
+    try
+    {
+        if (request->has_user() && session_is_valid(request->user()))
+        {
+            for (flashback::Roadmap const& r: m_database->search_roadmaps(request->token()))
+            {
+                flashback::Roadmap* roadmap = response->add_roadmap();
+                roadmap->set_id(r.id());
+                roadmap->set_name(r.name());
+            }
+        }
+    }
+    catch (flashback::client_exception const& exp)
+    {
+        std::cerr << std::format("Client: {}", exp.what());
+    }
+    catch (std::exception const& exp)
+    {
+        std::cerr << std::format("Server: {}", exp.what());
+    }
+
     return grpc::Status::OK;
 }
 

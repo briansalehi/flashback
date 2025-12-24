@@ -256,7 +256,8 @@ TEST_F(test_server, SignInWithInvalidCredentials)
     EXPECT_FALSE(user_after_signin->hash().empty()) << "Hash will be used internally by sign up function but will not return";
 
     EXPECT_CALL(*m_mock_database, user_exists(m_user->email())).Times(1).WillOnce(testing::Return(true));
-    EXPECT_CALL(*m_mock_database, get_user(m_user->email())).Times(1).WillOnce(testing::Return(std::make_unique<flashback::User>(*user_after_signin)));
+    EXPECT_CALL(*m_mock_database, get_user(m_user->email())).Times(1).WillOnce(
+        testing::Return(std::make_unique<flashback::User>(*user_after_signin)));
     EXPECT_CALL(*m_mock_database, create_session(m_user->id(), testing::A<std::string_view>(), m_user->device())).Times(0);
 
     request->set_allocated_user(user_before_signin.release());
@@ -387,20 +388,176 @@ TEST_F(test_server, CreateRoadmap)
 
 TEST_F(test_server, AssignRoadmap)
 {
+    auto request{std::make_unique<flashback::AssignRoadmapRequest>()};
+    auto response{std::make_unique<flashback::AssignRoadmapResponse>()};
+    auto requesting_user{std::make_unique<flashback::User>(*m_user)};
+    auto database_retrieved_user{std::make_unique<flashback::User>(*m_user)};
+    auto roadmap{std::make_unique<flashback::Roadmap>()};
+
+    EXPECT_CALL(*m_mock_database, get_user(testing::A<std::string_view>(), testing::A<std::string_view>())).Times(1).WillOnce(
+        testing::Return(std::make_unique<flashback::User>(*database_retrieved_user)));
+    EXPECT_CALL(*m_mock_database, assign_roadmap(testing::A<uint64_t>(), testing::A<uint64_t>())).Times(1);
+
+    EXPECT_FALSE(request->has_roadmap());
+    EXPECT_FALSE(request->has_user());
+    EXPECT_NO_THROW(m_server->AssignRoadmap(m_server_context.get(), request.get(), response.get()));
+
+    roadmap->set_id(1);
+    roadmap->set_name("Overtime Working Specialist");
+    request->set_allocated_roadmap(roadmap.release());
+    EXPECT_TRUE(request->has_roadmap());
+    EXPECT_GT(request->roadmap().id(), 0);
+    EXPECT_FALSE(request->has_user());
+    EXPECT_FALSE(request->roadmap().name().empty());
+
+    EXPECT_NO_THROW(m_server->AssignRoadmap(m_server_context.get(), request.get(), response.get()));
+
+    request->set_allocated_user(requesting_user.release());
+    EXPECT_TRUE(request->has_user());
+    EXPECT_FALSE(request->user().token().empty());
+    EXPECT_FALSE(request->user().device().empty());
+    EXPECT_NO_THROW(m_server->AssignRoadmap(m_server_context.get(), request.get(), response.get()));
 }
 
 TEST_F(test_server, GetRoadmaps)
 {
+    auto const request{std::make_unique<flashback::GetRoadmapsRequest>()};
+    auto const response{std::make_unique<flashback::GetRoadmapsResponse>()};
+    auto requesting_user{std::make_unique<flashback::User>(*m_user)};
+    auto const database_retrieved_user{std::make_unique<flashback::User>(*m_user)};
+    auto const roadmap{std::make_unique<flashback::Roadmap>()};
+
+    EXPECT_CALL(*m_mock_database, get_user(testing::A<std::string_view>(), testing::A<std::string_view>())).Times(2).WillOnce(
+        testing::Return(std::make_unique<flashback::User>(*database_retrieved_user))).WillOnce(
+        testing::Return(std::make_unique<flashback::User>(*database_retrieved_user)));
+    EXPECT_CALL(*m_mock_database, get_roadmaps(testing::A<uint64_t>())).Times(1).WillOnce(
+        testing::Return(std::vector<flashback::Roadmap>{}));
+
+    EXPECT_FALSE(request->has_user());
+    EXPECT_NO_THROW(m_server->GetRoadmaps(m_server_context.get(), request.get(), response.get()));
+
+    roadmap->set_id(1);
+    roadmap->set_name("Overtime Working Specialist");
+    request->set_allocated_user(requesting_user.release());
+    EXPECT_TRUE(request->has_user());
+    EXPECT_FALSE(request->user().token().empty());
+    EXPECT_FALSE(request->user().device().empty());
+    EXPECT_NO_THROW(m_server->GetRoadmaps(m_server_context.get(), request.get(), response.get()));
 }
 
 TEST_F(test_server, RenameRoadmap)
 {
+    auto request{std::make_unique<flashback::RenameRoadmapRequest>()};
+    auto response{std::make_unique<flashback::RenameRoadmapResponse>()};
+    auto requesting_user{std::make_unique<flashback::User>(*m_user)};
+    auto database_retrieved_user{std::make_unique<flashback::User>(*m_user)};
+    auto roadmap{std::make_unique<flashback::Roadmap>()};
+
+    EXPECT_CALL(*m_mock_database, get_user(testing::A<std::string_view>(), testing::A<std::string_view>())).Times(1).WillOnce(
+        testing::Return(std::make_unique<flashback::User>(*database_retrieved_user)));
+    EXPECT_CALL(*m_mock_database, rename_roadmap(testing::A<uint64_t>(), testing::A<std::string_view>())).Times(1);
+
+    EXPECT_FALSE(request->has_roadmap());
+    EXPECT_FALSE(request->has_user());
+    EXPECT_NO_THROW(m_server->RenameRoadmap(m_server_context.get(), request.get(), response.get()));
+
+    roadmap->set_id(1);
+    roadmap->set_name("Overtime Working Specialist");
+    request->set_allocated_roadmap(roadmap.release());
+    EXPECT_TRUE(request->has_roadmap());
+    EXPECT_GT(request->roadmap().id(), 0);
+    EXPECT_FALSE(request->has_user());
+    EXPECT_FALSE(request->roadmap().name().empty());
+
+    EXPECT_NO_THROW(m_server->RenameRoadmap(m_server_context.get(), request.get(), response.get()));
+
+    request->set_allocated_user(requesting_user.release());
+    EXPECT_TRUE(request->has_user());
+    EXPECT_FALSE(request->user().token().empty());
+    EXPECT_FALSE(request->user().device().empty());
+    EXPECT_NO_THROW(m_server->RenameRoadmap(m_server_context.get(), request.get(), response.get()));
 }
 
 TEST_F(test_server, RemoveRoadmap)
 {
+    auto request{std::make_unique<flashback::RemoveRoadmapRequest>()};
+    auto response{std::make_unique<flashback::RemoveRoadmapResponse>()};
+    auto requesting_user{std::make_unique<flashback::User>(*m_user)};
+    auto database_retrieved_user{std::make_unique<flashback::User>(*m_user)};
+    auto roadmap{std::make_unique<flashback::Roadmap>()};
+
+    EXPECT_CALL(*m_mock_database, get_user(testing::A<std::string_view>(), testing::A<std::string_view>())).Times(1).WillOnce(
+        testing::Return(std::make_unique<flashback::User>(*database_retrieved_user)));
+    EXPECT_CALL(*m_mock_database, remove_roadmap(testing::A<uint64_t>())).Times(1);
+
+    EXPECT_FALSE(request->has_roadmap());
+    EXPECT_FALSE(request->has_user());
+    EXPECT_NO_THROW(m_server->RemoveRoadmap(m_server_context.get(), request.get(), response.get()));
+
+    roadmap->set_id(1);
+    roadmap->set_name("Overtime Working Specialist");
+    request->set_allocated_roadmap(roadmap.release());
+    EXPECT_TRUE(request->has_roadmap());
+    EXPECT_GT(request->roadmap().id(), 0);
+    EXPECT_FALSE(request->has_user());
+    EXPECT_FALSE(request->roadmap().name().empty());
+
+    EXPECT_NO_THROW(m_server->RemoveRoadmap(m_server_context.get(), request.get(), response.get()));
+
+    request->set_allocated_user(requesting_user.release());
+    EXPECT_TRUE(request->has_user());
+    EXPECT_FALSE(request->user().token().empty());
+    EXPECT_FALSE(request->user().device().empty());
+    EXPECT_NO_THROW(m_server->RemoveRoadmap(m_server_context.get(), request.get(), response.get()));
 }
 
 TEST_F(test_server, SearchRoadmaps)
 {
+    std::unique_ptr<flashback::User> database_retrieved_user{nullptr};
+    EXPECT_CALL(*m_mock_database, get_user(testing::A<std::string_view>(), testing::A<std::string_view>())).Times(0);
+    EXPECT_CALL(*m_mock_database, search_roadmaps(testing::A<std::string_view>())).Times(0);
+
+    auto search_request{std::make_unique<flashback::SearchRoadmapsRequest>()};
+    auto search_response{std::make_unique<flashback::SearchRoadmapsResponse>()};
+    EXPECT_FALSE(search_request->has_user());
+    EXPECT_NO_THROW(m_server->SearchRoadmaps(m_server_context.get(), search_request.get(), search_response.get()));
+    EXPECT_THAT(search_response->roadmap(), testing::SizeIs(0)) << "User is not set so the request will be declined";
+
+    database_retrieved_user = std::make_unique<flashback::User>(*m_user);
+    EXPECT_CALL(*m_mock_database, get_user(testing::A<std::string_view>(), testing::A<std::string_view>())).Times(1).WillOnce(testing::Return(std::make_unique<flashback::User>(*database_retrieved_user)));
+    EXPECT_CALL(*m_mock_database, search_roadmaps(testing::A<std::string_view>())).Times(1).WillOnce(testing::Return(std::vector<flashback::Roadmap>{}));
+
+    auto roadmap{std::make_unique<flashback::Roadmap>()};
+    roadmap->set_id(1);
+    roadmap->set_name("Overtime Working Specialist");
+    search_request->set_allocated_user(std::make_unique<flashback::User>(*m_user).release());
+    EXPECT_TRUE(search_request->has_user());
+    EXPECT_FALSE(search_request->user().token().empty());
+    EXPECT_FALSE(search_request->user().device().empty());
+    EXPECT_NO_THROW(m_server->SearchRoadmaps(m_server_context.get(), search_request.get(), search_response.get()));
+
+    database_retrieved_user = std::make_unique<flashback::User>(*m_user);
+    EXPECT_CALL(*m_mock_database, get_user(testing::A<std::string_view>(), testing::A<std::string_view>())).Times(1).WillOnce(testing::Return(std::make_unique<flashback::User>(*database_retrieved_user)));
+    EXPECT_CALL(*m_mock_database, create_roadmap(testing::A<std::string_view>())).Times(1).WillOnce(testing::Return(roadmap->id()));
+
+    grpc::Status status{};
+    auto create_request{std::make_unique<flashback::CreateRoadmapRequest>()};
+    auto create_response{std::make_unique<flashback::CreateRoadmapResponse>()};
+    create_request->set_allocated_user(std::make_unique<flashback::User>(*m_user).release());
+    EXPECT_TRUE(create_request->has_user());
+    EXPECT_FALSE(create_request->user().token().empty());
+    EXPECT_FALSE(create_request->user().device().empty());
+    EXPECT_NO_THROW(status = m_server->CreateRoadmap(m_server_context.get(), create_request.get(), create_response.get()));
+    EXPECT_TRUE(create_response->has_roadmap()) << "User is set and session is valid, therefore the request should be responded";
+    EXPECT_EQ(create_response->roadmap().id(), roadmap->id());
+
+    database_retrieved_user = std::make_unique<flashback::User>(*m_user);
+    EXPECT_CALL(*m_mock_database, get_user(testing::A<std::string_view>(), testing::A<std::string_view>())).Times(1).WillOnce(testing::Return(std::make_unique<flashback::User>(*database_retrieved_user)));
+    EXPECT_CALL(*m_mock_database, search_roadmaps(testing::A<std::string_view>())).Times(1).WillOnce(testing::Return(std::vector<flashback::Roadmap>{}));
+
+    search_request->set_allocated_user(std::make_unique<flashback::User>(*m_user).release());
+    EXPECT_TRUE(search_request->has_user());
+    EXPECT_FALSE(search_request->user().token().empty());
+    EXPECT_FALSE(search_request->user().device().empty());
+    EXPECT_NO_THROW(m_server->SearchRoadmaps(m_server_context.get(), search_request.get(), search_response.get()));
 }

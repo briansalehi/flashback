@@ -224,7 +224,7 @@ uint64_t database::create_roadmap(std::string_view name)
     return roadmap_id;
 }
 
-void database::assign_roadmap_to_user(uint64_t user_id, uint64_t roadmap_id)
+void database::assign_roadmap(uint64_t user_id, uint64_t roadmap_id)
 {
     exec("call assign_roadmap_to_user($1, $2)", user_id, roadmap_id);
 }

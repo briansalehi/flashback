@@ -21,7 +21,7 @@ public:
 
     // roadmaps
     MOCK_METHOD(uint64_t, create_roadmap, (std::string_view), (override));
-    MOCK_METHOD(void, assign_roadmap_to_user, (uint64_t, uint64_t), (override));
+    MOCK_METHOD(void, assign_roadmap, (uint64_t, uint64_t), (override));
     MOCK_METHOD(std::vector<flashback::Roadmap>, get_roadmaps, (uint64_t), (override));
     MOCK_METHOD(void, rename_roadmap, (uint64_t, std::string_view), (override));
     MOCK_METHOD(void, remove_roadmap, (uint64_t), (override));
