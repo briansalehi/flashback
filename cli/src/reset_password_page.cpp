@@ -10,6 +10,12 @@ using namespace flashback;
 reset_password_page::reset_password_page(std::shared_ptr<client> client)
     : m_client{client}
 {
+    auto [component, content] = reset_password_page::prepare_components();
+    page::display(component, content);
+}
+
+std::pair<ftxui::Component, std::function<ftxui::Element()>> reset_password_page::prepare_components()
+{
     ftxui::InputOption email_traits{};
     email_traits.on_enter = std::bind(&reset_password_page::verify_submit, this);
     ftxui::Component email_field{ftxui::Input(&m_email, email_traits)};
@@ -64,7 +70,7 @@ reset_password_page::reset_password_page(std::shared_ptr<client> client)
         }
     };
 
-    page::display(component, content);
+    return {component, content};
 }
 
 bool reset_password_page::verify()
@@ -78,19 +84,6 @@ void reset_password_page::submit()
 {
     try
     {
-        auto user{std::make_unique<User>()};
-        user->set_email(m_email);
-        user->set_password(m_password);
-        m_client->user(std::move(user));
-        std::shared_ptr<ResetPasswordResponse> response{m_client->reset_password()};
-
-        if (response->success())
-        {
-            page::close();
-        }
-        else
-        {
-        }
     }
     catch (std::exception const& exp)
     {

@@ -6,32 +6,23 @@ using namespace flashback;
 roadmap_page::roadmap_page(std::shared_ptr<client> client)
     : m_client{client}
 {
-    add_roadmaps();
-    std::function<ftxui::Element()> content{
-        [this] {
-            return ftxui::hbox(ftxui::vbox(m_elements), ftxui::flex);
-        }
-    };
-
+    load_roadmaps();
+    std::function<ftxui::Element()> const content{[this] { return ftxui::hbox(ftxui::vbox(m_elements), ftxui::flex); }};
     page::display(content);
 }
 
-void roadmap_page::add_roadmaps()
+std::pair<ftxui::Component, std::function<ftxui::Element()>> roadmap_page::prepare_components()
 {
-    std::ranges::for_each(m_client->roadmaps()->roadmap(), std::bind_front(&roadmap_page::add_roadmap, this));
+    return {};
 }
 
 void roadmap_page::add_roadmap(Roadmap const& r)
 {
-    ftxui::Element element{
-        ftxui::border(
-            ftxui::hbox(
-                ftxui::text(std::to_string(r.id())),
-                ftxui::separatorEmpty(),
-                ftxui::text(r.name())
-                )
-            )
-    };
-
+    ftxui::Element element{ftxui::border(ftxui::hbox(ftxui::text(std::to_string(r.id())), ftxui::separatorEmpty(), ftxui::text(r.name())))};
     m_elements.push_back(std::move(element));
+}
+
+void roadmap_page::load_roadmaps()
+{
+    std::ranges::for_each(m_client->get_roadmaps(), std::bind_front(&roadmap_page::add_roadmap, this));
 }

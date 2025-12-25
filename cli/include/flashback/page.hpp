@@ -1,5 +1,8 @@
 #pragma once
 
+#include <memory>
+#include <utility>
+#include <functional>
 #include <ftxui/dom/elements.hpp>
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/screen_interactive.hpp>
@@ -11,7 +14,7 @@ class page
 public:
     explicit page();
     virtual ~page() = default;
-
+    virtual std::pair<ftxui::Component, std::function<ftxui::Element()>> prepare_components() = 0;
     void render();
     void close();
 

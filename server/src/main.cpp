@@ -15,8 +15,8 @@ int main()
     try
     {
         auto database{std::make_shared<flashback::database>()};
-        auto server{std::make_shared<flashback::server>(database)};
-        auto builder{std::make_unique<grpc::ServerBuilder>()};
+        auto const server{std::make_shared<flashback::server>(database)};
+        auto const builder{std::make_unique<grpc::ServerBuilder>()};
 
         // grpc::SslServerCredentialsOptions opts;
         // opts.pem_key_cert_pairs.push_back({key, cert});

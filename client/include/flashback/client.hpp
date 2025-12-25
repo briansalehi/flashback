@@ -10,15 +10,17 @@ namespace flashback
 class client final: public basic_client
 {
 public:
-    explicit client(std::string address, std::string port);
-    ~client() override;
+    explicit client(std::string address, std::string port, std::shared_ptr<config_manager> config);
+    ~client() override = default;
     bool signup(std::string name, std::string email, std::string password) override;
+    bool signin(std::string email, std::string password) override;
+    bool needs_to_signup() const override;
+    bool needs_to_signin() const override;
+    std::vector<Roadmap> get_roadmaps() const override;
 
 private:
-    std::unique_ptr<grpc::ClientContext> m_client_context;
     std::shared_ptr<grpc::Channel> m_channel;
     std::unique_ptr<Server::Stub> m_stub;
-    std::unique_ptr<flashback::config_manager> m_config;
+    std::shared_ptr<config_manager> m_config;
 };
-
 } // flashback

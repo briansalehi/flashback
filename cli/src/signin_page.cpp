@@ -7,6 +7,12 @@ using namespace flashback;
 signin_page::signin_page(std::shared_ptr<client> client)
     : m_client{client}
 {
+    auto [component, content] = prepare_components();
+    page::display(component, content);
+}
+
+std::pair<ftxui::Component, std::function<ftxui::Element()>> signin_page::prepare_components()
+{
     ftxui::InputOption email_traits{};
     email_traits.on_enter = std::bind(&signin_page::verify_submit, this);
     ftxui::Component email_field{ftxui::Input(&m_email, email_traits)};
@@ -32,48 +38,29 @@ signin_page::signin_page(std::shared_ptr<client> client)
         }, button_style)
     };
 
-    ftxui::Component component{
-        ftxui::Container::Vertical({
-            email_field,
-            password,
-            submit_button
-        })
-    };
+    ftxui::Component component{ftxui::Container::Vertical({email_field, password, submit_button})};
 
     std::function<ftxui::Element()> content{
         [email_field, password, submit_button] {
-            return ftxui::vbox(
-                ftxui::vbox(
-                    ftxui::hbox(ftxui::text("Email: "), email_field->Render()),
-                    ftxui::hbox(ftxui::text("Password: "), password->Render()),
-                    submit_button->Render()
-                ) | ftxui::borderEmpty,
-                ftxui::borderEmpty
-            );
+            return ftxui::vbox(ftxui::vbox(ftxui::hbox(ftxui::text("Email: "), email_field->Render()),
+                                           ftxui::hbox(ftxui::text("Password: "), password->Render()),
+                                           submit_button->Render()) | ftxui::borderEmpty, ftxui::borderEmpty);
         }
     };
 
-    page::display(component, content);
+    return {component, content};
 }
 
-bool signin_page::verify()
+bool signin_page::verify() const
 {
-    return !m_email.empty() &&
-        !m_password.empty();
+    return !m_email.empty() && !m_password.empty();
 }
 
 void signin_page::submit()
 {
     try
     {
-        auto user{std::make_unique<User>()};
-        user->set_email(m_email);
-        user->set_password(m_password);
-        m_client->user(std::move(user));
-        std::shared_ptr<SignInResponse> response{m_client->signin()};
-        m_client->user(std::make_unique<User>(response->user()));
-
-        if (response->success())
+        if (m_client->signin(m_email, m_password))
         {
             page::close();
         }

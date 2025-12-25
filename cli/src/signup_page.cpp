@@ -1,4 +1,3 @@
-#include <functional>
 #include <flashback/signup_page.hpp>
 #include <ftxui/screen/color.hpp>
 #include <ftxui/dom/elements.hpp>
@@ -9,6 +8,12 @@ using namespace flashback;
 
 signup_page::signup_page(std::shared_ptr<client> client)
     : m_client{client}
+{
+    auto [component, content] = prepare_components();
+    page::display(component, content);
+}
+
+std::pair<ftxui::Component, std::function<ftxui::Element()>> signup_page::prepare_components()
 {
     ftxui::InputOption name_traits{};
     name_traits.on_enter = std::bind(&signup_page::verify_submit, this);
@@ -24,9 +29,7 @@ signup_page::signup_page(std::shared_ptr<client> client)
     ftxui::Component password{ftxui::Input(&m_password, password_traits)};
     ftxui::Component verify_password{ftxui::Input(&m_verify_password, password_traits)};
 
-    ftxui::Element unmatched_password{
-        ftxui::text("password does not match") | ftxui::color(ftxui::Color::Red) | ftxui::bold
-    };
+    ftxui::Element unmatched_password{ftxui::text("password does not match") | ftxui::color(ftxui::Color::Red) | ftxui::bold};
     // unmatched_password = ftxui::Maybe(unmatched_password, [&] -> bool { return password != verify_password; });
 
     ftxui::ButtonOption button_style{ftxui::ButtonOption::Animated()};
@@ -45,54 +48,31 @@ signup_page::signup_page(std::shared_ptr<client> client)
         }, button_style)
     };
 
-    ftxui::Component component{
-        ftxui::Container::Vertical({
-            name,
-            email_field,
-            password,
-            verify_password,
-            submit_button
-        })
-    };
+    ftxui::Component component{ftxui::Container::Vertical({name, email_field, password, verify_password, submit_button})};
 
     std::function<ftxui::Element()> content{
         [name, email_field, password, verify_password, submit_button] {
-            return ftxui::vbox(
-                ftxui::vbox(
-                    ftxui::hbox(ftxui::text("Full Name: "), name->Render()),
-                    ftxui::hbox(ftxui::text("Email: "), email_field->Render()),
-                    ftxui::hbox(ftxui::text("Password: "), password->Render()),
-                    ftxui::hbox(ftxui::text("Verify Password: "), verify_password->Render()),
-                    submit_button->Render()
-                ) | ftxui::borderEmpty,
-                ftxui::borderEmpty
-            );
+            return ftxui::vbox(ftxui::vbox(ftxui::hbox(ftxui::text("Full Name: "), name->Render()),
+                                           ftxui::hbox(ftxui::text("Email: "), email_field->Render()),
+                                           ftxui::hbox(ftxui::text("Password: "), password->Render()),
+                                           ftxui::hbox(ftxui::text("Verify Password: "), verify_password->Render()),
+                                           submit_button->Render()) | ftxui::borderEmpty, ftxui::borderEmpty);
         }
     };
 
-    page::display(component, content);
+    return {component, content};
 }
 
-bool signup_page::verify()
+bool signup_page::verify() const
 {
-    return !m_name.empty() &&
-        !m_email.empty() &&
-        !m_password.empty() &&
-        m_password == m_verify_password;
+    return !m_name.empty() && !m_email.empty() && !m_password.empty() && m_password == m_verify_password;
 }
 
 void signup_page::submit()
 {
     try
     {
-        auto user{std::make_unique<User>()};
-        user->set_name(m_name);
-        user->set_email(m_email);
-        user->set_password(m_password);
-        m_client->user(std::move(user));
-        std::shared_ptr<SignUpResponse> response{m_client->signup()};
-
-        if (response->success())
+        if (m_client->signup(m_name, m_email, m_password))
         {
             page::close();
         }

@@ -3,42 +3,33 @@
 #include <flashback/signin_page.hpp>
 #include <flashback/signup_page.hpp>
 #include <flashback/welcome_page.hpp>
-#include <flashback/reset_password_page.hpp>
 #include <flashback/window_manager.hpp>
 
 using namespace flashback;
 
 window_manager::window_manager(std::shared_ptr<client> client)
-    : m_client{client}, m_page{nullptr}, m_next_page{nullptr}, m_window_lock{std::make_unique<std::mutex>()},
-      m_window_runner{nullptr}
+    : m_client{client}
+    , m_page{nullptr}
+    , m_next_page{nullptr}
+    , m_window_lock{std::make_unique<std::mutex>()}
+    , m_window_runner{nullptr}
 {
     try
     {
         // swap_page(std::make_shared<welcome_page>());
-
-        if (!m_client->user_is_defined() || !m_client->session_is_valid())
+        if (m_client->needs_to_signup())
+        {
+            swap_page(std::make_shared<signup_page>(m_client));
+        }
+        else if (m_client->needs_to_signin())
         {
             swap_page(std::make_shared<signin_page>(m_client));
             m_window_runner->join();
         }
-
-        if (!m_client->user_is_defined())
+        else
         {
-            swap_page(std::make_shared<signup_page>(m_client));
-            m_window_runner->join();
-
-            if (m_client->user_is_defined() && !m_client->session_is_valid())
-            {
-                swap_page(std::make_shared<signin_page>(m_client));
-            }
-
-            if (!m_client->user_is_defined() || !m_client->session_is_valid())
-            {
-                throw std::runtime_error("Client: user is not defined");
-            }
+            swap_page(std::make_shared<roadmap_page>(m_client));
         }
-
-        swap_page(std::make_shared<roadmap_page>(m_client));
     }
     catch (std::runtime_error const& exp)
     {
@@ -49,8 +40,7 @@ window_manager::window_manager(std::shared_ptr<client> client)
 
 window_manager::~window_manager()
 {
-    if (m_window_runner->joinable())
-        m_window_runner->join();
+    if (m_window_runner->joinable()) m_window_runner->join();
 
     m_window_runner.reset();
 }

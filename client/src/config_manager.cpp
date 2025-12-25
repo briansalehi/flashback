@@ -7,11 +7,12 @@
 using namespace flashback;
 
 config_manager::config_manager()
-    : m_loaded_user{nullptr}
-    , m_base_path{std::filesystem::path{std::getenv("HOME")} / ".config/flashback"}
-    , m_config_path{m_base_path / "flashback.conf"}
+    : m_loaded_user{nullptr},
+    m_base_path{std::filesystem::path{std::getenv("HOME")} / ".config/flashback"},
+    m_config_path{m_base_path / "flashback.conf"}
 {
     config_manager::make_base();
+    config_manager::load();
 }
 
 std::filesystem::path config_manager::base_path() const noexcept
@@ -48,9 +49,14 @@ void config_manager::store(std::shared_ptr<User> user)
     m_config.close();
 }
 
-std::shared_ptr<User> config_manager::get_user() const
+std::unique_ptr<User> config_manager::get_user() const
 {
-    return m_loaded_user;
+    return std::make_unique<User>(*m_loaded_user);
+}
+
+bool config_manager::has_credentials() const noexcept
+{
+    return !m_loaded_user->token().empty() && !m_loaded_user->device().empty();
 }
 
 void config_manager::load()
@@ -71,7 +77,7 @@ void config_manager::load()
 
         while (std::getline(m_config, line))
         {
-            position = line.find("=");
+            position = line.find('=');
 
             if (position == std::string::npos)
             {
@@ -81,16 +87,10 @@ void config_manager::load()
             key = line.substr(0, position);
             value = line.substr(position + 1, std::string::npos);
 
-            if (key == "id")
-                m_loaded_user->set_id(std::stoull(value));
-            else if (key == "name")
-                m_loaded_user->set_name(value);
-            else if (key == "email")
-                m_loaded_user->set_email(value);
-            else if (key == "token")
-                m_loaded_user->set_token(value);
-            else if (key == "device")
-                m_loaded_user->set_device(value);
+            if (key == "name") m_loaded_user->set_name(value);
+            else if (key == "email") m_loaded_user->set_email(value);
+            else if (key == "token") m_loaded_user->set_token(value);
+            else if (key == "device") m_loaded_user->set_device(value);
         }
 
         m_config.close();
@@ -114,10 +114,14 @@ std::string config_manager::create_device_id()
     const char* hex{"0123456789abcdef"};
     std::stringstream stream;
 
-    for (int i = 0; i < 36; i++) {
-        if (i == 8 || i == 13 || i == 18 || i == 23) {
+    for (int i = 0; i < 36; i++)
+    {
+        if (i == 8 || i == 13 || i == 18 || i == 23)
+        {
             stream << '-';
-        } else {
+        }
+        else
+        {
             stream << hex[distribution(generator)];
         }
     }

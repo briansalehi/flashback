@@ -10,11 +10,11 @@
 
 namespace flashback
 {
-class client final
+class cli
 {
 public:
-    explicit client(std::shared_ptr<options> opts, std::shared_ptr<config_manager> config);
-    ~client() = default;
+    explicit cli(std::shared_ptr<options> opts, std::shared_ptr<config_manager> config);
+    ~cli() = default;
 
     [[nodiscard]] bool user_is_defined() const noexcept;
     [[nodiscard]] bool session_is_valid() const noexcept;

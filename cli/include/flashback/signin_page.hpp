@@ -10,12 +10,14 @@ class signin_page final: public page
 {
 public:
     explicit signin_page(std::shared_ptr<client> client);
+    std::pair<ftxui::Component, std::function<ftxui::Element()>> prepare_components() override;
 
 private:
-    bool verify();
+    bool verify() const;
     void submit();
     void verify_submit();
 
+private:
     std::shared_ptr<client> m_client;
     std::string m_email;
     std::string m_password;

@@ -8,8 +8,9 @@ public:
     MOCK_METHOD(std::filesystem::path, base_path, (), (const, override, noexcept));
     MOCK_METHOD(std::filesystem::path, config_path, (), ( const, override, noexcept));
     MOCK_METHOD(void, base_path, (std::filesystem::path), (override));
+    MOCK_METHOD(bool, has_credentials, (), (const, override, noexcept));
     MOCK_METHOD(void, load, (), (override));
     MOCK_METHOD(void, store, (std::shared_ptr<flashback::User>), (override));
-    MOCK_METHOD(std::shared_ptr<flashback::User>, get_user, (), ( const, override));
+    MOCK_METHOD(std::unique_ptr<flashback::User>, get_user, (), ( const, override));
     MOCK_METHOD(void, make_base, (), (override));
 };

@@ -1,4 +1,4 @@
-#include <flashback/client.hpp>
+#include <flashback/cli.hpp>
 #include <format>
 #include <fstream>
 #include <iostream>
@@ -6,7 +6,7 @@
 
 using namespace flashback;
 
-client::client(std::shared_ptr<options> opts, std::shared_ptr<config_manager> config)
+cli::cli(std::shared_ptr<options> opts, std::shared_ptr<config_manager> config)
     : m_channel{
           grpc::CreateChannel(std::format("{}:{}", opts->server_address, opts->server_port),
                               grpc::InsecureChannelCredentials())
@@ -17,9 +17,9 @@ client::client(std::shared_ptr<options> opts, std::shared_ptr<config_manager> co
     m_user = m_config->get_user();
 }
 
-bool client::user_is_defined() const noexcept { return m_user != nullptr; }
+bool cli::user_is_defined() const noexcept { return m_user != nullptr; }
 
-bool client::session_is_valid() const noexcept
+bool cli::session_is_valid() const noexcept
 {
     auto valid{false};
     auto context{std::make_unique<grpc::ClientContext>()};
@@ -40,11 +40,11 @@ bool client::session_is_valid() const noexcept
     return valid;
 }
 
-void client::user(std::shared_ptr<User> user) { m_user = user; }
+void cli::user(std::shared_ptr<User> user) { m_user = user; }
 
-void client::token(std::string token) { m_user->set_token(std::move(token)); }
+void cli::token(std::string token) { m_user->set_token(std::move(token)); }
 
-std::shared_ptr<GetRoadmapsResponse> client::roadmaps()
+std::shared_ptr<GetRoadmapsResponse> cli::roadmaps()
 {
     auto context{create_context()};
 
@@ -62,7 +62,7 @@ std::shared_ptr<GetRoadmapsResponse> client::roadmaps()
     return data;
 }
 
-std::shared_ptr<SignInResponse> client::signin()
+std::shared_ptr<SignInResponse> cli::signin()
 {
     auto context{std::make_unique<grpc::ClientContext>()};
     auto request{std::make_unique<SignInRequest>()};
@@ -112,7 +112,7 @@ std::shared_ptr<SignInResponse> client::signin()
     return response;
 }
 
-std::shared_ptr<SignUpResponse> client::signup()
+std::shared_ptr<SignUpResponse> cli::signup()
 {
     auto context{std::make_unique<grpc::ClientContext>()};
     auto request{std::make_shared<SignUpRequest>()};
@@ -149,7 +149,7 @@ std::shared_ptr<SignUpResponse> client::signup()
     return response;
 }
 
-std::shared_ptr<ResetPasswordResponse> client::reset_password()
+std::shared_ptr<ResetPasswordResponse> cli::reset_password()
 {
     auto context{std::make_unique<grpc::ClientContext>()};
     auto request{std::make_shared<ResetPasswordRequest>()};
@@ -184,7 +184,7 @@ std::shared_ptr<ResetPasswordResponse> client::reset_password()
     return response;
 }
 
-std::unique_ptr<grpc::ClientContext> client::create_context()
+std::unique_ptr<grpc::ClientContext> cli::create_context()
 {
     auto context{std::make_unique<grpc::ClientContext>()};
     context->AddMetadata("email", m_user->email());

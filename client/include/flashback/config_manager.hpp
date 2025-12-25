@@ -6,7 +6,7 @@
 
 namespace flashback
 {
-class config_manager: public basic_config_manager
+class config_manager final: public basic_config_manager
 {
 public:
     config_manager();
@@ -16,7 +16,8 @@ public:
 
     [[nodiscard]] std::filesystem::path base_path() const noexcept override;
     [[nodiscard]] std::filesystem::path config_path() const noexcept override;
-    [[nodiscard]] std::shared_ptr<User> get_user() const override;
+    [[nodiscard]] std::unique_ptr<User> get_user() const override;
+    [[nodiscard]] bool has_credentials() const noexcept override;
     void base_path(std::filesystem::path path) override;
     void load() override;
     void store(std::shared_ptr<User> user) override;
