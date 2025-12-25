@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.31.0)
+cmake_minimum_required(VERSION 3.31)
 
 project(Flashback
     VERSION 0.3
@@ -12,5 +12,6 @@ include(cmake/test_utils.cmake)
 add_subdirectory(common)
 add_subdirectory(database)
 add_subdirectory(server)
+add_subdirectory(client)
 add_subdirectory(cli)
 #add_subdirectory(gui)

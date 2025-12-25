@@ -33,7 +33,7 @@ protected:
         remove_roadmaps();
     }
 
-    uint64_t create_user() const
+    [[nodiscard]] uint64_t create_user() const
     {
         uint64_t user_id{};
 
@@ -222,7 +222,6 @@ TEST_F(test_database, CreateRoadmap)
     std::string primary_name{"Social Anxiety Expert"};
     std::string secondary_name{"Pointless Speech Specialist"};
     std::string name_with_quotes{"O'Reilly Technical Editor"};
-    std::string empty_name{""};
 
     EXPECT_NO_THROW(primary_id = m_database->create_roadmap(primary_name));
     EXPECT_GT(primary_id, 0);
@@ -235,7 +234,7 @@ TEST_F(test_database, CreateRoadmap)
     EXPECT_NO_THROW(quoted_id = m_database->create_roadmap(name_with_quotes));
     EXPECT_GT(quoted_id, 0);
 
-    EXPECT_THROW(m_database->create_roadmap(empty_name), flashback::client_exception);
+    EXPECT_THROW(m_database->create_roadmap(""), flashback::client_exception);
 }
 
 TEST_F(test_database, AssignRoadmapToUser)
@@ -252,9 +251,9 @@ TEST_F(test_database, AssignRoadmapToUser)
     ASSERT_NO_THROW(secondary_id = m_database->create_roadmap(secondary_name));
     ASSERT_GT(secondary_id, 0);
 
-    EXPECT_NO_THROW(m_database->assign_roadmap_to_user(m_user->id(), primary_id));
-    EXPECT_NO_THROW(m_database->assign_roadmap_to_user(m_user->id(), secondary_id));
-    EXPECT_THROW(m_database->assign_roadmap_to_user(m_user->id(), non_existing_id), pqxx::foreign_key_violation);
+    EXPECT_NO_THROW(m_database->assign_roadmap(m_user->id(), primary_id));
+    EXPECT_NO_THROW(m_database->assign_roadmap(m_user->id(), secondary_id));
+    EXPECT_THROW(m_database->assign_roadmap(m_user->id(), non_existing_id), pqxx::foreign_key_violation);
 }
 
 TEST_F(test_database, GetRoadmaps)
@@ -288,13 +287,13 @@ TEST_F(test_database, GetRoadmaps)
     EXPECT_THAT(roadmaps, testing::IsEmpty()) <<
  "Regardless of how many roadmaps exist, only the assigned roadmaps should return which is none so far";
 
-    EXPECT_NO_THROW(m_database->assign_roadmap_to_user(m_user->id(), primary_id));
+    EXPECT_NO_THROW(m_database->assign_roadmap(m_user->id(), primary_id));
 
     roadmaps = m_database->get_roadmaps(m_user->id());
     EXPECT_THAT(roadmaps, testing::SizeIs(1)) <<
  "One of the two existing roadmaps assigned to the user, so container should hold one roadmap";
 
-    EXPECT_NO_THROW(m_database->assign_roadmap_to_user(m_user->id(), secondary_id));
+    EXPECT_NO_THROW(m_database->assign_roadmap(m_user->id(), secondary_id));
 
     roadmaps = m_database->get_roadmaps(m_user->id());
     EXPECT_THAT(roadmaps, testing::SizeIs(2)) <<
@@ -307,13 +306,12 @@ TEST_F(test_database, RenameRoadmap)
     std::string roadmap_name{"Over Engineering Expert"};
     std::string modified_name{"Task Procrastination Engineer"};
     std::string name_with_quotes{"Underestimated Tasks' Deadline Scheduler"};
-    std::string empty_name{""};
     std::vector<flashback::Roadmap> roadmaps{};
     flashback::Roadmap roadmap{};
 
     ASSERT_NO_THROW(roadmap_id = m_database->create_roadmap(roadmap_name));
     ASSERT_GT(roadmap_id, 0);
-    ASSERT_NO_THROW(m_database->assign_roadmap_to_user(m_user->id(), roadmap_id));
+    ASSERT_NO_THROW(m_database->assign_roadmap(m_user->id(), roadmap_id));
 
     EXPECT_NO_THROW(m_database->rename_roadmap(roadmap_id, modified_name));
     ASSERT_NO_THROW(roadmaps = m_database->get_roadmaps(m_user->id()));
@@ -327,7 +325,7 @@ TEST_F(test_database, RenameRoadmap)
     ASSERT_NO_THROW(roadmap = roadmaps.at(0));
     EXPECT_EQ(roadmap.name(), name_with_quotes);
 
-    EXPECT_THROW(m_database->rename_roadmap(roadmap_id, empty_name), flashback::client_exception);
+    EXPECT_THROW(m_database->rename_roadmap(roadmap_id, ""), flashback::client_exception);
 }
 
 TEST_F(test_database, RemoveRoadmap)
@@ -342,8 +340,8 @@ TEST_F(test_database, RemoveRoadmap)
     ASSERT_NO_THROW(secondary_id = m_database->create_roadmap(secondary_name));
     ASSERT_GT(primary_id, 0);
     ASSERT_GT(secondary_id, 0);
-    ASSERT_NO_THROW(m_database->assign_roadmap_to_user(m_user->id(), primary_id));
-    ASSERT_NO_THROW(m_database->assign_roadmap_to_user(m_user->id(), secondary_id));
+    ASSERT_NO_THROW(m_database->assign_roadmap(m_user->id(), primary_id));
+    ASSERT_NO_THROW(m_database->assign_roadmap(m_user->id(), secondary_id));
 
     EXPECT_NO_THROW(m_database->remove_roadmap(primary_id));
     ASSERT_THAT(m_database->get_roadmaps(m_user->id()), testing::SizeIs(1)) <<
@@ -371,7 +369,7 @@ TEST_F(test_database, SearchRoadmaps)
     {
         uint64_t roadmap_id{};
         ASSERT_NO_THROW(roadmap_id = m_database->create_roadmap(roadmap_name));
-        ASSERT_NO_THROW(m_database->assign_roadmap_to_user(m_user->id(), roadmap_id));
+        ASSERT_NO_THROW(m_database->assign_roadmap(m_user->id(), roadmap_id));
     }
 
     EXPECT_NO_THROW(search_results = m_database->search_roadmaps("Management"));

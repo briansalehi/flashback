@@ -7,7 +7,7 @@
 #include <flashback/exceptions.hpp>
 #include <flashback/options.hpp>
 #include <flashback/window_manager.hpp>
-#include <flashback/config_manager.hpp>
+#include <../../client/include/flashback/config_manager.hpp>
 
 int main(int const argc, char** argv)
 {
