@@ -40,23 +40,23 @@ void config_manager::store(std::shared_ptr<User> user)
         throw std::runtime_error("Config: configuration cannot be written to filesystem");
     }
 
-    m_config << std::format("id={}\n", user->id());
     m_config << std::format("name={}\n", user->name());
     m_config << std::format("email={}\n", user->email());
     m_config << std::format("token={}\n", user->token());
     m_config << std::format("device={}\n", user->device());
 
     m_config.close();
+    load();
 }
 
 std::unique_ptr<User> config_manager::get_user() const
 {
-    return std::make_unique<User>(*m_loaded_user);
+    return m_loaded_user ? std::make_unique<User>(*m_loaded_user) : nullptr;
 }
 
 bool config_manager::has_credentials() const noexcept
 {
-    return !m_loaded_user->token().empty() && !m_loaded_user->device().empty();
+    return m_loaded_user && !m_loaded_user->token().empty() && !m_loaded_user->device().empty();
 }
 
 void config_manager::load()

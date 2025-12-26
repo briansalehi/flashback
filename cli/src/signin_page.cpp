@@ -1,11 +1,13 @@
 #include <functional>
 #include <flashback/signin_page.hpp>
+#include <flashback/window_manager.hpp>
 #include <ftxui/component/component.hpp>
 
 using namespace flashback;
 
-signin_page::signin_page(std::shared_ptr<client> client)
+signin_page::signin_page(std::shared_ptr<client> client, std::shared_ptr<window_manager> window)
     : m_client{client}
+    , m_window_manager{window}
 {
     auto [component, content] = prepare_components();
     page::display(component, content);
@@ -62,10 +64,11 @@ void signin_page::submit()
     {
         if (m_client->signin(m_email, m_password))
         {
-            page::close();
+            m_window_manager->display_roadmaps();
         }
         else
         {
+            m_window_manager->display_signin();
         }
     }
     catch (std::exception const& exp)

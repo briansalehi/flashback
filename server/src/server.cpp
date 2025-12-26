@@ -22,7 +22,8 @@ grpc::Status server::SignIn(grpc::ServerContext* context, const SignInRequest* r
 {
     try
     {
-        if (!request->has_user() || request->user().name().empty() || request->user().email().empty() || request->user().password().empty() || request->user().device().empty())
+        if (!request->has_user() || request->user().email().empty() || request->user().password().empty() || request->user().device().
+            empty())
         {
             throw client_exception("incomplete credentials");
         }
@@ -83,12 +84,14 @@ grpc::Status server::SignUp(grpc::ServerContext* context, const SignUpRequest* r
             throw client_exception("incomplete credentials");
         }
 
+        auto user{std::make_unique<User>(request->user())};
+
         if (m_database->user_exists(request->user().email()))
         {
             throw client_exception(std::format("user {} is already registered", request->user().email()));
+            // auto existing_user{m_database->get_user(request->user().email())};
         }
 
-        auto user{std::make_unique<User>(request->user())};
         user->set_hash(calculate_hash(user->password()));
         uint64_t user_id{m_database->create_user(user->name(), user->email(), user->hash())};
         user->clear_password();
@@ -106,6 +109,12 @@ grpc::Status server::SignUp(grpc::ServerContext* context, const SignUpRequest* r
             response->set_success(false);
             response->set_details("signup failed");
         }
+    }
+    catch (pqxx::unique_violation const& exp)
+    {
+        response->set_success(false);
+        response->set_details("user already exists");
+        std::cerr << std::format("Client: {}\n", exp.what());
     }
     catch (client_exception const& exp)
     {
@@ -224,7 +233,7 @@ grpc::Status server::GetRoadmaps(grpc::ServerContext* context, GetRoadmapsReques
         }
 
         std::vector<Roadmap> const roadmaps{m_database->get_roadmaps(user->id())};
-        std::clog << std::format("Client {}: collected {} roadmaps\n", request->user().id(), roadmaps.size());
+        std::clog << std::format("Client {}: collected {} roadmaps\n", user->id(), roadmaps.size());
 
         for (Roadmap const& roadmap: roadmaps)
         {
@@ -235,11 +244,11 @@ grpc::Status server::GetRoadmaps(grpc::ServerContext* context, GetRoadmapsReques
     }
     catch (client_exception const& exp)
     {
-        std::cerr << std::format("Client {}: {}\n", request->user().id(), exp.what());
+        std::cerr << std::format("Client {}: {}\n", request->user().token(), exp.what());
     }
     catch (std::exception const& exp)
     {
-        std::cerr << std::format("Server: failed to collect roadmaps for client {} because:\n{}\n", request->user().id(), exp.what());
+        std::cerr << std::format("Server: failed to collect roadmaps for client {} because:\n{}\n", request->user().token(), exp.what());
     }
 
     return grpc::Status::OK;
@@ -345,4 +354,3 @@ bool server::session_is_valid(User const& user) const
 {
     return nullptr != m_database->get_user(user.token(), user.device());
 }
-

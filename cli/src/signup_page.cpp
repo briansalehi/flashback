@@ -1,4 +1,5 @@
 #include <flashback/signup_page.hpp>
+#include <flashback/window_manager.hpp>
 #include <ftxui/screen/color.hpp>
 #include <ftxui/dom/elements.hpp>
 #include <ftxui/component/component.hpp>
@@ -6,8 +7,9 @@
 
 using namespace flashback;
 
-signup_page::signup_page(std::shared_ptr<client> client)
+signup_page::signup_page(std::shared_ptr<client> client, std::weak_ptr<window_manager> window)
     : m_client{client}
+    , m_window_manager{window}
 {
     auto [component, content] = prepare_components();
     page::display(component, content);
@@ -72,12 +74,17 @@ void signup_page::submit()
 {
     try
     {
-        if (m_client->signup(m_name, m_email, m_password))
+        if (auto const window = m_window_manager.lock())
         {
-            page::close();
-        }
-        else
-        {
+            if (m_client->signup(m_name, m_email, m_password))
+            {
+                window->display_signin();
+                page::close();
+            }
+            else
+            {
+                window->display_signin();
+            }
         }
     }
     catch (std::exception const& exp)

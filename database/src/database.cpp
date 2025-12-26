@@ -12,8 +12,7 @@ database::database(std::string name, std::string address, std::string port)
 {
     try
     {
-        m_connection = std::make_unique<pqxx::connection>(
-            std::format("postgres://flashback@{}:{}/{}", address, port, name));
+        m_connection = std::make_unique<pqxx::connection>(std::format("postgres://flashback@{}:{}/{}", address, port, name));
     }
     catch (pqxx::broken_connection const& exp)
     {
@@ -64,8 +63,7 @@ uint64_t database::create_user(std::string_view name, std::string_view email, st
 
         if (result.size() != 1)
         {
-            throw std::runtime_error(std::format("Server: could not create user because no user id was returned for {}",
-                                                 email));
+            throw std::runtime_error(std::format("Server: could not create user because no user id was returned for {}", email));
         }
 
         user_id = result.at(0).at(0).as<uint64_t>();
@@ -109,14 +107,11 @@ std::unique_ptr<User> database::get_user(std::string_view email)
         user->set_email(result.at("email").as<std::string>());
         user->set_verified(result.at("verified").as<bool>());
 
-        if (!result.at("hash").is_null())
-            user->set_hash(result.at("hash").as<std::string>());
+        if (!result.at("hash").is_null()) user->set_hash(result.at("hash").as<std::string>());
 
-        if (!result.at("token").is_null())
-            user->set_token(result.at("token").as<std::string>());
+        if (!result.at("token").is_null()) user->set_token(result.at("token").as<std::string>());
 
-        if (!result.at("device").is_null())
-            user->set_device(result.at("device").as<std::string>());
+        if (!result.at("device").is_null()) user->set_device(result.at("device").as<std::string>());
 
         std::tm tm{};
 
@@ -126,22 +121,15 @@ std::unique_ptr<User> database::get_user(std::string_view email)
         stream >> std::get_time(&tm, "%Y-%m-%d");
         time_t epoch{std::mktime(&tm)};
 
-        auto timestamp{
-            std::make_unique<google::protobuf::Timestamp>(google::protobuf::util::TimeUtil::SecondsToTimestamp(epoch))
-        };
+        auto timestamp{std::make_unique<google::protobuf::Timestamp>(google::protobuf::util::TimeUtil::SecondsToTimestamp(epoch))};
         user->set_allocated_joined(timestamp.release());
 
         std::string state_str{result.at("state").as<std::string>()};
-        if (state_str == "active")
-            user->set_state(User::active);
-        else if (state_str == "inactive")
-            user->set_state(User::inactive);
-        else if (state_str == "suspended")
-            user->set_state(User::suspended);
-        else if (state_str == "banned")
-            user->set_state(User::banned);
-        else
-            throw std::runtime_error("unhandled user state");
+        if (state_str == "active") user->set_state(User::active);
+        else if (state_str == "inactive") user->set_state(User::inactive);
+        else if (state_str == "suspended") user->set_state(User::suspended);
+        else if (state_str == "banned") user->set_state(User::banned);
+        else throw std::runtime_error("unhandled user state");
     }
 
     return user;
@@ -163,14 +151,11 @@ std::unique_ptr<User> database::get_user(std::string_view token, std::string_vie
         user->set_email(result.at("email").as<std::string>());
         user->set_verified(result.at("verified").as<bool>());
 
-        if (!result.at("hash").is_null())
-            user->set_hash(result.at("hash").as<std::string>());
+        if (!result.at("hash").is_null()) user->set_hash(result.at("hash").as<std::string>());
 
-        if (!result.at("token").is_null())
-            user->set_token(result.at("token").as<std::string>());
+        if (!result.at("token").is_null()) user->set_token(result.at("token").as<std::string>());
 
-        if (!result.at("device").is_null())
-            user->set_device(result.at("device").as<std::string>());
+        if (!result.at("device").is_null()) user->set_device(result.at("device").as<std::string>());
 
         std::tm tm{};
 
@@ -180,22 +165,15 @@ std::unique_ptr<User> database::get_user(std::string_view token, std::string_vie
         stream >> std::get_time(&tm, "%Y-%m-%d");
         time_t epoch{std::mktime(&tm)};
 
-        auto timestamp{
-            std::make_unique<google::protobuf::Timestamp>(google::protobuf::util::TimeUtil::SecondsToTimestamp(epoch))
-        };
+        auto timestamp{std::make_unique<google::protobuf::Timestamp>(google::protobuf::util::TimeUtil::SecondsToTimestamp(epoch))};
         user->set_allocated_joined(timestamp.release());
 
         std::string state_str{result.at("state").as<std::string>()};
-        if (state_str == "active")
-            user->set_state(User::active);
-        else if (state_str == "inactive")
-            user->set_state(User::inactive);
-        else if (state_str == "suspended")
-            user->set_state(User::suspended);
-        else if (state_str == "banned")
-            user->set_state(User::banned);
-        else
-            throw std::runtime_error("unhandled user state");
+        if (state_str == "active") user->set_state(User::active);
+        else if (state_str == "inactive") user->set_state(User::inactive);
+        else if (state_str == "suspended") user->set_state(User::suspended);
+        else if (state_str == "banned") user->set_state(User::banned);
+        else throw std::runtime_error("unhandled user state");
     }
 
     return user;
@@ -231,10 +209,10 @@ void database::assign_roadmap(uint64_t user_id, uint64_t roadmap_id)
 
 std::vector<Roadmap> database::get_roadmaps(uint64_t user_id)
 {
-    pqxx::result const result{query("select id, name from get_roadmaps($1)", user_id)};
+    pqxx::result const result{query("select id, name from get_roadmaps($1) order by name", user_id)};
     std::vector<Roadmap> roadmaps{};
 
-    for (pqxx::row row : result)
+    for (pqxx::row row: result)
     {
         Roadmap roadmap{};
         roadmap.set_id(row.at("id").as<std::uint64_t>());
@@ -265,9 +243,7 @@ std::vector<Roadmap> database::search_roadmaps(std::string_view token)
     std::vector<Roadmap> roadmaps;
     roadmaps.reserve(5);
 
-    pqxx::result result = query("select roadmap, name from search_roadmaps($1)", token);
-
-    for (pqxx::row row : result)
+    for (auto const result = query("select roadmap, name from search_roadmaps($1) order by similarity", token); pqxx::row row: result)
     {
         Roadmap roadmap{};
         roadmap.set_id(row.at("roadmap").as<uint64_t>());

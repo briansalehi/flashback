@@ -18,7 +18,8 @@ int main(int const argc, char** argv)
         auto const options{std::make_shared<flashback::options>(args)};
         auto config_manager{std::make_shared<flashback::config_manager>()};
         auto client{std::make_shared<flashback::client>(options->server_address, options->server_port, config_manager)};
-        auto window_manager{std::make_unique<flashback::window_manager>(client)};
+        auto window_manager{std::make_shared<flashback::window_manager>(client)};
+        window_manager->display_signin();
     }
     catch (flashback::descriptive_option const& opt)
     {

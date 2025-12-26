@@ -8,11 +8,16 @@
 
 namespace flashback
 {
-class window_manager
+class window_manager: public std::enable_shared_from_this<window_manager>
 {
 public:
     explicit window_manager(std::shared_ptr<client> client);
     ~window_manager();
+    void start();
+
+    void display_signup();
+    void display_signin();
+    void display_roadmaps();
 
 private:
     void display();

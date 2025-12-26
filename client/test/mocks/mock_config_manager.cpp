@@ -2,7 +2,7 @@
 #include <gmock/gmock.h>
 #include <flashback/basic_config_manager.hpp>
 
-class mock_config_manager: public flashback::basic_config_manager
+class mock_config_manager final: public flashback::basic_config_manager
 {
 public:
     MOCK_METHOD(std::filesystem::path, base_path, (), (const, override, noexcept));

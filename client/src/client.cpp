@@ -16,12 +16,26 @@ bool client::signup(std::string name, std::string email, std::string password)
     SignUpResponse response{};
     grpc::ClientContext context{};
     auto user{std::make_unique<User>()};
+    std::string device{m_config->create_device_id()};
     user->set_name(std::move(name));
     user->set_email(std::move(email));
+    user->set_device(std::move(device));
     user->set_password(std::move(password));
     request.set_allocated_user(user.release());
     m_stub->SignUp(&context, request, &response);
-    return response.success() && response.has_user();
+    bool const valid{response.success() && response.has_user()};
+    auto const created_user{std::make_shared<User>()};
+    created_user->set_name(std::move(name));
+    created_user->set_email(std::move(email));
+    created_user->set_device(std::move(device));
+    created_user->set_token(std::move(""));
+
+    if (response.has_user() && created_user)
+    {
+        m_config->store(created_user);
+    }
+
+    return valid;
 }
 
 bool client::signin(std::string email, std::string password)
@@ -29,9 +43,22 @@ bool client::signin(std::string email, std::string password)
     SignInRequest request{};
     SignInResponse response{};
     grpc::ClientContext context{};
-    request.set_allocated_user(m_config->get_user().release());
+    std::string device{m_config->create_device_id()};
+    auto user{std::make_unique<User>()};
+    user->set_email(email);
+    user->set_device(device);
+    user->set_password(std::move(password));
+    request.set_allocated_user(user.release());
     m_stub->SignIn(&context, request, &response);
-    return response.success() && response.has_user();
+    bool const valid{response.success() && response.has_user() && !response.user().token().empty()};
+
+    if (valid)
+    {
+        auto const created_user{std::make_shared<User>(response.user())};
+        m_config->store(created_user);
+    }
+
+    return valid;
 }
 
 bool client::needs_to_signup() const
@@ -52,7 +79,7 @@ bool client::needs_to_signin() const
         m_stub->VerifySession(&context, request, &response);
     }
 
-    return response.valid();
+    return !response.valid();
 }
 
 std::vector<Roadmap> client::get_roadmaps() const

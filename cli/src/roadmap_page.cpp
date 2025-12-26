@@ -1,10 +1,12 @@
 #include <functional>
 #include <flashback/roadmap_page.hpp>
+#include <flashback/window_manager.hpp>
 
 using namespace flashback;
 
-roadmap_page::roadmap_page(std::shared_ptr<client> client)
+roadmap_page::roadmap_page(std::shared_ptr<client> client, std::weak_ptr<window_manager> window)
     : m_client{client}
+    , m_window_manager{window}
 {
     load_roadmaps();
     std::function<ftxui::Element()> const content{[this] { return ftxui::hbox(ftxui::vbox(m_elements), ftxui::flex); }};
