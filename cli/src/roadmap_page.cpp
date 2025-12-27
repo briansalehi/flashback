@@ -20,7 +20,7 @@ std::pair<ftxui::Component, std::function<ftxui::Element()>> roadmap_page::prepa
 
 void roadmap_page::add_roadmap(Roadmap const& r)
 {
-    ftxui::Element element{ftxui::border(ftxui::hbox(ftxui::text(std::to_string(r.id())), ftxui::separatorEmpty(), ftxui::text(r.name())))};
+    ftxui::Element element{ftxui::border(ftxui::hbox(ftxui::text(r.name())))};
     m_elements.push_back(std::move(element));
 }
 

@@ -7,7 +7,7 @@
 
 namespace flashback
 {
-class server final: public Server::Service
+class server: public Server::Service
 {
 public:
     explicit server(std::shared_ptr<basic_database> database);

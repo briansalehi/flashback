@@ -2,19 +2,20 @@ cmake_minimum_required(VERSION 3.31.0)
 project(flashback-cli VERSION 0.3 LANGUAGES CXX DESCRIPTION "Linux Terminal Client")
 
 set(CMAKE_MESSAGE_CONTEXT "cli")
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 include(FetchContent)
 include(GNUInstallDirs)
 include(CMakePackageConfigHelpers)
 include(CTest)
 
-find_package(Boost 1.83.0 REQUIRED COMPONENTS program_options)
+find_package(Boost 1.83.0 CONFIG REQUIRED COMPONENTS program_options)
+find_package(ftxui 6.0.0 REQUIRED)
 find_package(GTest 1.15.0)
 
-FetchContent_Declare(ftxui GIT_REPOSITORY https://github.com/arthursonzogni/ftxui GIT_TAG v6.1.9)
-FetchContent_MakeAvailable(ftxui)
+#FetchContent_Declare(ftxui GIT_REPOSITORY https://github.com/arthursonzogni/ftxui GIT_TAG v6.1.9)
+#FetchContent_MakeAvailable(ftxui)
 
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 file(GLOB source_files RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} src/*.cpp)
 list(REMOVE_ITEM source_files src/main.cpp)
 file(GLOB header_files RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} include/flashback/*.hpp)
@@ -35,7 +36,7 @@ target_link_libraries(flashback PRIVATE cli)
 
 set(version_file "${CMAKE_BINARY_DIR}/FlashbackCliVersion.cmake")
 write_basic_package_version_file(${version_file} VERSION ${PROJECT_VERSION} COMPATIBILITY SameMajorVersion)
-install(TARGETS flashback RUNTIME CONFIGURATIONS Release MinSizeRel COMPONENT cli)
+install(TARGETS flashback RUNTIME CONFIGURATIONS Release MinSizeRel COMPONENT client)
 install(FILES ${version_file} COMPONENT client DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake)
 
 string(TOLOWER "${CMAKE_SYSTEM_NAME}" CPACK_SYSTEM_NAME)
