@@ -7,7 +7,7 @@ project(flashbackd
     HOMEPAGE_URL "https://flashback.eu.com"
 )
 
-set(CMAKE_MESSAGE_CONTEXT "server")
+set(CMAKE_MESSAGE_CONTEXT "flashbackd")
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 include(FetchContent)
@@ -25,20 +25,20 @@ file(GLOB header_files RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} include/flashback/*.
 file(GLOB test_files RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} test/units/*.cpp)
 file(GLOB mock_files RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} test/mocks/flashback/*.hpp)
 
-add_library(server)
-target_sources(server PUBLIC ${source_files})
-target_include_directories(server PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
-target_link_libraries(server PUBLIC common database sodium Boost::system Boost::program_options)
-target_compile_definitions(server PUBLIC INSTALL_RPATH="$ORIGIN")
-target_compile_features(server PUBLIC cxx_std_23)
-define_tests(TARGET server FILES "${test_files}" "${mock_files}" MOCK_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/test/mocks)
+add_library(flashbackd-internals)
+target_sources(flashbackd-internals PUBLIC ${source_files})
+target_include_directories(flashbackd-internals PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(flashbackd-internals PUBLIC common database sodium Boost::system Boost::program_options)
+target_compile_definitions(flashbackd-internals PUBLIC INSTALL_RPATH="$ORIGIN")
+target_compile_features(flashbackd-internals PUBLIC cxx_std_23)
+define_tests(TARGET flashbackd-internals FILES "${test_files}" MOCK_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/test/mocks)
 
 add_executable(flashbackd)
 target_sources(flashbackd PRIVATE src/main.cpp)
-target_link_libraries(flashbackd PRIVATE server)
+target_link_libraries(flashbackd PRIVATE flashbackd-internals)
 
-install(TARGETS flashbackd RUNTIME COMPONENT server)
-install(FILES res/flashbackd.service COMPONENT server DESTINATION ${CMAKE_INSTALL_LIBDIR}/lib/systemd/system)
+install(TARGETS flashbackd RUNTIME COMPONENT flashbackd)
+install(FILES res/flashbackd.service COMPONENT flashbackd DESTINATION ${CMAKE_INSTALL_LIBDIR}/lib/systemd/system)
 
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "${PROJECT_DESCRIPTION}")
 string(TOLOWER "${CMAKE_SYSTEM_NAME}" CPACK_SYSTEM_NAME)

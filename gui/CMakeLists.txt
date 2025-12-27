@@ -1,24 +1,18 @@
 cmake_minimum_required(VERSION 3.31.0)
-project(
-    VERSION 0.3
-    LANGUAGES CXX
-    DESCRIPTION "A program to transform complex technical subjects into muscle memory"
-    HOMEPAGE_URL "https://flashback.eu.com"
-)
-
-find_package(Qt6 6.10.0 REQUIRED COMPONENTS Core Quick)
+project(flashback-gui VERSION 0.3 LANGUAGES CXX DESCRIPTION "Flashback Graphical Client" HOMEPAGE_URL "https://flashback.eu.com")
 
 set(CMAKE_MESSAGE_CONTEXT "gui")
-
-include(GNUInstallDirs)
-include(CMakePackageConfigHelpers)
-
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_INSTALL_RPATH $<BUILD_INTERFACE:${CMAKE_BINARY_DIR}> $<INSTALL_INTERFACE:${CMAKE_INSTALL_LIBDIR}>)
-set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "${PACKAGE_DESCRIPTION}")
+
+include(GNUInstallDirs)
+include(CMakePackageConfigHelpers)
+include(CTest)
+
+find_package(Qt6 6.10.0 REQUIRED COMPONENTS Core Quick)
 
 # iOS
 set(asset_catalog_path ${CMAKE_CURRENT_SOURCE_DIR}/ios/Assets.xcassets)
@@ -65,3 +59,6 @@ install(TARGETS ${PROJECT_NAME}
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
+
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "${PACKAGE_DESCRIPTION}")
+include(CPack)

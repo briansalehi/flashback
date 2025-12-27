@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.31.0)
-project(flashback-cli VERSION 0.3 LANGUAGES CXX DESCRIPTION "Linux Terminal Client")
+project(flashback-cli VERSION 0.3 LANGUAGES CXX DESCRIPTION "Flashback Terminal Client" HOMEPAGE_URL "https::flashback.eu.com")
 
-set(CMAKE_MESSAGE_CONTEXT "cli")
+set(CMAKE_MESSAGE_CONTEXT "flashback")
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 include(FetchContent)
@@ -22,22 +22,22 @@ file(GLOB header_files RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} include/flashback/*.
 file(GLOB test_files RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} test/units/*.cpp)
 file(GLOB mock_files RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} test/mocks/flashback/*.hpp)
 
-add_library(cli STATIC)
-target_sources(cli PUBLIC ${source_files})
-target_include_directories(cli PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
-target_link_libraries(cli PUBLIC client Boost::program_options ftxui::screen ftxui::dom ftxui::component)
-target_compile_features(cli PUBLIC cxx_std_23)
-target_compile_definitions(cli PRIVATE PROGRAM_VERSION="${PROJECT_VERSION}")
-define_tests(TARGET cli FILES ${test_files} MOCK_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/test/mocks)
+add_library(flashback-internals STATIC)
+target_sources(flashback-internals PUBLIC ${source_files})
+target_include_directories(flashback-internals PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(flashback-internals PUBLIC client Boost::program_options ftxui::screen ftxui::dom ftxui::component)
+target_compile_features(flashback-internals PUBLIC cxx_std_23)
+target_compile_definitions(flashback-internals PRIVATE PROGRAM_VERSION="${PROJECT_VERSION}")
+define_tests(TARGET flashback-internals FILES ${test_files} MOCK_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/test/mocks)
 
 add_executable(flashback)
 target_sources(flashback PRIVATE src/main.cpp)
-target_link_libraries(flashback PRIVATE cli)
+target_link_libraries(flashback PRIVATE flashback-internals)
 
 set(version_file "${CMAKE_BINARY_DIR}/FlashbackCliVersion.cmake")
 write_basic_package_version_file(${version_file} VERSION ${PROJECT_VERSION} COMPATIBILITY SameMajorVersion)
-install(TARGETS flashback RUNTIME CONFIGURATIONS Release MinSizeRel COMPONENT client)
-install(FILES ${version_file} COMPONENT client DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake)
+install(TARGETS flashback RUNTIME CONFIGURATIONS Release MinSizeRel COMPONENT flashback)
+install(FILES ${version_file} COMPONENT flashback DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake)
 
 string(TOLOWER "${CMAKE_SYSTEM_NAME}" CPACK_SYSTEM_NAME)
 set(CPACK_PACKAGE_FILE_NAME "${PROJECT_NAME}-${PROJECT_VERSION}-${CPACK_SYSTEM_NAME}")
