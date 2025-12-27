@@ -61,5 +61,5 @@ target_include_directories(common PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include ${C
 target_link_libraries(common PUBLIC protobuf::libprotobuf gRPC::grpc++)
 target_compile_features(common PUBLIC cxx_std_23)
 target_compile_definitions(common PUBLIC PROGRAM_VERSION="${CMAKE_PROJECT_VERSION}")
-set_target_properties(common PUBLIC CXX_EXTENSIONS OFF)
+set_target_properties(common PROPERTIES CXX_EXTENSIONS OFF)
 define_tests(TARGET common FILES ${test_files} MOCK_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/test/mocks)

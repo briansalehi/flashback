@@ -12,7 +12,8 @@ include(GNUInstallDirs)
 include(CMakePackageConfigHelpers)
 include(CTest)
 
-find_package(Qt6 6.10.0 REQUIRED COMPONENTS Core Quick)
+find_package(QT NAMES Qt6 REQUIRED COMPONENTS Core)
+find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Core Quick)
 
 # iOS
 set(asset_catalog_path ${CMAKE_CURRENT_SOURCE_DIR}/ios/Assets.xcassets)
@@ -30,9 +31,10 @@ file(GLOB proto_files RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} proto/*.proto)
 list(APPEND test_files ${source_files})
 list(REMOVE_ITEM test_files src/main.cpp)
 
-qt_standard_project_setup(REQUIRES 6.9.0)
-qt_add_executable(${PROJECT_NAME})
-set_target_properties(${PROJECT_NAME}
+message(NOTICE "Qt Version: ${QT_VERSION_MAJOR}.${QT_VERSION_MINOR}")
+qt_standard_project_setup(REQUIRES ${QT_VERSION_MAJOR}.${QT_VERSION_MINOR})
+qt_add_executable(flashback-gui)
+set_target_properties(flashback-gui
     PROPERTIES QT_ANDROID_PACKAGE_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/android
     MACOSX_BUNDLE_GUI_IDENTIFIER com.eu.flashback
     MACOSX_BUNDLE_BUNDLE_VERSION ${CMAKE_PROJECT_VERSION}
@@ -41,20 +43,20 @@ set_target_properties(${PROJECT_NAME}
     MACOSX_BUNDLE TRUE
     WIN32_EXECUTABLE TRUE
 )
-qt_add_qml_module(${PROJECT_NAME}
+qt_add_qml_module(flashback-gui
     URI flashback
     VERSION ${CMAKE_PROJECT_VERSION}
     QML_FILES ${qml_files}
     RESOURCES ui/flashback.qrc
 )
-target_sources(${PROJECT_NAME}
+target_sources(flashback-gui
     PRIVATE ${source_files} ${app_icon} ${asset_catalog_path}
     PUBLIC FILE_SET HEADERS FILES ${header_files}
     PUBLIC FILE_SET modules TYPE CXX_MODULES FILES ${module_files}
 )
-target_link_libraries(${PROJECT_NAME} PRIVATE Qt6::Core Qt6::Quick)
+target_link_libraries(flashback-gui PRIVATE Qt${QT_VERSION_MAJOR}::Core Qt${QT_VERSION_MAJOR}::Quick)
 
-install(TARGETS ${PROJECT_NAME}
+install(TARGETS flashback-gui
     BUNDLE DESTINATION .
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
