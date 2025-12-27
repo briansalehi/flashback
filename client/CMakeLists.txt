@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.31)
-project(client VERSION 0.3 LANGUAGES CXX DESCRIPTION "Client library linked to user interfaces")
+project(client LANGUAGES CXX DESCRIPTION "Client library linked to user interfaces")
 
 set(CMAKE_MESSAGE_CONTEXT "client")
 
@@ -19,5 +19,5 @@ target_sources(client PUBLIC ${source_files})
 target_link_libraries(client PUBLIC common)
 target_include_directories(client PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_compile_features(client PUBLIC cxx_std_23)
-target_compile_definitions(client PRIVATE LIBRARY_VERSION="${PROJECT_VERSION}")
+target_compile_definitions(client PRIVATE LIBRARY_VERSION="${CMAKE_PROJECT_VERSION}")
 define_tests(TARGET client FILES "${test_files}" MOCK_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/test/mocks")

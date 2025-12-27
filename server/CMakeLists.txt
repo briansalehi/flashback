@@ -1,11 +1,5 @@
 cmake_minimum_required(VERSION 3.31.0)
-
-project(flashbackd
-    VERSION 0.3
-    LANGUAGES CXX
-    DESCRIPTION "A program to transform complex technical subjects into muscle memory"
-    HOMEPAGE_URL "https://flashback.eu.com"
-)
+project(flashbackd LANGUAGES CXX DESCRIPTION "Flashback Daemon" HOMEPAGE_URL "https://flashback.eu.com")
 
 set(CMAKE_MESSAGE_CONTEXT "flashbackd")
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
@@ -42,7 +36,7 @@ install(FILES res/flashbackd.service COMPONENT flashbackd DESTINATION ${CMAKE_IN
 
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "${PROJECT_DESCRIPTION}")
 string(TOLOWER "${CMAKE_SYSTEM_NAME}" CPACK_SYSTEM_NAME)
-set(CPACK_PACKAGE_FILE_NAME "${PROJECT_NAME}-${PROJECT_VERSION}-${CPACK_SYSTEM_NAME}")
+set(CPACK_PACKAGE_FILE_NAME "${PROJECT_NAME}-${CMAKE_PROJECT_VERSION}-${CPACK_SYSTEM_NAME}")
 set(CPACK_PACKAGE_VENDOR "Brian Salehi <briansalehi@proton.me>")
 set(CPACK_PACKAGE_CONTACT "Brian Salehi <briansalehi@proton.me>")
 set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE.md")
