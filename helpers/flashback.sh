@@ -189,8 +189,8 @@ show_topic_card()
 
     case "$state" in
         draft) state_color="\e[1;2;31m" ;;
+        reviewed) state_color="\e[1;2;35m" ;;
         completed) state_color="\e[1;2;33m" ;;
-        review) state_color="\e[1;2;35m" ;;
         approved) state_color="\e[1;2;32m" ;;
         released) state_color="\e[1;2;32m" ;;
         rejected) state_color="\e[1;2;3;31m" ;;
@@ -215,8 +215,8 @@ show_section_card()
 
     case "$state" in
         draft) state_color="\e[1;2;31m" ;;
+        reviewed) state_color="\e[1;2;35m" ;;
         completed) state_color="\e[1;2;33m" ;;
-        review) state_color="\e[1;2;35m" ;;
         approved) state_color="\e[1;2;32m" ;;
         released) state_color="\e[1;2;32m" ;;
         rejected) state_color="\e[1;2;3;31m" ;;
@@ -494,7 +494,7 @@ practice_subject()
             then
                 available_keys+=( "R" )
                 available_keys+=( "assign card to a resource" )
-            elif [ "$state" == "review" ]
+            elif [ "$state" == "reviewed" ]
             then
                 available_keys+=( "M" )
                 available_keys+=( "move card to another topic" )
@@ -536,7 +536,7 @@ practice_topic()
         topic_name="$(psql -U flashback -d flashback -c "select name from topics where subject = $subject and position = $topic" -At)"
         mode="selective"
 
-        readarray -t cards < <(psql -At -U flashback -d flashback -c "select card from get_topics_cards($roadmap, $subject, $topic) order by position")
+        readarray -t cards < <(psql -At -U flashback -d flashback -c "select card from get_topic_cards($roadmap, $subject, $topic) order by position")
         total_cards="$(psql -At -U flashback -d flashback -c "select count(*) from topics_cards where subject = $subject and topic = $topic")"
 
         card_index=0
@@ -561,7 +561,7 @@ practice_topic()
             then
                 available_keys+=( "R" )
                 available_keys+=( "assign card to a resource" )
-            elif [ "$state" == "review" ]
+            elif [ "$state" == "reviewed" ]
             then
                 available_keys+=( "M" )
                 available_keys+=( "move card to another topic" )
@@ -1128,7 +1128,7 @@ start_study()
                 then
                     available_keys+=( "A" )
                     available_keys+=( "assign card to a topic" )
-                elif [ "$state" == "review" ]
+                elif [ "$state" == "reviewed" ]
                 then
                     available_keys+=( "M" )
                     available_keys+=( "move card to another section" )

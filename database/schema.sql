@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict o4RDaOTVlwzmwHcmIFZsAWaCrez0CyLh2JmFOVYjg7V9S2Hxjza9VCmXDDmJT0E
+\restrict ZiWPjc1afdM4G4K1UzaU7Uz2Rb2CmhsrdMlgZHzQrBMWX05FV5bvhXz5m4ugY4j
 
 -- Dumped from database version 18.0
 -- Dumped by pg_dump version 18.0
@@ -62,8 +62,8 @@ COMMENT ON EXTENSION pg_trgm IS 'text similarity measurement and index searching
 
 CREATE TYPE flashback.card_state AS ENUM (
     'draft',
+    'reviewed',
     'completed',
-    'review',
     'approved',
     'released',
     'rejected'
@@ -71,21 +71,6 @@ CREATE TYPE flashback.card_state AS ENUM (
 
 
 ALTER TYPE flashback.card_state OWNER TO flashback;
-
---
--- Name: condition; Type: TYPE; Schema: flashback; Owner: flashback
---
-
-CREATE TYPE flashback.condition AS ENUM (
-    'draft',
-    'relevant',
-    'outdated',
-    'canonical',
-    'abandoned'
-);
-
-
-ALTER TYPE flashback.condition OWNER TO flashback;
 
 --
 -- Name: content_type; Type: TYPE; Schema: flashback; Owner: flashback
@@ -521,23 +506,22 @@ $$;
 ALTER FUNCTION flashback.create_resource(resource_name character varying, resource_type flashback.resource_type, resource_pattern flashback.section_pattern, presenter_id integer, provider_id integer, resource_link character varying) OWNER TO flashback;
 
 --
--- Name: create_roadmap(integer, character varying); Type: FUNCTION; Schema: flashback; Owner: flashback
+-- Name: create_roadmap(character varying); Type: FUNCTION; Schema: flashback; Owner: flashback
 --
 
-CREATE FUNCTION flashback.create_roadmap(user_id integer, name character varying) RETURNS integer
+CREATE FUNCTION flashback.create_roadmap(roadmap_name character varying) RETURNS integer
     LANGUAGE plpgsql
     AS $$
-declare roadmap integer;
+declare roadmap_id integer;
 begin
-    insert into roadmaps(name) values (name) returning id into roadmap;
+    insert into roadmaps (name) values (roadmap_name) returning id into roadmap_id;
 
-    insert into users_roadmaps("user", roadmap) values (user_id, roadmap);
-    return roadmap;
+    return roadmap_id;
 end;
 $$;
 
 
-ALTER FUNCTION flashback.create_roadmap(user_id integer, name character varying) OWNER TO flashback;
+ALTER FUNCTION flashback.create_roadmap(roadmap_name character varying) OWNER TO flashback;
 
 --
 -- Name: create_section(integer, character varying); Type: FUNCTION; Schema: flashback; Owner: flashback
@@ -809,17 +793,6 @@ $$;
 
 
 ALTER PROCEDURE flashback.edit_section_pattern(IN resource integer, IN pattern flashback.section_pattern) OWNER TO flashback;
-
---
--- Name: edit_users_name(integer, character varying); Type: PROCEDURE; Schema: flashback; Owner: flashback
---
-
-CREATE PROCEDURE flashback.edit_users_name(IN id integer, IN name character varying)
-    LANGUAGE plpgsql
-    AS $$ begin update users set name = edit_users_name.name where users.id = edit_users_name.id; end; $$;
-
-
-ALTER PROCEDURE flashback.edit_users_name(IN id integer, IN name character varying) OWNER TO flashback;
 
 --
 -- Name: estimate_read_time(integer); Type: FUNCTION; Schema: flashback; Owner: flashback
@@ -1123,40 +1096,24 @@ $$;
 ALTER FUNCTION flashback.get_practice_topics(roadmap_id integer, subject_id integer) OWNER TO flashback;
 
 --
--- Name: get_resources(integer); Type: FUNCTION; Schema: flashback; Owner: flashback
---
-
-CREATE FUNCTION flashback.get_resources("user" integer) RETURNS TABLE(id integer, name character varying, type flashback.resource_type, condition flashback.condition, presenter character varying, provider character varying, link character varying, last_read timestamp with time zone)
-    LANGUAGE plpgsql
-    AS $$
-begin
-    return query
-    select resources.id, resources.name, resources.type, resources.condition, resources.presenter, resources.provider, resources.link, max(sections_progress.time)
-    from resources
-    join shelves on shelves.resource = resources.id
-    left join sections_progress on sections_progress.resource = resources.id and sections_progress."user" = get_resources."user"
-    group by resources.id, resources.name, resources.type, resources.condition, resources.presenter, resources.provider, resources.link;
-end;
-$$;
-
-
-ALTER FUNCTION flashback.get_resources("user" integer) OWNER TO flashback;
-
---
 -- Name: get_resources(integer, integer); Type: FUNCTION; Schema: flashback; Owner: flashback
 --
 
-CREATE FUNCTION flashback.get_resources(user_id integer, subject_id integer) RETURNS TABLE(id integer, name character varying, type flashback.resource_type, condition flashback.condition, presenter character varying, provider character varying, link character varying, last_read timestamp with time zone)
+CREATE FUNCTION flashback.get_resources(user_id integer, subject_id integer) RETURNS TABLE(id integer, name character varying, type flashback.resource_type, pattern flashback.section_pattern, production date, expiration date, presenter flashback.citext, provider flashback.citext, link character varying, last_read timestamp with time zone)
     LANGUAGE plpgsql
     AS $$
 begin
     return query
-    select r.id, r.name, r.type, r.condition, r.presenter, r.provider, r.link, max(p.last_practice) filter (where p.last_practice is not null)
+    select r.id, r.name, r.type, r.pattern, r.production, r.expiration, e.name as presenter, v.name as provider, r.link, max(p.last_practice) filter (where p.last_practice is not null)
     from resources r
     join shelves s on s.resource = r.id and s.subject = subject_id
     join sections_cards sc on sc.resource = r.id
     left join progress p on p."user" = user_id and p.card = sc.card
-    group by r.id, r.name, r.type, r.condition, r.presenter, r.provider, r.link;
+    left join authors a on a.resource = r.id
+    left join presenters e on e.id = a.presenter
+    left join producers c on c.resource = r.id
+    left join providers v on v.id = c.provider
+    group by r.id, r.name, r.type, r.pattern, r.production, r.expiration, e.name, v.name, r.link;
 end;
 $$;
 
@@ -1167,9 +1124,17 @@ ALTER FUNCTION flashback.get_resources(user_id integer, subject_id integer) OWNE
 -- Name: get_roadmaps(integer); Type: FUNCTION; Schema: flashback; Owner: flashback
 --
 
-CREATE FUNCTION flashback.get_roadmaps("user" integer) RETURNS TABLE(id integer, name character varying)
+CREATE FUNCTION flashback.get_roadmaps("user" integer) RETURNS TABLE(id integer, name flashback.citext)
     LANGUAGE plpgsql
-    AS $$ begin return query select r.id, r.name from roadmaps r join users_roadmaps ur on ur.roadmap = r.id where ur."user" = get_roadmaps.user order by name; end; $$;
+    AS $$
+begin
+    return query
+    select r.id, r.name
+    from roadmaps r
+    join users_roadmaps ur on ur.roadmap = r.id
+    where ur."user" = get_roadmaps.user
+    order by name;
+end; $$;
 
 
 ALTER FUNCTION flashback.get_roadmaps("user" integer) OWNER TO flashback;
@@ -1214,12 +1179,12 @@ ALTER FUNCTION flashback.get_sections_cards(resource integer, section integer) O
 -- Name: get_subject_resources(character varying); Type: FUNCTION; Schema: flashback; Owner: flashback
 --
 
-CREATE FUNCTION flashback.get_subject_resources(subject character varying) RETURNS TABLE(id integer, name character varying, type flashback.resource_type, pattern flashback.section_pattern, condition flashback.condition, provider character varying, presenter character varying, link character varying)
+CREATE FUNCTION flashback.get_subject_resources(subject character varying) RETURNS TABLE(id integer, name character varying, type flashback.resource_type, pattern flashback.section_pattern, expiration date, provider character varying, presenter character varying, link character varying)
     LANGUAGE plpgsql
     AS $$
 begin
     return query
-    select r.id, r.name, r.type, r.pattern, r.condition, r.provider, r.presenter, r.link
+    select r.id, r.name, r.type, r.pattern, r.date, r.provider, r.presenter, r.link
     from resources r
     join shelves v on v.resource = r.id
     join subjects j on j.id = v.subject
@@ -1258,6 +1223,28 @@ end; $$;
 ALTER FUNCTION flashback.get_topic_assessments(user_id integer, subject_id integer, topic_position integer, max_level flashback.expertise_level) OWNER TO flashback;
 
 --
+-- Name: get_topic_cards(integer, integer, integer); Type: FUNCTION; Schema: flashback; Owner: flashback
+--
+
+CREATE FUNCTION flashback.get_topic_cards(roadmap_id integer, subject_id integer, topic_position integer) RETURNS TABLE(card integer, "position" integer, state flashback.card_state, headline text)
+    LANGUAGE plpgsql
+    AS $$
+begin
+    return query
+    select cards.id, tc."position", cards.state, cards.headline
+    from milestones m
+    join topics_cards tc on tc.subject = m.subject
+    join cards on cards.id = tc.card
+    where m.roadmap = roadmap_id
+    and m.subject = subject_id
+    and tc.topic = topic_position;
+end;
+$$;
+
+
+ALTER FUNCTION flashback.get_topic_cards(roadmap_id integer, subject_id integer, topic_position integer) OWNER TO flashback;
+
+--
 -- Name: get_topics(integer, flashback.expertise_level); Type: FUNCTION; Schema: flashback; Owner: flashback
 --
 
@@ -1292,28 +1279,6 @@ $$;
 
 
 ALTER FUNCTION flashback.get_topics(roadmap integer, milestone integer) OWNER TO flashback;
-
---
--- Name: get_topics_cards(integer, integer, integer); Type: FUNCTION; Schema: flashback; Owner: flashback
---
-
-CREATE FUNCTION flashback.get_topics_cards(roadmap_id integer, subject_id integer, topic_position integer) RETURNS TABLE(card integer, "position" integer, state flashback.card_state, headline text)
-    LANGUAGE plpgsql
-    AS $$
-begin
-    return query
-    select cards.id, tc."position", cards.state, cards.headline
-    from milestones m
-    join topics_cards tc on tc.subject = m.subject
-    join cards on cards.id = tc.card
-    where m.roadmap = roadmap_id
-    and m.subject = subject_id
-    and tc.topic = topic_position;
-end;
-$$;
-
-
-ALTER FUNCTION flashback.get_topics_cards(roadmap_id integer, subject_id integer, topic_position integer) OWNER TO flashback;
 
 --
 -- Name: get_unreviewed_sections_cards(); Type: FUNCTION; Schema: flashback; Owner: flashback
@@ -1388,25 +1353,25 @@ end; $$;
 ALTER FUNCTION flashback.get_user(user_email character varying) OWNER TO flashback;
 
 --
--- Name: get_user(integer, character varying); Type: FUNCTION; Schema: flashback; Owner: flashback
+-- Name: get_user(character varying, character varying); Type: FUNCTION; Schema: flashback; Owner: flashback
 --
 
-CREATE FUNCTION flashback.get_user(user_id integer, user_device character varying) RETURNS TABLE(id integer, name character varying, email character varying, hash character varying, state flashback.user_state, verified boolean, joined timestamp with time zone, token character varying, device character varying)
+CREATE FUNCTION flashback.get_user(user_token character varying, user_device character varying) RETURNS TABLE(id integer, name character varying, email character varying, hash character varying, state flashback.user_state, verified boolean, joined timestamp with time zone, token character varying, device character varying)
     LANGUAGE plpgsql
     AS $$
 begin
-    if exists (select id from sessions s where s."user" = user_id and s.device = user_device) then
-        update sessions s set last_usage = CURRENT_DATE where s."user" = user_id and s.device = user_device;
+    if exists (select id from sessions s where s.token = user_token and s.device = user_device) then
+        update sessions s set last_usage = CURRENT_DATE where s.token = user_token and s.device = user_device;
     end if;
 
     return query
     select u.id, u.name, u.email, u.hash, u.state, u.verified, u.joined, s.token, s.device
     from users u
-    join sessions s on s."user" = u.id and s."user" = user_id and s.device = user_device;
+    join sessions s on s."user" = u.id and s.token = user_token and s.device = user_device;
 end; $$;
 
 
-ALTER FUNCTION flashback.get_user(user_id integer, user_device character varying) OWNER TO flashback;
+ALTER FUNCTION flashback.get_user(user_token character varying, user_device character varying) OWNER TO flashback;
 
 --
 -- Name: is_subject_relevant(integer, integer); Type: FUNCTION; Schema: flashback; Owner: flashback
@@ -1683,23 +1648,56 @@ ALTER FUNCTION flashback.move_card_to_topic(selected_card integer, current_subje
 -- Name: remove_block(integer, integer); Type: PROCEDURE; Schema: flashback; Owner: flashback
 --
 
-CREATE PROCEDURE flashback.remove_block(IN card integer, IN block integer)
+CREATE PROCEDURE flashback.remove_block(IN card_id integer, IN block_position integer)
     LANGUAGE plpgsql
-    AS $$ begin delete from blocks where blocks.card = remove_block.card and blocks."position" = remove_block.block; end; $$;
+    AS $$
+begin
+    delete from blocks where card = card_id and "position" = block_position;
+
+    update blocks set position = position - 1 where card = card_id and "position" > block_position;
+end; $$;
 
 
-ALTER PROCEDURE flashback.remove_block(IN card integer, IN block integer) OWNER TO flashback;
+ALTER PROCEDURE flashback.remove_block(IN card_id integer, IN block_position integer) OWNER TO flashback;
+
+--
+-- Name: remove_roadmap(integer); Type: PROCEDURE; Schema: flashback; Owner: flashback
+--
+
+CREATE PROCEDURE flashback.remove_roadmap(IN roadmap_id integer)
+    LANGUAGE plpgsql
+    AS $$
+begin
+    delete from roadmaps where id = roadmap_id;
+end; $$;
+
+
+ALTER PROCEDURE flashback.remove_roadmap(IN roadmap_id integer) OWNER TO flashback;
 
 --
 -- Name: rename_roadmap(integer, character varying); Type: PROCEDURE; Schema: flashback; Owner: flashback
 --
 
-CREATE PROCEDURE flashback.rename_roadmap(IN roadmap integer, IN name character varying)
+CREATE PROCEDURE flashback.rename_roadmap(IN roadmap_id integer, IN roadmap_name character varying)
     LANGUAGE plpgsql
-    AS $$ begin update roadmaps set roadmaps.name = rename_roadmap.name where id = roadmap; end; $$;
+    AS $$
+begin
+    update roadmaps set name = roadmap_name where id = roadmap_id;
+end; $$;
 
 
-ALTER PROCEDURE flashback.rename_roadmap(IN roadmap integer, IN name character varying) OWNER TO flashback;
+ALTER PROCEDURE flashback.rename_roadmap(IN roadmap_id integer, IN roadmap_name character varying) OWNER TO flashback;
+
+--
+-- Name: rename_user(integer, character varying); Type: PROCEDURE; Schema: flashback; Owner: flashback
+--
+
+CREATE PROCEDURE flashback.rename_user(IN id integer, IN name character varying)
+    LANGUAGE plpgsql
+    AS $$ begin update users set name = edit_users_name.name where users.id = edit_users_name.id; end; $$;
+
+
+ALTER PROCEDURE flashback.rename_user(IN id integer, IN name character varying) OWNER TO flashback;
 
 --
 -- Name: reorder_blocks(integer, integer, integer); Type: PROCEDURE; Schema: flashback; Owner: flashback
@@ -1879,14 +1877,14 @@ ALTER PROCEDURE flashback.revoke_sessions_except(IN user_id integer, IN active_t
 -- Name: search_presenters(character varying); Type: FUNCTION; Schema: flashback; Owner: flashback
 --
 
-CREATE FUNCTION flashback.search_presenters(token character varying) RETURNS TABLE(presenter integer, name flashback.citext)
+CREATE FUNCTION flashback.search_presenters(token character varying) RETURNS TABLE(similarity bigint, presenter integer, name flashback.citext)
     LANGUAGE plpgsql
     AS $$
 begin
     set pg_trgm.similarity_threshold = 0.1;
 
     return query
-    select p.id, p.name
+    select row_number() over (order by p.name <-> token), p.id, p.name
     from presenters p
     where p.name % token
     order by p.name <-> token
@@ -1900,14 +1898,14 @@ ALTER FUNCTION flashback.search_presenters(token character varying) OWNER TO fla
 -- Name: search_providers(character varying); Type: FUNCTION; Schema: flashback; Owner: flashback
 --
 
-CREATE FUNCTION flashback.search_providers(token character varying) RETURNS TABLE(provider integer, name flashback.citext)
+CREATE FUNCTION flashback.search_providers(token character varying) RETURNS TABLE(similarity bigint, provider integer, name flashback.citext)
     LANGUAGE plpgsql
     AS $$
 begin
     set pg_trgm.similarity_threshold = 0.1;
 
     return query
-    select p.id, p.name
+    select row_number() over (order by p.name <-> token), p.id, p.name
     from providers p
     where p.name % token and p.name <> 'Flashback'
     order by p.name <-> token
@@ -1921,14 +1919,14 @@ ALTER FUNCTION flashback.search_providers(token character varying) OWNER TO flas
 -- Name: search_roadmaps(character varying); Type: FUNCTION; Schema: flashback; Owner: flashback
 --
 
-CREATE FUNCTION flashback.search_roadmaps(token character varying) RETURNS TABLE(roadmap integer, name flashback.citext)
+CREATE FUNCTION flashback.search_roadmaps(token character varying) RETURNS TABLE(similarity bigint, roadmap integer, name flashback.citext)
     LANGUAGE plpgsql
     AS $$
 begin
     set pg_trgm.similarity_threshold = 0.1;
 
     return query
-    select r.id, r.name
+    select row_number() over (order by r.name <-> token), r.id, r.name
     from roadmaps r
     where r.name % token
     order by r.name <-> token
@@ -2331,8 +2329,9 @@ CREATE TABLE flashback.resources (
     name character varying(200) NOT NULL,
     type flashback.resource_type NOT NULL,
     pattern flashback.section_pattern NOT NULL,
-    condition flashback.condition NOT NULL,
-    link character varying(2000)
+    link character varying(2000),
+    expiration date DEFAULT (now() + '5 years'::interval) NOT NULL,
+    production date DEFAULT now() NOT NULL
 );
 
 
@@ -2380,6 +2379,17 @@ ALTER TABLE flashback.resources ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY
     CACHE 1
 );
 
+
+--
+-- Name: roadmap_id; Type: TABLE; Schema: flashback; Owner: flashback
+--
+
+CREATE TABLE flashback.roadmap_id (
+    "coalesce" integer
+);
+
+
+ALTER TABLE flashback.roadmap_id OWNER TO flashback;
 
 --
 -- Name: roadmaps; Type: TABLE; Schema: flashback; Owner: flashback
@@ -2501,7 +2511,7 @@ ALTER TABLE flashback.sections_cards OWNER TO flashback;
 CREATE TABLE flashback.sessions (
     "user" integer NOT NULL,
     token character varying(300) NOT NULL,
-    device character varying(50),
+    device character varying(50) NOT NULL,
     last_usage timestamp with time zone
 );
 
@@ -2897,15 +2907,7 @@ ALTER TABLE ONLY flashback.sections
 --
 
 ALTER TABLE ONLY flashback.sessions
-    ADD CONSTRAINT sessions_pkey PRIMARY KEY ("user", token);
-
-
---
--- Name: sessions sessions_user_device_key; Type: CONSTRAINT; Schema: flashback; Owner: flashback
---
-
-ALTER TABLE ONLY flashback.sessions
-    ADD CONSTRAINT sessions_user_device_key UNIQUE ("user", device);
+    ADD CONSTRAINT sessions_pkey PRIMARY KEY (token, device, "user");
 
 
 --
@@ -3381,5 +3383,5 @@ ALTER TABLE ONLY flashback.users_roadmaps
 -- PostgreSQL database dump complete
 --
 
-\unrestrict o4RDaOTVlwzmwHcmIFZsAWaCrez0CyLh2JmFOVYjg7V9S2Hxjza9VCmXDDmJT0E
+\unrestrict ZiWPjc1afdM4G4K1UzaU7Uz2Rb2CmhsrdMlgZHzQrBMWX05FV5bvhXz5m4ugY4j
 
