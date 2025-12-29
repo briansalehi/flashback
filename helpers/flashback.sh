@@ -224,7 +224,7 @@ show_section_card()
 
     clear
     {
-        printf "\e[1;36m%s\e[0m \e[2;37m(%d)\e[0m \e[1;35m»\e[0m \e[1;36m%s\e[0m \e[2;37m(%d)\e[0m \e[1;35m»\e[0m \e[1;36m%s\e[0m \e[2;37m(%d %s %s)\e[0m \e[1;35m»\e[0m \e[1;36m%s / %d\e[0m \e[2;37mpresented by\e[0m \e[1;36m%s\e[0m \e[2;37mprovided by\e[0m \e[1;36m%s\e[0m\n\n" "${roadmaps[$roadmap]}" "$roadmap" "${subjects[$subject]}" "$subject" "${resource_name}" "${resource}" "${resource_type}" "${condition}" "$section_name" ${#sections[*]} "${author}" "${publisher}"
+        printf "\e[1;36m%s\e[0m \e[2;37m(%d)\e[0m \e[1;35m»\e[0m \e[1;36m%s\e[0m \e[2;37m(%d)\e[0m \e[1;35m»\e[0m \e[1;36m%s\e[0m \e[2;37m(%d %s \e[2;32m%s \e[2;31m%s\e[2;37m)\e[0m \e[1;35m»\e[0m \e[1;36m%s / %d\e[0m \e[2;37mpresented by\e[0m \e[1;36m%s\e[0m \e[2;37mprovided by\e[0m \e[1;36m%s\e[0m\n\n" "${roadmaps[$roadmap]}" "$roadmap" "${subjects[$subject]}" "$subject" "${resource_name}" "${resource}" "${resource_type}" "${production}" "${expiration}" "$section_name" ${#sections[*]} "${author}" "${publisher}"
         printf "\e[1;35m%d/%d\e[0m \e[1;33m%s\e[0m \e[2;37m%s\e[0m $state_color(%s)\e[0m\n" "$position" "${#cards[*]}" "$headline" "$card" "$state"
 
         show_blocks "$card"
@@ -281,10 +281,10 @@ load_resources()
     {
         printf "\e[1;36m%s\e[0m \e[2;37m(%d)\e[0m \e[1;35m»\e[0m \e[1;36m%s\e[0m \e[2;37mresources (%d)\e[0m\n\n" "${roadmaps[$roadmap]}" "$roadmap" "${subjects[$subject]}" "$subject"
         {
-            while IFS='|' read -r id name type condition presenter provider last_read
+            while IFS='|' read -r id name type production expiration presenter provider last_read
             do
-                printf "\e[1;35m%5d\e[0m \e[1;33m%s\e[0m \e[2;37m(%s)\e[0m %s %s \e[2;37m(%s)\e[0m\n" "$id" "$name" "$type" "$(get_time_difference "$last_read")" "$(get_credits "$provider" "$presenter")" "$condition"
-            done < <(psql -U flashback -d flashback -c "select id, name, type, condition, presenter, provider, last_read from get_resources($user, $subject) order by name" -At)
+                printf "\e[1;35m%5d\e[0m \e[1;33m%s\e[0m \e[2;37m(%s)\e[0m %s %s \e[2;37m(\e[2;32m%s \e[2;31m%s\e[2;37m)\e[0m\n" "$id" "$name" "$type" "$(get_time_difference "$last_read")" "$(get_credits "$provider" "$presenter")" "$production" "$expiration"
+            done < <(psql -U flashback -d flashback -c "select id, name, type, production, expiration, presenter, provider, last_read from get_resources($user, $subject) order by name" -At)
         } | dense_column
     } | custom_pager
 
@@ -637,7 +637,7 @@ list_resources()
     local selection="$1"
     local selection_color="\e[1;33m"
 
-    while IFS="|" read -r resource, name, type, condition, presenter, provider, last_read
+    while IFS="|" read -r resource, name, type, production, expiration, presenter, provider, last_read
     do
         pattern="${pattern^}"
         name="${name:-$pattern $position}"
@@ -653,7 +653,7 @@ list_resources()
         fi
 
         printf "\e[1;34m%d\e[0m $selection_color%s\e[0m\n" "$position" "${name}"
-    done < <(psql -U flashback -d flashback -c "select id, name, type, condition, presenter, provider, last_read from get_resources(1, $subject)" -At)
+    done < <(psql -U flashback -d flashback -c "select id, name, type, production, expiration, presenter, provider, last_read from get_resources(1, $subject)" -At)
 
     capture_line
 }
@@ -1090,7 +1090,7 @@ start_study()
 
     [ ${#selected_sections[*]} -eq 0 ] && return
 
-    while IFS="|" read -r resource resource_name resource_type pattern condition author publisher link last_read
+    while IFS="|" read -r resource resource_name resource_type pattern production expiration author publisher link last_read
     do
         while IFS="|" read -r section section_name
         do
@@ -1154,7 +1154,7 @@ start_study()
             done
 
         done < <(psql -U flashback -d flashback -c "select position, name from sections where resource = $resource and position in ( $(tr ' ' ',' <<< "${selected_sections[*]}") ) order by position" -At)
-    done < <(psql -U flashback -d flashback -c "select id, name, type, pattern, condition, presenter, provider, link, last_read from get_resources($user, $subject) where id = $resource order by name" -At)
+    done < <(psql -U flashback -d flashback -c "select id, name, type, pattern, production, expiration, presenter, provider, link, last_read from get_resources($user, $subject) where id = $resource order by name" -At)
     echo
 }
 
