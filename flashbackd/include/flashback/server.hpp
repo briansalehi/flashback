@@ -17,11 +17,12 @@ public:
     grpc::Status SignUp(grpc::ServerContext* context, SignUpRequest const* request, SignUpResponse* response) override;
     grpc::Status SignIn(grpc::ServerContext* context, SignInRequest const* request, SignInResponse* response) override;
     grpc::Status VerifySession(grpc::ServerContext* context, VerifySessionRequest const* request, VerifySessionResponse* response) override;
+    // VerifyUser
+
+    // accounts
     grpc::Status ResetPassword(grpc::ServerContext* context, ResetPasswordRequest const* request, ResetPasswordResponse* response) override;
     // RenameUser
     // ChangeUserEmail
-    // VerifyUser
-    // DeactivateUser
 
     // welcome page requests
     grpc::Status CreateRoadmap(grpc::ServerContext* context, CreateRoadmapRequest const* request, CreateRoadmapResponse* response) override;
@@ -30,10 +31,13 @@ public:
     grpc::Status RenameRoadmap(grpc::ServerContext* context, RenameRoadmapRequest const* request, RenameRoadmapResponse* response) override;
     grpc::Status RemoveRoadmap(grpc::ServerContext* context, RemoveRoadmapRequest const* request, RemoveRoadmapResponse* response) override;
     grpc::Status SearchRoadmaps(grpc::ServerContext* context, SearchRoadmapsRequest const* request, SearchRoadmapsResponse* response) override;
+    // GetRoadmapWeight
 
     // roadmap page requests
     // GetMilestones
     // AddMilestone
+    // SearchSubject
+    // CreateSubject
     // ReorderMilestone
     // RemoveMilestone
     // ChangeMilestoneLevel
@@ -93,6 +97,7 @@ public:
     // card page
     // EditHeadline
     // CreateBlock
+    // GetBlocks
     // EditBlock
     // RemoveBlock
     // EditBlockExtension

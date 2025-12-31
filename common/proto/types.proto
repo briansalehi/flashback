@@ -27,6 +27,16 @@ message Milestone {
     expertise_level level = 4;
 }
 
+message Presenter {
+    uint64 id = 1;
+    string name = 2;
+}
+
+message Provider {
+    uint64 id = 1;
+    string name = 2;
+}
+
 message Resource {
     enum resource_type {
         book = 0;
@@ -44,28 +54,21 @@ message Resource {
         chapter = 0;
         page = 1;
         session = 2;
-        segment = 3;
-        post = 4;
-        synapse = 5;
-    }
-
-    enum resource_condition {
-        draft = 0;
-        relevant = 1;
-        outdated = 2;
-        canonical = 3;
-        abandoned = 4;
+        episode = 3;
+        playlist = 4;
+        post = 5;
+        synapse = 6;
     }
 
     uint64 id = 1;
-    string name = 2;
-    string presenter = 3;
-    string provider = 4;
+    resource_type type = 2;
+    section_pattern pattern = 3;
+    string name = 4;
     string link = 5;
-    resource_type type = 6;
-    section_pattern pattern = 7;
-    resource_condition condition = 8;
-    uint64 days = 9;
+    google.protobuf.Timestamp production = 6;
+    google.protobuf.Timestamp expiration = 7;
+    Provider provider = 8;
+    repeated Presenter presenters = 9;
 }
 
 message Topic {
@@ -91,6 +94,20 @@ message Card {
     uint64 id = 1;
     card_state state = 2;
     string heading = 3;
+}
+
+message Block {
+    enum content_type {
+        text = 0;
+        code = 1;
+        image = 2;
+    }
+
+    uint64 position = 1;
+    content_type type = 2;
+    string extension = 3;
+    string metadata = 4;
+    string content = 5;
 }
 
 message User {
