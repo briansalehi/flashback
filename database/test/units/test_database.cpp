@@ -10,7 +10,7 @@
 #include <flashback/database.hpp>
 #include <flashback/exception.hpp>
 
-class test_database : public testing::Test
+class test_database: public testing::Test
 {
 protected:
     void SetUp() override
@@ -20,8 +20,7 @@ protected:
         m_user = std::make_unique<flashback::User>();
         m_user->set_name("Flashback Test User");
         m_user->set_email("user@flashback.eu.com");
-        m_user->set_hash(
-            R"($argon2id$v=19$m=262144,t=3,p=1$faiJerPBCLb2TEdTbGv8BQ$M0j9j6ojyIjD9yZ4+lBBNR/WAiWpImUcEcUhCL3u9gc)");
+        m_user->set_hash(R"($argon2id$v=19$m=262144,t=3,p=1$faiJerPBCLb2TEdTbGv8BQ$M0j9j6ojyIjD9yZ4+lBBNR/WAiWpImUcEcUhCL3u9gc)");
         m_user->set_token(R"(iNFzgSaY2W+q42gM9lNVbB13v0odiLy6WnHbInbuvvE)");
         m_user->set_device(R"(aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee)");
         m_user->set_id(create_user());
@@ -188,9 +187,7 @@ TEST_F(test_database, RevokeSingleSession)
 TEST_F(test_database, ResetPassword)
 {
     std::unique_ptr<flashback::User> user{nullptr};
-    std::string hash{
-        R"($argon2id$v=19$m=262144,t=3,p=1$faiJerPACLb2TEdTbGv8AQ$M0j9j6ojyIjD9yZ4+lAANR/WAiWpImUcEcUhCL3u9gc)"
-    };
+    std::string hash{R"($argon2id$v=19$m=262144,t=3,p=1$faiJerPACLb2TEdTbGv8AQ$M0j9j6ojyIjD9yZ4+lAANR/WAiWpImUcEcUhCL3u9gc)"};
 
     ASSERT_TRUE(m_database->create_session(m_user->id(), m_user->token(), m_user->device()));
 
@@ -276,8 +273,7 @@ TEST_F(test_database, GetRoadmaps)
     primary_roadmap.set_id(primary_id);
 
     EXPECT_NO_THROW(roadmaps = m_database->get_roadmaps(m_user->id()));
-    EXPECT_THAT(roadmaps, testing::IsEmpty()) <<
- "A roadmap was created but is not assigned to the user yet, container should be empty";
+    EXPECT_THAT(roadmaps, testing::IsEmpty()) << "A roadmap was created but is not assigned to the user yet, container should be empty";
 
     ASSERT_NO_THROW(secondary_id = m_database->create_roadmap(secondary_name));
     ASSERT_GT(secondary_id, 0);
@@ -296,8 +292,7 @@ TEST_F(test_database, GetRoadmaps)
     EXPECT_NO_THROW(m_database->assign_roadmap(m_user->id(), secondary_id));
 
     roadmaps = m_database->get_roadmaps(m_user->id());
-    EXPECT_THAT(roadmaps, testing::SizeIs(2)) <<
- "Both of the existing roadmaps was assigned to user, so container should contain both";
+    EXPECT_THAT(roadmaps, testing::SizeIs(2)) << "Both of the existing roadmaps was assigned to user, so container should contain both";
 }
 
 TEST_F(test_database, RenameRoadmap)
@@ -344,28 +339,41 @@ TEST_F(test_database, RemoveRoadmap)
     ASSERT_NO_THROW(m_database->assign_roadmap(m_user->id(), secondary_id));
 
     EXPECT_NO_THROW(m_database->remove_roadmap(primary_id));
-    ASSERT_THAT(m_database->get_roadmaps(m_user->id()), testing::SizeIs(1)) <<
- "Of two existing roadmaps, one should remain";
+    ASSERT_THAT(m_database->get_roadmaps(m_user->id()), testing::SizeIs(1)) << "Of two existing roadmaps, one should remain";
     EXPECT_NO_THROW(roadmap = m_database->get_roadmaps(m_user->id()).at(0));
     EXPECT_EQ(roadmap.name(), secondary_name);
 
-    EXPECT_NO_THROW(m_database->remove_roadmap(primary_id)) <<
- "Deleting non-existing roadmap should not throw an exception";
+    EXPECT_NO_THROW(m_database->remove_roadmap(primary_id)) << "Deleting non-existing roadmap should not throw an exception";
 }
 
 TEST_F(test_database, SearchRoadmaps)
 {
     std::vector<std::string> const names{
-        "Cloud Infrastructure", "Quantitative Finance", "Database Optimization", "Forensic Accounting",
-        "Cybersecurity Governance", "Data Visualization", "Talent Acquisition", "Supply Chain Logistics",
-        "Intellectual Property Law", "Agile Project Management", "Full-Stack Development", "Backend Development",
-        "Digital Marketing", "Content Marketing", "Financial Analysis", "Risk Analysis", "Product Management",
-        "Project Management", "Brand Strategy", "Growth Strategy"
+        "Cloud Infrastructure",
+        "Quantitative Finance",
+        "Database Optimization",
+        "Forensic Accounting",
+        "Cybersecurity Governance",
+        "Data Visualization",
+        "Talent Acquisition",
+        "Supply Chain Logistics",
+        "Intellectual Property Law",
+        "Agile Project Management",
+        "Full-Stack Development",
+        "Backend Development",
+        "Digital Marketing",
+        "Content Marketing",
+        "Financial Analysis",
+        "Risk Analysis",
+        "Product Management",
+        "Project Management",
+        "Brand Strategy",
+        "Growth Strategy"
     };
     std::vector<flashback::Roadmap> search_results;
     search_results.reserve(names.size());
 
-    for (std::string const& roadmap_name : names)
+    for (std::string const& roadmap_name: names)
     {
         uint64_t roadmap_id{};
         ASSERT_NO_THROW(roadmap_id = m_database->create_roadmap(roadmap_name));
