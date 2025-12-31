@@ -29,6 +29,7 @@ target_link_libraries(flashback-internals PUBLIC client Boost::program_options f
 target_compile_features(flashback-internals PUBLIC cxx_std_23)
 target_compile_definitions(flashback-internals PRIVATE PROGRAM_VERSION="${CMAKE_PROJECT_VERSION}")
 define_tests(TARGET flashback-internals FILES ${test_files} MOCK_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/test/mocks)
+set(tests ${tests};flashback-tests PARENT_SCOPE)
 
 add_executable(flashback)
 target_sources(flashback PRIVATE src/main.cpp)

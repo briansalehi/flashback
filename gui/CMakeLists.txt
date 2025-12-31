@@ -55,6 +55,8 @@ target_sources(flashback-gui
     PUBLIC FILE_SET modules TYPE CXX_MODULES FILES ${module_files}
 )
 target_link_libraries(flashback-gui PRIVATE Qt${QT_VERSION_MAJOR}::Core Qt${QT_VERSION_MAJOR}::Quick)
+define_tests(TARGET gui FILES ${test_files} MOCK_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/test/mocks)
+set(tests ${tests};gui PARENT_SCOPE)
 
 install(TARGETS flashback-gui
     BUNDLE DESTINATION .

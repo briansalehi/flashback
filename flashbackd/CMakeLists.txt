@@ -26,6 +26,7 @@ target_link_libraries(flashbackd-internals PUBLIC common database sodium Boost::
 target_compile_definitions(flashbackd-internals PUBLIC INSTALL_RPATH="$ORIGIN")
 target_compile_features(flashbackd-internals PUBLIC cxx_std_23)
 define_tests(TARGET flashbackd-internals FILES "${test_files}" MOCK_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/test/mocks)
+set(tests ${tests};flashbackd-tests PARENT_SCOPE)
 
 add_executable(flashbackd)
 target_sources(flashbackd PRIVATE src/main.cpp)
