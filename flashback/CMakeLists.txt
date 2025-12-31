@@ -37,7 +37,7 @@ target_link_libraries(flashback PRIVATE flashback-internals)
 
 set(version_file "${CMAKE_BINARY_DIR}/FlashbackCliVersion.cmake")
 write_basic_package_version_file(${version_file} VERSION ${CMAKE_PROJECT_VERSION} COMPATIBILITY SameMajorVersion)
-install(TARGETS flashback RUNTIME CONFIGURATIONS Release MinSizeRel COMPONENT flashback)
+install(TARGETS flashback RUNTIME COMPONENT flashback)
 install(FILES ${version_file} COMPONENT flashback DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake)
 
 string(TOLOWER "${CMAKE_SYSTEM_NAME}" CPACK_SYSTEM_NAME)
