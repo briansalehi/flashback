@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict ZiWPjc1afdM4G4K1UzaU7Uz2Rb2CmhsrdMlgZHzQrBMWX05FV5bvhXz5m4ugY4j
+\restrict gcX4IUpkGUXbWUhrxvIu4mmulcv7RzxXaj2Ygwobu4ORX3gW7aBW8TXFJ3MuNl3
 
 -- Dumped from database version 18.0
 -- Dumped by pg_dump version 18.0
@@ -78,7 +78,8 @@ ALTER TYPE flashback.card_state OWNER TO flashback;
 
 CREATE TYPE flashback.content_type AS ENUM (
     'text',
-    'code'
+    'code',
+    'image'
 );
 
 
@@ -191,24 +192,6 @@ CREATE TYPE flashback.user_state AS ENUM (
 
 
 ALTER TYPE flashback.user_state OWNER TO flashback;
-
---
--- Name: add_card_to_assessments(integer, flashback.expertise_level, integer, integer); Type: PROCEDURE; Schema: flashback; Owner: flashback
---
-
-CREATE PROCEDURE flashback.add_card_to_assessments(IN subject integer, IN level flashback.expertise_level, IN topic integer, IN card integer)
-    LANGUAGE plpgsql
-    AS $$
-begin
-    insert into assessments (subject, level, topic, card)
-    values (add_card_to_assessments.subject, add_card_to_assessments.level, add_card_to_assessments.topic, add_card_to_assessments.card);
-
-    update cards set state = 'review'::card_state where cards.id = add_card_to_assessments.card;
-end;
-$$;
-
-
-ALTER PROCEDURE flashback.add_card_to_assessments(IN subject integer, IN level flashback.expertise_level, IN topic integer, IN card integer) OWNER TO flashback;
 
 --
 -- Name: add_card_to_section(integer, integer, integer); Type: FUNCTION; Schema: flashback; Owner: flashback
@@ -348,10 +331,10 @@ $$;
 ALTER PROCEDURE flashback.add_subject_to_roadmap(IN subject integer, IN level flashback.expertise_level, IN roadmap integer, IN "position" integer) OWNER TO flashback;
 
 --
--- Name: assign_roadmap_to_user(integer, integer); Type: PROCEDURE; Schema: flashback; Owner: flashback
+-- Name: assign_roadmap(integer, integer); Type: PROCEDURE; Schema: flashback; Owner: flashback
 --
 
-CREATE PROCEDURE flashback.assign_roadmap_to_user(IN user_id integer, IN roadmap_id integer)
+CREATE PROCEDURE flashback.assign_roadmap(IN user_id integer, IN roadmap_id integer)
     LANGUAGE plpgsql
     AS $$
 begin
@@ -360,7 +343,7 @@ end;
 $$;
 
 
-ALTER PROCEDURE flashback.assign_roadmap_to_user(IN user_id integer, IN roadmap_id integer) OWNER TO flashback;
+ALTER PROCEDURE flashback.assign_roadmap(IN user_id integer, IN roadmap_id integer) OWNER TO flashback;
 
 --
 -- Name: change_block_extension(integer, integer, character varying); Type: PROCEDURE; Schema: flashback; Owner: flashback
@@ -402,6 +385,21 @@ CREATE PROCEDURE flashback.change_users_hash(IN user_id integer, IN hash charact
 
 
 ALTER PROCEDURE flashback.change_users_hash(IN user_id integer, IN hash character varying) OWNER TO flashback;
+
+--
+-- Name: create_assessment(integer, flashback.expertise_level, integer, integer); Type: PROCEDURE; Schema: flashback; Owner: flashback
+--
+
+CREATE PROCEDURE flashback.create_assessment(IN subject_id integer, IN subject_level flashback.expertise_level, IN topic_position integer, IN card_id integer)
+    LANGUAGE plpgsql
+    AS $$
+begin
+    insert into assessments (subject, level, topic, card) values (subject_id, subject_level, topic_position, card_id);
+end;
+$$;
+
+
+ALTER PROCEDURE flashback.create_assessment(IN subject_id integer, IN subject_level flashback.expertise_level, IN topic_position integer, IN card_id integer) OWNER TO flashback;
 
 --
 -- Name: create_block(integer, flashback.content_type, character varying, text); Type: FUNCTION; Schema: flashback; Owner: flashback
@@ -1140,6 +1138,24 @@ end; $$;
 ALTER FUNCTION flashback.get_roadmaps("user" integer) OWNER TO flashback;
 
 --
+-- Name: get_section_cards(integer, integer); Type: FUNCTION; Schema: flashback; Owner: flashback
+--
+
+CREATE FUNCTION flashback.get_section_cards(resource_id integer, section_id integer) RETURNS TABLE(id integer, "position" integer, state flashback.card_state, headline text)
+    LANGUAGE plpgsql
+    AS $$
+begin
+    return query
+    select cards.id, sc."position", cards.state, cards.headline
+    from sections_cards sc
+    join cards on cards.id = sc.card
+    where sc.resource = resource_id and sc.section = section_id;
+end; $$;
+
+
+ALTER FUNCTION flashback.get_section_cards(resource_id integer, section_id integer) OWNER TO flashback;
+
+--
 -- Name: get_sections(integer); Type: FUNCTION; Schema: flashback; Owner: flashback
 --
 
@@ -1156,24 +1172,6 @@ $$;
 
 
 ALTER FUNCTION flashback.get_sections(resource integer) OWNER TO flashback;
-
---
--- Name: get_sections_cards(integer, integer); Type: FUNCTION; Schema: flashback; Owner: flashback
---
-
-CREATE FUNCTION flashback.get_sections_cards(resource integer, section integer) RETURNS TABLE(id integer, "position" integer, state flashback.card_state, headline text)
-    LANGUAGE plpgsql
-    AS $$
-begin
-    return query
-    select cards.id, sc."position", cards.state, cards.headline
-    from sections_cards sc
-    join cards on cards.id = sc.card
-    where sc.resource = get_sections_cards.resource and sc.section = get_sections_cards.section;
-end; $$;
-
-
-ALTER FUNCTION flashback.get_sections_cards(resource integer, section integer) OWNER TO flashback;
 
 --
 -- Name: get_subject_resources(character varying); Type: FUNCTION; Schema: flashback; Owner: flashback
@@ -1731,31 +1729,37 @@ ALTER PROCEDURE flashback.reorder_blocks(IN target_card integer, IN old_position
 -- Name: reorder_milestone(integer, integer, integer); Type: PROCEDURE; Schema: flashback; Owner: flashback
 --
 
-CREATE PROCEDURE flashback.reorder_milestone(IN roadmap integer, IN old_position integer, IN new_position integer)
+CREATE PROCEDURE flashback.reorder_milestone(IN roadmap_id integer, IN old_position integer, IN new_position integer)
     LANGUAGE plpgsql
     AS $$
 declare top_position integer;
 begin
     -- locate the free position on top
-    select coalesce(max(m.position), 0) + 1 into top_position from milestones m where m.roadmap = reorder_milestone.roadmap;
+    select coalesce(max(m.position), 0) + 1 into top_position from milestones m where m.roadmap = roadmap_id;
 
     -- relocate targeted milestone to the top
-    update milestones set position = top_position where milestones.roadmap = reorder_milestone.roadmap and milestones.position = old_position;
+    update milestones m set position = top_position where m.roadmap = roadmap_id and m.position = old_position;
 
     -- relocate milestones between the old and new positions upwards or downwards to open up a space for targeted milestone on the new location
     if new_position < old_position then
-        update milestones set position = milestones.position + 1 where milestones.roadmap = reorder_milestone.roadmap and milestones.position >= new_position and milestones.position < old_position;
+        update milestones m set position = m.position + 1 where m.roadmap = roadmap_id and m.position >= new_position and m.position < old_position;
     else
-        update milestones set position = milestones.position - 1 where milestones.roadmap = reorder_milestone.roadmap and milestones.position > old_position and milestones.position <= new_position;
+        update milestones m set position = m.position - 1 where m.roadmap = roadmap_id and m.position > old_position and m.position <= new_position;
     end if;
 
     -- relocate targeted milestone from top to the new free location
-    update milestones set position = new_position where milestones.roadmap = reorder_milestone.roadmap and milestones.position = top_position;
+    update milestones m set position = new_position where m.roadmap = roadmap_id and m.position = top_position;
+
+    -- normalize milestone positions to avoid gaps
+    update milestones m set position = sub.correction from (
+        select row_number() over (order by im.position) as correction, im.position from milestones im where im.roadmap = roadmap_id
+    ) sub
+    where m.roadmap = roadmap_id and m.position = sub.position;
 end;
 $$;
 
 
-ALTER PROCEDURE flashback.reorder_milestone(IN roadmap integer, IN old_position integer, IN new_position integer) OWNER TO flashback;
+ALTER PROCEDURE flashback.reorder_milestone(IN roadmap_id integer, IN old_position integer, IN new_position integer) OWNER TO flashback;
 
 --
 -- Name: reorder_sections_cards(integer, integer, integer, integer); Type: PROCEDURE; Schema: flashback; Owner: flashback
@@ -2061,9 +2065,10 @@ ALTER TABLE flashback.authors OWNER TO flashback;
 CREATE TABLE flashback.blocks (
     card integer NOT NULL,
     "position" integer NOT NULL,
-    content text,
+    content text NOT NULL,
     type flashback.content_type NOT NULL,
-    extension character varying(20) NOT NULL
+    extension character varying(20) NOT NULL,
+    metadata character varying(100) DEFAULT NULL::character varying
 );
 
 
@@ -3383,5 +3388,5 @@ ALTER TABLE ONLY flashback.users_roadmaps
 -- PostgreSQL database dump complete
 --
 
-\unrestrict ZiWPjc1afdM4G4K1UzaU7Uz2Rb2CmhsrdMlgZHzQrBMWX05FV5bvhXz5m4ugY4j
+\unrestrict gcX4IUpkGUXbWUhrxvIu4mmulcv7RzxXaj2Ygwobu4ORX3gW7aBW8TXFJ3MuNl3
 
