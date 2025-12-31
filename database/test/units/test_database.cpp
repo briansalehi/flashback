@@ -30,6 +30,11 @@ protected:
     {
         remove_users();
         remove_roadmaps();
+        remove_subjects();
+        remove_cards();
+        remove_resources();
+        remove_providers();
+        remove_presenters();
     }
 
     [[nodiscard]] uint64_t create_user() const
@@ -49,10 +54,45 @@ protected:
         remove_user.commit();
     }
 
-    void remove_roadmaps()
+    void remove_roadmaps() const
     {
         pqxx::work removal(*m_connection);
         removal.exec("delete from roadmaps");
+        removal.commit();
+    }
+
+    void remove_subjects() const
+    {
+        pqxx::work removal(*m_connection);
+        removal.exec("delete from subjects");
+        removal.commit();
+    }
+
+    void remove_cards() const
+    {
+        pqxx::work removal(*m_connection);
+        removal.exec("delete from cards");
+        removal.commit();
+    }
+
+    void remove_resources() const
+    {
+        pqxx::work removal(*m_connection);
+        removal.exec("delete from resources");
+        removal.commit();
+    }
+
+    void remove_providers() const
+    {
+        pqxx::work removal(*m_connection);
+        removal.exec("delete from providers");
+        removal.commit();
+    }
+
+    void remove_presenters() const
+    {
+        pqxx::work removal(*m_connection);
+        removal.exec("delete from presenters");
         removal.commit();
     }
 

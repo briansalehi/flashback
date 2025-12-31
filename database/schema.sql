@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict gcX4IUpkGUXbWUhrxvIu4mmulcv7RzxXaj2Ygwobu4ORX3gW7aBW8TXFJ3MuNl3
+\restrict jjys0f8zBme9keBO5pvlR4X2KpZOsYGuVsRQ8H7SxYpcH2tqLBRNo2NpCixKhPZ
 
 -- Dumped from database version 18.0
 -- Dumped by pg_dump version 18.0
@@ -2571,7 +2571,7 @@ ALTER TABLE flashback.shelves_activities ALTER COLUMN id ADD GENERATED ALWAYS AS
 
 CREATE TABLE flashback.subjects (
     id integer NOT NULL,
-    name character varying(200) NOT NULL
+    name flashback.citext NOT NULL
 );
 
 
@@ -3025,6 +3025,13 @@ CREATE INDEX roadmaps_name_trigram ON flashback.roadmaps USING gin (name flashba
 
 
 --
+-- Name: subjects_name_trigram; Type: INDEX; Schema: flashback; Owner: flashback
+--
+
+CREATE INDEX subjects_name_trigram ON flashback.subjects USING gin (name flashback.gin_trgm_ops);
+
+
+--
 -- Name: assessments assessments_card_fkey; Type: FK CONSTRAINT; Schema: flashback; Owner: flashback
 --
 
@@ -3388,5 +3395,5 @@ ALTER TABLE ONLY flashback.users_roadmaps
 -- PostgreSQL database dump complete
 --
 
-\unrestrict gcX4IUpkGUXbWUhrxvIu4mmulcv7RzxXaj2Ygwobu4ORX3gW7aBW8TXFJ3MuNl3
+\unrestrict jjys0f8zBme9keBO5pvlR4X2KpZOsYGuVsRQ8H7SxYpcH2tqLBRNo2NpCixKhPZ
 
