@@ -110,6 +110,10 @@ service Server {
 
     // card page
     //rpc EditHeadline(EditHeadlineRequest) returns (EditHeadlineResponse);
+    //rpc MakeProgress(MakeProgressRequest) returns (MakeProgressResponse);
+    //rpc MoveCardToSection(MoveCardToSectionRequest) returns (MoveCardToSectionResponse);
+    //rpc MoveCardToTopic(MoveCardToTopicRequest) returns (MoveCardToTopicResponse);
+    //rpc MarkCardAsReviewed(MarkCardAsReviewedRequest) returns (MarkCardAsReviewedResponse);
     //rpc CreateBlock(CreateBlockRequest) returns (CreateBlockResponse);
     //rpc GetBlocks(GetBlocksRequest) returns (GetBlocksResponse);
     //rpc EditBlock(EditBlockRequest) returns (EditBlockResponse);
@@ -118,10 +122,6 @@ service Server {
     //rpc MergeBlocks(MergeBlocksRequest) returns (MergeBlocksResponse);
     //rpc SplitBlock(SplitBlockRequest) returns (SplitBlockResponse);
     //rpc MoveBlock(MoveBlockRequest) returns (MoveBlockResponse);
-    //rpc MakeProgress(MakeProgressRequest) returns (MakeProgressResponse);
-    //rpc MoveCardToSection(MoveCardToSectionRequest) returns (MoveCardToSectionResponse);
-    //rpc MoveCardToTopic(MoveCardToTopicRequest) returns (MoveCardToTopicResponse);
-    //rpc MarkCardAsReviewed(MarkCardAsReviewedRequest) returns (MarkCardAsReviewedResponse);
 
     // assessments
     //rpc CreateAssessment(CreateAssessmentRequest) returns (CreateAssessmentResponse);

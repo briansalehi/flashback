@@ -30,15 +30,17 @@ public:
 
     // roadmaps
     virtual uint64_t create_roadmap(std::string_view name) = 0;
-    virtual void assign_roadmap(uint64_t user_id, uint64_t roadmap_id) = 0;
+    virtual void assign_roadmap(uint64_t user_id, uint64_t roadmap_id) = 0; // clone?
     [[nodiscard]] virtual std::vector<Roadmap> get_roadmaps(uint64_t user_id) = 0;
     virtual void rename_roadmap(uint64_t roadmap_id, std::string_view modified_name) = 0;
     virtual void remove_roadmap(uint64_t roadmap_id) = 0;
     [[nodiscard]] virtual std::vector<Roadmap> search_roadmaps(std::string_view token) = 0;
+    //get_roadmap_weight
 
     // milestones
+    //get_milestones
     //add_milestone
-    //reorder_milestones
+    //reorder_milestone
     //remove_milestone
     //change_milestone_level
 
@@ -46,35 +48,42 @@ public:
     //create_subject
     //rename_subject
     //remove_subject
-    //remove_subject_with_cards
     //merge_subjects
     //add_resource_to_subject
     //drop_resource_from_subject
     //search_subjects
+    //user_is_qualified
+    //get_subject_weight
 
     // topics
     //create_topic
     //get_topics
-    //reorder_topics
+    //reorder_topic
     //remove_topic
-    //remove_topic_with_cards
     //merge_topics
     //rename_topic
     //move_topic
     //search_topics
+    //change_topic_level
+    //get_practice_topics
+    //get_practice_mode
+    //get_topic_weight
 
     // resources
     //create_resource
-    //search_resources
     //get_resources
+    //search_resources
     //rename_resource
     //remove_resource
-    //remove_resource_with_cards
     //merge_resources
     //change_resource_type
     //edit_resource_link
-    //change_section_pattern
-    //change_resource_condition
+    //edit_section_pattern
+    //edit_resource_production
+    //edit_resource_expiration
+    //get_relevant_subjects
+    //get_resource_state
+    //mark_resource_as_completed
 
     // providers
     //create_provider
@@ -97,36 +106,73 @@ public:
     //get_sections
     //remove_section
     //remove_section_with_cards
-    //reorder_sections
+    //reorder_section
     //merge_sections
     //rename_section
     //move_section
     //search_sections
+    //get_section_state
+    //mark_section_as_reviewed
+    //mark_section_as_completed
 
     // cards
     //create_card
     //add_card_to_section
     //add_card_to_topic
-    //reorder_section_cards
-    //reorder_topic_cards
-    //remove_card_from_section
-    //remove_card_from_topic
     //edit_card_headline
     //remove_card
     //merge_cards
     //get_study_cards
     //get_practice_cards
+    //get_topic_cards
+    //get_section_cards
     //search_cards
+    //move_card_to_section
+    //move_card_to_topic
+    //make_progress
+    //mark_card_as_reviewed
+    //mark_card_as_completed
+    //get_variations
+    //is_absolute
+    //get_card_weight
 
     // blocks
     //create_block
+    //get_blocks
     //edit_block
     //remove_block
-    //edit_block_extension
-    //edit_block_type
-    //edit_block_meta_data
-    //reorder_blocks
+    //reorder_block
     //merge_blocks
     //split_block
+    //move_block
+
+    // assessments
+    //create_assessment
+    //add_card_to_assessment
+    //get_assessments
+    //get_assessment_coverage
+    //get_assimilation_coverage
+    //expand_assessment
+    //diminish_assessment
+
+    // nerves
+    //create_nerve
+
+    // anomaly detection
+    //get_duplicate_cards
+    //get_lost_cards
+    //get_out_of_shelves
+    //get_unshelved_resources
+    //get_unapproved_topics_cards
+
+    // client
+    //certify_client
+    //get_client_certifications
+
+    // triggers
+    //section_is_reviewed
+    //complete_cards
+    //approve_cards
+    //release_cards
 };
 } // flashback

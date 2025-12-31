@@ -193,9 +193,11 @@ message MergeBlocksRequest { }
 message MergeBlocksResponse { }
 message SplitBlockRequest { }
 message SplitBlockResponse { }
+message MoveBlockRequest { }
+message MoveBlockResponse { }
 
 // assessments
-message CreateAssessmentRequest { }
+message CreateAssessmentRequest { Card card = 1; }
 message CreateAssessmentResponse { }
 message GetAssessmentRequest { }
 message GetAssessmentResponse { }
