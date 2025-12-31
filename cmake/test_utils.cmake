@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.31)
 
-set(TEST_GRANULARITY "1" CACHE STRING "Granularity of tests with 1 as single unified test, 2 as a test per component, 3 as a test per test file")
+set(TEST_GRANULARITY 3 CACHE STRING "Granularity of tests with 1 as single unified test, 2 as a test per component, 3 as a test per test file")
 
 function(define_tests)
     set(options)
