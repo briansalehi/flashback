@@ -30,6 +30,9 @@ public:
     void remove_roadmap(uint64_t roadmap_id) override;
     [[nodiscard]] std::vector<Roadmap> search_roadmaps(std::string_view token) override;
 
+    // subjects
+    Subject create_subject(std::string name) override;
+
 private:
     template <typename... Args>
     [[nodiscard]] pqxx::result query(std::string_view format, Args&&... args) const

@@ -253,3 +253,18 @@ std::vector<Roadmap> database::search_roadmaps(std::string_view token)
 
     return roadmaps;
 }
+
+Subject database::create_subject(std::string name)
+{
+    if (name.empty())
+    {
+        throw client_exception("subject name cannot be empty");
+    }
+
+    auto const result{query("select create_subject($1) as id", name)};
+    auto const id{result.at(0, 0).as<uint64_t>()};
+    Subject subject{};
+    subject.set_name(std::move(name));
+    subject.set_id(id);
+    return subject;
+}

@@ -426,3 +426,24 @@ TEST_F(test_database, SearchRoadmaps)
     EXPECT_NO_THROW(search_results = m_database->search_roadmaps("Prompt Engineering"));
     EXPECT_THAT(search_results, testing::IsEmpty()) << "Should not exist!";
 }
+
+TEST_F(test_database, CreateSubject)
+{
+    flashback::Subject subject;
+    std::string subject_name{"Git"};
+
+    EXPECT_NO_THROW(subject = m_database->create_subject(subject_name));
+    EXPECT_EQ(subject.name(), subject_name);
+    EXPECT_GT(subject.id(), 0);
+
+    EXPECT_THROW(subject = m_database->create_subject(subject_name), pqxx::unique_violation) << "Subjects must be unique";
+
+    subject_name = "Linus' Operating System";
+    EXPECT_NO_THROW(subject = m_database->create_subject(subject_name)) << "Subjects with quotes in their name should not be a problem";
+    EXPECT_EQ(subject.name(), subject_name);
+    EXPECT_GT(subject.id(), 0);
+
+    subject_name.clear();
+    EXPECT_THROW(subject = m_database->create_subject(subject_name), flashback::client_exception) << "Subjects with empty names are not allowed";
+}
+

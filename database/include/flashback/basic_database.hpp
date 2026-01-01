@@ -2,6 +2,7 @@
 
 #include <memory>
 #include <vector>
+#include <string>
 #include <string_view>
 #include <types.pb.h>
 
@@ -45,7 +46,7 @@ public:
     //change_milestone_level
 
     // subjects
-    //create_subject
+    virtual Subject create_subject(std::string name) = 0;
     //rename_subject
     //remove_subject
     //merge_subjects
