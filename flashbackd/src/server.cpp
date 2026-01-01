@@ -327,6 +327,9 @@ grpc::Status server::CreateSubject(grpc::ServerContext* context, CreateSubjectRe
     try
     {
         m_database->create_subject(request->name());
+        response->set_success(true);
+        response->clear_details();
+        response->set_code(0);
     }
     catch (flashback::client_exception const& exp)
     {

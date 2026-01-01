@@ -561,3 +561,22 @@ TEST_F(test_server, SearchRoadmaps)
     EXPECT_FALSE(search_request->user().device().empty());
     EXPECT_NO_THROW(m_server->SearchRoadmaps(m_server_context.get(), search_request.get(), search_response.get()));
 }
+
+TEST_F(test_server, CreateSubject)
+{
+    std::string const subject_name{"C++"};
+    grpc::Status status;
+    flashback::CreateSubjectRequest request;
+    request.set_name(subject_name);
+    flashback::CreateSubjectResponse response;
+    flashback::Subject expected_subject{};
+    expected_subject.set_name(subject_name);
+    expected_subject.set_id(1);
+    flashback::Subject resulting_subject;
+
+    EXPECT_CALL(*m_mock_database, create_subject(testing::A<std::string>())).Times(1).WillOnce(testing::Return(expected_subject));
+    EXPECT_NO_THROW(status = m_server->CreateSubject(m_server_context.get(), &request, &response));
+    EXPECT_TRUE(status.ok());
+    EXPECT_TRUE(response.success());
+    EXPECT_EQ(response.code(), 0);
+}
