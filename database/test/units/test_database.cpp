@@ -446,4 +446,3 @@ TEST_F(test_database, CreateSubject)
     subject_name.clear();
     EXPECT_THROW(subject = m_database->create_subject(subject_name), flashback::client_exception) << "Subjects with empty names are not allowed";
 }
-

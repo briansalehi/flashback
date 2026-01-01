@@ -26,5 +26,8 @@ public:
     MOCK_METHOD(void, rename_roadmap, (uint64_t, std::string_view), (override));
     MOCK_METHOD(void, remove_roadmap, (uint64_t), (override));
     MOCK_METHOD(std::vector<Roadmap>, search_roadmaps, (std::string_view), (override));
+
+    // subjects
+    MOCK_METHOD(Subject, create_subject, (std::string), (override));
 };
 } // flashback

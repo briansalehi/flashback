@@ -36,8 +36,8 @@ public:
     // roadmap page requests
     // GetMilestones
     // AddMilestone
+    grpc::Status CreateSubject(grpc::ServerContext* context, CreateSubjectRequest const* request, CreateSubjectResponse* response) override;
     // SearchSubject
-    // CreateSubject
     // ReorderMilestone
     // RemoveMilestone
     // ChangeMilestoneLevel

@@ -43,8 +43,8 @@ message AddMilestoneRequest { }
 message AddMilestoneResponse { }
 message SearchSubjectsRequest { }
 message SearchSubjectsResponse { }
-message CreateSubjectRequest { }
-message CreateSubjectResponse { }
+message CreateSubjectRequest { string name = 1; }
+message CreateSubjectResponse { bool success = 1; string details = 2; uint32 code = 3; }
 message ReorderMilestoneRequest { }
 message ReorderMilestoneResponse { }
 message RemoveMilestoneRequest { }
