@@ -16,7 +16,7 @@ jobs:
       - name: build
         run: cmake --build flashback-debug-ninja --parallel $(nproc) --target flashbackd
       - name: test
-        run: ctest --build-exe-dir flashback-debug-ninja --test-dir flashback-debug-ninja
+        run: ctest --build-generator Ninja --build-and-test . flashback-debug-ninja --verbose
   debug-make:
     runs-on: ubuntu-latest
     steps:
@@ -29,7 +29,7 @@ jobs:
       - name: build
         run: cmake --build flashback-debug-make --parallel $(nproc) --target flashbackd
       - name: test
-        run: ctest --build-exe-dir flashback-debug-make --test-dir flashback-debug-make
+        run: ctest --build-generator 'Unix Makefiles' --build-and-test . flashback-debug-make --verbose
   release-ninja:
     runs-on: ubuntu-latest
     steps:
@@ -42,7 +42,7 @@ jobs:
       - name: build
         run: cmake --build flashback-release-ninja --parallel $(nproc) --target flashbackd
       - name: test
-        run: ctest --build-exe-dir flashback-release-make --test-dir flashback-release-make
+        run: ctest --build-generator Ninja --build-and-test . flashback-release-make --verbose
       - name: install
         run: cmake --install flashback-release-ninja --component flashbackd
       - name: pack
@@ -59,7 +59,7 @@ jobs:
       - name: build
         run: cmake --build flashback-release-make --parallel $(nproc) --target flashbackd
       - name: test
-        run: ctest --build-exe-dir flashback-release-make --test-dir flashback-release-make
+        run: ctest --build-generator 'Unix Makefiles' --build-and-test . flashback-release-make --verbose
       - name: install
         run: cmake --install flashback-release-make --component flashbackd
       - name: pack
