@@ -8,59 +8,37 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: prepare
-        run: sudo apt install --yes --no-install-recommends libboost-system-dev libboost-program-options-dev libgtest-dev libprotobuf-dev libgrpc++-dev protobuf-compiler-grpc libsodium-dev
+        run: sudo apt install --yes --no-install-recommends libboost-system-dev libboost-program-options-dev libgtest-dev libprotobuf-dev libgrpc++-dev protobuf-compiler-grpc libsodium-dev libgmock-dev
       - name: checkout
         uses: actions/checkout@v4
       - name: configure
         run: cmake -G Ninja -S . -B flashback-debug-ninja -D CMAKE_BUILD_TYPE=Debug -D TEST_GRANULARITY=1
       - name: build
-        run: cmake --build flashback-debug-ninja --parallel $(nproc) --target flashbackd
+        run:
+          cmake --build flashback-debug-ninja --parallel $(nproc) --target flashbackd
+          cmake --build flashback-debug-ninja --parallel $(nproc) --target flashbackd-tests
+          cmake --build flashback-debug-ninja --parallel $(nproc) --target common-tests
+          cmake --build flashback-debug-ninja --parallel $(nproc) --target database-tests
       - name: test
-        run: ctest --build-generator Ninja --build-and-test . flashback-debug-ninja --verbose
-  debug-make:
-    runs-on: ubuntu-latest
-    steps:
-      - name: prepare
-        run: sudo apt install --yes --no-install-recommends libboost-system-dev libboost-program-options-dev libgtest-dev libprotobuf-dev libgrpc++-dev protobuf-compiler-grpc libsodium-dev
-      - name: checkout
-        uses: actions/checkout@v4
-      - name: configure
-        run: cmake -G 'Unix Makefiles' -S . -B flashback-debug-make -D CMAKE_BUILD_TYPE=Debug -D TEST_GRANULARITY=1
-      - name: build
-        run: cmake --build flashback-debug-make --parallel $(nproc) --target flashbackd
-      - name: test
-        run: ctest --build-generator 'Unix Makefiles' --build-and-test . flashback-debug-make --verbose
+        run: ctest --test-dir flashback-debug-ninja --verbose
   release-ninja:
     runs-on: ubuntu-latest
     steps:
       - name: prepare
-        run: sudo apt install --yes --no-install-recommends libboost-system-dev libboost-program-options-dev libgtest-dev libprotobuf-dev libgrpc++-dev protobuf-compiler-grpc libsodium-dev
+        run: sudo apt install --yes --no-install-recommends libboost-system-dev libboost-program-options-dev libgtest-dev libprotobuf-dev libgrpc++-dev protobuf-compiler-grpc libsodium-dev libgmock-dev
       - name: checkout
         uses: actions/checkout@v4
       - name: configure
         run: cmake -G Ninja -S . -B flashback-release-ninja -D CMAKE_BUILD_TYPE=Release -D CMAKE_INSTALL_PREFIX=flashback-install -D TEST_GRANULARITY=1
       - name: build
-        run: cmake --build flashback-release-ninja --parallel $(nproc) --target flashbackd
+        run:
+          cmake --build flashback-release-ninja --parallel $(nproc) --target flashbackd
+          cmake --build flashback-release-ninja --parallel $(nproc) --target flashbackd-tests
+          cmake --build flashback-release-ninja --parallel $(nproc) --target common-tests
+          cmake --build flashback-release-ninja --parallel $(nproc) --target database-tests
       - name: test
-        run: ctest --build-generator Ninja --build-and-test . flashback-release-make --verbose
+        run: ctest --test-dir flashback-release-ninja --verbose
       - name: install
         run: cmake --install flashback-release-ninja --component flashbackd
       - name: pack
         run: cpack -G ZIP -B flashback-release-ninja --config flashback-release-ninja/CPackConfig.cmake
-  release-make:
-    runs-on: ubuntu-latest
-    steps:
-      - name: prepare
-        run: sudo apt install --yes --no-install-recommends libboost-system-dev libboost-program-options-dev libgtest-dev libprotobuf-dev libgrpc++-dev protobuf-compiler-grpc libsodium-dev
-      - name: checkout
-        uses: actions/checkout@v4
-      - name: configure
-        run: cmake -G 'Unix Makefiles' -S . -B flashback-release-make -D CMAKE_BUILD_TYPE=Release -D CMAKE_INSTALL_PREFIX=flashback-install -D TEST_GRANULARITY=1
-      - name: build
-        run: cmake --build flashback-release-make --parallel $(nproc) --target flashbackd
-      - name: test
-        run: ctest --build-generator 'Unix Makefiles' --build-and-test . flashback-release-make --verbose
-      - name: install
-        run: cmake --install flashback-release-make --component flashbackd
-      - name: pack
-        run: cpack -G ZIP -B flashback-release-make --config flashback-release-make/CPackConfig.cmake
