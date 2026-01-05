@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict jjys0f8zBme9keBO5pvlR4X2KpZOsYGuVsRQ8H7SxYpcH2tqLBRNo2NpCixKhPZ
+\restrict BazJhXDHHfdS86MQSJoUeyQ0aVOHtjOZwfrCbcpLGoIaTcfeBcqUA29bTpBknhm
 
 -- Dumped from database version 18.0
 -- Dumped by pg_dump version 18.0
@@ -1687,6 +1687,21 @@ end; $$;
 ALTER PROCEDURE flashback.rename_roadmap(IN roadmap_id integer, IN roadmap_name character varying) OWNER TO flashback;
 
 --
+-- Name: rename_subject(integer, character varying); Type: PROCEDURE; Schema: flashback; Owner: flashback
+--
+
+CREATE PROCEDURE flashback.rename_subject(IN subject_id integer, IN subject_name character varying)
+    LANGUAGE plpgsql
+    AS $$
+begin
+    update subjects set name = subject_name where id = subject_id;
+end
+$$;
+
+
+ALTER PROCEDURE flashback.rename_subject(IN subject_id integer, IN subject_name character varying) OWNER TO flashback;
+
+--
 -- Name: rename_user(integer, character varying); Type: PROCEDURE; Schema: flashback; Owner: flashback
 --
 
@@ -1939,6 +1954,22 @@ end; $$;
 
 
 ALTER FUNCTION flashback.search_roadmaps(token character varying) OWNER TO flashback;
+
+--
+-- Name: search_subjects(character varying); Type: FUNCTION; Schema: flashback; Owner: flashback
+--
+
+CREATE FUNCTION flashback.search_subjects(token character varying) RETURNS TABLE("position" bigint, id integer, name flashback.citext)
+    LANGUAGE plpgsql
+    AS $$
+begin
+    set pg_trgm.similarity_threshold = 0.1;
+
+    return query select row_number() over (order by s.name <-> token), s.id, s.name from subjects s where s.name % token order by s.name <-> token limit 5;
+end $$;
+
+
+ALTER FUNCTION flashback.search_subjects(token character varying) OWNER TO flashback;
 
 --
 -- Name: split_block(integer, integer); Type: PROCEDURE; Schema: flashback; Owner: flashback
@@ -3395,5 +3426,5 @@ ALTER TABLE ONLY flashback.users_roadmaps
 -- PostgreSQL database dump complete
 --
 
-\unrestrict jjys0f8zBme9keBO5pvlR4X2KpZOsYGuVsRQ8H7SxYpcH2tqLBRNo2NpCixKhPZ
+\unrestrict BazJhXDHHfdS86MQSJoUeyQ0aVOHtjOZwfrCbcpLGoIaTcfeBcqUA29bTpBknhm
 

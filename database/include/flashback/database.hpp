@@ -32,6 +32,7 @@ public:
 
     // subjects
     Subject create_subject(std::string name) override;
+    std::map<uint64_t, Subject> search_subjects(std::string name) override;
     void rename_subject(uint64_t id, std::string name) override;
 
 private:

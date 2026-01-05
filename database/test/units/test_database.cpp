@@ -444,5 +444,65 @@ TEST_F(test_database, CreateSubject)
     EXPECT_GT(subject.id(), 0);
 
     subject_name.clear();
-    EXPECT_THROW(subject = m_database->create_subject(subject_name), flashback::client_exception) << "Subjects with empty names are not allowed";
+    EXPECT_THROW(subject = m_database->create_subject(subject_name), flashback::client_exception) <<
+ "Subjects with empty names are not allowed";
+}
+
+TEST_F(test_database, SearchSubject)
+{
+    std::string const subject_name{"Calculus"};
+    std::string const irrelevant_subject{"Linux Administration"};
+    std::string const name_pattern{"lus"};
+    flashback::Subject subject{};
+    std::map<uint64_t, flashback::Subject> matches{};
+
+    ASSERT_NO_THROW(subject = m_database->create_subject(irrelevant_subject));
+    ASSERT_EQ(subject.name(), irrelevant_subject) << "Subject sample 1 should be created before performing search";
+    ASSERT_GT(subject.id(), 0);
+
+    ASSERT_NO_THROW(subject = m_database->create_subject(subject_name)) << "Subject sample 2 should be created before performing search";
+    ASSERT_EQ(subject.name(), subject_name);
+    ASSERT_GT(subject.id(), 0);
+
+    EXPECT_NO_THROW(matches = m_database->search_subjects(name_pattern));
+    EXPECT_EQ(matches.size(), 1) << "Only one of the two existing objects should be similar";
+    EXPECT_NO_THROW(matches.at(1)) << "The first and only match should be in the first position";
+    EXPECT_EQ(matches.at(1).id(), subject.id());
+    EXPECT_EQ(matches.at(1).name(), subject.name());
+
+    EXPECT_NO_THROW(matches = m_database->search_subjects(""));
+    EXPECT_TRUE(matches.empty()) << "Searching empty name should not have any results";
+}
+
+TEST_F(test_database, RenameSubject)
+{
+    std::string const initial_name{"Container"};
+    std::string const modified_name{"Docker"};
+    std::string const irrelevant_name{"Linux"};
+    std::map<uint64_t, flashback::Subject> matches{};
+    flashback::Subject subject{};
+
+    ASSERT_NO_THROW(subject = m_database->create_subject(irrelevant_name));
+    ASSERT_EQ(subject.name(), irrelevant_name);
+    ASSERT_GT(subject.id(), 0);
+
+    ASSERT_NO_THROW(subject = m_database->create_subject(initial_name));
+    ASSERT_EQ(subject.name(), initial_name);
+    ASSERT_GT(subject.id(), 0);
+
+    ASSERT_NO_THROW(matches = m_database->search_subjects(initial_name));
+    ASSERT_EQ(matches.size(), 1) << "Irrelevant subject should not be visible in search results, there must be only one matching subject";
+    ASSERT_NO_THROW(matches = m_database->search_subjects(modified_name));
+    ASSERT_EQ(matches.size(), 0) << "Modified name should not appear before actually modifying";
+
+    EXPECT_NO_THROW(m_database->rename_subject(subject.id(), modified_name));
+    EXPECT_NO_THROW(matches = m_database->search_subjects(initial_name));
+    EXPECT_EQ(matches.size(), 0) << "Previous name of the subject should not appear";
+    EXPECT_NO_THROW(matches = m_database->search_subjects(modified_name));
+    EXPECT_EQ(matches.size(), 1) << "New name of the subject should be the only match";
+
+    EXPECT_THROW(m_database->rename_subject(subject.id(), ""), flashback::client_exception) << "Empty subject names should be declined";
+
+    EXPECT_THROW(m_database->rename_subject(subject.id(), "Linux"), pqxx::unique_violation) <<
+ "Renaming to an existing subject is duplicate and should be declined";
 }

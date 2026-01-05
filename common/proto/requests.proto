@@ -28,21 +28,22 @@ message CreateRoadmapResponse { Roadmap roadmap = 1; }
 message AssignRoadmapRequest { User user = 1; Roadmap roadmap = 2; }
 message AssignRoadmapResponse { }
 message GetRoadmapsRequest { User user = 1; }
-message GetRoadmapsResponse { repeated Roadmap roadmap = 1; }
+message GetRoadmapsResponse { repeated Roadmap roadmaps = 1; }
 message RenameRoadmapRequest { User user = 1; Roadmap roadmap = 2; }
 message RenameRoadmapResponse { }
 message RemoveRoadmapRequest { User user = 1; Roadmap roadmap = 2; }
 message RemoveRoadmapResponse { }
 message SearchRoadmapsRequest { User user = 1; string token = 2; }
-message SearchRoadmapsResponse { repeated Roadmap roadmap = 1; }
+message SearchRoadmapsResponse { repeated Roadmap roadmaps = 1; }
 
 // roadmap page requests
 message GetMilestonesRequest { }
 message GetMilestonesResponse { }
 message AddMilestoneRequest { }
 message AddMilestoneResponse { }
-message SearchSubjectsRequest { }
-message SearchSubjectsResponse { }
+message SearchSubjectsRequest { string token = 1; }
+message MatchingSubject { uint64 position = 1; Subject subject = 2; }
+message SearchSubjectsResponse { repeated MatchingSubject subjects = 1; }
 message CreateSubjectRequest { string name = 1; }
 message CreateSubjectResponse { bool success = 1; string details = 2; uint32 code = 3; }
 message ReorderMilestoneRequest { }
@@ -53,7 +54,7 @@ message ChangeMilestoneLevelRequest { }
 message ChangeMilestoneLevelResponse { }
 
 // subject page
-message RenameSubjectRequest { }
+message RenameSubjectRequest { uint64 id = 1; string name = 2; }
 message RenameSubjectResponse { }
 message RemoveSubjectRequest { }
 message RemoveSubjectResponse { }

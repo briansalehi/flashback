@@ -29,13 +29,13 @@ service Server {
     //rpc GetMilestones(GetMilestonesRequest) returns (GetMilestonesResponse);
     //rpc AddMilestone(AddMilestoneRequest) returns (AddMilestoneResponse);
     rpc CreateSubject(CreateSubjectRequest) returns (CreateSubjectResponse);
-    //rpc SearchSubjects(SearchSubjectsRequest) returns (SearchSubjectsResponse);
+    rpc SearchSubjects(SearchSubjectsRequest) returns (SearchSubjectsResponse);
     //rpc ReorderMilestone(ReorderMilestoneRequest) returns (ReorderMilestoneResponse);
     //rpc RemoveMilestone(RemoveMilestoneRequest) returns (RemoveMilestoneResponse);
     //rpc ChangeMilestoneLevel(ChangeMilestoneLevelRequest) returns (ChangeMilestoneLevelResponse);
 
     // subject page
-    //rpc RenameSubject(RenameSubjectRequest) returns (RenameSubjectResponse);
+    rpc RenameSubject(RenameSubjectRequest) returns (RenameSubjectResponse);
     //rpc RemoveSubject(RemoveSubjectRequest) returns (RemoveSubjectResponse);
     //rpc MergeSubjects(MergeSubjectsRequest) returns (MergeSubjectsResponse);
     //rpc GetSubjectWeight(GetSubjectWeightRequest) returns (GetSubjectWeightResponse);

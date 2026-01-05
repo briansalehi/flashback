@@ -29,6 +29,7 @@ public:
 
     // subjects
     MOCK_METHOD(Subject, create_subject, (std::string), (override));
+    MOCK_METHOD((std::map<uint64_t, Subject>), search_subjects, (std::string), (override));
     MOCK_METHOD(void, rename_subject, (uint64_t, std::string), (override));
 };
 } // flashback

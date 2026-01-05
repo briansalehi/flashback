@@ -269,6 +269,28 @@ Subject database::create_subject(std::string name)
     return subject;
 }
 
+std::map<uint64_t, Subject> database::search_subjects(std::string name)
+{
+    std::map<uint64_t, Subject> subjects{};
+
+    if (!name.empty())
+    {
+        if (pqxx::result const matches{query("select position, id, name from search_subjects($1)", std::move(name))}; !matches.empty())
+        {
+            for (pqxx::row const& row: matches)
+            {
+                uint64_t position{row.at("position").as<uint64_t>()};
+                Subject subject{};
+                subject.set_id(row.at("id").as<uint64_t>());
+                subject.set_name(row.at("name").as<std::string>());
+                subjects.insert({position, subject});
+            }
+        }
+    }
+
+    return subjects;
+}
+
 void database::rename_subject(uint64_t id, std::string name)
 {
     if (name.empty())

@@ -2,6 +2,7 @@
 
 #include <memory>
 #include <vector>
+#include <map>
 #include <string>
 #include <string_view>
 #include <types.pb.h>
@@ -52,7 +53,7 @@ public:
     //merge_subjects
     //add_resource_to_subject
     //drop_resource_from_subject
-    //search_subjects
+    virtual std::map<uint64_t, Subject> search_subjects(std::string name) = 0;
     //user_is_qualified
     //get_subject_weight
 
