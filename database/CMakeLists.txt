@@ -10,11 +10,11 @@ include(CTest)
 
 find_package(PostgreSQL 16.0.0 REQUIRED)
 find_package(GTest 1.15.0)
-find_library(pqxx 7.0.0 NAMES pqxx REQUIRED)
-find_path(pqxx_INCLUDE_DIRS pqxx NAMES pqxx)
+#find_library(pqxx 7.10.0 NAMES pqxx REQUIRED)
+#find_path(pqxx_INCLUDE_DIRS pqxx NAMES pqxx)
 
-#FetchContent_Declare(pqxx GIT_REPOSITORY https://github.com/jtv/libpqxx GIT_TAG 7.10.4)
-#FetchContent_MakeAvailable(pqxx)
+FetchContent_Declare(pqxx GIT_REPOSITORY https://github.com/jtv/libpqxx GIT_TAG 7.10.4)
+FetchContent_MakeAvailable(pqxx)
 
 file(GLOB source_files RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} src/*.cpp)
 file(GLOB header_files RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} include/flashback/*.hpp)
