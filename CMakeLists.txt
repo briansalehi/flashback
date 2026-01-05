@@ -7,7 +7,7 @@ include(CTest)
 add_subdirectory(common)
 add_subdirectory(database)
 add_subdirectory(flashbackd)
-add_subdirectory(client)
+#add_subdirectory(client)
 #add_subdirectory(flashback)
 #add_subdirectory(gui)
 

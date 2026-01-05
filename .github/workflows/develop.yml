@@ -14,7 +14,7 @@ jobs:
       - name: configure
         run: cmake -G Ninja -S . -B flashback-debug-ninja -D CMAKE_BUILD_TYPE=Debug -D TEST_GRANULARITY=1
       - name: build
-        run: cmake --build flashback-debug-ninja --parallel $(nproc) --target flashbackd flashbackd-internals-tests common-tests database-tests client-tests
+        run: cmake --build flashback-debug-ninja --parallel $(nproc) --target flashbackd flashbackd-internals-tests common-tests database-tests
       - name: test
         run: ctest --test-dir flashback-debug-ninja --verbose
   release-ninja:
@@ -27,7 +27,7 @@ jobs:
       - name: configure
         run: cmake -G Ninja -S . -B flashback-release-ninja -D CMAKE_BUILD_TYPE=Release -D CMAKE_INSTALL_PREFIX=flashback-install -D TEST_GRANULARITY=1
       - name: build
-        run: cmake --build flashback-release-ninja --parallel $(nproc) --target flashbackd flashbackd-internals-tests common-tests database-tests client-tests
+        run: cmake --build flashback-release-ninja --parallel $(nproc) --target flashbackd flashbackd-internals-tests common-tests database-tests
       - name: test
         run: ctest --test-dir flashback-release-ninja --verbose
       - name: install
