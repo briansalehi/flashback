@@ -10,7 +10,7 @@ include(CMakePackageConfigHelpers)
 include(CTest)
 
 find_package(Boost 1.83.0 CONFIG REQUIRED COMPONENTS program_options)
-find_package(ftxui 6.0.0 REQUIRED)
+#find_package(ftxui 6.0.0 REQUIRED)
 find_package(GTest 1.15.0)
 
 #FetchContent_Declare(ftxui GIT_REPOSITORY https://github.com/arthursonzogni/ftxui GIT_TAG v6.1.9)
