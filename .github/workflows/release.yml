@@ -1,4 +1,4 @@
-name: Release Workflow
+name: release
 permissions:
   contents: write
   packages: write
