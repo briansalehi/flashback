@@ -268,3 +268,13 @@ Subject database::create_subject(std::string name)
     subject.set_id(id);
     return subject;
 }
+
+void database::rename_subject(uint64_t id, std::string name)
+{
+    if (name.empty())
+    {
+        throw client_exception("Subject name cannot be empty");
+    }
+
+    exec("call rename_subject($1, $2)", id, std::move(name));
+}

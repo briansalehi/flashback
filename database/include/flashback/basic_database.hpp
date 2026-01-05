@@ -47,7 +47,7 @@ public:
 
     // subjects
     virtual Subject create_subject(std::string name) = 0;
-    //rename_subject
+    virtual void rename_subject(uint64_t id, std::string name) = 0;
     //remove_subject
     //merge_subjects
     //add_resource_to_subject

@@ -32,6 +32,7 @@ public:
 
     // subjects
     Subject create_subject(std::string name) override;
+    void rename_subject(uint64_t id, std::string name) override;
 
 private:
     template <typename... Args>
