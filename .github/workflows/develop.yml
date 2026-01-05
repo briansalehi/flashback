@@ -1,0 +1,58 @@
+name: Development Workflow
+on:
+  push:
+    branches: develop
+  workflow_dispatch:
+jobs:
+  debug-ninja:
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+      - name: configure
+        run: cmake -G Ninja -S flashback -B flashback-debug-ninja -D CMAKE_BUILD_TYPE=Debug
+      - name: build
+        run: cmake --build flashback-debug-ninja --parallel $(nproc)
+      - name: test
+        run: ctest --build-exe-dir flashback-debug-ninja --test-dir flashback-debug-ninja
+  debug-make:
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+      - name: configure
+        run: cmake -G 'Unix Makefiles' -S flashback -B flashback-debug-make -D CMAKE_BUILD_TYPE=Debug
+      - name: build
+        run: cmake --build flashback-debug-make --parallel $(nproc)
+      - name: test
+        run: ctest --build-exe-dir flashback-debug-make --test-dir flashback-debug-make
+  release-ninja:
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+      - name: configure
+        run: cmake -G Ninja -S flashback -B flashback-release-ninja -D CMAKE_BUILD_TYPE=Release -D CMAKE_INSTALL_PREFIX=flashback-install -D TEST_GRANULARITY=1 -D INSTALL_TESTS=ON
+      - name: build
+        run: cmake --build flashback-release-ninja --parallel $(nproc)
+      - name: install
+        run: cmake --install flashback-release-ninja
+      - name: test
+        run: ./flashback-release-ninja/all_tests
+      - name: pack
+        run: cpack -G ZIP -B flashback-release-ninja --config flashback-release-ninja/CPackConfig.cmake
+  release-make:
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+      - name: configure
+        run: cmake -G 'Unix Makefiles' -S flashback -B flashback-release-make -D CMAKE_BUILD_TYPE=Release -D CMAKE_INSTALL_PREFIX=flashback-install -D TEST_GRANULARITY=1 -D INSTALL_TESTS=ON
+      - name: build
+        run: cmake --build flashback-release-make --parallel $(nproc)
+      - name: install
+        run: cmake --install flashback-release-make
+      - name: test
+        run: ./flashback-release-make/all_tests
+      - name: pack
+        run: cpack -G ZIP -B flashback-release-make --config flashback-release-make/CPackConfig.cmake
