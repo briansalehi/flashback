@@ -8,7 +8,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: prepare
-        run: sudo apt install --yes --no-install-recommends libboost-dev libboost-program-options-dev libpqxx-dev libgtest-dev libprotobuf-dev libgrpc++-dev protobuf-compiler-grpc
+        run: sudo apt install --yes --no-install-recommends libboost-system-dev libboost-program-options-dev libpqxx-dev libgtest-dev libprotobuf-dev libgrpc++-dev protobuf-compiler-grpc
       - name: checkout
         uses: actions/checkout@v4
       - name: configure
@@ -21,7 +21,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: prepare
-        run: sudo apt install --yes --no-install-recommends libboost-dev libboost-program-options-dev libpqxx-dev libgtest-dev libprotobuf-dev libgrpc++-dev protobuf-compiler-grpc
+        run: sudo apt install --yes --no-install-recommends libboost-system-dev libboost-program-options-dev libpqxx-dev libgtest-dev libprotobuf-dev libgrpc++-dev protobuf-compiler-grpc
       - name: checkout
         uses: actions/checkout@v4
       - name: configure
@@ -34,7 +34,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: prepare
-        run: sudo apt install --yes --no-install-recommends libboost-dev libboost-program-options-dev libpqxx-dev libgtest-dev libprotobuf-dev libgrpc++-dev protobuf-compiler-grpc
+        run: sudo apt install --yes --no-install-recommends libboost-system-dev libboost-program-options-dev libpqxx-dev libgtest-dev libprotobuf-dev libgrpc++-dev protobuf-compiler-grpc
       - name: checkout
         uses: actions/checkout@v4
       - name: configure
@@ -51,7 +51,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: prepare
-        run: sudo apt install --yes --no-install-recommends libboost-dev libboost-program-options-dev libpqxx-dev libgtest-dev libprotobuf-dev libgrpc++-dev protobuf-compiler-grpc
+        run: sudo apt install --yes --no-install-recommends libboost-system-dev libboost-program-options-dev libpqxx-dev libgtest-dev libprotobuf-dev libgrpc++-dev protobuf-compiler-grpc
       - name: checkout
         uses: actions/checkout@v4
       - name: configure
