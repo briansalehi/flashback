@@ -12,7 +12,7 @@ jobs:
       - name: checkout
         uses: actions/checkout@v4
       - name: configure
-        run: cmake -G Ninja -S flashback -B flashback-debug-ninja -D CMAKE_BUILD_TYPE=Debug
+        run: cmake -G Ninja -S . -B flashback-debug-ninja -D CMAKE_BUILD_TYPE=Debug
       - name: build
         run: cmake --build flashback-debug-ninja --parallel $(nproc) --target flashbackd
       - name: test
@@ -25,7 +25,7 @@ jobs:
       - name: checkout
         uses: actions/checkout@v4
       - name: configure
-        run: cmake -G 'Unix Makefiles' -S flashback -B flashback-debug-make -D CMAKE_BUILD_TYPE=Debug
+        run: cmake -G 'Unix Makefiles' -S . -B flashback-debug-make -D CMAKE_BUILD_TYPE=Debug
       - name: build
         run: cmake --build flashback-debug-make --parallel $(nproc) --target flashbackd
       - name: test
@@ -38,7 +38,7 @@ jobs:
       - name: checkout
         uses: actions/checkout@v4
       - name: configure
-        run: cmake -G Ninja -S flashback -B flashback-release-ninja -D CMAKE_BUILD_TYPE=Release -D CMAKE_INSTALL_PREFIX=flashback-install -D TEST_GRANULARITY=1
+        run: cmake -G Ninja -S . -B flashback-release-ninja -D CMAKE_BUILD_TYPE=Release -D CMAKE_INSTALL_PREFIX=flashback-install -D TEST_GRANULARITY=1
       - name: build
         run: cmake --build flashback-release-ninja --parallel $(nproc) --target flashbackd
       - name: test
@@ -55,7 +55,7 @@ jobs:
       - name: checkout
         uses: actions/checkout@v4
       - name: configure
-        run: cmake -G 'Unix Makefiles' -S flashback -B flashback-release-make -D CMAKE_BUILD_TYPE=Release -D CMAKE_INSTALL_PREFIX=flashback-install -D TEST_GRANULARITY=1
+        run: cmake -G 'Unix Makefiles' -S . -B flashback-release-make -D CMAKE_BUILD_TYPE=Release -D CMAKE_INSTALL_PREFIX=flashback-install -D TEST_GRANULARITY=1
       - name: build
         run: cmake --build flashback-release-make --parallel $(nproc) --target flashbackd
       - name: test
