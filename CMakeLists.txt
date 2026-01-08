@@ -6,9 +6,9 @@ include(CTest)
 
 add_subdirectory(common)
 add_subdirectory(database)
-add_subdirectory(flashbackd)
+add_subdirectory(daemon)
 #add_subdirectory(client)
-#add_subdirectory(flashback)
+#add_subdirectory(shell)
 #add_subdirectory(gui)
 
 if(TEST_GRANULARITY EQUAL 1)

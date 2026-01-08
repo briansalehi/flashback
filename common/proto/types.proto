@@ -14,13 +14,13 @@ message Subject {
     string name = 2;
 }
 
-message Milestone {
-    enum expertise_level {
-        surface = 0;
-        depth = 1;
-        origin = 2;
-    }
+enum expertise_level {
+    surface = 0;
+    depth = 1;
+    origin = 2;
+}
 
+message Milestone {
     uint64 position = 1;
     uint64 id = 2;
     string name = 3;
@@ -74,6 +74,7 @@ message Resource {
 message Topic {
     uint64 position = 1;
     string name = 2;
+    expertise_level level = 3;
 }
 
 message Section {

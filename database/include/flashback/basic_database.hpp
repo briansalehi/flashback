@@ -156,6 +156,7 @@ public:
     //get_assimilation_coverage
     //expand_assessment
     //diminish_assessment
+    virtual expertise_level get_user_cognitive_level(uint64_t user_id, uint64_t subject_id) const = 0;
 
     // nerves
     //create_nerve

@@ -5,7 +5,7 @@ AccessModifierOffset: -4
 AlignConsecutiveAssignments: false
 AlignConsecutiveDeclarations: false
 AlignOperands: false
-AlignTrailingComments: false
+AlignTrailingComments: true
 AllowShortCaseLabelsOnASingleLine: true
 AllowShortIfStatementsOnASingleLine: true
 AllowShortLoopsOnASingleLine: true
@@ -29,7 +29,10 @@ BraceWrapping:
   SplitEmptyRecord: true
   SplitEmptyNamespace: true
 BreakBeforeBraces: Custom
-ColumnLimit: 140
+BreakConstructorInitializers: BeforeComma
+BreakConstructorInitializersBeforeComma: false
+ColumnLimit: 170
+ConstructorInitializerAllOnOneLineOrOnePerLine: true
 IncludeCategories: 
   - Regex: '^<.*'
     Priority: 1
@@ -39,6 +42,7 @@ IncludeCategories:
     Priority: 3
 IncludeIsMainRegex: '([-_](test|unittest))?$'
 IndentCaseBlocks: true
+IndentGotoLabels: false
 IndentWidth: 4
 InsertNewlineAtEOF: true
 MacroBlockBegin: ''

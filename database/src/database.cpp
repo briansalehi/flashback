@@ -300,3 +300,30 @@ void database::rename_subject(uint64_t id, std::string name)
 
     exec("call rename_subject($1, $2)", id, std::move(name));
 }
+
+expertise_level database::get_user_cognitive_level(uint64_t user_id, uint64_t subject_id) const
+{
+    auto level{expertise_level::surface};
+
+    for (pqxx::result const result{query("select get_user_cognitive_level($1, $2)", user_id, subject_id)}; pqxx::row row: result)
+    {
+        if (std::string const string_level{row.at(0).as<std::string>()}; string_level == "surface")
+        {
+            level = expertise_level::surface;
+        }
+        else if (string_level == "depth")
+        {
+            level = expertise_level::depth;
+        }
+        else if (string_level == "origin")
+        {
+            level = expertise_level::origin;
+        }
+        else
+        {
+            throw std::runtime_error{"invalid expertise level"};
+        }
+    }
+
+    return level;
+}

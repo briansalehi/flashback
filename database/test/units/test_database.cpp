@@ -320,14 +320,12 @@ TEST_F(test_database, GetRoadmaps)
     secondary_roadmap.set_id(secondary_id);
 
     EXPECT_NO_THROW(roadmaps = m_database->get_roadmaps(m_user->id()));
-    EXPECT_THAT(roadmaps, testing::IsEmpty()) <<
- "Regardless of how many roadmaps exist, only the assigned roadmaps should return which is none so far";
+    EXPECT_THAT(roadmaps, testing::IsEmpty()) << "Regardless of how many roadmaps exist, only the assigned roadmaps should return which is none so far";
 
     EXPECT_NO_THROW(m_database->assign_roadmap(m_user->id(), primary_id));
 
     roadmaps = m_database->get_roadmaps(m_user->id());
-    EXPECT_THAT(roadmaps, testing::SizeIs(1)) <<
- "One of the two existing roadmaps assigned to the user, so container should hold one roadmap";
+    EXPECT_THAT(roadmaps, testing::SizeIs(1)) << "One of the two existing roadmaps assigned to the user, so container should hold one roadmap";
 
     EXPECT_NO_THROW(m_database->assign_roadmap(m_user->id(), secondary_id));
 
@@ -388,28 +386,26 @@ TEST_F(test_database, RemoveRoadmap)
 
 TEST_F(test_database, SearchRoadmaps)
 {
-    std::vector<std::string> const names{
-        "Cloud Infrastructure",
-        "Quantitative Finance",
-        "Database Optimization",
-        "Forensic Accounting",
-        "Cybersecurity Governance",
-        "Data Visualization",
-        "Talent Acquisition",
-        "Supply Chain Logistics",
-        "Intellectual Property Law",
-        "Agile Project Management",
-        "Full-Stack Development",
-        "Backend Development",
-        "Digital Marketing",
-        "Content Marketing",
-        "Financial Analysis",
-        "Risk Analysis",
-        "Product Management",
-        "Project Management",
-        "Brand Strategy",
-        "Growth Strategy"
-    };
+    std::vector<std::string> const names{"Cloud Infrastructure",
+                                         "Quantitative Finance",
+                                         "Database Optimization",
+                                         "Forensic Accounting",
+                                         "Cybersecurity Governance",
+                                         "Data Visualization",
+                                         "Talent Acquisition",
+                                         "Supply Chain Logistics",
+                                         "Intellectual Property Law",
+                                         "Agile Project Management",
+                                         "Full-Stack Development",
+                                         "Backend Development",
+                                         "Digital Marketing",
+                                         "Content Marketing",
+                                         "Financial Analysis",
+                                         "Risk Analysis",
+                                         "Product Management",
+                                         "Project Management",
+                                         "Brand Strategy",
+                                         "Growth Strategy"};
     std::vector<flashback::Roadmap> search_results;
     search_results.reserve(names.size());
 
@@ -444,8 +440,7 @@ TEST_F(test_database, CreateSubject)
     EXPECT_GT(subject.id(), 0);
 
     subject_name.clear();
-    EXPECT_THROW(subject = m_database->create_subject(subject_name), flashback::client_exception) <<
- "Subjects with empty names are not allowed";
+    EXPECT_THROW(subject = m_database->create_subject(subject_name), flashback::client_exception) << "Subjects with empty names are not allowed";
 }
 
 TEST_F(test_database, SearchSubject)
@@ -503,6 +498,5 @@ TEST_F(test_database, RenameSubject)
 
     EXPECT_THROW(m_database->rename_subject(subject.id(), ""), flashback::client_exception) << "Empty subject names should be declined";
 
-    EXPECT_THROW(m_database->rename_subject(subject.id(), "Linux"), pqxx::unique_violation) <<
- "Renaming to an existing subject is duplicate and should be declined";
+    EXPECT_THROW(m_database->rename_subject(subject.id(), "Linux"), pqxx::unique_violation) << "Renaming to an existing subject is duplicate and should be declined";
 }
