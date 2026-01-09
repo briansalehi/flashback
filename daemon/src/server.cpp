@@ -22,8 +22,7 @@ grpc::Status server::SignIn(grpc::ServerContext* context, const SignInRequest* r
 {
     try
     {
-        if (!request->has_user() || request->user().email().empty() || request->user().password().empty() || request->user().device().
-            empty())
+        if (!request->has_user() || request->user().email().empty() || request->user().password().empty() || request->user().device().empty())
         {
             throw client_exception("incomplete credentials");
         }
@@ -78,8 +77,8 @@ grpc::Status server::SignUp(grpc::ServerContext* context, const SignUpRequest* r
 {
     try
     {
-        if (!request->has_user() || request->user().name().empty() || request->user().email().empty() || request->user().device().empty() ||
-            request->user().password().empty())
+        if (!request->has_user() || request->user().name().empty() || request->user().email().empty() || request->user().device().empty() || request->user().password().
+            empty())
         {
             throw client_exception("incomplete credentials");
         }
@@ -136,8 +135,8 @@ grpc::Status server::ResetPassword(grpc::ServerContext* context, ResetPasswordRe
 {
     try
     {
-        if (request->has_user() && (request->user().id() == 0 || request->user().email().empty() || request->user().password().empty() ||
-            request->user().device().empty()))
+        if (request->has_user() && (request->user().id() == 0 || request->user().email().empty() || request->user().password().empty() || request->user().device().
+            empty()))
         {
             throw client_exception("incomplete credentials");
         }
@@ -182,9 +181,7 @@ grpc::Status server::CreateRoadmap(grpc::ServerContext* context, CreateRoadmapRe
     {
         if (request->has_user() && session_is_valid(request->user()))
         {
-            auto roadmap{std::make_unique<Roadmap>()};
-            roadmap->set_name(request->name());
-            roadmap->set_id(m_database->create_roadmap(request->name()));
+            auto roadmap{std::make_unique<Roadmap>(m_database->create_roadmap(request->name()))};
             response->set_allocated_roadmap(roadmap.release());
         }
     }

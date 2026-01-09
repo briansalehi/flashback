@@ -348,9 +348,15 @@ TEST_F(test_server, CreateRoadmap)
     grpc::Status status{};
     auto request{std::make_unique<flashback::CreateRoadmapRequest>()};
     auto response{std::make_unique<flashback::CreateRoadmapResponse>()};
+    flashback::Roadmap expected_roadmap{};
+    expected_roadmap.set_id(1);
+    expected_roadmap.set_name(roadmap_name);
+    flashback::Roadmap quoted_roadmap{};
+    quoted_roadmap.set_id(2);
+    quoted_roadmap.set_name(name_with_quotes);
 
-    EXPECT_CALL(*m_mock_database, create_roadmap(roadmap_name)).Times(1).WillOnce(testing::Return(1));
-    EXPECT_CALL(*m_mock_database, create_roadmap(name_with_quotes)).Times(1).WillOnce(testing::Return(2));
+    EXPECT_CALL(*m_mock_database, create_roadmap(roadmap_name)).Times(1).WillOnce(testing::Return(expected_roadmap));
+    EXPECT_CALL(*m_mock_database, create_roadmap(name_with_quotes)).Times(1).WillOnce(testing::Return(quoted_roadmap));
     EXPECT_CALL(*m_mock_database, get_user(m_user->token(), m_user->device())).Times(4).WillOnce(testing::Return(nullptr)).WillOnce(
         testing::Return(std::make_unique<flashback::User>(*m_user))).WillOnce(testing::Return(nullptr)).WillOnce(
         testing::Return(std::make_unique<flashback::User>(*m_user)));
@@ -528,9 +534,9 @@ TEST_F(test_server, SearchRoadmaps)
         testing::Return(std::make_unique<flashback::User>(*database_retrieved_user)));
     EXPECT_CALL(*m_mock_database, search_roadmaps(testing::A<std::string_view>())).Times(1).WillOnce(testing::Return(std::vector<flashback::Roadmap>{}));
 
-    auto roadmap{std::make_unique<flashback::Roadmap>()};
-    roadmap->set_id(1);
-    roadmap->set_name("Overtime Working Specialist");
+    flashback::Roadmap roadmap{};
+    roadmap.set_id(1);
+    roadmap.set_name("Overtime Working Specialist");
     search_request->set_allocated_user(std::make_unique<flashback::User>(*m_user).release());
     EXPECT_TRUE(search_request->has_user());
     EXPECT_FALSE(search_request->user().token().empty());
@@ -540,7 +546,7 @@ TEST_F(test_server, SearchRoadmaps)
     database_retrieved_user = std::make_unique<flashback::User>(*m_user);
     EXPECT_CALL(*m_mock_database, get_user(testing::A<std::string_view>(), testing::A<std::string_view>())).Times(1).WillOnce(
         testing::Return(std::make_unique<flashback::User>(*database_retrieved_user)));
-    EXPECT_CALL(*m_mock_database, create_roadmap(testing::A<std::string_view>())).Times(1).WillOnce(testing::Return(roadmap->id()));
+    EXPECT_CALL(*m_mock_database, create_roadmap(testing::A<std::string>())).Times(1).WillOnce(testing::Return(roadmap));
 
     grpc::Status status{};
     auto create_request{std::make_unique<flashback::CreateRoadmapRequest>()};
@@ -551,7 +557,7 @@ TEST_F(test_server, SearchRoadmaps)
     EXPECT_FALSE(create_request->user().device().empty());
     EXPECT_NO_THROW(status = m_server->CreateRoadmap(m_server_context.get(), create_request.get(), create_response.get()));
     EXPECT_TRUE(create_response->has_roadmap()) << "User is set and session is valid, therefore the request should be responded";
-    EXPECT_EQ(create_response->roadmap().id(), roadmap->id());
+    EXPECT_EQ(create_response->roadmap().id(), roadmap.id());
 
     database_retrieved_user = std::make_unique<flashback::User>(*m_user);
     EXPECT_CALL(*m_mock_database, get_user(testing::A<std::string_view>(), testing::A<std::string_view>())).Times(1).WillOnce(
