@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict BazJhXDHHfdS86MQSJoUeyQ0aVOHtjOZwfrCbcpLGoIaTcfeBcqUA29bTpBknhm
+\restrict 3iELiReYAOo3MPsfg29oNo6igZ21zkVYWrEaMWZ2F7Mem8R726Xt6O3U4szy4sC
 
 -- Dumped from database version 18.0
 -- Dumped by pg_dump version 18.0
@@ -272,6 +272,54 @@ $$;
 ALTER PROCEDURE flashback.add_card_to_topic(IN subject integer, IN level flashback.expertise_level, IN topic integer, IN card integer, IN "position" integer) OWNER TO flashback;
 
 --
+-- Name: add_milestone(integer, flashback.expertise_level, integer); Type: FUNCTION; Schema: flashback; Owner: flashback
+--
+
+CREATE FUNCTION flashback.add_milestone(subject_id integer, subject_level flashback.expertise_level, roadmap_id integer) RETURNS integer
+    LANGUAGE plpgsql
+    AS $$
+declare top_position integer;
+begin
+    select coalesce(max(milestones.position), 0) + 1 into top_position from milestones where milestones.roadmap = roadmap_id;
+
+    insert into milestones(roadmap, subject, level, position) values (roadmap_id, subject_id, subject_level, top_position);
+
+    return top_position;
+end;
+$$;
+
+
+ALTER FUNCTION flashback.add_milestone(subject_id integer, subject_level flashback.expertise_level, roadmap_id integer) OWNER TO flashback;
+
+--
+-- Name: add_milestone(integer, flashback.expertise_level, integer, integer); Type: PROCEDURE; Schema: flashback; Owner: flashback
+--
+
+CREATE PROCEDURE flashback.add_milestone(IN subject_id integer, IN subject_level flashback.expertise_level, IN roadmap_id integer, IN subject_position integer)
+    LANGUAGE plpgsql
+    AS $$
+declare top_position integer;
+begin
+    select coalesce(max(milestones.position), 0) + 1 into top_position from milestones where milestones.roadmap = roadmap_id;
+
+    update milestones m set position = m.position + top_position where m.roadmap = roadmap_id and m.position >= subject_position;
+
+    insert into milestones(roadmap, subject, level, position) values (
+        roadmap_id, subject_id, subject_level, subject_position
+    );
+
+    update milestones m set position = s.altered_position
+    from (
+        select mm.position, mm.level, row_number() over (order by mm.position) as altered_position from milestones mm where mm.roadmap = roadmap_id
+    ) s
+    where m.roadmap = roadmap_id and m.level = s.level and m.position = s.position;
+end;
+$$;
+
+
+ALTER PROCEDURE flashback.add_milestone(IN subject_id integer, IN subject_level flashback.expertise_level, IN roadmap_id integer, IN subject_position integer) OWNER TO flashback;
+
+--
 -- Name: add_resource_to_subject(integer, integer); Type: PROCEDURE; Schema: flashback; Owner: flashback
 --
 
@@ -281,54 +329,6 @@ CREATE PROCEDURE flashback.add_resource_to_subject(IN resource_id integer, IN su
 
 
 ALTER PROCEDURE flashback.add_resource_to_subject(IN resource_id integer, IN subject_id integer) OWNER TO flashback;
-
---
--- Name: add_subject_to_roadmap(integer, flashback.expertise_level, integer); Type: FUNCTION; Schema: flashback; Owner: flashback
---
-
-CREATE FUNCTION flashback.add_subject_to_roadmap(subject integer, level flashback.expertise_level, roadmap integer) RETURNS integer
-    LANGUAGE plpgsql
-    AS $$
-declare top_position integer;
-begin
-    select coalesce(max(milestones.position), 0) + 1 into top_position from milestones where milestones.roadmap = add_subject_to_roadmap.roadmap;
-
-    insert into milestones(roadmap, subject, level, position) values (add_subject_to_roadmap.roadmap, add_subject_to_roadmap.subject, add_subject_to_roadmap.level, top_position);
-
-    return top_position;
-end;
-$$;
-
-
-ALTER FUNCTION flashback.add_subject_to_roadmap(subject integer, level flashback.expertise_level, roadmap integer) OWNER TO flashback;
-
---
--- Name: add_subject_to_roadmap(integer, flashback.expertise_level, integer, integer); Type: PROCEDURE; Schema: flashback; Owner: flashback
---
-
-CREATE PROCEDURE flashback.add_subject_to_roadmap(IN subject integer, IN level flashback.expertise_level, IN roadmap integer, IN "position" integer)
-    LANGUAGE plpgsql
-    AS $$
-declare top_position integer;
-begin
-    select coalesce(max(milestones.position), 0) + 1 into top_position from milestones where milestones.roadmap = add_subject_to_roadmap.roadmap;
-
-    update milestones m set position = m.position + top_position where m.roadmap = add_subject_to_roadmap.roadmap and m.position >= add_subject_to_roadmap.position;
-
-    insert into milestones(roadmap, subject, level, position) values (
-        add_subject_to_roadmap.roadmap, add_subject_to_roadmap.subject, add_subject_to_roadmap.level, add_subject_to_roadmap.position
-    );
-
-    update milestones m set position = s.altered_position
-    from (
-        select mm.position, mm.level, row_number() over (order by mm.position) as altered_position from milestones mm where mm.roadmap = add_subject_to_roadmap.roadmap
-    ) s
-    where m.roadmap = add_subject_to_roadmap.roadmap and m.level = s.level and m.position = s.position;
-end;
-$$;
-
-
-ALTER PROCEDURE flashback.add_subject_to_roadmap(IN subject integer, IN level flashback.expertise_level, IN roadmap integer, IN "position" integer) OWNER TO flashback;
 
 --
 -- Name: assign_roadmap(integer, integer); Type: PROCEDURE; Schema: flashback; Owner: flashback
@@ -891,7 +891,7 @@ begin
     select ac.subject, ac.topic, ac.level, bool_and(coalesce(p.progression, 0) >= 3) as assimilated
     from get_assessment_coverage(assessment_id) ac
     join topics_cards tc on tc.subject = ac.subject and tc.topic = ac.topic and tc.level = ac.level
-    left join progress p on p.user = user_id and p.card = tc.card
+    left join progress p on p.user = user_id and p.card = tc.card and p.last_practice > now() - '10 days'::interval
     group by ac.subject, ac.topic, ac.level;
 end; $$;
 
@@ -921,7 +921,7 @@ begin
     select tc.topic, tc.level, tc.card, tc.position, p.last_practice, p.duration
     from topics_cards tc
     left join progress p on p.user = user_id  and p.card = tc.card
-    where tc.subject = subject_id and tc.level <= max_level::expertise_level;
+    where tc.subject = subject_id and tc.level <= max_level;
 end;
 $$;
 
@@ -976,6 +976,24 @@ $$;
 
 
 ALTER FUNCTION flashback.get_lost_cards() OWNER TO flashback;
+
+--
+-- Name: get_milestones(integer); Type: FUNCTION; Schema: flashback; Owner: flashback
+--
+
+CREATE FUNCTION flashback.get_milestones(roadmap_id integer) RETURNS TABLE(level flashback.expertise_level, "position" integer, id integer, name flashback.citext)
+    LANGUAGE plpgsql
+    AS $$
+begin
+    return query
+    select milestones.level, milestones.position, subjects.id, subjects.name
+    from milestones
+    join subjects on milestones.subject = subjects.id
+    where milestones.roadmap = roadmap_id;
+end; $$;
+
+
+ALTER FUNCTION flashback.get_milestones(roadmap_id integer) OWNER TO flashback;
 
 --
 -- Name: get_out_of_shelves(); Type: FUNCTION; Schema: flashback; Owner: flashback
@@ -1193,17 +1211,6 @@ end; $$;
 ALTER FUNCTION flashback.get_subject_resources(subject character varying) OWNER TO flashback;
 
 --
--- Name: get_subjects(integer); Type: FUNCTION; Schema: flashback; Owner: flashback
---
-
-CREATE FUNCTION flashback.get_subjects(roadmap integer) RETURNS TABLE(level flashback.expertise_level, "position" integer, id integer, name character varying)
-    LANGUAGE plpgsql
-    AS $$ begin return query select milestones.level, milestones.position, subjects.id, subjects.name from milestones join subjects on milestones.subject = subjects.id where milestones.roadmap = get_subjects.roadmap; end; $$;
-
-
-ALTER FUNCTION flashback.get_subjects(roadmap integer) OWNER TO flashback;
-
---
 -- Name: get_topic_assessments(integer, integer, integer, flashback.expertise_level); Type: FUNCTION; Schema: flashback; Owner: flashback
 --
 
@@ -1370,6 +1377,27 @@ end; $$;
 
 
 ALTER FUNCTION flashback.get_user(user_token character varying, user_device character varying) OWNER TO flashback;
+
+--
+-- Name: get_user_cognitive_level(integer, integer); Type: FUNCTION; Schema: flashback; Owner: flashback
+--
+
+CREATE FUNCTION flashback.get_user_cognitive_level(user_id integer, subject_id integer) RETURNS flashback.expertise_level
+    LANGUAGE plpgsql
+    AS $$
+declare cognitive_level expertise_level;
+begin
+    select t.level into cognitive_level
+    from topics t
+    where t.subject = subject_id
+    group by t.subject, t.level
+    order by get_practice_mode(user_id, t.subject, t.level) = 'progressive'::practice_mode desc, t.level limit 1;
+
+    return cognitive_level;
+end; $$;
+
+
+ALTER FUNCTION flashback.get_user_cognitive_level(user_id integer, subject_id integer) OWNER TO flashback;
 
 --
 -- Name: is_subject_relevant(integer, integer); Type: FUNCTION; Schema: flashback; Owner: flashback
@@ -2819,6 +2847,14 @@ ALTER TABLE ONLY flashback.milestones
 
 
 --
+-- Name: milestones milestones_roadmap_subject_level_position_key; Type: CONSTRAINT; Schema: flashback; Owner: flashback
+--
+
+ALTER TABLE ONLY flashback.milestones
+    ADD CONSTRAINT milestones_roadmap_subject_level_position_key UNIQUE (roadmap, subject, level, "position");
+
+
+--
 -- Name: nerves nerves_pkey; Type: CONSTRAINT; Schema: flashback; Owner: flashback
 --
 
@@ -2931,6 +2967,14 @@ ALTER TABLE ONLY flashback.sections_cards
 
 
 --
+-- Name: sections_cards sections_cards_resource_section_position_key; Type: CONSTRAINT; Schema: flashback; Owner: flashback
+--
+
+ALTER TABLE ONLY flashback.sections_cards
+    ADD CONSTRAINT sections_cards_resource_section_position_key UNIQUE (resource, section, "position");
+
+
+--
 -- Name: sections sections_pkey; Type: CONSTRAINT; Schema: flashback; Owner: flashback
 --
 
@@ -3000,6 +3044,14 @@ ALTER TABLE ONLY flashback.topics_activities
 
 ALTER TABLE ONLY flashback.topics_cards
     ADD CONSTRAINT topics_cards_pkey PRIMARY KEY (subject, level, topic, card);
+
+
+--
+-- Name: topics_cards topics_cards_subject_topic_level_position_key; Type: CONSTRAINT; Schema: flashback; Owner: flashback
+--
+
+ALTER TABLE ONLY flashback.topics_cards
+    ADD CONSTRAINT topics_cards_subject_topic_level_position_key UNIQUE (subject, topic, level, "position");
 
 
 --
@@ -3426,5 +3478,5 @@ ALTER TABLE ONLY flashback.users_roadmaps
 -- PostgreSQL database dump complete
 --
 
-\unrestrict BazJhXDHHfdS86MQSJoUeyQ0aVOHtjOZwfrCbcpLGoIaTcfeBcqUA29bTpBknhm
+\unrestrict 3iELiReYAOo3MPsfg29oNo6igZ21zkVYWrEaMWZ2F7Mem8R726Xt6O3U4szy4sC
 

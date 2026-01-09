@@ -189,7 +189,7 @@ void database::revoke_sessions_except(uint64_t user_id, std::string_view token)
     exec("call revoke_sessions_except($1, $2)", user_id, token);
 }
 
-uint64_t database::create_roadmap(std::string_view name)
+Roadmap database::create_roadmap(std::string name)
 {
     if (name.empty())
     {
@@ -197,9 +197,12 @@ uint64_t database::create_roadmap(std::string_view name)
     }
 
     pqxx::result result{query("select create_roadmap($1)", name)};
-    uint64_t roadmap_id = result.at(0).at(0).as<uint64_t>();
+    uint64_t id = result.at(0).at(0).as<uint64_t>();
+    Roadmap roadmap{};
+    roadmap.set_id(id);
+    roadmap.set_name(std::move(name));
 
-    return roadmap_id;
+    return roadmap;
 }
 
 void database::assign_roadmap(uint64_t user_id, uint64_t roadmap_id)
@@ -299,6 +302,73 @@ void database::rename_subject(uint64_t id, std::string name)
     }
 
     exec("call rename_subject($1, $2)", id, std::move(name));
+}
+
+Milestone database::add_milestone(uint64_t const subject_id, expertise_level const subject_level, uint64_t const roadmap_id) const
+{
+    std::string level;
+    Milestone milestone;
+
+    switch (subject_level)
+    {
+    case flashback::expertise_level::surface: level = "surface";
+        break;
+    case flashback::expertise_level::depth: level = "depth";
+        break;
+    case flashback::expertise_level::origin: level = "origin";
+        break;
+    default: throw client_exception{"invalid expertise level"};
+    }
+
+    pqxx::result const result = query("select add_milestone($1, $2, $3) as id", subject_id, level, roadmap_id);
+    milestone.set_id(subject_id);
+    milestone.set_position(result.at(0).at("id").as<uint64_t>());
+    milestone.set_level(subject_level);
+
+    return milestone;
+}
+
+void database::add_milestone(uint64_t const subject_id, expertise_level const subject_level, uint64_t const roadmap_id, uint64_t const position) const
+{
+    std::string level;
+
+    switch (subject_level)
+    {
+    case flashback::expertise_level::surface: level = "surface";
+        break;
+    case flashback::expertise_level::depth: level = "depth";
+        break;
+    case flashback::expertise_level::origin: level = "origin";
+        break;
+    default: throw std::runtime_error{"invalid expertise level"};
+    }
+
+    exec("call add_milestone($1, $2, $3, $4)", subject_id, level, roadmap_id, position);
+}
+
+std::vector<Milestone> database::get_milestones(uint64_t roadmap_id) const
+{
+    std::vector<Milestone> milestones{};
+    for (pqxx::row const& row: query("select level, position, id, name from get_milestones($1)", roadmap_id))
+    {
+        uint64_t const id = row.at("id").as<uint64_t>();
+        uint64_t const position = row.at("position").as<uint64_t>();
+        std::string const level = row.at("level").as<std::string>();
+        std::string const name = row.at("name").as<std::string>();
+
+        Milestone milestone{};
+        milestone.set_id(id);
+        milestone.set_name(name);
+        milestone.set_position(position);
+
+        if (level == "surface") milestone.set_level(expertise_level::surface);
+        else if (level == "depth") milestone.set_level(expertise_level::depth);
+        else if (level == "origin") milestone.set_level(expertise_level::origin);
+        else throw std::runtime_error{"invalid expertise level"};
+
+        milestones.push_back(milestone);
+    }
+    return milestones;
 }
 
 expertise_level database::get_user_cognitive_level(uint64_t user_id, uint64_t subject_id) const

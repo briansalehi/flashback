@@ -31,7 +31,7 @@ public:
     //unlock_user
 
     // roadmaps
-    virtual uint64_t create_roadmap(std::string_view name) = 0;
+    virtual Roadmap create_roadmap(std::string name) = 0;
     virtual void assign_roadmap(uint64_t user_id, uint64_t roadmap_id) = 0; // clone?
     [[nodiscard]] virtual std::vector<Roadmap> get_roadmaps(uint64_t user_id) = 0;
     virtual void rename_roadmap(uint64_t roadmap_id, std::string_view modified_name) = 0;
@@ -40,8 +40,9 @@ public:
     //get_roadmap_weight
 
     // milestones
-    //get_milestones
-    //add_milestone
+    virtual Milestone add_milestone(uint64_t subject_id, expertise_level subject_level, uint64_t roadmap_id) const = 0;
+    virtual void add_milestone(uint64_t subject_id, expertise_level subject_level, uint64_t roadmap_id, uint64_t position) const = 0;
+    virtual std::vector<Milestone> get_milestones(uint64_t roadmap_id) const = 0;
     //reorder_milestone
     //remove_milestone
     //change_milestone_level

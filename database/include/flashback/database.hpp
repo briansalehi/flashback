@@ -23,7 +23,7 @@ public:
     void revoke_sessions_except(uint64_t user_id, std::string_view token) override;
 
     // roadmaps
-    uint64_t create_roadmap(std::string_view name) override;
+    Roadmap create_roadmap(std::string name) override;
     void assign_roadmap(uint64_t user_id, uint64_t roadmap_id) override;
     [[nodiscard]] std::vector<Roadmap> get_roadmaps(uint64_t user_id) override;
     void rename_roadmap(uint64_t roadmap_id, std::string_view modified_name) override;
@@ -34,6 +34,11 @@ public:
     Subject create_subject(std::string name) override;
     std::map<uint64_t, Subject> search_subjects(std::string name) override;
     void rename_subject(uint64_t id, std::string name) override;
+
+    // milestones
+    Milestone add_milestone(uint64_t subject_id, expertise_level subject_level, uint64_t roadmap_id) const override;
+    void add_milestone(uint64_t subject_id, expertise_level subject_level, uint64_t roadmap_id, uint64_t position) const override;
+    std::vector<Milestone> get_milestones(uint64_t roadmap_id) const override;
 
     // practices
     expertise_level get_user_cognitive_level(uint64_t user_id, uint64_t subject_id) const override;
