@@ -382,6 +382,44 @@ grpc::Status server::SearchSubjects(grpc::ServerContext* context, SearchSubjects
     return grpc::Status::OK;
 }
 
+grpc::Status server::RenameSubject(grpc::ServerContext* context, RenameSubjectRequest const* request, RenameSubjectResponse* response)
+{
+    try
+    {
+        if (request->has_user() && session_is_valid(request->user()))
+        {
+            if (request->id() == 0)
+            {
+                response->set_details("invalid subject id");
+                response->set_code(1);
+            }
+            else if (request->name().empty())
+            {
+                response->set_details("invalid subject name");
+                response->set_code(2);
+            }
+            else
+            {
+                m_database->rename_subject(request->id(), request->name());
+                response->set_success(true);
+                response->set_code(0);
+            }
+        }
+        else
+        {
+            response->set_details("invalid user");
+            response->set_code(3);
+        }
+    }
+    catch (client_exception const& exp)
+    {
+        response->set_details(exp.what());
+        response->set_code(4);
+    }
+
+    return grpc::Status::OK;
+}
+
 std::string server::calculate_hash(std::string_view password)
 {
     char buffer[crypto_pwhash_STRBYTES];

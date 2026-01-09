@@ -43,7 +43,7 @@ public:
     // ChangeMilestoneLevel
 
     // subject page requests
-    // RenameSubject
+    grpc::Status RenameSubject(grpc::ServerContext* context, RenameSubjectRequest const* request, RenameSubjectResponse* response) override;
     // RemoveSubject
     // MergeSubjects
     // GetResources

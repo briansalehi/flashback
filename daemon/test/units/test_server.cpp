@@ -635,3 +635,31 @@ TEST_F(test_server, SearchSubjects)
     EXPECT_TRUE(status.ok());
     ASSERT_EQ(response.subjects().size(), 0) << "Searching subject with no name should result empty set";
 }
+
+TEST_F(test_server, RenameSubject)
+{
+    auto requesting_user{std::make_unique<flashback::User>(*m_user)};
+    auto returning_user{std::make_unique<flashback::User>(*m_user)};
+    grpc::Status status{};
+    grpc::ServerContext context{};
+    flashback::RenameSubjectRequest request{};
+    flashback::RenameSubjectResponse response{};
+    std::string const subject_name{"Docker"};
+
+    EXPECT_CALL(*m_mock_database, get_user(testing::A<std::string_view>(), testing::A<std::string_view>())).Times(1).WillOnce(testing::Return(std::move(returning_user)));
+    EXPECT_CALL(*m_mock_database, rename_subject(testing::A<uint64_t>(), testing::A<std::string>())).Times(1);
+
+    EXPECT_NO_THROW(status = m_server->RenameSubject(&context, &request, &response));
+    EXPECT_TRUE(status.ok());
+    EXPECT_FALSE(response.success()) << "Renaming to an empty string should not succeed";
+    EXPECT_GT(response.code(), 0) << "Renaming to an empty string should result in error code greater than zero";
+
+    request.set_allocated_user(requesting_user.release());
+    request.set_id(1);
+    request.set_name(subject_name);
+
+    EXPECT_NO_THROW(status = m_server->RenameSubject(&context, &request, &response));
+    EXPECT_TRUE(status.ok());
+    EXPECT_TRUE(response.success());
+    EXPECT_EQ(response.code(), 0);
+}
