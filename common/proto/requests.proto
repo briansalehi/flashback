@@ -42,7 +42,7 @@ message GetMilestonesResponse { }
 message AddMilestoneRequest { User user = 1; }
 message AddMilestoneResponse { }
 message SearchSubjectsRequest { User user = 1; string token = 2; }
-message SearchSubjectsResponse { repeated MatchingSubject subject = 1; }
+message SearchSubjectsResponse { repeated MatchingSubject subjects = 1; }
 message CreateSubjectRequest { User user = 1; string name = 2; }
 message CreateSubjectResponse { bool success = 1; string details = 2; uint32 code = 3; }
 message ReorderMilestoneRequest { User user = 1; }

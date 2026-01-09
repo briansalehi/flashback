@@ -351,6 +351,7 @@ grpc::Status server::CreateSubject(grpc::ServerContext* context, CreateSubjectRe
         response->set_success(false);
         response->set_details("internal error");
         response->set_code(3);
+        std::cerr << std::format("Server: error while creating subject: {}", exp.what());
     }
 
     return grpc::Status::OK;
@@ -358,6 +359,26 @@ grpc::Status server::CreateSubject(grpc::ServerContext* context, CreateSubjectRe
 
 grpc::Status server::SearchSubjects(grpc::ServerContext* context, SearchSubjectsRequest const* request, SearchSubjectsResponse* response)
 {
+    try
+    {
+        if (request->has_user() && !request->token().empty() && session_is_valid(request->user()))
+        {
+            for (auto const& [position, subject]: m_database->search_subjects(request->token()))
+            {
+                MatchingSubject* matching_subject = response->add_subjects();
+                matching_subject->set_position(position);
+                matching_subject->set_allocated_subject(std::make_unique<Subject>(subject).release());
+            }
+        }
+    }
+    catch (client_exception const& exp)
+    {
+    }
+    catch (std::exception const& exp)
+    {
+        std::cerr << std::format("Server: error while searching for subjects: {}", exp.what());
+    }
+
     return grpc::Status::OK;
 }
 

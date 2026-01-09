@@ -1,6 +1,9 @@
 #include <memory>
 #include <string>
+#include <vector>
+#include <map>
 #include <optional>
+#include <algorithm>
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 #include <flashback/mock_database.hpp>
@@ -564,21 +567,71 @@ TEST_F(test_server, SearchRoadmaps)
 
 TEST_F(test_server, CreateSubject)
 {
-    std::string const subject_name{"C++"};
-    grpc::Status status;
     flashback::CreateSubjectRequest request;
-    request.set_name(subject_name);
     flashback::CreateSubjectResponse response;
+    grpc::Status status;
+    std::string const subject_name{"C++"};
+    auto requesting_user{std::make_unique<flashback::User>(*m_user)};
+    auto returning_user{std::make_unique<flashback::User>(*m_user)};
     flashback::Subject returning_subject{};
+
+    request.set_allocated_user(requesting_user.release());
+    request.set_name(subject_name);
     returning_subject.set_name(subject_name);
     returning_subject.set_id(1);
 
-    auto const returning_user{std::make_unique<flashback::User>(*m_user)};
-    EXPECT_CALL(*m_mock_database, get_user(testing::A<std::string_view>(), testing::A<std::string_view>())).Times(1).WillOnce(
-        testing::Return(std::make_unique<flashback::User>(*returning_user)));
+    EXPECT_CALL(*m_mock_database, get_user(testing::A<std::string_view>(), testing::A<std::string_view>())).Times(1).WillOnce(testing::Return(std::move(returning_user)));
     EXPECT_CALL(*m_mock_database, create_subject(testing::A<std::string>())).Times(1).WillOnce(testing::Return(returning_subject));
     EXPECT_NO_THROW(status = m_server->CreateSubject(m_server_context.get(), &request, &response));
     EXPECT_TRUE(status.ok());
     EXPECT_TRUE(response.success());
     EXPECT_EQ(response.code(), 0);
+}
+
+TEST_F(test_server, SearchSubjects)
+{
+    flashback::SearchSubjectsRequest request;
+    flashback::SearchSubjectsResponse response;
+    grpc::ServerContext context;
+    grpc::Status status;
+    auto requesting_user{std::make_unique<flashback::User>(*m_user)};
+    auto returning_user{std::make_unique<flashback::User>(*m_user)};
+    std::string const searching_pattern{"Linux"};
+    std::vector<std::string> const subject_names{"Linux Kernel", "Linux System Administration", "Linux Network Administration"};
+    std::map<uint64_t, flashback::Subject> database_subjects;
+
+    for (uint64_t index{}; auto const& name: subject_names)
+    {
+        ++index;
+        flashback::Subject subject;
+        subject.set_id(index);
+        subject.set_name(name);
+        database_subjects.insert({index, subject});
+    }
+
+    request.set_allocated_user(requesting_user.release());
+    request.set_token(searching_pattern);
+
+    EXPECT_CALL(*m_mock_database, get_user(testing::A<std::string_view>(), testing::A<std::string_view>())).Times(1).WillOnce(testing::Return(std::move(returning_user)));
+    EXPECT_CALL(*m_mock_database, search_subjects(testing::A<std::string>())).Times(1).WillOnce(testing::Return(database_subjects));
+    EXPECT_NO_THROW(status = m_server->SearchSubjects(&context, &request, &response));
+    EXPECT_TRUE(status.ok());
+    ASSERT_EQ(response.subjects().size(), database_subjects.size());
+
+    for (auto const& match: response.subjects())
+    {
+        uint64_t const position{match.position()};
+        flashback::Subject const& subject{match.subject()};
+        auto const& iter = std::ranges::find_if(database_subjects, [&match](std::pair<uint64_t, flashback::Subject> const& e) {
+            return match.position() == e.first && match.subject().id() == e.second.id() && match.subject().name() == e.second.name();
+        });
+        EXPECT_NE(iter, database_subjects.cend());
+    }
+
+    request.clear_user();
+    request.clear_token();
+    response.clear_subjects();
+    EXPECT_NO_THROW(status = m_server->SearchSubjects(&context, &request, &response)) << "Searching subject with no name should result in empty set with no exceptions";
+    EXPECT_TRUE(status.ok());
+    ASSERT_EQ(response.subjects().size(), 0) << "Searching subject with no name should result empty set";
 }
