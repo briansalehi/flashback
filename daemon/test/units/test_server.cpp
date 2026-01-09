@@ -203,8 +203,7 @@ TEST_F(test_server, SignIn)
 
     EXPECT_CALL(*m_mock_database, user_exists(m_user->email())).Times(1).WillOnce(testing::Return(true));
     EXPECT_CALL(*m_mock_database, get_user(m_user->email())).Times(1).WillOnce(testing::Return(std::move(user_after_signin)));
-    EXPECT_CALL(*m_mock_database, create_session(m_user->id(), testing::A<std::string_view>(), m_user->device())).Times(1).WillOnce(
-        testing::Return(true));
+    EXPECT_CALL(*m_mock_database, create_session(m_user->id(), testing::A<std::string_view>(), m_user->device())).Times(1).WillOnce(testing::Return(true));
 
     request->set_allocated_user(user_before_signin.release());
     EXPECT_NO_THROW(m_server->SignIn(m_server_context.get(), request.get(), response.get()));
@@ -256,8 +255,7 @@ TEST_F(test_server, SignInWithInvalidCredentials)
     EXPECT_FALSE(user_after_signin->hash().empty()) << "Hash will be used internally by sign up function but will not return";
 
     EXPECT_CALL(*m_mock_database, user_exists(m_user->email())).Times(1).WillOnce(testing::Return(true));
-    EXPECT_CALL(*m_mock_database, get_user(m_user->email())).Times(1).WillOnce(
-        testing::Return(std::make_unique<flashback::User>(*user_after_signin)));
+    EXPECT_CALL(*m_mock_database, get_user(m_user->email())).Times(1).WillOnce(testing::Return(std::make_unique<flashback::User>(*user_after_signin)));
     EXPECT_CALL(*m_mock_database, create_session(m_user->id(), testing::A<std::string_view>(), m_user->device())).Times(0);
 
     request->set_allocated_user(user_before_signin.release());
@@ -430,8 +428,7 @@ TEST_F(test_server, GetRoadmaps)
     EXPECT_CALL(*m_mock_database, get_user(testing::A<std::string_view>(), testing::A<std::string_view>())).Times(2).WillOnce(
         testing::Return(std::make_unique<flashback::User>(*database_retrieved_user))).WillOnce(
         testing::Return(std::make_unique<flashback::User>(*database_retrieved_user)));
-    EXPECT_CALL(*m_mock_database, get_roadmaps(testing::A<uint64_t>())).Times(1).WillOnce(
-        testing::Return(std::vector<flashback::Roadmap>{}));
+    EXPECT_CALL(*m_mock_database, get_roadmaps(testing::A<uint64_t>())).Times(1).WillOnce(testing::Return(std::vector<flashback::Roadmap>{}));
 
     EXPECT_FALSE(request->has_user());
     EXPECT_NO_THROW(m_server->GetRoadmaps(m_server_context.get(), request.get(), response.get()));
@@ -524,7 +521,8 @@ TEST_F(test_server, SearchRoadmaps)
     EXPECT_THAT(search_response->roadmap(), testing::SizeIs(0)) << "User is not set so the request will be declined";
 
     database_retrieved_user = std::make_unique<flashback::User>(*m_user);
-    EXPECT_CALL(*m_mock_database, get_user(testing::A<std::string_view>(), testing::A<std::string_view>())).Times(1).WillOnce(testing::Return(std::make_unique<flashback::User>(*database_retrieved_user)));
+    EXPECT_CALL(*m_mock_database, get_user(testing::A<std::string_view>(), testing::A<std::string_view>())).Times(1).WillOnce(
+        testing::Return(std::make_unique<flashback::User>(*database_retrieved_user)));
     EXPECT_CALL(*m_mock_database, search_roadmaps(testing::A<std::string_view>())).Times(1).WillOnce(testing::Return(std::vector<flashback::Roadmap>{}));
 
     auto roadmap{std::make_unique<flashback::Roadmap>()};
@@ -537,7 +535,8 @@ TEST_F(test_server, SearchRoadmaps)
     EXPECT_NO_THROW(m_server->SearchRoadmaps(m_server_context.get(), search_request.get(), search_response.get()));
 
     database_retrieved_user = std::make_unique<flashback::User>(*m_user);
-    EXPECT_CALL(*m_mock_database, get_user(testing::A<std::string_view>(), testing::A<std::string_view>())).Times(1).WillOnce(testing::Return(std::make_unique<flashback::User>(*database_retrieved_user)));
+    EXPECT_CALL(*m_mock_database, get_user(testing::A<std::string_view>(), testing::A<std::string_view>())).Times(1).WillOnce(
+        testing::Return(std::make_unique<flashback::User>(*database_retrieved_user)));
     EXPECT_CALL(*m_mock_database, create_roadmap(testing::A<std::string_view>())).Times(1).WillOnce(testing::Return(roadmap->id()));
 
     grpc::Status status{};
@@ -552,7 +551,8 @@ TEST_F(test_server, SearchRoadmaps)
     EXPECT_EQ(create_response->roadmap().id(), roadmap->id());
 
     database_retrieved_user = std::make_unique<flashback::User>(*m_user);
-    EXPECT_CALL(*m_mock_database, get_user(testing::A<std::string_view>(), testing::A<std::string_view>())).Times(1).WillOnce(testing::Return(std::make_unique<flashback::User>(*database_retrieved_user)));
+    EXPECT_CALL(*m_mock_database, get_user(testing::A<std::string_view>(), testing::A<std::string_view>())).Times(1).WillOnce(
+        testing::Return(std::make_unique<flashback::User>(*database_retrieved_user)));
     EXPECT_CALL(*m_mock_database, search_roadmaps(testing::A<std::string_view>())).Times(1).WillOnce(testing::Return(std::vector<flashback::Roadmap>{}));
 
     search_request->set_allocated_user(std::make_unique<flashback::User>(*m_user).release());
@@ -569,12 +569,14 @@ TEST_F(test_server, CreateSubject)
     flashback::CreateSubjectRequest request;
     request.set_name(subject_name);
     flashback::CreateSubjectResponse response;
-    flashback::Subject expected_subject{};
-    expected_subject.set_name(subject_name);
-    expected_subject.set_id(1);
-    flashback::Subject resulting_subject;
+    flashback::Subject returning_subject{};
+    returning_subject.set_name(subject_name);
+    returning_subject.set_id(1);
 
-    EXPECT_CALL(*m_mock_database, create_subject(testing::A<std::string>())).Times(1).WillOnce(testing::Return(expected_subject));
+    auto const returning_user{std::make_unique<flashback::User>(*m_user)};
+    EXPECT_CALL(*m_mock_database, get_user(testing::A<std::string_view>(), testing::A<std::string_view>())).Times(1).WillOnce(
+        testing::Return(std::make_unique<flashback::User>(*returning_user)));
+    EXPECT_CALL(*m_mock_database, create_subject(testing::A<std::string>())).Times(1).WillOnce(testing::Return(returning_subject));
     EXPECT_NO_THROW(status = m_server->CreateSubject(m_server_context.get(), &request, &response));
     EXPECT_TRUE(status.ok());
     EXPECT_TRUE(response.success());

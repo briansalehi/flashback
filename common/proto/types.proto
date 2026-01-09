@@ -4,38 +4,16 @@ package flashback;
 
 import "google/protobuf/timestamp.proto";
 
-message Roadmap {
-    uint64 id = 1;
-    string name = 2;
-}
+enum expertise_level { surface = 0; depth = 1; origin = 2; }
 
-message Subject {
-    uint64 id = 1;
-    string name = 2;
-}
-
-enum expertise_level {
-    surface = 0;
-    depth = 1;
-    origin = 2;
-}
-
-message Milestone {
-    uint64 position = 1;
-    uint64 id = 2;
-    string name = 3;
-    expertise_level level = 4;
-}
-
-message Presenter {
-    uint64 id = 1;
-    string name = 2;
-}
-
-message Provider {
-    uint64 id = 1;
-    string name = 2;
-}
+message Roadmap { uint64 id = 1; string name = 2; }
+message Subject { uint64 id = 1; string name = 2; }
+message MatchingSubject { uint64 position = 1; Subject subject = 2; }
+message Milestone { uint64 position = 1; uint64 id = 2; string name = 3; expertise_level level = 4; }
+message Presenter { uint64 id = 1; string name = 2; }
+message Provider { uint64 id = 1; string name = 2; }
+message Topic { uint64 position = 1; string name = 2; expertise_level level = 3; }
+message Section { uint64 id = 1; string name = 2; }
 
 message Resource {
     enum resource_type {
@@ -69,17 +47,6 @@ message Resource {
     google.protobuf.Timestamp expiration = 7;
     Provider provider = 8;
     repeated Presenter presenters = 9;
-}
-
-message Topic {
-    uint64 position = 1;
-    string name = 2;
-    expertise_level level = 3;
-}
-
-message Section {
-    uint64 id = 1;
-    string name = 2;
 }
 
 message Card {

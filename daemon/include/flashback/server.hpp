@@ -37,7 +37,7 @@ public:
     // GetMilestones
     // AddMilestone
     grpc::Status CreateSubject(grpc::ServerContext* context, CreateSubjectRequest const* request, CreateSubjectResponse* response) override;
-    // SearchSubject
+    grpc::Status SearchSubjects(grpc::ServerContext* context, SearchSubjectsRequest const* request, SearchSubjectsResponse* response) override;
     // ReorderMilestone
     // RemoveMilestone
     // ChangeMilestoneLevel

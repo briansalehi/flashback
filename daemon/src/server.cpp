@@ -326,10 +326,13 @@ grpc::Status server::CreateSubject(grpc::ServerContext* context, CreateSubjectRe
 {
     try
     {
-        m_database->create_subject(request->name());
-        response->set_success(true);
-        response->clear_details();
-        response->set_code(0);
+        if (request->has_user() && session_is_valid(request->user()))
+        {
+            m_database->create_subject(request->name());
+            response->set_success(true);
+            response->clear_details();
+            response->set_code(0);
+        }
     }
     catch (flashback::client_exception const& exp)
     {
@@ -350,6 +353,11 @@ grpc::Status server::CreateSubject(grpc::ServerContext* context, CreateSubjectRe
         response->set_code(3);
     }
 
+    return grpc::Status::OK;
+}
+
+grpc::Status server::SearchSubjects(grpc::ServerContext* context, SearchSubjectsRequest const* request, SearchSubjectsResponse* response)
+{
     return grpc::Status::OK;
 }
 

@@ -19,5 +19,8 @@ public:
     MOCK_METHOD(grpc::Status, RenameRoadmap, (grpc:: ServerContext*, RenameRoadmapRequest const*, RenameRoadmapResponse*), (override));
     MOCK_METHOD(grpc::Status, RemoveRoadmap, (grpc:: ServerContext*, RemoveRoadmapRequest const*, RemoveRoadmapResponse*), (override));
     MOCK_METHOD(grpc::Status, SearchRoadmaps, (grpc:: ServerContext*, SearchRoadmapsRequest const*, SearchRoadmapsResponse*), (override));
+    MOCK_METHOD(grpc::Status, RenameSubject, (grpc::ServerContext*, const flashback::RenameSubjectRequest*, flashback::RenameSubjectResponse*), (override));
+    MOCK_METHOD(grpc::Status, CreateSubject, (grpc::ServerContext*, CreateSubjectRequest const*, CreateSubjectResponse*), (override));
+    MOCK_METHOD(grpc::Status, SearchSubjects, (grpc ::ServerContext*, SearchSubjectsRequest const*, SearchSubjectsResponse*), (override));
 };
 } // flashback

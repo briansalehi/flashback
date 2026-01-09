@@ -35,9 +35,12 @@ public:
     std::map<uint64_t, Subject> search_subjects(std::string name) override;
     void rename_subject(uint64_t id, std::string name) override;
 
+    // practices
+    expertise_level get_user_cognitive_level(uint64_t user_id, uint64_t subject_id) const override;
+
 private:
     template <typename... Args>
-    [[nodiscard]] pqxx::result query(std::string_view format, Args&&... args) const
+    [[nodiscard]] pqxx::result query(std::string_view const format, Args&&... args) const
     {
         pqxx::work work{*m_connection};
         pqxx::result result{work.exec(format, pqxx::params{std::forward<Args>(args)...})};
@@ -46,7 +49,7 @@ private:
     }
 
     template <typename... Args>
-    void exec(std::string_view format, Args&&... args) const
+    void exec(std::string_view const format, Args&&... args) const
     {
         pqxx::work work{*m_connection};
         work.exec(format, pqxx::params{std::forward<Args>(args)...});

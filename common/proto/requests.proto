@@ -15,11 +15,11 @@ message VerifySessionResponse { bool valid = 1; }
 // account page requests
 message ResetPasswordRequest { User user = 1; }
 message ResetPasswordResponse { bool success = 1; string details = 2; User user = 3; }
-message RenameUserRequest { }
+message RenameUserRequest { User user = 1; }
 message RenameUserResponse { }
-message ChangeUserEmailRequest { }
+message ChangeUserEmailRequest { User user = 1; }
 message ChangeUserEmailResponse { }
-message VerifyUserRequest { }
+message VerifyUserRequest { User user = 1; }
 message VerifyUserResponse { }
 
 // welcome page requests
@@ -37,184 +37,183 @@ message SearchRoadmapsRequest { User user = 1; string token = 2; }
 message SearchRoadmapsResponse { repeated Roadmap roadmap = 1; }
 
 // roadmap page requests
-message GetMilestonesRequest { }
+message GetMilestonesRequest { User user = 1; }
 message GetMilestonesResponse { }
-message AddMilestoneRequest { }
+message AddMilestoneRequest { User user = 1; }
 message AddMilestoneResponse { }
-message SearchSubjectsRequest { string token = 1; }
-message MatchingSubject { uint64 position = 1; Subject subject = 2; }
+message SearchSubjectsRequest { User user = 1; string token = 2; }
 message SearchSubjectsResponse { repeated MatchingSubject subject = 1; }
-message CreateSubjectRequest { string name = 1; }
+message CreateSubjectRequest { User user = 1; string name = 2; }
 message CreateSubjectResponse { bool success = 1; string details = 2; uint32 code = 3; }
-message ReorderMilestoneRequest { }
+message ReorderMilestoneRequest { User user = 1; }
 message ReorderMilestoneResponse { }
-message RemoveMilestoneRequest { }
+message RemoveMilestoneRequest { User user = 1; }
 message RemoveMilestoneResponse { }
-message ChangeMilestoneLevelRequest { }
+message ChangeMilestoneLevelRequest { User user = 1; }
 message ChangeMilestoneLevelResponse { }
 
 // subject page
-message RenameSubjectRequest { uint64 id = 1; string name = 2; }
+message RenameSubjectRequest { User user = 1; uint64 id = 2; string name = 3; } // X
 message RenameSubjectResponse { }
-message RemoveSubjectRequest { }
+message RemoveSubjectRequest { User user = 1; }
 message RemoveSubjectResponse { }
-message MergeSubjectsRequest { }
+message MergeSubjectsRequest { User user = 1; }
 message MergeSubjectsResponse { }
 
 // subject page resource view
-message GetResourcesRequest { }
+message GetResourcesRequest { User user = 1; }
 message GetResourcesResponse { }
-message AddResourceToSubjectRequest { }
+message AddResourceToSubjectRequest { User user = 1; }
 message AddResourceToSubjectResponse { }
-message CreateResourceRequest { }
+message CreateResourceRequest { User user = 1; }
 message CreateResourceResponse { }
-message DropResourceFromSubjectRequest { }
+message DropResourceFromSubjectRequest { User user = 1; }
 message DropResourceFromSubjectResponse { }
-message MergeResourcesRequest { }
+message MergeResourcesRequest { User user = 1; }
 message MergeResourcesResponse { }
 
 // subject page topic view
-message CreateTopicRequest { }
+message CreateTopicRequest { User user = 1; }
 message CreateTopicResponse { }
-message GetTopicsRequest { }
+message GetTopicsRequest { User user = 1; }
 message GetTopicsResponse { }
-message ReorderTopicRequest { }
+message ReorderTopicRequest { User user = 1; }
 message ReorderTopicResponse { }
-message RemoveTopicRequest { }
+message RemoveTopicRequest { User user = 1; }
 message RemoveTopicResponse { }
-message MergeTopicsRequest { }
+message MergeTopicsRequest { User user = 1; }
 message MergeTopicsResponse { }
-message MoveTopicRequest { }
+message MoveTopicRequest { User user = 1; }
 message MoveTopicResponse { }
-message SearchTopicsRequest { }
+message SearchTopicsRequest { User user = 1; }
 message SearchTopicsResponse { }
-message ChangeTopicLevelRequest { }
+message ChangeTopicLevelRequest { User user = 1; }
 message ChangeTopicLevelResponse { }
 
 // resource page requests
-message GetSectionsRequest { }
+message GetSectionsRequest { User user = 1; }
 message GetSectionsResponse { }
-message RenameResourceRequest { }
+message RenameResourceRequest { User user = 1; }
 message RenameResourceResponse { }
-message RemoveResourceRequest { }
+message RemoveResourceRequest { User user = 1; }
 message RemoveResourceResponse { }
-message EditResourceProviderRequest { }
+message EditResourceProviderRequest { User user = 1; }
 message EditResourceProviderResponse { }
-message EditResourcePresenterRequest { }
+message EditResourcePresenterRequest { User user = 1; }
 message EditResourcePresenterResponse { }
-message EditResourceLinkRequest { }
+message EditResourceLinkRequest { User user = 1; }
 message EditResourceLinkResponse { }
-message EditResourceProductionRequest { }
+message EditResourceProductionRequest { User user = 1; }
 message EditResourceProductionResponse { }
-message EditResourceExpirationRequest { }
+message EditResourceExpirationRequest { User user = 1; }
 message EditResourceExpirationResponse { }
-message ChangeResourceTypeRequest { }
+message ChangeResourceTypeRequest { User user = 1; }
 message ChangeResourceTypeResponse { }
-message EditSectionPatternRequest { }
+message EditSectionPatternRequest { User user = 1; }
 message EditSectionPatternResponse { }
-message CreateSectionRequest { }
+message CreateSectionRequest { User user = 1; }
 message CreateSectionResponse { }
-message ReorderSectionRequest { }
+message ReorderSectionRequest { User user = 1; }
 message ReorderSectionResponse { }
-message RemoveSectionRequest { }
+message RemoveSectionRequest { User user = 1; }
 message RemoveSectionResponse { }
-message MergeSectionsRequest { }
+message MergeSectionsRequest { User user = 1; }
 message MergeSectionsResponse { }
-message MoveSectionRequest { }
+message MoveSectionRequest { User user = 1; }
 message MoveSectionResponse { }
 
 // providers
-message CreateProviderRequest { }
+message CreateProviderRequest { User user = 1; }
 message CreateProviderResponse { }
-message SearchProvidersRequest { }
+message SearchProvidersRequest { User user = 1; }
 message SearchProvidersResponse { }
-message AddProviderRequest { }
+message AddProviderRequest { User user = 1; }
 message AddProviderResponse { }
-message RenameProviderRequest { }
+message RenameProviderRequest { User user = 1; }
 message RenameProviderResponse { }
-message RemoveProviderRequest { }
+message RemoveProviderRequest { User user = 1; }
 message RemoveProviderResponse { }
-message MergeProvidersRequest { }
+message MergeProvidersRequest { User user = 1; }
 message MergeProvidersResponse { }
 
 // presenters
-message CreatePresenterRequest { }
+message CreatePresenterRequest { User user = 1; }
 message CreatePresenterResponse { }
-message SearchPresentersRequest { }
+message SearchPresentersRequest { User user = 1; }
 message SearchPresentersResponse { }
-message AddPresenterRequest { }
+message AddPresenterRequest { User user = 1; }
 message AddPresenterResponse { }
-message RenamePresenterRequest { }
+message RenamePresenterRequest { User user = 1; }
 message RenamePresenterResponse { }
-message RemovePresenterRequest { }
+message RemovePresenterRequest { User user = 1; }
 message RemovePresenterResponse { }
-message MergePresentersRequest { }
+message MergePresentersRequest { User user = 1; }
 message MergePresentersResponse { }
 
 // section/topic page
-message CreateCardRequest { }
+message CreateCardRequest { User user = 1; }
 message CreateCardResponse { }
-message ReorderCardRequest { }
+message ReorderCardRequest { User user = 1; }
 message ReorderCardResponse { }
-message RemoveCardRequest { }
+message RemoveCardRequest { User user = 1; }
 message RemoveCardResponse { }
-message MergeCardsRequest { }
+message MergeCardsRequest { User user = 1; }
 message MergeCardsResponse { }
 
 // section page
-message GetStudyCardsRequest { }
+message GetStudyCardsRequest { User user = 1; }
 message GetStudyCardsResponse { }
-message RenameSectionRequest { }
+message RenameSectionRequest { User user = 1; }
 message RenameSectionResponse { }
-message MoveCardToSectionRequest { Resource resource = 1; Section section = 2; }
+message MoveCardToSectionRequest { User user = 1; Resource resource = 2; Section section = 3; }
 message MoveCardToSectionResponse { }
 
 // topic page
-message GetPracticeCardsRequest { }
+message GetPracticeCardsRequest { User user = 1; }
 message GetPracticeCardsResponse { }
-message RenameTopicRequest { }
+message RenameTopicRequest { User user = 1; }
 message RenameTopicResponse { }
-message MoveCardToTopicRequest { Subject subject = 1; Topic topic = 2; }
+message MoveCardToTopicRequest { User user = 1; Subject subject = 2; Topic topic = 3; } // X
 message MoveCardToTopicResponse { }
 
 // card page
-message EditHeadlineRequest { }
+message EditHeadlineRequest { User user = 1; }
 message EditHeadlineResponse { }
-message CreateBlockRequest { }
+message CreateBlockRequest { User user = 1; }
 message CreateBlockResponse { }
-message GetBlocksRequest { }
+message GetBlocksRequest { User user = 1; }
 message GetBlocksResponse { }
-message EditBlockRequest { Block block = 1; }
+message EditBlockRequest { User user = 1; Block block = 2; } // X
 message EditBlockResponse { bool success = 1; string details = 2; }
-message RemoveBlockRequest { }
+message RemoveBlockRequest { User user = 1; }
 message RemoveBlockResponse { }
-message ReorderBlockRequest { }
+message ReorderBlockRequest { User user = 1; }
 message ReorderBlockResponse { }
-message MergeBlocksRequest { }
+message MergeBlocksRequest { User user = 1; }
 message MergeBlocksResponse { }
-message SplitBlockRequest { }
+message SplitBlockRequest { User user = 1; }
 message SplitBlockResponse { }
-message MoveBlockRequest { }
+message MoveBlockRequest { User user = 1; }
 message MoveBlockResponse { }
 
 // assessments
-message CreateAssessmentRequest { Card card = 1; }
+message CreateAssessmentRequest { User user = 1; Card card = 2; }
 message CreateAssessmentResponse { }
-message GetAssessmentRequest { }
+message GetAssessmentRequest { User user = 1; }
 message GetAssessmentResponse { }
-message ExpandAssessmentRequest { }
+message ExpandAssessmentRequest { User user = 1; }
 message ExpandAssessmentResponse { }
 
 // nerves
-message CreateNerveRequest { }
+message CreateNerveRequest { User user = 1; }
 message CreateNerveResponse { }
 
 // practice reports
-message EstimateCardTimeRequest { }
+message EstimateCardTimeRequest { User user = 1; }
 message EstimateCardTimeResponse { }
-message GetTopicWeightRequest { }
+message GetTopicWeightRequest { User user = 1; }
 message GetTopicWeightResponse { }
-message GetSubjectWeightRequest { }
+message GetSubjectWeightRequest { User user = 1; }
 message GetSubjectWeightResponse { }
-message GetRoadmapWeightRequest { }
+message GetRoadmapWeightRequest { User user = 1; }
 message GetRoadmapWeightResponse { }
