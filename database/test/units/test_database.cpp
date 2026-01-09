@@ -443,7 +443,7 @@ TEST_F(test_database, CreateSubject)
     EXPECT_THROW(subject = m_database->create_subject(subject_name), flashback::client_exception) << "Subjects with empty names are not allowed";
 }
 
-TEST_F(test_database, SearchSubject)
+TEST_F(test_database, SearchSubjects)
 {
     std::string const subject_name{"Calculus"};
     std::string const irrelevant_subject{"Linux Administration"};
@@ -475,6 +475,7 @@ TEST_F(test_database, RenameSubject)
     std::string const modified_name{"Docker"};
     std::string const irrelevant_name{"Linux"};
     std::map<uint64_t, flashback::Subject> matches{};
+    uint64_t const expected_position{1};
     flashback::Subject subject{};
 
     ASSERT_NO_THROW(subject = m_database->create_subject(irrelevant_name));
@@ -494,7 +495,9 @@ TEST_F(test_database, RenameSubject)
     EXPECT_NO_THROW(matches = m_database->search_subjects(initial_name));
     EXPECT_EQ(matches.size(), 0) << "Previous name of the subject should not appear";
     EXPECT_NO_THROW(matches = m_database->search_subjects(modified_name));
-    EXPECT_EQ(matches.size(), 1) << "New name of the subject should be the only match";
+    ASSERT_EQ(matches.size(), 1) << "New name of the subject should be the only match";
+    ASSERT_NO_THROW(matches.at(expected_position));
+    EXPECT_EQ(matches.at(expected_position).name(), modified_name);
 
     EXPECT_THROW(m_database->rename_subject(subject.id(), ""), flashback::client_exception) << "Empty subject names should be declined";
 
