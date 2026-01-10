@@ -328,9 +328,10 @@ Milestone database::add_milestone(uint64_t const subject_id, expertise_level con
     return milestone;
 }
 
-void database::add_milestone(uint64_t const subject_id, expertise_level const subject_level, uint64_t const roadmap_id, uint64_t const position) const
+Milestone database::add_milestone(uint64_t const subject_id, expertise_level const subject_level, uint64_t const roadmap_id, uint64_t const position) const
 {
     std::string level;
+    Milestone milestone;
 
     switch (subject_level)
     {
@@ -344,6 +345,11 @@ void database::add_milestone(uint64_t const subject_id, expertise_level const su
     }
 
     exec("call add_milestone($1, $2, $3, $4)", subject_id, level, roadmap_id, position);
+    milestone.set_id(subject_id);
+    milestone.set_position(position);
+    milestone.set_level(subject_level);
+
+    return milestone;
 }
 
 std::vector<Milestone> database::get_milestones(uint64_t roadmap_id) const

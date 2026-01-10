@@ -568,11 +568,14 @@ TEST_F(test_database, GetMilestones)
     {
         flashback::Subject returning_subject;
         flashback::Subject expected_subject;
+        flashback::Milestone milestone;
         expected_subject.set_name(name);
         ASSERT_NO_THROW(returning_subject = m_database->create_subject(expected_subject.name()));
         ASSERT_EQ(returning_subject.name(), expected_subject.name());
         ASSERT_GT(returning_subject.id(), 0);
-        EXPECT_NO_THROW(m_database->add_milestone(returning_subject.id(), flashback::expertise_level::surface, returning_roadmap.id()));
+        EXPECT_NO_THROW(milestone = m_database->add_milestone(returning_subject.id(), flashback::expertise_level::surface, returning_roadmap.id()));
+        EXPECT_EQ(milestone.id(), returning_subject.id());
+        EXPECT_EQ(milestone.level(), flashback::expertise_level::surface);
     }
 
     EXPECT_NO_THROW(milestones = m_database->get_milestones(returning_roadmap.id()));

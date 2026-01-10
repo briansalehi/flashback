@@ -669,3 +669,51 @@ TEST_F(test_server, RenameSubject)
     EXPECT_TRUE(response.success());
     EXPECT_EQ(response.code(), 0);
 }
+
+TEST_F(test_server, AddMilestone)
+{
+    using testing::A;
+    using testing::An;
+    using testing::Return;
+
+    auto requesting_user{std::make_unique<flashback::User>(*m_user)};
+    auto returning_user{std::make_unique<flashback::User>(*m_user)};
+    auto returning_user2{std::make_unique<flashback::User>(*m_user)};
+    grpc::Status status{};
+    grpc::ServerContext context{};
+    flashback::AddMilestoneRequest request{};
+    flashback::AddMilestoneResponse response{};
+    flashback::Milestone milestone;
+    flashback::Roadmap roadmap{};
+    roadmap.set_id(1);
+    milestone.set_id(1);
+    milestone.set_name("NeoMutt");
+    milestone.set_level(flashback::expertise_level::surface);
+    milestone.set_position(1);
+
+    request.set_subject_id(milestone.id());
+    request.set_roadmap_id(roadmap.id());
+    request.set_subject_level(milestone.level());
+    request.clear_position();
+    request.set_allocated_user(requesting_user.release());
+
+    EXPECT_CALL(*m_mock_database, get_user(A<std::string_view>(), A<std::string_view>())).Times(2).WillOnce(Return(std::move(returning_user))).WillOnce(Return(std::move(returning_user2)));
+    EXPECT_CALL(*m_mock_database, add_milestone(A<uint64_t>(), An<flashback::expertise_level>(), A<uint64_t>())).WillOnce(Return(milestone));
+    EXPECT_CALL(*m_mock_database, add_milestone(A<uint64_t>(), An<flashback::expertise_level>(), A<uint64_t>(), A<uint64_t>())).WillOnce(Return(milestone));
+
+    EXPECT_NO_THROW(status = m_server->AddMilestone(&context, &request, &response));
+    EXPECT_TRUE(status.ok());
+    EXPECT_TRUE(response.success()) << "Milestone without position should be added";
+    EXPECT_EQ(response.milestone().id(), milestone.id());
+    EXPECT_EQ(response.milestone().level(), milestone.level());
+    EXPECT_EQ(response.milestone().position(), milestone.position());
+
+    request.set_position(milestone.position());
+
+    EXPECT_NO_THROW(status = m_server->AddMilestone(&context, &request, &response));
+    EXPECT_TRUE(status.ok());
+    EXPECT_TRUE(response.success()) << "Milestone with position should be added";
+    EXPECT_EQ(response.milestone().id(), milestone.id());
+    EXPECT_EQ(response.milestone().level(), milestone.level());
+    EXPECT_EQ(response.milestone().position(), milestone.position());
+}

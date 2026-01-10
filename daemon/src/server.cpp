@@ -319,6 +319,61 @@ grpc::Status server::SearchRoadmaps(grpc::ServerContext* context, SearchRoadmaps
     return grpc::Status::OK;
 }
 
+grpc::Status server::AddMilestone(grpc::ServerContext* context, AddMilestoneRequest const* request, AddMilestoneResponse* response)
+{
+    try
+    {
+        response->set_success(false);
+        response->clear_details();
+        response->set_code(0);
+        response->clear_milestone();
+
+        if (request->has_user() && session_is_valid(request->user()))
+        {
+            if (request->subject_id() == 0)
+            {
+                response->set_details("invalid subject");
+                response->set_code(1);
+            }
+            else if (request->roadmap_id() == 0)
+            {
+                response->set_details("invalid roadmap");
+                response->set_code(2);
+            }
+            else
+            {
+                if (request->position() > 0)
+                {
+                    Milestone milestone = m_database->add_milestone(request->subject_id(), request->subject_level(), request->roadmap_id(), request->position());
+                    response->set_allocated_milestone(std::make_unique<flashback::Milestone>(milestone).release());
+                    response->set_success(true);
+                }
+                else
+                {
+                    Milestone milestone = m_database->add_milestone(request->subject_id(), request->subject_level(), request->roadmap_id());
+                    response->set_allocated_milestone(std::make_unique<flashback::Milestone>(milestone).release());
+                    response->set_success(true);
+                }
+            }
+        }
+    }
+    catch (client_exception const& exp)
+    {
+        response->set_code(3);
+        response->set_details(exp.what());
+        response->set_success(false);
+    }
+    catch (std::exception const& exp)
+    {
+        std::cerr << std::format("Server: {}", exp.what());
+        response->set_code(3);
+        response->set_details("internal error");
+        response->set_success(false);
+    }
+
+    return grpc::Status::OK;
+}
+
 grpc::Status server::CreateSubject(grpc::ServerContext* context, CreateSubjectRequest const* request, CreateSubjectResponse* response)
 {
     try

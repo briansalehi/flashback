@@ -27,7 +27,7 @@ service Server {
 
     // roadmap page requests
     //rpc GetMilestones(GetMilestonesRequest) returns (GetMilestonesResponse);
-    //rpc AddMilestone(AddMilestoneRequest) returns (AddMilestoneResponse);
+    rpc AddMilestone(AddMilestoneRequest) returns (AddMilestoneResponse);
     rpc CreateSubject(CreateSubjectRequest) returns (CreateSubjectResponse);
     rpc SearchSubjects(SearchSubjectsRequest) returns (SearchSubjectsResponse);
     //rpc ReorderMilestone(ReorderMilestoneRequest) returns (ReorderMilestoneResponse);

@@ -35,7 +35,7 @@ public:
 
     // roadmap page requests
     // GetMilestones
-    // AddMilestone
+    grpc::Status AddMilestone(grpc::ServerContext* context, AddMilestoneRequest const* request, AddMilestoneResponse* response) override;
     grpc::Status CreateSubject(grpc::ServerContext* context, CreateSubjectRequest const* request, CreateSubjectResponse* response) override;
     grpc::Status SearchSubjects(grpc::ServerContext* context, SearchSubjectsRequest const* request, SearchSubjectsResponse* response) override;
     // ReorderMilestone

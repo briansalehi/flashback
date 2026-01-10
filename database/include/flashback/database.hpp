@@ -37,7 +37,7 @@ public:
 
     // milestones
     Milestone add_milestone(uint64_t subject_id, expertise_level subject_level, uint64_t roadmap_id) const override;
-    void add_milestone(uint64_t subject_id, expertise_level subject_level, uint64_t roadmap_id, uint64_t position) const override;
+    Milestone add_milestone(uint64_t subject_id, expertise_level subject_level, uint64_t roadmap_id, uint64_t position) const override;
     std::vector<Milestone> get_milestones(uint64_t roadmap_id) const override;
 
     // practices
