@@ -37,8 +37,8 @@ message SearchRoadmapsRequest { User user = 1; string token = 2; }
 message SearchRoadmapsResponse { repeated Roadmap roadmap = 1; }
 
 // roadmap page requests
-message GetMilestonesRequest { User user = 1; }
-message GetMilestonesResponse { }
+message GetMilestonesRequest { User user = 1; uint64 roadmap_id = 2; }
+message GetMilestonesResponse { repeated Milestone milestones = 1; bool success = 2; string details = 3; uint32 code = 4; }
 message AddMilestoneRequest { User user = 1; uint64 subject_id = 2; expertise_level subject_level = 3; uint64 roadmap_id = 4; uint64 position = 5; }
 message AddMilestoneResponse { Milestone milestone = 1; bool success = 2; string details = 3; uint32 code = 4; }
 message SearchSubjectsRequest { User user = 1; string token = 2; }

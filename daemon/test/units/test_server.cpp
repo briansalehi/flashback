@@ -2,6 +2,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <tuple>
 #include <optional>
 #include <algorithm>
 #include <gtest/gtest.h>
@@ -697,7 +698,8 @@ TEST_F(test_server, AddMilestone)
     request.clear_position();
     request.set_allocated_user(requesting_user.release());
 
-    EXPECT_CALL(*m_mock_database, get_user(A<std::string_view>(), A<std::string_view>())).Times(2).WillOnce(Return(std::move(returning_user))).WillOnce(Return(std::move(returning_user2)));
+    EXPECT_CALL(*m_mock_database, get_user(A<std::string_view>(), A<std::string_view>())).Times(2).WillOnce(Return(std::move(returning_user))).WillOnce(
+        Return(std::move(returning_user2)));
     EXPECT_CALL(*m_mock_database, add_milestone(A<uint64_t>(), An<flashback::expertise_level>(), A<uint64_t>())).WillOnce(Return(milestone));
     EXPECT_CALL(*m_mock_database, add_milestone(A<uint64_t>(), An<flashback::expertise_level>(), A<uint64_t>(), A<uint64_t>())).WillOnce(Return(milestone));
 
@@ -716,4 +718,56 @@ TEST_F(test_server, AddMilestone)
     EXPECT_EQ(response.milestone().id(), milestone.id());
     EXPECT_EQ(response.milestone().level(), milestone.level());
     EXPECT_EQ(response.milestone().position(), milestone.position());
+}
+
+TEST_F(test_server, GetMilestones)
+{
+    using testing::A;
+    using testing::An;
+    using testing::Return;
+
+    auto requesting_user{std::make_unique<flashback::User>(*m_user)};
+    auto database_provided_user{std::make_unique<flashback::User>(*m_user)};
+    grpc::Status status{};
+    grpc::ServerContext context{};
+    flashback::GetMilestonesRequest request{};
+    flashback::GetMilestonesResponse response{};
+    flashback::Roadmap requesting_roadmap{};
+    std::vector<flashback::Milestone> database_provided_milestones;
+
+    requesting_roadmap.set_id(1);
+    requesting_roadmap.set_name("eBFP");
+
+    for (auto const& m: std::vector<std::tuple<uint64_t, uint64_t, flashback::expertise_level, std::string>>{
+             {1, 10, flashback::expertise_level::surface, "eBPF"},
+             {2, 20, flashback::expertise_level::depth, "C++"},
+             {3, 30, flashback::expertise_level::surface, "Rust"}})
+    {
+        flashback::Milestone milestone{};
+        milestone.set_id(std::get<0>(m));
+        milestone.set_position(std::get<1>(m));
+        milestone.set_level(std::get<2>(m));
+        milestone.set_name(std::get<3>(m));
+        database_provided_milestones.push_back(milestone);
+    }
+
+    request.set_allocated_user(requesting_user.release());
+    request.set_roadmap_id(requesting_roadmap.id());
+
+    EXPECT_CALL(*m_mock_database, get_user(A<std::string_view>(), A<std::string_view>())).Times(1).WillOnce(Return(std::move(database_provided_user)));
+    EXPECT_CALL(*m_mock_database, get_milestones(A<uint64_t>())).Times(1).WillOnce(Return(database_provided_milestones));
+    EXPECT_NO_THROW(status = m_server->GetMilestones(&context, &request, &response));
+    EXPECT_TRUE(status.ok());
+    EXPECT_TRUE(response.success());
+    EXPECT_TRUE(response.details().empty());
+    EXPECT_EQ(response.code(), 0);
+    EXPECT_EQ(response.milestones().size(), database_provided_milestones.size());
+
+    for (auto const& milestone: response.milestones())
+    {
+        auto const& iter = std::ranges::find_if(database_provided_milestones, [&milestone](flashback::Milestone const& m) {
+            return m.id() == milestone.id() && m.position() == milestone.position() && m.level() == milestone.level() && m.name() == milestone.name();
+        });
+        EXPECT_NE(iter, database_provided_milestones.cend());
+    }
 }

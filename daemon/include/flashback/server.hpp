@@ -34,7 +34,7 @@ public:
     // GetRoadmapWeight
 
     // roadmap page requests
-    // GetMilestones
+    grpc::Status GetMilestones(grpc::ServerContext* context, GetMilestonesRequest const* request, GetMilestonesResponse* response) override;
     grpc::Status AddMilestone(grpc::ServerContext* context, AddMilestoneRequest const* request, AddMilestoneResponse* response) override;
     grpc::Status CreateSubject(grpc::ServerContext* context, CreateSubjectRequest const* request, CreateSubjectResponse* response) override;
     grpc::Status SearchSubjects(grpc::ServerContext* context, SearchSubjectsRequest const* request, SearchSubjectsResponse* response) override;

@@ -319,6 +319,42 @@ grpc::Status server::SearchRoadmaps(grpc::ServerContext* context, SearchRoadmaps
     return grpc::Status::OK;
 }
 
+grpc::Status server::GetMilestones(grpc::ServerContext* context, GetMilestonesRequest const* request, GetMilestonesResponse* response)
+{
+    response->clear_milestones();
+    response->set_success(false);
+    response->set_code(0);
+    response->clear_details();
+
+    try
+    {
+        if (request->has_user() && session_is_valid(request->user()))
+        {
+            for (Milestone const& m: m_database->get_milestones(request->roadmap_id()))
+            {
+                Milestone* milestone{response->add_milestones()};
+                milestone->set_id(m.id());
+                milestone->set_position(m.position());
+                milestone->set_name(m.name());
+                milestone->set_level(m.level());
+            }
+            response->set_success(true);
+        }
+    }
+    catch (client_exception const& exp)
+    {
+        response->set_details(exp.what());
+        response->set_code(1);
+    }
+    catch (std::exception const& exp)
+    {
+        response->set_details("internal error");
+        response->set_code(1);
+        std::cerr << std::format("Server: {}", exp.what());
+    }
+    return grpc::Status::OK;
+}
+
 grpc::Status server::AddMilestone(grpc::ServerContext* context, AddMilestoneRequest const* request, AddMilestoneResponse* response)
 {
     try

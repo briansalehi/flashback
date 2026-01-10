@@ -22,5 +22,6 @@ public:
     MOCK_METHOD(grpc::Status, RenameSubject, (grpc::ServerContext*, const flashback::RenameSubjectRequest*, flashback::RenameSubjectResponse*), (override));
     MOCK_METHOD(grpc::Status, CreateSubject, (grpc::ServerContext*, CreateSubjectRequest const*, CreateSubjectResponse*), (override));
     MOCK_METHOD(grpc::Status, SearchSubjects, (grpc ::ServerContext*, SearchSubjectsRequest const*, SearchSubjectsResponse*), (override));
+    MOCK_METHOD(grpc::Status, AddMilestone, (grpc::ServerContext*, AddMilestoneRequest const*, AddMilestoneResponse*), (override));
 };
 } // flashback

@@ -26,7 +26,7 @@ service Server {
     //rpc GetRoadmapWeight(GetRoadmapWeightRequest) returns (GetRoadmapWeightResponse);
 
     // roadmap page requests
-    //rpc GetMilestones(GetMilestonesRequest) returns (GetMilestonesResponse);
+    rpc GetMilestones(GetMilestonesRequest) returns (GetMilestonesResponse);
     rpc AddMilestone(AddMilestoneRequest) returns (AddMilestoneResponse);
     rpc CreateSubject(CreateSubjectRequest) returns (CreateSubjectResponse);
     rpc SearchSubjects(SearchSubjectsRequest) returns (SearchSubjectsResponse);
