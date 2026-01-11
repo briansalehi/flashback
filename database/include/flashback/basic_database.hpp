@@ -43,6 +43,8 @@ public:
     virtual Milestone add_milestone(uint64_t subject_id, expertise_level subject_level, uint64_t roadmap_id) const = 0;
     virtual Milestone add_milestone(uint64_t subject_id, expertise_level subject_level, uint64_t roadmap_id, uint64_t position) const = 0;
     virtual std::vector<Milestone> get_milestones(uint64_t roadmap_id) const = 0;
+    virtual void add_requirement(uint64_t roadmap_id, uint64_t subject_id, expertise_level level, uint64_t required_subject_id, expertise_level minimum_level) const = 0;
+    virtual std::vector<Milestone> get_requiremnts(uint64_t roadmap_id, uint64_t subject_id) const = 0;
     //reorder_milestone
     //remove_milestone
     //change_milestone_level

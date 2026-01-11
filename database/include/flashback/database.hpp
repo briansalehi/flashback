@@ -39,6 +39,8 @@ public:
     Milestone add_milestone(uint64_t subject_id, expertise_level subject_level, uint64_t roadmap_id) const override;
     Milestone add_milestone(uint64_t subject_id, expertise_level subject_level, uint64_t roadmap_id, uint64_t position) const override;
     std::vector<Milestone> get_milestones(uint64_t roadmap_id) const override;
+    void add_requirement(uint64_t roadmap_id, uint64_t subject_id, expertise_level level, uint64_t required_subject_id, expertise_level minimum_level) const override;
+    std::vector<Milestone> get_requiremnts(uint64_t roadmap_id, uint64_t subject_id) const override;
 
     // practices
     expertise_level get_user_cognitive_level(uint64_t user_id, uint64_t subject_id) const override;
@@ -59,6 +61,36 @@ private:
         pqxx::work work{*m_connection};
         work.exec(format, pqxx::params{std::forward<Args>(args)...});
         work.commit();
+    }
+
+    static expertise_level to_level(std::string_view level)
+    {
+        expertise_level result{};
+
+        if (level == "surface") result = expertise_level::surface;
+        else if (level == "depth") result = expertise_level::depth;
+        else if (level == "origin") result = expertise_level::origin;
+        else throw std::runtime_error{"invalid expertise level"};
+
+        return result;
+    }
+
+    static std::string level_to_string(expertise_level level)
+    {
+        std::string result{};
+
+        switch (level)
+        {
+        case flashback::expertise_level::surface: result = "surface";
+            break;
+        case flashback::expertise_level::depth: result = "depth";
+            break;
+        case flashback::expertise_level::origin: result = "origin";
+            break;
+        default: throw std::runtime_error{"invalid expertise level"};
+        }
+
+        return result;
     }
 
 private:

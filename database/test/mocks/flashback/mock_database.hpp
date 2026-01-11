@@ -36,6 +36,8 @@ public:
     MOCK_METHOD(Milestone, add_milestone, (uint64_t, expertise_level, uint64_t), (const, override));
     MOCK_METHOD(Milestone, add_milestone, (uint64_t, expertise_level, uint64_t, uint64_t), (const, override));
     MOCK_METHOD(std::vector<Milestone>, get_milestones, (uint64_t), (const, override));
+    MOCK_METHOD(void, add_requirement, (uint64_t, uint64_t, expertise_level, uint64_t, expertise_level), (const, override));
+    MOCK_METHOD(std::vector<Milestone>, get_requiremnts, (uint64_t, uint64_t), (const, override));
 
     // practices
     MOCK_METHOD(expertise_level, get_user_cognitive_level, (uint64_t, uint64_t), (const, override));

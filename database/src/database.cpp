@@ -366,15 +366,32 @@ std::vector<Milestone> database::get_milestones(uint64_t roadmap_id) const
         milestone.set_id(id);
         milestone.set_name(name);
         milestone.set_position(position);
-
-        if (level == "surface") milestone.set_level(expertise_level::surface);
-        else if (level == "depth") milestone.set_level(expertise_level::depth);
-        else if (level == "origin") milestone.set_level(expertise_level::origin);
-        else throw std::runtime_error{"invalid expertise level"};
-
+        milestone.set_level(to_level(level));
         milestones.push_back(milestone);
     }
     return milestones;
+}
+
+void database::add_requirement(uint64_t roadmap_id, uint64_t subject_id, expertise_level level, uint64_t required_subject_id, expertise_level minimum_level) const
+{
+    exec("call add_requirement($1, $2, $3, $4, $5)", roadmap_id, subject_id, level_to_string(level), required_subject_id, level_to_string(minimum_level));
+}
+
+std::vector<Milestone> database::get_requiremnts(uint64_t roadmap_id, uint64_t subject_id) const
+{
+    std::vector<Milestone> requirements{};
+
+    for (auto const& row: query("select subject, level, position, name from get_requirements($1, $2)", roadmap_id, subject_id))
+    {
+        Milestone milestone;
+        milestone.set_id(row.at("subject").as<uint64_t>());
+        milestone.set_position(row.at("position").as<uint64_t>());
+        milestone.set_name(row.at("name").as<std::string>());
+        milestone.set_level(to_level(row.at("level").as<std::string>()));
+        requirements.push_back(milestone);
+    }
+
+    return requirements;
 }
 
 expertise_level database::get_user_cognitive_level(uint64_t user_id, uint64_t subject_id) const
@@ -383,22 +400,7 @@ expertise_level database::get_user_cognitive_level(uint64_t user_id, uint64_t su
 
     for (pqxx::result const result{query("select get_user_cognitive_level($1, $2)", user_id, subject_id)}; pqxx::row row: result)
     {
-        if (std::string const string_level{row.at(0).as<std::string>()}; string_level == "surface")
-        {
-            level = expertise_level::surface;
-        }
-        else if (string_level == "depth")
-        {
-            level = expertise_level::depth;
-        }
-        else if (string_level == "origin")
-        {
-            level = expertise_level::origin;
-        }
-        else
-        {
-            throw std::runtime_error{"invalid expertise level"};
-        }
+        level = to_level(row.at(0).as<std::string>());
     }
 
     return level;

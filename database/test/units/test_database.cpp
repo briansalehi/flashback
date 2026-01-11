@@ -588,3 +588,11 @@ TEST_F(test_database, GetMilestones)
         EXPECT_NE(iter, subject_names.cend());
     }
 }
+
+TEST_F(test_database, AddRequirement)
+{
+}
+
+TEST_F(test_database, GetRequirements)
+{
+}
