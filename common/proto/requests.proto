@@ -59,8 +59,8 @@ message ChangeMilestoneLevelResponse { bool success = 1; string details = 2; uin
 // subject page
 message RenameSubjectRequest { User user = 1; uint64 id = 2; string name = 3; } // X
 message RenameSubjectResponse { bool success = 1; string details = 2; uint32 code = 3; }
-message RemoveSubjectRequest { User user = 1; }
-message RemoveSubjectResponse { }
+message RemoveSubjectRequest { User user = 1; Subject subject = 2; }
+message RemoveSubjectResponse { bool success = 1; string details = 2; uint32 code = 3; }
 message MergeSubjectsRequest { User user = 1; }
 message MergeSubjectsResponse { }
 

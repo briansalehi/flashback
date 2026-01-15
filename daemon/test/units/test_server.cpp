@@ -951,7 +951,8 @@ TEST_F(test_server, RemoveMilestone)
     roadmap->set_name("Theoretical Physicist");
     milestone->set_id(1);
 
-    EXPECT_CALL(*m_mock_database, get_user(A<std::string_view>(), A<std::string_view>())).Times(3).WillOnce(Return(std::make_unique<flashback::User>(*m_user))).WillOnce(Return(std::make_unique<flashback::User>(*m_user))).WillOnce(Return(std::make_unique<flashback::User>(*m_user)));
+    EXPECT_CALL(*m_mock_database, get_user(A<std::string_view>(), A<std::string_view>())).Times(3).WillOnce(Return(std::make_unique<flashback::User>(*m_user))).
+WillOnce(Return(std::make_unique<flashback::User>(*m_user))).WillOnce(Return(std::make_unique<flashback::User>(*m_user)));
     EXPECT_CALL(*m_mock_database, remove_milestone(A<uint64_t>(), A<uint64_t>())).Times(1);
 
     EXPECT_NO_THROW(status = m_server->RemoveMilestone(&context, &request, &response));
@@ -1000,8 +1001,9 @@ TEST_F(test_server, ChangeMilestoneLevel)
     roadmap->set_name("Theoretical Physicist");
     milestone->set_id(1);
 
-    EXPECT_CALL(*m_mock_database, get_user(A<std::string_view>(), A<std::string_view>())).Times(3).WillOnce(Return(std::make_unique<flashback::User>(*m_user))).WillOnce(Return(std::make_unique<flashback::User>(*m_user))).WillOnce(Return(std::make_unique<flashback::User>(*m_user)));
-    EXPECT_CALL(*m_mock_database, change_milestone_level(A<uint64_t>(), A<uint64_t>(), An<flashback::expertise_level>()));
+    EXPECT_CALL(*m_mock_database, get_user(A<std::string_view>(), A<std::string_view>())).Times(3).WillOnce(Return(std::make_unique<flashback::User>(*m_user))).
+WillOnce(Return(std::make_unique<flashback::User>(*m_user))).WillOnce(Return(std::make_unique<flashback::User>(*m_user)));
+    EXPECT_CALL(*m_mock_database, change_milestone_level(A<uint64_t>(), A<uint64_t>(), An<flashback::expertise_level>())).Times(1);
 
     EXPECT_NO_THROW(status = m_server->ChangeMilestoneLevel(&context, &request, &response));
     EXPECT_TRUE(status.ok());
@@ -1027,6 +1029,46 @@ TEST_F(test_server, ChangeMilestoneLevel)
     EXPECT_NO_THROW(status = m_server->ChangeMilestoneLevel(&context, &request, &response));
     EXPECT_TRUE(status.ok());
     EXPECT_TRUE(response.success()) << "Request to change milestone with valid credentials, valid roadmap, and valid milestone should work";
+    EXPECT_TRUE(response.details().empty());
+    EXPECT_EQ(response.code(), 0);
+}
+
+TEST_F(test_server, RemoveSubject)
+{
+    using testing::A;
+    using testing::An;
+    using testing::Return;
+
+    auto user{std::make_unique<flashback::User>(*m_user)};
+    auto subject{std::make_unique<flashback::Subject>()};
+    grpc::ServerContext context{};
+    grpc::Status status{};
+    flashback::RemoveSubjectRequest request{};
+    flashback::RemoveSubjectResponse response{};
+
+    subject->set_id(1);
+
+    EXPECT_CALL(*m_mock_database, get_user(A<std::string_view>(), A<std::string_view>())).Times(2).WillOnce(Return(std::make_unique<flashback::User>(*m_user))).WillOnce(
+        Return(std::make_unique<flashback::User>(*m_user)));
+    EXPECT_CALL(*m_mock_database, remove_subject(A<uint64_t>())).Times(1);
+
+    EXPECT_NO_THROW(status = m_server->RemoveSubject(&context, &request, &response));
+    EXPECT_TRUE(status.ok());
+    EXPECT_FALSE(response.success()) << "Request to remove a subject with an invalid user should be declined";
+    EXPECT_FALSE(response.details().empty());
+    EXPECT_EQ(response.code(), 3);
+
+    request.set_allocated_user(user.release());
+    EXPECT_NO_THROW(status = m_server->RemoveSubject(&context, &request, &response));
+    EXPECT_TRUE(status.ok());
+    EXPECT_FALSE(response.success()) << "Request to remove an invalid subject should be declined";
+    EXPECT_FALSE(response.details().empty());
+    EXPECT_EQ(response.code(), 4);
+
+    request.set_allocated_subject(subject.release());
+    EXPECT_NO_THROW(status = m_server->RemoveSubject(&context, &request, &response));
+    EXPECT_TRUE(status.ok());
+    EXPECT_TRUE(response.success()) << "Request to remove a subject with valid credentials and valid subject should work";
     EXPECT_TRUE(response.details().empty());
     EXPECT_EQ(response.code(), 0);
 }

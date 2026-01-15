@@ -38,7 +38,7 @@ service Server {
 
     // subject page
     rpc RenameSubject(RenameSubjectRequest) returns (RenameSubjectResponse);
-    //rpc RemoveSubject(RemoveSubjectRequest) returns (RemoveSubjectResponse);
+    rpc RemoveSubject(RemoveSubjectRequest) returns (RemoveSubjectResponse);
     //rpc MergeSubjects(MergeSubjectsRequest) returns (MergeSubjectsResponse);
     //rpc GetSubjectWeight(GetSubjectWeightRequest) returns (GetSubjectWeightResponse);
 

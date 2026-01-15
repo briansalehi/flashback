@@ -291,7 +291,7 @@ void database::rename_subject(uint64_t const id, std::string name) const
     exec("call rename_subject($1, $2)", id, std::move(name));
 }
 
-void database::remove_subject(uint64_t id) const
+void database::remove_subject(uint64_t const id) const
 {
     exec("call remove_subject($1)", id);
 }

@@ -46,7 +46,7 @@ public:
 
     // subject page requests
     grpc::Status RenameSubject(grpc::ServerContext* context, RenameSubjectRequest const* request, RenameSubjectResponse* response) override;
-    // RemoveSubject
+    grpc::Status RemoveSubject(grpc::ServerContext* context, RemoveSubjectRequest const* request, RemoveSubjectResponse* response) override;
     // MergeSubjects
     // GetResources
     // AddResourceToSubject
