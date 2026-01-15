@@ -727,6 +727,7 @@ TEST_F(test_database, ChangeMilestoneLevel)
     flashback::Roadmap roadmap{};
     flashback::Subject subject{};
     flashback::Milestone milestone{};
+    flashback::Milestone modified_milestone{};
     std::vector<flashback::Milestone> milestones{};
     roadmap.set_name("Theoretical Physicist");
 
@@ -740,13 +741,13 @@ TEST_F(test_database, ChangeMilestoneLevel)
     ASSERT_EQ(milestone.id(), subject.id());
     ASSERT_NO_THROW(milestones = m_database->get_milestones(roadmap.id()));
     ASSERT_THAT(milestones, SizeIs(1));
-    ASSERT_NO_THROW(milestones.at(0));
-    ASSERT_EQ(milestones.at(0).id(), subject.id());
-    EXPECT_GT(milestones.at(0).level(), flashback::expertise_level::depth);
+    ASSERT_NO_THROW(modified_milestone = milestones.at(0));
+    ASSERT_EQ(modified_milestone.id(), subject.id());
+    EXPECT_EQ(modified_milestone.level(), flashback::expertise_level::depth);
     EXPECT_NO_THROW(m_database->change_milestone_level(roadmap.id(), milestone.id(), flashback::expertise_level::surface));
     ASSERT_NO_THROW(milestones = m_database->get_milestones(roadmap.id()));
     ASSERT_THAT(milestones, SizeIs(1));
-    ASSERT_NO_THROW(milestones.at(0));
-    ASSERT_EQ(milestones.at(0).id(), subject.id());
-    EXPECT_GT(milestones.at(0).level(), flashback::expertise_level::surface);
+    ASSERT_NO_THROW(modified_milestone = milestones.at(0));
+    ASSERT_EQ(modified_milestone.id(), subject.id());
+    EXPECT_EQ(modified_milestone.level(), flashback::expertise_level::surface);
 }

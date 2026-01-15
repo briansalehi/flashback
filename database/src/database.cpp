@@ -397,8 +397,9 @@ void database::remove_milestone(uint64_t roadmap_id, uint64_t subject_id) const
     exec("call remove_milestone($1, $2)", roadmap_id, subject_id);
 }
 
-void database::change_milestone_level(uint64_t roadmap_id, uint64_t subject_id, expertise_level level) const
+void database::change_milestone_level(uint64_t const roadmap_id, uint64_t const subject_id, expertise_level const level) const
 {
+    exec("call change_milestone_level($1, $2, $3)", roadmap_id, subject_id, level_to_string(level));
 }
 
 expertise_level database::get_user_cognitive_level(uint64_t user_id, uint64_t subject_id) const
