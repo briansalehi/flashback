@@ -181,7 +181,7 @@ grpc::Status server::CreateRoadmap(grpc::ServerContext* context, CreateRoadmapRe
     {
         if (request->has_user() && session_is_valid(request->user()))
         {
-            auto roadmap{std::make_unique<Roadmap>(m_database->create_roadmap(request->name()))};
+            auto roadmap{std::make_unique<Roadmap>(m_database->create_roadmap(request->user().id(), request->name()))};
             response->set_allocated_roadmap(roadmap.release());
         }
     }
@@ -190,27 +190,6 @@ grpc::Status server::CreateRoadmap(grpc::ServerContext* context, CreateRoadmapRe
         std::cerr << std::format("Client: {}", exp.what());
     }
     catch (pqxx::unique_violation const& exp)
-    {
-        std::cerr << std::format("Server: {}", exp.what());
-    }
-
-    return grpc::Status::OK;
-}
-
-grpc::Status server::AssignRoadmap(grpc::ServerContext* context, AssignRoadmapRequest const* request, AssignRoadmapResponse* response)
-{
-    try
-    {
-        if (request->has_user() && request->has_roadmap() && session_is_valid(request->user()))
-        {
-            m_database->assign_roadmap(request->user().id(), request->roadmap().id());
-        }
-    }
-    catch (flashback::client_exception const& exp)
-    {
-        std::cerr << std::format("Client: {}", exp.what());
-    }
-    catch (std::exception const& exp)
     {
         std::cerr << std::format("Server: {}", exp.what());
     }
@@ -319,6 +298,52 @@ grpc::Status server::SearchRoadmaps(grpc::ServerContext* context, SearchRoadmaps
     return grpc::Status::OK;
 }
 
+grpc::Status server::CloneRoadmap(grpc::ServerContext* context, CloneRoadmapRequest const* request, CloneRoadmapResponse* response)
+{
+    try
+    {
+        response->set_success(false);
+        response->clear_code();
+        response->clear_details();
+
+        if (request->has_user() && session_is_valid(request->user()))
+        {
+            if (request->has_roadmap())
+            {
+                Roadmap roadmap{m_database->clone_roadmap(request->user().id(), request->roadmap().id())};
+                response->set_allocated_roadmap(std::make_unique<Roadmap>(roadmap).release());
+                response->set_success(true);
+            }
+            else
+            {
+                response->set_code(4);
+                response->set_details("invalid roadmap");
+            }
+        }
+        else
+        {
+            response->set_code(3);
+            response->set_details("invalid user");
+        }
+    }
+    catch (flashback::client_exception const& exp)
+    {
+        response->set_code(2);
+        response->set_details(exp.what());
+        response->set_success(false);
+        std::cerr << std::format("Client: {}", exp.what());
+    }
+    catch (std::exception const& exp)
+    {
+        response->set_code(1);
+        response->set_details("internal error");
+        response->set_success(false);
+        std::cerr << std::format("Server: {}", exp.what());
+    }
+
+    return grpc::Status::OK;
+}
+
 grpc::Status server::GetMilestones(grpc::ServerContext* context, GetMilestonesRequest const* request, GetMilestonesResponse* response)
 {
     response->clear_milestones();
@@ -410,6 +435,71 @@ grpc::Status server::AddMilestone(grpc::ServerContext* context, AddMilestoneRequ
     return grpc::Status::OK;
 }
 
+grpc::Status server::AddRequirement(grpc::ServerContext* context, AddRequirementRequest const* request, AddRequirementResponse* response)
+{
+    try
+    {
+        response->set_success(false);
+        response->clear_details();
+        response->set_code(0);
+
+        if (request->has_user() && session_is_valid(request->user()))
+        {
+            m_database->add_requirement(request->roadmap().id(), request->milestone(), request->required_milestone());
+            response->set_success(true);
+        }
+    }
+    catch (client_exception const& exp)
+    {
+        response->set_code(3);
+        response->set_details(exp.what());
+        response->set_success(false);
+    }
+    catch (std::exception const& exp)
+    {
+        std::cerr << std::format("Server: {}", exp.what());
+        response->set_code(3);
+        response->set_details("internal error");
+        response->set_success(false);
+    }
+
+    return grpc::Status::OK;
+}
+
+grpc::Status server::GetRequirements(grpc::ServerContext* context, GetRequirementsRequest const* request, GetRequirementsResponse* response)
+{
+    try
+    {
+        response->set_success(false);
+        response->clear_details();
+        response->set_code(0);
+
+        if (request->has_user() && session_is_valid(request->user()))
+        {
+            for (Milestone const& requirement: m_database->get_requirements(request->roadmap().id(), request->milestone().id(), request->milestone().level()))
+            {
+                Milestone* milestone = response->add_milestones();
+                *milestone = requirement;
+                response->set_success(true);
+            }
+        }
+    }
+    catch (client_exception const& exp)
+    {
+        response->set_code(3);
+        response->set_details(exp.what());
+        response->set_success(false);
+    }
+    catch (std::exception const& exp)
+    {
+        std::cerr << std::format("Server: {}", exp.what());
+        response->set_code(3);
+        response->set_details("internal error");
+        response->set_success(false);
+    }
+    return grpc::Status::OK;
+}
+
 grpc::Status server::CreateSubject(grpc::ServerContext* context, CreateSubjectRequest const* request, CreateSubjectResponse* response)
 {
     try
@@ -467,6 +557,78 @@ grpc::Status server::SearchSubjects(grpc::ServerContext* context, SearchSubjects
         std::cerr << std::format("Server: error while searching for subjects: {}", exp.what());
     }
 
+    return grpc::Status::OK;
+}
+
+grpc::Status server::ReorderMilestone(grpc::ServerContext* context, ReorderMilestoneRequest const* request, ReorderMilestoneResponse* response)
+{
+    try
+    {
+        if (request->has_user() && session_is_valid(request->user()))
+        {
+            if (!request->has_roadmap() || request->roadmap().id() == 0)
+            {
+                response->set_success(false);
+                response->set_details("invalid roadmap");
+                response->set_code(4);
+            }
+            else if (request->current_position() == 0 || request->target_position() == 0)
+            {
+                response->set_success(false);
+                response->set_details("invalid positions");
+                response->set_code(5);
+            }
+            else if (request->current_position() == request->target_position())
+            {
+                response->set_success(false);
+                response->set_details("same position is invalid");
+                response->set_code(6);
+            }
+            else
+            {
+                m_database->reorder_milestone(request->roadmap().id(), request->current_position(), request->target_position());
+                response->set_success(true);
+                response->clear_details();
+                response->set_code(0);
+            }
+        }
+        else
+        {
+            response->set_success(false);
+            response->set_details("invalid user");
+            response->set_code(3);
+        }
+    }
+    catch (flashback::client_exception const& exp)
+    {
+        response->set_success(false);
+        response->set_details(exp.what());
+        response->set_code(1);
+    }
+    catch (pqxx::unique_violation const& exp)
+    {
+        response->set_success(false);
+        response->set_details("duplicate request");
+        response->set_code(2);
+    }
+    catch (std::exception const& exp)
+    {
+        response->set_success(false);
+        response->set_details("internal error");
+        response->set_code(3);
+        std::cerr << std::format("Server: error while creating subject: {}", exp.what());
+    }
+
+    return grpc::Status::OK;
+}
+
+grpc::Status server::RemoveMilestone(grpc::ServerContext* context, RemoveMilestoneRequest const* request, RemoveMilestoneResponse* response)
+{
+    return grpc::Status::OK;
+}
+
+grpc::Status server::ChangeMilestoneLevel(grpc::ServerContext* context, ChangeMilestoneLevelRequest const* request, ChangeMilestoneLevelResponse* response)
+{
     return grpc::Status::OK;
 }
 

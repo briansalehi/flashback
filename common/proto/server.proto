@@ -18,21 +18,23 @@ service Server {
 
     // welcome page requests
     rpc CreateRoadmap(CreateRoadmapRequest) returns (CreateRoadmapResponse);
-    rpc AssignRoadmap(AssignRoadmapRequest) returns (AssignRoadmapResponse); // rename to CloneRoadmap?
     rpc GetRoadmaps(GetRoadmapsRequest) returns (GetRoadmapsResponse);
     rpc RemoveRoadmap(RemoveRoadmapRequest) returns (RemoveRoadmapResponse);
     rpc RenameRoadmap(RenameRoadmapRequest) returns (RenameRoadmapResponse);
     rpc SearchRoadmaps(SearchRoadmapsRequest) returns (SearchRoadmapsResponse);
+    rpc CloneRoadmap(CloneRoadmapRequest) returns (CloneRoadmapResponse);
     //rpc GetRoadmapWeight(GetRoadmapWeightRequest) returns (GetRoadmapWeightResponse);
 
     // roadmap page requests
     rpc GetMilestones(GetMilestonesRequest) returns (GetMilestonesResponse);
     rpc AddMilestone(AddMilestoneRequest) returns (AddMilestoneResponse);
+    rpc AddRequirement(AddRequirementRequest) returns (AddRequirementResponse);
+    rpc GetRequirements(GetRequirementsRequest) returns (GetRequirementsResponse);
     rpc CreateSubject(CreateSubjectRequest) returns (CreateSubjectResponse);
     rpc SearchSubjects(SearchSubjectsRequest) returns (SearchSubjectsResponse);
-    //rpc ReorderMilestone(ReorderMilestoneRequest) returns (ReorderMilestoneResponse);
-    //rpc RemoveMilestone(RemoveMilestoneRequest) returns (RemoveMilestoneResponse);
-    //rpc ChangeMilestoneLevel(ChangeMilestoneLevelRequest) returns (ChangeMilestoneLevelResponse);
+    rpc ReorderMilestone(ReorderMilestoneRequest) returns (ReorderMilestoneResponse);
+    rpc RemoveMilestone(RemoveMilestoneRequest) returns (RemoveMilestoneResponse);
+    rpc ChangeMilestoneLevel(ChangeMilestoneLevelRequest) returns (ChangeMilestoneLevelResponse);
 
     // subject page
     rpc RenameSubject(RenameSubjectRequest) returns (RenameSubjectResponse);

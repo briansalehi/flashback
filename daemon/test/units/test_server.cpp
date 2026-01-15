@@ -356,8 +356,8 @@ TEST_F(test_server, CreateRoadmap)
     quoted_roadmap.set_id(2);
     quoted_roadmap.set_name(name_with_quotes);
 
-    EXPECT_CALL(*m_mock_database, create_roadmap(roadmap_name)).Times(1).WillOnce(testing::Return(expected_roadmap));
-    EXPECT_CALL(*m_mock_database, create_roadmap(name_with_quotes)).Times(1).WillOnce(testing::Return(quoted_roadmap));
+    EXPECT_CALL(*m_mock_database, create_roadmap(m_user->id(), roadmap_name)).Times(1).WillOnce(testing::Return(expected_roadmap));
+    EXPECT_CALL(*m_mock_database, create_roadmap(m_user->id(), name_with_quotes)).Times(1).WillOnce(testing::Return(quoted_roadmap));
     EXPECT_CALL(*m_mock_database, get_user(m_user->token(), m_user->device())).Times(4).WillOnce(testing::Return(nullptr)).WillOnce(
         testing::Return(std::make_unique<flashback::User>(*m_user))).WillOnce(testing::Return(nullptr)).WillOnce(
         testing::Return(std::make_unique<flashback::User>(*m_user)));
@@ -392,39 +392,6 @@ TEST_F(test_server, CreateRoadmap)
     EXPECT_TRUE(response->has_roadmap()) << "Roadmaps with quotes in their names should be allowed";
     EXPECT_GT(response->roadmap().id(), 0);
     EXPECT_EQ(response->roadmap().name(), name_with_quotes);
-}
-
-TEST_F(test_server, AssignRoadmap)
-{
-    auto request{std::make_unique<flashback::AssignRoadmapRequest>()};
-    auto response{std::make_unique<flashback::AssignRoadmapResponse>()};
-    auto requesting_user{std::make_unique<flashback::User>(*m_user)};
-    auto database_retrieved_user{std::make_unique<flashback::User>(*m_user)};
-    auto roadmap{std::make_unique<flashback::Roadmap>()};
-
-    EXPECT_CALL(*m_mock_database, get_user(testing::A<std::string_view>(), testing::A<std::string_view>())).Times(1).WillOnce(
-        testing::Return(std::make_unique<flashback::User>(*database_retrieved_user)));
-    EXPECT_CALL(*m_mock_database, assign_roadmap(testing::A<uint64_t>(), testing::A<uint64_t>())).Times(1);
-
-    EXPECT_FALSE(request->has_roadmap());
-    EXPECT_FALSE(request->has_user());
-    EXPECT_NO_THROW(m_server->AssignRoadmap(m_server_context.get(), request.get(), response.get()));
-
-    roadmap->set_id(1);
-    roadmap->set_name("Overtime Working Specialist");
-    request->set_allocated_roadmap(roadmap.release());
-    EXPECT_TRUE(request->has_roadmap());
-    EXPECT_GT(request->roadmap().id(), 0);
-    EXPECT_FALSE(request->has_user());
-    EXPECT_FALSE(request->roadmap().name().empty());
-
-    EXPECT_NO_THROW(m_server->AssignRoadmap(m_server_context.get(), request.get(), response.get()));
-
-    request->set_allocated_user(requesting_user.release());
-    EXPECT_TRUE(request->has_user());
-    EXPECT_FALSE(request->user().token().empty());
-    EXPECT_FALSE(request->user().device().empty());
-    EXPECT_NO_THROW(m_server->AssignRoadmap(m_server_context.get(), request.get(), response.get()));
 }
 
 TEST_F(test_server, GetRoadmaps)
@@ -547,7 +514,7 @@ TEST_F(test_server, SearchRoadmaps)
     database_retrieved_user = std::make_unique<flashback::User>(*m_user);
     EXPECT_CALL(*m_mock_database, get_user(testing::A<std::string_view>(), testing::A<std::string_view>())).Times(1).WillOnce(
         testing::Return(std::make_unique<flashback::User>(*database_retrieved_user)));
-    EXPECT_CALL(*m_mock_database, create_roadmap(testing::A<std::string>())).Times(1).WillOnce(testing::Return(roadmap));
+    EXPECT_CALL(*m_mock_database, create_roadmap(testing::A<uint64_t>(), testing::A<std::string>())).Times(1).WillOnce(testing::Return(roadmap));
 
     grpc::Status status{};
     auto create_request{std::make_unique<flashback::CreateRoadmapRequest>()};
@@ -739,8 +706,7 @@ TEST_F(test_server, GetMilestones)
     requesting_roadmap.set_name("eBFP");
 
     for (auto const& m: std::vector<std::tuple<uint64_t, uint64_t, flashback::expertise_level, std::string>>{
-             {1, 10, flashback::expertise_level::surface, "eBPF"},
-             {2, 20, flashback::expertise_level::depth, "C++"},
+             {1, 10, flashback::expertise_level::surface, "eBPF"}, {2, 20, flashback::expertise_level::depth, "C++"},
              {3, 30, flashback::expertise_level::surface, "Rust"}})
     {
         flashback::Milestone milestone{};
@@ -770,4 +736,207 @@ TEST_F(test_server, GetMilestones)
         });
         EXPECT_NE(iter, database_provided_milestones.cend());
     }
+}
+
+TEST_F(test_server, AddRequirement)
+{
+    using testing::A;
+    using testing::An;
+    using testing::Return;
+
+    auto requesting_user{std::make_unique<flashback::User>(*m_user)};
+    auto database_provided_user{std::make_unique<flashback::User>(*m_user)};
+    auto roadmap{std::make_unique<flashback::Roadmap>()};
+    auto milestone{std::make_unique<flashback::Milestone>()};
+    auto required_milestone{std::make_unique<flashback::Milestone>()};
+    grpc::Status status{};
+    grpc::ServerContext context{};
+    flashback::AddRequirementRequest request{};
+    flashback::AddRequirementResponse response{};
+    std::vector<flashback::Milestone> milestones;
+
+    roadmap->set_id(1);
+    roadmap->set_name("Embedded Linux Software Engineering");
+    milestone->set_id(1);
+    milestone->set_name("Linux Kernel");
+    milestone->set_position(2);
+    milestone->set_level(flashback::expertise_level::surface);
+    required_milestone->set_id(2);
+    required_milestone->set_name("C");
+    required_milestone->set_position(1);
+    required_milestone->set_level(flashback::expertise_level::origin);
+    request.set_allocated_user(requesting_user.release());
+    request.set_allocated_roadmap(roadmap.release());
+    request.set_allocated_milestone(milestone.release());
+    request.set_allocated_required_milestone(required_milestone.release());
+
+    EXPECT_CALL(*m_mock_database, get_user(A<std::string_view>(), A<std::string_view>())).Times(1).WillOnce(Return(std::move(database_provided_user)));
+    EXPECT_CALL(*m_mock_database, add_requirement(A<uint64_t>(), A<flashback::Milestone>(), A<flashback::Milestone>())).Times(1);
+    EXPECT_NO_THROW(status = m_server->AddRequirement(&context, &request, &response));
+    EXPECT_TRUE(status.ok());
+    EXPECT_TRUE(response.success());
+    EXPECT_TRUE(response.details().empty());
+    EXPECT_EQ(response.code(), 0);
+}
+
+TEST_F(test_server, GetRequirements)
+{
+    using testing::A;
+    using testing::An;
+    using testing::Return;
+
+    auto requesting_user{std::make_unique<flashback::User>(*m_user)};
+    auto database_provided_user{std::make_unique<flashback::User>(*m_user)};
+    auto milestone{std::make_unique<flashback::Milestone>()};
+    std::vector<std::string> subject_names{"eBPF", "C++", "C", "GDB"};
+    std::vector<flashback::Milestone> required_milestones{};
+    grpc::Status status{};
+    grpc::ServerContext context{};
+    flashback::GetRequirementsRequest request{};
+    flashback::GetRequirementsResponse response{};
+    std::vector<flashback::Milestone> milestones;
+
+    milestone->set_id(1);
+    milestone->set_name("Linux Kernel");
+    milestone->set_position(2);
+    milestone->set_level(flashback::expertise_level::surface);
+
+    uint64_t index{};
+    for (std::string const& name: subject_names)
+    {
+        flashback::Milestone required_milestone{};
+        required_milestone.set_id(++index);
+        required_milestone.set_name(name);
+        required_milestone.set_position(++index);
+        required_milestone.set_level(flashback::expertise_level::surface);
+        required_milestones.push_back(required_milestone);
+    }
+
+    EXPECT_CALL(*m_mock_database, get_user(A<std::string_view>(), A<std::string_view>())).Times(2).WillOnce(Return(std::move(std::make_unique<flashback::User>(*m_user))))
+.WillOnce(Return(std::move(std::make_unique<flashback::User>(*m_user))));
+    EXPECT_CALL(*m_mock_database, get_requirements(A<uint64_t>(), A<uint64_t>(), An<flashback::expertise_level>())).Times(2).WillOnce(
+        Return(std::vector<flashback::Milestone>{})).WillOnce(Return(required_milestones));
+
+    EXPECT_NO_THROW(status = m_server->GetRequirements(&context, &request, &response));
+    EXPECT_TRUE(status.ok());
+    EXPECT_FALSE(response.success()) << "Requesting requirements with invalid user should be declined";
+
+    request.set_allocated_user(requesting_user.release());
+    EXPECT_NO_THROW(status = m_server->GetRequirements(&context, &request, &response));
+    EXPECT_TRUE(status.ok());
+    EXPECT_FALSE(response.success()) << "Requesting requirements with invalid milestone should be declined";
+
+    request.set_allocated_milestone(milestone.release());
+    EXPECT_NO_THROW(status = m_server->GetRequirements(&context, &request, &response));
+    EXPECT_TRUE(status.ok());
+    EXPECT_TRUE(response.success());
+    EXPECT_TRUE(response.details().empty());
+    EXPECT_EQ(response.code(), 0);
+}
+
+TEST_F(test_server, CloneRoadmap)
+{
+    using testing::A;
+    using testing::An;
+    using testing::Return;
+
+    auto requesting_user{std::make_unique<flashback::User>(*m_user)};
+    auto database_provided_user{std::make_unique<flashback::User>(*m_user)};
+    auto original_roadmap{std::make_unique<flashback::Roadmap>()};
+    grpc::Status status{};
+    grpc::ServerContext context{};
+    flashback::CloneRoadmapRequest request{};
+    flashback::CloneRoadmapResponse response{};
+    flashback::Roadmap database_provided_roadmap{};
+    std::string const roadmap_name{"Theoretical Physics"};
+
+    original_roadmap->set_id(1);
+    original_roadmap->set_name(roadmap_name);
+    database_provided_roadmap.set_id(2);
+    database_provided_roadmap.set_name(roadmap_name);
+
+    EXPECT_CALL(*m_mock_database, get_user(A<std::string_view>(), A<std::string_view>())).Times(2).WillOnce(Return(std::make_unique<flashback::User>(*m_user))).WillOnce(
+        Return(std::make_unique<flashback::User>(*m_user)));
+    EXPECT_CALL(*m_mock_database, clone_roadmap(A<uint64_t>(), A<uint64_t>())).Times(1).WillOnce(Return(database_provided_roadmap));
+
+    EXPECT_NO_THROW(status = m_server->CloneRoadmap(&context, &request, &response));
+    EXPECT_TRUE(status.ok());
+    EXPECT_FALSE(response.success()) << "Requesting to clone a roadmap from invalid user should be declined";
+    EXPECT_EQ(response.code(), 3) << "Invalid user error code should be a constant number";
+
+    request.set_allocated_user(requesting_user.release());
+    EXPECT_NO_THROW(status = m_server->CloneRoadmap(&context, &request, &response));
+    EXPECT_TRUE(status.ok());
+    EXPECT_FALSE(response.success()) << "Requesting to clone an invalid roadmap from a user should be declined";
+    EXPECT_EQ(response.code(), 4);
+
+    request.set_allocated_roadmap(original_roadmap.release());
+    EXPECT_NO_THROW(status = m_server->CloneRoadmap(&context, &request, &response));
+    EXPECT_TRUE(status.ok());
+    EXPECT_TRUE(response.has_roadmap());
+    EXPECT_EQ(response.roadmap().id(), database_provided_roadmap.id());
+    EXPECT_EQ(response.roadmap().name(), database_provided_roadmap.name());
+}
+
+TEST_F(test_server, ReorderMilestone)
+{
+    using testing::A;
+    using testing::An;
+    using testing::Return;
+
+    auto requesting_user{std::make_unique<flashback::User>(*m_user)};
+    auto database_provided_user{std::make_unique<flashback::User>(*m_user)};
+    auto roadmap{std::make_unique<flashback::Roadmap>()};
+    grpc::Status status{};
+    grpc::ServerContext context{};
+    flashback::ReorderMilestoneRequest request{};
+    flashback::ReorderMilestoneResponse response{};
+    flashback::Roadmap database_provided_roadmap{};
+    roadmap->set_id(1);
+    roadmap->set_name("Theoretical Physics");
+
+    EXPECT_CALL(*m_mock_database, get_user(A<std::string_view>(), A<std::string_view>())).Times(4).WillOnce(Return(std::make_unique<flashback::User>(*m_user))).WillOnce(Return(std::make_unique<flashback::User>(*m_user))).WillOnce(Return(std::make_unique<flashback::User>(*m_user))).WillOnce(Return(std::make_unique<flashback::User>(*m_user)));
+    EXPECT_CALL(*m_mock_database, reorder_milestone(A<uint64_t>(), 1, 3)).Times(1);
+
+    EXPECT_NO_THROW(status = m_server->ReorderMilestone(&context, &request, &response));
+    EXPECT_TRUE(status.ok());
+    EXPECT_FALSE(response.success()) << "Requesting to reorder a milestone from invalid user should be declined";
+    EXPECT_EQ(response.code(), 3) << "Error code for invalid user should be a constant number";
+
+    request.set_allocated_user(requesting_user.release());
+    EXPECT_NO_THROW(status = m_server->ReorderMilestone(&context, &request, &response));
+    EXPECT_TRUE(status.ok());
+    EXPECT_FALSE(response.success()) << "Requesting to reorder an invalid roadmap from a legitimate user should be declined";
+    EXPECT_EQ(response.code(), 4);
+
+    request.set_allocated_roadmap(roadmap.release());
+    request.set_current_position(0);
+    request.set_target_position(0);
+    EXPECT_NO_THROW(status = m_server->ReorderMilestone(&context, &request, &response));
+    EXPECT_TRUE(status.ok());
+    EXPECT_FALSE(response.success()) << "Requesting to reorder a milestone with incorrect position should be declined";
+    EXPECT_EQ(response.code(), 5);
+
+    request.set_current_position(1);
+    request.set_target_position(1);
+    EXPECT_NO_THROW(status = m_server->ReorderMilestone(&context, &request, &response));
+    EXPECT_TRUE(status.ok());
+    EXPECT_FALSE(response.success()) << "Requesting to reorder a milestone from a position to the same position should be declined";
+    EXPECT_EQ(response.code(), 6);
+
+    request.set_current_position(1);
+    request.set_target_position(3);
+    EXPECT_NO_THROW(status = m_server->ReorderMilestone(&context, &request, &response));
+    EXPECT_TRUE(status.ok());
+    EXPECT_TRUE(response.success()) << "Reordering two milestones from a position to another valid position should work";
+    EXPECT_TRUE(response.details().empty());
+    EXPECT_EQ(response.code(), 0);
+}
+
+TEST_F(test_server, RemoveMilestone)
+{
+}
+
+TEST_F(test_server, ChangeMilestoneLevel)
+{
 }

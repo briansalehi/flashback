@@ -13,37 +13,40 @@ public:
     ~database() override = default;
 
     // users
-    bool create_session(uint64_t user_id, std::string_view token, std::string_view device) override;
-    [[nodiscard]] uint64_t create_user(std::string_view name, std::string_view email, std::string_view hash) override;
-    void reset_password(uint64_t user_id, std::string_view hash) override;
-    [[nodiscard]] bool user_exists(std::string_view email) override;
-    [[nodiscard]] std::unique_ptr<User> get_user(std::string_view email) override;
-    [[nodiscard]] std::unique_ptr<User> get_user(std::string_view token, std::string_view device) override;
-    void revoke_session(uint64_t user_id, std::string_view token) override;
-    void revoke_sessions_except(uint64_t user_id, std::string_view token) override;
+    bool create_session(uint64_t user_id, std::string_view token, std::string_view device) const override;
+    [[nodiscard]] uint64_t create_user(std::string_view name, std::string_view email, std::string_view hash) const override;
+    void reset_password(uint64_t user_id, std::string_view hash) const override;
+    [[nodiscard]] bool user_exists(std::string_view email) const override;
+    [[nodiscard]] std::unique_ptr<User> get_user(std::string_view email) const override;
+    [[nodiscard]] std::unique_ptr<User> get_user(std::string_view token, std::string_view device) const override;
+    void revoke_session(uint64_t user_id, std::string_view token) const override;
+    void revoke_sessions_except(uint64_t user_id, std::string_view token) const override;
 
     // roadmaps
-    Roadmap create_roadmap(std::string name) override;
-    void assign_roadmap(uint64_t user_id, uint64_t roadmap_id) override;
-    [[nodiscard]] std::vector<Roadmap> get_roadmaps(uint64_t user_id) override;
-    void rename_roadmap(uint64_t roadmap_id, std::string_view modified_name) override;
-    void remove_roadmap(uint64_t roadmap_id) override;
-    [[nodiscard]] std::vector<Roadmap> search_roadmaps(std::string_view token) override;
+    [[nodiscard]] Roadmap create_roadmap(uint64_t const user_id, std::string name) const override;
+    [[nodiscard]] std::vector<Roadmap> get_roadmaps(uint64_t user_id) const override;
+    void rename_roadmap(uint64_t roadmap_id, std::string_view modified_name) const override;
+    void remove_roadmap(uint64_t roadmap_id) const override;
+    [[nodiscard]] std::vector<Roadmap> search_roadmaps(std::string_view token) const override;
 
     // subjects
-    Subject create_subject(std::string name) override;
-    std::map<uint64_t, Subject> search_subjects(std::string name) override;
-    void rename_subject(uint64_t id, std::string name) override;
+    [[nodiscard]] Subject create_subject(std::string name) const override;
+    [[nodiscard]] std::map<uint64_t, Subject> search_subjects(std::string name) const override;
+    void rename_subject(uint64_t id, std::string name) const override;
 
     // milestones
-    Milestone add_milestone(uint64_t subject_id, expertise_level subject_level, uint64_t roadmap_id) const override;
-    Milestone add_milestone(uint64_t subject_id, expertise_level subject_level, uint64_t roadmap_id, uint64_t position) const override;
-    std::vector<Milestone> get_milestones(uint64_t roadmap_id) const override;
-    void add_requirement(uint64_t roadmap_id, uint64_t subject_id, expertise_level level, uint64_t required_subject_id, expertise_level minimum_level) const override;
-    std::vector<Milestone> get_requiremnts(uint64_t roadmap_id, uint64_t subject_id) const override;
+    [[nodiscard]] Milestone add_milestone(uint64_t subject_id, expertise_level subject_level, uint64_t roadmap_id) const override;
+    [[nodiscard]] Milestone add_milestone(uint64_t subject_id, expertise_level subject_level, uint64_t roadmap_id, uint64_t position) const override;
+    [[nodiscard]] std::vector<Milestone> get_milestones(uint64_t roadmap_id) const override;
+    void add_requirement(uint64_t roadmap_id, Milestone milestone, Milestone required_milestone) const override;
+    [[nodiscard]] std::vector<Milestone> get_requirements(uint64_t roadmap_id, uint64_t subject_id, expertise_level subject_level) const override;
+    [[nodiscard]] Roadmap clone_roadmap(uint64_t user_id, uint64_t roadmap_id) const override;
+    void reorder_milestone(uint64_t roadmap_id, uint64_t current_position, uint64_t target_position) const override;
+    void remove_milestone(uint64_t roadmap_id, uint64_t subject_id) const override;
+    void change_milestone_level(uint64_t roadmap_id, uint64_t subject_id, expertise_level level) const override;
 
     // practices
-    expertise_level get_user_cognitive_level(uint64_t user_id, uint64_t subject_id) const override;
+    [[nodiscard]] expertise_level get_user_cognitive_level(uint64_t user_id, uint64_t subject_id) const override;
 
 private:
     template <typename... Args>

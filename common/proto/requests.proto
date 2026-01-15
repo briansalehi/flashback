@@ -25,8 +25,6 @@ message VerifyUserResponse { }
 // welcome page requests
 message CreateRoadmapRequest { User user = 1; string name = 2; }
 message CreateRoadmapResponse { Roadmap roadmap = 1; }
-message AssignRoadmapRequest { User user = 1; Roadmap roadmap = 2; }
-message AssignRoadmapResponse { }
 message GetRoadmapsRequest { User user = 1; }
 message GetRoadmapsResponse { repeated Roadmap roadmap = 1; }
 message RenameRoadmapRequest { User user = 1; Roadmap roadmap = 2; }
@@ -35,22 +33,28 @@ message RemoveRoadmapRequest { User user = 1; Roadmap roadmap = 2; }
 message RemoveRoadmapResponse { }
 message SearchRoadmapsRequest { User user = 1; string token = 2; }
 message SearchRoadmapsResponse { repeated Roadmap roadmap = 1; }
+message CloneRoadmapRequest { User user = 1; Roadmap roadmap = 2; }
+message CloneRoadmapResponse { Roadmap roadmap = 1; bool success = 2; string details = 3; uint32 code = 4; }
 
 // roadmap page requests
 message GetMilestonesRequest { User user = 1; uint64 roadmap_id = 2; }
 message GetMilestonesResponse { repeated Milestone milestones = 1; bool success = 2; string details = 3; uint32 code = 4; }
 message AddMilestoneRequest { User user = 1; uint64 subject_id = 2; expertise_level subject_level = 3; uint64 roadmap_id = 4; uint64 position = 5; }
 message AddMilestoneResponse { Milestone milestone = 1; bool success = 2; string details = 3; uint32 code = 4; }
+message AddRequirementRequest { User user = 1; Roadmap roadmap = 2; Milestone milestone = 3; Milestone required_milestone = 4; }
+message AddRequirementResponse { bool success = 1; string details = 2; uint32 code = 3; }
+message GetRequirementsRequest { User user = 1; Roadmap roadmap = 2; Milestone milestone = 3; }
+message GetRequirementsResponse { repeated Milestone milestones = 1; bool success = 2; string details = 3; uint32 code = 4; }
 message SearchSubjectsRequest { User user = 1; string token = 2; }
 message SearchSubjectsResponse { repeated MatchingSubject subjects = 1; }
 message CreateSubjectRequest { User user = 1; string name = 2; }
 message CreateSubjectResponse { bool success = 1; string details = 2; uint32 code = 3; }
-message ReorderMilestoneRequest { User user = 1; }
-message ReorderMilestoneResponse { }
-message RemoveMilestoneRequest { User user = 1; }
-message RemoveMilestoneResponse { }
-message ChangeMilestoneLevelRequest { User user = 1; }
-message ChangeMilestoneLevelResponse { }
+message ReorderMilestoneRequest { User user = 1; Roadmap roadmap = 2; uint64 current_position = 3; uint64 target_position = 4; }
+message ReorderMilestoneResponse { bool success = 1; string details = 2; uint32 code = 3; }
+message RemoveMilestoneRequest { User user = 1; Roadmap roadmap = 2; Milestone milestone = 3; }
+message RemoveMilestoneResponse { bool success = 1; string details = 2; uint32 code = 3; }
+message ChangeMilestoneLevelRequest { User user = 1; Roadmap roadmap = 2; Milestone milestone = 3; }
+message ChangeMilestoneLevelResponse { bool success = 1; string details = 2; uint32 code = 3; }
 
 // subject page
 message RenameSubjectRequest { User user = 1; uint64 id = 2; string name = 3; } // X

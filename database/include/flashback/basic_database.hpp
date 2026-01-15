@@ -15,14 +15,14 @@ public:
     virtual ~basic_database() = default;
 
     // user handling
-    virtual bool create_session(uint64_t user_id, std::string_view token, std::string_view device) = 0;
-    [[nodiscard]] virtual uint64_t create_user(std::string_view name, std::string_view email, std::string_view hash) = 0;
-    virtual void reset_password(uint64_t user_id, std::string_view hash) = 0;
-    [[nodiscard]] virtual bool user_exists(std::string_view email) = 0;
-    [[nodiscard]] virtual std::unique_ptr<User> get_user(std::string_view email) = 0;
-    [[nodiscard]] virtual std::unique_ptr<User> get_user(std::string_view token, std::string_view device) = 0;
-    virtual void revoke_session(uint64_t user_id, std::string_view token) = 0;
-    virtual void revoke_sessions_except(uint64_t user_id, std::string_view token) = 0;
+    [[nodiscard]] virtual bool create_session(uint64_t user_id, std::string_view token, std::string_view device) const = 0;
+    [[nodiscard]] virtual uint64_t create_user(std::string_view name, std::string_view email, std::string_view hash) const = 0;
+    virtual void reset_password(uint64_t user_id, std::string_view hash) const = 0;
+    [[nodiscard]] virtual bool user_exists(std::string_view email) const = 0;
+    [[nodiscard]] virtual std::unique_ptr<User> get_user(std::string_view email) const = 0;
+    [[nodiscard]] virtual std::unique_ptr<User> get_user(std::string_view token, std::string_view device) const = 0;
+    virtual void revoke_session(uint64_t user_id, std::string_view token) const = 0;
+    virtual void revoke_sessions_except(uint64_t user_id, std::string_view token) const = 0;
     //rename_user
     //change_user_email
     //verify_user
@@ -31,32 +31,32 @@ public:
     //unlock_user
 
     // roadmaps
-    virtual Roadmap create_roadmap(std::string name) = 0;
-    virtual void assign_roadmap(uint64_t user_id, uint64_t roadmap_id) = 0; // clone?
-    [[nodiscard]] virtual std::vector<Roadmap> get_roadmaps(uint64_t user_id) = 0;
-    virtual void rename_roadmap(uint64_t roadmap_id, std::string_view modified_name) = 0;
-    virtual void remove_roadmap(uint64_t roadmap_id) = 0;
-    [[nodiscard]] virtual std::vector<Roadmap> search_roadmaps(std::string_view token) = 0;
+    [[nodiscard]] virtual Roadmap create_roadmap(uint64_t user_id, std::string name) const = 0;
+    [[nodiscard]] virtual std::vector<Roadmap> get_roadmaps(uint64_t user_id) const = 0;
+    virtual void rename_roadmap(uint64_t roadmap_id, std::string_view modified_name) const = 0;
+    virtual void remove_roadmap(uint64_t roadmap_id) const = 0;
+    [[nodiscard]] virtual std::vector<Roadmap> search_roadmaps(std::string_view token) const = 0;
+    [[nodiscard]] virtual Roadmap clone_roadmap(uint64_t user_id, uint64_t roadmap_id) const = 0;
     //get_roadmap_weight
 
     // milestones
-    virtual Milestone add_milestone(uint64_t subject_id, expertise_level subject_level, uint64_t roadmap_id) const = 0;
-    virtual Milestone add_milestone(uint64_t subject_id, expertise_level subject_level, uint64_t roadmap_id, uint64_t position) const = 0;
-    virtual std::vector<Milestone> get_milestones(uint64_t roadmap_id) const = 0;
-    virtual void add_requirement(uint64_t roadmap_id, uint64_t subject_id, expertise_level level, uint64_t required_subject_id, expertise_level minimum_level) const = 0;
-    virtual std::vector<Milestone> get_requiremnts(uint64_t roadmap_id, uint64_t subject_id) const = 0;
-    //reorder_milestone
-    //remove_milestone
-    //change_milestone_level
+    [[nodiscard]] virtual Milestone add_milestone(uint64_t subject_id, expertise_level subject_level, uint64_t roadmap_id) const = 0;
+    [[nodiscard]] virtual Milestone add_milestone(uint64_t subject_id, expertise_level subject_level, uint64_t roadmap_id, uint64_t position) const = 0;
+    [[nodiscard]] virtual std::vector<Milestone> get_milestones(uint64_t roadmap_id) const = 0;
+    virtual void add_requirement(uint64_t roadmap_id, Milestone milestone, Milestone required_milestone) const = 0;
+    [[nodiscard]] virtual std::vector<Milestone> get_requirements(uint64_t roadmap_id, uint64_t subject_id, expertise_level subject_level) const = 0;
+    virtual void reorder_milestone(uint64_t roadmap_id, uint64_t current_position, uint64_t target_position) const = 0;
+    virtual void remove_milestone(uint64_t roadmap_id, uint64_t subject_id) const = 0;
+    virtual void change_milestone_level(uint64_t roadmap_id, uint64_t subject_id, expertise_level level) const = 0;
 
     // subjects
-    virtual Subject create_subject(std::string name) = 0;
-    virtual void rename_subject(uint64_t id, std::string name) = 0;
+    [[nodiscard]] virtual Subject create_subject(std::string name) const = 0;
+    virtual void rename_subject(uint64_t id, std::string name) const = 0;
     //remove_subject
     //merge_subjects
     //add_resource_to_subject
     //drop_resource_from_subject
-    virtual std::map<uint64_t, Subject> search_subjects(std::string name) = 0;
+    [[nodiscard]] virtual std::map<uint64_t, Subject> search_subjects(std::string name) const = 0;
     //user_is_qualified
     //get_subject_weight
 
@@ -159,7 +159,7 @@ public:
     //get_assimilation_coverage
     //expand_assessment
     //diminish_assessment
-    virtual expertise_level get_user_cognitive_level(uint64_t user_id, uint64_t subject_id) const = 0;
+    [[nodiscard]] virtual expertise_level get_user_cognitive_level(uint64_t user_id, uint64_t subject_id) const = 0;
 
     // nerves
     //create_nerve

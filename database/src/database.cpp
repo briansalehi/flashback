@@ -36,7 +36,7 @@ database::database(std::string name, std::string address, std::string port)
     }
 }
 
-bool database::create_session(uint64_t user_id, std::string_view token, std::string_view device)
+bool database::create_session(uint64_t const user_id, std::string_view token, std::string_view device) const
 {
     bool result{};
 
@@ -48,18 +48,19 @@ bool database::create_session(uint64_t user_id, std::string_view token, std::str
     catch (std::exception const& exp)
     {
         std::cerr << exp.what() << std::endl;
+        result = false;
     }
 
     return result;
 }
 
-uint64_t database::create_user(std::string_view name, std::string_view email, std::string_view hash)
+uint64_t database::create_user(std::string_view name, std::string_view email, std::string_view hash) const
 {
     uint64_t user_id{};
 
     try
     {
-        pqxx::result result{query("select * from create_user($1, $2, $3)", name, email, hash)};
+        pqxx::result const result{query("select * from create_user($1, $2, $3)", name, email, hash)};
 
         if (result.size() != 1)
         {
@@ -76,16 +77,16 @@ uint64_t database::create_user(std::string_view name, std::string_view email, st
     return user_id;
 }
 
-void database::reset_password(uint64_t user_id, std::string_view hash)
+void database::reset_password(uint64_t const user_id, std::string_view hash) const
 {
     exec("call reset_password($1, $2)", user_id, hash);
 }
 
-bool database::user_exists(std::string_view email)
+bool database::user_exists(std::string_view email) const
 {
     bool exists{false};
 
-    if (pqxx::result result{query("select * from user_exists($1)", email)}; !result.empty())
+    if (pqxx::result const result{query("select * from user_exists($1)", email)}; !result.empty())
     {
         exists = result.at(0).at(0).as<bool>();
     }
@@ -93,11 +94,11 @@ bool database::user_exists(std::string_view email)
     return exists;
 }
 
-std::unique_ptr<User> database::get_user(std::string_view email)
+std::unique_ptr<User> database::get_user(std::string_view email) const
 {
     std::unique_ptr<User> user{nullptr};
 
-    if (pqxx::result result_set{query("select * from get_user($1)", email)}; !result_set.empty())
+    if (pqxx::result const result_set{query("select * from get_user($1)", email)}; !result_set.empty())
     {
         pqxx::row result{result_set.at(0)};
         user = std::make_unique<User>();
@@ -114,9 +115,7 @@ std::unique_ptr<User> database::get_user(std::string_view email)
         if (!result.at("device").is_null()) user->set_device(result.at("device").as<std::string>());
 
         std::tm tm{};
-
-        std::string date_str{result.at("joined").as<std::string>()};
-        std::istringstream stream{date_str};
+        std::istringstream stream{result.at("joined").as<std::string>()};
 
         stream >> std::get_time(&tm, "%Y-%m-%d");
         time_t epoch{std::mktime(&tm)};
@@ -124,8 +123,7 @@ std::unique_ptr<User> database::get_user(std::string_view email)
         auto timestamp{std::make_unique<google::protobuf::Timestamp>(google::protobuf::util::TimeUtil::SecondsToTimestamp(epoch))};
         user->set_allocated_joined(timestamp.release());
 
-        std::string state_str{result.at("state").as<std::string>()};
-        if (state_str == "active") user->set_state(User::active);
+        if (std::string const state_str{result.at("state").as<std::string>()}; state_str == "active") user->set_state(User::active);
         else if (state_str == "inactive") user->set_state(User::inactive);
         else if (state_str == "suspended") user->set_state(User::suspended);
         else if (state_str == "banned") user->set_state(User::banned);
@@ -135,13 +133,11 @@ std::unique_ptr<User> database::get_user(std::string_view email)
     return user;
 }
 
-std::unique_ptr<User> database::get_user(std::string_view token, std::string_view device)
+std::unique_ptr<User> database::get_user(std::string_view token, std::string_view device) const
 {
     std::unique_ptr<User> user{nullptr};
 
-    pqxx::result result_set{query("select * from get_user($1, $2)", token, device)};
-
-    if (result_set.size() == 1)
+    if (pqxx::result const result_set{query("select * from get_user($1, $2)", token, device)}; result_set.size() == 1)
     {
         pqxx::row result{result_set.at(0)};
         user = std::make_unique<User>();
@@ -158,9 +154,7 @@ std::unique_ptr<User> database::get_user(std::string_view token, std::string_vie
         if (!result.at("device").is_null()) user->set_device(result.at("device").as<std::string>());
 
         std::tm tm{};
-
-        std::string date_str{result.at("joined").as<std::string>()};
-        std::istringstream stream{date_str};
+        std::istringstream stream{result.at("joined").as<std::string>()};
 
         stream >> std::get_time(&tm, "%Y-%m-%d");
         time_t epoch{std::mktime(&tm)};
@@ -168,8 +162,7 @@ std::unique_ptr<User> database::get_user(std::string_view token, std::string_vie
         auto timestamp{std::make_unique<google::protobuf::Timestamp>(google::protobuf::util::TimeUtil::SecondsToTimestamp(epoch))};
         user->set_allocated_joined(timestamp.release());
 
-        std::string state_str{result.at("state").as<std::string>()};
-        if (state_str == "active") user->set_state(User::active);
+        if (std::string const state_str{result.at("state").as<std::string>()}; state_str == "active") user->set_state(User::active);
         else if (state_str == "inactive") user->set_state(User::inactive);
         else if (state_str == "suspended") user->set_state(User::suspended);
         else if (state_str == "banned") user->set_state(User::banned);
@@ -179,43 +172,37 @@ std::unique_ptr<User> database::get_user(std::string_view token, std::string_vie
     return user;
 }
 
-void database::revoke_session(uint64_t user_id, std::string_view token)
+void database::revoke_session(uint64_t const user_id, std::string_view token) const
 {
     exec("call revoke_session($1, $2)", user_id, token);
 }
 
-void database::revoke_sessions_except(uint64_t user_id, std::string_view token)
+void database::revoke_sessions_except(uint64_t const user_id, std::string_view token) const
 {
     exec("call revoke_sessions_except($1, $2)", user_id, token);
 }
 
-Roadmap database::create_roadmap(std::string name)
+Roadmap database::create_roadmap(uint64_t const user_id, std::string name) const
 {
     if (name.empty())
     {
         throw client_exception("roadmap name is empty");
     }
 
-    pqxx::result result{query("select create_roadmap($1)", name)};
-    uint64_t id = result.at(0).at(0).as<uint64_t>();
+    pqxx::result const result{query("select create_roadmap($1, $2)", user_id, name)};
+    uint64_t const roadmap_id{result.at(0).at(0).as<uint64_t>()};
     Roadmap roadmap{};
-    roadmap.set_id(id);
+    roadmap.set_id(roadmap_id);
     roadmap.set_name(std::move(name));
 
     return roadmap;
 }
 
-void database::assign_roadmap(uint64_t user_id, uint64_t roadmap_id)
+std::vector<Roadmap> database::get_roadmaps(uint64_t const user_id) const
 {
-    exec("call assign_roadmap($1, $2)", user_id, roadmap_id);
-}
-
-std::vector<Roadmap> database::get_roadmaps(uint64_t user_id)
-{
-    pqxx::result const result{query("select id, name from get_roadmaps($1) order by name", user_id)};
     std::vector<Roadmap> roadmaps{};
 
-    for (pqxx::row row: result)
+    for (pqxx::result const result{query("select id, name from get_roadmaps($1) order by name", user_id)}; pqxx::row row: result)
     {
         Roadmap roadmap{};
         roadmap.set_id(row.at("id").as<std::uint64_t>());
@@ -226,7 +213,7 @@ std::vector<Roadmap> database::get_roadmaps(uint64_t user_id)
     return roadmaps;
 }
 
-void database::rename_roadmap(uint64_t roadmap_id, std::string_view modified_name)
+void database::rename_roadmap(uint64_t const roadmap_id, std::string_view modified_name) const
 {
     if (modified_name.empty())
     {
@@ -236,12 +223,12 @@ void database::rename_roadmap(uint64_t roadmap_id, std::string_view modified_nam
     exec("call rename_roadmap($1, $2)", roadmap_id, modified_name);
 }
 
-void database::remove_roadmap(uint64_t roadmap_id)
+void database::remove_roadmap(uint64_t const roadmap_id) const
 {
     exec("call remove_roadmap($1)", roadmap_id);
 }
 
-std::vector<Roadmap> database::search_roadmaps(std::string_view token)
+std::vector<Roadmap> database::search_roadmaps(std::string_view token) const
 {
     std::vector<Roadmap> roadmaps;
     roadmaps.reserve(5);
@@ -257,7 +244,7 @@ std::vector<Roadmap> database::search_roadmaps(std::string_view token)
     return roadmaps;
 }
 
-Subject database::create_subject(std::string name)
+Subject database::create_subject(std::string name) const
 {
     if (name.empty())
     {
@@ -272,7 +259,7 @@ Subject database::create_subject(std::string name)
     return subject;
 }
 
-std::map<uint64_t, Subject> database::search_subjects(std::string name)
+std::map<uint64_t, Subject> database::search_subjects(std::string name) const
 {
     std::map<uint64_t, Subject> subjects{};
 
@@ -294,7 +281,7 @@ std::map<uint64_t, Subject> database::search_subjects(std::string name)
     return subjects;
 }
 
-void database::rename_subject(uint64_t id, std::string name)
+void database::rename_subject(uint64_t const id, std::string name) const
 {
     if (name.empty())
     {
@@ -306,21 +293,8 @@ void database::rename_subject(uint64_t id, std::string name)
 
 Milestone database::add_milestone(uint64_t const subject_id, expertise_level const subject_level, uint64_t const roadmap_id) const
 {
-    std::string level;
     Milestone milestone;
-
-    switch (subject_level)
-    {
-    case flashback::expertise_level::surface: level = "surface";
-        break;
-    case flashback::expertise_level::depth: level = "depth";
-        break;
-    case flashback::expertise_level::origin: level = "origin";
-        break;
-    default: throw client_exception{"invalid expertise level"};
-    }
-
-    pqxx::result const result = query("select add_milestone($1, $2, $3) as id", subject_id, level, roadmap_id);
+    pqxx::result const result = query("select add_milestone($1, $2, $3) as id", subject_id, level_to_string(subject_level), roadmap_id);
     milestone.set_id(subject_id);
     milestone.set_position(result.at(0).at("id").as<uint64_t>());
     milestone.set_level(subject_level);
@@ -352,10 +326,11 @@ Milestone database::add_milestone(uint64_t const subject_id, expertise_level con
     return milestone;
 }
 
-std::vector<Milestone> database::get_milestones(uint64_t roadmap_id) const
+std::vector<Milestone> database::get_milestones(uint64_t const roadmap_id) const
 {
     std::vector<Milestone> milestones{};
-    for (pqxx::row const& row: query("select level, position, id, name from get_milestones($1)", roadmap_id))
+
+    for (pqxx::row const& row: query("select level, position, id, name from get_milestones($1) order by position", roadmap_id))
     {
         uint64_t const id = row.at("id").as<uint64_t>();
         uint64_t const position = row.at("position").as<uint64_t>();
@@ -369,29 +344,61 @@ std::vector<Milestone> database::get_milestones(uint64_t roadmap_id) const
         milestone.set_level(to_level(level));
         milestones.push_back(milestone);
     }
+
     return milestones;
 }
 
-void database::add_requirement(uint64_t roadmap_id, uint64_t subject_id, expertise_level level, uint64_t required_subject_id, expertise_level minimum_level) const
+void database::add_requirement(uint64_t const roadmap_id, Milestone const milestone, Milestone const required_milestone) const
 {
-    exec("call add_requirement($1, $2, $3, $4, $5)", roadmap_id, subject_id, level_to_string(level), required_subject_id, level_to_string(minimum_level));
+    exec("call add_requirement($1, $2, $3, $4, $5)", roadmap_id, milestone.id(), level_to_string(milestone.level()), required_milestone.id(),
+         level_to_string(required_milestone.level()));
 }
 
-std::vector<Milestone> database::get_requiremnts(uint64_t roadmap_id, uint64_t subject_id) const
+std::vector<Milestone> database::get_requirements(uint64_t const roadmap_id, uint64_t const subject_id, expertise_level const subject_level) const
 {
     std::vector<Milestone> requirements{};
 
-    for (auto const& row: query("select subject, level, position, name from get_requirements($1, $2)", roadmap_id, subject_id))
+    for (auto const& row: query("select subject, position, name, required_level from get_requirements($1, $2, $3)", roadmap_id, subject_id,
+                                level_to_string(subject_level)))
     {
         Milestone milestone;
         milestone.set_id(row.at("subject").as<uint64_t>());
         milestone.set_position(row.at("position").as<uint64_t>());
         milestone.set_name(row.at("name").as<std::string>());
-        milestone.set_level(to_level(row.at("level").as<std::string>()));
+        milestone.set_level(to_level(row.at("required_level").as<std::string>()));
         requirements.push_back(milestone);
     }
 
     return requirements;
+}
+
+Roadmap database::clone_roadmap(uint64_t const user_id, uint64_t const roadmap_id) const
+{
+    Roadmap roadmap{};
+    roadmap.clear_id();
+    roadmap.clear_name();
+
+    for (pqxx::row const& row: query("select id, name from clone_roadmap($1, $2)", user_id, roadmap_id))
+    {
+        roadmap.set_id(row.at("id").as<uint64_t>());
+        roadmap.set_name(row.at("name").as<std::string>());
+    }
+
+    return roadmap;
+}
+
+void database::reorder_milestone(uint64_t const roadmap_id, uint64_t const current_position, uint64_t const target_position) const
+{
+    exec("call reorder_milestone($1, $2, $3)", roadmap_id, current_position, target_position);
+}
+
+void database::remove_milestone(uint64_t roadmap_id, uint64_t subject_id) const
+{
+    exec("call remove_milestone($1, $2)", roadmap_id, subject_id);
+}
+
+void database::change_milestone_level(uint64_t roadmap_id, uint64_t subject_id, expertise_level level) const
+{
 }
 
 expertise_level database::get_user_cognitive_level(uint64_t user_id, uint64_t subject_id) const

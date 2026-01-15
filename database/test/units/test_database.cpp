@@ -256,42 +256,23 @@ TEST_F(test_database, CreateRoadmap)
     flashback::Roadmap primary_roadmap{};
     flashback::Roadmap secondary_roadmap{};
     flashback::Roadmap quoted_roadmap{};
+    flashback::Roadmap failed_roadmap{};
     primary_roadmap.set_name("Social Anxiety Expert");
     secondary_roadmap.set_name("Pointless Speech Specialist");
     quoted_roadmap.set_name("O'Reilly Technical Editor");
 
-    EXPECT_NO_THROW(primary_roadmap = m_database->create_roadmap(primary_roadmap.name()));
+    EXPECT_NO_THROW(primary_roadmap = m_database->create_roadmap(m_user->id(), primary_roadmap.name()));
     EXPECT_GT(primary_roadmap.id(), 0);
 
-    EXPECT_NO_THROW(secondary_roadmap = m_database->create_roadmap(secondary_roadmap.name()));
+    EXPECT_NO_THROW(secondary_roadmap = m_database->create_roadmap(m_user->id(), secondary_roadmap.name()));
     EXPECT_GT(secondary_roadmap.id(), 0);
 
-    EXPECT_THROW(m_database->create_roadmap(primary_roadmap.name()), pqxx::unique_violation);
+    EXPECT_THROW(failed_roadmap = m_database->create_roadmap(m_user->id(), primary_roadmap.name()), pqxx::unique_violation);
 
-    EXPECT_NO_THROW(quoted_roadmap = m_database->create_roadmap(quoted_roadmap.name()));
+    EXPECT_NO_THROW(quoted_roadmap = m_database->create_roadmap(m_user->id(), quoted_roadmap.name()));
     EXPECT_GT(quoted_roadmap.id(), 0);
 
-    EXPECT_THROW(m_database->create_roadmap(""), flashback::client_exception);
-}
-
-TEST_F(test_database, AssignRoadmapToUser)
-{
-    flashback::Roadmap primary_roadmap{};
-    flashback::Roadmap secondary_roadmap{};
-    flashback::Roadmap non_existing_roadmap{};
-    primary_roadmap.set_name("Social Anxiety Expert");
-    secondary_roadmap.set_name("Pointless Speech Specialist");
-    non_existing_roadmap.set_id(1000);
-
-    ASSERT_NO_THROW(primary_roadmap = m_database->create_roadmap(primary_roadmap.name()));
-    ASSERT_GT(primary_roadmap.id(), 0);
-
-    ASSERT_NO_THROW(secondary_roadmap = m_database->create_roadmap(secondary_roadmap.name()));
-    ASSERT_GT(secondary_roadmap.id(), 0);
-
-    EXPECT_NO_THROW(m_database->assign_roadmap(m_user->id(), primary_roadmap.id()));
-    EXPECT_NO_THROW(m_database->assign_roadmap(m_user->id(), secondary_roadmap.id()));
-    EXPECT_THROW(m_database->assign_roadmap(m_user->id(), non_existing_roadmap.id()), pqxx::foreign_key_violation);
+    EXPECT_THROW(failed_roadmap = m_database->create_roadmap(m_user->id(), ""), flashback::client_exception);
 }
 
 TEST_F(test_database, GetRoadmaps)
@@ -305,25 +286,12 @@ TEST_F(test_database, GetRoadmaps)
     EXPECT_NO_THROW(roadmaps = m_database->get_roadmaps(m_user->id()));
     EXPECT_THAT(roadmaps, testing::IsEmpty()) << "No roadmap was created so far, container should be empty";
 
-    ASSERT_NO_THROW(primary_roadmap = m_database->create_roadmap(primary_roadmap.name()));
+    ASSERT_NO_THROW(primary_roadmap = m_database->create_roadmap(m_user->id(), primary_roadmap.name()));
     ASSERT_GT(primary_roadmap.id(), 0);
     primary_roadmap.set_id(primary_roadmap.id());
 
-    EXPECT_NO_THROW(roadmaps = m_database->get_roadmaps(m_user->id()));
-    EXPECT_THAT(roadmaps, testing::IsEmpty()) << "A roadmap was created but is not assigned to the user yet, container should be empty";
-
-    ASSERT_NO_THROW(secondary_roadmap = m_database->create_roadmap(secondary_roadmap.name()));
+    ASSERT_NO_THROW(secondary_roadmap = m_database->create_roadmap(m_user->id(), secondary_roadmap.name()));
     ASSERT_GT(secondary_roadmap.id(), 0);
-
-    EXPECT_NO_THROW(roadmaps = m_database->get_roadmaps(m_user->id()));
-    EXPECT_THAT(roadmaps, testing::IsEmpty()) << "Regardless of how many roadmaps exist, only the assigned roadmaps should return which is none so far";
-
-    EXPECT_NO_THROW(m_database->assign_roadmap(m_user->id(), primary_roadmap.id()));
-
-    roadmaps = m_database->get_roadmaps(m_user->id());
-    EXPECT_THAT(roadmaps, testing::SizeIs(1)) << "One of the two existing roadmaps assigned to the user, so container should hold one roadmap";
-
-    EXPECT_NO_THROW(m_database->assign_roadmap(m_user->id(), secondary_roadmap.id()));
 
     roadmaps = m_database->get_roadmaps(m_user->id());
     EXPECT_THAT(roadmaps, testing::SizeIs(2)) << "Both of the existing roadmaps was assigned to user, so container should contain both";
@@ -337,9 +305,8 @@ TEST_F(test_database, RenameRoadmap)
     std::string name_with_quotes{"Underestimated Tasks' Deadline Scheduler"};
     std::vector<flashback::Roadmap> roadmaps{};
 
-    ASSERT_NO_THROW(roadmap = m_database->create_roadmap(roadmap.name()));
+    ASSERT_NO_THROW(roadmap = m_database->create_roadmap(m_user->id(), roadmap.name()));
     ASSERT_GT(roadmap.id(), 0);
-    ASSERT_NO_THROW(m_database->assign_roadmap(m_user->id(), roadmap.id()));
 
     EXPECT_NO_THROW(m_database->rename_roadmap(roadmap.id(), modified_name));
     ASSERT_NO_THROW(roadmaps = m_database->get_roadmaps(m_user->id()));
@@ -364,12 +331,10 @@ TEST_F(test_database, RemoveRoadmap)
     secondary_roadmap.set_name("Variable Naming Specialist");
     std::vector<flashback::Roadmap> roadmaps;
 
-    ASSERT_NO_THROW(primary_roadmap = m_database->create_roadmap(primary_roadmap.name()));
-    ASSERT_NO_THROW(secondary_roadmap = m_database->create_roadmap(secondary_roadmap.name()));
+    ASSERT_NO_THROW(primary_roadmap = m_database->create_roadmap(m_user->id(), primary_roadmap.name()));
+    ASSERT_NO_THROW(secondary_roadmap = m_database->create_roadmap(m_user->id(), secondary_roadmap.name()));
     ASSERT_GT(primary_roadmap.id(), 0);
     ASSERT_GT(secondary_roadmap.id(), 0);
-    ASSERT_NO_THROW(m_database->assign_roadmap(m_user->id(), primary_roadmap.id()));
-    ASSERT_NO_THROW(m_database->assign_roadmap(m_user->id(), secondary_roadmap.id()));
 
     EXPECT_NO_THROW(m_database->remove_roadmap(primary_roadmap.id()));
     ASSERT_THAT(m_database->get_roadmaps(m_user->id()), testing::SizeIs(1)) << "Of two existing roadmaps, one should remain";
@@ -407,8 +372,7 @@ TEST_F(test_database, SearchRoadmaps)
     for (std::string const& roadmap_name: names)
     {
         flashback::Roadmap roadmap{};
-        ASSERT_NO_THROW(roadmap = m_database->create_roadmap(roadmap_name));
-        ASSERT_NO_THROW(m_database->assign_roadmap(m_user->id(), roadmap.id()));
+        ASSERT_NO_THROW(roadmap = m_database->create_roadmap(m_user->id(), roadmap_name));
     }
 
     EXPECT_NO_THROW(search_results = m_database->search_roadmaps("Management"));
@@ -506,9 +470,8 @@ TEST_F(test_database, AddMilestone)
     flashback::Roadmap expected_roadmap{};
     expected_roadmap.set_name("Open Source Expert");
 
-    ASSERT_NO_THROW(returning_roadmap = m_database->create_roadmap(expected_roadmap.name()));
+    ASSERT_NO_THROW(returning_roadmap = m_database->create_roadmap(m_user->id(), expected_roadmap.name()));
     ASSERT_GT(returning_roadmap.id(), 0);
-    ASSERT_NO_THROW(m_database->assign_roadmap(m_user->id(), returning_roadmap.id()));
 
     for (auto const& name: subject_names)
     {
@@ -533,9 +496,8 @@ TEST_F(test_database, AddMilestoneWithPosition)
     flashback::Roadmap expected_roadmap{};
     expected_roadmap.set_name("Open Source Expert");
 
-    ASSERT_NO_THROW(returning_roadmap = m_database->create_roadmap(expected_roadmap.name()));
+    ASSERT_NO_THROW(returning_roadmap = m_database->create_roadmap(m_user->id(), expected_roadmap.name()));
     ASSERT_GT(returning_roadmap.id(), 0);
-    ASSERT_NO_THROW(m_database->assign_roadmap(m_user->id(), returning_roadmap.id()));
 
     uint64_t position{};
 
@@ -544,11 +506,12 @@ TEST_F(test_database, AddMilestoneWithPosition)
         ++position;
         flashback::Subject returning_subject;
         flashback::Subject expected_subject;
+        flashback::Milestone milestone;
         expected_subject.set_name(name);
         ASSERT_NO_THROW(returning_subject = m_database->create_subject(expected_subject.name()));
         ASSERT_EQ(returning_subject.name(), expected_subject.name());
         ASSERT_GT(returning_subject.id(), 0);
-        EXPECT_NO_THROW(m_database->add_milestone(returning_subject.id(), flashback::expertise_level::surface, returning_roadmap.id(), position));
+        EXPECT_NO_THROW(milestone = m_database->add_milestone(returning_subject.id(), flashback::expertise_level::surface, returning_roadmap.id(), position));
     }
 }
 
@@ -560,9 +523,8 @@ TEST_F(test_database, GetMilestones)
     flashback::Roadmap expected_roadmap{};
     expected_roadmap.set_name("Open Source Expert");
 
-    ASSERT_NO_THROW(returning_roadmap = m_database->create_roadmap(expected_roadmap.name()));
+    ASSERT_NO_THROW(returning_roadmap = m_database->create_roadmap(m_user->id(), expected_roadmap.name()));
     ASSERT_GT(returning_roadmap.id(), 0);
-    ASSERT_NO_THROW(m_database->assign_roadmap(m_user->id(), returning_roadmap.id()));
 
     for (auto const& name: subject_names)
     {
@@ -591,8 +553,200 @@ TEST_F(test_database, GetMilestones)
 
 TEST_F(test_database, AddRequirement)
 {
+    flashback::Roadmap roadmap{};
+    flashback::Subject dependent_subject{};
+    flashback::Subject required_subject{};
+    flashback::Milestone dependent_milestone{};
+    flashback::Milestone required_milestone{};
+    roadmap.set_name("Linux Device Driver Developer");
+    dependent_subject.set_name("QEMU");
+    required_subject.set_name("Linux System Administration");
+    dependent_milestone.set_level(flashback::expertise_level::surface);
+    required_milestone.set_level(flashback::expertise_level::depth);
+
+    ASSERT_NO_THROW(roadmap = m_database->create_roadmap(m_user->id(), roadmap.name()));
+    ASSERT_GT(roadmap.id(), 0);
+    ASSERT_NO_THROW(dependent_subject = m_database->create_subject(dependent_subject.name()));
+    ASSERT_GT(dependent_subject.id(), 0);
+    ASSERT_NO_THROW(required_subject = m_database->create_subject(required_subject.name()));
+    ASSERT_GT(dependent_subject.id(), 0);
+    ASSERT_NO_THROW(dependent_milestone = m_database->add_milestone(dependent_subject.id(), dependent_milestone.level(), roadmap.id()));
+    ASSERT_EQ(dependent_milestone.id(), dependent_subject.id());
+    ASSERT_NO_THROW(required_milestone = m_database->add_milestone(required_subject.id(), required_milestone.level(), roadmap.id()));
+    ASSERT_EQ(required_milestone.id(), required_subject.id());
+    EXPECT_NO_THROW(m_database->add_requirement(roadmap.id(), dependent_milestone, required_milestone));
 }
 
 TEST_F(test_database, GetRequirements)
 {
+    flashback::Roadmap roadmap{};
+    flashback::Subject dependent_subject{};
+    flashback::Subject required_subject{};
+    flashback::Milestone dependent_milestone{};
+    flashback::Milestone required_milestone{};
+    std::vector<flashback::Milestone> requirements{};
+    roadmap.set_name("Linux Device Driver Developer");
+    dependent_subject.set_name("QEMU");
+    required_subject.set_name("Linux System Administration");
+    dependent_milestone.set_level(flashback::expertise_level::surface);
+    required_milestone.set_level(flashback::expertise_level::depth);
+
+    ASSERT_NO_THROW(roadmap = m_database->create_roadmap(m_user->id(), roadmap.name()));
+    ASSERT_GT(roadmap.id(), 0);
+    ASSERT_NO_THROW(dependent_subject = m_database->create_subject(dependent_subject.name()));
+    ASSERT_GT(dependent_subject.id(), 0);
+    ASSERT_NO_THROW(required_subject = m_database->create_subject(required_subject.name()));
+    ASSERT_GT(required_subject.id(), 0);
+    ASSERT_NO_THROW(dependent_milestone = m_database->add_milestone(dependent_subject.id(), dependent_milestone.level(), roadmap.id()));
+    ASSERT_EQ(dependent_milestone.id(), dependent_subject.id());
+    ASSERT_NO_THROW(required_milestone = m_database->add_milestone(required_subject.id(), required_milestone.level(), roadmap.id()));
+    ASSERT_EQ(required_milestone.id(), required_subject.id());
+    ASSERT_NO_THROW(m_database->add_requirement(roadmap.id(), dependent_milestone, required_milestone));
+    EXPECT_NO_THROW(requirements = m_database->get_requirements(roadmap.id(), dependent_milestone.id(), dependent_milestone.level()));
+    ASSERT_EQ(requirements.size(), 1);
+    ASSERT_NO_THROW(requirements.at(0));
+    EXPECT_EQ(requirements.at(0).id(), required_milestone.id());
+}
+
+TEST_F(test_database, CloneRoadmap)
+{
+    flashback::Roadmap roadmap{};
+    flashback::Roadmap cloned_roadmap{};
+    std::vector<flashback::Roadmap> roadmaps{};
+    std::string token{R"(1111111111+q42gM9lNVbB13v0odiLy6WnHbInbuvvE)"};
+    std::string device{R"(ffffffff-gggg-hhhh-iiii-jjjjjjjjjjjj)"};
+    uint64_t user_id;
+
+    roadmap.set_name("Theoretical Physicist");
+
+    ASSERT_NO_THROW(user_id = m_database->create_user(m_user->name(), "another@flashback.eu.com", m_user->hash()));
+    ASSERT_GT(user_id, 0);
+    ASSERT_TRUE(m_database->create_session(user_id, std::move(token), std::move(device)));
+    ASSERT_NO_THROW(roadmap = m_database->create_roadmap(m_user->id(), roadmap.name()));
+    ASSERT_GT(roadmap.id(), 0);
+    EXPECT_NO_THROW(cloned_roadmap = m_database->clone_roadmap(user_id, roadmap.id())) << "Roadmap should be cloned for the new user";
+    ASSERT_NO_THROW(roadmaps = m_database->get_roadmaps(user_id));
+    EXPECT_EQ(roadmaps.size(), 1) << "New user should have one cloned roadmap";
+    EXPECT_NO_THROW(roadmaps.at(0));
+    EXPECT_GT(roadmaps.at(0).id(), 0);
+    EXPECT_NE(roadmaps.at(0).id(), roadmap.id()) << "Cloned roadmap should not have the same ID as the original roadmap";
+}
+
+TEST_F(test_database, ReorderMilestone)
+{
+    flashback::Roadmap roadmap{};
+    flashback::Subject subject_pos1{};
+    flashback::Subject subject_pos2{};
+    flashback::Subject subject_pos3{};
+    flashback::Milestone milestone_pos1{};
+    flashback::Milestone milestone_pos2{};
+    flashback::Milestone milestone_pos3{};
+    flashback::expertise_level level{flashback::expertise_level::origin};
+    std::vector<flashback::Milestone> milestones{};
+    roadmap.set_name("Theoretical Physicist");
+    subject_pos1.set_name("Calculus");
+    subject_pos2.set_name("Linear Algebra");
+    subject_pos3.set_name("Graph Theory");
+
+    ASSERT_NO_THROW(roadmap = m_database->create_roadmap(m_user->id(), roadmap.name()));
+    ASSERT_NO_THROW(subject_pos1 = m_database->create_subject(subject_pos1.name()));
+    ASSERT_NO_THROW(subject_pos2 = m_database->create_subject(subject_pos2.name()));
+    ASSERT_NO_THROW(subject_pos3 = m_database->create_subject(subject_pos3.name()));
+    ASSERT_NO_THROW(milestone_pos1 = m_database->add_milestone(subject_pos1.id(), level, roadmap.id()));
+    ASSERT_NO_THROW(milestone_pos2 = m_database->add_milestone(subject_pos2.id(), level, roadmap.id()));
+    ASSERT_NO_THROW(milestone_pos3 = m_database->add_milestone(subject_pos3.id(), level, roadmap.id()));
+    EXPECT_EQ(milestone_pos1.position(), 1);
+    EXPECT_EQ(milestone_pos2.position(), 2);
+    EXPECT_EQ(milestone_pos3.position(), 3);
+    ASSERT_NO_THROW(milestones = m_database->get_milestones(roadmap.id()));
+    ASSERT_THAT(milestones, testing::SizeIs(3));
+    ASSERT_NO_THROW(milestones.at(2));
+    EXPECT_EQ(milestones.at(0).id(), milestone_pos1.id()) << "Milestone 1 should be in position 1 before reordering";
+    EXPECT_EQ(milestones.at(0).position(), 1) << "Vector should have the same order as milestones";
+    EXPECT_EQ(milestones.at(1).id(), milestone_pos2.id()) << "Milestone 2 should be in position 2 before reordering";
+    EXPECT_EQ(milestones.at(1).position(), 2) << "Vector should have the same order as milestones";
+    EXPECT_EQ(milestones.at(2).id(), milestone_pos3.id()) << "Milestone 3 should be in position 3 before reordering";
+    EXPECT_EQ(milestones.at(2).position(), 3) << "Vector should have the same order as milestones";
+    EXPECT_NO_THROW(m_database->reorder_milestone(roadmap.id(), 1, 3));
+    ASSERT_NO_THROW(milestones = m_database->get_milestones(roadmap.id()));
+    ASSERT_THAT(milestones, testing::SizeIs(3));
+    ASSERT_NO_THROW(milestones.at(2));
+    EXPECT_EQ(milestones.at(0).id(), milestone_pos2.id()) << "Milestone 2 should be in position 1 after reordering";
+    EXPECT_EQ(milestones.at(0).position(), 1) << "Vector should have the same order as milestones";
+    EXPECT_EQ(milestones.at(1).id(), milestone_pos3.id()) << "Milestone 3 should be in position 2 after reordering";
+    EXPECT_EQ(milestones.at(1).position(), 2) << "Vector should have the same order as milestones";
+    EXPECT_EQ(milestones.at(2).id(), milestone_pos1.id()) << "Milestone 1 should be in position 3 after reordering";
+    EXPECT_EQ(milestones.at(2).position(), 3) << "Vector should have the same order as milestones";
+    EXPECT_NO_THROW(m_database->reorder_milestone(roadmap.id(), 3, 1));
+    ASSERT_NO_THROW(milestones = m_database->get_milestones(roadmap.id()));
+    EXPECT_EQ(milestones.at(0).id(), milestone_pos1.id()) << "Milestone 1 should be in position 1 after reversing the order";
+    EXPECT_EQ(milestones.at(0).position(), 1) << "Vector should have the same order as milestones";
+    EXPECT_EQ(milestones.at(1).id(), milestone_pos2.id()) << "Milestone 2 should be in position 2 after reversing the order";
+    EXPECT_EQ(milestones.at(1).position(), 2) << "Vector should have the same order as milestones";
+    EXPECT_EQ(milestones.at(2).id(), milestone_pos3.id()) << "Milestone 3 should be in position 3 after reversing the order";
+    EXPECT_EQ(milestones.at(2).position(), 3) << "Vector should have the same order as milestones";
+}
+
+TEST_F(test_database, RemoveMilestone)
+{
+    using testing::SizeIs;
+
+    flashback::Roadmap roadmap{};
+    std::vector<flashback::Subject> subjects{};
+    std::vector<flashback::Milestone> milestones{};
+    roadmap.set_name("Theoretical Physicist");
+
+    ASSERT_NO_THROW(roadmap = m_database->create_roadmap(m_user->id(), roadmap.name()));
+    ASSERT_GT(roadmap.id(), 0);
+
+    for (std::string const& name: {"Calculus", "Linear Algebra", "Graph Theory"})
+    {
+        flashback::Subject subject{};
+        flashback::Milestone milestone{};
+        ASSERT_NO_THROW(subject = m_database->create_subject(name));
+        ASSERT_GT(subject.id(), 0);
+        ASSERT_NO_THROW(milestone = m_database->add_milestone(subject.id(), flashback::expertise_level::depth, roadmap.id()));
+        ASSERT_EQ(milestone.id(), subject.id());
+    }
+
+    ASSERT_NO_THROW(milestones = m_database->get_milestones(roadmap.id()));
+    ASSERT_THAT(milestones, SizeIs(3));
+    ASSERT_NO_THROW(milestones.at(2));
+    EXPECT_NO_THROW(m_database->remove_milestone(roadmap.id(), milestones.at(2).id()));
+    ASSERT_NO_THROW(milestones = m_database->get_milestones(roadmap.id()));
+    ASSERT_THAT(milestones, SizeIs(2));
+    ASSERT_NO_THROW(milestones.at(1));
+    EXPECT_GT(milestones.at(0).id(), 0);
+    EXPECT_GT(milestones.at(1).id(), 0);
+}
+
+TEST_F(test_database, ChangeMilestoneLevel)
+{
+    using testing::SizeIs;
+
+    flashback::Roadmap roadmap{};
+    flashback::Subject subject{};
+    flashback::Milestone milestone{};
+    std::vector<flashback::Milestone> milestones{};
+    roadmap.set_name("Theoretical Physicist");
+
+    ASSERT_NO_THROW(roadmap = m_database->create_roadmap(m_user->id(), roadmap.name()));
+    ASSERT_GT(roadmap.id(), 0);
+
+    subject.set_name("Calculus");
+    ASSERT_NO_THROW(subject = m_database->create_subject(subject.name()));
+    ASSERT_GT(subject.id(), 0);
+    ASSERT_NO_THROW(milestone = m_database->add_milestone(subject.id(), flashback::expertise_level::depth, roadmap.id()));
+    ASSERT_EQ(milestone.id(), subject.id());
+    ASSERT_NO_THROW(milestones = m_database->get_milestones(roadmap.id()));
+    ASSERT_THAT(milestones, SizeIs(1));
+    ASSERT_NO_THROW(milestones.at(0));
+    ASSERT_EQ(milestones.at(0).id(), subject.id());
+    EXPECT_GT(milestones.at(0).level(), flashback::expertise_level::depth);
+    EXPECT_NO_THROW(m_database->change_milestone_level(roadmap.id(), milestone.id(), flashback::expertise_level::surface));
+    ASSERT_NO_THROW(milestones = m_database->get_milestones(roadmap.id()));
+    ASSERT_THAT(milestones, SizeIs(1));
+    ASSERT_NO_THROW(milestones.at(0));
+    ASSERT_EQ(milestones.at(0).id(), subject.id());
+    EXPECT_GT(milestones.at(0).level(), flashback::expertise_level::surface);
 }
