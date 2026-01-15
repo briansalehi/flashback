@@ -706,7 +706,8 @@ TEST_F(test_server, GetMilestones)
     requesting_roadmap.set_name("eBFP");
 
     for (auto const& m: std::vector<std::tuple<uint64_t, uint64_t, flashback::expertise_level, std::string>>{
-             {1, 10, flashback::expertise_level::surface, "eBPF"}, {2, 20, flashback::expertise_level::depth, "C++"},
+             {1, 10, flashback::expertise_level::surface, "eBPF"},
+             {2, 20, flashback::expertise_level::depth, "C++"},
              {3, 30, flashback::expertise_level::surface, "Rust"}})
     {
         flashback::Milestone milestone{};
@@ -786,7 +787,6 @@ TEST_F(test_server, GetRequirements)
     using testing::Return;
 
     auto requesting_user{std::make_unique<flashback::User>(*m_user)};
-    auto database_provided_user{std::make_unique<flashback::User>(*m_user)};
     auto milestone{std::make_unique<flashback::Milestone>()};
     std::vector<std::string> subject_names{"eBPF", "C++", "C", "GDB"};
     std::vector<flashback::Milestone> required_milestones{};
@@ -841,7 +841,6 @@ TEST_F(test_server, CloneRoadmap)
     using testing::Return;
 
     auto requesting_user{std::make_unique<flashback::User>(*m_user)};
-    auto database_provided_user{std::make_unique<flashback::User>(*m_user)};
     auto original_roadmap{std::make_unique<flashback::Roadmap>()};
     grpc::Status status{};
     grpc::ServerContext context{};
@@ -885,17 +884,18 @@ TEST_F(test_server, ReorderMilestone)
     using testing::Return;
 
     auto requesting_user{std::make_unique<flashback::User>(*m_user)};
-    auto database_provided_user{std::make_unique<flashback::User>(*m_user)};
     auto roadmap{std::make_unique<flashback::Roadmap>()};
     grpc::Status status{};
     grpc::ServerContext context{};
     flashback::ReorderMilestoneRequest request{};
     flashback::ReorderMilestoneResponse response{};
-    flashback::Roadmap database_provided_roadmap{};
+    flashback::Roadmap const database_provided_roadmap{};
     roadmap->set_id(1);
     roadmap->set_name("Theoretical Physics");
 
-    EXPECT_CALL(*m_mock_database, get_user(A<std::string_view>(), A<std::string_view>())).Times(4).WillOnce(Return(std::make_unique<flashback::User>(*m_user))).WillOnce(Return(std::make_unique<flashback::User>(*m_user))).WillOnce(Return(std::make_unique<flashback::User>(*m_user))).WillOnce(Return(std::make_unique<flashback::User>(*m_user)));
+    EXPECT_CALL(*m_mock_database, get_user(A<std::string_view>(), A<std::string_view>())).Times(4).WillOnce(Return(std::make_unique<flashback::User>(*m_user))).
+WillOnce(Return(std::make_unique<flashback::User>(*m_user))).WillOnce(Return(std::make_unique<flashback::User>(*m_user))).WillOnce(
+                                                                                             Return(std::make_unique<flashback::User>(*m_user)));
     EXPECT_CALL(*m_mock_database, reorder_milestone(A<uint64_t>(), 1, 3)).Times(1);
 
     EXPECT_NO_THROW(status = m_server->ReorderMilestone(&context, &request, &response));
@@ -935,8 +935,98 @@ TEST_F(test_server, ReorderMilestone)
 
 TEST_F(test_server, RemoveMilestone)
 {
+    using testing::A;
+    using testing::An;
+    using testing::Return;
+
+    auto user{std::make_unique<flashback::User>(*m_user)};
+    auto roadmap{std::make_unique<flashback::Roadmap>()};
+    auto milestone{std::make_unique<flashback::Milestone>()};
+    grpc::ServerContext context{};
+    grpc::Status status{};
+    flashback::RemoveMilestoneRequest request{};
+    flashback::RemoveMilestoneResponse response{};
+
+    roadmap->set_id(1);
+    roadmap->set_name("Theoretical Physicist");
+    milestone->set_id(1);
+
+    EXPECT_CALL(*m_mock_database, get_user(A<std::string_view>(), A<std::string_view>())).Times(3).WillOnce(Return(std::make_unique<flashback::User>(*m_user))).WillOnce(Return(std::make_unique<flashback::User>(*m_user))).WillOnce(Return(std::make_unique<flashback::User>(*m_user)));
+    EXPECT_CALL(*m_mock_database, remove_milestone(A<uint64_t>(), A<uint64_t>())).Times(1);
+
+    EXPECT_NO_THROW(status = m_server->RemoveMilestone(&context, &request, &response));
+    EXPECT_TRUE(status.ok());
+    EXPECT_FALSE(response.success()) << "Request to remove a milestone from an invalid user should be declined";
+    EXPECT_EQ(response.code(), 3) << "The error for invalid user should have a constant value";
+    EXPECT_FALSE(response.details().empty());
+
+    request.set_allocated_user(user.release());
+    EXPECT_NO_THROW(status = m_server->RemoveMilestone(&context, &request, &response));
+    EXPECT_TRUE(status.ok());
+    EXPECT_FALSE(response.success()) << "Request to remove a milestone with invalid roadmap should be declined";
+    EXPECT_EQ(response.code(), 4);
+    EXPECT_FALSE(response.details().empty());
+
+    request.set_allocated_roadmap(roadmap.release());
+    EXPECT_NO_THROW(status = m_server->RemoveMilestone(&context, &request, &response));
+    EXPECT_TRUE(status.ok());
+    EXPECT_FALSE(response.success()) << "Request to remove a milestone with invalid milestone should be declined";
+    EXPECT_EQ(response.code(), 5);
+    EXPECT_FALSE(response.details().empty());
+
+    request.set_allocated_milestone(milestone.release());
+    EXPECT_NO_THROW(status = m_server->RemoveMilestone(&context, &request, &response));
+    EXPECT_TRUE(status.ok());
+    EXPECT_TRUE(response.success()) << "Request to remove a milestone with valid user credentials, valid roadmap and valid milestone should work";
+    EXPECT_EQ(response.code(), 0);
+    EXPECT_TRUE(response.details().empty());
 }
 
 TEST_F(test_server, ChangeMilestoneLevel)
 {
+    using testing::A;
+    using testing::An;
+    using testing::Return;
+
+    auto user{std::make_unique<flashback::User>(*m_user)};
+    auto roadmap{std::make_unique<flashback::Roadmap>()};
+    auto milestone{std::make_unique<flashback::Milestone>()};
+    grpc::ServerContext context{};
+    grpc::Status status{};
+    flashback::ChangeMilestoneLevelRequest request{};
+    flashback::ChangeMilestoneLevelResponse response{};
+
+    roadmap->set_id(1);
+    roadmap->set_name("Theoretical Physicist");
+    milestone->set_id(1);
+
+    EXPECT_CALL(*m_mock_database, get_user(A<std::string_view>(), A<std::string_view>())).Times(3).WillOnce(Return(std::make_unique<flashback::User>(*m_user))).WillOnce(Return(std::make_unique<flashback::User>(*m_user))).WillOnce(Return(std::make_unique<flashback::User>(*m_user)));
+    EXPECT_CALL(*m_mock_database, change_milestone_level(A<uint64_t>(), A<uint64_t>(), An<flashback::expertise_level>()));
+
+    EXPECT_NO_THROW(status = m_server->ChangeMilestoneLevel(&context, &request, &response));
+    EXPECT_TRUE(status.ok());
+    EXPECT_FALSE(response.success()) << "Request to change milestone level from an invalid user should be declined";
+    EXPECT_FALSE(response.details().empty());
+    EXPECT_EQ(response.code(), 3);
+
+    request.set_allocated_user(user.release());
+    EXPECT_NO_THROW(status = m_server->ChangeMilestoneLevel(&context, &request, &response));
+    EXPECT_TRUE(status.ok());
+    EXPECT_FALSE(response.success()) << "Request to change milestone level with invalid roadmap should be declined";
+    EXPECT_FALSE(response.details().empty());
+    EXPECT_EQ(response.code(), 4);
+
+    request.set_allocated_roadmap(roadmap.release());
+    EXPECT_NO_THROW(status = m_server->ChangeMilestoneLevel(&context, &request, &response));
+    EXPECT_TRUE(status.ok());
+    EXPECT_FALSE(response.success()) << "Request to change milestone level with invalid milestone should be declined";
+    EXPECT_FALSE(response.details().empty());
+    EXPECT_EQ(response.code(), 5);
+
+    request.set_allocated_milestone(milestone.release());
+    EXPECT_NO_THROW(status = m_server->ChangeMilestoneLevel(&context, &request, &response));
+    EXPECT_TRUE(status.ok());
+    EXPECT_TRUE(response.success()) << "Request to change milestone with valid credentials, valid roadmap, and valid milestone should work";
+    EXPECT_TRUE(response.details().empty());
+    EXPECT_EQ(response.code(), 0);
 }

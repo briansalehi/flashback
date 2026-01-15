@@ -624,11 +624,93 @@ grpc::Status server::ReorderMilestone(grpc::ServerContext* context, ReorderMiles
 
 grpc::Status server::RemoveMilestone(grpc::ServerContext* context, RemoveMilestoneRequest const* request, RemoveMilestoneResponse* response)
 {
+    try
+    {
+        if (!request->has_user() || !session_is_valid(request->user()))
+        {
+            response->set_success(false);
+            response->set_details("invalid user");
+            response->set_code(3);
+        }
+        else if (!request->has_roadmap() || request->roadmap().id() == 0)
+        {
+            response->set_success(false);
+            response->set_details("invalid roadmap");
+            response->set_code(4);
+        }
+        else if (!request->has_milestone() || request->milestone().id() == 0)
+        {
+            response->set_success(false);
+            response->set_details("invalid milestone");
+            response->set_code(5);
+        }
+        else
+        {
+            m_database->remove_milestone(request->roadmap().id(), request->milestone().id());
+            response->set_success(true);
+            response->clear_details();
+            response->set_code(0);
+        }
+    }
+    catch (client_exception const& exp)
+    {
+        response->set_success(false);
+        response->set_details(exp.what());
+        response->set_code(1);
+    }
+    catch (std::exception const& exp)
+    {
+        response->set_success(false);
+        response->set_details("internal error");
+        response->set_code(2);
+    }
+
     return grpc::Status::OK;
 }
 
 grpc::Status server::ChangeMilestoneLevel(grpc::ServerContext* context, ChangeMilestoneLevelRequest const* request, ChangeMilestoneLevelResponse* response)
 {
+    try
+    {
+        if (!request->has_user() || !session_is_valid(request->user()))
+        {
+            response->set_success(false);
+            response->set_details("invalid user");
+            response->set_code(3);
+        }
+        else if (!request->has_roadmap() || request->roadmap().id() == 0)
+        {
+            response->set_success(false);
+            response->set_details("invalid roadmap");
+            response->set_code(4);
+        }
+        else if (!request->has_milestone() || request->milestone().id() == 0)
+        {
+            response->set_success(false);
+            response->set_details("invalid milestone");
+            response->set_code(5);
+        }
+        else
+        {
+            m_database->change_milestone_level(request->roadmap().id(), request->milestone().id(), request->milestone().level());
+            response->set_success(true);
+            response->clear_details();
+            response->set_code(0);
+        }
+    }
+    catch (client_exception const& exp)
+    {
+        response->set_success(false);
+        response->set_details(exp.what());
+        response->set_code(1);
+    }
+    catch (std::exception const& exp)
+    {
+        response->set_success(false);
+        response->set_details("internal error");
+        response->set_code(2);
+    }
+
     return grpc::Status::OK;
 }
 
