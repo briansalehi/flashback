@@ -775,3 +775,26 @@ TEST_F(test_database, remove_subject)
     EXPECT_NO_THROW(matched_subjects = m_database->search_subjects(subject.name()));
     EXPECT_THAT(matched_subjects, SizeIs(0)) << "There should be no search results for the subject that was removed earlier";
 }
+
+TEST_F(test_database, merge_subjects)
+{
+    using testing::SizeIs;
+
+    flashback::Subject source_subject{};
+    flashback::Subject target_subject{};
+    std::map<uint64_t, flashback::Subject> matched_subjects{};
+    source_subject.set_name("Basic Mathematics");
+    target_subject.set_name("Calculus");
+
+    ASSERT_NO_THROW(source_subject = m_database->create_subject(source_subject.name()));
+    ASSERT_NO_THROW(target_subject = m_database->create_subject(target_subject.name()));
+    EXPECT_NO_THROW(matched_subjects = m_database->search_subjects(source_subject.name()));
+    ASSERT_THAT(matched_subjects, SizeIs(1));
+    EXPECT_THAT(matched_subjects.at(0).id(), source_subject.id());
+    EXPECT_THAT(matched_subjects.at(0).name(), source_subject.name());
+    ASSERT_NO_THROW(matched_subjects = m_database->search_subjects(target_subject.name()));
+    ASSERT_THAT(matched_subjects, SizeIs(1));
+    EXPECT_THAT(matched_subjects.at(0).id(), target_subject.id());
+    EXPECT_THAT(matched_subjects.at(0).name(), target_subject.name());
+    EXPECT_NO_THROW(m_database->merge_subjects(source_subject.id(), target_subject.id()));
+}

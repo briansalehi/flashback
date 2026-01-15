@@ -53,7 +53,7 @@ public:
     [[nodiscard]] virtual Subject create_subject(std::string name) const = 0;
     virtual void rename_subject(uint64_t id, std::string name) const = 0;
     virtual void remove_subject(uint64_t id) const = 0;
-    //merge_subjects
+    virtual void merge_subjects(uint64_t source, uint64_t target) const = 0;
     //add_resource_to_subject
     //drop_resource_from_subject
     [[nodiscard]] virtual std::map<uint64_t, Subject> search_subjects(std::string name) const = 0;

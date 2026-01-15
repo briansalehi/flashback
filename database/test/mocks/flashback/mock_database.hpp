@@ -32,6 +32,7 @@ public:
     MOCK_METHOD((std::map<uint64_t, Subject>), search_subjects, (std::string), (const, override));
     MOCK_METHOD(void, rename_subject, (uint64_t, std::string), (const, override));
     MOCK_METHOD(void, remove_subject, (uint64_t), (const, override));
+    MOCK_METHOD(void, merge_subjects, (uint64_t, uint64_t), (const, override));
 
     // milestones
     MOCK_METHOD(Milestone, add_milestone, (uint64_t, expertise_level, uint64_t), (const, override));

@@ -296,6 +296,10 @@ void database::remove_subject(uint64_t const id) const
     exec("call remove_subject($1)", id);
 }
 
+void database::merge_subjects(uint64_t source, uint64_t target) const
+{
+}
+
 Milestone database::add_milestone(uint64_t const subject_id, expertise_level const subject_level, uint64_t const roadmap_id) const
 {
     Milestone milestone;
