@@ -751,3 +751,27 @@ TEST_F(test_database, ChangeMilestoneLevel)
     ASSERT_EQ(modified_milestone.id(), subject.id());
     EXPECT_EQ(modified_milestone.level(), flashback::expertise_level::surface);
 }
+
+TEST_F(test_database, remove_subject)
+{
+    using testing::SizeIs;
+
+    std::vector<flashback::Subject> subjects{};
+    std::map<uint64_t, flashback::Subject> matched_subjects{};
+
+    for (std::string const& name: {"Calculus", "Linear Algebra", "Graph Theory"})
+    {
+        flashback::Subject sample_subject{};
+        EXPECT_NO_THROW(sample_subject = m_database->create_subject(name));
+        subjects.push_back(sample_subject);
+    }
+
+    flashback::Subject const subject = subjects.at(0);
+    ASSERT_GT(subject.id(), 0);
+    ASSERT_FALSE(subject.name().empty());
+    EXPECT_NO_THROW(matched_subjects = m_database->search_subjects(subject.name()));
+    EXPECT_THAT(matched_subjects, SizeIs(1)) << "Subject should appear in the search result before being removed";
+    EXPECT_NO_THROW(m_database->remove_subject(subject.id()));
+    EXPECT_NO_THROW(matched_subjects = m_database->search_subjects(subject.name()));
+    EXPECT_THAT(matched_subjects, SizeIs(0)) << "There should be no search results for the subject that was removed earlier";
+}

@@ -52,7 +52,7 @@ public:
     // subjects
     [[nodiscard]] virtual Subject create_subject(std::string name) const = 0;
     virtual void rename_subject(uint64_t id, std::string name) const = 0;
-    //remove_subject
+    virtual void remove_subject(uint64_t id) const = 0;
     //merge_subjects
     //add_resource_to_subject
     //drop_resource_from_subject

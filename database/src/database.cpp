@@ -291,6 +291,11 @@ void database::rename_subject(uint64_t const id, std::string name) const
     exec("call rename_subject($1, $2)", id, std::move(name));
 }
 
+void database::remove_subject(uint64_t id) const
+{
+    exec("call remove_subject($1)", id);
+}
+
 Milestone database::add_milestone(uint64_t const subject_id, expertise_level const subject_level, uint64_t const roadmap_id) const
 {
     Milestone milestone;

@@ -33,6 +33,7 @@ public:
     [[nodiscard]] Subject create_subject(std::string name) const override;
     [[nodiscard]] std::map<uint64_t, Subject> search_subjects(std::string name) const override;
     void rename_subject(uint64_t id, std::string name) const override;
+    void remove_subject(uint64_t id) const override;
 
     // milestones
     [[nodiscard]] Milestone add_milestone(uint64_t subject_id, expertise_level subject_level, uint64_t roadmap_id) const override;
