@@ -49,8 +49,9 @@ public:
 
     // resources
     [[nodiscard]] Resource create_resource(Resource const& resource) const override;
-    void add_resource_to_subject(uint64_t const resource_id, uint64_t const subject_id) const override;
-    [[nodiscard]] std::vector<Resource> get_resources(uint64_t const subject_id) const override;
+    void add_resource_to_subject(uint64_t resource_id, uint64_t subject_id) const override;
+    [[nodiscard]] std::vector<Resource> get_resources(uint64_t subject_id) const override;
+    void drop_resource_from_subject(uint64_t resource_id, uint64_t subject_id) const override;
 
     // practices
     [[nodiscard]] expertise_level get_user_cognitive_level(uint64_t user_id, uint64_t subject_id) const override;

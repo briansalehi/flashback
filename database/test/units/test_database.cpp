@@ -881,15 +881,28 @@ TEST_F(test_database, get_resources)
     resource.set_link(R"(https://example.com)");
     resource.set_production(production);
     resource.set_expiration(expiration);
+    flashback::Resource secondary_resource{};
+    secondary_resource.set_name("You Don't Know JS");
+    secondary_resource.set_type(flashback::Resource::book);
+    secondary_resource.set_pattern(flashback::Resource::chapter);
+    secondary_resource.set_link(R"(https://example.com)");
+    secondary_resource.set_production(production);
+    secondary_resource.set_expiration(expiration);
     subject.set_name("Algorithms");
 
     ASSERT_NO_THROW(resource = m_database->create_resource(resource));
     ASSERT_GT(resource.id(), 0);
+    ASSERT_NO_THROW(secondary_resource = m_database->create_resource(secondary_resource));
+    ASSERT_GT(secondary_resource.id(), 0);
+    ASSERT_NE(resource.id(), secondary_resource.id());
     ASSERT_NO_THROW(subject = m_database->create_subject(subject.name()));
     ASSERT_GT(subject.id(), 0);
+    EXPECT_NO_THROW(resources = m_database->get_resources(subject.id() + 1));
+    EXPECT_THAT(resources, SizeIs(0)) << "Invalid subject should not have resources";
     ASSERT_NO_THROW(m_database->add_resource_to_subject(resource.id(), subject.id()));
+    ASSERT_NO_THROW(m_database->add_resource_to_subject(secondary_resource.id(), subject.id()));
     EXPECT_NO_THROW(resources = m_database->get_resources(subject.id()));
-    EXPECT_THAT(resources, SizeIs(1));
+    EXPECT_THAT(resources, SizeIs(2));
     ASSERT_NO_THROW(resources.at(0));
     EXPECT_EQ(resources.at(0).id(), resource.id());
     EXPECT_EQ(resources.at(0).name(), resource.name());
@@ -898,4 +911,50 @@ TEST_F(test_database, get_resources)
     EXPECT_EQ(resources.at(0).link(), resource.link());
     EXPECT_EQ(resources.at(0).production(), resource.production());
     EXPECT_EQ(resources.at(0).expiration(), resource.expiration());
+}
+
+TEST_F(test_database, drop_resource_from_subject)
+{
+    using testing::SizeIs;
+
+    flashback::Subject subject{};
+    std::vector<flashback::Resource> resources{};
+    auto const production{std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count()};
+    auto const expiration{
+        std::chrono::duration_cast<std::chrono::seconds>(
+            std::chrono::system_clock::time_point(std::chrono::system_clock::now() + std::chrono::years{3}).time_since_epoch()).count()};
+    flashback::Resource resource{};
+    resource.set_name("Introduction to Algorithms");
+    resource.set_type(flashback::Resource::book);
+    resource.set_pattern(flashback::Resource::chapter);
+    resource.set_link(R"(https://example.com)");
+    resource.set_production(production);
+    resource.set_expiration(expiration);
+    flashback::Resource secondary_resource{};
+    secondary_resource.set_name("You Don't Know JS");
+    secondary_resource.set_type(flashback::Resource::book);
+    secondary_resource.set_pattern(flashback::Resource::chapter);
+    secondary_resource.set_link(R"(https://example.com)");
+    secondary_resource.set_production(production);
+    secondary_resource.set_expiration(expiration);
+    subject.set_name("JavaScript");
+
+    ASSERT_NO_THROW(resource = m_database->create_resource(resource));
+    ASSERT_GT(resource.id(), 0);
+    ASSERT_NO_THROW(secondary_resource = m_database->create_resource(secondary_resource));
+    ASSERT_GT(secondary_resource.id(), 0);
+    ASSERT_NE(resource.id(), secondary_resource.id());
+    ASSERT_NO_THROW(subject = m_database->create_subject(subject.name()));
+    ASSERT_GT(subject.id(), 0);
+    ASSERT_NO_THROW(m_database->add_resource_to_subject(resource.id(), subject.id()));
+    EXPECT_NO_THROW(resources = m_database->get_resources(subject.id()));
+    EXPECT_THAT(resources, SizeIs(1));
+    resources.clear();
+    ASSERT_NO_THROW(m_database->add_resource_to_subject(secondary_resource.id(), subject.id()));
+    EXPECT_NO_THROW(resources = m_database->get_resources(subject.id()));
+    EXPECT_THAT(resources, SizeIs(2));
+    EXPECT_NO_THROW(m_database->drop_resource_from_subject(resource.id(), subject.id()));
+    EXPECT_NO_THROW(resources = m_database->get_resources(subject.id()));
+    EXPECT_THAT(resources, SizeIs(1));
+    EXPECT_THAT(resources.at(0).id(), secondary_resource.id());
 }
