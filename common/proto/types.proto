@@ -43,8 +43,8 @@ message Resource {
     section_pattern pattern = 3;
     string name = 4;
     string link = 5;
-    google.protobuf.Timestamp production = 6;
-    google.protobuf.Timestamp expiration = 7;
+    uint64 production = 6;
+    uint64 expiration = 7;
     Provider provider = 8;
     repeated Presenter presenters = 9;
 }

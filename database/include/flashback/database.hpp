@@ -49,6 +49,8 @@ public:
 
     // resources
     [[nodiscard]] Resource create_resource(Resource const& resource) const override;
+    void add_resource_to_subject(uint64_t const resource_id, uint64_t const subject_id) const override;
+    [[nodiscard]] std::vector<Resource> get_resources(uint64_t const subject_id) const override;
 
     // practices
     [[nodiscard]] expertise_level get_user_cognitive_level(uint64_t user_id, uint64_t subject_id) const override;
@@ -131,6 +133,24 @@ private:
         return type_string;
     }
 
+    static Resource::resource_type to_resource_type(std::string_view const type_string)
+    {
+        Resource::resource_type type{};
+
+        if (type_string == "book") type = Resource::book;
+        else if (type_string == "website") type = Resource::website;
+        else if (type_string == "course") type = Resource::course;
+        else if (type_string == "video") type = Resource::video;
+        else if (type_string == "channel") type = Resource::channel;
+        else if (type_string == "mailing_list") type = Resource::mailing_list;
+        else if (type_string == "manual") type = Resource::manual;
+        else if (type_string == "slides") type = Resource::slides;
+        else if (type_string == "user") type = Resource::user;
+        else throw std::runtime_error("invalid resource type");
+
+        return type;
+    }
+
     static std::string section_pattern_to_string(Resource::section_pattern const pattern)
     {
         std::string pattern_string{};
@@ -155,6 +175,22 @@ private:
         }
 
         return pattern_string;
+    }
+
+    static Resource::section_pattern to_section_pattern(std::string_view const pattern_string)
+    {
+        Resource::section_pattern pattern{};
+
+        if (pattern_string == "chapter") pattern = Resource::chapter;
+        else if (pattern_string == "page") pattern = Resource::page;
+        else if (pattern_string == "session") pattern = Resource::session;
+        else if (pattern_string == "episode") pattern = Resource::episode;
+        else if (pattern_string == "playlist") pattern = Resource::playlist;
+        else if (pattern_string == "post") pattern = Resource::post;
+        else if (pattern_string == "synapse") pattern = Resource::synapse;
+        else throw std::runtime_error("invalid section pattern");
+
+        return pattern;
     }
 
 private:

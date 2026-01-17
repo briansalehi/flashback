@@ -54,7 +54,7 @@ public:
     virtual void rename_subject(uint64_t id, std::string name) const = 0;
     virtual void remove_subject(uint64_t id) const = 0;
     virtual void merge_subjects(uint64_t source, uint64_t target) const = 0;
-    //add_resource_to_subject
+    virtual void add_resource_to_subject(uint64_t resource, uint64_t subject) const = 0;
     //drop_resource_from_subject
     [[nodiscard]] virtual std::map<uint64_t, Subject> search_subjects(std::string name) const = 0;
     //user_is_qualified
@@ -76,7 +76,7 @@ public:
 
     // resources
     [[nodiscard]] virtual Resource create_resource(Resource const& resource) const = 0;
-    //get_resources
+    [[nodiscard]] virtual std::vector<Resource> get_resources(uint64_t subject_id) const = 0;
     //search_resources
     //rename_resource
     //remove_resource

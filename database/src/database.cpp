@@ -414,19 +414,40 @@ void database::change_milestone_level(uint64_t const roadmap_id, uint64_t const 
 Resource database::create_resource(Resource const& resource) const
 {
     Resource generated_resource{resource};
-    std::chrono::system_clock::time_point const epoch{std::chrono::system_clock::from_time_t(0)};
-    std::chrono::system_clock::time_point const production{epoch + std::chrono::system_clock::duration{resource.production().seconds()}};
-    std::chrono::system_clock::time_point const expiration{epoch + std::chrono::system_clock::duration{resource.expiration().seconds()}};
 
     if (!resource.name().empty())
     {
-        for (pqxx::result const result = query("select create_resource($1, $2, $3, $4, $5, $6) as id", resource.name(), resource_type_to_string(resource.type()), section_pattern_to_string(resource.pattern()), resource.link(), std::format("{:%FT%T%z}", production), std::format("{:%FT%T%z}", expiration)); pqxx::row row: result)
+        for (pqxx::result const result = query("select create_resource($1, $2, $3, $4, $5, $6) as id", resource.name(), resource_type_to_string(resource.type()),
+                                               section_pattern_to_string(resource.pattern()), resource.link(), resource.production(),
+                                               resource.expiration()); pqxx::row row: result)
         {
             generated_resource.set_id(row.at("id").as<uint64_t>());
         }
     }
 
     return generated_resource;
+}
+
+void database::add_resource_to_subject(uint64_t const resource_id, uint64_t const subject_id) const
+{
+    exec("call add_resource_to_subject($1, $2)", resource_id, subject_id);
+}
+
+std::vector<Resource> database::get_resources(uint64_t const subject_id) const
+{
+    std::vector<Resource> resources{};
+    pqxx::row const resource_rows{query("select id, name, type, pattern, link, production, expiration from get_resources($1)", subject_id).at(0)};
+    Resource resource{};
+    resource.set_id(resource_rows.at("id").as<uint64_t>());
+    resource.set_name(resource_rows.at("name").as<std::string>());
+    resource.set_type(to_resource_type(resource_rows.at("type").as<std::string>()));
+    resource.set_pattern(to_section_pattern(resource_rows.at("pattern").as<std::string>()));
+    resource.set_link(resource_rows.at("link").as<std::string>());
+    resource.set_production(resource_rows.at("production").as<uint64_t>());
+    resource.set_expiration(resource_rows.at("expiration").as<uint64_t>());
+    resources.push_back(resource);
+
+    return resources;
 }
 
 expertise_level database::get_user_cognitive_level(uint64_t user_id, uint64_t subject_id) const

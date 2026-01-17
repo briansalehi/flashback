@@ -808,19 +808,17 @@ TEST_F(test_database, create_resource)
     constexpr auto type{flashback::Resource::book};
     constexpr auto pattern{flashback::Resource::chapter};
     constexpr auto link{R"(https://example.com)"};
-    std::chrono::system_clock::time_point production{std::chrono::system_clock::now()};
-    std::chrono::system_clock::time_point expiration{std::chrono::system_clock::now() + std::chrono::years{3}};
+    auto const production{std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count()};
+    auto const expiration{
+        std::chrono::duration_cast<std::chrono::seconds>(
+            std::chrono::system_clock::time_point(std::chrono::system_clock::now() + std::chrono::years{3}).time_since_epoch()).count()};
     flashback::Resource resource{};
     resource.set_name(name);
     resource.set_type(type);
     resource.set_pattern(pattern);
     resource.set_link(link);
-    auto protobuf_production{std::make_unique<google::protobuf::Timestamp>()};
-    protobuf_production->set_seconds(production.time_since_epoch().count());
-    auto protobuf_expiration{std::make_unique<google::protobuf::Timestamp>()};
-    protobuf_expiration->set_seconds(expiration.time_since_epoch().count());
-    resource.set_allocated_production(protobuf_production.release());
-    resource.set_allocated_expiration(protobuf_expiration.release());
+    resource.set_production(production);
+    resource.set_expiration(expiration);
 
     EXPECT_NO_THROW(resource = m_database->create_resource(resource));
     EXPECT_GT(resource.id(), 0);
@@ -828,8 +826,8 @@ TEST_F(test_database, create_resource)
     EXPECT_EQ(resource.type(), type);
     EXPECT_EQ(resource.pattern(), pattern);
     EXPECT_EQ(resource.link(), link);
-    EXPECT_EQ(resource.production().seconds(), production.time_since_epoch().count());
-    EXPECT_EQ(resource.expiration().seconds(), expiration.time_since_epoch().count());
+    EXPECT_EQ(resource.production(), production);
+    EXPECT_EQ(resource.expiration(), expiration);
 
     resource.clear_id();
     resource.clear_name();
@@ -839,6 +837,65 @@ TEST_F(test_database, create_resource)
     EXPECT_EQ(resource.type(), type);
     EXPECT_EQ(resource.pattern(), pattern);
     EXPECT_EQ(resource.link(), link);
-    EXPECT_EQ(resource.production().seconds(), production.time_since_epoch().count());
-    EXPECT_EQ(resource.expiration().seconds(), expiration.time_since_epoch().count());
+    EXPECT_EQ(resource.production(), production);
+    EXPECT_EQ(resource.expiration(), expiration);
+}
+
+TEST_F(test_database, add_resource_to_subject)
+{
+    flashback::Subject subject{};
+    flashback::Resource resource{};
+    auto const production{std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count()};
+    auto const expiration{
+        std::chrono::duration_cast<std::chrono::seconds>(
+            std::chrono::system_clock::time_point(std::chrono::system_clock::now() + std::chrono::years{3}).time_since_epoch()).count()};
+    resource.set_name("Introduction to Algorithms");
+    resource.set_type(flashback::Resource::book);
+    resource.set_pattern(flashback::Resource::chapter);
+    resource.set_link(R"(https://example.com)");
+    resource.set_production(production);
+    resource.set_expiration(expiration);
+    subject.set_name("Algorithms");
+
+    ASSERT_NO_THROW(resource = m_database->create_resource(resource));
+    ASSERT_GT(resource.id(), 0);
+    ASSERT_NO_THROW(subject = m_database->create_subject(subject.name()));
+    ASSERT_GT(subject.id(), 0);
+    EXPECT_NO_THROW(m_database->add_resource_to_subject(resource.id(), subject.id()));
+}
+
+TEST_F(test_database, get_resources)
+{
+    using testing::SizeIs;
+
+    flashback::Subject subject{};
+    flashback::Resource resource{};
+    std::vector<flashback::Resource> resources{};
+    auto const production{std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count()};
+    auto const expiration{
+        std::chrono::duration_cast<std::chrono::seconds>(
+            std::chrono::system_clock::time_point(std::chrono::system_clock::now() + std::chrono::years{3}).time_since_epoch()).count()};
+    resource.set_name("Introduction to Algorithms");
+    resource.set_type(flashback::Resource::book);
+    resource.set_pattern(flashback::Resource::chapter);
+    resource.set_link(R"(https://example.com)");
+    resource.set_production(production);
+    resource.set_expiration(expiration);
+    subject.set_name("Algorithms");
+
+    ASSERT_NO_THROW(resource = m_database->create_resource(resource));
+    ASSERT_GT(resource.id(), 0);
+    ASSERT_NO_THROW(subject = m_database->create_subject(subject.name()));
+    ASSERT_GT(subject.id(), 0);
+    ASSERT_NO_THROW(m_database->add_resource_to_subject(resource.id(), subject.id()));
+    EXPECT_NO_THROW(resources = m_database->get_resources(subject.id()));
+    EXPECT_THAT(resources, SizeIs(1));
+    ASSERT_NO_THROW(resources.at(0));
+    EXPECT_EQ(resources.at(0).id(), resource.id());
+    EXPECT_EQ(resources.at(0).name(), resource.name());
+    EXPECT_EQ(resources.at(0).type(), resource.type());
+    EXPECT_EQ(resources.at(0).pattern(), resource.pattern());
+    EXPECT_EQ(resources.at(0).link(), resource.link());
+    EXPECT_EQ(resources.at(0).production(), resource.production());
+    EXPECT_EQ(resources.at(0).expiration(), resource.expiration());
 }

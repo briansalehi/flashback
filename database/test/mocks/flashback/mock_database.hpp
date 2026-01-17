@@ -46,6 +46,8 @@ public:
 
     // resources
     MOCK_METHOD(Resource, create_resource, (Resource const&), (const, override));
+    MOCK_METHOD(void, add_resource_to_subject, (uint64_t, uint64_t), (const, override));
+    MOCK_METHOD(std::vector<Resource>, get_resources, (uint64_t), (const, override));
 
     // practices
     MOCK_METHOD(expertise_level, get_user_cognitive_level, (uint64_t, uint64_t), (const, override));
