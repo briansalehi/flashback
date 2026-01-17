@@ -61,8 +61,8 @@ message RenameSubjectRequest { User user = 1; uint64 id = 2; string name = 3; } 
 message RenameSubjectResponse { bool success = 1; string details = 2; uint32 code = 3; }
 message RemoveSubjectRequest { User user = 1; Subject subject = 2; }
 message RemoveSubjectResponse { bool success = 1; string details = 2; uint32 code = 3; }
-message MergeSubjectsRequest { User user = 1; }
-message MergeSubjectsResponse { }
+message MergeSubjectsRequest { User user = 1; Subject source_subject = 2; Subject target_subject = 3; }
+message MergeSubjectsResponse { bool success = 1; string details = 2; uint32 code = 3; }
 
 // subject page resource view
 message GetResourcesRequest { User user = 1; }

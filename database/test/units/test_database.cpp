@@ -790,11 +790,13 @@ TEST_F(test_database, merge_subjects)
     ASSERT_NO_THROW(target_subject = m_database->create_subject(target_subject.name()));
     EXPECT_NO_THROW(matched_subjects = m_database->search_subjects(source_subject.name()));
     ASSERT_THAT(matched_subjects, SizeIs(1));
-    EXPECT_THAT(matched_subjects.at(0).id(), source_subject.id());
-    EXPECT_THAT(matched_subjects.at(0).name(), source_subject.name());
+    ASSERT_NO_THROW(matched_subjects.at(1));
+    EXPECT_THAT(matched_subjects.at(1).id(), source_subject.id());
+    EXPECT_THAT(matched_subjects.at(1).name(), source_subject.name());
     ASSERT_NO_THROW(matched_subjects = m_database->search_subjects(target_subject.name()));
     ASSERT_THAT(matched_subjects, SizeIs(1));
-    EXPECT_THAT(matched_subjects.at(0).id(), target_subject.id());
-    EXPECT_THAT(matched_subjects.at(0).name(), target_subject.name());
+    ASSERT_NO_THROW(matched_subjects.at(1));
+    EXPECT_THAT(matched_subjects.at(1).id(), target_subject.id());
+    EXPECT_THAT(matched_subjects.at(1).name(), target_subject.name());
     EXPECT_NO_THROW(m_database->merge_subjects(source_subject.id(), target_subject.id()));
 }

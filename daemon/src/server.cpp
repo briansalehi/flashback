@@ -792,6 +792,46 @@ grpc::Status server::RemoveSubject(grpc::ServerContext* context, RemoveSubjectRe
     return grpc::Status::OK;
 }
 
+grpc::Status server::MergeSubjects(grpc::ServerContext* context, MergeSubjectsRequest const* request, MergeSubjectsResponse* response)
+{
+    try
+    {
+        if (!request->has_user() || !session_is_valid(request->user()))
+        {
+            response->set_success(false);
+            response->set_details("invalid user");
+            response->set_code(3);
+        }
+        else if (request->source_subject().id() == 0 || request->target_subject().id() == 0)
+        {
+            response->set_success(false);
+            response->set_details("invalid subject");
+            response->set_code(4);
+        }
+        else
+        {
+            m_database->merge_subjects(request->source_subject().id(), request->target_subject().id());
+            response->set_success(true);
+            response->clear_details();
+            response->set_code(0);
+        }
+    }
+    catch (client_exception const& exp)
+    {
+        response->set_success(false);
+        response->set_details(exp.what());
+        response->set_code(1);
+    }
+    catch (std::exception const& exp)
+    {
+        response->set_success(false);
+        response->set_details("internal error");
+        response->set_code(2);
+    }
+
+    return grpc::Status::OK;
+}
+
 std::string server::calculate_hash(std::string_view password)
 {
     char buffer[crypto_pwhash_STRBYTES];

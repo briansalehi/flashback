@@ -1072,3 +1072,53 @@ TEST_F(test_server, RemoveSubject)
     EXPECT_TRUE(response.details().empty());
     EXPECT_EQ(response.code(), 0);
 }
+
+TEST_F(test_server, MergeSubjects)
+{
+    using testing::A;
+    using testing::An;
+    using testing::Return;
+
+    auto user{std::make_unique<flashback::User>(*m_user)};
+    auto source_subject{std::make_unique<flashback::Subject>()};
+    auto target_subject{std::make_unique<flashback::Subject>()};
+    grpc::ServerContext context{};
+    grpc::Status status{};
+    flashback::MergeSubjectsRequest request;
+    flashback::MergeSubjectsResponse response;
+
+    source_subject->set_id(1);
+    source_subject->set_name("Linear Algebra");
+    target_subject->set_id(2);
+    target_subject->set_name("Graph Theory");
+
+    EXPECT_CALL(*m_mock_database, get_user(A<std::string_view>(), A<std::string_view>())).Times(3).WillOnce(Return(std::make_unique<flashback::User>(*m_user))).WillOnce(Return(std::make_unique<flashback::User>(*m_user))).WillOnce(Return(std::make_unique<flashback::User>(*m_user)));
+    EXPECT_CALL(*m_mock_database, merge_subjects(A<uint64_t>(), A<uint64_t>())).Times(1);
+
+    EXPECT_NO_THROW(status = m_server->MergeSubjects(&context, &request, &response));
+    EXPECT_TRUE(status.ok());
+    EXPECT_FALSE(response.success()) << "Request to merge two subjects from an invalid user should be declined";
+    EXPECT_FALSE(response.details().empty());
+    EXPECT_EQ(response.code(), 3) << "Invalid user should be indicated by an error";
+
+    request.set_allocated_user(user.release());
+    EXPECT_NO_THROW(status = m_server->MergeSubjects(&context, &request, &response));
+    EXPECT_TRUE(status.ok());
+    EXPECT_FALSE(response.success()) << "Request to merge two invalid subjects should be declined";
+    EXPECT_FALSE(response.details().empty());
+    EXPECT_EQ(response.code(), 4);
+
+    request.set_allocated_source_subject(source_subject.release());
+    EXPECT_NO_THROW(status = m_server->MergeSubjects(&context, &request, &response));
+    EXPECT_TRUE(status.ok());
+    EXPECT_FALSE(response.success()) << "Request to merge two invalid subjects should be declined";
+    EXPECT_FALSE(response.details().empty());
+    EXPECT_EQ(response.code(), 4);
+
+    request.set_allocated_target_subject(target_subject.release());
+    EXPECT_NO_THROW(status = m_server->MergeSubjects(&context, &request, &response));
+    EXPECT_TRUE(status.ok());
+    EXPECT_TRUE(response.success()) << "Request to merge two valid subjects should work";
+    EXPECT_TRUE(response.details().empty());
+    EXPECT_EQ(response.code(), 0);
+}
