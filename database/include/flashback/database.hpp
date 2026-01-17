@@ -47,6 +47,9 @@ public:
     void remove_milestone(uint64_t roadmap_id, uint64_t subject_id) const override;
     void change_milestone_level(uint64_t roadmap_id, uint64_t subject_id, expertise_level level) const override;
 
+    // resources
+    [[nodiscard]] Resource create_resource(Resource const& resource) const override;
+
     // practices
     [[nodiscard]] expertise_level get_user_cognitive_level(uint64_t user_id, uint64_t subject_id) const override;
 
@@ -68,7 +71,7 @@ private:
         work.commit();
     }
 
-    static expertise_level to_level(std::string_view level)
+    static expertise_level to_level(std::string_view const level)
     {
         expertise_level result{};
 
@@ -80,7 +83,7 @@ private:
         return result;
     }
 
-    static std::string level_to_string(expertise_level level)
+    static std::string level_to_string(expertise_level const level)
     {
         std::string result{};
 
@@ -96,6 +99,62 @@ private:
         }
 
         return result;
+    }
+
+    static std::string resource_type_to_string(Resource::resource_type const type)
+    {
+        std::string type_string{};
+
+        switch (type)
+        {
+        case Resource::book: type_string = "book";
+            break;
+        case Resource::website: type_string = "website";
+            break;
+        case Resource::course: type_string = "course";
+            break;
+        case Resource::video: type_string = "video";
+            break;
+        case Resource::channel: type_string = "channel";
+            break;
+        case Resource::mailing_list: type_string = "mailing_list";
+            break;
+        case Resource::manual: type_string = "manual";
+            break;
+        case Resource::slides: type_string = "slides";
+            break;
+        case Resource::user: type_string = "user";
+            break;
+        default: throw std::runtime_error("invalid resource type");
+        }
+
+        return type_string;
+    }
+
+    static std::string section_pattern_to_string(Resource::section_pattern const pattern)
+    {
+        std::string pattern_string{};
+
+        switch (pattern)
+        {
+        case Resource::chapter: pattern_string = "chapter";
+            break;
+        case Resource::page: pattern_string = "page";
+            break;
+        case Resource::session: pattern_string = "session";
+            break;
+        case Resource::episode: pattern_string = "episode";
+            break;
+        case Resource::playlist: pattern_string = "playlist";
+            break;
+        case Resource::post: pattern_string = "post";
+            break;
+        case Resource::synapse: pattern_string = "synapse";
+            break;
+        default: throw std::runtime_error("invalid section pattern");
+        }
+
+        return pattern_string;
     }
 
 private:

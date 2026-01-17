@@ -800,3 +800,45 @@ TEST_F(test_database, merge_subjects)
     EXPECT_THAT(matched_subjects.at(1).name(), target_subject.name());
     EXPECT_NO_THROW(m_database->merge_subjects(source_subject.id(), target_subject.id()));
 }
+
+TEST_F(test_database, create_resource)
+{
+    uint64_t id{};
+    constexpr auto name{"Introduction to Algorithms"};
+    constexpr auto type{flashback::Resource::book};
+    constexpr auto pattern{flashback::Resource::chapter};
+    constexpr auto link{R"(https://example.com)"};
+    std::chrono::system_clock::time_point production{std::chrono::system_clock::now()};
+    std::chrono::system_clock::time_point expiration{std::chrono::system_clock::now() + std::chrono::years{3}};
+    flashback::Resource resource{};
+    resource.set_name(name);
+    resource.set_type(type);
+    resource.set_pattern(pattern);
+    resource.set_link(link);
+    auto protobuf_production{std::make_unique<google::protobuf::Timestamp>()};
+    protobuf_production->set_seconds(production.time_since_epoch().count());
+    auto protobuf_expiration{std::make_unique<google::protobuf::Timestamp>()};
+    protobuf_expiration->set_seconds(expiration.time_since_epoch().count());
+    resource.set_allocated_production(protobuf_production.release());
+    resource.set_allocated_expiration(protobuf_expiration.release());
+
+    EXPECT_NO_THROW(resource = m_database->create_resource(resource));
+    EXPECT_GT(resource.id(), 0);
+    EXPECT_EQ(resource.name(), name);
+    EXPECT_EQ(resource.type(), type);
+    EXPECT_EQ(resource.pattern(), pattern);
+    EXPECT_EQ(resource.link(), link);
+    EXPECT_EQ(resource.production().seconds(), production.time_since_epoch().count());
+    EXPECT_EQ(resource.expiration().seconds(), expiration.time_since_epoch().count());
+
+    resource.clear_id();
+    resource.clear_name();
+    EXPECT_NO_THROW(resource = m_database->create_resource(resource));
+    EXPECT_EQ(resource.id(), 0) << "Resource with empty name should be created";
+    EXPECT_TRUE(resource.name().empty());
+    EXPECT_EQ(resource.type(), type);
+    EXPECT_EQ(resource.pattern(), pattern);
+    EXPECT_EQ(resource.link(), link);
+    EXPECT_EQ(resource.production().seconds(), production.time_since_epoch().count());
+    EXPECT_EQ(resource.expiration().seconds(), expiration.time_since_epoch().count());
+}

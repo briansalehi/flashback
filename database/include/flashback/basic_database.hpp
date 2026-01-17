@@ -75,7 +75,7 @@ public:
     //get_topic_weight
 
     // resources
-    //create_resource
+    [[nodiscard]] virtual Resource create_resource(Resource const& resource) const = 0;
     //get_resources
     //search_resources
     //rename_resource

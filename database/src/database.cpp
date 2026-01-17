@@ -411,6 +411,24 @@ void database::change_milestone_level(uint64_t const roadmap_id, uint64_t const 
     exec("call change_milestone_level($1, $2, $3)", roadmap_id, subject_id, level_to_string(level));
 }
 
+Resource database::create_resource(Resource const& resource) const
+{
+    Resource generated_resource{resource};
+    std::chrono::system_clock::time_point const epoch{std::chrono::system_clock::from_time_t(0)};
+    std::chrono::system_clock::time_point const production{epoch + std::chrono::system_clock::duration{resource.production().seconds()}};
+    std::chrono::system_clock::time_point const expiration{epoch + std::chrono::system_clock::duration{resource.expiration().seconds()}};
+
+    if (!resource.name().empty())
+    {
+        for (pqxx::result const result = query("select create_resource($1, $2, $3, $4, $5, $6) as id", resource.name(), resource_type_to_string(resource.type()), section_pattern_to_string(resource.pattern()), resource.link(), std::format("{:%FT%T%z}", production), std::format("{:%FT%T%z}", expiration)); pqxx::row row: result)
+        {
+            generated_resource.set_id(row.at("id").as<uint64_t>());
+        }
+    }
+
+    return generated_resource;
+}
+
 expertise_level database::get_user_cognitive_level(uint64_t user_id, uint64_t subject_id) const
 {
     auto level{expertise_level::surface};

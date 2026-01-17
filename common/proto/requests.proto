@@ -65,10 +65,10 @@ message MergeSubjectsRequest { User user = 1; Subject source_subject = 2; Subjec
 message MergeSubjectsResponse { bool success = 1; string details = 2; uint32 code = 3; }
 
 // subject page resource view
-message GetResourcesRequest { User user = 1; }
-message GetResourcesResponse { }
-message AddResourceToSubjectRequest { User user = 1; }
-message AddResourceToSubjectResponse { }
+message GetResourcesRequest { User user = 1; Subject subject = 2; }
+message GetResourcesResponse { bool success = 1; string details = 2; uint32 code = 3;  repeated Resource resources = 4; }
+message AddResourceToSubjectRequest { User user = 1; Resource resource = 2; Subject subject = 3; }
+message AddResourceToSubjectResponse { bool success = 1; string details = 2; uint32 code = 3; }
 message CreateResourceRequest { User user = 1; }
 message CreateResourceResponse { }
 message DropResourceFromSubjectRequest { User user = 1; }

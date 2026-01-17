@@ -44,6 +44,9 @@ public:
     MOCK_METHOD(void, remove_milestone, (uint64_t, uint64_t), (const, override));
     MOCK_METHOD(void, change_milestone_level, (uint64_t, uint64_t, expertise_level), (const, override));
 
+    // resources
+    MOCK_METHOD(Resource, create_resource, (Resource const&), (const, override));
+
     // practices
     MOCK_METHOD(expertise_level, get_user_cognitive_level, (uint64_t, uint64_t), (const, override));
 };
