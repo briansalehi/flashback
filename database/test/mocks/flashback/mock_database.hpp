@@ -63,11 +63,19 @@ public:
     MOCK_METHOD(Provider, create_provider, (std::string), (const, override));
     MOCK_METHOD(void, add_provider, (uint64_t, uint64_t), (const, override));
     MOCK_METHOD(void, drop_provider, (uint64_t, uint64_t), (const, override));
+    MOCK_METHOD((std::map<uint64_t, Provider>), search_provider, (std::string), (const, override));
+    MOCK_METHOD(void, rename_provider, (uint64_t, std::string), (const, override));
+    MOCK_METHOD(void, remove_provider, (uint64_t), (const, override));
+    MOCK_METHOD(void, merge_providers, (uint64_t, uint64_t), (const, override));
 
     // presenters
     MOCK_METHOD(Presenter, create_presenter, (std::string), (const, override));
     MOCK_METHOD(void, add_presenter, (uint64_t, uint64_t), (const, override));
     MOCK_METHOD(void, drop_presenter, (uint64_t, uint64_t), (const, override));
+    MOCK_METHOD((std::map<uint64_t, Presenter>), search_presenter, (std::string), (const, override));
+    MOCK_METHOD(void, rename_presenter, (uint64_t, std::string), (const, override));
+    MOCK_METHOD(void, remove_presenter, (uint64_t), (const, override));
+    MOCK_METHOD(void, merge_presenters, (uint64_t, uint64_t), (const, override));
 
     // practices
     MOCK_METHOD(expertise_level, get_user_cognitive_level, (uint64_t, uint64_t), (const, override));

@@ -66,11 +66,19 @@ public:
     Provider create_provider(std::string name) const override;
     void add_provider(uint64_t resource_id, uint64_t provider_id) const override;
     void drop_provider(uint64_t resource_id, uint64_t provider_id) const override;
+    std::map<uint64_t, Provider> search_provider(std::string name) const override;
+    void rename_provider(uint64_t provider_id, std::string name) const override;
+    void remove_provider(uint64_t provider_id) const override;
+    void merge_providers(uint64_t source_id, uint64_t target_id) const override;
 
     // presenters
     Presenter create_presenter(std::string name) const override;
     void add_presenter(uint64_t resource_id, uint64_t presenter_id) const override;
     void drop_presenter(uint64_t resource_id, uint64_t presenter_id) const override;
+    std::map<uint64_t, Presenter> search_presenter(std::string name) const override;
+    void rename_presenter(uint64_t presenter_id, std::string name) const override;
+    void remove_presenter(uint64_t presenter_id) const override;
+    void merge_presenters(uint64_t source_id, uint64_t target_id) const override;
 
     // practices
     [[nodiscard]] expertise_level get_user_cognitive_level(uint64_t user_id, uint64_t subject_id) const override;

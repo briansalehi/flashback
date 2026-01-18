@@ -1445,3 +1445,35 @@ TEST_F(test_database, drop_presenter)
     ASSERT_GT(presenter.id(), 0);
     EXPECT_NO_THROW(m_database->drop_presenter(resource.id(), presenter.id()));
 }
+
+TEST_F(test_database, search_providers)
+{
+}
+
+TEST_F(test_database, rename_provider)
+{
+}
+
+TEST_F(test_database, remove_provider)
+{
+}
+
+TEST_F(test_database, merge_providers)
+{
+}
+
+TEST_F(test_database, search_presenters)
+{
+}
+
+TEST_F(test_database, rename_presenter)
+{
+}
+
+TEST_F(test_database, remove_presenter)
+{
+}
+
+TEST_F(test_database, merge_presenters)
+{
+}

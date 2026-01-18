@@ -542,6 +542,24 @@ void database::drop_provider(uint64_t const resource_id, uint64_t const provider
     exec("call drop_provider($1, $2)", resource_id, provider_id);
 }
 
+std::map<uint64_t, Provider> database::search_provider(std::string name) const
+{
+    std::map<uint64_t, Provider> matched{};
+    return matched;
+}
+
+void database::rename_provider(uint64_t const provider_id, std::string name) const
+{
+}
+
+void database::remove_provider(uint64_t const provider_id) const
+{
+}
+
+void database::merge_providers(uint64_t const source_id, uint64_t const target_id) const
+{
+}
+
 Presenter database::create_presenter(std::string name) const
 {
     Presenter presenter{};
@@ -568,6 +586,24 @@ void database::add_presenter(uint64_t const resource_id, uint64_t const presente
 void database::drop_presenter(uint64_t const resource_id, uint64_t const presenter_id) const
 {
     exec("call drop_presenter($1, $2)", resource_id, presenter_id);
+}
+
+std::map<uint64_t, Presenter> database::search_presenter(std::string name) const
+{
+    std::map<uint64_t, Presenter> matched{};
+    return matched;
+}
+
+void database::rename_presenter(uint64_t const presenter_id, std::string name) const
+{
+}
+
+void database::remove_presenter(uint64_t const presenter_id) const
+{
+}
+
+void database::merge_presenters(uint64_t const source_id, uint64_t const target_id) const
+{
 }
 
 expertise_level database::get_user_cognitive_level(uint64_t const user_id, uint64_t const subject_id) const

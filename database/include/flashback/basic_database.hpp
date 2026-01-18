@@ -94,19 +94,19 @@ public:
     virtual Provider create_provider(std::string name) const = 0;
     virtual void add_provider(uint64_t resource_id, uint64_t provider_id) const = 0;
     virtual void drop_provider(uint64_t resource_id, uint64_t provider_id) const = 0;
-    //search_provider
-    //rename_provider
-    //remove_provider
-    //merge_providers
+    virtual std::map<uint64_t, Provider> search_provider(std::string name) const = 0;
+    virtual void rename_provider(uint64_t provider_id, std::string name) const = 0;
+    virtual void remove_provider(uint64_t provider_id) const = 0;
+    virtual void merge_providers(uint64_t source_id, uint64_t target_id) const =0;
 
     // presenters
     virtual Presenter create_presenter(std::string name) const = 0;
     virtual void add_presenter(uint64_t resource_id, uint64_t presenter_id) const = 0;
     virtual void drop_presenter(uint64_t resource_id, uint64_t presenter_id) const = 0;
-    //search_presenter
-    //rename_presenter
-    //remove_presenter
-    //merge_presenters
+    virtual std::map<uint64_t, Presenter> search_presenter(std::string name) const = 0;
+    virtual void rename_presenter(uint64_t presenter_id, std::string name) const = 0;
+    virtual void remove_presenter(uint64_t presenter_id) const = 0;
+    virtual void merge_presenters(uint64_t source_id, uint64_t target_id) const = 0;
 
     // sections
     //create_section
