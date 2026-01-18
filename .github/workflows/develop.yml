@@ -4,28 +4,15 @@ on:
     branches: develop
   workflow_dispatch:
 jobs:
-  debug-ninja:
-    runs-on: ubuntu-latest
-    steps:
-      - name: prepare
-        run: sudo apt install --yes --no-install-recommends libboost-system-dev libboost-program-options-dev libgtest-dev libprotobuf-dev libgrpc++-dev protobuf-compiler-grpc libsodium-dev libgmock-dev
-      - name: checkout
-        uses: actions/checkout@v4
-      - name: configure
-        run: cmake -G Ninja -S . -B flashback-debug-ninja -D CMAKE_BUILD_TYPE=Debug -D TEST_GRANULARITY=1
-      - name: build
-        run: cmake --build flashback-debug-ninja --parallel $(nproc) --target flashbackd flashbackd-internals-tests common-tests database-tests
-      - name: test
-        run: ctest --test-dir flashback-debug-ninja --verbose
   release-ninja:
     runs-on: ubuntu-latest
     steps:
       - name: prepare
-        run: sudo apt install --yes --no-install-recommends libboost-system-dev libboost-program-options-dev libgtest-dev libprotobuf-dev libgrpc++-dev protobuf-compiler-grpc libsodium-dev libgmock-dev
+        run: sudo apt install --yes --no-install-recommends cmake libboost-system-dev libboost-program-options-dev libgtest-dev libprotobuf-dev libgrpc++-dev protobuf-compiler-grpc libsodium-dev libgmock-dev
       - name: checkout
         uses: actions/checkout@v4
       - name: configure
-        run: cmake -G Ninja -S . -B flashback-release-ninja -D CMAKE_BUILD_TYPE=Release -D CMAKE_INSTALL_PREFIX=flashback-install -D TEST_GRANULARITY=1
+        run: cmake -G Ninja -S . -B flashback-release-ninja -D CMAKE_BUILD_TYPE=Release -D CMAKE_INSTALL_PREFIX=flashback-install -D TEST_GRANULARITY=3
       - name: build
         run: cmake --build flashback-release-ninja --parallel $(nproc) --target flashbackd flashbackd-internals-tests common-tests database-tests
       - name: test
