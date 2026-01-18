@@ -4,7 +4,7 @@ on:
     branches: develop
   workflow_dispatch:
 jobs:
-  release-ninja:
+  release:
     runs-on: ubuntu-latest
     steps:
       - name: prepare
@@ -12,12 +12,12 @@ jobs:
       - name: checkout
         uses: actions/checkout@v4
       - name: configure
-        run: cmake -G Ninja -S . -B flashback-release-ninja -D CMAKE_BUILD_TYPE=Release -D CMAKE_INSTALL_PREFIX=flashback-install -D TEST_GRANULARITY=3
+        run: cmake -G Ninja -S . -B flashback-release -D CMAKE_BUILD_TYPE=Release -D CMAKE_INSTALL_PREFIX=flashback-install -D TEST_GRANULARITY=2
       - name: build
-        run: cmake --build flashback-release-ninja --parallel $(nproc) --target flashbackd flashbackd-internals-tests common-tests database-tests
+        run: cmake --build flashback-release --parallel $(nproc) --target flashbackd common-tests database-tests flashbackd-internals-tests
       - name: test
-        run: ctest --test-dir flashback-release-ninja --verbose
+        run: ctest --test-dir flashback-release --verbose
       - name: install
-        run: cmake --install flashback-release-ninja --component flashbackd
+        run: cmake --install flashback-release --component flashbackd
       - name: pack
-        run: cpack -G ZIP -B flashback-release-ninja --config flashback-release-ninja/CPackConfig.cmake
+        run: cpack -G ZIP -B flashback-release --config flashback-release/CPackConfig.cmake
