@@ -808,10 +808,10 @@ TEST_F(test_database, create_resource)
     constexpr auto type{flashback::Resource::book};
     constexpr auto pattern{flashback::Resource::chapter};
     constexpr auto link{R"(https://example.com)"};
-    auto const production{std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count()};
-    auto const expiration{
-        std::chrono::duration_cast<std::chrono::seconds>(
-            std::chrono::system_clock::time_point(std::chrono::system_clock::now() + std::chrono::years{3}).time_since_epoch()).count()};
+    auto const now{std::chrono::system_clock::now().time_since_epoch()};
+    auto const later{std::chrono::system_clock::time_point(std::chrono::system_clock::now() + std::chrono::years{3}).time_since_epoch()};
+    auto const production{std::chrono::duration_cast<std::chrono::seconds>(now).count()};
+    auto const expiration{std::chrono::duration_cast<std::chrono::seconds>(later).count()};
     flashback::Resource resource{};
     resource.set_name(name);
     resource.set_type(type);
@@ -845,10 +845,10 @@ TEST_F(test_database, add_resource_to_subject)
 {
     flashback::Subject subject{};
     flashback::Resource resource{};
-    auto const production{std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count()};
-    auto const expiration{
-        std::chrono::duration_cast<std::chrono::seconds>(
-            std::chrono::system_clock::time_point(std::chrono::system_clock::now() + std::chrono::years{3}).time_since_epoch()).count()};
+    auto const now{std::chrono::system_clock::now().time_since_epoch()};
+    auto const later{std::chrono::system_clock::time_point(std::chrono::system_clock::now() + std::chrono::years{3}).time_since_epoch()};
+    auto const production{std::chrono::duration_cast<std::chrono::seconds>(now).count()};
+    auto const expiration{std::chrono::duration_cast<std::chrono::seconds>(later).count()};
     resource.set_name("Introduction to Algorithms");
     resource.set_type(flashback::Resource::book);
     resource.set_pattern(flashback::Resource::chapter);
@@ -871,10 +871,10 @@ TEST_F(test_database, get_resources)
     flashback::Subject subject{};
     flashback::Resource resource{};
     std::vector<flashback::Resource> resources{};
-    auto const production{std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count()};
-    auto const expiration{
-        std::chrono::duration_cast<std::chrono::seconds>(
-            std::chrono::system_clock::time_point(std::chrono::system_clock::now() + std::chrono::years{3}).time_since_epoch()).count()};
+    auto const now{std::chrono::system_clock::now().time_since_epoch()};
+    auto const later{std::chrono::system_clock::time_point(std::chrono::system_clock::now() + std::chrono::years{3}).time_since_epoch()};
+    auto const production{std::chrono::duration_cast<std::chrono::seconds>(now).count()};
+    auto const expiration{std::chrono::duration_cast<std::chrono::seconds>(later).count()};
     resource.set_name("Introduction to Algorithms");
     resource.set_type(flashback::Resource::book);
     resource.set_pattern(flashback::Resource::chapter);
@@ -919,10 +919,10 @@ TEST_F(test_database, drop_resource_from_subject)
 
     flashback::Subject subject{};
     std::vector<flashback::Resource> resources{};
-    auto const production{std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count()};
-    auto const expiration{
-        std::chrono::duration_cast<std::chrono::seconds>(
-            std::chrono::system_clock::time_point(std::chrono::system_clock::now() + std::chrono::years{3}).time_since_epoch()).count()};
+    auto const now{std::chrono::system_clock::now().time_since_epoch()};
+    auto const later{std::chrono::system_clock::time_point(std::chrono::system_clock::now() + std::chrono::years{3}).time_since_epoch()};
+    auto const production{std::chrono::duration_cast<std::chrono::seconds>(now).count()};
+    auto const expiration{std::chrono::duration_cast<std::chrono::seconds>(later).count()};
     flashback::Resource resource{};
     resource.set_name("Introduction to Algorithms");
     resource.set_type(flashback::Resource::book);
@@ -957,4 +957,45 @@ TEST_F(test_database, drop_resource_from_subject)
     EXPECT_NO_THROW(resources = m_database->get_resources(subject.id()));
     EXPECT_THAT(resources, SizeIs(1));
     EXPECT_THAT(resources.at(0).id(), secondary_resource.id());
+}
+
+TEST_F(test_database, search_resources)
+{
+    using testing::SizeIs;
+
+    constexpr auto search_pattern{"cmake"};
+    constexpr auto irrelevant_name{"Irrelevant"};
+    auto const now{std::chrono::system_clock::now().time_since_epoch()};
+    auto const later{std::chrono::system_clock::time_point(std::chrono::system_clock::now() + std::chrono::years{3}).time_since_epoch()};
+    auto const production{std::chrono::duration_cast<std::chrono::seconds>(now).count()};
+    auto const expiration{std::chrono::duration_cast<std::chrono::seconds>(later).count()};
+    std::vector<flashback::Resource> resources{};
+    std::map<uint64_t, flashback::Resource> matched_resources{};
+    flashback::Subject subject{};
+    subject.set_name("CMake");
+
+    ASSERT_NO_THROW(subject = m_database->create_subject(subject.name()));
+    ASSERT_GT(subject.id(), 0);
+
+    for (std::string const& name: {"Modern CMake", "Old CMake", "CMake Alternatives", "CMake for C++", "GNU Make", "Make Manual", "Irrelevant"})
+    {
+        flashback::Resource resource{};
+        resource.set_name(name);
+        resource.set_type(flashback::Resource::book);
+        resource.set_pattern(flashback::Resource::chapter);
+        resource.set_link(R"(https://example.com)");
+        resource.set_production(production);
+        resource.set_expiration(expiration);
+        ASSERT_NO_THROW(resource = m_database->create_resource(resource));
+        ASSERT_GT(resource.id(), 0);
+        ASSERT_NO_THROW(m_database->add_resource_to_subject(resource.id(), subject.id()));
+        resources.push_back(std::move(resource));
+    }
+
+    EXPECT_NO_THROW(resources = m_database->get_resources(subject.id()));
+    EXPECT_THAT(resources, SizeIs(7));
+    EXPECT_NO_THROW(matched_resources = m_database->search_resources(search_pattern));
+    EXPECT_THAT(matched_resources, SizeIs(6));
+    EXPECT_NO_THROW(matched_resources = m_database->search_resources(irrelevant_name));
+    EXPECT_THAT(matched_resources, SizeIs(1));
 }

@@ -77,7 +77,7 @@ public:
     virtual void add_resource_to_subject(uint64_t resource_id, uint64_t subject_id) const = 0;
     [[nodiscard]] virtual std::vector<Resource> get_resources(uint64_t subject_id) const = 0;
     virtual void drop_resource_from_subject(uint64_t resource_id, uint64_t subject_id) const = 0;
-    //search_resources
+    [[nodiscard]] virtual std::map<uint64_t, Resource> search_resources(std::string name) const = 0;
     //rename_resource
     //remove_resource
     //merge_resources

@@ -455,6 +455,25 @@ void database::drop_resource_from_subject(uint64_t resource_id, uint64_t subject
     exec("call drop_resource_from_subject($1, $2)", resource_id, subject_id);
 }
 
+std::map<uint64_t, Resource> database::search_resources(std::string name) const
+{
+    std::map<uint64_t, Resource> matched{};
+    for (pqxx::row const& row: query("select position, id, name, type, pattern, link, production, expiration from search_resources($1) order by position", name))
+    {
+        uint64_t const position{row.at("position").as<uint64_t>()};
+        Resource resource{};
+        resource.set_id(row.at("id").as<uint64_t>());
+        resource.set_name(row.at("name").as<std::string>());
+        resource.set_type(to_resource_type(row.at("type").as<std::string>()));
+        resource.set_pattern(to_section_pattern(row.at("pattern").as<std::string>()));
+        resource.set_link(row.at("link").as<std::string>());
+        resource.set_production(row.at("production").as<uint64_t>());
+        resource.set_expiration(row.at("expiration").as<uint64_t>());
+        matched.insert({position, resource});
+    }
+    return matched;
+}
+
 expertise_level database::get_user_cognitive_level(uint64_t user_id, uint64_t subject_id) const
 {
     auto level{expertise_level::surface};
