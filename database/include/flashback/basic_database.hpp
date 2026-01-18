@@ -82,7 +82,7 @@ public:
     //remove_resource
     //merge_resources
     //change_resource_type
-    //edit_resource_link
+    virtual void edit_resource_link(uint64_t resource_id, std::string link) const = 0;
     //edit_section_pattern
     //edit_resource_production
     //edit_resource_expiration

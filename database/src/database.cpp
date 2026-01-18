@@ -450,7 +450,7 @@ std::vector<Resource> database::get_resources(uint64_t const subject_id) const
     return resources;
 }
 
-void database::drop_resource_from_subject(uint64_t resource_id, uint64_t subject_id) const
+void database::drop_resource_from_subject(uint64_t const resource_id, uint64_t const subject_id) const
 {
     exec("call drop_resource_from_subject($1, $2)", resource_id, subject_id);
 }
@@ -474,7 +474,12 @@ std::map<uint64_t, Resource> database::search_resources(std::string name) const
     return matched;
 }
 
-expertise_level database::get_user_cognitive_level(uint64_t user_id, uint64_t subject_id) const
+void database::edit_resource_link(uint64_t const resource_id, std::string const link) const
+{
+    exec("call edit_resource_link($1, $2)", resource_id, link);
+}
+
+expertise_level database::get_user_cognitive_level(uint64_t const user_id, uint64_t const subject_id) const
 {
     auto level{expertise_level::surface};
 
