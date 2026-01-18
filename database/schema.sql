@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict 3iELiReYAOo3MPsfg29oNo6igZ21zkVYWrEaMWZ2F7Mem8R726Xt6O3U4szy4sC
+\restrict 9ngZ20gw2G6fqhYF1G00l9pT5lWmR1xoaglFfzvlovusCqiWTbFnmZ4Kz52QMpT
 
 -- Dumped from database version 18.0
 -- Dumped by pg_dump version 18.0
@@ -320,6 +320,60 @@ $$;
 ALTER PROCEDURE flashback.add_milestone(IN subject_id integer, IN subject_level flashback.expertise_level, IN roadmap_id integer, IN subject_position integer) OWNER TO flashback;
 
 --
+-- Name: add_presenter(integer, integer); Type: PROCEDURE; Schema: flashback; Owner: flashback
+--
+
+CREATE PROCEDURE flashback.add_presenter(IN resource_id integer, IN presenter_id integer)
+    LANGUAGE plpgsql
+    AS $$
+begin
+    insert into authors (resource, presenter) values (resource_id, presenter_id);
+end;
+$$;
+
+
+ALTER PROCEDURE flashback.add_presenter(IN resource_id integer, IN presenter_id integer) OWNER TO flashback;
+
+--
+-- Name: add_provider(integer, integer); Type: PROCEDURE; Schema: flashback; Owner: flashback
+--
+
+CREATE PROCEDURE flashback.add_provider(IN resource_id integer, IN provider_id integer)
+    LANGUAGE plpgsql
+    AS $$
+begin
+    insert into producers (resource, provider) values (resource_id, provider_id);
+end;
+$$;
+
+
+ALTER PROCEDURE flashback.add_provider(IN resource_id integer, IN provider_id integer) OWNER TO flashback;
+
+--
+-- Name: add_requirement(integer, integer, flashback.expertise_level, integer, flashback.expertise_level); Type: PROCEDURE; Schema: flashback; Owner: flashback
+--
+
+CREATE PROCEDURE flashback.add_requirement(IN roadmap_id integer, IN subject_id integer, IN subject_level flashback.expertise_level, IN required_subject_id integer, IN minimum_subject_level flashback.expertise_level)
+    LANGUAGE plpgsql
+    AS $$
+begin
+    if
+        -- a subject cannot be its own requirement
+        subject_id <> required_subject_id and
+        -- a subject cannot have circular requirement
+        not exists (select 1 from requirements where roadmap = roadmap_id and subject = required_subject_id and required_subject = subject_id) and
+        -- a requirement weaker than what already exists for a subject is a dupliate and is avoided
+        not exists (select 1 from requirements where roadmap = roadmap_id and subject = subject_id and level < subject_level and required_subject = required_subject_id and minimum_level >= minimum_subject_level)
+    then
+        insert into requirements (roadmap, subject, level, required_subject, minimum_level)
+        values (roadmap_id, subject_id, subject_level, required_subject_id, minimum_subject_level);
+    end if;
+end; $$;
+
+
+ALTER PROCEDURE flashback.add_requirement(IN roadmap_id integer, IN subject_id integer, IN subject_level flashback.expertise_level, IN required_subject_id integer, IN minimum_subject_level flashback.expertise_level) OWNER TO flashback;
+
+--
 -- Name: add_resource_to_subject(integer, integer); Type: PROCEDURE; Schema: flashback; Owner: flashback
 --
 
@@ -329,21 +383,6 @@ CREATE PROCEDURE flashback.add_resource_to_subject(IN resource_id integer, IN su
 
 
 ALTER PROCEDURE flashback.add_resource_to_subject(IN resource_id integer, IN subject_id integer) OWNER TO flashback;
-
---
--- Name: assign_roadmap(integer, integer); Type: PROCEDURE; Schema: flashback; Owner: flashback
---
-
-CREATE PROCEDURE flashback.assign_roadmap(IN user_id integer, IN roadmap_id integer)
-    LANGUAGE plpgsql
-    AS $$
-begin
-    insert into users_roadmaps("user", roadmap) values (user_id, roadmap_id);
-end;
-$$;
-
-
-ALTER PROCEDURE flashback.assign_roadmap(IN user_id integer, IN roadmap_id integer) OWNER TO flashback;
 
 --
 -- Name: change_block_extension(integer, integer, character varying); Type: PROCEDURE; Schema: flashback; Owner: flashback
@@ -376,6 +415,50 @@ $$;
 ALTER PROCEDURE flashback.change_block_type(IN selected_card integer, IN block integer, IN new_type flashback.content_type) OWNER TO flashback;
 
 --
+-- Name: change_milestone_level(integer, integer, flashback.expertise_level); Type: PROCEDURE; Schema: flashback; Owner: flashback
+--
+
+CREATE PROCEDURE flashback.change_milestone_level(IN roadmap_id integer, IN subject_id integer, IN subject_level flashback.expertise_level)
+    LANGUAGE plpgsql
+    AS $$
+begin
+    update milestones set level = subject_level where roadmap = roadmap_id and subject = subject_id;
+end; $$;
+
+
+ALTER PROCEDURE flashback.change_milestone_level(IN roadmap_id integer, IN subject_id integer, IN subject_level flashback.expertise_level) OWNER TO flashback;
+
+--
+-- Name: change_resource_type(integer, flashback.resource_type); Type: PROCEDURE; Schema: flashback; Owner: flashback
+--
+
+CREATE PROCEDURE flashback.change_resource_type(IN resource_id integer, IN resource_type flashback.resource_type)
+    LANGUAGE plpgsql
+    AS $$
+begin
+    update resources set type = resource_type where id = resource_id;
+end;
+$$;
+
+
+ALTER PROCEDURE flashback.change_resource_type(IN resource_id integer, IN resource_type flashback.resource_type) OWNER TO flashback;
+
+--
+-- Name: change_section_pattern(integer, flashback.section_pattern); Type: PROCEDURE; Schema: flashback; Owner: flashback
+--
+
+CREATE PROCEDURE flashback.change_section_pattern(IN resource_id integer, IN resource_pattern flashback.section_pattern)
+    LANGUAGE plpgsql
+    AS $$
+begin
+    update resources set pattern = resource_pattern where resources.id = resource_id;
+end;
+$$;
+
+
+ALTER PROCEDURE flashback.change_section_pattern(IN resource_id integer, IN resource_pattern flashback.section_pattern) OWNER TO flashback;
+
+--
 -- Name: change_users_hash(integer, character varying); Type: PROCEDURE; Schema: flashback; Owner: flashback
 --
 
@@ -385,6 +468,28 @@ CREATE PROCEDURE flashback.change_users_hash(IN user_id integer, IN hash charact
 
 
 ALTER PROCEDURE flashback.change_users_hash(IN user_id integer, IN hash character varying) OWNER TO flashback;
+
+--
+-- Name: clone_roadmap(integer, integer); Type: FUNCTION; Schema: flashback; Owner: flashback
+--
+
+CREATE FUNCTION flashback.clone_roadmap(user_id integer, roadmap_id integer) RETURNS TABLE(id integer, name flashback.citext)
+    LANGUAGE plpgsql
+    AS $$
+declare roadmap_name citext;
+declare roadmap_owner integer;
+declare cloned_roadmap_id integer;
+begin
+    select r.name, r.user into roadmap_name, roadmap_owner from roadmaps r where r.id = roadmap_id;
+
+    if roadmap_owner <> user_id then
+        cloned_roadmap_id := create_roadmap(user_id, roadmap_name);
+        insert into milestones (roadmap, subject, level, position) select m.roadmap, m.subject, m.level, m.position from milestones m where m.roadmap = roadmap_id;
+    end if;
+end; $$;
+
+
+ALTER FUNCTION flashback.clone_roadmap(user_id integer, roadmap_id integer) OWNER TO flashback;
 
 --
 -- Name: create_assessment(integer, flashback.expertise_level, integer, integer); Type: PROCEDURE; Schema: flashback; Owner: flashback
@@ -478,48 +583,78 @@ end; $$;
 ALTER FUNCTION flashback.create_nerve(user_id integer, subject_id integer) OWNER TO flashback;
 
 --
--- Name: create_resource(character varying, flashback.resource_type, flashback.section_pattern, integer, integer, character varying); Type: FUNCTION; Schema: flashback; Owner: flashback
+-- Name: create_presenter(character varying); Type: FUNCTION; Schema: flashback; Owner: flashback
 --
 
-CREATE FUNCTION flashback.create_resource(resource_name character varying, resource_type flashback.resource_type, resource_pattern flashback.section_pattern, presenter_id integer, provider_id integer, resource_link character varying) RETURNS integer
+CREATE FUNCTION flashback.create_presenter(presenter_name character varying) RETURNS integer
+    LANGUAGE plpgsql
+    AS $$
+declare presenter_id integer;
+begin
+    insert into presenters (name) values (presenter_name) returning id into presenter_id;
+
+    return presenter_id;
+end;
+$$;
+
+
+ALTER FUNCTION flashback.create_presenter(presenter_name character varying) OWNER TO flashback;
+
+--
+-- Name: create_provider(character varying); Type: FUNCTION; Schema: flashback; Owner: flashback
+--
+
+CREATE FUNCTION flashback.create_provider(provider_name character varying) RETURNS integer
+    LANGUAGE plpgsql
+    AS $$
+declare provider_id integer;
+begin
+    insert into providers (name) values (provider_name) returning id into provider_id;
+
+    return provider_id;
+end;
+$$;
+
+
+ALTER FUNCTION flashback.create_provider(provider_name character varying) OWNER TO flashback;
+
+--
+-- Name: create_resource(character varying, flashback.resource_type, flashback.section_pattern, character varying, integer, integer); Type: FUNCTION; Schema: flashback; Owner: flashback
+--
+
+CREATE FUNCTION flashback.create_resource(resource_name character varying, resource_type flashback.resource_type, resource_pattern flashback.section_pattern, resource_link character varying, resource_production integer, resource_expiration integer) RETURNS integer
     LANGUAGE plpgsql
     AS $$
 declare resource_id integer;
-declare presenter_id integer;
-declare provider_id integer;
 begin
-    insert into resources (name, type, pattern, condition, link)
-    values (resource_name, resource_type, resource_pattern, 'relevant'::condition, nullif(create_resource.link, ''))
+    insert into resources (name, type, pattern, link, production, expiration)
+    values (resource_name, resource_type, resource_pattern, nullif(resource_link, ''), resource_production, resource_expiration)
     returning id into resource_id;
-
-    insert into authors (resource, presenter) values (resource_id, presenter_id);
-
-    insert into producers (resource, provider) values (resource_id, producere_id);
 
     return resource_id;
 end;
 $$;
 
 
-ALTER FUNCTION flashback.create_resource(resource_name character varying, resource_type flashback.resource_type, resource_pattern flashback.section_pattern, presenter_id integer, provider_id integer, resource_link character varying) OWNER TO flashback;
+ALTER FUNCTION flashback.create_resource(resource_name character varying, resource_type flashback.resource_type, resource_pattern flashback.section_pattern, resource_link character varying, resource_production integer, resource_expiration integer) OWNER TO flashback;
 
 --
--- Name: create_roadmap(character varying); Type: FUNCTION; Schema: flashback; Owner: flashback
+-- Name: create_roadmap(integer, character varying); Type: FUNCTION; Schema: flashback; Owner: flashback
 --
 
-CREATE FUNCTION flashback.create_roadmap(roadmap_name character varying) RETURNS integer
+CREATE FUNCTION flashback.create_roadmap(user_id integer, roadmap_name character varying) RETURNS integer
     LANGUAGE plpgsql
     AS $$
 declare roadmap_id integer;
 begin
-    insert into roadmaps (name) values (roadmap_name) returning id into roadmap_id;
+    insert into roadmaps ("user", name) values (user_id, roadmap_name) returning id into roadmap_id;
 
     return roadmap_id;
 end;
 $$;
 
 
-ALTER FUNCTION flashback.create_roadmap(roadmap_name character varying) OWNER TO flashback;
+ALTER FUNCTION flashback.create_roadmap(user_id integer, roadmap_name character varying) OWNER TO flashback;
 
 --
 -- Name: create_section(integer, character varying); Type: FUNCTION; Schema: flashback; Owner: flashback
@@ -699,6 +834,51 @@ $$;
 ALTER FUNCTION flashback.create_user(name character varying, email character varying, hash character varying) OWNER TO flashback;
 
 --
+-- Name: drop_presenter(integer, integer); Type: PROCEDURE; Schema: flashback; Owner: flashback
+--
+
+CREATE PROCEDURE flashback.drop_presenter(IN resource_id integer, IN presenter_id integer)
+    LANGUAGE plpgsql
+    AS $$
+begin
+    delete from authors where resource = resource_id and presenter = presenter_id;
+end;
+$$;
+
+
+ALTER PROCEDURE flashback.drop_presenter(IN resource_id integer, IN presenter_id integer) OWNER TO flashback;
+
+--
+-- Name: drop_provider(integer, integer); Type: PROCEDURE; Schema: flashback; Owner: flashback
+--
+
+CREATE PROCEDURE flashback.drop_provider(IN resource_id integer, IN provider_id integer)
+    LANGUAGE plpgsql
+    AS $$
+begin
+    delete from producers where resource = resource_id and provider = provider_id;
+end;
+$$;
+
+
+ALTER PROCEDURE flashback.drop_provider(IN resource_id integer, IN provider_id integer) OWNER TO flashback;
+
+--
+-- Name: drop_resource_from_subject(integer, integer); Type: PROCEDURE; Schema: flashback; Owner: flashback
+--
+
+CREATE PROCEDURE flashback.drop_resource_from_subject(IN resource_id integer, IN subject_id integer)
+    LANGUAGE plpgsql
+    AS $$
+begin
+    delete from shelves where resource = resource_id and subject = subject_id;
+end;
+$$;
+
+
+ALTER PROCEDURE flashback.drop_resource_from_subject(IN resource_id integer, IN subject_id integer) OWNER TO flashback;
+
+--
 -- Name: edit_block(integer, integer, text); Type: PROCEDURE; Schema: flashback; Owner: flashback
 --
 
@@ -725,19 +905,34 @@ $$;
 ALTER PROCEDURE flashback.edit_card_headline(IN card integer, IN new_headline character varying) OWNER TO flashback;
 
 --
--- Name: edit_resource_name(integer, character varying); Type: PROCEDURE; Schema: flashback; Owner: flashback
+-- Name: edit_resource_expiration(integer, integer); Type: PROCEDURE; Schema: flashback; Owner: flashback
 --
 
-CREATE PROCEDURE flashback.edit_resource_name(IN resource integer, IN name character varying)
+CREATE PROCEDURE flashback.edit_resource_expiration(IN resource_id integer, IN resource_expiration integer)
     LANGUAGE plpgsql
     AS $$
 begin
-    update resources set name = edit_resource_name.name where id = resource;
+    update resources set expiration = resource_expiration where id = resource_id;
 end;
 $$;
 
 
-ALTER PROCEDURE flashback.edit_resource_name(IN resource integer, IN name character varying) OWNER TO flashback;
+ALTER PROCEDURE flashback.edit_resource_expiration(IN resource_id integer, IN resource_expiration integer) OWNER TO flashback;
+
+--
+-- Name: edit_resource_link(integer, character varying); Type: PROCEDURE; Schema: flashback; Owner: flashback
+--
+
+CREATE PROCEDURE flashback.edit_resource_link(IN resource_id integer, IN subject_link character varying)
+    LANGUAGE plpgsql
+    AS $$
+begin
+    update resources set link = subject_link where id = resource_id;
+end;
+$$;
+
+
+ALTER PROCEDURE flashback.edit_resource_link(IN resource_id integer, IN subject_link character varying) OWNER TO flashback;
 
 --
 -- Name: edit_resource_presenter(integer, character varying); Type: PROCEDURE; Schema: flashback; Owner: flashback
@@ -751,6 +946,21 @@ CREATE PROCEDURE flashback.edit_resource_presenter(IN resource integer, IN autho
 ALTER PROCEDURE flashback.edit_resource_presenter(IN resource integer, IN author character varying) OWNER TO flashback;
 
 --
+-- Name: edit_resource_production(integer, integer); Type: PROCEDURE; Schema: flashback; Owner: flashback
+--
+
+CREATE PROCEDURE flashback.edit_resource_production(IN resource_id integer, IN resource_production integer)
+    LANGUAGE plpgsql
+    AS $$
+begin
+    update resources set production = resource_production where id = resource_id;
+end;
+$$;
+
+
+ALTER PROCEDURE flashback.edit_resource_production(IN resource_id integer, IN resource_production integer) OWNER TO flashback;
+
+--
 -- Name: edit_resource_provider(integer, character varying); Type: PROCEDURE; Schema: flashback; Owner: flashback
 --
 
@@ -760,37 +970,6 @@ CREATE PROCEDURE flashback.edit_resource_provider(IN resource integer, IN edited
 
 
 ALTER PROCEDURE flashback.edit_resource_provider(IN resource integer, IN edited_publisher character varying) OWNER TO flashback;
-
---
--- Name: edit_resource_type(integer, flashback.resource_type); Type: PROCEDURE; Schema: flashback; Owner: flashback
---
-
-CREATE PROCEDURE flashback.edit_resource_type(IN resource integer, IN type flashback.resource_type)
-    LANGUAGE plpgsql
-    AS $$
-begin
-    update resources set type = edit_resource_type.type where id = resource;
-end;
-$$;
-
-
-ALTER PROCEDURE flashback.edit_resource_type(IN resource integer, IN type flashback.resource_type) OWNER TO flashback;
-
---
--- Name: edit_section_pattern(integer, flashback.section_pattern); Type: PROCEDURE; Schema: flashback; Owner: flashback
---
-
-CREATE PROCEDURE flashback.edit_section_pattern(IN resource integer, IN pattern flashback.section_pattern)
-    LANGUAGE plpgsql
-    AS $$
-begin
-    update resources set pattern = edit_section_pattern.pattern
-    where resources.id = edit_section_pattern.resource;
-end;
-$$;
-
-
-ALTER PROCEDURE flashback.edit_section_pattern(IN resource integer, IN pattern flashback.section_pattern) OWNER TO flashback;
 
 --
 -- Name: estimate_read_time(integer); Type: FUNCTION; Schema: flashback; Owner: flashback
@@ -1112,29 +1291,39 @@ $$;
 ALTER FUNCTION flashback.get_practice_topics(roadmap_id integer, subject_id integer) OWNER TO flashback;
 
 --
--- Name: get_resources(integer, integer); Type: FUNCTION; Schema: flashback; Owner: flashback
+-- Name: get_requirements(integer, integer, flashback.expertise_level); Type: FUNCTION; Schema: flashback; Owner: flashback
 --
 
-CREATE FUNCTION flashback.get_resources(user_id integer, subject_id integer) RETURNS TABLE(id integer, name character varying, type flashback.resource_type, pattern flashback.section_pattern, production date, expiration date, presenter flashback.citext, provider flashback.citext, link character varying, last_read timestamp with time zone)
+CREATE FUNCTION flashback.get_requirements(roadmap_id integer, subject_id integer, subject_level flashback.expertise_level) RETURNS TABLE(subject integer, "position" integer, name flashback.citext, required_level flashback.expertise_level)
     LANGUAGE plpgsql
     AS $$
 begin
     return query
-    select r.id, r.name, r.type, r.pattern, r.production, r.expiration, e.name as presenter, v.name as provider, r.link, max(p.last_practice) filter (where p.last_practice is not null)
-    from resources r
-    join shelves s on s.resource = r.id and s.subject = subject_id
-    join sections_cards sc on sc.resource = r.id
-    left join progress p on p."user" = user_id and p.card = sc.card
-    left join authors a on a.resource = r.id
-    left join presenters e on e.id = a.presenter
-    left join producers c on c.resource = r.id
-    left join providers v on v.id = c.provider
-    group by r.id, r.name, r.type, r.pattern, r.production, r.expiration, e.name, v.name, r.link;
+    select r.required_subject, m.position, s.name, max(r.minimum_level)
+    from requirements r
+    join milestones m on m.roadmap = r.roadmap and m.subject = r.required_subject and r.minimum_level <= m.level
+    join subjects s on s.id = r.required_subject
+    where r.roadmap = roadmap_id and r.subject = subject_id and r.level <= subject_level
+    group by r.required_subject, m.position, s.name;
+end; $$;
+
+
+ALTER FUNCTION flashback.get_requirements(roadmap_id integer, subject_id integer, subject_level flashback.expertise_level) OWNER TO flashback;
+
+--
+-- Name: get_resources(integer); Type: FUNCTION; Schema: flashback; Owner: flashback
+--
+
+CREATE FUNCTION flashback.get_resources(subject_id integer) RETURNS TABLE(id integer, name flashback.citext, type flashback.resource_type, pattern flashback.section_pattern, production integer, expiration integer, link character varying)
+    LANGUAGE plpgsql
+    AS $$
+begin
+    return query select r.id, r.name, r.type, r.pattern, r.production, r.expiration, r.link from resources r join shelves s on s.resource = r.id and s.subject = subject_id;
 end;
 $$;
 
 
-ALTER FUNCTION flashback.get_resources(user_id integer, subject_id integer) OWNER TO flashback;
+ALTER FUNCTION flashback.get_resources(subject_id integer) OWNER TO flashback;
 
 --
 -- Name: get_roadmaps(integer); Type: FUNCTION; Schema: flashback; Owner: flashback
@@ -1144,12 +1333,7 @@ CREATE FUNCTION flashback.get_roadmaps("user" integer) RETURNS TABLE(id integer,
     LANGUAGE plpgsql
     AS $$
 begin
-    return query
-    select r.id, r.name
-    from roadmaps r
-    join users_roadmaps ur on ur.roadmap = r.id
-    where ur."user" = get_roadmaps.user
-    order by name;
+    return query select r.id, r.name from roadmaps r where r."user" = get_roadmaps.user;
 end; $$;
 
 
@@ -1405,7 +1589,16 @@ ALTER FUNCTION flashback.get_user_cognitive_level(user_id integer, subject_id in
 
 CREATE FUNCTION flashback.is_subject_relevant(target_resource integer, target_subject integer) RETURNS boolean
     LANGUAGE plpgsql
-    AS $$ begin return (select count(cards.id) > 0 from cards join sections_cards s on s.card = cards.id join topics_cards t on t.card = cards.id where s.resource = target_resource and t.subject = target_subject); end; $$;
+    AS $$
+begin
+    return (
+        select count(cards.id) > 0
+        from cards
+        join sections_cards s on s.card = cards.id
+        join topics_cards t on t.card = cards.id
+        where s.resource = target_resource and t.subject = target_subject
+    );
+end; $$;
 
 
 ALTER FUNCTION flashback.is_subject_relevant(target_resource integer, target_subject integer) OWNER TO flashback;
@@ -1619,6 +1812,51 @@ $$;
 ALTER PROCEDURE flashback.merge_cards(IN lhs integer, IN rhs integer, IN new_headline character varying) OWNER TO flashback;
 
 --
+-- Name: merge_resources(integer, integer); Type: PROCEDURE; Schema: flashback; Owner: flashback
+--
+
+CREATE PROCEDURE flashback.merge_resources(IN source_id integer, IN target_id integer)
+    LANGUAGE plpgsql
+    AS $$
+begin
+    if source_id <> target_id then
+        update sections set resource = target_id where resource = source_id;
+
+        update shelves set resource = target_id where resource = source_id and subject not in (select subject from shelves where resource = target_id);
+
+        update nerves set resource = target_id where resource = source_id;
+
+        update authors set resource = target_id where resource = source_id;
+
+        update producers set resource = target_id where resource = source_id;
+
+        delete from resources where id = source_id;
+    end if;
+end;
+$$;
+
+
+ALTER PROCEDURE flashback.merge_resources(IN source_id integer, IN target_id integer) OWNER TO flashback;
+
+--
+-- Name: merge_subjects(integer, integer); Type: PROCEDURE; Schema: flashback; Owner: flashback
+--
+
+CREATE PROCEDURE flashback.merge_subjects(IN source_subject_id integer, IN target_subject_id integer)
+    LANGUAGE plpgsql
+    AS $$
+declare last_position integer;
+begin
+    if source_subject_id <> target_subject_id then
+        select max(coalesce(position, 0)) + 1 into last_position from topics where subject = source_subject_id;
+        update topics set position = t.position + last_position, subject = target_subject_id where subject = source_subject_id;
+    end if;
+end; $$;
+
+
+ALTER PROCEDURE flashback.merge_subjects(IN source_subject_id integer, IN target_subject_id integer) OWNER TO flashback;
+
+--
 -- Name: move_card_to_section(integer, integer, integer, integer); Type: FUNCTION; Schema: flashback; Owner: flashback
 --
 
@@ -1687,6 +1925,37 @@ end; $$;
 ALTER PROCEDURE flashback.remove_block(IN card_id integer, IN block_position integer) OWNER TO flashback;
 
 --
+-- Name: remove_milestone(integer, integer); Type: PROCEDURE; Schema: flashback; Owner: flashback
+--
+
+CREATE PROCEDURE flashback.remove_milestone(IN roadmap_id integer, IN subject_id integer)
+    LANGUAGE plpgsql
+    AS $$
+begin
+    delete from milestones where roadmap = roadmap_id and subject = subject_id;
+end; $$;
+
+
+ALTER PROCEDURE flashback.remove_milestone(IN roadmap_id integer, IN subject_id integer) OWNER TO flashback;
+
+--
+-- Name: remove_resource(integer); Type: PROCEDURE; Schema: flashback; Owner: flashback
+--
+
+CREATE PROCEDURE flashback.remove_resource(IN resource_id integer)
+    LANGUAGE plpgsql
+    AS $$
+begin
+    if not exists (select 1 from sections_cards where resource = resource_id) then
+        delete from resources where id = resource_id;
+    end if;
+end;
+$$;
+
+
+ALTER PROCEDURE flashback.remove_resource(IN resource_id integer) OWNER TO flashback;
+
+--
 -- Name: remove_roadmap(integer); Type: PROCEDURE; Schema: flashback; Owner: flashback
 --
 
@@ -1699,6 +1968,37 @@ end; $$;
 
 
 ALTER PROCEDURE flashback.remove_roadmap(IN roadmap_id integer) OWNER TO flashback;
+
+--
+-- Name: remove_subject(integer); Type: PROCEDURE; Schema: flashback; Owner: flashback
+--
+
+CREATE PROCEDURE flashback.remove_subject(IN subject_id integer)
+    LANGUAGE plpgsql
+    AS $$
+begin
+    if not exists (select 1 from topics_cards where subject = subject_id) then
+        delete from subjects where id = subject_id;
+    end if;
+end; $$;
+
+
+ALTER PROCEDURE flashback.remove_subject(IN subject_id integer) OWNER TO flashback;
+
+--
+-- Name: rename_resource(integer, character varying); Type: PROCEDURE; Schema: flashback; Owner: flashback
+--
+
+CREATE PROCEDURE flashback.rename_resource(IN resource_id integer, IN resource_name character varying)
+    LANGUAGE plpgsql
+    AS $$
+begin
+    update resources set name = resource_name where id = resource_id;
+end;
+$$;
+
+
+ALTER PROCEDURE flashback.rename_resource(IN resource_id integer, IN resource_name character varying) OWNER TO flashback;
 
 --
 -- Name: rename_roadmap(integer, character varying); Type: PROCEDURE; Schema: flashback; Owner: flashback
@@ -1961,6 +2261,28 @@ end; $$;
 
 
 ALTER FUNCTION flashback.search_providers(token character varying) OWNER TO flashback;
+
+--
+-- Name: search_resources(character varying); Type: FUNCTION; Schema: flashback; Owner: flashback
+--
+
+CREATE FUNCTION flashback.search_resources(search_pattern character varying) RETURNS TABLE("position" bigint, id integer, name flashback.citext, type flashback.resource_type, pattern flashback.section_pattern, link character varying, production integer, expiration integer)
+    LANGUAGE plpgsql
+    AS $$
+begin
+    set pg_trgm.similarity_threshold = 0.11;
+
+    return query
+    select row_number() over (order by r.name <-> search_pattern, r.production desc, r.expiration desc), r.id, r.name, r.type, r.pattern, r.link, r.production, r.expiration
+    from resources r
+    where r.name % search_pattern
+    order by r.name <-> search_pattern, r.production desc, r.expiration desc
+    limit 20;
+end;
+$$;
+
+
+ALTER FUNCTION flashback.search_resources(search_pattern character varying) OWNER TO flashback;
 
 --
 -- Name: search_roadmaps(character varying); Type: FUNCTION; Schema: flashback; Owner: flashback
@@ -2385,17 +2707,32 @@ ALTER TABLE flashback.providers ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY
 
 
 --
+-- Name: requirements; Type: TABLE; Schema: flashback; Owner: flashback
+--
+
+CREATE TABLE flashback.requirements (
+    roadmap integer NOT NULL,
+    subject integer NOT NULL,
+    level flashback.expertise_level NOT NULL,
+    required_subject integer NOT NULL,
+    minimum_level flashback.expertise_level
+);
+
+
+ALTER TABLE flashback.requirements OWNER TO flashback;
+
+--
 -- Name: resources; Type: TABLE; Schema: flashback; Owner: flashback
 --
 
 CREATE TABLE flashback.resources (
     id integer NOT NULL,
-    name character varying(200) NOT NULL,
+    name flashback.citext NOT NULL,
     type flashback.resource_type NOT NULL,
     pattern flashback.section_pattern NOT NULL,
     link character varying(2000),
-    expiration date DEFAULT (now() + '5 years'::interval) NOT NULL,
-    production date DEFAULT now() NOT NULL
+    production integer NOT NULL,
+    expiration integer NOT NULL
 );
 
 
@@ -2461,7 +2798,8 @@ ALTER TABLE flashback.roadmap_id OWNER TO flashback;
 
 CREATE TABLE flashback.roadmaps (
     id integer NOT NULL,
-    name flashback.citext NOT NULL
+    name flashback.citext NOT NULL,
+    "user" integer NOT NULL
 );
 
 
@@ -2771,18 +3109,6 @@ ALTER TABLE flashback.users ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
 
 
 --
--- Name: users_roadmaps; Type: TABLE; Schema: flashback; Owner: flashback
---
-
-CREATE TABLE flashback.users_roadmaps (
-    "user" integer NOT NULL,
-    roadmap integer NOT NULL
-);
-
-
-ALTER TABLE flashback.users_roadmaps OWNER TO flashback;
-
---
 -- Name: assessments assessments_pkey; Type: CONSTRAINT; Schema: flashback; Owner: flashback
 --
 
@@ -2847,11 +3173,11 @@ ALTER TABLE ONLY flashback.milestones
 
 
 --
--- Name: milestones milestones_roadmap_subject_level_position_key; Type: CONSTRAINT; Schema: flashback; Owner: flashback
+-- Name: milestones milestones_roadmap_subject_position_key; Type: CONSTRAINT; Schema: flashback; Owner: flashback
 --
 
 ALTER TABLE ONLY flashback.milestones
-    ADD CONSTRAINT milestones_roadmap_subject_level_position_key UNIQUE (roadmap, subject, level, "position");
+    ADD CONSTRAINT milestones_roadmap_subject_position_key UNIQUE (roadmap, subject, "position");
 
 
 --
@@ -2919,6 +3245,14 @@ ALTER TABLE ONLY flashback.providers
 
 
 --
+-- Name: requirements requirements_roadmap_subject_level_required_subject_minimum_key; Type: CONSTRAINT; Schema: flashback; Owner: flashback
+--
+
+ALTER TABLE ONLY flashback.requirements
+    ADD CONSTRAINT requirements_roadmap_subject_level_required_subject_minimum_key UNIQUE (roadmap, subject, level, required_subject, minimum_level);
+
+
+--
 -- Name: resources resources_pkey; Type: CONSTRAINT; Schema: flashback; Owner: flashback
 --
 
@@ -2935,19 +3269,19 @@ ALTER TABLE ONLY flashback.roadmaps_activities
 
 
 --
--- Name: roadmaps roadmaps_name_key; Type: CONSTRAINT; Schema: flashback; Owner: flashback
---
-
-ALTER TABLE ONLY flashback.roadmaps
-    ADD CONSTRAINT roadmaps_name_key UNIQUE (name);
-
-
---
 -- Name: roadmaps roadmaps_pkey; Type: CONSTRAINT; Schema: flashback; Owner: flashback
 --
 
 ALTER TABLE ONLY flashback.roadmaps
     ADD CONSTRAINT roadmaps_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: roadmaps roadmaps_user_name_key; Type: CONSTRAINT; Schema: flashback; Owner: flashback
+--
+
+ALTER TABLE ONLY flashback.roadmaps
+    ADD CONSTRAINT roadmaps_user_name_key UNIQUE ("user", name);
 
 
 --
@@ -3063,14 +3397,6 @@ ALTER TABLE ONLY flashback.topics
 
 
 --
--- Name: users_roadmaps user_roadmaps_pkey; Type: CONSTRAINT; Schema: flashback; Owner: flashback
---
-
-ALTER TABLE ONLY flashback.users_roadmaps
-    ADD CONSTRAINT user_roadmaps_pkey PRIMARY KEY ("user", roadmap);
-
-
---
 -- Name: users users_email_key; Type: CONSTRAINT; Schema: flashback; Owner: flashback
 --
 
@@ -3098,6 +3424,13 @@ CREATE INDEX presenters_name_trigram ON flashback.presenters USING gin (name fla
 --
 
 CREATE INDEX providers_name_trigram ON flashback.providers USING gin (name flashback.gin_trgm_ops);
+
+
+--
+-- Name: resources_name_trgm; Type: INDEX; Schema: flashback; Owner: flashback
+--
+
+CREATE INDEX resources_name_trgm ON flashback.resources USING gin (name flashback.gin_trgm_ops);
 
 
 --
@@ -3283,6 +3616,22 @@ ALTER TABLE ONLY flashback.progress
 
 
 --
+-- Name: requirements requirements_roadmap_required_subject_fkey; Type: FK CONSTRAINT; Schema: flashback; Owner: flashback
+--
+
+ALTER TABLE ONLY flashback.requirements
+    ADD CONSTRAINT requirements_roadmap_required_subject_fkey FOREIGN KEY (roadmap, required_subject) REFERENCES flashback.milestones(roadmap, subject) ON UPDATE CASCADE ON DELETE CASCADE;
+
+
+--
+-- Name: requirements requirements_roadmap_subject_fkey; Type: FK CONSTRAINT; Schema: flashback; Owner: flashback
+--
+
+ALTER TABLE ONLY flashback.requirements
+    ADD CONSTRAINT requirements_roadmap_subject_fkey FOREIGN KEY (roadmap, subject) REFERENCES flashback.milestones(roadmap, subject) ON UPDATE CASCADE ON DELETE CASCADE;
+
+
+--
 -- Name: resources_activities resources_activities_resource_fkey; Type: FK CONSTRAINT; Schema: flashback; Owner: flashback
 --
 
@@ -3320,6 +3669,14 @@ ALTER TABLE ONLY flashback.roadmaps_activities
 
 ALTER TABLE ONLY flashback.roadmaps_activities
     ADD CONSTRAINT roadmaps_activities_user_fkey FOREIGN KEY ("user") REFERENCES flashback.users(id) ON UPDATE CASCADE;
+
+
+--
+-- Name: roadmaps roadmaps_user_fkey; Type: FK CONSTRAINT; Schema: flashback; Owner: flashback
+--
+
+ALTER TABLE ONLY flashback.roadmaps
+    ADD CONSTRAINT roadmaps_user_fkey FOREIGN KEY ("user") REFERENCES flashback.users(id) ON UPDATE CASCADE ON DELETE CASCADE;
 
 
 --
@@ -3459,24 +3816,8 @@ ALTER TABLE ONLY flashback.topics_cards
 
 
 --
--- Name: users_roadmaps user_roadmaps_roadmap_fkey; Type: FK CONSTRAINT; Schema: flashback; Owner: flashback
---
-
-ALTER TABLE ONLY flashback.users_roadmaps
-    ADD CONSTRAINT user_roadmaps_roadmap_fkey FOREIGN KEY (roadmap) REFERENCES flashback.roadmaps(id) ON UPDATE CASCADE ON DELETE CASCADE;
-
-
---
--- Name: users_roadmaps user_roadmaps_user_fkey; Type: FK CONSTRAINT; Schema: flashback; Owner: flashback
---
-
-ALTER TABLE ONLY flashback.users_roadmaps
-    ADD CONSTRAINT user_roadmaps_user_fkey FOREIGN KEY ("user") REFERENCES flashback.users(id) ON UPDATE CASCADE ON DELETE CASCADE;
-
-
---
 -- PostgreSQL database dump complete
 --
 
-\unrestrict 3iELiReYAOo3MPsfg29oNo6igZ21zkVYWrEaMWZ2F7Mem8R726Xt6O3U4szy4sC
+\unrestrict 9ngZ20gw2G6fqhYF1G00l9pT5lWmR1xoaglFfzvlovusCqiWTbFnmZ4Kz52QMpT
 
