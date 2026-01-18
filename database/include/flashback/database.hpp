@@ -54,6 +54,10 @@ public:
     void drop_resource_from_subject(uint64_t resource_id, uint64_t subject_id) const override;
     [[nodiscard]] std::map<uint64_t, Resource> search_resources(std::string name) const override;
     void edit_resource_link(uint64_t resource_id, std::string link) const override;
+    void change_resource_type(uint64_t resource_id, Resource::resource_type type) const override;
+    void change_section_pattern(uint64_t resource_id, Resource::section_pattern pattern) const override;
+    void edit_resource_production(uint64_t resource_id, uint64_t production) const override;
+    void edit_resource_expiration(uint64_t resource_id, uint64_t expiration) const override;
 
     // practices
     [[nodiscard]] expertise_level get_user_cognitive_level(uint64_t user_id, uint64_t subject_id) const override;

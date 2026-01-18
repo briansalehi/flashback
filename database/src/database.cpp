@@ -479,6 +479,26 @@ void database::edit_resource_link(uint64_t const resource_id, std::string const 
     exec("call edit_resource_link($1, $2)", resource_id, link);
 }
 
+void database::change_resource_type(uint64_t const resource_id, Resource::resource_type const type) const
+{
+    exec("call change_resource_type($1, $2)", resource_id, resource_type_to_string(type));
+}
+
+void database::change_section_pattern(uint64_t const resource_id, Resource::section_pattern const pattern) const
+{
+    exec("call change_section_pattern($1, $2)", resource_id, section_pattern_to_string(pattern));
+}
+
+void database::edit_resource_production(uint64_t const resource_id, uint64_t const production) const
+{
+    exec("call edit_resource_production($1, $2)", resource_id, production);
+}
+
+void database::edit_resource_expiration(uint64_t const resource_id, uint64_t const expiration) const
+{
+    exec("call edit_resource_expiration($1, $2)", resource_id, expiration);
+}
+
 expertise_level database::get_user_cognitive_level(uint64_t const user_id, uint64_t const subject_id) const
 {
     auto level{expertise_level::surface};

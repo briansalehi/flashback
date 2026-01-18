@@ -1039,3 +1039,163 @@ TEST_F(test_database, edit_resource_link)
     EXPECT_NE(resources.at(0).link(), resource.link());
     EXPECT_EQ(resources.at(0).link(), modified_link);
 }
+
+TEST_F(test_database, change_resource_type)
+{
+    using testing::SizeIs;
+
+    flashback::Resource::resource_type modified_type{flashback::Resource::channel};
+    flashback::Subject subject{};
+    std::vector<flashback::Resource> resources{};
+    auto const now{std::chrono::system_clock::now().time_since_epoch()};
+    auto const later{std::chrono::system_clock::time_point(std::chrono::system_clock::now() + std::chrono::years{3}).time_since_epoch()};
+    auto const production{std::chrono::duration_cast<std::chrono::seconds>(now).count()};
+    auto const expiration{std::chrono::duration_cast<std::chrono::seconds>(later).count()};
+    flashback::Resource resource{};
+    resource.set_name("Introduction to Algorithms");
+    resource.set_type(flashback::Resource::book);
+    resource.set_pattern(flashback::Resource::chapter);
+    resource.set_link(R"(https://example.com)");
+    resource.set_production(production);
+    resource.set_expiration(expiration);
+    subject.set_name("JavaScript");
+
+    ASSERT_NO_THROW(resource = m_database->create_resource(resource));
+    ASSERT_GT(resource.id(), 0);
+    ASSERT_NO_THROW(subject = m_database->create_subject(subject.name()));
+    ASSERT_GT(subject.id(), 0);
+    ASSERT_NO_THROW(m_database->add_resource_to_subject(resource.id(), subject.id()));
+    ASSERT_NO_THROW(resources = m_database->get_resources(subject.id()));
+    ASSERT_THAT(resources, SizeIs(1));
+    ASSERT_NO_THROW(resources.at(0).id());
+    ASSERT_EQ(resources.at(0).id(), resource.id());
+    EXPECT_EQ(resources.at(0).type(), resource.type());
+    EXPECT_NE(resources.at(0).type(), modified_type);
+    EXPECT_NO_THROW(m_database->change_resource_type(resource.id(), modified_type));
+    ASSERT_NO_THROW(resources = m_database->get_resources(subject.id()));
+    ASSERT_THAT(resources, SizeIs(1));
+    ASSERT_NO_THROW(resources.at(0).id());
+    ASSERT_EQ(resources.at(0).id(), resource.id());
+    EXPECT_NE(resources.at(0).type(), resource.type());
+    EXPECT_EQ(resources.at(0).type(), modified_type);
+}
+
+TEST_F(test_database, change_section_pattern)
+{
+    using testing::SizeIs;
+
+    flashback::Resource::section_pattern modified_pattern{flashback::Resource::video};
+    flashback::Subject subject{};
+    std::vector<flashback::Resource> resources{};
+    auto const now{std::chrono::system_clock::now().time_since_epoch()};
+    auto const later{std::chrono::system_clock::time_point(std::chrono::system_clock::now() + std::chrono::years{3}).time_since_epoch()};
+    auto const production{std::chrono::duration_cast<std::chrono::seconds>(now).count()};
+    auto const expiration{std::chrono::duration_cast<std::chrono::seconds>(later).count()};
+    flashback::Resource resource{};
+    resource.set_name("Introduction to Algorithms");
+    resource.set_type(flashback::Resource::book);
+    resource.set_pattern(flashback::Resource::chapter);
+    resource.set_link(R"(https://example.com)");
+    resource.set_production(production);
+    resource.set_expiration(expiration);
+    subject.set_name("JavaScript");
+
+    ASSERT_NO_THROW(resource = m_database->create_resource(resource));
+    ASSERT_GT(resource.id(), 0);
+    ASSERT_NO_THROW(subject = m_database->create_subject(subject.name()));
+    ASSERT_GT(subject.id(), 0);
+    ASSERT_NO_THROW(m_database->add_resource_to_subject(resource.id(), subject.id()));
+    ASSERT_NO_THROW(resources = m_database->get_resources(subject.id()));
+    ASSERT_THAT(resources, SizeIs(1));
+    ASSERT_NO_THROW(resources.at(0).id());
+    ASSERT_EQ(resources.at(0).id(), resource.id());
+    EXPECT_EQ(resources.at(0).pattern(), resource.pattern());
+    EXPECT_NE(resources.at(0).pattern(), modified_pattern);
+    EXPECT_NO_THROW(m_database->change_section_pattern(resource.id(), modified_pattern));
+    ASSERT_NO_THROW(resources = m_database->get_resources(subject.id()));
+    ASSERT_THAT(resources, SizeIs(1));
+    ASSERT_NO_THROW(resources.at(0).id());
+    ASSERT_EQ(resources.at(0).id(), resource.id());
+    EXPECT_NE(resources.at(0).pattern(), resource.pattern());
+    EXPECT_EQ(resources.at(0).pattern(), modified_pattern);
+}
+
+TEST_F(test_database, edit_resource_production)
+{
+    using testing::SizeIs;
+
+    flashback::Subject subject{};
+    std::vector<flashback::Resource> resources{};
+    auto const now{std::chrono::system_clock::now().time_since_epoch()};
+    auto const later{std::chrono::system_clock::time_point(std::chrono::system_clock::now() + std::chrono::years{3}).time_since_epoch()};
+    auto const production{std::chrono::duration_cast<std::chrono::seconds>(now).count()};
+    auto const modified_production{std::chrono::duration_cast<std::chrono::seconds>(now + std::chrono::days{2}).count()};
+    auto const expiration{std::chrono::duration_cast<std::chrono::seconds>(later).count()};
+    flashback::Resource resource{};
+    resource.set_name("Introduction to Algorithms");
+    resource.set_type(flashback::Resource::book);
+    resource.set_pattern(flashback::Resource::chapter);
+    resource.set_link(R"(https://example.com)");
+    resource.set_production(production);
+    resource.set_expiration(expiration);
+    subject.set_name("JavaScript");
+
+    ASSERT_NO_THROW(resource = m_database->create_resource(resource));
+    ASSERT_GT(resource.id(), 0);
+    ASSERT_NO_THROW(subject = m_database->create_subject(subject.name()));
+    ASSERT_GT(subject.id(), 0);
+    ASSERT_NO_THROW(m_database->add_resource_to_subject(resource.id(), subject.id()));
+    ASSERT_NO_THROW(resources = m_database->get_resources(subject.id()));
+    ASSERT_THAT(resources, SizeIs(1));
+    ASSERT_NO_THROW(resources.at(0).id());
+    ASSERT_EQ(resources.at(0).id(), resource.id());
+    EXPECT_EQ(resources.at(0).production(), resource.production());
+    EXPECT_NE(resources.at(0).production(), modified_production);
+    EXPECT_NO_THROW(m_database->edit_resource_production(resource.id(), modified_production));
+    ASSERT_NO_THROW(resources = m_database->get_resources(subject.id()));
+    ASSERT_THAT(resources, SizeIs(1));
+    ASSERT_NO_THROW(resources.at(0).id());
+    ASSERT_EQ(resources.at(0).id(), resource.id());
+    EXPECT_NE(resources.at(0).production(), resource.production());
+    EXPECT_EQ(resources.at(0).production(), modified_production);
+}
+
+TEST_F(test_database, edit_resource_expiration)
+{
+    using testing::SizeIs;
+
+    flashback::Subject subject{};
+    std::vector<flashback::Resource> resources{};
+    auto const now{std::chrono::system_clock::now().time_since_epoch()};
+    auto const later{std::chrono::system_clock::time_point(std::chrono::system_clock::now() + std::chrono::years{3}).time_since_epoch()};
+    auto const production{std::chrono::duration_cast<std::chrono::seconds>(now).count()};
+    auto const expiration{std::chrono::duration_cast<std::chrono::seconds>(later).count()};
+    auto const modified_expiration{std::chrono::duration_cast<std::chrono::seconds>(later + std::chrono::days{2}).count()};
+    flashback::Resource resource{};
+    resource.set_name("Introduction to Algorithms");
+    resource.set_type(flashback::Resource::book);
+    resource.set_pattern(flashback::Resource::chapter);
+    resource.set_link(R"(https://example.com)");
+    resource.set_production(production);
+    resource.set_expiration(expiration);
+    subject.set_name("JavaScript");
+
+    ASSERT_NO_THROW(resource = m_database->create_resource(resource));
+    ASSERT_GT(resource.id(), 0);
+    ASSERT_NO_THROW(subject = m_database->create_subject(subject.name()));
+    ASSERT_GT(subject.id(), 0);
+    ASSERT_NO_THROW(m_database->add_resource_to_subject(resource.id(), subject.id()));
+    ASSERT_NO_THROW(resources = m_database->get_resources(subject.id()));
+    ASSERT_THAT(resources, SizeIs(1));
+    ASSERT_NO_THROW(resources.at(0).id());
+    ASSERT_EQ(resources.at(0).id(), resource.id());
+    EXPECT_EQ(resources.at(0).expiration(), resource.expiration());
+    EXPECT_NE(resources.at(0).expiration(), modified_expiration);
+    EXPECT_NO_THROW(m_database->edit_resource_expiration(resource.id(), modified_expiration));
+    ASSERT_NO_THROW(resources = m_database->get_resources(subject.id()));
+    ASSERT_THAT(resources, SizeIs(1));
+    ASSERT_NO_THROW(resources.at(0).id());
+    ASSERT_EQ(resources.at(0).id(), resource.id());
+    EXPECT_NE(resources.at(0).expiration(), resource.expiration());
+    EXPECT_EQ(resources.at(0).expiration(), modified_expiration);
+}
