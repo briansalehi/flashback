@@ -78,9 +78,9 @@ public:
     [[nodiscard]] virtual std::vector<Resource> get_resources(uint64_t subject_id) const = 0;
     virtual void drop_resource_from_subject(uint64_t resource_id, uint64_t subject_id) const = 0;
     [[nodiscard]] virtual std::map<uint64_t, Resource> search_resources(std::string name) const = 0;
-    //rename_resource
-    //remove_resource
-    //merge_resources
+    virtual void rename_resource(uint64_t resource_id, std::string name) const = 0;
+    virtual void remove_resource(uint64_t resource_id) const = 0;
+    virtual Resource merge_resources(uint64_t source_id, uint64_t target_id) const = 0;
     virtual void edit_resource_link(uint64_t resource_id, std::string link) const = 0;
     virtual void change_resource_type(uint64_t resource_id, Resource::resource_type type) const = 0;
     virtual void change_section_pattern(uint64_t resource_id, Resource::section_pattern pattern) const = 0;

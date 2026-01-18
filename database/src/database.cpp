@@ -499,6 +499,22 @@ void database::edit_resource_expiration(uint64_t const resource_id, uint64_t con
     exec("call edit_resource_expiration($1, $2)", resource_id, expiration);
 }
 
+void database::rename_resource(uint64_t resource_id, std::string name) const
+{
+    exec("call rename_resource($1, $2)", resource_id, name);
+}
+
+void database::remove_resource(uint64_t resource_id) const
+{
+    exec("call remove_resource($1)", resource_id);
+}
+
+Resource database::merge_resources(uint64_t source_id, uint64_t target_id) const
+{
+    Resource resource{};
+    return resource;
+}
+
 expertise_level database::get_user_cognitive_level(uint64_t const user_id, uint64_t const subject_id) const
 {
     auto level{expertise_level::surface};

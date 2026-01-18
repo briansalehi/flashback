@@ -55,6 +55,9 @@ public:
     MOCK_METHOD(void, change_section_pattern, (uint64_t, Resource::section_pattern const pattern), (const, override));
     MOCK_METHOD(void, edit_resource_production, (uint64_t, uint64_t), (const, override));
     MOCK_METHOD(void, edit_resource_expiration, (uint64_t, uint64_t), (const, override));
+    MOCK_METHOD(void, rename_resource, (uint64_t, std::string), (const, override));
+    MOCK_METHOD(void, remove_resource, (uint64_t), (const, override));
+    MOCK_METHOD(Resource, merge_resources, (uint64_t, uint64_t), (const, override));
 
     // practices
     MOCK_METHOD(expertise_level, get_user_cognitive_level, (uint64_t, uint64_t), (const, override));
