@@ -509,10 +509,65 @@ void database::remove_resource(uint64_t resource_id) const
     exec("call remove_resource($1)", resource_id);
 }
 
-Resource database::merge_resources(uint64_t source_id, uint64_t target_id) const
+void database::merge_resources(uint64_t source_id, uint64_t target_id) const
 {
-    Resource resource{};
-    return resource;
+    exec("call merge_resources($1, $2)", source_id, target_id);
+}
+
+Provider database::create_provider(std::string name) const
+{
+    Provider provider{};
+    provider.clear_name();
+    provider.clear_id();
+
+    if (!name.empty())
+    {
+        if (pqxx::result const result{query("select create_provider($1) as id", name)}; result.size() == 1)
+        {
+            provider.set_id(result.at(0).at("id").as<uint64_t>());
+            provider.set_name(std::move(name));
+        }
+    }
+
+    return provider;
+}
+
+void database::add_provider(uint64_t const resource_id, uint64_t const provider_id) const
+{
+    exec("call add_provider($1, $2)", resource_id, provider_id);
+}
+
+void database::drop_provider(uint64_t const resource_id, uint64_t const provider_id) const
+{
+    exec("call drop_provider($1, $2)", resource_id, provider_id);
+}
+
+Presenter database::create_presenter(std::string name) const
+{
+    Presenter presenter{};
+    presenter.clear_name();
+    presenter.clear_id();
+
+    if (!name.empty())
+    {
+        if (pqxx::result const result{query("select create_presenter($1) as id", name)}; result.size() == 1)
+        {
+            presenter.set_id(result.at(0).at("id").as<uint64_t>());
+            presenter.set_name(std::move(name));
+        }
+    }
+
+    return presenter;
+}
+
+void database::add_presenter(uint64_t const resource_id, uint64_t const presenter_id) const
+{
+    exec("call add_presenter($1, $2)", resource_id, presenter_id);
+}
+
+void database::drop_presenter(uint64_t const resource_id, uint64_t const presenter_id) const
+{
+    exec("call drop_presenter($1, $2)", resource_id, presenter_id);
 }
 
 expertise_level database::get_user_cognitive_level(uint64_t const user_id, uint64_t const subject_id) const

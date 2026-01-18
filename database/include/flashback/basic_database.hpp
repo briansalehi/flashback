@@ -78,30 +78,32 @@ public:
     [[nodiscard]] virtual std::vector<Resource> get_resources(uint64_t subject_id) const = 0;
     virtual void drop_resource_from_subject(uint64_t resource_id, uint64_t subject_id) const = 0;
     [[nodiscard]] virtual std::map<uint64_t, Resource> search_resources(std::string name) const = 0;
-    virtual void rename_resource(uint64_t resource_id, std::string name) const = 0;
-    virtual void remove_resource(uint64_t resource_id) const = 0;
-    virtual Resource merge_resources(uint64_t source_id, uint64_t target_id) const = 0;
     virtual void edit_resource_link(uint64_t resource_id, std::string link) const = 0;
     virtual void change_resource_type(uint64_t resource_id, Resource::resource_type type) const = 0;
     virtual void change_section_pattern(uint64_t resource_id, Resource::section_pattern pattern) const = 0;
     virtual void edit_resource_production(uint64_t resource_id, uint64_t production) const = 0;
     virtual void edit_resource_expiration(uint64_t resource_id, uint64_t expiration) const = 0;
+    virtual void rename_resource(uint64_t resource_id, std::string name) const = 0;
+    virtual void remove_resource(uint64_t resource_id) const = 0;
+    virtual void merge_resources(uint64_t source_id, uint64_t target_id) const = 0;
     //get_relevant_subjects
     //get_resource_state
     //mark_resource_as_completed
 
     // providers
-    //create_provider
+    virtual Provider create_provider(std::string name) const = 0;
+    virtual void add_provider(uint64_t resource_id, uint64_t provider_id) const = 0;
+    virtual void drop_provider(uint64_t resource_id, uint64_t provider_id) const = 0;
     //search_provider
-    //add_provider
     //rename_provider
     //remove_provider
     //merge_providers
 
     // presenters
-    //create_presenter
+    virtual Presenter create_presenter(std::string name) const = 0;
+    virtual void add_presenter(uint64_t resource_id, uint64_t presenter_id) const = 0;
+    virtual void drop_presenter(uint64_t resource_id, uint64_t presenter_id) const = 0;
     //search_presenter
-    //add_presenter
     //rename_presenter
     //remove_presenter
     //merge_presenters

@@ -57,7 +57,17 @@ public:
     MOCK_METHOD(void, edit_resource_expiration, (uint64_t, uint64_t), (const, override));
     MOCK_METHOD(void, rename_resource, (uint64_t, std::string), (const, override));
     MOCK_METHOD(void, remove_resource, (uint64_t), (const, override));
-    MOCK_METHOD(Resource, merge_resources, (uint64_t, uint64_t), (const, override));
+    MOCK_METHOD(void, merge_resources, (uint64_t, uint64_t), (const, override));
+
+    // providers
+    MOCK_METHOD(Provider, create_provider, (std::string), (const, override));
+    MOCK_METHOD(void, add_provider, (uint64_t, uint64_t), (const, override));
+    MOCK_METHOD(void, drop_provider, (uint64_t, uint64_t), (const, override));
+
+    // presenters
+    MOCK_METHOD(Presenter, create_presenter, (std::string), (const, override));
+    MOCK_METHOD(void, add_presenter, (uint64_t, uint64_t), (const, override));
+    MOCK_METHOD(void, drop_presenter, (uint64_t, uint64_t), (const, override));
 
     // practices
     MOCK_METHOD(expertise_level, get_user_cognitive_level, (uint64_t, uint64_t), (const, override));

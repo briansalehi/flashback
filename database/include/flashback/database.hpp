@@ -60,7 +60,17 @@ public:
     void edit_resource_expiration(uint64_t resource_id, uint64_t expiration) const override;
     void rename_resource(uint64_t resource_id, std::string name) const override;
     void remove_resource(uint64_t resource_id) const override;
-    Resource merge_resources(uint64_t source_id, uint64_t target_id) const override;
+    void merge_resources(uint64_t source_id, uint64_t target_id) const override;
+
+    // providers
+    Provider create_provider(std::string name) const override;
+    void add_provider(uint64_t resource_id, uint64_t provider_id) const override;
+    void drop_provider(uint64_t resource_id, uint64_t provider_id) const override;
+
+    // presenters
+    Presenter create_presenter(std::string name) const override;
+    void add_presenter(uint64_t resource_id, uint64_t presenter_id) const override;
+    void drop_presenter(uint64_t resource_id, uint64_t presenter_id) const override;
 
     // practices
     [[nodiscard]] expertise_level get_user_cognitive_level(uint64_t user_id, uint64_t subject_id) const override;

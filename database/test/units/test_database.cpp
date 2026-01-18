@@ -1257,16 +1257,191 @@ TEST_F(test_database, remove_resource)
     resource.set_link(R"(https://example.com)");
     resource.set_production(production);
     resource.set_expiration(expiration);
+    flashback::Resource secondary_resource{};
+    secondary_resource.set_name("You Don't Know JS");
+    secondary_resource.set_type(flashback::Resource::book);
+    secondary_resource.set_pattern(flashback::Resource::chapter);
+    secondary_resource.set_link(R"(https://example.com)");
+    secondary_resource.set_production(production);
+    secondary_resource.set_expiration(expiration);
     subject.set_name("JavaScript");
 
     ASSERT_NO_THROW(resource = m_database->create_resource(resource));
     ASSERT_GT(resource.id(), 0);
+    ASSERT_NO_THROW(secondary_resource = m_database->create_resource(secondary_resource));
+    ASSERT_GT(secondary_resource.id(), 0);
     ASSERT_NO_THROW(subject = m_database->create_subject(subject.name()));
     ASSERT_GT(subject.id(), 0);
     ASSERT_NO_THROW(m_database->add_resource_to_subject(resource.id(), subject.id()));
+    ASSERT_NO_THROW(m_database->add_resource_to_subject(secondary_resource.id(), subject.id()));
     ASSERT_NO_THROW(resources = m_database->get_resources(subject.id()));
-    ASSERT_THAT(resources, SizeIs(1));
+    ASSERT_THAT(resources, SizeIs(2));
     EXPECT_NO_THROW(m_database->remove_resource(resource.id()));
     ASSERT_NO_THROW(resources = m_database->get_resources(subject.id()));
-    ASSERT_THAT(resources, SizeIs(0));
+    ASSERT_THAT(resources, SizeIs(1));
+}
+
+TEST_F(test_database, merge_resources)
+{
+    using testing::SizeIs;
+
+    flashback::Subject subject{};
+    std::vector<flashback::Resource> resources{};
+    auto const now{std::chrono::system_clock::now().time_since_epoch()};
+    auto const later{std::chrono::system_clock::time_point(std::chrono::system_clock::now() + std::chrono::years{3}).time_since_epoch()};
+    auto const production{std::chrono::duration_cast<std::chrono::seconds>(now).count()};
+    auto const expiration{std::chrono::duration_cast<std::chrono::seconds>(later).count()};
+    flashback::Resource resource{};
+    resource.set_name("Introduction to Algorithms");
+    resource.set_type(flashback::Resource::book);
+    resource.set_pattern(flashback::Resource::chapter);
+    resource.set_link(R"(https://example.com)");
+    resource.set_production(production);
+    resource.set_expiration(expiration);
+    flashback::Resource secondary_resource{};
+    secondary_resource.set_name("You Don't Know JS");
+    secondary_resource.set_type(flashback::Resource::book);
+    secondary_resource.set_pattern(flashback::Resource::chapter);
+    secondary_resource.set_link(R"(https://example.com)");
+    secondary_resource.set_production(production);
+    secondary_resource.set_expiration(expiration);
+    subject.set_name("JavaScript");
+
+    ASSERT_NO_THROW(resource = m_database->create_resource(resource));
+    ASSERT_GT(resource.id(), 0);
+    ASSERT_NO_THROW(secondary_resource = m_database->create_resource(secondary_resource));
+    ASSERT_GT(secondary_resource.id(), 0);
+    ASSERT_NO_THROW(subject = m_database->create_subject(subject.name()));
+    ASSERT_GT(subject.id(), 0);
+    ASSERT_NO_THROW(m_database->add_resource_to_subject(resource.id(), subject.id()));
+    ASSERT_NO_THROW(m_database->add_resource_to_subject(secondary_resource.id(), subject.id()));
+    ASSERT_NO_THROW(resources = m_database->get_resources(subject.id()));
+    ASSERT_THAT(resources, SizeIs(2));
+    EXPECT_NO_THROW(m_database->merge_resources(resource.id(), secondary_resource.id()));
+    ASSERT_NO_THROW(resources = m_database->get_resources(subject.id()));
+    ASSERT_THAT(resources, SizeIs(1));
+}
+
+TEST_F(test_database, create_provider)
+{
+    std::string const name{"Brian Salehi"};
+    flashback::Provider provider{};
+    provider.set_name(name);
+    EXPECT_NO_THROW(provider = m_database->create_provider(provider.name()));
+    EXPECT_GT(provider.id(), 0);
+    EXPECT_EQ(provider.name(), name);
+}
+
+TEST_F(test_database, add_provider)
+{
+    using testing::SizeIs;
+
+    std::vector<flashback::Resource> resources{};
+    auto const now{std::chrono::system_clock::now().time_since_epoch()};
+    auto const later{std::chrono::system_clock::time_point(std::chrono::system_clock::now() + std::chrono::years{3}).time_since_epoch()};
+    auto const production{std::chrono::duration_cast<std::chrono::seconds>(now).count()};
+    auto const expiration{std::chrono::duration_cast<std::chrono::seconds>(later).count()};
+    flashback::Resource resource{};
+    resource.set_name("Introduction to Algorithms");
+    resource.set_type(flashback::Resource::book);
+    resource.set_pattern(flashback::Resource::chapter);
+    resource.set_link(R"(https://example.com)");
+    resource.set_production(production);
+    resource.set_expiration(expiration);
+    flashback::Provider provider{};
+    provider.set_name("Brian Salehi");
+
+    ASSERT_NO_THROW(resource = m_database->create_resource(resource));
+    ASSERT_GT(resource.id(), 0);
+    ASSERT_NO_THROW(provider = m_database->create_provider(provider.name()));
+    ASSERT_GT(provider.id(), 0);
+    EXPECT_NO_THROW(m_database->add_provider(resource.id(), provider.id()));
+}
+
+TEST_F(test_database, drop_provider)
+{
+    using testing::SizeIs;
+
+    std::vector<flashback::Resource> resources{};
+    auto const now{std::chrono::system_clock::now().time_since_epoch()};
+    auto const later{std::chrono::system_clock::time_point(std::chrono::system_clock::now() + std::chrono::years{3}).time_since_epoch()};
+    auto const production{std::chrono::duration_cast<std::chrono::seconds>(now).count()};
+    auto const expiration{std::chrono::duration_cast<std::chrono::seconds>(later).count()};
+    flashback::Resource resource{};
+    resource.set_name("Introduction to Algorithms");
+    resource.set_type(flashback::Resource::book);
+    resource.set_pattern(flashback::Resource::chapter);
+    resource.set_link(R"(https://example.com)");
+    resource.set_production(production);
+    resource.set_expiration(expiration);
+    flashback::Provider provider{};
+    provider.set_name("Brian Salehi");
+
+    ASSERT_NO_THROW(resource = m_database->create_resource(resource));
+    ASSERT_GT(resource.id(), 0);
+    ASSERT_NO_THROW(provider = m_database->create_provider(provider.name()));
+    ASSERT_GT(provider.id(), 0);
+    EXPECT_NO_THROW(m_database->drop_provider(resource.id(), provider.id()));
+}
+
+TEST_F(test_database, create_presenter)
+{
+    std::string const name{"Brian Salehi"};
+    flashback::Presenter presenter{};
+    presenter.set_name(name);
+    EXPECT_NO_THROW(presenter = m_database->create_presenter(presenter.name()));
+    EXPECT_GT(presenter.id(), 0);
+    EXPECT_EQ(presenter.name(), name);
+}
+
+TEST_F(test_database, add_presenter)
+{
+    using testing::SizeIs;
+
+    std::vector<flashback::Resource> resources{};
+    auto const now{std::chrono::system_clock::now().time_since_epoch()};
+    auto const later{std::chrono::system_clock::time_point(std::chrono::system_clock::now() + std::chrono::years{3}).time_since_epoch()};
+    auto const production{std::chrono::duration_cast<std::chrono::seconds>(now).count()};
+    auto const expiration{std::chrono::duration_cast<std::chrono::seconds>(later).count()};
+    flashback::Resource resource{};
+    resource.set_name("Introduction to Algorithms");
+    resource.set_type(flashback::Resource::book);
+    resource.set_pattern(flashback::Resource::chapter);
+    resource.set_link(R"(https://example.com)");
+    resource.set_production(production);
+    resource.set_expiration(expiration);
+    flashback::Presenter presenter{};
+    presenter.set_name("Brian Salehi");
+
+    ASSERT_NO_THROW(resource = m_database->create_resource(resource));
+    ASSERT_GT(resource.id(), 0);
+    ASSERT_NO_THROW(presenter = m_database->create_presenter(presenter.name()));
+    ASSERT_GT(presenter.id(), 0);
+    EXPECT_NO_THROW(m_database->add_presenter(resource.id(), presenter.id()));
+}
+
+TEST_F(test_database, drop_presenter)
+{
+    using testing::SizeIs;
+
+    std::vector<flashback::Resource> resources{};
+    auto const now{std::chrono::system_clock::now().time_since_epoch()};
+    auto const later{std::chrono::system_clock::time_point(std::chrono::system_clock::now() + std::chrono::years{3}).time_since_epoch()};
+    auto const production{std::chrono::duration_cast<std::chrono::seconds>(now).count()};
+    auto const expiration{std::chrono::duration_cast<std::chrono::seconds>(later).count()};
+    flashback::Resource resource{};
+    resource.set_name("Introduction to Algorithms");
+    resource.set_type(flashback::Resource::book);
+    resource.set_pattern(flashback::Resource::chapter);
+    resource.set_link(R"(https://example.com)");
+    resource.set_production(production);
+    resource.set_expiration(expiration);
+    flashback::Presenter presenter{};
+    presenter.set_name("Brian Salehi");
+
+    ASSERT_NO_THROW(resource = m_database->create_resource(resource));
+    ASSERT_GT(resource.id(), 0);
+    ASSERT_NO_THROW(presenter = m_database->create_presenter(presenter.name()));
+    ASSERT_GT(presenter.id(), 0);
+    EXPECT_NO_THROW(m_database->drop_presenter(resource.id(), presenter.id()));
 }
