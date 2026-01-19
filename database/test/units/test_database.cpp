@@ -1448,32 +1448,196 @@ TEST_F(test_database, drop_presenter)
 
 TEST_F(test_database, search_providers)
 {
+    using testing::SizeIs;
+    using testing::IsEmpty;
+
+    std::vector<flashback::Provider> existing_providers{};
+    std::map<uint64_t, flashback::Provider> matched_providers{};
+
+    for (auto const& name: {"John Doe", "Jane Doe", "Brian Salehi"})
+    {
+        flashback::Provider provider{};
+        provider.set_name(name);
+        ASSERT_NO_THROW(provider = m_database->create_provider(name));
+        ASSERT_GT(provider.id(), 0);
+        ASSERT_EQ(provider.name(), name);
+        existing_providers.push_back(provider);
+    }
+
+    EXPECT_THAT(existing_providers, SizeIs(3));
+    EXPECT_NO_THROW(matched_providers = m_database->search_providers("Doe"));
+    EXPECT_THAT(matched_providers, SizeIs(2));
+    ASSERT_NO_THROW(matched_providers.at(1).id());
+    EXPECT_NE(matched_providers.at(1).name(), "Brian Salehi");
+    EXPECT_NE(matched_providers.at(2).name(), "Brian Salehi");
+
+    EXPECT_NO_THROW(matched_providers = m_database->search_providers(""));
+    EXPECT_THAT(matched_providers, IsEmpty());
 }
 
 TEST_F(test_database, rename_provider)
 {
+    using testing::SizeIs;
+    using testing::IsEmpty;
+
+    constexpr auto modified_name{"Brian Salehi"};
+    std::vector<flashback::Provider> existing_providers{};
+    std::map<uint64_t, flashback::Provider> matched_providers{};
+    flashback::Provider provider{};
+    provider.set_name("John Doe");
+    ASSERT_NO_THROW(provider = m_database->create_provider(provider.name()));
+    ASSERT_GT(provider.id(), 0);
+    ASSERT_NE(provider.name(), modified_name);
+
+    EXPECT_NO_THROW(m_database->rename_provider(provider.id(), modified_name));
+    EXPECT_NO_THROW(matched_providers = m_database->search_providers("Doe"));
+    EXPECT_THAT(matched_providers, IsEmpty());
+    EXPECT_NO_THROW(matched_providers = m_database->search_providers("Brian"));
+    EXPECT_THAT(matched_providers, SizeIs(1));
 }
 
 TEST_F(test_database, remove_provider)
 {
+    using testing::SizeIs;
+    using testing::IsEmpty;
+
+    std::map<uint64_t, flashback::Provider> matched_providers{};
+
+    for (auto const& name: {"John Doe", "Jane Doe", "Brian Salehi"})
+    {
+        flashback::Provider provider{};
+        provider.set_name(name);
+        ASSERT_NO_THROW(provider = m_database->create_provider(name));
+        ASSERT_GT(provider.id(), 0);
+        ASSERT_EQ(provider.name(), name);
+    }
+
+    EXPECT_NO_THROW(matched_providers = m_database->search_providers("Doe"));
+    EXPECT_THAT(matched_providers, SizeIs(2));
+    EXPECT_NO_THROW(m_database->remove_provider(matched_providers.at(1).id()));
+    EXPECT_NO_THROW(matched_providers = m_database->search_providers("Doe"));
+    EXPECT_THAT(matched_providers, SizeIs(1));
 }
 
 TEST_F(test_database, merge_providers)
 {
+    using testing::SizeIs;
+    using testing::IsEmpty;
+
+    std::map<uint64_t, flashback::Provider> matched_providers{};
+
+    for (auto const& name: {"John Doe", "Jane Doe"})
+    {
+        flashback::Provider provider{};
+        provider.set_name(name);
+        ASSERT_NO_THROW(provider = m_database->create_provider(name));
+        ASSERT_GT(provider.id(), 0);
+        ASSERT_EQ(provider.name(), name);
+    }
+
+    ASSERT_NO_THROW(matched_providers = m_database->search_providers("Doe"));
+    ASSERT_THAT(matched_providers, SizeIs(2));
+    ASSERT_NO_THROW(matched_providers.at(1).id());
+    ASSERT_NO_THROW(matched_providers.at(2).id());
+    EXPECT_NO_THROW(m_database->merge_providers(matched_providers.at(1).id(), matched_providers.at(2).id()));
+    EXPECT_NO_THROW(matched_providers = m_database->search_providers("Doe"));
+    EXPECT_THAT(matched_providers, SizeIs(1));
 }
 
 TEST_F(test_database, search_presenters)
 {
+    using testing::SizeIs;
+    using testing::IsEmpty;
+
+    std::vector<flashback::Presenter> existing_presenters{};
+    std::map<uint64_t, flashback::Presenter> matched_presenters{};
+
+    for (auto const& name: {"John Doe", "Jane Doe", "Brian Salehi"})
+    {
+        flashback::Presenter presenter{};
+        presenter.set_name(name);
+        ASSERT_NO_THROW(presenter = m_database->create_presenter(name));
+        ASSERT_GT(presenter.id(), 0);
+        ASSERT_EQ(presenter.name(), name);
+        existing_presenters.push_back(presenter);
+    }
+
+    EXPECT_THAT(existing_presenters, SizeIs(3));
+    EXPECT_NO_THROW(matched_presenters = m_database->search_presenters("Doe"));
+    EXPECT_THAT(matched_presenters, SizeIs(2));
+    ASSERT_NO_THROW(matched_presenters.at(1).id());
+    EXPECT_NE(matched_presenters.at(1).name(), "Brian Salehi");
+    EXPECT_NE(matched_presenters.at(2).name(), "Brian Salehi");
+
+    EXPECT_NO_THROW(matched_presenters = m_database->search_presenters(""));
+    EXPECT_THAT(matched_presenters, IsEmpty());
 }
 
 TEST_F(test_database, rename_presenter)
 {
+    using testing::SizeIs;
+    using testing::IsEmpty;
+
+    constexpr auto modified_name{"Brian Salehi"};
+    std::vector<flashback::Presenter> existing_presenters{};
+    std::map<uint64_t, flashback::Presenter> matched_presenters{};
+    flashback::Presenter presenter{};
+    presenter.set_name("John Doe");
+    ASSERT_NO_THROW(presenter = m_database->create_presenter(presenter.name()));
+    ASSERT_GT(presenter.id(), 0);
+    ASSERT_NE(presenter.name(), modified_name);
+
+    EXPECT_NO_THROW(m_database->rename_presenter(presenter.id(), modified_name));
+    EXPECT_NO_THROW(matched_presenters = m_database->search_presenters("Doe"));
+    EXPECT_THAT(matched_presenters, IsEmpty());
+    EXPECT_NO_THROW(matched_presenters = m_database->search_presenters("Brian"));
+    EXPECT_THAT(matched_presenters, SizeIs(1));
 }
 
 TEST_F(test_database, remove_presenter)
 {
+    using testing::SizeIs;
+    using testing::IsEmpty;
+
+    std::map<uint64_t, flashback::Presenter> matched_presenters{};
+
+    for (auto const& name: {"John Doe", "Jane Doe", "Brian Salehi"})
+    {
+        flashback::Presenter presenter{};
+        presenter.set_name(name);
+        ASSERT_NO_THROW(presenter = m_database->create_presenter(name));
+        ASSERT_GT(presenter.id(), 0);
+        ASSERT_EQ(presenter.name(), name);
+    }
+
+    EXPECT_NO_THROW(matched_presenters = m_database->search_presenters("Doe"));
+    EXPECT_THAT(matched_presenters, SizeIs(2));
+    EXPECT_NO_THROW(m_database->remove_presenter(matched_presenters.at(1).id()));
+    EXPECT_NO_THROW(matched_presenters = m_database->search_presenters("Doe"));
+    EXPECT_THAT(matched_presenters, SizeIs(1));
 }
 
 TEST_F(test_database, merge_presenters)
 {
+    using testing::SizeIs;
+    using testing::IsEmpty;
+
+    std::map<uint64_t, flashback::Presenter> matched_presenters{};
+
+    for (auto const& name: {"John Doe", "Jane Doe"})
+    {
+        flashback::Presenter presenter{};
+        presenter.set_name(name);
+        ASSERT_NO_THROW(presenter = m_database->create_presenter(name));
+        ASSERT_GT(presenter.id(), 0);
+        ASSERT_EQ(presenter.name(), name);
+    }
+
+    ASSERT_NO_THROW(matched_presenters = m_database->search_presenters("Doe"));
+    ASSERT_THAT(matched_presenters, SizeIs(2));
+    ASSERT_NO_THROW(matched_presenters.at(1).id());
+    ASSERT_NO_THROW(matched_presenters.at(2).id());
+    EXPECT_NO_THROW(m_database->merge_presenters(matched_presenters.at(1).id(), matched_presenters.at(2).id()));
+    EXPECT_NO_THROW(matched_presenters = m_database->search_presenters("Doe"));
+    EXPECT_THAT(matched_presenters, SizeIs(1));
 }

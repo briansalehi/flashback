@@ -542,22 +542,33 @@ void database::drop_provider(uint64_t const resource_id, uint64_t const provider
     exec("call drop_provider($1, $2)", resource_id, provider_id);
 }
 
-std::map<uint64_t, Provider> database::search_provider(std::string name) const
+std::map<uint64_t, Provider> database::search_providers(std::string name) const
 {
     std::map<uint64_t, Provider> matched{};
+    for (pqxx::row const& row: query("select similarity, provider, name from search_providers($1)", std::move(name)))
+    {
+        uint64_t const position{row.at("similarity").as<uint64_t>()};
+        Provider provider{};
+        provider.set_id(row.at("provider").as<uint64_t>());
+        provider.set_name(row.at("name").as<std::string>());
+        matched.insert({position, provider});
+    }
     return matched;
 }
 
 void database::rename_provider(uint64_t const provider_id, std::string name) const
 {
+    exec("call rename_provider($1, $2)", provider_id, std::move(name));
 }
 
 void database::remove_provider(uint64_t const provider_id) const
 {
+    exec("call remove_provider($1)", provider_id);
 }
 
 void database::merge_providers(uint64_t const source_id, uint64_t const target_id) const
 {
+    exec("call merge_providers($1, $2)", source_id, target_id);
 }
 
 Presenter database::create_presenter(std::string name) const
@@ -588,22 +599,33 @@ void database::drop_presenter(uint64_t const resource_id, uint64_t const present
     exec("call drop_presenter($1, $2)", resource_id, presenter_id);
 }
 
-std::map<uint64_t, Presenter> database::search_presenter(std::string name) const
+std::map<uint64_t, Presenter> database::search_presenters(std::string name) const
 {
     std::map<uint64_t, Presenter> matched{};
+    for (pqxx::row const& row: query("select similarity, presenter, name from search_presenters($1)", std::move(name)))
+    {
+        uint64_t const position{row.at("similarity").as<uint64_t>()};
+        Presenter presenter{};
+        presenter.set_id(row.at("presenter").as<uint64_t>());
+        presenter.set_name(row.at("name").as<std::string>());
+        matched.insert({position, presenter});
+    }
     return matched;
 }
 
 void database::rename_presenter(uint64_t const presenter_id, std::string name) const
 {
+    exec("call rename_presenter($1, $2)", presenter_id, std::move(name));
 }
 
 void database::remove_presenter(uint64_t const presenter_id) const
 {
+    exec("call remove_presenter($1)", presenter_id);
 }
 
 void database::merge_presenters(uint64_t const source_id, uint64_t const target_id) const
 {
+    exec("call merge_presenters($1, $2)", source_id, target_id);
 }
 
 expertise_level database::get_user_cognitive_level(uint64_t const user_id, uint64_t const subject_id) const
