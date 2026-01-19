@@ -7,12 +7,12 @@
 
 using namespace flashback;
 
-database::database(std::string name, std::string address, std::string port)
+database::database(std::string client, std::string name, std::string address, std::string port)
     : m_connection{nullptr}
 {
     try
     {
-        m_connection = std::make_unique<pqxx::connection>(std::format("postgres://flashback@{}:{}/{}", address, port, name));
+        m_connection = std::make_unique<pqxx::connection>(std::format("postgres://{}@{}:{}/{}", client, address, port, name));
     }
     catch (pqxx::broken_connection const& exp)
     {

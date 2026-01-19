@@ -18,7 +18,7 @@ jobs:
       - name: create database
         run:  ./database/create-test-database.sh
       - name: build
-        run:  cmake --build flashback-release --parallel $(nproc) --target flashbackd common-tests database-tests flashbackd-internals-tests
+        run:  echo "build with $(nproc) cores"; cmake --build flashback-release --parallel $(nproc) --target flashbackd common-tests database-tests flashbackd-internals-tests
       - name: test
         run:  ctest --test-dir flashback-release --verbose
       - name: install

@@ -15,8 +15,8 @@ class test_database: public testing::Test
 protected:
     void SetUp() override
     {
-        m_connection = std::make_unique<pqxx::connection>("postgres://flashback@localhost:5432/flashback_test");
-        m_database = std::make_unique<flashback::database>("flashback_test");
+        m_connection = std::make_unique<pqxx::connection>("postgres://flashback_client@localhost:5432/flashback_test");
+        m_database = std::make_unique<flashback::database>("flashback_client", "flashback_test", "localhost", "5432");
         m_user = std::make_unique<flashback::User>();
         m_user->set_name("Flashback Test User");
         m_user->set_email("user@flashback.eu.com");

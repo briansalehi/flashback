@@ -9,7 +9,7 @@ namespace flashback
 class database: public basic_database
 {
 public:
-    explicit database(std::string name = "flashback", std::string address = "localhost", std::string port = "5432");
+    explicit database(std::string client, std::string name = "flashback", std::string address = "localhost", std::string port = "5432");
     ~database() override = default;
 
     // users
