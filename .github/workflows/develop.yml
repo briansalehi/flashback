@@ -11,6 +11,8 @@ jobs:
         run:  sudo apt install --yes --no-install-recommends cmake postgresql libreadline-dev make curl patch tar gzip bzip2 sed libboost-system-dev libboost-program-options-dev libgtest-dev libprotobuf-dev libgrpc++-dev protobuf-compiler-grpc libsodium-dev libgmock-dev
       - name: checkout
         uses: actions/checkout@v4
+      - name: print configuration path
+        uses: sudo -u postgres find /var/lib/postgresql -type f -name pg_hba.conf -print -quit 2>/dev/null
       - name: install postgresql
         run:  |
           sudo systemctl start postgresql.service
