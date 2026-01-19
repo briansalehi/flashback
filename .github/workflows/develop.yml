@@ -12,6 +12,8 @@ jobs:
       - name: checkout
         uses: actions/checkout@v4
       - name: install postgresql
+        run:  sudo find /etc/ -type f -name pg_hba.conf -print -quit
+      - name: install postgresql
         run:  |
           sudo systemctl start postgresql.service
           config_path="$(sudo find /etc/ -type f -name pg_hba.conf 2>/dev/null)"
