@@ -14,9 +14,9 @@ jobs:
       - name: install postgresql
         run:  |
           sudo systemctl start postgresql.service
-          pgdata="$(sudo -u postgres find /var/lib/postgresql -type f -name pg_hba.conf -print -quit)"
-          sudo -u postgres sed -i '/^host\s*all\s*all\s*127.0.0.1/i host flashback_test flashback_client 127.0.0.1/32 trust' "$pgdata"/pg_hba.conf
-          sudo -u postgres sed -i '/^host\s*all\s*all\s*::1/i host flashback_test flashback_client ::1/128 trust' "$pgdata"/pg_hba.conf
+          sudo -u postgres find /var/lib/postgresql -type f -name pg_hba.conf -print -quit 2>/dev/null
+          sudo -u postgres sed -i '/^host\s*all\s*all\s*127.0.0.1/i host flashback_test flashback_client 127.0.0.1/32 trust' /var/lib/postgresql/pg_hba.conf
+          sudo -u postgres sed -i '/^host\s*all\s*all\s*::1/i host flashback_test flashback_client ::1/128 trust' /var/lib/postgresql/pg_hba.conf
           sudo systemctl restart postgresql.service
       - name: configure postgresql
         run:  |
