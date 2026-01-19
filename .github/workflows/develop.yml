@@ -13,9 +13,11 @@ jobs:
         uses: actions/checkout@v4
       - name: install postgresql
         run:  |
-          sudo sed -i '/^host\s*all\s*all\s*127.0.0.1/i host flashback_test flashback_client 127.0.0.1/32 trust' /var/lib/pgsql/data/pg_hba.conf
-          sudo sed -i '/^host\s*all\s*all\s*::1/i host flashback_test flashback_client ::1/128 trust' /var/lib/pgsql/data/pg_hba.conf
           sudo systemctl start postgresql.service
+          pgdata="$(sudo -u postgres psql -At -c 'show data_directory')"
+          sudo -u postgres sed -i '/^host\s*all\s*all\s*127.0.0.1/i host flashback_test flashback_client 127.0.0.1/32 trust' "$pgdata"/pg_hba.conf
+          sudo -u postgres sed -i '/^host\s*all\s*all\s*::1/i host flashback_test flashback_client ::1/128 trust' "$pgdata"/pg_hba.conf
+          sudo systemctl restart postgresql.service
       - name: configure postgresql
         run:  |
           sudo -u postgres psql -c 'drop database if exists flashback_test'
