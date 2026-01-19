@@ -11,18 +11,11 @@ jobs:
         run:  sudo apt install --yes --no-install-recommends cmake postgresql libreadline-dev make curl patch tar gzip bzip2 sed libboost-system-dev libboost-program-options-dev libgtest-dev libprotobuf-dev libgrpc++-dev protobuf-compiler-grpc libsodium-dev libgmock-dev
       - name: checkout
         uses: actions/checkout@v4
-      - name: find path
-        run:  sudo find /etc/ -type f -name pg_hba.conf -print -quit
-      - name: store path
-        run:  config_path="$(sudo find /etc/ -type f -name pg_hba.conf -print -quit)"; echo "config_path=$config_path" >> $GITHUB_OUTPUT
       - name: install postgresql
         run:  |
+          sudo -u postgres sed -i '/^host\s*all\s*all\s*127.0.0.1/i host flashback_test flashback_client 127.0.0.1/32 trust' /etc/postgresql/*/main/pg_hba.conf
+          sudo -u postgres sed -i '/^host\s*all\s*all\s*::1/i host flashback_test flashback_client ::1/128 trust' /etc/postgresql/*/main/pg_hba.conf
           sudo systemctl start postgresql.service
-          config_path="$(sudo find /etc/ -type f -name pg_hba.conf 2>/dev/null)"
-          sudo -u postgres find /var/lib/postgresql -type f -name pg_hba.conf -print -quit 2>/dev/null
-          sudo -u postgres sed -i '/^host\s*all\s*all\s*127.0.0.1/i host flashback_test flashback_client 127.0.0.1/32 trust' ${config_path}
-          sudo -u postgres sed -i '/^host\s*all\s*all\s*::1/i host flashback_test flashback_client ::1/128 trust' ${config_path}
-          sudo systemctl restart postgresql.service
       - name: configure postgresql
         run:  |
           sudo -u postgres psql -c 'drop database if exists flashback_test'
