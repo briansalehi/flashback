@@ -12,7 +12,7 @@ jobs:
       - name: checkout
         uses: actions/checkout@v4
       - name: print configuration path
-        uses: sudo -u postgres find /var/lib/postgresql -type f -name pg_hba.conf -print -quit 2>/dev/null
+        run:  sudo -u postgres find /var/lib/postgresql -type f -name pg_hba.conf -print -quit 2>/dev/null
       - name: install postgresql
         run:  |
           sudo systemctl start postgresql.service
