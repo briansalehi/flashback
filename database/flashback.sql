@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict naRIqOsLKInTcNPESgXHrfnQyfNXL4RxXS1iPxQs5d5XzMoUnIEVm8ACziC8uTb
+\restrict ZcOGXOtIYhgIDW8mmgeCC1D4x14qR8wvg7XtM3GQP3aqaPHoo1eaHolmVwpZqFP
 
 -- Dumped from database version 18.1
 -- Dumped by pg_dump version 18.0
@@ -148,7 +148,7 @@ CREATE TYPE flashback.resource_type AS ENUM (
     'mailing list',
     'manual',
     'slides',
-    'user'
+    'nerve'
 );
 
 
@@ -574,9 +574,12 @@ ALTER FUNCTION flashback.create_card(headline text) OWNER TO flashback;
 CREATE FUNCTION flashback.create_nerve(user_id integer, resource_name character varying, subject_id integer, expiration integer) RETURNS integer
     LANGUAGE plpgsql
     AS $$
+declare user_name character varying;
 declare resource_id integer;
 begin
-    resource_id := create_resource(resource_name, 'nerve'::resource_type, 'synapse'::section_patern, null::character varying, extract(epoch from now()), expiration);
+    select name into user_name from users where id = user_id;
+
+    resource_id := create_resource(user_name || '''s Knowledge in ' || resource_name, 'nerve'::resource_type, 'synapse'::section_pattern, null::character varying, cast(extract(epoch from now()) as integer), expiration);
 
     insert into shelves (resource, subject) values (resource_id, subject_id);
 
@@ -1179,6 +1182,21 @@ end; $$;
 
 
 ALTER FUNCTION flashback.get_milestones(roadmap_id integer) OWNER TO flashback;
+
+--
+-- Name: get_nerves(integer); Type: FUNCTION; Schema: flashback; Owner: flashback
+--
+
+CREATE FUNCTION flashback.get_nerves(user_id integer) RETURNS TABLE(id integer, name flashback.citext, type flashback.resource_type, pattern flashback.section_pattern, link character varying, production integer, expiration integer)
+    LANGUAGE plpgsql
+    AS $$
+begin
+    return query select r.id, r.name, r.type, r.pattern, r.link, r.production, r.expiration from resources r join nerves n on n.resource = r.id where n.user = user_id;
+end;
+$$;
+
+
+ALTER FUNCTION flashback.get_nerves(user_id integer) OWNER TO flashback;
 
 --
 -- Name: get_out_of_shelves(); Type: FUNCTION; Schema: flashback; Owner: flashback
@@ -21619,7 +21637,6 @@ COPY flashback.resources (id, name, type, pattern, link, production, expiration)
 235	Offensive Hacking Unfolded	book	chapter	https://subscription.packtpub.com/video/security/9781804615294/	1766793600	1924560000
 12	Linux Device Drivers	course	episode	https://www.linkedin.com/learning/linux-device-drivers-reading-writing-and-debugging	1766793600	1924560000
 82	A Complete Guide to Standard C++ Algorithms	book	chapter	https://github.com/HappyCerberus/book-cpp-algorithms	1672531200	1861920000
-236	Brian Salehi	user	synapse	\N	1766793600	1924560000
 52	The Shellcoder's Handbook	book	chapter	https://www.wiley.com/en-us/The+Shellcoder's+Handbook%3A+Discovering+and+Exploiting+Security+Holes+-p-9780764544682	1766793600	1924560000
 60	Learn Docker in a month of Lunches	book	chapter	https://www.manning.com/books/learn-docker-in-a-month-of-lunches	1766793600	1924560000
 75	Linux Kernel Debugging	book	chapter	https://subscription.packtpub.com/book/cloud-networking/9781801075039/	1766793600	1924560000
@@ -21635,6 +21652,7 @@ COPY flashback.resources (id, name, type, pattern, link, production, expiration)
 85	Thomas' Calculus	book	chapter	https://www.pearson.com/en-us/subject-catalog/p/thomas-calculus/P200000007103/9780137616077	1766793600	1924560000
 116	OliveStem	channel	playlist	https://www.youtube.com/@olivestemlearning	1766793600	1924560000
 89	Embedded Linux Training Course	slides	chapter	https://bootlin.com/training/embedded-linux/	1766793600	1924560000
+236	Brian's Knowledge in C++	nerve	synapse	\N	1766793600	1924560000
 33	Linux Driver Development for Embedded Processors	book	chapter	https://vdoc.pub/download/linux-driver-development-for-embedded-processors-second-edition-learn-to-develop-linux-embedded-drivers-with-kernel-49-lts-1gf0ri0tddno	1766793600	1924560000
 21	A Common-Sense Guide to Data Structures and Algorithms	book	chapter	https://pragprog.com/titles/jwdsal2/a-common-sense-guide-to-data-structures-and-algorithms-second-edition/	1672531200	1861920000
 228	Advanced ESP32	course	chapter	https://subscription.packtpub.com/video/iot-hardware/9781800202016	1577836800	1861920000
@@ -32054,5 +32072,5 @@ GRANT ALL ON SCHEMA public TO flashback_client;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict naRIqOsLKInTcNPESgXHrfnQyfNXL4RxXS1iPxQs5d5XzMoUnIEVm8ACziC8uTb
+\unrestrict ZcOGXOtIYhgIDW8mmgeCC1D4x14qR8wvg7XtM3GQP3aqaPHoo1eaHolmVwpZqFP
 

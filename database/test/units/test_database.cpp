@@ -1641,3 +1641,44 @@ TEST_F(test_database, merge_presenters)
     EXPECT_NO_THROW(matched_presenters = m_database->search_presenters("Doe"));
     EXPECT_THAT(matched_presenters, SizeIs(1));
 }
+
+TEST_F(test_database, create_nerve)
+{
+    flashback::Subject subject{};
+    subject.set_name("C++");
+    flashback::Resource resource{};
+    resource.set_name("Brian's Knowledge in C++");
+    auto const expiration{std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch() + std::chrono::years{4})};
+
+    ASSERT_NO_THROW(subject = m_database->create_subject(subject.name()));
+    ASSERT_GT(subject.id(), 0);
+    EXPECT_NO_THROW(resource = m_database->create_nerve(m_user->id(), resource.name(), subject.id(), expiration.count()));
+    EXPECT_GT(resource.id(), 0);
+}
+
+TEST_F(test_database, get_nerves)
+{
+    using testing::SizeIs;
+
+    flashback::Subject subject{};
+    subject.set_name("C++");
+    flashback::Resource resource{};
+    resource.set_name("C++");
+    std::string const expected_name{std::format("{}'s Knowledge in {}", m_user->name(), resource.name())};
+    auto const expiration{std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch() + std::chrono::years{4})};
+    std::vector<flashback::Resource> nerves{};
+
+    ASSERT_NO_THROW(subject = m_database->create_subject(subject.name()));
+    ASSERT_GT(subject.id(), 0);
+    EXPECT_NO_THROW(resource = m_database->create_nerve(m_user->id(), resource.name(), subject.id(), expiration.count()));
+    EXPECT_GT(resource.id(), 0);
+    EXPECT_NO_THROW(nerves = m_database->get_nerves(m_user->id()));
+    ASSERT_THAT(nerves, SizeIs(1));
+    EXPECT_THAT(nerves.at(0).id(), resource.id());
+    EXPECT_EQ(nerves.at(0).name(), expected_name);
+    EXPECT_EQ(nerves.at(0).type(), flashback::Resource::nerve);
+    EXPECT_EQ(nerves.at(0).pattern(), flashback::Resource::synapse);
+    EXPECT_TRUE(nerves.at(0).link().empty());
+    EXPECT_GT(nerves.at(0).production(), 0);
+    EXPECT_EQ(nerves.at(0).expiration(), expiration.count());
+}

@@ -25,7 +25,7 @@ message Resource {
         mailing_list = 5;
         manual = 6;
         slides = 7;
-        user = 8;
+        nerve = 8;
     }
 
     enum section_pattern {

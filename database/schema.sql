@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict GD0XKWCABqkbPQdFxaZSrbNwwuceTFXn0HLYbLuvPTXhAE83tW2ALr4flB50qOr
+\restrict hkFmvGKQMj93TjdSyvLGKRQSQ8a8njVl84udfWH3w9HMO1s9DKLATF8wRapaLKQ
 
 -- Dumped from database version 18.1
 -- Dumped by pg_dump version 18.0
@@ -148,7 +148,7 @@ CREATE TYPE flashback.resource_type AS ENUM (
     'mailing list',
     'manual',
     'slides',
-    'user'
+    'nerve'
 );
 
 
@@ -568,28 +568,28 @@ $$;
 ALTER FUNCTION flashback.create_card(headline text) OWNER TO flashback;
 
 --
--- Name: create_nerve(integer, integer); Type: FUNCTION; Schema: flashback; Owner: flashback
+-- Name: create_nerve(integer, character varying, integer, integer); Type: FUNCTION; Schema: flashback; Owner: flashback
 --
 
-CREATE FUNCTION flashback.create_nerve(user_id integer, subject_id integer) RETURNS integer
+CREATE FUNCTION flashback.create_nerve(user_id integer, resource_name character varying, subject_id integer, expiration integer) RETURNS integer
     LANGUAGE plpgsql
     AS $$
 declare user_name character varying;
-declare user_resource integer;
+declare resource_id integer;
 begin
     select name into user_name from users where id = user_id;
 
-    user_resource := create_resource(user_name, 'nerve'::resource_type, 'synapse'::section_patern, user_name, 'Flashback'::character varying, null::character varying);
+    resource_id := create_resource(user_name || '''s Knowledge in ' || resource_name, 'nerve'::resource_type, 'synapse'::section_pattern, null::character varying, cast(extract(epoch from now()) as integer), expiration);
 
-    insert into shelves (resource, subject) values (user_resource, subject_id);
+    insert into shelves (resource, subject) values (resource_id, subject_id);
 
-    insert into nerves ("user", resource, subject) values (user_id, user_resource, subject_id);
+    insert into nerves ("user", resource, subject) values (user_id, resource_id, subject_id);
 
-    return user_resource;
+    return resource_id;
 end; $$;
 
 
-ALTER FUNCTION flashback.create_nerve(user_id integer, subject_id integer) OWNER TO flashback;
+ALTER FUNCTION flashback.create_nerve(user_id integer, resource_name character varying, subject_id integer, expiration integer) OWNER TO flashback;
 
 --
 -- Name: create_presenter(character varying); Type: FUNCTION; Schema: flashback; Owner: flashback
@@ -1182,6 +1182,21 @@ end; $$;
 
 
 ALTER FUNCTION flashback.get_milestones(roadmap_id integer) OWNER TO flashback;
+
+--
+-- Name: get_nerves(integer); Type: FUNCTION; Schema: flashback; Owner: flashback
+--
+
+CREATE FUNCTION flashback.get_nerves(user_id integer) RETURNS TABLE(id integer, name flashback.citext, type flashback.resource_type, pattern flashback.section_pattern, link character varying, production integer, expiration integer)
+    LANGUAGE plpgsql
+    AS $$
+begin
+    return query select r.id, r.name, r.type, r.pattern, r.link, r.production, r.expiration from resources r join nerves n on n.resource = r.id where n.user = user_id;
+end;
+$$;
+
+
+ALTER FUNCTION flashback.get_nerves(user_id integer) OWNER TO flashback;
 
 --
 -- Name: get_out_of_shelves(); Type: FUNCTION; Schema: flashback; Owner: flashback
@@ -2693,8 +2708,8 @@ ALTER TABLE flashback.milestones_activities ALTER COLUMN id ADD GENERATED ALWAYS
 --
 
 CREATE TABLE flashback.nerves (
-    "user" integer CONSTRAINT knowledge_user_not_null NOT NULL,
-    resource integer CONSTRAINT knowledge_resource_not_null NOT NULL,
+    "user" integer NOT NULL,
+    resource integer NOT NULL,
     subject integer NOT NULL
 );
 
@@ -2775,7 +2790,7 @@ ALTER TABLE flashback.producers OWNER TO flashback;
 CREATE TABLE flashback.progress (
     "user" integer NOT NULL,
     card integer NOT NULL,
-    last_practice timestamp with time zone DEFAULT now() CONSTRAINT progress_time_not_null NOT NULL,
+    last_practice timestamp with time zone DEFAULT now() NOT NULL,
     duration integer NOT NULL,
     progression integer DEFAULT 0 NOT NULL
 );
@@ -3930,5 +3945,5 @@ GRANT ALL ON SCHEMA public TO flashback_client;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict GD0XKWCABqkbPQdFxaZSrbNwwuceTFXn0HLYbLuvPTXhAE83tW2ALr4flB50qOr
+\unrestrict hkFmvGKQMj93TjdSyvLGKRQSQ8a8njVl84udfWH3w9HMO1s9DKLATF8wRapaLKQ
 

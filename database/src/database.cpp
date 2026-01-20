@@ -628,6 +628,40 @@ void database::merge_presenters(uint64_t const source_id, uint64_t const target_
     exec("call merge_presenters($1, $2)", source_id, target_id);
 }
 
+Resource database::create_nerve(uint64_t user_id, std::string resource_name, uint64_t subject_id, uint64_t expiration) const
+{
+    Resource resource{};
+    resource.clear_id();
+    resource.set_name(resource_name);
+
+    if (pqxx::result const result{query("select create_nerve($1, $2, $3, $4) as id", user_id, resource_name, subject_id, expiration)}; result.size() == 1)
+    {
+        resource.set_id(result.at(0).at("id").as<uint64_t>());
+    }
+
+    return resource;
+}
+
+std::vector<Resource> database::get_nerves(uint64_t user_id) const
+{
+    std::vector<Resource> nerves{};
+
+    for (pqxx::row const& row: query("select id, name, type, pattern, link, production, expiration from get_nerves($1)", user_id))
+    {
+        Resource resource{};
+        resource.set_id(row.at("id").as<uint64_t>());
+        resource.set_name(row.at("name").as<std::string>());
+        resource.set_type(to_resource_type(row.at("type").as<std::string>()));
+        resource.set_pattern(to_section_pattern(row.at("pattern").as<std::string>()));
+        resource.set_link(row.at("link").is_null() ? "" : row.at("link").as<std::string>());
+        resource.set_production(row.at("production").as<uint64_t>());
+        resource.set_expiration(row.at("expiration").as<uint64_t>());
+        nerves.push_back(resource);
+    }
+
+    return nerves;
+}
+
 expertise_level database::get_user_cognitive_level(uint64_t const user_id, uint64_t const subject_id) const
 {
     auto level{expertise_level::surface};

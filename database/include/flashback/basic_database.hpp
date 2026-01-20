@@ -164,7 +164,8 @@ public:
     [[nodiscard]] virtual expertise_level get_user_cognitive_level(uint64_t user_id, uint64_t subject_id) const = 0;
 
     // nerves
-    //create_nerve
+    [[nodiscard]] virtual Resource create_nerve(uint64_t user_id, std::string resource_name, uint64_t subject_id, uint64_t expiration) const = 0;
+    [[nodiscard]] virtual std::vector<Resource> get_nerves(uint64_t user_id) const = 0;
 
     // anomaly detection
     //get_duplicate_cards

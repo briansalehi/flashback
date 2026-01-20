@@ -80,6 +80,10 @@ public:
     void remove_presenter(uint64_t presenter_id) const override;
     void merge_presenters(uint64_t source_id, uint64_t target_id) const override;
 
+    // nerves
+    Resource create_nerve(uint64_t user_id, std::string resource_name, uint64_t subject_id, uint64_t expiration) const override;
+    std::vector<Resource> get_nerves(uint64_t user_id) const override;
+
     // practices
     [[nodiscard]] expertise_level get_user_cognitive_level(uint64_t user_id, uint64_t subject_id) const override;
 
@@ -153,7 +157,7 @@ private:
             break;
         case Resource::slides: type_string = "slides";
             break;
-        case Resource::user: type_string = "user";
+        case Resource::nerve: type_string = "nerve";
             break;
         default: throw std::runtime_error("invalid resource type");
         }
@@ -173,7 +177,7 @@ private:
         else if (type_string == "mailing_list") type = Resource::mailing_list;
         else if (type_string == "manual") type = Resource::manual;
         else if (type_string == "slides") type = Resource::slides;
-        else if (type_string == "user") type = Resource::user;
+        else if (type_string == "nerve") type = Resource::nerve;
         else throw std::runtime_error("invalid resource type");
 
         return type;

@@ -77,6 +77,10 @@ public:
     MOCK_METHOD(void, remove_presenter, (uint64_t), (const, override));
     MOCK_METHOD(void, merge_presenters, (uint64_t, uint64_t), (const, override));
 
+    // nerves
+    MOCK_METHOD(Resource, create_nerve, (uint64_t, std::string, uint64_t, uint64_t), (const, override));
+    MOCK_METHOD(std::vector<Resource>, get_nerves, (uint64_t), (const, override));
+
     // practices
     MOCK_METHOD(expertise_level, get_user_cognitive_level, (uint64_t, uint64_t), (const, override));
 };
