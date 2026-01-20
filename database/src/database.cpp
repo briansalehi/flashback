@@ -514,6 +514,75 @@ void database::merge_resources(uint64_t source_id, uint64_t target_id) const
     exec("call merge_resources($1, $2)", source_id, target_id);
 }
 
+std::map<uint64_t, Section> database::get_sections(uint64_t resource_id) const
+{
+    return {};
+}
+
+void database::remove_section(uint64_t resource_id) const
+{
+}
+
+void database::reorder_section(uint64_t resource_id, uint64_t current_position, uint64_t target_position) const
+{
+}
+
+void database::merge_sections(uint64_t resource_id, uint64_t source_position, uint64_t target_position) const
+{
+}
+
+void database::rename_section(uint64_t resource_id, uint64_t position, std::string name) const
+{
+}
+
+void database::move_section(uint64_t resource_id, uint64_t position, uint64_t target_resource_id, uint64_t target_position) const
+{
+}
+
+std::map<uint64_t, Section> database::search_sections(uint64_t resource_id, uint64_t position, std::string search_pattern) const
+{
+    return {};
+}
+
+Topic database::create_topic(uint64_t subject_id, std::string name, flashback::expertise_level level, uint64_t position) const
+{
+    return {};
+}
+
+std::map<uint64_t, Topic> database::get_topics(uint64_t subject_id) const
+{
+    return {};
+}
+
+void database::reorder_topic(uint64_t subject_id, uint64_t source_position, uint64_t target_position) const
+{
+}
+
+void database::remove_topic(uint64_t subject_id, uint64_t position) const
+{
+}
+
+void database::merge_topics(uint64_t subject_id, uint64_t source_position, uint64_t target_position) const
+{
+}
+
+void database::rename_topic(uint64_t subject_id, uint64_t position, std::string name) const
+{
+}
+
+void database::move_topic(uint64_t subject_id, uint64_t position, uint64_t target_subject_id, uint64_t target_position) const
+{
+}
+
+std::map<uint64_t, Topic> database::search_topics(uint64_t subject_id, std::string name) const
+{
+    return {};
+}
+
+void database::change_topic_level(uint64_t subject_id, uint64_t position, flashback::expertise_level level) const
+{
+}
+
 Provider database::create_provider(std::string name) const
 {
     Provider provider{};

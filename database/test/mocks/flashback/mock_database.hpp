@@ -81,6 +81,27 @@ public:
     MOCK_METHOD(Resource, create_nerve, (uint64_t, std::string, uint64_t, uint64_t), (const, override));
     MOCK_METHOD(std::vector<Resource>, get_nerves, (uint64_t), (const, override));
 
+    // sections
+    MOCK_METHOD(Section, create_section, (uint64_t, uint64_t, std::string, std::string), (const, override));
+    MOCK_METHOD((std::map<uint64_t, Section>), get_sections, (uint64_t), (const, override));
+    MOCK_METHOD(void, remove_section, (uint64_t), (const, override));
+    MOCK_METHOD(void, reorder_section, (uint64_t, uint64_t, uint64_t), (const, override));
+    MOCK_METHOD(void, merge_sections, (uint64_t, uint64_t, uint64_t), (const, override));
+    MOCK_METHOD(void, rename_section, (uint64_t, uint64_t, std::string), (const, override));
+    MOCK_METHOD(void, move_section, (uint64_t, uint64_t, uint64_t, uint64_t), (const, override));
+    MOCK_METHOD((std::map<uint64_t, Section>), search_sections, (uint64_t, uint64_t, std::string), (const, override));
+
+    // topics
+    MOCK_METHOD(Topic, create_topic, (uint64_t, std::string, flashback::expertise_level, uint64_t) , (const, override));
+    MOCK_METHOD((std::map<uint64_t, Topic>), get_topics, (uint64_t) , (const, override));
+    MOCK_METHOD(void, reorder_topic, (uint64_t, uint64_t, uint64_t) , (const, override));
+    MOCK_METHOD(void, remove_topic, (uint64_t, uint64_t) , (const, override));
+    MOCK_METHOD(void, merge_topics, (uint64_t, uint64_t, uint64_t) , (const, override));
+    MOCK_METHOD(void, rename_topic, (uint64_t, uint64_t, std::string) , (const, override));
+    MOCK_METHOD(void, move_topic, (uint64_t, uint64_t, uint64_t, uint64_t) , (const, override));
+    MOCK_METHOD((std::map<uint64_t, Topic>), search_topics, (uint64_t, std::string) , (const, override));
+    MOCK_METHOD(void, change_topic_level, (uint64_t, uint64_t, flashback::expertise_level) , (const, override));
+
     // practices
     MOCK_METHOD(expertise_level, get_user_cognitive_level, (uint64_t, uint64_t), (const, override));
 };

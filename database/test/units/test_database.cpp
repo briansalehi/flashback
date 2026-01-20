@@ -1687,3 +1687,107 @@ TEST_F(test_database, get_nerves)
     ASSERT_NO_THROW(resources.at(0).id());
     EXPECT_EQ(resources.at(0).id(), resource.id());
 }
+
+TEST_F(test_database, get_sections)
+{
+    flashback::Resource resource{};
+    resource.set_name("C++");
+
+    std::map<uint64_t, flashback::Section> sections{};
+    EXPECT_NO_THROW(sections = m_database->get_sections(resource.id()));
+}
+
+TEST_F(test_database, remove_section)
+{
+    flashback::Resource resource{};
+    resource.set_name("C++");
+
+    EXPECT_NO_THROW(m_database->remove_section(resource.id()));
+}
+
+TEST_F(test_database, reorder_section)
+{
+    flashback::Resource resource{};
+    resource.set_name("C++");
+    resource.set_position(1);
+    flashback::Resource secondary_resource{};
+    secondary_resource.set_name("C++");
+    secondary_resource.set_position(2);
+    uint64_t const target_position{1};
+
+    EXPECT_NO_THROW(m_database->reorder_section(resource.id(), resource.position(), target_position));
+}
+
+TEST_F(test_database, merge_sections)
+{
+    flashback::Resource resource{};
+    resource.set_name("C++");
+    resource.set_position();
+    uint64_t const target_position{1};
+
+    EXPECT_NO_THROW(m_database->merge_sections(resource.id(), resource.position(), target_position)));
+}
+
+TEST_F(test_database, rename_section)
+{
+    flashback::Resource resource{};
+    resource.set_name("C++");
+    resource.set_position();
+
+    EXPECT_NO_THROW(m_database->rename_section(resource.id(), resource.position(), resource.name()));
+}
+
+TEST_F(test_database, move_section)
+{
+    // void database::move_section(uint64_t resource_id, uint64_t position, uint64_t target_resource_id, uint64_t target_position) const
+}
+
+TEST_F(test_database, search_sections)
+{
+    // std::map<uint64_t, Section> database::search_sections(uint64_t resource_id, uint64_t position, std::string search_pattern) const
+}
+
+TEST_F(test_database, create_topic)
+{
+    // Topic database::create_topic(uint64_t subject_id, std::string name, flashback::expertise_level level, uint64_t position) const
+}
+
+TEST_F(test_database, get_topics)
+{
+    // std::map<uint64_t, Topic> database::get_topics(uint64_t subject_id) const
+}
+
+TEST_F(test_database, reorder_topic)
+{
+    // void database::reorder_topic(uint64_t subject_id, uint64_t source_position, uint64_t target_position) const
+}
+
+TEST_F(test_database, remove_topic)
+{
+    // void database::remove_topic(uint64_t subject_id, uint64_t position) const
+}
+
+TEST_F(test_database, merge_topics)
+{
+    // void database::merge_topics(uint64_t subject_id, uint64_t source_position, uint64_t target_position) const
+}
+
+TEST_F(test_database, rename_topic)
+{
+    // void database::rename_topic(uint64_t subject_id, uint64_t position, std::string name) const
+}
+
+TEST_F(test_database, move_topic)
+{
+    // void database::move_topic(uint64_t subject_id, uint64_t position, uint64_t target_subject_id, uint64_t target_position) const
+}
+
+TEST_F(test_database, search_topics)
+{
+    // std::map<uint64_t, Topic> database::search_topics(uint64_t subject_id, std::string name) const
+}
+
+TEST_F(test_database, change_topic_level)
+{
+    // void database::change_topic_level(uint64_t subject_id, uint64_t position, flashback::expertise_level level) const
+}
