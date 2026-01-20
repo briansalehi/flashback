@@ -1664,6 +1664,7 @@ TEST_F(test_database, get_nerves)
     subject.set_name("C++");
     flashback::Resource resource{};
     resource.set_name("C++");
+    std::vector<flashback::Resource> resources{};
     std::string const expected_name{std::format("{}'s Knowledge in {}", m_user->name(), resource.name())};
     auto const expiration{std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch() + std::chrono::years{4})};
     std::vector<flashback::Resource> nerves{};
@@ -1681,4 +1682,8 @@ TEST_F(test_database, get_nerves)
     EXPECT_TRUE(nerves.at(0).link().empty());
     EXPECT_GT(nerves.at(0).production(), 0);
     EXPECT_EQ(nerves.at(0).expiration(), expiration.count());
+    EXPECT_NO_THROW(resources = m_database->get_resources(subject.id()));
+    ASSERT_THAT(resources, SizeIs(1));
+    ASSERT_NO_THROW(resources.at(0).id());
+    EXPECT_EQ(resources.at(0).id(), resource.id());
 }

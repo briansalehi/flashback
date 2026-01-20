@@ -441,7 +441,7 @@ std::vector<Resource> database::get_resources(uint64_t const subject_id) const
         resource.set_name(row.at("name").as<std::string>());
         resource.set_type(to_resource_type(row.at("type").as<std::string>()));
         resource.set_pattern(to_section_pattern(row.at("pattern").as<std::string>()));
-        resource.set_link(row.at("link").as<std::string>());
+        resource.set_link(row.at("link").is_null() ? "" : row.at("link").as<std::string>());
         resource.set_production(row.at("production").as<uint64_t>());
         resource.set_expiration(row.at("expiration").as<uint64_t>());
         resources.push_back(resource);
@@ -466,7 +466,7 @@ std::map<uint64_t, Resource> database::search_resources(std::string name) const
         resource.set_name(row.at("name").as<std::string>());
         resource.set_type(to_resource_type(row.at("type").as<std::string>()));
         resource.set_pattern(to_section_pattern(row.at("pattern").as<std::string>()));
-        resource.set_link(row.at("link").as<std::string>());
+        resource.set_link(row.at("link").is_null() ? "" : row.at("link").as<std::string>());
         resource.set_production(row.at("production").as<uint64_t>());
         resource.set_expiration(row.at("expiration").as<uint64_t>());
         matched.insert({position, resource});
