@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict OkZyjXrh1q9vFE9691lgRikDbYircrdJF0tSwOUbmDPteNJUvBXhpNu768OnOtv
+\restrict naRIqOsLKInTcNPESgXHrfnQyfNXL4RxXS1iPxQs5d5XzMoUnIEVm8ACziC8uTb
 
 -- Dumped from database version 18.1
 -- Dumped by pg_dump version 18.0
@@ -568,28 +568,25 @@ $$;
 ALTER FUNCTION flashback.create_card(headline text) OWNER TO flashback;
 
 --
--- Name: create_nerve(integer, integer); Type: FUNCTION; Schema: flashback; Owner: flashback
+-- Name: create_nerve(integer, character varying, integer, integer); Type: FUNCTION; Schema: flashback; Owner: flashback
 --
 
-CREATE FUNCTION flashback.create_nerve(user_id integer, subject_id integer) RETURNS integer
+CREATE FUNCTION flashback.create_nerve(user_id integer, resource_name character varying, subject_id integer, expiration integer) RETURNS integer
     LANGUAGE plpgsql
     AS $$
-declare user_name character varying;
-declare user_resource integer;
+declare resource_id integer;
 begin
-    select name into user_name from users where id = user_id;
+    resource_id := create_resource(resource_name, 'nerve'::resource_type, 'synapse'::section_patern, null::character varying, extract(epoch from now()), expiration);
 
-    user_resource := create_resource(user_name, 'nerve'::resource_type, 'synapse'::section_patern, user_name, 'Flashback'::character varying, null::character varying);
+    insert into shelves (resource, subject) values (resource_id, subject_id);
 
-    insert into shelves (resource, subject) values (user_resource, subject_id);
+    insert into nerves ("user", resource, subject) values (user_id, resource_id, subject_id);
 
-    insert into nerves ("user", resource, subject) values (user_id, user_resource, subject_id);
-
-    return user_resource;
+    return resource_id;
 end; $$;
 
 
-ALTER FUNCTION flashback.create_nerve(user_id integer, subject_id integer) OWNER TO flashback;
+ALTER FUNCTION flashback.create_nerve(user_id integer, resource_name character varying, subject_id integer, expiration integer) OWNER TO flashback;
 
 --
 -- Name: create_presenter(character varying); Type: FUNCTION; Schema: flashback; Owner: flashback
@@ -2693,8 +2690,8 @@ ALTER TABLE flashback.milestones_activities ALTER COLUMN id ADD GENERATED ALWAYS
 --
 
 CREATE TABLE flashback.nerves (
-    "user" integer CONSTRAINT knowledge_user_not_null NOT NULL,
-    resource integer CONSTRAINT knowledge_resource_not_null NOT NULL,
+    "user" integer NOT NULL,
+    resource integer NOT NULL,
     subject integer NOT NULL
 );
 
@@ -2775,7 +2772,7 @@ ALTER TABLE flashback.producers OWNER TO flashback;
 CREATE TABLE flashback.progress (
     "user" integer NOT NULL,
     card integer NOT NULL,
-    last_practice timestamp with time zone DEFAULT now() CONSTRAINT progress_time_not_null NOT NULL,
+    last_practice timestamp with time zone DEFAULT now() NOT NULL,
     duration integer NOT NULL,
     progression integer DEFAULT 0 NOT NULL
 );
@@ -32057,5 +32054,5 @@ GRANT ALL ON SCHEMA public TO flashback_client;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict OkZyjXrh1q9vFE9691lgRikDbYircrdJF0tSwOUbmDPteNJUvBXhpNu768OnOtv
+\unrestrict naRIqOsLKInTcNPESgXHrfnQyfNXL4RxXS1iPxQs5d5XzMoUnIEVm8ACziC8uTb
 
