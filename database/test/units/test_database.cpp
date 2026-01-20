@@ -1720,26 +1720,45 @@ TEST_F(test_database, reorder_section)
 
 TEST_F(test_database, merge_sections)
 {
-    flashback::Resource resource{};
-    resource.set_name("C++");
-    resource.set_position();
+    flashback::Subject subject{};
+    subject.set_name("C++");
+    flashback::Topic topic{};
+    topic.set_name("Intro");
+    topic.set_position(1);
     uint64_t const target_position{1};
 
-    EXPECT_NO_THROW(m_database->merge_sections(resource.id(), resource.position(), target_position)));
+    ASSERT_NO_THROW(subject = m_database->create_subject(subject.name()));
+    ASSERT_GT(subject.id(), 0);
+    EXPECT_NO_THROW(m_database->merge_sections(subject.id(), resource.position(), target_position)));
 }
 
 TEST_F(test_database, rename_section)
 {
-    flashback::Resource resource{};
-    resource.set_name("C++");
-    resource.set_position();
+    flashback::Subject subject{};
+    subject.set_name("C++");
+    flashback::Topic topic{};
+    topic.set_name("Intro");
+    topic.set_position(1);
+    std::string const modified_name{"Advanced"};
 
-    EXPECT_NO_THROW(m_database->rename_section(resource.id(), resource.position(), resource.name()));
+    ASSERT_NO_THROW(subject = m_database->create_subject(subject.name()));
+    ASSERT_GT(subject.id(), 0);
+    EXPECT_NO_THROW(m_database->rename_section(subject.id(), topic.position(), topic.name()));
 }
 
 TEST_F(test_database, move_section)
 {
-    // void database::move_section(uint64_t resource_id, uint64_t position, uint64_t target_resource_id, uint64_t target_position) const
+    flashback::Subject subject{};
+    subject.set_name("C++");
+    flashback::Subject target{};
+    target.set_name("Rust");
+    flashback::Topic topic{};
+    topic.set_name("Intro");
+    topic.set_position(1);
+
+    ASSERT_NO_THROW(subject = m_database->create_subject(subject.name()));
+    ASSERT_GT(subject.id(), 0);
+    EXPECT_NO_THROW(m_database->move_section(subject.id(), topic.position(), target.id(), topic.position()));
 }
 
 TEST_F(test_database, search_sections)
