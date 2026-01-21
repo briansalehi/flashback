@@ -13,7 +13,7 @@ public:
     ~database() override = default;
 
     // users
-    bool create_session(uint64_t user_id, std::string_view token, std::string_view device) const override;
+    [[nodiscard]] bool create_session(uint64_t user_id, std::string_view token, std::string_view device) const override;
     [[nodiscard]] uint64_t create_user(std::string_view name, std::string_view email, std::string_view hash) const override;
     void reset_password(uint64_t user_id, std::string_view hash) const override;
     [[nodiscard]] bool user_exists(std::string_view email) const override;
@@ -23,7 +23,7 @@ public:
     void revoke_sessions_except(uint64_t user_id, std::string_view token) const override;
 
     // roadmaps
-    [[nodiscard]] Roadmap create_roadmap(uint64_t const user_id, std::string name) const override;
+    [[nodiscard]] Roadmap create_roadmap(uint64_t user_id, std::string name) const override;
     [[nodiscard]] std::vector<Roadmap> get_roadmaps(uint64_t user_id) const override;
     void rename_roadmap(uint64_t roadmap_id, std::string_view modified_name) const override;
     void remove_roadmap(uint64_t roadmap_id) const override;
@@ -63,46 +63,47 @@ public:
     void merge_resources(uint64_t source_id, uint64_t target_id) const override;
 
     // sections
-    std::map<uint64_t, Section> get_sections(uint64_t resource_id) const override;
-    void remove_section(uint64_t resource_id) const override;
+    [[nodiscard]] Section create_section(uint64_t resource_id, uint64_t position, std::string name, std::string link) const override;
+    [[nodiscard]] std::map<uint64_t, Section> get_sections(uint64_t resource_id) const override;
+    void remove_section(uint64_t resource_id, uint64_t position) const override;
     void reorder_section(uint64_t resource_id, uint64_t current_position, uint64_t target_position) const override;
     void merge_sections(uint64_t resource_id, uint64_t source_position, uint64_t target_position) const override;
     void rename_section(uint64_t resource_id, uint64_t position, std::string name) const override;
     void move_section(uint64_t resource_id, uint64_t position, uint64_t target_resource_id, uint64_t target_position) const override;
-    std::map<uint64_t, Section> search_sections(uint64_t resource_id, uint64_t position, std::string search_pattern) const override;
+    [[nodiscard]] std::map<uint64_t, Section> search_sections(uint64_t resource_id, std::string search_pattern) const override;
 
     // topics
-    Topic create_topic(uint64_t subject_id, std::string name, flashback::expertise_level level, uint64_t position) const override;
-    std::map<uint64_t, Topic> get_topics(uint64_t subject_id) const override;
+    [[nodiscard]] Topic create_topic(uint64_t subject_id, std::string name, flashback::expertise_level level, uint64_t position) const override;
+    [[nodiscard]] std::map<uint64_t, Topic> get_topics(uint64_t subject_id) const override;
     void reorder_topic(uint64_t subject_id, uint64_t source_position, uint64_t target_position) const override;
     void remove_topic(uint64_t subject_id, uint64_t position) const override;
     void merge_topics(uint64_t subject_id, uint64_t source_position, uint64_t target_position) const override;
     void rename_topic(uint64_t subject_id, uint64_t position, std::string name) const override;
     void move_topic(uint64_t subject_id, uint64_t position, uint64_t target_subject_id, uint64_t target_position) const override;
-    std::map<uint64_t, Topic> search_topics(uint64_t subject_id, std::string name) const override;
+    [[nodiscard]] std::map<uint64_t, Topic> search_topics(uint64_t subject_id, std::string name) const override;
     void change_topic_level(uint64_t subject_id, uint64_t position, flashback::expertise_level level) const override;
 
     // providers
-    Provider create_provider(std::string name) const override;
+    [[nodiscard]] Provider create_provider(std::string name) const override;
     void add_provider(uint64_t resource_id, uint64_t provider_id) const override;
     void drop_provider(uint64_t resource_id, uint64_t provider_id) const override;
-    std::map<uint64_t, Provider> search_providers(std::string name) const override;
+    [[nodiscard]] std::map<uint64_t, Provider> search_providers(std::string name) const override;
     void rename_provider(uint64_t provider_id, std::string name) const override;
     void remove_provider(uint64_t provider_id) const override;
     void merge_providers(uint64_t source_id, uint64_t target_id) const override;
 
     // presenters
-    Presenter create_presenter(std::string name) const override;
+    [[nodiscard]] Presenter create_presenter(std::string name) const override;
     void add_presenter(uint64_t resource_id, uint64_t presenter_id) const override;
     void drop_presenter(uint64_t resource_id, uint64_t presenter_id) const override;
-    std::map<uint64_t, Presenter> search_presenters(std::string name) const override;
+    [[nodiscard]] std::map<uint64_t, Presenter> search_presenters(std::string name) const override;
     void rename_presenter(uint64_t presenter_id, std::string name) const override;
     void remove_presenter(uint64_t presenter_id) const override;
     void merge_presenters(uint64_t source_id, uint64_t target_id) const override;
 
     // nerves
-    Resource create_nerve(uint64_t user_id, std::string resource_name, uint64_t subject_id, uint64_t expiration) const override;
-    std::vector<Resource> get_nerves(uint64_t user_id) const override;
+    [[nodiscard]] Resource create_nerve(uint64_t user_id, std::string resource_name, uint64_t subject_id, uint64_t expiration) const override;
+    [[nodiscard]] std::vector<Resource> get_nerves(uint64_t user_id) const override;
 
     // practices
     [[nodiscard]] expertise_level get_user_cognitive_level(uint64_t user_id, uint64_t subject_id) const override;

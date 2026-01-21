@@ -499,88 +499,185 @@ void database::edit_resource_expiration(uint64_t const resource_id, uint64_t con
     exec("call edit_resource_expiration($1, $2)", resource_id, expiration);
 }
 
-void database::rename_resource(uint64_t resource_id, std::string name) const
+void database::rename_resource(uint64_t const resource_id, std::string name) const
 {
     exec("call rename_resource($1, $2)", resource_id, name);
 }
 
-void database::remove_resource(uint64_t resource_id) const
+void database::remove_resource(uint64_t const resource_id) const
 {
     exec("call remove_resource($1)", resource_id);
 }
 
-void database::merge_resources(uint64_t source_id, uint64_t target_id) const
+void database::merge_resources(uint64_t const source_id, uint64_t const target_id) const
 {
     exec("call merge_resources($1, $2)", source_id, target_id);
 }
 
-std::map<uint64_t, Section> database::get_sections(uint64_t resource_id) const
+Section database::create_section(uint64_t const resource_id, uint64_t const position, std::string name, std::string link) const
 {
-    return {};
+    Section section{};
+    section.set_name(name);
+    section.set_position(position);
+    section.set_link(link);
+    uint64_t id{};
+    pqxx::result result{};
+
+    if (position > 0)
+    {
+        result = query("call create_section($1, $2, $3, $4)", resource_id, name, link, position);
+    }
+    else
+    {
+        if (result = query("select create_section($1, $2, $3) as id", resource_id, name, link); result.size() == 1)
+        {
+            section.set_position(result.at(0).at("id").as<uint64_t>());
+        }
+    }
+
+    return section;
 }
 
-void database::remove_section(uint64_t resource_id) const
+std::map<uint64_t, Section> database::get_sections(uint64_t const resource_id) const
 {
+    std::map<uint64_t, Section> sections{};
+
+    for (pqxx::row const& row: query("select position, name, link from get_sections($1)", resource_id))
+    {
+        Section section{};
+        section.set_position(row.at("position").as<uint64_t>());
+        section.set_name(row.at("name").as<std::string>());
+        section.set_link(row.at("link").is_null() ? "" : row.at("link").as<std::string>());
+        sections.insert({section.position(), section});
+    }
+
+    return sections;
 }
 
-void database::reorder_section(uint64_t resource_id, uint64_t current_position, uint64_t target_position) const
+void database::remove_section(uint64_t const resource_id, uint64_t const position) const
 {
+    exec("call remove_section($1, $2)", resource_id, position);
 }
 
-void database::merge_sections(uint64_t resource_id, uint64_t source_position, uint64_t target_position) const
+void database::reorder_section(uint64_t const resource_id, uint64_t const current_position, uint64_t const target_position) const
 {
+    exec("call reorder_section($1, $2, $3)", resource_id, current_position, target_position);
 }
 
-void database::rename_section(uint64_t resource_id, uint64_t position, std::string name) const
+void database::merge_sections(uint64_t const resource_id, uint64_t const source_position, uint64_t const target_position) const
 {
+    exec("call merge_sections($1, $2, $3)", resource_id, source_position, target_position);
 }
 
-void database::move_section(uint64_t resource_id, uint64_t position, uint64_t target_resource_id, uint64_t target_position) const
+void database::rename_section(uint64_t const resource_id, uint64_t const position, std::string name) const
 {
+    exec("call rename_section($1, $2, $3)", resource_id, position, name);
 }
 
-std::map<uint64_t, Section> database::search_sections(uint64_t resource_id, uint64_t position, std::string search_pattern) const
+void database::move_section(uint64_t const resource_id, uint64_t const position, uint64_t const target_resource_id, uint64_t const target_position) const
 {
-    return {};
+    exec("call move_section($1, $2, $3, $4)", resource_id, position, target_resource_id, target_position);
 }
 
-Topic database::create_topic(uint64_t subject_id, std::string name, flashback::expertise_level level, uint64_t position) const
+std::map<uint64_t, Section> database::search_sections(uint64_t const resource_id, std::string search_pattern) const
 {
-    return {};
+    std::map<uint64_t, Section> sections{};
+
+    for (pqxx::row const& row: query("select position, name, link from search_sections($1, $2)", resource_id, std::move(search_pattern)))
+    {
+        Section section{};
+        section.set_position(row.at("position").as<uint64_t>());
+        section.set_name(row.at("name").as<std::string>());
+        section.set_link(row.at("link").is_null() ? "" : row.at("link").as<std::string>());
+        sections.insert({section.position(), section});
+    }
+
+    return sections;
 }
 
-std::map<uint64_t, Topic> database::get_topics(uint64_t subject_id) const
+Topic database::create_topic(uint64_t const subject_id, std::string name, flashback::expertise_level const level, uint64_t const position) const
 {
-    return {};
+    Topic topic{};
+    topic.set_name(name);
+    topic.set_level(level);
+    topic.set_position(position);
+    pqxx::result result{};
+
+    if (position > 0)
+    {
+        result = query("call create_topic($1, $2, $3, $4)", subject_id, name, level_to_string(level), position);
+    }
+    else
+    {
+        if (result = query("select create_topic($1, $2, $3) as id", subject_id, name, level_to_string(level)); result.size() == 1)
+        {
+            topic.set_position(result.at(0).at("id").as<uint64_t>());
+        }
+    }
+
+    return topic;
 }
 
-void database::reorder_topic(uint64_t subject_id, uint64_t source_position, uint64_t target_position) const
+std::map<uint64_t, Topic> database::get_topics(uint64_t const subject_id) const
 {
+    std::map<uint64_t, Topic> topics{};
+
+    for (pqxx::row const& row: query("select position, name, level from get_topics($1)", subject_id))
+    {
+        Topic topic{};
+        topic.set_position(row.at("position").as<uint64_t>());
+        topic.set_name(row.at("name").as<std::string>());
+        topic.set_level(to_level(row.at("level").as<std::string>()));
+        topics.insert({topic.position(), topic});
+    }
+
+    return topics;
 }
 
-void database::remove_topic(uint64_t subject_id, uint64_t position) const
+void database::reorder_topic(uint64_t const subject_id, uint64_t const source_position, uint64_t const target_position) const
 {
+    exec("call reorder_topic($1, $2, $3)", subject_id, source_position, target_position);
 }
 
-void database::merge_topics(uint64_t subject_id, uint64_t source_position, uint64_t target_position) const
+void database::remove_topic(uint64_t const subject_id, uint64_t const position) const
 {
+    exec("call remove_topic($1, $2)", subject_id, position);
 }
 
-void database::rename_topic(uint64_t subject_id, uint64_t position, std::string name) const
+void database::merge_topics(uint64_t const subject_id, uint64_t const source_position, uint64_t const target_position) const
 {
+    exec("call merge_topics($1, $2, $3)", subject_id, source_position, target_position);
 }
 
-void database::move_topic(uint64_t subject_id, uint64_t position, uint64_t target_subject_id, uint64_t target_position) const
+void database::rename_topic(uint64_t const subject_id, uint64_t const position, std::string name) const
 {
+    exec("call rename_topic($1, $2, $3)", subject_id, position, name);
 }
 
-std::map<uint64_t, Topic> database::search_topics(uint64_t subject_id, std::string name) const
+void database::move_topic(uint64_t const subject_id, uint64_t const position, uint64_t const target_subject_id, uint64_t const target_position) const
 {
-    return {};
+    exec("call move_topic($1, $2, $3, $4)", subject_id, position, target_subject_id, target_position);
 }
 
-void database::change_topic_level(uint64_t subject_id, uint64_t position, flashback::expertise_level level) const
+std::map<uint64_t, Topic> database::search_topics(uint64_t const subject_id, std::string name) const
 {
+    std::map<uint64_t, Topic> topics{};
+
+    for (pqxx::row const& row: query("select position, name, level from search_topics($1, $2)", subject_id, name))
+    {
+        Topic topic{};
+        topic.set_position(row.at("position").as<uint64_t>());
+        topic.set_name(row.at("name").as<std::string>());
+        topic.set_level(to_level(row.at("level").as<std::string>()));
+        topics.insert({topic.position(), topic});
+    }
+
+    return topics;
+}
+
+void database::change_topic_level(uint64_t const subject_id, uint64_t const position, flashback::expertise_level const level) const
+{
+    exec("call change_topic_level($1, $2, $3)", subject_id, position, level_to_string(level));
 }
 
 Provider database::create_provider(std::string name) const
@@ -697,13 +794,13 @@ void database::merge_presenters(uint64_t const source_id, uint64_t const target_
     exec("call merge_presenters($1, $2)", source_id, target_id);
 }
 
-Resource database::create_nerve(uint64_t user_id, std::string resource_name, uint64_t subject_id, uint64_t expiration) const
+Resource database::create_nerve(uint64_t const user_id, std::string resource_name, uint64_t const subject_id, uint64_t const expiration) const
 {
     Resource resource{};
     resource.clear_id();
     resource.set_name(resource_name);
 
-    if (pqxx::result const result{query("select create_nerve($1, $2, $3, $4) as id", user_id, resource_name, subject_id, expiration)}; result.size() == 1)
+    if (pqxx::result const result{query("select create_nerve($1, $2, $3, $4) as id", user_id, std::move(resource_name), subject_id, expiration)}; result.size() == 1)
     {
         resource.set_id(result.at(0).at("id").as<uint64_t>());
     }
@@ -711,7 +808,7 @@ Resource database::create_nerve(uint64_t user_id, std::string resource_name, uin
     return resource;
 }
 
-std::vector<Resource> database::get_nerves(uint64_t user_id) const
+std::vector<Resource> database::get_nerves(uint64_t const user_id) const
 {
     std::vector<Resource> nerves{};
 

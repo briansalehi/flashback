@@ -1688,125 +1688,602 @@ TEST_F(test_database, get_nerves)
     EXPECT_EQ(resources.at(0).id(), resource.id());
 }
 
-TEST_F(test_database, get_sections)
+TEST_F(test_database, create_section)
 {
+    using testing::SizeIs;
+
+    auto const production{std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch())};
+    auto const expiration{std::chrono::duration_cast<std::chrono::seconds>(production + std::chrono::years{4})};
+    std::map<uint64_t, flashback::Section> sections{};
+    flashback::Section section{};
     flashback::Resource resource{};
     resource.set_name("C++");
+    resource.set_type(flashback::Resource::book);
+    resource.set_pattern(flashback::Resource::chapter);
+    resource.clear_link();
+    resource.set_production(production.count());
+    resource.set_expiration(expiration.count());
 
+    ASSERT_NO_THROW(resource = m_database->create_resource(resource));
+    ASSERT_GT(resource.id(), 0);
+
+    for (std::string const& name: {"Chapter 1", "Chapter 2", "Chapter 3"})
+    {
+        section.set_name(name);
+        section.clear_position();
+        section.clear_link();
+        EXPECT_NO_THROW(section = m_database->create_section(resource.id(), section.position(), section.name(), section.link()));
+        EXPECT_GT(section.position(), 0);
+    }
+
+    EXPECT_EQ(sections.at(1).position(), 1);
+    EXPECT_EQ(sections.at(2).position(), 2);
+    EXPECT_EQ(sections.at(3).position(), 3);
+}
+
+TEST_F(test_database, get_sections)
+{
+    using testing::SizeIs;
+
+    auto const production{std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch())};
+    auto const expiration{std::chrono::duration_cast<std::chrono::seconds>(production + std::chrono::years{4})};
     std::map<uint64_t, flashback::Section> sections{};
+    flashback::Section section{};
+    flashback::Resource resource{};
+    resource.set_name("C++");
+    resource.set_type(flashback::Resource::book);
+    resource.set_pattern(flashback::Resource::chapter);
+    resource.clear_link();
+    resource.set_production(production.count());
+    resource.set_expiration(expiration.count());
+
+    ASSERT_NO_THROW(resource = m_database->create_resource(resource));
+    ASSERT_GT(resource.id(), 0);
+
+    for (std::string const& name: {"Chapter 1", "Chapter 2", "Chapter 3"})
+    {
+        section.set_name(name);
+        section.clear_position();
+        section.clear_link();
+        ASSERT_NO_THROW(section = m_database->create_section(resource.id(), section.position(), section.name(), section.link()));
+        ASSERT_GT(section.position(), 0);
+    }
+
     EXPECT_NO_THROW(sections = m_database->get_sections(resource.id()));
+    EXPECT_THAT(sections, SizeIs(3));
 }
 
 TEST_F(test_database, remove_section)
 {
+    using testing::SizeIs;
+
+    auto const production{std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch())};
+    auto const expiration{std::chrono::duration_cast<std::chrono::seconds>(production + std::chrono::years{4})};
+    std::map<uint64_t, flashback::Section> sections{};
+    flashback::Section section{};
     flashback::Resource resource{};
     resource.set_name("C++");
+    resource.set_type(flashback::Resource::book);
+    resource.set_pattern(flashback::Resource::chapter);
+    resource.clear_link();
+    resource.set_production(production.count());
+    resource.set_expiration(expiration.count());
 
-    EXPECT_NO_THROW(m_database->remove_section(resource.id()));
+    ASSERT_NO_THROW(resource = m_database->create_resource(resource));
+    ASSERT_GT(resource.id(), 0);
+
+    for (std::string const& name: {"Chapter 1", "Chapter 2", "Chapter 3"})
+    {
+        section.set_name(name);
+        section.clear_position();
+        section.clear_link();
+        ASSERT_NO_THROW(section = m_database->create_section(resource.id(), section.position(), section.name(), section.link()));
+        ASSERT_GT(section.position(), 0);
+        ASSERT_EQ(section.name(), name);
+    }
+
+    EXPECT_NO_THROW(sections = m_database->get_sections(resource.id()));
+    EXPECT_THAT(sections, SizeIs(3));
+    EXPECT_NO_THROW(m_database->remove_section(resource.id(), section.position()));
+    EXPECT_NO_THROW(sections = m_database->get_sections(resource.id()));
+    EXPECT_THAT(sections, SizeIs(2));
 }
 
 TEST_F(test_database, reorder_section)
 {
+    using testing::SizeIs;
+
+    auto const production{std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch())};
+    auto const expiration{std::chrono::duration_cast<std::chrono::seconds>(production + std::chrono::years{4})};
+    std::map<uint64_t, flashback::Section> sections{};
+    flashback::Section section{};
     flashback::Resource resource{};
     resource.set_name("C++");
-    resource.set_position(1);
-    flashback::Resource secondary_resource{};
-    secondary_resource.set_name("C++");
-    secondary_resource.set_position(2);
-    uint64_t const target_position{1};
+    resource.set_type(flashback::Resource::book);
+    resource.set_pattern(flashback::Resource::chapter);
+    resource.clear_link();
+    resource.set_production(production.count());
+    resource.set_expiration(expiration.count());
 
-    EXPECT_NO_THROW(m_database->reorder_section(resource.id(), resource.position(), target_position));
+    ASSERT_NO_THROW(resource = m_database->create_resource(resource));
+    ASSERT_GT(resource.id(), 0);
+
+    for (std::string const& name: {"Chapter 1", "Chapter 2", "Chapter 3"})
+    {
+        section.set_name(name);
+        section.clear_position();
+        section.clear_link();
+        ASSERT_NO_THROW(section = m_database->create_section(resource.id(), section.position(), section.name(), section.link()));
+        ASSERT_GT(section.position(), 0);
+        ASSERT_EQ(section.name(), name);
+    }
+
+    EXPECT_NO_THROW(sections = m_database->get_sections(resource.id()));
+    ASSERT_THAT(sections, SizeIs(3));
+    uint64_t const source_position{sections.at(1).position()};
+    uint64_t const target_position{sections.at(3).position()};
+    EXPECT_NO_THROW(m_database->reorder_section(resource.id(), source_position, target_position));
+    EXPECT_NO_THROW(sections = m_database->get_sections(resource.id()));
+    EXPECT_THAT(sections, SizeIs(3));
+    EXPECT_EQ(sections.at(1).position(), target_position);
+    EXPECT_EQ(sections.at(3).position(), source_position);
 }
 
 TEST_F(test_database, merge_sections)
 {
-    flashback::Subject subject{};
-    subject.set_name("C++");
-    flashback::Topic topic{};
-    topic.set_name("Intro");
-    topic.set_position(1);
-    uint64_t const target_position{1};
+    using testing::SizeIs;
 
-    ASSERT_NO_THROW(subject = m_database->create_subject(subject.name()));
-    ASSERT_GT(subject.id(), 0);
-    EXPECT_NO_THROW(m_database->merge_sections(subject.id(), resource.position(), target_position)));
+    auto const production{std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch())};
+    auto const expiration{std::chrono::duration_cast<std::chrono::seconds>(production + std::chrono::years{4})};
+    std::map<uint64_t, flashback::Section> sections{};
+    flashback::Section section{};
+    flashback::Resource resource{};
+    resource.set_name("C++");
+    resource.set_type(flashback::Resource::book);
+    resource.set_pattern(flashback::Resource::chapter);
+    resource.clear_link();
+    resource.set_production(production.count());
+    resource.set_expiration(expiration.count());
+
+    ASSERT_NO_THROW(resource = m_database->create_resource(resource));
+    ASSERT_GT(resource.id(), 0);
+
+    for (std::string const& name: {"Chapter 1", "Chapter 2", "Chapter 3"})
+    {
+        section.set_name(name);
+        section.clear_position();
+        section.clear_link();
+        ASSERT_NO_THROW(section = m_database->create_section(resource.id(), section.position(), section.name(), section.link()));
+        ASSERT_GT(section.position(), 0);
+        ASSERT_EQ(section.name(), name);
+    }
+
+    EXPECT_NO_THROW(sections = m_database->get_sections(resource.id()));
+    ASSERT_THAT(sections, SizeIs(3));
+    uint64_t const source_position{sections.at(1).position()};
+    uint64_t const target_position{sections.at(3).position()};
+    EXPECT_NO_THROW(m_database->merge_sections(resource.id(), source_position, target_position));
+    EXPECT_NO_THROW(sections = m_database->get_sections(resource.id()));
+    ASSERT_THAT(sections, SizeIs(2));
 }
 
 TEST_F(test_database, rename_section)
 {
-    flashback::Subject subject{};
-    subject.set_name("C++");
-    flashback::Topic topic{};
-    topic.set_name("Intro");
-    topic.set_position(1);
-    std::string const modified_name{"Advanced"};
+    using testing::SizeIs;
 
-    ASSERT_NO_THROW(subject = m_database->create_subject(subject.name()));
-    ASSERT_GT(subject.id(), 0);
-    EXPECT_NO_THROW(m_database->rename_section(subject.id(), topic.position(), topic.name()));
+    auto const production{std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch())};
+    auto const expiration{std::chrono::duration_cast<std::chrono::seconds>(production + std::chrono::years{4})};
+    std::map<uint64_t, flashback::Section> sections{};
+    flashback::Section section{};
+    flashback::Resource resource{};
+    resource.set_name("C++");
+    resource.set_type(flashback::Resource::book);
+    resource.set_pattern(flashback::Resource::chapter);
+    resource.clear_link();
+    resource.set_production(production.count());
+    resource.set_expiration(expiration.count());
+
+    ASSERT_NO_THROW(resource = m_database->create_resource(resource));
+    ASSERT_GT(resource.id(), 0);
+
+    for (std::string const& name: {"Chapter 1", "Chapter 2", "Chapter 3"})
+    {
+        section.set_name(name);
+        section.clear_position();
+        section.clear_link();
+        ASSERT_NO_THROW(section = m_database->create_section(resource.id(), section.position(), section.name(), section.link()));
+        ASSERT_GT(section.position(), 0);
+        ASSERT_EQ(section.name(), name);
+    }
+
+    EXPECT_NO_THROW(sections = m_database->get_sections(resource.id()));
+    ASSERT_THAT(sections, SizeIs(3));
+    constexpr auto modified_name{"Modified Section"};
+    EXPECT_NE(sections.at(1).name(), modified_name);
+    EXPECT_NO_THROW(m_database->rename_section(resource.id(), sections.at(1).position(), modified_name));
+    EXPECT_NO_THROW(sections = m_database->get_sections(resource.id()));
+    ASSERT_THAT(sections, SizeIs(3));
+    EXPECT_EQ(sections.at(1).name(), modified_name);
 }
 
 TEST_F(test_database, move_section)
 {
-    flashback::Subject subject{};
-    subject.set_name("C++");
-    flashback::Subject target{};
-    target.set_name("Rust");
-    flashback::Topic topic{};
-    topic.set_name("Intro");
-    topic.set_position(1);
+    using testing::SizeIs;
 
-    ASSERT_NO_THROW(subject = m_database->create_subject(subject.name()));
-    ASSERT_GT(subject.id(), 0);
-    EXPECT_NO_THROW(m_database->move_section(subject.id(), topic.position(), target.id(), topic.position()));
+    auto const production{std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch())};
+    auto const expiration{std::chrono::duration_cast<std::chrono::seconds>(production + std::chrono::years{4})};
+    std::map<uint64_t, flashback::Section> sections{};
+    flashback::Section section{};
+    flashback::Resource resource{};
+    resource.set_name("C++");
+    resource.set_type(flashback::Resource::book);
+    resource.set_pattern(flashback::Resource::chapter);
+    resource.clear_link();
+    resource.set_production(production.count());
+    resource.set_expiration(expiration.count());
+    flashback::Resource target_resource{};
+    target_resource.set_name("Rust");
+    target_resource.set_type(flashback::Resource::book);
+    target_resource.set_pattern(flashback::Resource::chapter);
+    target_resource.clear_link();
+    target_resource.set_production(production.count());
+    target_resource.set_expiration(expiration.count());
+
+    ASSERT_NO_THROW(resource = m_database->create_resource(resource));
+    ASSERT_GT(resource.id(), 0);
+    ASSERT_NO_THROW(target_resource = m_database->create_resource(target_resource));
+    ASSERT_GT(target_resource.id(), 0);
+
+    for (std::string const& name: {"Chapter 1", "Chapter 2", "Chapter 3"})
+    {
+        section.set_name(name);
+        section.clear_position();
+        section.clear_link();
+        ASSERT_NO_THROW(section = m_database->create_section(resource.id(), section.position(), section.name(), section.link()));
+        ASSERT_GT(section.position(), 0);
+        ASSERT_EQ(section.name(), name);
+        ASSERT_NO_THROW(section = m_database->create_section(target_resource.id(), section.position(), section.name(), section.link()));
+        ASSERT_GT(section.position(), 0);
+        ASSERT_EQ(section.name(), name);
+    }
+
+    EXPECT_NO_THROW(sections = m_database->get_sections(resource.id()));
+    ASSERT_THAT(sections, SizeIs(3));
+    EXPECT_NO_THROW(m_database->move_section(resource.id(), sections.at(1).position(), target_resource.id(), sections.size() + 1));
+    EXPECT_NO_THROW(sections = m_database->get_sections(resource.id()));
+    ASSERT_THAT(sections, SizeIs(2));
+    EXPECT_NO_THROW(sections = m_database->get_sections(target_resource.id()));
+    ASSERT_THAT(sections, SizeIs(4));
+    EXPECT_EQ(sections.at(4).position(), 4);
+    EXPECT_NO_THROW(m_database->move_section(resource.id(), sections.at(1).position(), target_resource.id(), 1));
+    EXPECT_NO_THROW(sections = m_database->get_sections(resource.id()));
+    ASSERT_THAT(sections, SizeIs(1));
+    EXPECT_NO_THROW(sections = m_database->get_sections(target_resource.id()));
+    ASSERT_THAT(sections, SizeIs(5));
 }
 
 TEST_F(test_database, search_sections)
 {
-    // std::map<uint64_t, Section> database::search_sections(uint64_t resource_id, uint64_t position, std::string search_pattern) const
+    using testing::SizeIs;
+
+    auto const production{std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch())};
+    auto const expiration{std::chrono::duration_cast<std::chrono::seconds>(production + std::chrono::years{4})};
+    std::map<uint64_t, flashback::Section> sections{};
+    flashback::Section section{};
+    flashback::Resource resource{};
+    resource.set_name("C++");
+    resource.set_type(flashback::Resource::book);
+    resource.set_pattern(flashback::Resource::chapter);
+    resource.clear_link();
+    resource.set_production(production.count());
+    resource.set_expiration(expiration.count());
+
+    ASSERT_NO_THROW(resource = m_database->create_resource(resource));
+    ASSERT_GT(resource.id(), 0);
+
+    for (std::string const& name: {"Chapter 1", "Chapter 2", "Chapter 3"})
+    {
+        section.set_name(name);
+        section.clear_position();
+        section.clear_link();
+        ASSERT_NO_THROW(section = m_database->create_section(resource.id(), section.position(), section.name(), section.link()));
+        ASSERT_GT(section.position(), 0);
+        ASSERT_EQ(section.name(), name);
+    }
+
+    EXPECT_NO_THROW(sections = m_database->get_sections(resource.id()));
+    ASSERT_THAT(sections, SizeIs(3));
+    EXPECT_NO_THROW(sections = m_database->search_sections(resource.id(), "chapter"));
+    ASSERT_THAT(sections, SizeIs(3));
+    EXPECT_NO_THROW(sections = m_database->search_sections(resource.id(), "1"));
+    ASSERT_THAT(sections, SizeIs(1));
 }
 
 TEST_F(test_database, create_topic)
 {
-    // Topic database::create_topic(uint64_t subject_id, std::string name, flashback::expertise_level level, uint64_t position) const
+    flashback::Subject subject{};
+    flashback::Topic topic{};
+    constexpr auto topic_name{"C++"};
+    constexpr auto level{flashback::expertise_level::surface};
+
+    subject.set_name(topic_name);
+    topic.clear_position();
+    topic.set_name("Lambda Functions");
+    topic.set_level(level);
+    ASSERT_NO_THROW(subject = m_database->create_subject(subject.name()));
+    ASSERT_GT(subject.id(), 0);
+    EXPECT_NO_THROW(topic = m_database->create_topic(subject.id(), topic.name(), topic.level(), topic.position()));
+    EXPECT_GT(topic.position(), 0);
+    EXPECT_EQ(topic.name(), topic_name);
+    EXPECT_EQ(topic.level(), level);
 }
 
 TEST_F(test_database, get_topics)
 {
-    // std::map<uint64_t, Topic> database::get_topics(uint64_t subject_id) const
+    using testing::SizeIs;
+
+    flashback::Subject subject{};
+    flashback::Topic topic{};
+    std::map<uint64_t, flashback::Topic> topics{};
+    constexpr auto topic_name{"C++"};
+    constexpr auto level{flashback::expertise_level::surface};
+    subject.set_name(topic_name);
+
+    ASSERT_NO_THROW(subject = m_database->create_subject(subject.name()));
+    ASSERT_GT(subject.id(), 0);
+
+    for (auto const& name: {"Chrono", "Coroutines", "Reflection"})
+    {
+        topic.clear_position();
+        topic.set_name(name);
+        topic.set_level(level);
+        ASSERT_NO_THROW(topic = m_database->create_topic(subject.id(), topic.name(), topic.level(), topic.position()));
+        ASSERT_GT(topic.position(), 0);
+    }
+
+    EXPECT_NO_THROW(topics = m_database->get_topics(subject.id()));
+    EXPECT_THAT(topics, SizeIs(3));
+    EXPECT_THAT(topics.at(1).position(), 1);
+    EXPECT_THAT(topics.at(2).position(), 2);
+    EXPECT_THAT(topics.at(3).position(), 3);
 }
 
 TEST_F(test_database, reorder_topic)
 {
-    // void database::reorder_topic(uint64_t subject_id, uint64_t source_position, uint64_t target_position) const
+    using testing::SizeIs;
+
+    flashback::Subject subject{};
+    flashback::Topic topic{};
+    std::map<uint64_t, flashback::Topic> topics{};
+    constexpr auto topic_name{"C++"};
+    constexpr auto level{flashback::expertise_level::surface};
+    subject.set_name(topic_name);
+
+    ASSERT_NO_THROW(subject = m_database->create_subject(subject.name()));
+    ASSERT_GT(subject.id(), 0);
+
+    for (auto const& name: {"Chrono", "Coroutines", "Reflection"})
+    {
+        topic.clear_position();
+        topic.set_name(name);
+        topic.set_level(level);
+        ASSERT_NO_THROW(topic = m_database->create_topic(subject.id(), topic.name(), topic.level(), topic.position()));
+        ASSERT_GT(topic.position(), 0);
+    }
+
+    EXPECT_NO_THROW(topics = m_database->get_topics(subject.id()));
+    EXPECT_THAT(topics, SizeIs(3));
+    uint64_t const source_position = topics.at(1).position();
+    std::string const source_name = topics.at(1).name();
+    uint64_t const target_position = topics.at(3).position();
+    std::string const target_name = topics.at(3).name();
+    EXPECT_NO_THROW(m_database->reorder_topic(subject.id(), source_position, target_position));
+    EXPECT_NO_THROW(topics = m_database->get_topics(subject.id()));
+    EXPECT_THAT(topics, SizeIs(3));
+    EXPECT_EQ(topics.at(1).name(), target_name);
+    EXPECT_EQ(topics.at(3).name(), source_name);
 }
 
 TEST_F(test_database, remove_topic)
 {
-    // void database::remove_topic(uint64_t subject_id, uint64_t position) const
+    using testing::SizeIs;
+
+    flashback::Subject subject{};
+    flashback::Topic topic{};
+    std::map<uint64_t, flashback::Topic> topics{};
+    constexpr auto topic_name{"C++"};
+    constexpr auto level{flashback::expertise_level::surface};
+    subject.set_name(topic_name);
+
+    ASSERT_NO_THROW(subject = m_database->create_subject(subject.name()));
+    ASSERT_GT(subject.id(), 0);
+
+    for (auto const& name: {"Chrono", "Coroutines", "Reflection"})
+    {
+        topic.clear_position();
+        topic.set_name(name);
+        topic.set_level(level);
+        ASSERT_NO_THROW(topic = m_database->create_topic(subject.id(), topic.name(), topic.level(), topic.position()));
+        ASSERT_GT(topic.position(), 0);
+    }
+
+    EXPECT_NO_THROW(topics = m_database->get_topics(subject.id()));
+    EXPECT_THAT(topics, SizeIs(3));
+    EXPECT_EQ(topics.at(1).position(), 1);
+    EXPECT_NO_THROW(m_database->remove_topic(subject.id(), topics.at(1).position()));
+    EXPECT_NO_THROW(topics = m_database->get_topics(subject.id()));
+    EXPECT_THAT(topics, SizeIs(2));
+    EXPECT_EQ(topics.at(1).position(), 1);
 }
 
 TEST_F(test_database, merge_topics)
 {
-    // void database::merge_topics(uint64_t subject_id, uint64_t source_position, uint64_t target_position) const
+    using testing::SizeIs;
+
+    flashback::Subject subject{};
+    flashback::Topic topic{};
+    std::map<uint64_t, flashback::Topic> topics{};
+    constexpr auto topic_name{"C++"};
+    constexpr auto level{flashback::expertise_level::surface};
+    subject.set_name(topic_name);
+
+    ASSERT_NO_THROW(subject = m_database->create_subject(subject.name()));
+    ASSERT_GT(subject.id(), 0);
+
+    for (auto const& name: {"Chrono", "Coroutines", "Reflection"})
+    {
+        topic.clear_position();
+        topic.set_name(name);
+        topic.set_level(level);
+        ASSERT_NO_THROW(topic = m_database->create_topic(subject.id(), topic.name(), topic.level(), topic.position()));
+        ASSERT_GT(topic.position(), 0);
+    }
+
+    EXPECT_NO_THROW(topics = m_database->get_topics(subject.id()));
+    EXPECT_THAT(topics, SizeIs(3));
+    std::string const target_name{topics.at(3).name()};
+    EXPECT_NO_THROW(m_database->merge_topics(subject.id(), topics.at(1).position(), topics.at(3).position()));
+    EXPECT_NO_THROW(topics = m_database->get_topics(subject.id()));
+    EXPECT_THAT(topics, SizeIs(2));
+    EXPECT_EQ(topics.at(2).name(), target_name);
 }
 
 TEST_F(test_database, rename_topic)
 {
-    // void database::rename_topic(uint64_t subject_id, uint64_t position, std::string name) const
+    using testing::SizeIs;
+
+    flashback::Subject subject{};
+    flashback::Topic topic{};
+    std::map<uint64_t, flashback::Topic> topics{};
+    constexpr auto topic_name{"C++"};
+    constexpr auto level{flashback::expertise_level::surface};
+    subject.set_name(topic_name);
+
+    ASSERT_NO_THROW(subject = m_database->create_subject(subject.name()));
+    ASSERT_GT(subject.id(), 0);
+
+    for (auto const& name: {"Chrono", "Coroutines", "Reflection"})
+    {
+        topic.clear_position();
+        topic.set_name(name);
+        topic.set_level(level);
+        ASSERT_NO_THROW(topic = m_database->create_topic(subject.id(), topic.name(), topic.level(), topic.position()));
+        ASSERT_GT(topic.position(), 0);
+    }
+
+    EXPECT_NO_THROW(topics = m_database->get_topics(subject.id()));
+    EXPECT_THAT(topics, SizeIs(3));
+    constexpr auto modified_name{"Modified Topic"};
+    EXPECT_NE(topics.at(1).name(), modified_name);
+    EXPECT_NO_THROW(m_database->rename_topic(subject.id(), topics.at(1).position(), modified_name));
+    EXPECT_NO_THROW(topics = m_database->get_topics(subject.id()));
+    EXPECT_THAT(topics, SizeIs(3));
+    EXPECT_EQ(topics.at(1).name(), modified_name);
 }
 
 TEST_F(test_database, move_topic)
 {
-    // void database::move_topic(uint64_t subject_id, uint64_t position, uint64_t target_subject_id, uint64_t target_position) const
+    using testing::SizeIs;
+
+    flashback::Subject subject{};
+    flashback::Subject target_subject{};
+    flashback::Topic topic{};
+    std::map<uint64_t, flashback::Topic> topics{};
+    constexpr auto level{flashback::expertise_level::surface};
+    subject.set_name("C++");
+    target_subject.set_name("Rust");
+
+    ASSERT_NO_THROW(subject = m_database->create_subject(subject.name()));
+    ASSERT_GT(subject.id(), 0);
+    ASSERT_NO_THROW(target_subject = m_database->create_subject(target_subject.name()));
+    ASSERT_GT(target_subject.id(), 0);
+
+    for (auto const& name: {"Chrono", "Coroutines", "Reflection"})
+    {
+        topic.clear_position();
+        topic.set_name(name);
+        topic.set_level(level);
+        ASSERT_NO_THROW(topic = m_database->create_topic(subject.id(), topic.name(), topic.level(), topic.position()));
+        ASSERT_GT(topic.position(), 0);
+        ASSERT_NO_THROW(topic = m_database->create_topic(target_subject.id(), topic.name(), topic.level(), topic.position()));
+        ASSERT_GT(topic.position(), 0);
+    }
+
+    EXPECT_NO_THROW(topics = m_database->get_topics(subject.id()));
+    EXPECT_THAT(topics, SizeIs(3));
+    uint64_t const source_position{topics.at(1).position()};
+    EXPECT_NO_THROW(topics = m_database->get_topics(target_subject.id()));
+    EXPECT_THAT(topics, SizeIs(3));
+    uint64_t const target_position{topics.size() + 1};
+    EXPECT_NO_THROW(m_database->move_topic(subject.id(), 1, target_subject.id(), 4));
+    EXPECT_NO_THROW(topics = m_database->get_topics(subject.id()));
+    EXPECT_THAT(topics, SizeIs(2));
+    EXPECT_NO_THROW(topics = m_database->get_topics(target_subject.id()));
+    EXPECT_THAT(topics, SizeIs(4));
+    EXPECT_NO_THROW(m_database->move_topic(subject.id(), 1, target_subject.id(), 1));
+    EXPECT_NO_THROW(topics = m_database->get_topics(subject.id()));
+    EXPECT_THAT(topics, SizeIs(1));
+    EXPECT_NO_THROW(topics = m_database->get_topics(target_subject.id()));
+    EXPECT_THAT(topics, SizeIs(5));
 }
 
 TEST_F(test_database, search_topics)
 {
-    // std::map<uint64_t, Topic> database::search_topics(uint64_t subject_id, std::string name) const
+    using testing::SizeIs;
+
+    flashback::Subject subject{};
+    flashback::Topic topic{};
+    std::map<uint64_t, flashback::Topic> topics{};
+    constexpr auto topic_name{"C++"};
+    constexpr auto level{flashback::expertise_level::surface};
+    constexpr auto search_pattern{"chrono"};
+    subject.set_name(topic_name);
+
+    ASSERT_NO_THROW(subject = m_database->create_subject(subject.name()));
+    ASSERT_GT(subject.id(), 0);
+
+    for (auto const& name: {"Chrono", "Coroutines", "Reflection"})
+    {
+        topic.clear_position();
+        topic.set_name(name);
+        topic.set_level(level);
+        ASSERT_NO_THROW(topic = m_database->create_topic(subject.id(), topic.name(), topic.level(), topic.position()));
+        ASSERT_GT(topic.position(), 0);
+    }
+
+    EXPECT_NO_THROW(topics = m_database->search_topics(subject.id(), search_pattern));
+    EXPECT_THAT(topics, SizeIs(1));
 }
 
 TEST_F(test_database, change_topic_level)
 {
-    // void database::change_topic_level(uint64_t subject_id, uint64_t position, flashback::expertise_level level) const
+    using testing::SizeIs;
+
+    flashback::Subject subject{};
+    flashback::Topic topic{};
+    std::map<uint64_t, flashback::Topic> topics{};
+    constexpr auto topic_name{"C++"};
+    constexpr auto level{flashback::expertise_level::surface};
+    constexpr auto target_level{flashback::expertise_level::origin};
+    subject.set_name(topic_name);
+
+    ASSERT_NO_THROW(subject = m_database->create_subject(subject.name()));
+    ASSERT_GT(subject.id(), 0);
+
+    for (auto const& name: {"Chrono", "Coroutines", "Reflection"})
+    {
+        topic.clear_position();
+        topic.set_name(name);
+        topic.set_level(level);
+        ASSERT_NO_THROW(topic = m_database->create_topic(subject.id(), topic.name(), topic.level(), topic.position()));
+        ASSERT_GT(topic.position(), 0);
+    }
+
+    EXPECT_NO_THROW(topics = m_database->get_topics(subject.id()));
+    EXPECT_THAT(topics, SizeIs(3));
+    EXPECT_EQ(topics.at(1).level(), level);
+    EXPECT_NO_THROW(m_database->change_topic_level(subject.id(), topics.at(1).position(), target_level));
+    EXPECT_NO_THROW(topics = m_database->get_topics(subject.id()));
+    EXPECT_THAT(topics, SizeIs(3));
+    EXPECT_EQ(topics.at(1).level(), target_level);
 }
