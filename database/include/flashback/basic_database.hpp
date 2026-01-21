@@ -117,6 +117,7 @@ public:
     virtual void rename_section(uint64_t resource_id, uint64_t position, std::string name) const = 0;
     virtual void move_section(uint64_t resource_id, uint64_t position, uint64_t target_resource_id, uint64_t target_position) const = 0;
     [[nodiscard]] virtual std::map<uint64_t, Section> search_sections(uint64_t resource_id, std::string search_pattern) const = 0;
+    virtual void edit_section_link(uint64_t resource_id, uint64_t position, std::string link) const = 0;
     //remove_section_with_cards
     //get_section_state
     //mark_section_as_reviewed

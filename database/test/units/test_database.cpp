@@ -1999,6 +1999,41 @@ TEST_F(test_database, search_sections)
     ASSERT_THAT(sections, SizeIs(1));
 }
 
+TEST_F(test_database, edit_section_link)
+{
+    using testing::SizeIs;
+
+    auto const production{std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch())};
+    auto const expiration{std::chrono::duration_cast<std::chrono::seconds>(production + std::chrono::years{4})};
+    constexpr auto link{R"(https://modified.com)"};
+    std::map<uint64_t, flashback::Section> sections{};
+    flashback::Section section{};
+    flashback::Resource resource{};
+    resource.set_name("C++");
+    resource.set_type(flashback::Resource::book);
+    resource.set_pattern(flashback::Resource::chapter);
+    resource.clear_link();
+    resource.set_production(production.count());
+    resource.set_expiration(expiration.count());
+    section.set_name("C++ Book");
+    section.clear_position();
+    section.clear_link();
+
+    ASSERT_NO_THROW(resource = m_database->create_resource(resource));
+    ASSERT_GT(resource.id(), 0);
+    ASSERT_NO_THROW(section = m_database->create_section(resource.id(), section.position(), section.name(), section.link()));
+    ASSERT_GT(section.position(), 0);
+    ASSERT_EQ(section.link(), link);
+    EXPECT_NO_THROW(sections = m_database->get_sections(resource.id()));
+    ASSERT_THAT(sections, SizeIs(3));
+    constexpr auto modified_link{"https://modified.com"};
+    EXPECT_NE(sections.at(1).link(), modified_link);
+    EXPECT_NO_THROW(m_database->edit_section_link(resource.id(), sections.at(1).position(), modified_link));
+    EXPECT_NO_THROW(sections = m_database->get_sections(resource.id()));
+    ASSERT_THAT(sections, SizeIs(3));
+    EXPECT_EQ(sections.at(1).link(), modified_link);
+}
+
 TEST_F(test_database, create_topic)
 {
     flashback::Subject subject{};

@@ -595,6 +595,11 @@ std::map<uint64_t, Section> database::search_sections(uint64_t const resource_id
     return sections;
 }
 
+void database::edit_section_link(uint64_t resource_id, uint64_t position, std::string link) const
+{
+    exec("call edit_section_link($1, $2, $3)", resource_id, position, link);
+}
+
 Topic database::create_topic(uint64_t const subject_id, std::string name, flashback::expertise_level const level, uint64_t const position) const
 {
     Topic topic{};

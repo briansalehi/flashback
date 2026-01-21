@@ -71,6 +71,7 @@ public:
     void rename_section(uint64_t resource_id, uint64_t position, std::string name) const override;
     void move_section(uint64_t resource_id, uint64_t position, uint64_t target_resource_id, uint64_t target_position) const override;
     [[nodiscard]] std::map<uint64_t, Section> search_sections(uint64_t resource_id, std::string search_pattern) const override;
+    void edit_section_link(uint64_t resource_id, uint64_t position, std::string link) const override;
 
     // topics
     [[nodiscard]] Topic create_topic(uint64_t subject_id, std::string name, flashback::expertise_level level, uint64_t position) const override;

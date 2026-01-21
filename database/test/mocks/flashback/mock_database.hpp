@@ -90,6 +90,7 @@ public:
     MOCK_METHOD(void, rename_section, (uint64_t, uint64_t, std::string), (const, override));
     MOCK_METHOD(void, move_section, (uint64_t, uint64_t, uint64_t, uint64_t), (const, override));
     MOCK_METHOD((std::map<uint64_t, Section>), search_sections, (uint64_t, std::string), (const, override));
+    MOCK_METHOD(void, edit_section_link, (uint64_t, uint64_t, std::string), (const, override));
 
     // topics
     MOCK_METHOD(Topic, create_topic, (uint64_t, std::string, flashback::expertise_level, uint64_t) , (const, override));
