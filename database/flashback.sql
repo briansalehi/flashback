@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict WNs8zktz6BYrXiQhVMJuY4tkWDkgWRgQx4jamGYa847jx5YgbtyYanRshoN9TGh
+\restrict Ckkg3r6wlQWyRfQnWmS1vbMzJbtKe02leVXlqfwUCTJob9jPTSgnJkGGpu8JFgw
 
 -- Dumped from database version 18.1
 -- Dumped by pg_dump version 18.0
@@ -1369,19 +1369,19 @@ ALTER FUNCTION flashback.get_section_cards(resource_id integer, section_id integ
 -- Name: get_sections(integer); Type: FUNCTION; Schema: flashback; Owner: flashback
 --
 
-CREATE FUNCTION flashback.get_sections(resource integer) RETURNS TABLE("position" integer, name character varying)
+CREATE FUNCTION flashback.get_sections(resource_id integer) RETURNS TABLE("position" integer, name character varying, link character varying)
     LANGUAGE plpgsql
     AS $$
 declare pattern section_pattern;
 begin
-    select resources.pattern into pattern from resources where resources.id = get_sections.resource;
+    select r.pattern into pattern from resources r where r.id = resource_id;
 
-    return query select sections.position, coalesce(sections.name, initcap(pattern || ' ' || sections.position)) from sections where sections.resource = get_sections.resource;
+    return query select s.position, coalesce(s.name, initcap(pattern || ' ' || s.position)), s.link from sections s where s.resource = resource_id;
 end;
 $$;
 
 
-ALTER FUNCTION flashback.get_sections(resource integer) OWNER TO flashback;
+ALTER FUNCTION flashback.get_sections(resource_id integer) OWNER TO flashback;
 
 --
 -- Name: get_subject_resources(character varying); Type: FUNCTION; Schema: flashback; Owner: flashback
@@ -2040,6 +2040,23 @@ end; $$;
 
 
 ALTER PROCEDURE flashback.remove_roadmap(IN roadmap_id integer) OWNER TO flashback;
+
+--
+-- Name: remove_section(integer, integer); Type: PROCEDURE; Schema: flashback; Owner: flashback
+--
+
+CREATE PROCEDURE flashback.remove_section(IN resource_id integer, IN section_position integer)
+    LANGUAGE plpgsql
+    AS $$
+begin
+    if not exists (select 1 from sections_cards where resource = resource_id) then
+        delete from sections where resource = resource_id and position = section_position;
+    end if;
+end;
+$$;
+
+
+ALTER PROCEDURE flashback.remove_section(IN resource_id integer, IN section_position integer) OWNER TO flashback;
 
 --
 -- Name: remove_subject(integer); Type: PROCEDURE; Schema: flashback; Owner: flashback
@@ -32056,5 +32073,5 @@ GRANT ALL ON SCHEMA public TO flashback_client;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict WNs8zktz6BYrXiQhVMJuY4tkWDkgWRgQx4jamGYa847jx5YgbtyYanRshoN9TGh
+\unrestrict Ckkg3r6wlQWyRfQnWmS1vbMzJbtKe02leVXlqfwUCTJob9jPTSgnJkGGpu8JFgw
 

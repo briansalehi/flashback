@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict hkFmvGKQMj93TjdSyvLGKRQSQ8a8njVl84udfWH3w9HMO1s9DKLATF8wRapaLKQ
+\restrict me7etGBgP3fkcgkMgo3x3KewPIhW05fD9MZwEgBLuKYQ6SW1FAHuqZ5a9NUA5cG
 
 -- Dumped from database version 18.1
 -- Dumped by pg_dump version 18.0
@@ -666,70 +666,54 @@ $$;
 ALTER FUNCTION flashback.create_roadmap(user_id integer, roadmap_name character varying) OWNER TO flashback;
 
 --
--- Name: create_section(integer, character varying); Type: FUNCTION; Schema: flashback; Owner: flashback
+-- Name: create_section(integer, character varying, character varying); Type: FUNCTION; Schema: flashback; Owner: flashback
 --
 
-CREATE FUNCTION flashback.create_section(resource_id integer, resource_name character varying) RETURNS integer
+CREATE FUNCTION flashback.create_section(resource_id integer, resource_name character varying, resource_link character varying) RETURNS integer
     LANGUAGE plpgsql
     AS $$
 declare last_position integer;
 begin
     select coalesce(max(position), 0) + 1 into last_position from sections where sections.resource = resource_id;
 
-    insert into sections (resource, position, name) values (resource_id, last_position, nullif(resource_name, ''));
+    insert into sections (resource, position, name, link) values (resource_id, last_position, nullif(resource_name, ''), nullif(resource_link, ''));
 
     return last_position;
-end; $$;
+end;
+$$;
 
 
-ALTER FUNCTION flashback.create_section(resource_id integer, resource_name character varying) OWNER TO flashback;
+ALTER FUNCTION flashback.create_section(resource_id integer, resource_name character varying, resource_link character varying) OWNER TO flashback;
 
 --
--- Name: create_section(integer, character varying, integer); Type: PROCEDURE; Schema: flashback; Owner: flashback
+-- Name: create_section(integer, character varying, character varying, integer); Type: PROCEDURE; Schema: flashback; Owner: flashback
 --
 
-CREATE PROCEDURE flashback.create_section(IN resource integer, IN name character varying, IN "position" integer)
+CREATE PROCEDURE flashback.create_section(IN resource_id integer, IN section_name character varying, IN section_link character varying, IN section_position integer)
     LANGUAGE plpgsql
     AS $$
 declare last_position integer;
---declare new_position integer;
---section record;
 begin
-    if not exists (select 1 from resources where resources.id = create_section.resource) then
+    if not exists (select 1 from resources where resources.id = resource_id) then
         raise notice 'Resource does not exist';
     end if;
 
-    select max(coalesce(position, 0)) into last_position from sections where sections.resource = create_section.resource;
+    select max(coalesce(position, 0)) into last_position from sections where sections.resource = resource_id;
 
-    update sections set position = sections.position + last_position where sections.resource = create_sction.resource and sections.position >= create_section.position;
+    update sections set position = sections.position + last_position where sections.resource = create_sction.resource and sections.position >= section_position;
 
-    --for section in
-    --    select s.position from sections s where s.resource = create_section.resource
-    --loop
-    --    select section.position + last_position into new_position;
-
-    --    update sections set position = new_position where sections.resource = create_sction.resource and sections.position = create_section.position;
-    --end loop;
-
-
-    insert into sections (resource, position, name) values (create_section.resource, create_section.position, nullif(create_section.name, ''));
-
-    --for section_record in
-    --    select s.position from sections s where s.resource = create_section.resource
-    --loop
-    --end loop;
+    insert into sections (resource, position, name) values (resource_id, section_position, nullif(section_name, ''));
 
     update sections set position = ss.new_position
     from (
-        select row_number() over (order by s.position) as new_position, s.position
-        from sections s
-        where s.resource = create_section.resource
+        select row_number() over (order by s.position) as new_position, s.position from sections s where s.resource = resource_id
     ) ss
-    where sections.resource = create_section.resource and ss.position = sections.position;
-end; $$;
+    where sections.resource = resource_id and ss.position = sections.position;
+end;
+$$;
 
 
-ALTER PROCEDURE flashback.create_section(IN resource integer, IN name character varying, IN "position" integer) OWNER TO flashback;
+ALTER PROCEDURE flashback.create_section(IN resource_id integer, IN section_name character varying, IN section_link character varying, IN section_position integer) OWNER TO flashback;
 
 --
 -- Name: create_session(integer, character varying, character varying); Type: PROCEDURE; Schema: flashback; Owner: flashback
@@ -1385,19 +1369,19 @@ ALTER FUNCTION flashback.get_section_cards(resource_id integer, section_id integ
 -- Name: get_sections(integer); Type: FUNCTION; Schema: flashback; Owner: flashback
 --
 
-CREATE FUNCTION flashback.get_sections(resource integer) RETURNS TABLE("position" integer, name character varying)
+CREATE FUNCTION flashback.get_sections(resource_id integer) RETURNS TABLE("position" integer, name character varying, link character varying)
     LANGUAGE plpgsql
     AS $$
 declare pattern section_pattern;
 begin
-    select resources.pattern into pattern from resources where resources.id = get_sections.resource;
+    select r.pattern into pattern from resources r where r.id = resource_id;
 
-    return query select sections.position, coalesce(sections.name, initcap(pattern || ' ' || sections.position)) from sections where sections.resource = get_sections.resource;
+    return query select s.position, coalesce(s.name, initcap(pattern || ' ' || s.position)), s.link from sections s where s.resource = resource_id;
 end;
 $$;
 
 
-ALTER FUNCTION flashback.get_sections(resource integer) OWNER TO flashback;
+ALTER FUNCTION flashback.get_sections(resource_id integer) OWNER TO flashback;
 
 --
 -- Name: get_subject_resources(character varying); Type: FUNCTION; Schema: flashback; Owner: flashback
@@ -2056,6 +2040,23 @@ end; $$;
 
 
 ALTER PROCEDURE flashback.remove_roadmap(IN roadmap_id integer) OWNER TO flashback;
+
+--
+-- Name: remove_section(integer, integer); Type: PROCEDURE; Schema: flashback; Owner: flashback
+--
+
+CREATE PROCEDURE flashback.remove_section(IN resource_id integer, IN section_position integer)
+    LANGUAGE plpgsql
+    AS $$
+begin
+    if not exists (select 1 from sections_cards where resource = resource_id) then
+        delete from sections where resource = resource_id and position = section_position;
+    end if;
+end;
+$$;
+
+
+ALTER PROCEDURE flashback.remove_section(IN resource_id integer, IN section_position integer) OWNER TO flashback;
 
 --
 -- Name: remove_subject(integer); Type: PROCEDURE; Schema: flashback; Owner: flashback
@@ -3945,5 +3946,5 @@ GRANT ALL ON SCHEMA public TO flashback_client;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict hkFmvGKQMj93TjdSyvLGKRQSQ8a8njVl84udfWH3w9HMO1s9DKLATF8wRapaLKQ
+\unrestrict me7etGBgP3fkcgkMgo3x3KewPIhW05fD9MZwEgBLuKYQ6SW1FAHuqZ5a9NUA5cG
 

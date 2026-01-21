@@ -2017,7 +2017,7 @@ TEST_F(test_database, edit_section_link)
     resource.set_expiration(expiration.count());
     section.set_name("C++ Book");
     section.clear_position();
-    section.clear_link();
+    section.set_link(link);
 
     ASSERT_NO_THROW(resource = m_database->create_resource(resource));
     ASSERT_GT(resource.id(), 0);
@@ -2025,10 +2025,10 @@ TEST_F(test_database, edit_section_link)
     ASSERT_GT(section.position(), 0);
     ASSERT_EQ(section.link(), link);
     EXPECT_NO_THROW(sections = m_database->get_sections(resource.id()));
-    ASSERT_THAT(sections, SizeIs(3));
+    ASSERT_THAT(sections, SizeIs(1));
     constexpr auto modified_link{"https://modified.com"};
-    EXPECT_NE(sections.at(1).link(), modified_link);
-    EXPECT_NO_THROW(m_database->edit_section_link(resource.id(), sections.at(1).position(), modified_link));
+    EXPECT_NE(section.link(), modified_link);
+    EXPECT_NO_THROW(m_database->edit_section_link(resource.id(), section.position(), modified_link));
     EXPECT_NO_THROW(sections = m_database->get_sections(resource.id()));
     ASSERT_THAT(sections, SizeIs(3));
     EXPECT_EQ(sections.at(1).link(), modified_link);
