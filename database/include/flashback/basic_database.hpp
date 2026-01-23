@@ -36,7 +36,7 @@ public:
     [[nodiscard]] virtual std::vector<Roadmap> get_roadmaps(uint64_t user_id) const = 0;
     virtual void rename_roadmap(uint64_t roadmap_id, std::string_view modified_name) const = 0;
     virtual void remove_roadmap(uint64_t roadmap_id) const = 0;
-    [[nodiscard]] virtual std::vector<Roadmap> search_roadmaps(std::string_view token) const = 0;
+    [[nodiscard]] virtual std::map<uint64_t, Roadmap> search_roadmaps(std::string_view search_pattern) const = 0;
     [[nodiscard]] virtual Roadmap clone_roadmap(uint64_t user_id, uint64_t roadmap_id) const = 0;
     //get_roadmap_weight
 
@@ -55,7 +55,7 @@ public:
     virtual void rename_subject(uint64_t id, std::string name) const = 0;
     virtual void remove_subject(uint64_t id) const = 0;
     virtual void merge_subjects(uint64_t source, uint64_t target) const = 0;
-    [[nodiscard]] virtual std::map<uint64_t, Subject> search_subjects(std::string name) const = 0;
+    [[nodiscard]] virtual std::map<uint64_t, Subject> search_subjects(std::string_view search_pattern) const = 0;
     //get_subject_weight
 
     // topics
@@ -66,7 +66,7 @@ public:
     virtual void merge_topics(uint64_t subject_id, uint64_t source_position, uint64_t target_position) const = 0;
     virtual void rename_topic(uint64_t subject_id, uint64_t position, std::string name) const = 0;
     virtual void move_topic(uint64_t subject_id, uint64_t position, uint64_t target_subject_id, uint64_t target_position) const = 0;
-    [[nodiscard]] virtual std::map<uint64_t, Topic> search_topics(uint64_t subject_id, std::string name) const = 0;
+    [[nodiscard]] virtual std::map<uint64_t, Topic> search_topics(uint64_t subject_id, std::string_view search_pattern) const = 0;
     virtual void change_topic_level(uint64_t subject_id, uint64_t position, flashback::expertise_level level) const = 0;
     //get_practice_topics
     //get_practice_mode
@@ -77,7 +77,7 @@ public:
     virtual void add_resource_to_subject(uint64_t resource_id, uint64_t subject_id) const = 0;
     [[nodiscard]] virtual std::vector<Resource> get_resources(uint64_t subject_id) const = 0;
     virtual void drop_resource_from_subject(uint64_t resource_id, uint64_t subject_id) const = 0;
-    [[nodiscard]] virtual std::map<uint64_t, Resource> search_resources(std::string name) const = 0;
+    [[nodiscard]] virtual std::map<uint64_t, Resource> search_resources(std::string_view search_pattern) const = 0;
     virtual void edit_resource_link(uint64_t resource_id, std::string link) const = 0;
     virtual void change_resource_type(uint64_t resource_id, Resource::resource_type type) const = 0;
     virtual void change_section_pattern(uint64_t resource_id, Resource::section_pattern pattern) const = 0;
@@ -94,7 +94,7 @@ public:
     [[nodiscard]] virtual Provider create_provider(std::string name) const = 0;
     virtual void add_provider(uint64_t resource_id, uint64_t provider_id) const = 0;
     virtual void drop_provider(uint64_t resource_id, uint64_t provider_id) const = 0;
-    [[nodiscard]] virtual std::map<uint64_t, Provider> search_providers(std::string name) const = 0;
+    [[nodiscard]] virtual std::map<uint64_t, Provider> search_providers(std::string_view search_pattern) const = 0;
     virtual void rename_provider(uint64_t provider_id, std::string name) const = 0;
     virtual void remove_provider(uint64_t provider_id) const = 0;
     virtual void merge_providers(uint64_t source_id, uint64_t target_id) const =0;
@@ -103,7 +103,7 @@ public:
     [[nodiscard]] virtual Presenter create_presenter(std::string name) const = 0;
     virtual void add_presenter(uint64_t resource_id, uint64_t presenter_id) const = 0;
     virtual void drop_presenter(uint64_t resource_id, uint64_t presenter_id) const = 0;
-    [[nodiscard]] virtual std::map<uint64_t, Presenter> search_presenters(std::string name) const = 0;
+    [[nodiscard]] virtual std::map<uint64_t, Presenter> search_presenters(std::string_view search_pattern) const = 0;
     virtual void rename_presenter(uint64_t presenter_id, std::string name) const = 0;
     virtual void remove_presenter(uint64_t presenter_id) const = 0;
     virtual void merge_presenters(uint64_t source_id, uint64_t target_id) const = 0;
@@ -116,7 +116,7 @@ public:
     virtual void merge_sections(uint64_t resource_id, uint64_t source_position, uint64_t target_position) const = 0;
     virtual void rename_section(uint64_t resource_id, uint64_t position, std::string name) const = 0;
     virtual void move_section(uint64_t resource_id, uint64_t position, uint64_t target_resource_id, uint64_t target_position) const = 0;
-    [[nodiscard]] virtual std::map<uint64_t, Section> search_sections(uint64_t resource_id, std::string search_pattern) const = 0;
+    [[nodiscard]] virtual std::map<uint64_t, Section> search_sections(uint64_t resource_id, std::string_view search_pattern) const = 0;
     virtual void edit_section_link(uint64_t resource_id, uint64_t position, std::string link) const = 0;
     //remove_section_with_cards
     //get_section_state

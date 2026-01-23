@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict me7etGBgP3fkcgkMgo3x3KewPIhW05fD9MZwEgBLuKYQ6SW1FAHuqZ5a9NUA5cG
+\restrict vaiZk3ESAnVawRBFSCVRfnOkcKqdK6EzLhV9AGt31c5ZPwr0ceFBKUQqSc2fxAf
 
 -- Dumped from database version 18.1
 -- Dumped by pg_dump version 18.0
@@ -1881,6 +1881,32 @@ $$;
 ALTER PROCEDURE flashback.merge_resources(IN source_id integer, IN target_id integer) OWNER TO flashback;
 
 --
+-- Name: merge_sections(integer, integer, integer); Type: PROCEDURE; Schema: flashback; Owner: flashback
+--
+
+CREATE PROCEDURE flashback.merge_sections(IN resource_id integer, IN source_section integer, IN target_section integer)
+    LANGUAGE plpgsql
+    AS $$
+declare top_position integer;
+begin
+    select max(coalesce(position, 0)) from sections_cards where resource = resource_id and section = target_section;
+
+    update sections_cards set section = target_section, position = position + top_position where resource = resource_id and section = source_section;
+
+    delete from sections where resource = resource_id and position = source_section;
+
+    update sections s set position = ss.updated_position from (
+        select si.position, row_number() over (order by si.position), si.resource from sections si where resource = resource_id
+    ) as ss
+    where s.resource = ss.resource and s.position = ss.position;
+
+end;
+$$;
+
+
+ALTER PROCEDURE flashback.merge_sections(IN resource_id integer, IN source_section integer, IN target_section integer) OWNER TO flashback;
+
+--
 -- Name: merge_subjects(integer, integer); Type: PROCEDURE; Schema: flashback; Owner: flashback
 --
 
@@ -1949,6 +1975,27 @@ $$;
 
 
 ALTER FUNCTION flashback.move_card_to_topic(selected_card integer, current_subject integer, current_level flashback.expertise_level, current_topic integer, target_topic integer) OWNER TO flashback;
+
+--
+-- Name: move_section(integer, integer, integer, integer); Type: PROCEDURE; Schema: flashback; Owner: flashback
+--
+
+CREATE PROCEDURE flashback.move_section(IN resource_id integer, IN section_position integer, IN target_resource_id integer, IN target_section_position integer)
+    LANGUAGE plpgsql
+    AS $$
+declare next_free_section integer;
+begin
+    select max(coalesce(section, 0)) + 1 from sections where resource = target_resource_id;
+
+    update sections set resource = target_resource_id and position = next_free_section where resource = resource_id and position = section_position;
+
+    if target_section_position > 0 and target_section_position <> next_free_section then
+        call reorder_section(target_resource_id, next_free_section, target_section_position);
+    end if;
+end; $$;
+
+
+ALTER PROCEDURE flashback.move_section(IN resource_id integer, IN section_position integer, IN target_resource_id integer, IN target_section_position integer) OWNER TO flashback;
 
 --
 -- Name: remove_block(integer, integer); Type: PROCEDURE; Schema: flashback; Owner: flashback
@@ -2134,6 +2181,20 @@ end; $$;
 ALTER PROCEDURE flashback.rename_roadmap(IN roadmap_id integer, IN roadmap_name character varying) OWNER TO flashback;
 
 --
+-- Name: rename_section(integer, integer, character varying); Type: PROCEDURE; Schema: flashback; Owner: flashback
+--
+
+CREATE PROCEDURE flashback.rename_section(IN resource_id integer, IN section_position integer, IN section_name character varying)
+    LANGUAGE plpgsql
+    AS $$
+begin
+    update sections set name = section_name where resource = resource_id and position = section_position;
+end; $$;
+
+
+ALTER PROCEDURE flashback.rename_section(IN resource_id integer, IN section_position integer, IN section_name character varying) OWNER TO flashback;
+
+--
 -- Name: rename_subject(integer, character varying); Type: PROCEDURE; Schema: flashback; Owner: flashback
 --
 
@@ -2222,6 +2283,34 @@ $$;
 
 
 ALTER PROCEDURE flashback.reorder_milestone(IN roadmap_id integer, IN old_position integer, IN new_position integer) OWNER TO flashback;
+
+--
+-- Name: reorder_section(integer, integer, integer); Type: PROCEDURE; Schema: flashback; Owner: flashback
+--
+
+CREATE PROCEDURE flashback.reorder_section(IN resource_id integer, IN section_position integer, IN target_position integer)
+    LANGUAGE plpgsql
+    AS $$
+declare temporary_position integer;
+begin
+    select max(coalesce(position, 0)) + 1 from sections where resource = resource_id;
+
+    update sections set position = temporary_position where resource = resource_id and position = section_position;
+
+    if target_position > section_position then
+        update sections set position = position - 1 where resource = resource_id and position <= target_position and position > section_position;
+    else
+        update sections set position = position + 1 where resource = resource_id and position >= target_position and position < section_position;
+    end if;
+
+    update sections s set position = ss.updated_position from (
+        select si.position, row_number() over (order by si.position), si.resource from sections si where resource = resource_id
+    ) as ss
+    where s.resource = ss.resource and s.position = ss.position;
+end; $$;
+
+
+ALTER PROCEDURE flashback.reorder_section(IN resource_id integer, IN section_position integer, IN target_position integer) OWNER TO flashback;
 
 --
 -- Name: reorder_sections_cards(integer, integer, integer, integer); Type: PROCEDURE; Schema: flashback; Owner: flashback
@@ -2353,7 +2442,6 @@ begin
     select row_number() over (order by p.name <-> token), p.id, p.name
     from presenters p
     where p.name % token
-    order by p.name <-> token
     limit 5;
 end; $$;
 
@@ -2374,7 +2462,6 @@ begin
     select row_number() over (order by p.name <-> token), p.id, p.name
     from providers p
     where p.name % token and p.name <> 'Flashback'
-    order by p.name <-> token
     limit 5;
 end; $$;
 
@@ -2385,7 +2472,7 @@ ALTER FUNCTION flashback.search_providers(token character varying) OWNER TO flas
 -- Name: search_resources(character varying); Type: FUNCTION; Schema: flashback; Owner: flashback
 --
 
-CREATE FUNCTION flashback.search_resources(search_pattern character varying) RETURNS TABLE("position" bigint, id integer, name flashback.citext, type flashback.resource_type, pattern flashback.section_pattern, link character varying, production integer, expiration integer)
+CREATE FUNCTION flashback.search_resources(search_pattern character varying) RETURNS TABLE(similarity bigint, id integer, name flashback.citext, type flashback.resource_type, pattern flashback.section_pattern, link character varying, production integer, expiration integer)
     LANGUAGE plpgsql
     AS $$
 begin
@@ -2395,7 +2482,6 @@ begin
     select row_number() over (order by r.name <-> search_pattern, r.production desc, r.expiration desc), r.id, r.name, r.type, r.pattern, r.link, r.production, r.expiration
     from resources r
     where r.name % search_pattern
-    order by r.name <-> search_pattern, r.production desc, r.expiration desc
     limit 20;
 end;
 $$;
@@ -2417,7 +2503,6 @@ begin
     select row_number() over (order by r.name <-> token), r.id, r.name
     from roadmaps r
     where r.name % token
-    order by r.name <-> token
     limit 5;
 end; $$;
 
@@ -2425,20 +2510,52 @@ end; $$;
 ALTER FUNCTION flashback.search_roadmaps(token character varying) OWNER TO flashback;
 
 --
+-- Name: search_sections(integer, character varying); Type: FUNCTION; Schema: flashback; Owner: flashback
+--
+
+CREATE FUNCTION flashback.search_sections(resource_id integer, search_pattern character varying) RETURNS TABLE(similarity bigint, "position" integer, name flashback.citext, link character varying)
+    LANGUAGE plpgsql
+    AS $$
+begin
+    set pg_trgm.similarity_threshold = 0.11;
+
+    return query select row_number() over (order by s.name <-> search_pattern, s.position), s.position, s.name, s.link from sections s where s.resource = resource_id and s.name % search_pattern limit 5;
+end; $$;
+
+
+ALTER FUNCTION flashback.search_sections(resource_id integer, search_pattern character varying) OWNER TO flashback;
+
+--
 -- Name: search_subjects(character varying); Type: FUNCTION; Schema: flashback; Owner: flashback
 --
 
-CREATE FUNCTION flashback.search_subjects(token character varying) RETURNS TABLE("position" bigint, id integer, name flashback.citext)
+CREATE FUNCTION flashback.search_subjects(token character varying) RETURNS TABLE(similarity bigint, id integer, name flashback.citext)
     LANGUAGE plpgsql
     AS $$
 begin
     set pg_trgm.similarity_threshold = 0.1;
 
-    return query select row_number() over (order by s.name <-> token), s.id, s.name from subjects s where s.name % token order by s.name <-> token limit 5;
+    return query select row_number() over (order by s.name <-> token), s.id, s.name from subjects s where s.name % token limit 10;
 end $$;
 
 
 ALTER FUNCTION flashback.search_subjects(token character varying) OWNER TO flashback;
+
+--
+-- Name: search_topics(integer, character varying); Type: FUNCTION; Schema: flashback; Owner: flashback
+--
+
+CREATE FUNCTION flashback.search_topics(subject_id integer, search_pattern character varying) RETURNS TABLE(similarity bigint, "position" integer, name flashback.citext, level flashback.expertise_level)
+    LANGUAGE plpgsql
+    AS $$
+begin
+    set pg_trgm.similarity_threshold = 0.11;
+
+    return query select row_number() over (order by t.name <-> search_pattern, t.position), t.position, t.name, t.level from topics t where t.subject = subject_id and t.name % search_pattern limit 5;
+end; $$;
+
+
+ALTER FUNCTION flashback.search_topics(subject_id integer, search_pattern character varying) OWNER TO flashback;
 
 --
 -- Name: split_block(integer, integer); Type: PROCEDURE; Schema: flashback; Owner: flashback
@@ -2974,7 +3091,7 @@ ALTER TABLE flashback.roadmaps ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY 
 CREATE TABLE flashback.sections (
     resource integer NOT NULL,
     "position" integer NOT NULL,
-    name character varying(200),
+    name flashback.citext,
     link character varying(2000)
 );
 
@@ -3546,10 +3663,10 @@ CREATE INDEX providers_name_trigram ON flashback.providers USING gin (name flash
 
 
 --
--- Name: resources_name_trgm; Type: INDEX; Schema: flashback; Owner: flashback
+-- Name: resource_name_trigram; Type: INDEX; Schema: flashback; Owner: flashback
 --
 
-CREATE INDEX resources_name_trgm ON flashback.resources USING gin (name flashback.gin_trgm_ops);
+CREATE INDEX resource_name_trigram ON flashback.resources USING gin (name flashback.gin_trgm_ops);
 
 
 --
@@ -3557,6 +3674,13 @@ CREATE INDEX resources_name_trgm ON flashback.resources USING gin (name flashbac
 --
 
 CREATE INDEX roadmaps_name_trigram ON flashback.roadmaps USING gin (name flashback.gin_trgm_ops);
+
+
+--
+-- Name: sections_name_trigram; Type: INDEX; Schema: flashback; Owner: flashback
+--
+
+CREATE INDEX sections_name_trigram ON flashback.sections USING gin (name flashback.gin_trgm_ops);
 
 
 --
@@ -3946,5 +4070,5 @@ GRANT ALL ON SCHEMA public TO flashback_client;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict me7etGBgP3fkcgkMgo3x3KewPIhW05fD9MZwEgBLuKYQ6SW1FAHuqZ5a9NUA5cG
+\unrestrict vaiZk3ESAnVawRBFSCVRfnOkcKqdK6EzLhV9AGt31c5ZPwr0ceFBKUQqSc2fxAf
 

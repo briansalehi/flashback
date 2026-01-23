@@ -27,11 +27,11 @@ public:
     [[nodiscard]] std::vector<Roadmap> get_roadmaps(uint64_t user_id) const override;
     void rename_roadmap(uint64_t roadmap_id, std::string_view modified_name) const override;
     void remove_roadmap(uint64_t roadmap_id) const override;
-    [[nodiscard]] std::vector<Roadmap> search_roadmaps(std::string_view token) const override;
+    [[nodiscard]] std::map<uint64_t, Roadmap> search_roadmaps(std::string_view search_pattern) const override;
 
     // subjects
     [[nodiscard]] Subject create_subject(std::string name) const override;
-    [[nodiscard]] std::map<uint64_t, Subject> search_subjects(std::string name) const override;
+    [[nodiscard]] std::map<uint64_t, Subject> search_subjects(std::string_view search_pattern) const override;
     void rename_subject(uint64_t id, std::string name) const override;
     void remove_subject(uint64_t id) const override;
     void merge_subjects(uint64_t source, uint64_t target) const override;
@@ -52,7 +52,7 @@ public:
     void add_resource_to_subject(uint64_t resource_id, uint64_t subject_id) const override;
     [[nodiscard]] std::vector<Resource> get_resources(uint64_t subject_id) const override;
     void drop_resource_from_subject(uint64_t resource_id, uint64_t subject_id) const override;
-    [[nodiscard]] std::map<uint64_t, Resource> search_resources(std::string name) const override;
+    [[nodiscard]] std::map<uint64_t, Resource> search_resources(std::string_view search_pattern) const override;
     void edit_resource_link(uint64_t resource_id, std::string link) const override;
     void change_resource_type(uint64_t resource_id, Resource::resource_type type) const override;
     void change_section_pattern(uint64_t resource_id, Resource::section_pattern pattern) const override;
@@ -70,7 +70,7 @@ public:
     void merge_sections(uint64_t resource_id, uint64_t source_position, uint64_t target_position) const override;
     void rename_section(uint64_t resource_id, uint64_t position, std::string name) const override;
     void move_section(uint64_t resource_id, uint64_t position, uint64_t target_resource_id, uint64_t target_position) const override;
-    [[nodiscard]] std::map<uint64_t, Section> search_sections(uint64_t resource_id, std::string search_pattern) const override;
+    [[nodiscard]] std::map<uint64_t, Section> search_sections(uint64_t resource_id, std::string_view search_pattern) const override;
     void edit_section_link(uint64_t resource_id, uint64_t position, std::string link) const override;
 
     // topics
@@ -81,14 +81,14 @@ public:
     void merge_topics(uint64_t subject_id, uint64_t source_position, uint64_t target_position) const override;
     void rename_topic(uint64_t subject_id, uint64_t position, std::string name) const override;
     void move_topic(uint64_t subject_id, uint64_t position, uint64_t target_subject_id, uint64_t target_position) const override;
-    [[nodiscard]] std::map<uint64_t, Topic> search_topics(uint64_t subject_id, std::string name) const override;
+    [[nodiscard]] std::map<uint64_t, Topic> search_topics(uint64_t subject_id, std::string_view search_pattern) const override;
     void change_topic_level(uint64_t subject_id, uint64_t position, flashback::expertise_level level) const override;
 
     // providers
     [[nodiscard]] Provider create_provider(std::string name) const override;
     void add_provider(uint64_t resource_id, uint64_t provider_id) const override;
     void drop_provider(uint64_t resource_id, uint64_t provider_id) const override;
-    [[nodiscard]] std::map<uint64_t, Provider> search_providers(std::string name) const override;
+    [[nodiscard]] std::map<uint64_t, Provider> search_providers(std::string_view search_pattern) const override;
     void rename_provider(uint64_t provider_id, std::string name) const override;
     void remove_provider(uint64_t provider_id) const override;
     void merge_providers(uint64_t source_id, uint64_t target_id) const override;
@@ -97,7 +97,7 @@ public:
     [[nodiscard]] Presenter create_presenter(std::string name) const override;
     void add_presenter(uint64_t resource_id, uint64_t presenter_id) const override;
     void drop_presenter(uint64_t resource_id, uint64_t presenter_id) const override;
-    [[nodiscard]] std::map<uint64_t, Presenter> search_presenters(std::string name) const override;
+    [[nodiscard]] std::map<uint64_t, Presenter> search_presenters(std::string_view search_pattern) const override;
     void rename_presenter(uint64_t presenter_id, std::string name) const override;
     void remove_presenter(uint64_t presenter_id) const override;
     void merge_presenters(uint64_t source_id, uint64_t target_id) const override;

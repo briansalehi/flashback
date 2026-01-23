@@ -228,17 +228,20 @@ void database::remove_roadmap(uint64_t const roadmap_id) const
     exec("call remove_roadmap($1)", roadmap_id);
 }
 
-std::vector<Roadmap> database::search_roadmaps(std::string_view token) const
+std::map<uint64_t, Roadmap> database::search_roadmaps(std::string_view search_pattern) const
 {
-    std::vector<Roadmap> roadmaps;
-    roadmaps.reserve(5);
+    std::map<uint64_t, Roadmap> roadmaps;
 
-    for (auto const result = query("select roadmap, name from search_roadmaps($1) order by similarity", token); pqxx::row row: result)
+    if (!search_pattern.empty())
     {
-        Roadmap roadmap{};
-        roadmap.set_id(row.at("roadmap").as<uint64_t>());
-        roadmap.set_name(row.at("name").as<std::string>());
-        roadmaps.push_back(std::move(roadmap));
+        for (auto const result = query("select similarity, roadmap, name from search_roadmaps($1) order by similarity", search_pattern); pqxx::row const& row: result)
+        {
+            uint64_t const similarity{row.at("similarity").as<uint64_t>()};
+            Roadmap roadmap{};
+            roadmap.set_id(row.at("roadmap").as<uint64_t>());
+            roadmap.set_name(row.at("name").as<std::string>());
+            roadmaps.insert({similarity, std::move(roadmap)});
+        }
     }
 
     return roadmaps;
@@ -259,22 +262,19 @@ Subject database::create_subject(std::string name) const
     return subject;
 }
 
-std::map<uint64_t, Subject> database::search_subjects(std::string name) const
+std::map<uint64_t, Subject> database::search_subjects(std::string_view search_pattern) const
 {
     std::map<uint64_t, Subject> subjects{};
 
-    if (!name.empty())
+    if (!search_pattern.empty())
     {
-        if (pqxx::result const matches{query("select position, id, name from search_subjects($1)", std::move(name))}; !matches.empty())
+        for (pqxx::row const& row: query("select similarity, id, name from search_subjects($1) order by similarity", search_pattern))
         {
-            for (pqxx::row const& row: matches)
-            {
-                uint64_t position{row.at("position").as<uint64_t>()};
-                Subject subject{};
-                subject.set_id(row.at("id").as<uint64_t>());
-                subject.set_name(row.at("name").as<std::string>());
-                subjects.insert({position, subject});
-            }
+            uint64_t const similarity{row.at("similarity").as<uint64_t>()};
+            Subject subject{};
+            subject.set_id(row.at("id").as<uint64_t>());
+            subject.set_name(row.at("name").as<std::string>());
+            subjects.insert({similarity, subject});
         }
     }
 
@@ -455,22 +455,28 @@ void database::drop_resource_from_subject(uint64_t const resource_id, uint64_t c
     exec("call drop_resource_from_subject($1, $2)", resource_id, subject_id);
 }
 
-std::map<uint64_t, Resource> database::search_resources(std::string name) const
+std::map<uint64_t, Resource> database::search_resources(std::string_view search_pattern) const
 {
     std::map<uint64_t, Resource> matched{};
-    for (pqxx::row const& row: query("select position, id, name, type, pattern, link, production, expiration from search_resources($1) order by position", name))
+
+    if (!search_pattern.empty())
     {
-        uint64_t const position{row.at("position").as<uint64_t>()};
-        Resource resource{};
-        resource.set_id(row.at("id").as<uint64_t>());
-        resource.set_name(row.at("name").as<std::string>());
-        resource.set_type(to_resource_type(row.at("type").as<std::string>()));
-        resource.set_pattern(to_section_pattern(row.at("pattern").as<std::string>()));
-        resource.set_link(row.at("link").is_null() ? "" : row.at("link").as<std::string>());
-        resource.set_production(row.at("production").as<uint64_t>());
-        resource.set_expiration(row.at("expiration").as<uint64_t>());
-        matched.insert({position, resource});
+        for (pqxx::row const& row: query("select similarity, id, name, type, pattern, link, production, expiration from search_resources($1) order by position",
+                                         search_pattern))
+        {
+            uint64_t const similarity{row.at("similarity").as<uint64_t>()};
+            Resource resource{};
+            resource.set_id(row.at("id").as<uint64_t>());
+            resource.set_name(row.at("name").as<std::string>());
+            resource.set_type(to_resource_type(row.at("type").as<std::string>()));
+            resource.set_pattern(to_section_pattern(row.at("pattern").as<std::string>()));
+            resource.set_link(row.at("link").is_null() ? "" : row.at("link").as<std::string>());
+            resource.set_production(row.at("production").as<uint64_t>());
+            resource.set_expiration(row.at("expiration").as<uint64_t>());
+            matched.insert({similarity, resource});
+        }
     }
+
     return matched;
 }
 
@@ -542,7 +548,7 @@ std::map<uint64_t, Section> database::get_sections(uint64_t const resource_id) c
 {
     std::map<uint64_t, Section> sections{};
 
-    for (pqxx::row const& row: query("select position, name, link from get_sections($1)", resource_id))
+    for (pqxx::row const& row: query("select position, name, link from get_sections($1) order by position", resource_id))
     {
         Section section{};
         section.set_position(row.at("position").as<uint64_t>());
@@ -579,17 +585,21 @@ void database::move_section(uint64_t const resource_id, uint64_t const position,
     exec("call move_section($1, $2, $3, $4)", resource_id, position, target_resource_id, target_position);
 }
 
-std::map<uint64_t, Section> database::search_sections(uint64_t const resource_id, std::string search_pattern) const
+std::map<uint64_t, Section> database::search_sections(uint64_t const resource_id, std::string_view search_pattern) const
 {
     std::map<uint64_t, Section> sections{};
 
-    for (pqxx::row const& row: query("select position, name, link from search_sections($1, $2)", resource_id, std::move(search_pattern)))
+    if (!search_pattern.empty())
     {
-        Section section{};
-        section.set_position(row.at("position").as<uint64_t>());
-        section.set_name(row.at("name").as<std::string>());
-        section.set_link(row.at("link").is_null() ? "" : row.at("link").as<std::string>());
-        sections.insert({section.position(), section});
+        for (pqxx::row const& row: query("select similarity, position, name, link from search_sections($1, $2) order by similarity", resource_id, search_pattern))
+        {
+            uint64_t const similarity{row.at("similarity").as<uint64_t>()};
+            Section section{};
+            section.set_position(row.at("position").as<uint64_t>());
+            section.set_name(row.at("name").as<std::string>());
+            section.set_link(row.at("link").is_null() ? "" : row.at("link").as<std::string>());
+            sections.insert({similarity, section});
+        }
     }
 
     return sections;
@@ -627,7 +637,7 @@ std::map<uint64_t, Topic> database::get_topics(uint64_t const subject_id) const
 {
     std::map<uint64_t, Topic> topics{};
 
-    for (pqxx::row const& row: query("select position, name, level from get_topics($1)", subject_id))
+    for (pqxx::row const& row: query("select position, name, level from get_topics($1) order by position", subject_id))
     {
         Topic topic{};
         topic.set_position(row.at("position").as<uint64_t>());
@@ -664,17 +674,21 @@ void database::move_topic(uint64_t const subject_id, uint64_t const position, ui
     exec("call move_topic($1, $2, $3, $4)", subject_id, position, target_subject_id, target_position);
 }
 
-std::map<uint64_t, Topic> database::search_topics(uint64_t const subject_id, std::string name) const
+std::map<uint64_t, Topic> database::search_topics(uint64_t const subject_id, std::string_view search_pattern) const
 {
     std::map<uint64_t, Topic> topics{};
 
-    for (pqxx::row const& row: query("select position, name, level from search_topics($1, $2)", subject_id, name))
+    if (!search_pattern.empty())
     {
-        Topic topic{};
-        topic.set_position(row.at("position").as<uint64_t>());
-        topic.set_name(row.at("name").as<std::string>());
-        topic.set_level(to_level(row.at("level").as<std::string>()));
-        topics.insert({topic.position(), topic});
+        for (pqxx::row const& row: query("select similarity, position, name, level from search_topics($1, $2) order by similarity", subject_id, search_pattern))
+        {
+            uint64_t const similarity{row.at("similarity").as<uint64_t>()};
+            Topic topic{};
+            topic.set_position(row.at("position").as<uint64_t>());
+            topic.set_name(row.at("name").as<std::string>());
+            topic.set_level(to_level(row.at("level").as<std::string>()));
+            topics.insert({similarity, topic});
+        }
     }
 
     return topics;
@@ -713,17 +727,22 @@ void database::drop_provider(uint64_t const resource_id, uint64_t const provider
     exec("call drop_provider($1, $2)", resource_id, provider_id);
 }
 
-std::map<uint64_t, Provider> database::search_providers(std::string name) const
+std::map<uint64_t, Provider> database::search_providers(std::string_view search_pattern) const
 {
     std::map<uint64_t, Provider> matched{};
-    for (pqxx::row const& row: query("select similarity, provider, name from search_providers($1)", std::move(name)))
+
+    if (!search_pattern.empty())
     {
-        uint64_t const position{row.at("similarity").as<uint64_t>()};
-        Provider provider{};
-        provider.set_id(row.at("provider").as<uint64_t>());
-        provider.set_name(row.at("name").as<std::string>());
-        matched.insert({position, provider});
+        for (pqxx::row const& row: query("select similarity, provider, name from search_providers($1) order by similarity", search_pattern))
+        {
+            uint64_t const similarity{row.at("similarity").as<uint64_t>()};
+            Provider provider{};
+            provider.set_id(row.at("provider").as<uint64_t>());
+            provider.set_name(row.at("name").as<std::string>());
+            matched.insert({similarity, provider});
+        }
     }
+
     return matched;
 }
 
@@ -770,17 +789,22 @@ void database::drop_presenter(uint64_t const resource_id, uint64_t const present
     exec("call drop_presenter($1, $2)", resource_id, presenter_id);
 }
 
-std::map<uint64_t, Presenter> database::search_presenters(std::string name) const
+std::map<uint64_t, Presenter> database::search_presenters(std::string_view search_pattern) const
 {
     std::map<uint64_t, Presenter> matched{};
-    for (pqxx::row const& row: query("select similarity, presenter, name from search_presenters($1)", std::move(name)))
+
+    if (!search_pattern.empty())
     {
-        uint64_t const position{row.at("similarity").as<uint64_t>()};
-        Presenter presenter{};
-        presenter.set_id(row.at("presenter").as<uint64_t>());
-        presenter.set_name(row.at("name").as<std::string>());
-        matched.insert({position, presenter});
+        for (pqxx::row const& row: query("select similarity, presenter, name from search_presenters($1) order by similarity", search_pattern))
+        {
+            uint64_t const similarity{row.at("similarity").as<uint64_t>()};
+            Presenter presenter{};
+            presenter.set_id(row.at("presenter").as<uint64_t>());
+            presenter.set_name(row.at("name").as<std::string>());
+            matched.insert({similarity, presenter});
+        }
     }
+
     return matched;
 }
 
