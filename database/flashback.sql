@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict A15DhawuLoWWG07UV6oIfqAc0K87U4s4CUYadbfs7CJXfSTZWp4bUeUSkea1KHe
+\restrict ps24M5ftViRdeszWN8qfin9XZcbwp6f3vaXQdmkDbSlvYMmTVi3ocO1Zvkwo9c5
 
 -- Dumped from database version 18.1
 -- Dumped by pg_dump version 18.0
@@ -468,6 +468,20 @@ $$;
 ALTER PROCEDURE flashback.change_section_pattern(IN resource_id integer, IN resource_pattern flashback.section_pattern) OWNER TO flashback;
 
 --
+-- Name: change_topic_level(integer, integer, flashback.expertise_level); Type: PROCEDURE; Schema: flashback; Owner: flashback
+--
+
+CREATE PROCEDURE flashback.change_topic_level(IN subject_id integer, IN topic_position integer, IN topic_level flashback.expertise_level)
+    LANGUAGE plpgsql
+    AS $$
+begin
+    update topics set level = topic_level where subject = subject_id and position = topic_position;
+end; $$;
+
+
+ALTER PROCEDURE flashback.change_topic_level(IN subject_id integer, IN topic_position integer, IN topic_level flashback.expertise_level) OWNER TO flashback;
+
+--
 -- Name: change_users_hash(integer, character varying); Type: PROCEDURE; Schema: flashback; Owner: flashback
 --
 
@@ -760,53 +774,50 @@ ALTER FUNCTION flashback.create_subject(name character varying) OWNER TO flashba
 -- Name: create_topic(integer, flashback.expertise_level, character varying); Type: FUNCTION; Schema: flashback; Owner: flashback
 --
 
-CREATE FUNCTION flashback.create_topic(subject integer, level flashback.expertise_level, name character varying) RETURNS integer
+CREATE FUNCTION flashback.create_topic(subject_id integer, topic_level flashback.expertise_level, topic_name character varying) RETURNS integer
     LANGUAGE plpgsql
     AS $$
 declare top_position integer;
 begin
     select coalesce(max(topics."position"), 0) + 1 into top_position
-    from topics where topics.subject = create_topic.subject and topics.level = create_topic.level;
+    from topics where topics.subject = subject_id and topics.level = topic_level;
 
     insert into topics(subject, level, position, name)
-    values (create_topic.subject, create_topic.level, top_position, create_topic.name);
+    values (subject_id, topic_level, top_position, topic_name);
 
     return top_position;
 end;
 $$;
 
 
-ALTER FUNCTION flashback.create_topic(subject integer, level flashback.expertise_level, name character varying) OWNER TO flashback;
+ALTER FUNCTION flashback.create_topic(subject_id integer, topic_level flashback.expertise_level, topic_name character varying) OWNER TO flashback;
 
 --
 -- Name: create_topic(integer, flashback.expertise_level, character varying, integer); Type: PROCEDURE; Schema: flashback; Owner: flashback
 --
 
-CREATE PROCEDURE flashback.create_topic(IN subject integer, IN level flashback.expertise_level, IN name character varying, IN "position" integer)
+CREATE PROCEDURE flashback.create_topic(IN subject_id integer, IN topic_level flashback.expertise_level, IN topic_name character varying, IN topic_position integer)
     LANGUAGE plpgsql
     AS $$
 declare top_position integer;
 begin
-    select coalesce(max(topics.position), 0) + 1 into top_position
-    from topics where topics.subject = create_topic.subject and topics.level = create_topic.level;
+    select coalesce(max(topics.position), 0) + 1 into top_position from topics where topics.subject = subject_id and topics.level = topic_level;
 
-    update topics set position = topics.position + top_position
-    where topics.subject = create_topic.subject and topics.level = create_topic.level and topics.position >= create_topic.position;
+    update topics set position = topics.position + top_position where topics.subject = subject_id and topics.level = topic_level and topics.position >= topic_position;
 
-    insert into topics(subject, level, name, position)
-    values (create_topic.subject, create_topic.level, create_topic.name, create_topic.position);
+    insert into topics(subject, level, name, position) values (subject_id, topic_level, topic_name, topic_position);
 
     update topics set position = sub.new_position
     from (
         select row_number() over (order by t.position) as new_position, t.position as old_position, t.subject, t.level
-        from topics t where t.subject = create_topic.subject and t.level = create_topic.level
+        from topics t where t.subject = subject_id and t.level = topic_level
     ) sub
     where sub.subject = topics.subject and sub.level = topics.level and topics.position = sub.old_position;
 end;
 $$;
 
 
-ALTER PROCEDURE flashback.create_topic(IN subject integer, IN level flashback.expertise_level, IN name character varying, IN "position" integer) OWNER TO flashback;
+ALTER PROCEDURE flashback.create_topic(IN subject_id integer, IN topic_level flashback.expertise_level, IN topic_name character varying, IN topic_position integer) OWNER TO flashback;
 
 --
 -- Name: create_user(character varying, character varying, character varying); Type: FUNCTION; Schema: flashback; Owner: flashback
@@ -963,6 +974,20 @@ CREATE PROCEDURE flashback.edit_resource_provider(IN resource integer, IN edited
 
 
 ALTER PROCEDURE flashback.edit_resource_provider(IN resource integer, IN edited_publisher character varying) OWNER TO flashback;
+
+--
+-- Name: edit_section_link(integer, integer, character varying); Type: PROCEDURE; Schema: flashback; Owner: flashback
+--
+
+CREATE PROCEDURE flashback.edit_section_link(IN resource_id integer, IN section_position integer, IN section_link character varying)
+    LANGUAGE plpgsql
+    AS $$
+begin
+    update sections set link = section_link where resource = resource_id and position = section_position;
+end; $$;
+
+
+ALTER PROCEDURE flashback.edit_section_link(IN resource_id integer, IN section_position integer, IN section_link character varying) OWNER TO flashback;
 
 --
 -- Name: estimate_read_time(integer); Type: FUNCTION; Schema: flashback; Owner: flashback
@@ -1442,40 +1467,18 @@ $$;
 ALTER FUNCTION flashback.get_topic_cards(roadmap_id integer, subject_id integer, topic_position integer) OWNER TO flashback;
 
 --
--- Name: get_topics(integer, flashback.expertise_level); Type: FUNCTION; Schema: flashback; Owner: flashback
+-- Name: get_topics(integer); Type: FUNCTION; Schema: flashback; Owner: flashback
 --
 
-CREATE FUNCTION flashback.get_topics(subject integer, level flashback.expertise_level) RETURNS TABLE("position" integer, name character varying)
+CREATE FUNCTION flashback.get_topics(subject_id integer) RETURNS TABLE("position" integer, name character varying, level flashback.expertise_level)
     LANGUAGE plpgsql
     AS $$
 begin
-    return query
-    select topics.position, topics.name
-    from topics
-    where topics.subject = get_topics.subject and topics.level <= get_topics.level;
+    return query select t.position, t.name, t.level from topics t where t.subject = subject_id;
 end; $$;
 
 
-ALTER FUNCTION flashback.get_topics(subject integer, level flashback.expertise_level) OWNER TO flashback;
-
---
--- Name: get_topics(integer, integer); Type: FUNCTION; Schema: flashback; Owner: flashback
---
-
-CREATE FUNCTION flashback.get_topics(roadmap integer, milestone integer) RETURNS TABLE("position" integer, name character varying)
-    LANGUAGE plpgsql
-    AS $$
-begin
-    return query
-    select topics.position, topics.name
-    from milestones
-    join topics on topics.subject = milestones.subject
-    where milestones.roadmap = get_topics.roadmap and milestones.position = get_topics.milestone;
-end;
-$$;
-
-
-ALTER FUNCTION flashback.get_topics(roadmap integer, milestone integer) OWNER TO flashback;
+ALTER FUNCTION flashback.get_topics(subject_id integer) OWNER TO flashback;
 
 --
 -- Name: get_unreviewed_sections_cards(); Type: FUNCTION; Schema: flashback; Owner: flashback
@@ -1925,6 +1928,32 @@ end; $$;
 ALTER PROCEDURE flashback.merge_subjects(IN source_subject_id integer, IN target_subject_id integer) OWNER TO flashback;
 
 --
+-- Name: merge_topics(integer, integer, integer); Type: PROCEDURE; Schema: flashback; Owner: flashback
+--
+
+CREATE PROCEDURE flashback.merge_topics(IN subject_id integer, IN source_topic integer, IN target_topic integer)
+    LANGUAGE plpgsql
+    AS $$
+declare top_position integer;
+begin
+    select max(coalesce(position, 0)) from topics_cards where subject = subject_id and topic = target_topic;
+
+    update topics_cards set topic = target_topic, position = position + top_position where subject = subject_id and topic = source_topic;
+
+    delete from topics where subject = subject_id and position = source_topic;
+
+    update topics t set position = tt.updated_position from (
+        select ti.position, row_number() over (order by ti.position), ti.subject from topics ti where ti.subject = subject_id
+    ) as tt
+    where t.subject = tt.subject and t.position = tt.position;
+
+end;
+$$;
+
+
+ALTER PROCEDURE flashback.merge_topics(IN subject_id integer, IN source_topic integer, IN target_topic integer) OWNER TO flashback;
+
+--
 -- Name: move_card_to_section(integer, integer, integer, integer); Type: FUNCTION; Schema: flashback; Owner: flashback
 --
 
@@ -1996,6 +2025,27 @@ end; $$;
 
 
 ALTER PROCEDURE flashback.move_section(IN resource_id integer, IN section_position integer, IN target_resource_id integer, IN target_section_position integer) OWNER TO flashback;
+
+--
+-- Name: move_topic(integer, integer, integer, integer); Type: PROCEDURE; Schema: flashback; Owner: flashback
+--
+
+CREATE PROCEDURE flashback.move_topic(IN subject_id integer, IN topic_position integer, IN target_subject_id integer, IN target_topic_position integer)
+    LANGUAGE plpgsql
+    AS $$
+declare next_free_topic integer;
+begin
+    select max(coalesce(topic, 0)) + 1 from topics where subject = target_subject_id;
+
+    update topics set subject = target_subject_id and position = next_free_topic where subject = subject_id and position = topic_position;
+
+    if target_topic_position > 0 and target_topic_position <> next_free_topic then
+        call reorder_topic(target_subject_id, next_free_topic, target_topic_position);
+    end if;
+end; $$;
+
+
+ALTER PROCEDURE flashback.move_topic(IN subject_id integer, IN topic_position integer, IN target_subject_id integer, IN target_topic_position integer) OWNER TO flashback;
 
 --
 -- Name: remove_block(integer, integer); Type: PROCEDURE; Schema: flashback; Owner: flashback
@@ -2122,6 +2172,23 @@ end; $$;
 ALTER PROCEDURE flashback.remove_subject(IN subject_id integer) OWNER TO flashback;
 
 --
+-- Name: remove_topic(integer, integer); Type: PROCEDURE; Schema: flashback; Owner: flashback
+--
+
+CREATE PROCEDURE flashback.remove_topic(IN subject_id integer, IN topic_position integer)
+    LANGUAGE plpgsql
+    AS $$
+begin
+    if not exists (select 1 from topics_cards where subject = subject_id) then
+        delete from topics where subject = subject_id and position = topic_position;
+    end if;
+end;
+$$;
+
+
+ALTER PROCEDURE flashback.remove_topic(IN subject_id integer, IN topic_position integer) OWNER TO flashback;
+
+--
 -- Name: rename_presenter(integer, flashback.citext); Type: PROCEDURE; Schema: flashback; Owner: flashback
 --
 
@@ -2208,6 +2275,20 @@ $$;
 
 
 ALTER PROCEDURE flashback.rename_subject(IN subject_id integer, IN subject_name character varying) OWNER TO flashback;
+
+--
+-- Name: rename_topic(integer, integer, character varying); Type: PROCEDURE; Schema: flashback; Owner: flashback
+--
+
+CREATE PROCEDURE flashback.rename_topic(IN subject_id integer, IN topic_position integer, IN topic_name character varying)
+    LANGUAGE plpgsql
+    AS $$
+begin
+    update topics set name = topic_name where subject = subject_id and position = topic_position;
+end; $$;
+
+
+ALTER PROCEDURE flashback.rename_topic(IN subject_id integer, IN topic_position integer, IN topic_name character varying) OWNER TO flashback;
 
 --
 -- Name: rename_user(integer, character varying); Type: PROCEDURE; Schema: flashback; Owner: flashback
@@ -2348,6 +2429,34 @@ $$;
 
 
 ALTER PROCEDURE flashback.reorder_sections_cards(IN target_resource integer, IN target_section integer, IN target_card integer, IN new_position integer) OWNER TO flashback;
+
+--
+-- Name: reorder_topic(integer, integer, integer); Type: PROCEDURE; Schema: flashback; Owner: flashback
+--
+
+CREATE PROCEDURE flashback.reorder_topic(IN subject_id integer, IN topic_position integer, IN target_position integer)
+    LANGUAGE plpgsql
+    AS $$
+declare temporary_position integer;
+begin
+    select max(coalesce(position, 0)) + 1 from topics where subject = subject_id;
+
+    update topics set position = temporary_position where subject = subject_id and position = topic_position;
+
+    if target_position > topic_position then
+        update topics set position = position - 1 where subject = subject_id and position <= target_position and position > topic_position;
+    else
+        update topics set position = position + 1 where subject = subject_id and position >= target_position and position < topic_position;
+    end if;
+
+    update topics t set position = tt.updated_position from (
+        select ti.position, row_number() over (order by ti.position), ti.subject from topics ti where ti.subject = subject_id
+    ) as tt
+    where t.subject = tt.subject and t.position = tt.position;
+end; $$;
+
+
+ALTER PROCEDURE flashback.reorder_topic(IN subject_id integer, IN topic_position integer, IN target_position integer) OWNER TO flashback;
 
 --
 -- Name: reorder_topics_cards(integer, flashback.expertise_level, integer, integer, integer); Type: PROCEDURE; Schema: flashback; Owner: flashback
@@ -32197,5 +32306,5 @@ GRANT ALL ON SCHEMA public TO flashback_client;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict A15DhawuLoWWG07UV6oIfqAc0K87U4s4CUYadbfs7CJXfSTZWp4bUeUSkea1KHe
+\unrestrict ps24M5ftViRdeszWN8qfin9XZcbwp6f3vaXQdmkDbSlvYMmTVi3ocO1Zvkwo9c5
 

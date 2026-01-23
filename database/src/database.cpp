@@ -526,12 +526,11 @@ Section database::create_section(uint64_t const resource_id, uint64_t const posi
     section.set_name(name);
     section.set_position(position);
     section.set_link(link);
-    uint64_t id{};
     pqxx::result result{};
 
     if (position > 0)
     {
-        result = query("call create_section($1, $2, $3, $4)", resource_id, name, link, position);
+        exec("call create_section($1, $2, $3, $4)", resource_id, name, link, position);
     }
     else
     {
