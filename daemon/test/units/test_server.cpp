@@ -500,7 +500,7 @@ TEST_F(test_server, SearchRoadmaps)
     database_retrieved_user = std::make_unique<flashback::User>(*m_user);
     EXPECT_CALL(*m_mock_database, get_user(testing::A<std::string_view>(), testing::A<std::string_view>())).Times(1).WillOnce(
         testing::Return(std::make_unique<flashback::User>(*database_retrieved_user)));
-    EXPECT_CALL(*m_mock_database, search_roadmaps(testing::A<std::string_view>())).Times(1).WillOnce(testing::Return(std::vector<flashback::Roadmap>{}));
+    EXPECT_CALL(*m_mock_database, search_roadmaps(testing::A<std::string_view>())).Times(1).WillOnce(testing::Return(std::map<uint64_t, flashback::Roadmap>{}));
 
     flashback::Roadmap roadmap{};
     roadmap.set_id(1);
@@ -530,7 +530,7 @@ TEST_F(test_server, SearchRoadmaps)
     database_retrieved_user = std::make_unique<flashback::User>(*m_user);
     EXPECT_CALL(*m_mock_database, get_user(testing::A<std::string_view>(), testing::A<std::string_view>())).Times(1).WillOnce(
         testing::Return(std::make_unique<flashback::User>(*database_retrieved_user)));
-    EXPECT_CALL(*m_mock_database, search_roadmaps(testing::A<std::string_view>())).Times(1).WillOnce(testing::Return(std::vector<flashback::Roadmap>{}));
+    EXPECT_CALL(*m_mock_database, search_roadmaps(testing::A<std::string_view>())).Times(1).WillOnce(testing::Return(std::map<uint64_t, flashback::Roadmap>{}));
 
     search_request->set_allocated_user(std::make_unique<flashback::User>(*m_user).release());
     EXPECT_TRUE(search_request->has_user());
@@ -587,7 +587,7 @@ TEST_F(test_server, SearchSubjects)
     request.set_token(searching_pattern);
 
     EXPECT_CALL(*m_mock_database, get_user(testing::A<std::string_view>(), testing::A<std::string_view>())).Times(1).WillOnce(testing::Return(std::move(returning_user)));
-    EXPECT_CALL(*m_mock_database, search_subjects(testing::A<std::string>())).Times(1).WillOnce(testing::Return(database_subjects));
+    EXPECT_CALL(*m_mock_database, search_subjects(testing::A<std::string_view>())).Times(1).WillOnce(testing::Return(database_subjects));
     EXPECT_NO_THROW(status = m_server->SearchSubjects(&context, &request, &response));
     EXPECT_TRUE(status.ok());
     ASSERT_EQ(response.subjects().size(), database_subjects.size());

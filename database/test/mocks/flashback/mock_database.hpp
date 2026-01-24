@@ -93,15 +93,15 @@ public:
     MOCK_METHOD(void, edit_section_link, (uint64_t, uint64_t, std::string), (const, override));
 
     // topics
-    MOCK_METHOD(Topic, create_topic, (uint64_t, std::string, flashback::expertise_level, uint64_t) , (const, override));
-    MOCK_METHOD((std::map<uint64_t, Topic>), get_topics, (uint64_t, flashback::expertise_level) , (const, override));
-    MOCK_METHOD(void, reorder_topic, (uint64_t, flashback::expertise_level, uint64_t, uint64_t) , (const, override));
-    MOCK_METHOD(void, remove_topic, (uint64_t, flashback::expertise_level, uint64_t) , (const, override));
-    MOCK_METHOD(void, merge_topics, (uint64_t, flashback::expertise_level, uint64_t, uint64_t) , (const, override));
-    MOCK_METHOD(void, rename_topic, (uint64_t, uint64_t, std::string) , (const, override));
-    MOCK_METHOD(void, move_topic, (uint64_t, uint64_t, uint64_t, uint64_t) , (const, override));
-    MOCK_METHOD((std::map<uint64_t, Topic>), search_topics, (uint64_t, std::string_view) , (const, override));
-    MOCK_METHOD(void, change_topic_level, (uint64_t, uint64_t, flashback::expertise_level, flashback::expertise_level) , (const, override));
+    MOCK_METHOD(Topic, create_topic, (uint64_t, std::string, flashback::expertise_level, uint64_t), (const, override));
+    MOCK_METHOD((std::map<uint64_t, Topic>), get_topics, (uint64_t, flashback::expertise_level), (const, override));
+    MOCK_METHOD(void, reorder_topic, (uint64_t, flashback::expertise_level, uint64_t, uint64_t), (const, override));
+    MOCK_METHOD(void, remove_topic, (uint64_t, flashback::expertise_level, uint64_t), (const, override));
+    MOCK_METHOD(void, merge_topics, (uint64_t, flashback::expertise_level, uint64_t, uint64_t), (const, override));
+    MOCK_METHOD(void, rename_topic, (uint64_t, expertise_level, uint64_t, std::string), (const, override));
+    MOCK_METHOD(void, move_topic, (uint64_t, expertise_level, uint64_t, uint64_t, uint64_t), (const, override));
+    MOCK_METHOD((std::map<uint64_t, Topic>), search_topics, (uint64_t, expertise_level, std::string_view), (const, override));
+    MOCK_METHOD(void, change_topic_level, (uint64_t, uint64_t, flashback::expertise_level, flashback::expertise_level), (const, override));
 
     // practices
     MOCK_METHOD(expertise_level, get_user_cognitive_level, (uint64_t, uint64_t), (const, override));

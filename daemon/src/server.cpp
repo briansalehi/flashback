@@ -278,11 +278,11 @@ grpc::Status server::SearchRoadmaps(grpc::ServerContext* context, SearchRoadmaps
     {
         if (request->has_user() && session_is_valid(request->user()))
         {
-            for (flashback::Roadmap const& r: m_database->search_roadmaps(request->token()))
+            for (auto const& [similarity, matched]: m_database->search_roadmaps(request->token()))
             {
                 flashback::Roadmap* roadmap = response->add_roadmap();
-                roadmap->set_id(r.id());
-                roadmap->set_name(r.name());
+                roadmap->set_id(matched.id());
+                roadmap->set_name(matched.name());
             }
         }
     }
