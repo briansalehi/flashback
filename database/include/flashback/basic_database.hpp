@@ -60,14 +60,14 @@ public:
 
     // topics
     [[nodiscard]] virtual Topic create_topic(uint64_t subject_id, std::string name, flashback::expertise_level level, uint64_t position) const = 0;
-    [[nodiscard]] virtual std::map<uint64_t, Topic> get_topics(uint64_t subject_id) const = 0;
-    virtual void reorder_topic(uint64_t subject_id, uint64_t source_position, uint64_t target_position) const = 0;
-    virtual void remove_topic(uint64_t subject_id, uint64_t position) const = 0;
-    virtual void merge_topics(uint64_t subject_id, uint64_t source_position, uint64_t target_position) const = 0;
-    virtual void rename_topic(uint64_t subject_id, uint64_t position, std::string name) const = 0;
-    virtual void move_topic(uint64_t subject_id, uint64_t position, uint64_t target_subject_id, uint64_t target_position) const = 0;
-    [[nodiscard]] virtual std::map<uint64_t, Topic> search_topics(uint64_t subject_id, std::string_view search_pattern) const = 0;
-    virtual void change_topic_level(uint64_t subject_id, uint64_t position, flashback::expertise_level level) const = 0;
+    [[nodiscard]] virtual std::map<uint64_t, Topic> get_topics(uint64_t subject_id, expertise_level level) const = 0;
+    virtual void reorder_topic(uint64_t subject_id, expertise_level level, uint64_t source_position, uint64_t target_position) const = 0;
+    virtual void remove_topic(uint64_t subject_id, expertise_level level, uint64_t position) const = 0;
+    virtual void merge_topics(uint64_t subject_id, expertise_level level, uint64_t source_position, uint64_t target_position) const = 0;
+    virtual void rename_topic(uint64_t subject_id, expertise_level level, uint64_t position, std::string name) const = 0;
+    virtual void move_topic(uint64_t subject_id, expertise_level level, uint64_t position, uint64_t target_subject_id, uint64_t target_position) const = 0;
+    [[nodiscard]] virtual std::map<uint64_t, Topic> search_topics(uint64_t subject_id, expertise_level level, std::string_view search_pattern) const = 0;
+    virtual void change_topic_level(uint64_t subject_id, uint64_t position, flashback::expertise_level level, flashback::expertise_level target) const = 0;
     //get_practice_topics
     //get_practice_mode
     //get_topic_weight

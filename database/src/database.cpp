@@ -461,7 +461,7 @@ std::map<uint64_t, Resource> database::search_resources(std::string_view search_
 
     if (!search_pattern.empty())
     {
-        for (pqxx::row const& row: query("select similarity, id, name, type, pattern, link, production, expiration from search_resources($1) order by position",
+        for (pqxx::row const& row: query("select similarity, id, name, type, pattern, link, production, expiration from search_resources($1) order by similarity",
                                          search_pattern))
         {
             uint64_t const similarity{row.at("similarity").as<uint64_t>()};
@@ -609,7 +609,7 @@ void database::edit_section_link(uint64_t resource_id, uint64_t position, std::s
     exec("call edit_section_link($1, $2, $3)", resource_id, position, link);
 }
 
-Topic database::create_topic(uint64_t const subject_id, std::string name, flashback::expertise_level const level, uint64_t const position) const
+Topic database::create_topic(uint64_t const subject_id, std::string name,expertise_level const level, uint64_t const position) const
 {
     Topic topic{};
     topic.set_name(name);
@@ -619,11 +619,11 @@ Topic database::create_topic(uint64_t const subject_id, std::string name, flashb
 
     if (position > 0)
     {
-        result = query("call create_topic($1, $2, $3, $4)", subject_id, name, level_to_string(level), position);
+        exec("call create_topic($1, $2, $3, $4)", subject_id, level_to_string(level), std::move(name), position);
     }
     else
     {
-        if (result = query("select create_topic($1, $2, $3) as id", subject_id, name, level_to_string(level)); result.size() == 1)
+        if (result = query("select create_topic($1, $2, $3) as id", subject_id, level_to_string(level), std::move(name)); result.size() == 1)
         {
             topic.set_position(result.at(0).at("id").as<uint64_t>());
         }
@@ -632,11 +632,11 @@ Topic database::create_topic(uint64_t const subject_id, std::string name, flashb
     return topic;
 }
 
-std::map<uint64_t, Topic> database::get_topics(uint64_t const subject_id) const
+std::map<uint64_t, Topic> database::get_topics(uint64_t const subject_id, expertise_level const level) const
 {
     std::map<uint64_t, Topic> topics{};
 
-    for (pqxx::row const& row: query("select position, name, level from get_topics($1) order by position", subject_id))
+    for (pqxx::row const& row: query("select position, name, level from get_topics($1, $2) order by position", subject_id, level_to_string(level)))
     {
         Topic topic{};
         topic.set_position(row.at("position").as<uint64_t>());
@@ -648,38 +648,38 @@ std::map<uint64_t, Topic> database::get_topics(uint64_t const subject_id) const
     return topics;
 }
 
-void database::reorder_topic(uint64_t const subject_id, uint64_t const source_position, uint64_t const target_position) const
+void database::reorder_topic(uint64_t const subject_id, expertise_level const level, uint64_t const source_position, uint64_t const target_position) const
 {
-    exec("call reorder_topic($1, $2, $3)", subject_id, source_position, target_position);
+    exec("call reorder_topic($1, $2, $3, $4)", subject_id, level_to_string(level), source_position, target_position);
 }
 
-void database::remove_topic(uint64_t const subject_id, uint64_t const position) const
+void database::remove_topic(uint64_t const subject_id, expertise_level const level, uint64_t const position) const
 {
-    exec("call remove_topic($1, $2)", subject_id, position);
+    exec("call remove_topic($1, $2, $3)", subject_id, level_to_string(level), position);
 }
 
-void database::merge_topics(uint64_t const subject_id, uint64_t const source_position, uint64_t const target_position) const
+void database::merge_topics(uint64_t const subject_id, expertise_level const level, uint64_t const source_position, uint64_t const target_position) const
 {
-    exec("call merge_topics($1, $2, $3)", subject_id, source_position, target_position);
+    exec("call merge_topics($1, $2, $3, $4)", subject_id, level_to_string(level), source_position, target_position);
 }
 
-void database::rename_topic(uint64_t const subject_id, uint64_t const position, std::string name) const
+void database::rename_topic(uint64_t const subject_id, expertise_level const level, uint64_t const position, std::string name) const
 {
-    exec("call rename_topic($1, $2, $3)", subject_id, position, name);
+    exec("call rename_topic($1, $2, $3, $4)", subject_id, level_to_string(level), position, name);
 }
 
-void database::move_topic(uint64_t const subject_id, uint64_t const position, uint64_t const target_subject_id, uint64_t const target_position) const
+void database::move_topic(uint64_t const subject_id, expertise_level const level, uint64_t const position, uint64_t const target_subject_id, uint64_t const target_position) const
 {
-    exec("call move_topic($1, $2, $3, $4)", subject_id, position, target_subject_id, target_position);
+    exec("call move_topic($1, $2, $3, $4, $5)", subject_id, level_to_string(level), position, target_subject_id, target_position);
 }
 
-std::map<uint64_t, Topic> database::search_topics(uint64_t const subject_id, std::string_view search_pattern) const
+std::map<uint64_t, Topic> database::search_topics(uint64_t const subject_id, expertise_level const level, std::string_view search_pattern) const
 {
     std::map<uint64_t, Topic> topics{};
 
     if (!search_pattern.empty())
     {
-        for (pqxx::row const& row: query("select similarity, position, name, level from search_topics($1, $2) order by similarity", subject_id, search_pattern))
+        for (pqxx::row const& row: query("select similarity, position, name, level from search_topics($1, $2, $3) order by similarity", subject_id, level_to_string(level), search_pattern))
         {
             uint64_t const similarity{row.at("similarity").as<uint64_t>()};
             Topic topic{};
@@ -693,9 +693,9 @@ std::map<uint64_t, Topic> database::search_topics(uint64_t const subject_id, std
     return topics;
 }
 
-void database::change_topic_level(uint64_t const subject_id, uint64_t const position, flashback::expertise_level const level) const
+void database::change_topic_level(uint64_t const subject_id, uint64_t const position, flashback::expertise_level const level, flashback::expertise_level const target) const
 {
-    exec("call change_topic_level($1, $2, $3)", subject_id, position, level_to_string(level));
+    exec("call change_topic_level($1, $2, $3, $4)", subject_id, position, level_to_string(level), level_to_string(target));
 }
 
 Provider database::create_provider(std::string name) const

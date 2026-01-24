@@ -74,15 +74,15 @@ public:
     void edit_section_link(uint64_t resource_id, uint64_t position, std::string link) const override;
 
     // topics
-    [[nodiscard]] Topic create_topic(uint64_t subject_id, std::string name, flashback::expertise_level level, uint64_t position) const override;
-    [[nodiscard]] std::map<uint64_t, Topic> get_topics(uint64_t subject_id) const override;
-    void reorder_topic(uint64_t subject_id, uint64_t source_position, uint64_t target_position) const override;
-    void remove_topic(uint64_t subject_id, uint64_t position) const override;
-    void merge_topics(uint64_t subject_id, uint64_t source_position, uint64_t target_position) const override;
-    void rename_topic(uint64_t subject_id, uint64_t position, std::string name) const override;
-    void move_topic(uint64_t subject_id, uint64_t position, uint64_t target_subject_id, uint64_t target_position) const override;
-    [[nodiscard]] std::map<uint64_t, Topic> search_topics(uint64_t subject_id, std::string_view search_pattern) const override;
-    void change_topic_level(uint64_t subject_id, uint64_t position, flashback::expertise_level level) const override;
+    [[nodiscard]] Topic create_topic(uint64_t subject_id, std::string name,expertise_level level, uint64_t position) const override;
+    [[nodiscard]] std::map<uint64_t, Topic> get_topics(uint64_t subject_id, expertise_level level) const override;
+    void reorder_topic(uint64_t subject_id, expertise_level level, uint64_t source_position, uint64_t target_position) const override;
+    void remove_topic(uint64_t subject_id, expertise_level level, uint64_t position) const override;
+    void merge_topics(uint64_t subject_id, expertise_level level, uint64_t source_position, uint64_t target_position) const override;
+    void rename_topic(uint64_t subject_id, expertise_level level, uint64_t position, std::string name) const override;
+    void move_topic(uint64_t subject_id, expertise_level level, uint64_t position, uint64_t target_subject_id, uint64_t target_position) const override;
+    [[nodiscard]] std::map<uint64_t, Topic> search_topics(uint64_t subject_id, expertise_level level, std::string_view search_pattern) const override;
+    void change_topic_level(uint64_t subject_id, uint64_t position, flashback::expertise_level level, flashback::expertise_level target) const override;
 
     // providers
     [[nodiscard]] Provider create_provider(std::string name) const override;

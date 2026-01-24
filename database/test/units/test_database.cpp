@@ -366,8 +366,7 @@ TEST_F(test_database, SearchRoadmaps)
                                          "Project Management",
                                          "Brand Strategy",
                                          "Growth Strategy"};
-    std::vector<flashback::Roadmap> search_results;
-    search_results.reserve(names.size());
+    std::map<uint64_t, flashback::Roadmap> search_results;
 
     for (std::string const& roadmap_name: names)
     {
@@ -1675,6 +1674,7 @@ TEST_F(test_database, get_nerves)
     EXPECT_GT(resource.id(), 0);
     EXPECT_NO_THROW(nerves = m_database->get_nerves(m_user->id()));
     ASSERT_THAT(nerves, SizeIs(1));
+    ASSERT_NO_THROW(nerves.at(0).id());
     EXPECT_THAT(nerves.at(0).id(), resource.id());
     EXPECT_EQ(nerves.at(0).name(), expected_name);
     EXPECT_EQ(nerves.at(0).type(), flashback::Resource::nerve);
@@ -1714,11 +1714,9 @@ TEST_F(test_database, create_section)
         section.clear_link();
         EXPECT_NO_THROW(section = m_database->create_section(resource.id(), section.position(), section.name(), section.link()));
         EXPECT_GT(section.position(), 0);
+        EXPECT_EQ(section.name(), name);
+        EXPECT_TRUE(section.link().empty());
     }
-
-    EXPECT_EQ(sections.at(1).position(), 1);
-    EXPECT_EQ(sections.at(2).position(), 2);
-    EXPECT_EQ(sections.at(3).position(), 3);
 }
 
 TEST_F(test_database, get_sections)
@@ -1821,12 +1819,21 @@ TEST_F(test_database, reorder_section)
     EXPECT_NO_THROW(sections = m_database->get_sections(resource.id()));
     ASSERT_THAT(sections, SizeIs(3));
     uint64_t const source_position{sections.at(1).position()};
+    std::string const source_name{sections.at(1).name()};
     uint64_t const target_position{sections.at(3).position()};
+    std::string const target_name{sections.at(3).name()};
     EXPECT_NO_THROW(m_database->reorder_section(resource.id(), source_position, target_position));
     EXPECT_NO_THROW(sections = m_database->get_sections(resource.id()));
     EXPECT_THAT(sections, SizeIs(3));
-    EXPECT_EQ(sections.at(1).position(), target_position);
-    EXPECT_EQ(sections.at(3).position(), source_position);
+    ASSERT_NO_THROW(sections.at(1).position());
+    ASSERT_NO_THROW(sections.at(2).name());
+    ASSERT_NO_THROW(sections.at(2).position());
+    ASSERT_NO_THROW(sections.at(3).position());
+    ASSERT_NO_THROW(sections.at(3).name());
+    EXPECT_EQ(sections.at(1).position(), source_position) << "A B C becomes B C A";
+    EXPECT_EQ(sections.at(2).name(), target_name);
+    EXPECT_EQ(sections.at(3).position(), target_position);
+    EXPECT_EQ(sections.at(3).name(), source_name);
 }
 
 TEST_F(test_database, merge_sections)
@@ -1860,6 +1867,8 @@ TEST_F(test_database, merge_sections)
 
     EXPECT_NO_THROW(sections = m_database->get_sections(resource.id()));
     ASSERT_THAT(sections, SizeIs(3));
+    ASSERT_NO_THROW(sections.at(1).position());
+    ASSERT_NO_THROW(sections.at(3).position());
     uint64_t const source_position{sections.at(1).position()};
     uint64_t const target_position{sections.at(3).position()};
     EXPECT_NO_THROW(m_database->merge_sections(resource.id(), source_position, target_position));
@@ -1899,10 +1908,12 @@ TEST_F(test_database, rename_section)
     EXPECT_NO_THROW(sections = m_database->get_sections(resource.id()));
     ASSERT_THAT(sections, SizeIs(3));
     constexpr auto modified_name{"Modified Section"};
+    ASSERT_NO_THROW(sections.at(1).name());
     EXPECT_NE(sections.at(1).name(), modified_name);
     EXPECT_NO_THROW(m_database->rename_section(resource.id(), sections.at(1).position(), modified_name));
     EXPECT_NO_THROW(sections = m_database->get_sections(resource.id()));
     ASSERT_THAT(sections, SizeIs(3));
+    ASSERT_NO_THROW(sections.at(1).name());
     EXPECT_EQ(sections.at(1).name(), modified_name);
 }
 
@@ -1947,19 +1958,22 @@ TEST_F(test_database, move_section)
         ASSERT_EQ(section.name(), name);
     }
 
-    EXPECT_NO_THROW(sections = m_database->get_sections(resource.id()));
-    ASSERT_THAT(sections, SizeIs(3));
-    EXPECT_NO_THROW(m_database->move_section(resource.id(), sections.at(1).position(), target_resource.id(), sections.size() + 1));
-    EXPECT_NO_THROW(sections = m_database->get_sections(resource.id()));
-    ASSERT_THAT(sections, SizeIs(2));
-    EXPECT_NO_THROW(sections = m_database->get_sections(target_resource.id()));
-    ASSERT_THAT(sections, SizeIs(4));
-    EXPECT_EQ(sections.at(4).position(), 4);
-    EXPECT_NO_THROW(m_database->move_section(resource.id(), sections.at(1).position(), target_resource.id(), 1));
-    EXPECT_NO_THROW(sections = m_database->get_sections(resource.id()));
-    ASSERT_THAT(sections, SizeIs(1));
-    EXPECT_NO_THROW(sections = m_database->get_sections(target_resource.id()));
-    ASSERT_THAT(sections, SizeIs(5));
+    ASSERT_NO_THROW(sections = m_database->get_sections(resource.id()));
+    ASSERT_THAT(sections, SizeIs(3)) << "All sections must appear before performing move";
+    EXPECT_NO_THROW(m_database->move_section(resource.id(), 1, target_resource.id(), 4));
+    ASSERT_NO_THROW(sections = m_database->get_sections(resource.id()));
+    ASSERT_THAT(sections, SizeIs(2)) << "Source resource must have one section less after movement";
+    ASSERT_NO_THROW(sections = m_database->get_sections(target_resource.id()));
+    ASSERT_THAT(sections, SizeIs(4)) << "Target resource must have one section more after movement";
+    ASSERT_NO_THROW(sections.at(4).position());
+    EXPECT_EQ(sections.at(4).position(), 4) << "The last section in the list must have the last position";
+    EXPECT_NO_THROW(m_database->move_section(resource.id(), 2, target_resource.id(), 1));
+    ASSERT_NO_THROW(sections = m_database->get_sections(resource.id()));
+    ASSERT_THAT(sections, SizeIs(1)) << "Source resource must have one section less after movement";
+    ASSERT_NO_THROW(sections = m_database->get_sections(target_resource.id()));
+    ASSERT_THAT(sections, SizeIs(5)) << "Target resource must have one section more after movement";
+    ASSERT_NO_THROW(sections.at(5).position());
+    EXPECT_EQ(sections.at(5).position(), 5) << "The last section in the list must have the last position";
 }
 
 TEST_F(test_database, search_sections)
@@ -2005,7 +2019,7 @@ TEST_F(test_database, edit_section_link)
 
     auto const production{std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch())};
     auto const expiration{std::chrono::duration_cast<std::chrono::seconds>(production + std::chrono::years{4})};
-    constexpr auto link{R"(https://modified.com)"};
+    constexpr auto link{R"(https://example.com)"};
     std::map<uint64_t, flashback::Section> sections{};
     flashback::Section section{};
     flashback::Resource resource{};
@@ -2030,7 +2044,8 @@ TEST_F(test_database, edit_section_link)
     EXPECT_NE(section.link(), modified_link);
     EXPECT_NO_THROW(m_database->edit_section_link(resource.id(), section.position(), modified_link));
     EXPECT_NO_THROW(sections = m_database->get_sections(resource.id()));
-    ASSERT_THAT(sections, SizeIs(3));
+    ASSERT_THAT(sections, SizeIs(1));
+    ASSERT_NO_THROW(sections.at(1).link());
     EXPECT_EQ(sections.at(1).link(), modified_link);
 }
 
@@ -2038,12 +2053,12 @@ TEST_F(test_database, create_topic)
 {
     flashback::Subject subject{};
     flashback::Topic topic{};
-    constexpr auto topic_name{"C++"};
+    constexpr auto topic_name{"Lambda Functions"};
     constexpr auto level{flashback::expertise_level::surface};
 
-    subject.set_name(topic_name);
+    subject.set_name("C++");
     topic.clear_position();
-    topic.set_name("Lambda Functions");
+    topic.set_name(topic_name);
     topic.set_level(level);
     ASSERT_NO_THROW(subject = m_database->create_subject(subject.name()));
     ASSERT_GT(subject.id(), 0);
@@ -2076,8 +2091,11 @@ TEST_F(test_database, get_topics)
         ASSERT_GT(topic.position(), 0);
     }
 
-    EXPECT_NO_THROW(topics = m_database->get_topics(subject.id()));
+    EXPECT_NO_THROW(topics = m_database->get_topics(subject.id(), level));
     EXPECT_THAT(topics, SizeIs(3));
+    ASSERT_NO_THROW(topics.at(1).position());
+    ASSERT_NO_THROW(topics.at(2).position());
+    ASSERT_NO_THROW(topics.at(3).position());
     EXPECT_THAT(topics.at(1).position(), 1);
     EXPECT_THAT(topics.at(2).position(), 2);
     EXPECT_THAT(topics.at(3).position(), 3);
@@ -2106,17 +2124,27 @@ TEST_F(test_database, reorder_topic)
         ASSERT_GT(topic.position(), 0);
     }
 
-    EXPECT_NO_THROW(topics = m_database->get_topics(subject.id()));
+    EXPECT_NO_THROW(topics = m_database->get_topics(subject.id(), level));
     EXPECT_THAT(topics, SizeIs(3));
+    ASSERT_NO_THROW(topics.at(1).position());
+    ASSERT_NO_THROW(topics.at(2).name());
+    ASSERT_NO_THROW(topics.at(3).name());
+    ASSERT_NO_THROW(topics.at(3).position());
     uint64_t const source_position = topics.at(1).position();
     std::string const source_name = topics.at(1).name();
     uint64_t const target_position = topics.at(3).position();
     std::string const target_name = topics.at(3).name();
-    EXPECT_NO_THROW(m_database->reorder_topic(subject.id(), source_position, target_position));
-    EXPECT_NO_THROW(topics = m_database->get_topics(subject.id()));
+    EXPECT_NO_THROW(m_database->reorder_topic(subject.id(), topics.at(1).level(), source_position, target_position));
+    EXPECT_NO_THROW(topics = m_database->get_topics(subject.id(), level));
     EXPECT_THAT(topics, SizeIs(3));
-    EXPECT_EQ(topics.at(1).name(), target_name);
+    ASSERT_NO_THROW(topics.at(1).position());
+    ASSERT_NO_THROW(topics.at(2).name());
+    ASSERT_NO_THROW(topics.at(3).name());
+    ASSERT_NO_THROW(topics.at(3).position());
+    EXPECT_EQ(topics.at(1).position(), source_position);
+    EXPECT_EQ(topics.at(2).name(), target_name) << "A B C becomes B C A";
     EXPECT_EQ(topics.at(3).name(), source_name);
+    EXPECT_EQ(topics.at(3).position(), target_position);
 }
 
 TEST_F(test_database, remove_topic)
@@ -2142,12 +2170,14 @@ TEST_F(test_database, remove_topic)
         ASSERT_GT(topic.position(), 0);
     }
 
-    EXPECT_NO_THROW(topics = m_database->get_topics(subject.id()));
+    EXPECT_NO_THROW(topics = m_database->get_topics(subject.id(), level));
     EXPECT_THAT(topics, SizeIs(3));
+    ASSERT_NO_THROW(topics.at(1).position());
     EXPECT_EQ(topics.at(1).position(), 1);
-    EXPECT_NO_THROW(m_database->remove_topic(subject.id(), topics.at(1).position()));
-    EXPECT_NO_THROW(topics = m_database->get_topics(subject.id()));
+    EXPECT_NO_THROW(m_database->remove_topic(subject.id(), level, 1));
+    EXPECT_NO_THROW(topics = m_database->get_topics(subject.id(), level));
     EXPECT_THAT(topics, SizeIs(2));
+    ASSERT_NO_THROW(topics.at(1).name());
     EXPECT_EQ(topics.at(1).position(), 1);
 }
 
@@ -2174,12 +2204,14 @@ TEST_F(test_database, merge_topics)
         ASSERT_GT(topic.position(), 0);
     }
 
-    EXPECT_NO_THROW(topics = m_database->get_topics(subject.id()));
+    EXPECT_NO_THROW(topics = m_database->get_topics(subject.id(), level));
     EXPECT_THAT(topics, SizeIs(3));
+    ASSERT_NO_THROW(topics.at(3).name());
     std::string const target_name{topics.at(3).name()};
-    EXPECT_NO_THROW(m_database->merge_topics(subject.id(), topics.at(1).position(), topics.at(3).position()));
-    EXPECT_NO_THROW(topics = m_database->get_topics(subject.id()));
+    EXPECT_NO_THROW(m_database->merge_topics(subject.id(), topics.at(1).level(), topics.at(1).position(), topics.at(3).position()));
+    EXPECT_NO_THROW(topics = m_database->get_topics(subject.id(), level));
     EXPECT_THAT(topics, SizeIs(2));
+    ASSERT_NO_THROW(topics.at(2).name());
     EXPECT_EQ(topics.at(2).name(), target_name);
 }
 
@@ -2206,13 +2238,15 @@ TEST_F(test_database, rename_topic)
         ASSERT_GT(topic.position(), 0);
     }
 
-    EXPECT_NO_THROW(topics = m_database->get_topics(subject.id()));
+    EXPECT_NO_THROW(topics = m_database->get_topics(subject.id(), level));
     EXPECT_THAT(topics, SizeIs(3));
     constexpr auto modified_name{"Modified Topic"};
+    ASSERT_NO_THROW(topics.at(1).name());
     EXPECT_NE(topics.at(1).name(), modified_name);
-    EXPECT_NO_THROW(m_database->rename_topic(subject.id(), topics.at(1).position(), modified_name));
-    EXPECT_NO_THROW(topics = m_database->get_topics(subject.id()));
+    EXPECT_NO_THROW(m_database->rename_topic(subject.id(), level, topics.at(1).position(), modified_name));
+    EXPECT_NO_THROW(topics = m_database->get_topics(subject.id(), level));
     EXPECT_THAT(topics, SizeIs(3));
+    ASSERT_NO_THROW(topics.at(1).name());
     EXPECT_EQ(topics.at(1).name(), modified_name);
 }
 
@@ -2232,6 +2266,7 @@ TEST_F(test_database, move_topic)
     ASSERT_GT(subject.id(), 0);
     ASSERT_NO_THROW(target_subject = m_database->create_subject(target_subject.name()));
     ASSERT_GT(target_subject.id(), 0);
+    ASSERT_NE(subject.id(), target_subject.id());
 
     for (auto const& name: {"Chrono", "Coroutines", "Reflection"})
     {
@@ -2244,21 +2279,22 @@ TEST_F(test_database, move_topic)
         ASSERT_GT(topic.position(), 0);
     }
 
-    EXPECT_NO_THROW(topics = m_database->get_topics(subject.id()));
+    EXPECT_NO_THROW(topics = m_database->get_topics(subject.id(), level));
     EXPECT_THAT(topics, SizeIs(3));
+    ASSERT_NO_THROW(topics.at(1).position());
     uint64_t const source_position{topics.at(1).position()};
-    EXPECT_NO_THROW(topics = m_database->get_topics(target_subject.id()));
+    EXPECT_NO_THROW(topics = m_database->get_topics(target_subject.id(), level));
     EXPECT_THAT(topics, SizeIs(3));
     uint64_t const target_position{topics.size() + 1};
-    EXPECT_NO_THROW(m_database->move_topic(subject.id(), 1, target_subject.id(), 4));
-    EXPECT_NO_THROW(topics = m_database->get_topics(subject.id()));
+    EXPECT_NO_THROW(m_database->move_topic(subject.id(), level, 1, target_subject.id(), 4));
+    EXPECT_NO_THROW(topics = m_database->get_topics(subject.id(), level));
     EXPECT_THAT(topics, SizeIs(2));
-    EXPECT_NO_THROW(topics = m_database->get_topics(target_subject.id()));
+    EXPECT_NO_THROW(topics = m_database->get_topics(target_subject.id(), level));
     EXPECT_THAT(topics, SizeIs(4));
-    EXPECT_NO_THROW(m_database->move_topic(subject.id(), 1, target_subject.id(), 1));
-    EXPECT_NO_THROW(topics = m_database->get_topics(subject.id()));
+    EXPECT_NO_THROW(m_database->move_topic(subject.id(), level, 1, target_subject.id(), 1));
+    EXPECT_NO_THROW(topics = m_database->get_topics(subject.id(), level));
     EXPECT_THAT(topics, SizeIs(1));
-    EXPECT_NO_THROW(topics = m_database->get_topics(target_subject.id()));
+    EXPECT_NO_THROW(topics = m_database->get_topics(target_subject.id(), level));
     EXPECT_THAT(topics, SizeIs(5));
 }
 
@@ -2286,7 +2322,7 @@ TEST_F(test_database, search_topics)
         ASSERT_GT(topic.position(), 0);
     }
 
-    EXPECT_NO_THROW(topics = m_database->search_topics(subject.id(), search_pattern));
+    EXPECT_NO_THROW(topics = m_database->search_topics(subject.id(), level, search_pattern));
     EXPECT_THAT(topics, SizeIs(1));
 }
 
@@ -2314,11 +2350,15 @@ TEST_F(test_database, change_topic_level)
         ASSERT_GT(topic.position(), 0);
     }
 
-    EXPECT_NO_THROW(topics = m_database->get_topics(subject.id()));
+    EXPECT_NO_THROW(topics = m_database->get_topics(subject.id(), level));
     EXPECT_THAT(topics, SizeIs(3));
+    ASSERT_NO_THROW(topics.at(1).level());
     EXPECT_EQ(topics.at(1).level(), level);
-    EXPECT_NO_THROW(m_database->change_topic_level(subject.id(), topics.at(1).position(), target_level));
-    EXPECT_NO_THROW(topics = m_database->get_topics(subject.id()));
-    EXPECT_THAT(topics, SizeIs(3));
+    EXPECT_NO_THROW(m_database->change_topic_level(subject.id(), topics.at(1).position(), topics.at(1).level(), target_level));
+    EXPECT_NO_THROW(topics = m_database->get_topics(subject.id(), level));
+    EXPECT_THAT(topics, SizeIs(2)) << "Subject should have one topic less in previous level";
+    EXPECT_NO_THROW(topics = m_database->get_topics(subject.id(), target_level));
+    EXPECT_THAT(topics, SizeIs(1)) << "Subject should have exactly one topic in target level";
+    ASSERT_NO_THROW(topics.at(1).level());
     EXPECT_EQ(topics.at(1).level(), target_level);
 }
