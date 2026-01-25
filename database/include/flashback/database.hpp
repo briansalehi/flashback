@@ -102,6 +102,30 @@ public:
     void remove_presenter(uint64_t presenter_id) const override;
     void merge_presenters(uint64_t source_id, uint64_t target_id) const override;
 
+    // cards
+    [[nodiscard]] Card create_card(Card card) const override;
+    void add_card_to_section(uint64_t card_id, uint64_t resource_id, uint64_t section_position) const override;
+    void add_card_to_topic(uint64_t card_id, uint64_t subject_id, uint64_t topic_position, expertise_level topic_level) const override;
+    void edit_card_headline(uint64_t card_id, std::string headline) const override;
+    void remove_card(uint64_t card_id) const override;
+    void merge_cards(uint64_t source_id, uint64_t target_id) const override;
+    [[nodiscard]] std::map<uint64_t, Card> search_cards(std::string_view search_pattern) const override;
+    void move_card_to_section(uint64_t card_id, uint64_t resource_id, uint64_t section_position) const override;
+    void move_card_to_topic(uint64_t card_id, uint64_t subject_id, uint64_t topic_position, expertise_level topic_level) const override;
+
+    // blocks
+    [[nodiscard]] Block create_block(uint64_t card_id, Block block) const override;
+    [[nodiscard]] std::map<uint64_t, Block> get_blocks(uint64_t card_id) const override;
+    void remove_block(uint64_t card_id, uint64_t block_position) const override;
+    void edit_block_content(uint64_t card_id, uint64_t block_position, std::string) const override;
+    void edit_block_type(uint64_t card_id, uint64_t block_position, Block::content_type type) const override;
+    void edit_block_extension(uint64_t card_id, uint64_t block_position, std::string extension) const override;
+    void edit_block_metadata(uint64_t card_id, uint64_t block_position, std::string metadata) const override;
+    void reorder_block(uint64_t card_id, uint64_t block_position, uint64_t target_position) const override;
+    void merge_blocks(uint64_t card_id, uint64_t source_position, uint64_t target_position) const override;
+    [[nodiscard]] std::pair<Block, Block> split_block(uint64_t card_id, uint64_t block_position) const override;
+    void move_block(uint64_t card_id, uint64_t block_position, uint64_t target_card_id, uint64_t target_position) const override;
+
     // nerves
     [[nodiscard]] Resource create_nerve(uint64_t user_id, std::string resource_name, uint64_t subject_id, uint64_t expiration) const override;
     [[nodiscard]] std::vector<Resource> get_nerves(uint64_t user_id) const override;

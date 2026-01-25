@@ -103,6 +103,30 @@ public:
     MOCK_METHOD((std::map<uint64_t, Topic>), search_topics, (uint64_t, expertise_level, std::string_view), (const, override));
     MOCK_METHOD(void, change_topic_level, (uint64_t, uint64_t, flashback::expertise_level, flashback::expertise_level), (const, override));
 
+    // cards
+    MOCK_METHOD(flashback::Card, create_card, (flashback::Card), (const, override));
+    MOCK_METHOD(void, add_card_to_section, (uint64_t, uint64_t, uint64_t), (const, override));
+    MOCK_METHOD(void, add_card_to_topic, (uint64_t, uint64_t, uint64_t, expertise_level), (const, override));
+    MOCK_METHOD(void, edit_card_headline, (uint64_t, std::string), (const, override));
+    MOCK_METHOD(void, remove_card, (uint64_t), (const, override));
+    MOCK_METHOD(void, merge_cards, (uint64_t, uint64_t), (const, override));
+    MOCK_METHOD((std::map<uint64_t, flashback::Card>), search_cards, (std::string_view), (const, override));
+    MOCK_METHOD(void, move_card_to_section, (uint64_t, uint64_t, uint64_t), (const, override));
+    MOCK_METHOD(void, move_card_to_topic, (uint64_t, uint64_t, uint64_t, expertise_level), (const, override));
+
+    // blocks
+    MOCK_METHOD(flashback::Block, create_block, (uint64_t, flashback::Block), (const, override));
+    MOCK_METHOD((std::map<uint64_t, flashback::Block>), get_blocks, (uint64_t), (const, override));
+    MOCK_METHOD(void, remove_block, (uint64_t, uint64_t), (const, override));
+    MOCK_METHOD(void, edit_block_content, (uint64_t, uint64_t, std::string), (const, override));
+    MOCK_METHOD(void, edit_block_type, (uint64_t, uint64_t, flashback::Block::content_type), (const, override));
+    MOCK_METHOD(void, edit_block_extension, (uint64_t, uint64_t, std::string), (const, override));
+    MOCK_METHOD(void, edit_block_metadata, (uint64_t, uint64_t, std::string), (const, override));
+    MOCK_METHOD(void, reorder_block, (uint64_t, uint64_t, uint64_t), (const, override));
+    MOCK_METHOD(void, merge_blocks, (uint64_t, uint64_t, uint64_t), (const, override));
+    MOCK_METHOD((std::pair<flashback::Block, flashback::Block>), split_block, (uint64_t, uint64_t), (const, override));
+    MOCK_METHOD(void, move_block, (uint64_t, uint64_t, uint64_t, uint64_t), (const, override));
+
     // practices
     MOCK_METHOD(expertise_level, get_user_cognitive_level, (uint64_t, uint64_t), (const, override));
 };

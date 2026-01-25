@@ -124,35 +124,38 @@ public:
     //mark_section_as_completed
 
     // cards
-    //create_card
-    //add_card_to_section
-    //add_card_to_topic
-    //edit_card_headline
-    //remove_card
-    //merge_cards
+    [[nodiscard]] virtual Card create_card(Card card) const = 0;
+    virtual void add_card_to_section(uint64_t card_id, uint64_t resource_id, uint64_t section_position) const = 0;
+    virtual void add_card_to_topic(uint64_t card_id, uint64_t subject_id, uint64_t topic_position, expertise_level topic_level) const = 0;
+    virtual void edit_card_headline(uint64_t card_id, std::string headline) const = 0;
+    virtual void remove_card(uint64_t card_id) const = 0;
+    virtual void merge_cards(uint64_t source_id, uint64_t target_id) const = 0;
+    [[nodiscard]] virtual std::map<uint64_t, Card> search_cards(std::string_view search_pattern) const = 0;
+    virtual void move_card_to_section(uint64_t card_id, uint64_t resource_id, uint64_t section_position) const = 0;
+    virtual void move_card_to_topic(uint64_t card_id, uint64_t subject_id, uint64_t topic_position, expertise_level topic_level) const = 0;
+    //get_card_weight
+    //make_progress
     //get_study_cards
     //get_practice_cards
     //get_topic_cards
     //get_section_cards
-    //search_cards
-    //move_card_to_section
-    //move_card_to_topic
-    //make_progress
     //mark_card_as_reviewed
     //mark_card_as_completed
     //get_variations
     //is_absolute
-    //get_card_weight
 
     // blocks
-    //create_block
-    //get_blocks
-    //edit_block
-    //remove_block
-    //reorder_block
-    //merge_blocks
-    //split_block
-    //move_block
+    [[nodiscard]] virtual Block create_block(uint64_t card_id, Block block) const = 0;
+    [[nodiscard]] virtual std::map<uint64_t, Block> get_blocks(uint64_t card_id) const = 0;
+    virtual void remove_block(uint64_t card_id, uint64_t block_position) const = 0;
+    virtual void edit_block_content(uint64_t card_id, uint64_t block_position, std::string) const = 0;
+    virtual void edit_block_type(uint64_t card_id, uint64_t block_position, Block::content_type type) const = 0;
+    virtual void edit_block_extension(uint64_t card_id, uint64_t block_position, std::string extension) const = 0;
+    virtual void edit_block_metadata(uint64_t card_id, uint64_t block_position, std::string metadata) const = 0;
+    virtual void reorder_block(uint64_t card_id, uint64_t block_position, uint64_t target_position) const = 0;
+    virtual void merge_blocks(uint64_t card_id, uint64_t source_position, uint64_t target_position) const = 0;
+    [[nodiscard]] virtual std::pair<Block, Block> split_block(uint64_t card_id, uint64_t block_position) const = 0;
+    virtual void move_block(uint64_t card_id, uint64_t block_position, uint64_t target_card_id, uint64_t target_position) const = 0;
 
     // assessments
     //create_assessment

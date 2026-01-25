@@ -603,7 +603,7 @@ TEST_F(test_database, GetRequirements)
     ASSERT_NO_THROW(m_database->add_requirement(roadmap.id(), dependent_milestone, required_milestone));
     EXPECT_NO_THROW(requirements = m_database->get_requirements(roadmap.id(), dependent_milestone.id(), dependent_milestone.level()));
     ASSERT_EQ(requirements.size(), 1);
-    ASSERT_NO_THROW(requirements.at(0));
+    ASSERT_NO_THROW(requirements.at(0).id());
     EXPECT_EQ(requirements.at(0).id(), required_milestone.id());
 }
 
@@ -626,7 +626,7 @@ TEST_F(test_database, CloneRoadmap)
     EXPECT_NO_THROW(cloned_roadmap = m_database->clone_roadmap(user_id, roadmap.id())) << "Roadmap should be cloned for the new user";
     ASSERT_NO_THROW(roadmaps = m_database->get_roadmaps(user_id));
     EXPECT_EQ(roadmaps.size(), 1) << "New user should have one cloned roadmap";
-    EXPECT_NO_THROW(roadmaps.at(0));
+    EXPECT_NO_THROW(roadmaps.at(0).id());
     EXPECT_GT(roadmaps.at(0).id(), 0);
     EXPECT_NE(roadmaps.at(0).id(), roadmap.id()) << "Cloned roadmap should not have the same ID as the original roadmap";
 }
@@ -659,7 +659,9 @@ TEST_F(test_database, ReorderMilestone)
     EXPECT_EQ(milestone_pos3.position(), 3);
     ASSERT_NO_THROW(milestones = m_database->get_milestones(roadmap.id()));
     ASSERT_THAT(milestones, testing::SizeIs(3));
-    ASSERT_NO_THROW(milestones.at(2));
+    ASSERT_NO_THROW(milestones.at(0).id());
+    ASSERT_NO_THROW(milestones.at(1).id());
+    ASSERT_NO_THROW(milestones.at(2).id());
     EXPECT_EQ(milestones.at(0).id(), milestone_pos1.id()) << "Milestone 1 should be in position 1 before reordering";
     EXPECT_EQ(milestones.at(0).position(), 1) << "Vector should have the same order as milestones";
     EXPECT_EQ(milestones.at(1).id(), milestone_pos2.id()) << "Milestone 2 should be in position 2 before reordering";
@@ -669,7 +671,9 @@ TEST_F(test_database, ReorderMilestone)
     EXPECT_NO_THROW(m_database->reorder_milestone(roadmap.id(), 1, 3));
     ASSERT_NO_THROW(milestones = m_database->get_milestones(roadmap.id()));
     ASSERT_THAT(milestones, testing::SizeIs(3));
-    ASSERT_NO_THROW(milestones.at(2));
+    ASSERT_NO_THROW(milestones.at(0).id());
+    ASSERT_NO_THROW(milestones.at(1).id());
+    ASSERT_NO_THROW(milestones.at(2).id());
     EXPECT_EQ(milestones.at(0).id(), milestone_pos2.id()) << "Milestone 2 should be in position 1 after reordering";
     EXPECT_EQ(milestones.at(0).position(), 1) << "Vector should have the same order as milestones";
     EXPECT_EQ(milestones.at(1).id(), milestone_pos3.id()) << "Milestone 3 should be in position 2 after reordering";
@@ -710,11 +714,12 @@ TEST_F(test_database, RemoveMilestone)
 
     ASSERT_NO_THROW(milestones = m_database->get_milestones(roadmap.id()));
     ASSERT_THAT(milestones, SizeIs(3));
-    ASSERT_NO_THROW(milestones.at(2));
+    ASSERT_NO_THROW(milestones.at(2).id());
     EXPECT_NO_THROW(m_database->remove_milestone(roadmap.id(), milestones.at(2).id()));
     ASSERT_NO_THROW(milestones = m_database->get_milestones(roadmap.id()));
     ASSERT_THAT(milestones, SizeIs(2));
-    ASSERT_NO_THROW(milestones.at(1));
+    ASSERT_NO_THROW(milestones.at(0).id());
+    ASSERT_NO_THROW(milestones.at(1).id());
     EXPECT_GT(milestones.at(0).id(), 0);
     EXPECT_GT(milestones.at(1).id(), 0);
 }
@@ -902,7 +907,7 @@ TEST_F(test_database, get_resources)
     ASSERT_NO_THROW(m_database->add_resource_to_subject(secondary_resource.id(), subject.id()));
     EXPECT_NO_THROW(resources = m_database->get_resources(subject.id()));
     EXPECT_THAT(resources, SizeIs(2));
-    ASSERT_NO_THROW(resources.at(0));
+    ASSERT_NO_THROW(resources.at(0).id());
     EXPECT_EQ(resources.at(0).id(), resource.id());
     EXPECT_EQ(resources.at(0).name(), resource.name());
     EXPECT_EQ(resources.at(0).type(), resource.type());
@@ -2362,3 +2367,95 @@ TEST_F(test_database, change_topic_level)
     ASSERT_NO_THROW(topics.at(1).level());
     EXPECT_EQ(topics.at(1).level(), target_level);
 }
+
+TEST_F(test_database, create_card)
+{
+    constexpr auto headline{"Have you considered using Flashback?"};
+    flashback::Card card{};
+    card.set_headline(headline);
+
+    EXPECT_EQ(card.id(), 0);
+    EXPECT_EQ(card.state(), flashback::Card::draft);
+    EXPECT_EQ(card.headline(), headline);
+    EXPECT_NO_THROW(card = m_database->create_card(card));
+    EXPECT_GT(card.id(), 0) << "Card ID must be set after creation";
+    EXPECT_EQ(card.state(), flashback::Card::draft);
+    EXPECT_EQ(card.headline(), headline);
+}
+
+TEST_F(test_database, add_card_to_section)
+{
+}
+
+TEST_F(test_database, add_card_to_topic)
+{
+}
+
+TEST_F(test_database, edit_card_headline)
+{
+}
+
+TEST_F(test_database, remove_card)
+{
+}
+
+TEST_F(test_database, merge_cards)
+{
+}
+
+TEST_F(test_database, search_cards)
+{
+}
+
+TEST_F(test_database, move_card_to_section)
+{
+}
+
+TEST_F(test_database, move_card_to_topic)
+{
+}
+
+TEST_F(test_database, create_block)
+{
+}
+
+TEST_F(test_database, get_blocks)
+{
+}
+
+TEST_F(test_database, remove_block)
+{
+}
+
+TEST_F(test_database, edit_block_content)
+{
+}
+
+TEST_F(test_database, edit_block_type)
+{
+}
+
+TEST_F(test_database, edit_block_extension)
+{
+}
+
+TEST_F(test_database, edit_block_metadata)
+{
+}
+
+TEST_F(test_database, reorder_block)
+{
+}
+
+TEST_F(test_database, merge_blocks)
+{
+}
+
+TEST_F(test_database, split_block)
+{
+}
+
+TEST_F(test_database, move_block)
+{
+}
+

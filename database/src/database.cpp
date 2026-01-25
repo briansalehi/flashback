@@ -609,7 +609,7 @@ void database::edit_section_link(uint64_t resource_id, uint64_t position, std::s
     exec("call edit_section_link($1, $2, $3)", resource_id, position, link);
 }
 
-Topic database::create_topic(uint64_t const subject_id, std::string name,expertise_level const level, uint64_t const position) const
+Topic database::create_topic(uint64_t const subject_id, std::string name, expertise_level const level, uint64_t const position) const
 {
     Topic topic{};
     topic.set_name(name);
@@ -668,7 +668,8 @@ void database::rename_topic(uint64_t const subject_id, expertise_level const lev
     exec("call rename_topic($1, $2, $3, $4)", subject_id, level_to_string(level), position, name);
 }
 
-void database::move_topic(uint64_t const subject_id, expertise_level const level, uint64_t const position, uint64_t const target_subject_id, uint64_t const target_position) const
+void database::move_topic(uint64_t const subject_id, expertise_level const level, uint64_t const position, uint64_t const target_subject_id,
+                          uint64_t const target_position) const
 {
     exec("call move_topic($1, $2, $3, $4, $5)", subject_id, level_to_string(level), position, target_subject_id, target_position);
 }
@@ -679,7 +680,8 @@ std::map<uint64_t, Topic> database::search_topics(uint64_t const subject_id, exp
 
     if (!search_pattern.empty())
     {
-        for (pqxx::row const& row: query("select similarity, position, name, level from search_topics($1, $2, $3) order by similarity", subject_id, level_to_string(level), search_pattern))
+        for (pqxx::row const& row: query("select similarity, position, name, level from search_topics($1, $2, $3) order by similarity", subject_id,
+                                         level_to_string(level), search_pattern))
         {
             uint64_t const similarity{row.at("similarity").as<uint64_t>()};
             Topic topic{};
@@ -693,7 +695,8 @@ std::map<uint64_t, Topic> database::search_topics(uint64_t const subject_id, exp
     return topics;
 }
 
-void database::change_topic_level(uint64_t const subject_id, uint64_t const position, flashback::expertise_level const level, flashback::expertise_level const target) const
+void database::change_topic_level(uint64_t const subject_id, uint64_t const position, flashback::expertise_level const level,
+                                  flashback::expertise_level const target) const
 {
     exec("call change_topic_level($1, $2, $3, $4)", subject_id, position, level_to_string(level), level_to_string(target));
 }
@@ -820,6 +823,98 @@ void database::remove_presenter(uint64_t const presenter_id) const
 void database::merge_presenters(uint64_t const source_id, uint64_t const target_id) const
 {
     exec("call merge_presenters($1, $2)", source_id, target_id);
+}
+
+Card database::create_card(Card card) const
+{
+    if (!card.headline().empty())
+    {
+        if (pqxx::result const result{query("select create_card($1) as id", card.headline())}; result.size() == 1)
+        {
+            card.set_id(result.at(0).at("id").as<uint64_t>());
+        }
+    }
+    return card;
+}
+
+void database::add_card_to_section(uint64_t card_id, uint64_t resource_id, uint64_t section_position) const
+{
+}
+
+void database::add_card_to_topic(uint64_t card_id, uint64_t subject_id, uint64_t topic_position, expertise_level topic_level) const
+{
+}
+
+void database::edit_card_headline(uint64_t card_id, std::string headline) const
+{
+}
+
+void database::remove_card(uint64_t card_id) const
+{
+}
+
+void database::merge_cards(uint64_t source_id, uint64_t target_id) const
+{
+}
+
+std::map<uint64_t, Card> database::search_cards(std::string_view search_pattern) const
+{
+    return {};
+}
+
+void database::move_card_to_section(uint64_t card_id, uint64_t resource_id, uint64_t section_position) const
+{
+}
+
+void database::move_card_to_topic(uint64_t card_id, uint64_t subject_id, uint64_t topic_position, expertise_level topic_level) const
+{
+}
+
+Block database::create_block(uint64_t card_id, Block block) const
+{
+    return {};
+}
+
+std::map<uint64_t, Block> database::get_blocks(uint64_t card_id) const
+{
+    return {};
+}
+
+void database::remove_block(uint64_t card_id, uint64_t block_position) const
+{
+}
+
+void database::edit_block_content(uint64_t card_id, uint64_t block_position, std::string) const
+{
+}
+
+void database::edit_block_type(uint64_t card_id, uint64_t block_position, Block::content_type type) const
+{
+}
+
+void database::edit_block_extension(uint64_t card_id, uint64_t block_position, std::string extension) const
+{
+}
+
+void database::edit_block_metadata(uint64_t card_id, uint64_t block_position, std::string metadata) const
+{
+}
+
+void database::reorder_block(uint64_t card_id, uint64_t block_position, uint64_t target_position) const
+{
+}
+
+void database::merge_blocks(uint64_t card_id, uint64_t source_position, uint64_t target_position) const
+{
+}
+
+std::pair<Block, Block> database::split_block(uint64_t card_id, uint64_t block_position) const
+{
+    return {};
+}
+
+void database::move_block(uint64_t card_id, uint64_t block_position, uint64_t target_card_id, uint64_t target_position) const
+{
 }
 
 Resource database::create_nerve(uint64_t const user_id, std::string resource_name, uint64_t const subject_id, uint64_t const expiration) const

@@ -61,7 +61,7 @@ message Card {
 
     uint64 id = 1;
     card_state state = 2;
-    string heading = 3;
+    string headline = 3;
 }
 
 message Block {

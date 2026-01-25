@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict SyolU9JGagdqRPupBoygmnm9N7yaeF9QirhFRZKJ3yeNxt6xfWz3WQckg5Sfu8v
+\restrict HzmRTBOWedggyQcyJbFGnkakQHVxIWxMtRQdf7ukW6hqfoGzpq05QAqauomfXJ1
 
 -- Dumped from database version 18.1
 -- Dumped by pg_dump version 18.0
@@ -2411,43 +2411,6 @@ end; $$;
 ALTER PROCEDURE flashback.reorder_section(IN resource_id integer, IN section_position integer, IN target_position integer) OWNER TO flashback;
 
 --
--- Name: reorder_sections_cards(integer, integer, integer, integer); Type: PROCEDURE; Schema: flashback; Owner: flashback
---
-
-CREATE PROCEDURE flashback.reorder_sections_cards(IN target_resource integer, IN target_section integer, IN target_card integer, IN new_position integer)
-    LANGUAGE plpgsql
-    AS $$
-declare old_position integer;
-declare top_position integer;
-begin
-    lock table sections_cards in row exclusive mode;
-
-    select coalesce(max(position), 0) + 1 into top_position
-    from sections_cards where section = target_section;
-
-    select position into old_position from sections_cards sc
-    where sc.resource = target_resource and sc.section = target_section and sc.card = target_card;
-
-    update sections_cards sc set position = top_position
-    where sc.resource = target_resource and sc.section = target_section and sc.card = target_card and sc.position = old_position;
-
-    if new_position < old_position then
-        update sections_cards sc set position = sc.position + 1
-        where sc.resource = target_resource and sc.section = target_section and sc.position >= new_position and sc.position < old_position;
-    else
-        update sections_cards sc set position = sc.position - 1
-        where sc.resource = target_resource and section = sc.target_section and sc.position > old_position and sc.position <= new_position;
-    end if;
-
-    update sections_cards sc set position = new_position
-    where sc.resource = target_resource and sc.section = target_section and sc.card = target_card and sc.position = top_position;
-end;
-$$;
-
-
-ALTER PROCEDURE flashback.reorder_sections_cards(IN target_resource integer, IN target_section integer, IN target_card integer, IN new_position integer) OWNER TO flashback;
-
---
 -- Name: reorder_topic(integer, flashback.expertise_level, integer, integer); Type: PROCEDURE; Schema: flashback; Owner: flashback
 --
 
@@ -2477,41 +2440,6 @@ end; $$;
 
 
 ALTER PROCEDURE flashback.reorder_topic(IN subject_id integer, IN topic_level flashback.expertise_level, IN topic_position integer, IN target_position integer) OWNER TO flashback;
-
---
--- Name: reorder_topics_cards(integer, flashback.expertise_level, integer, integer, integer); Type: PROCEDURE; Schema: flashback; Owner: flashback
---
-
-CREATE PROCEDURE flashback.reorder_topics_cards(IN subject integer, IN level flashback.expertise_level, IN target_topic integer, IN target_card integer, IN new_position integer)
-    LANGUAGE plpgsql
-    AS $$
-declare old_position integer;
-declare top_position integer;
-begin
-    select position into old_position from topics_cards
-    where subject = subject and level = level and topic = target_topic and card = target_card;
-
-    select max(position) + 1 into top_position from topics_cards
-    where subject = subject and level = level and topic = target_topic;
-
-    update topics_cards set position = top_position
-    where subject = subject and level = level and topic = target_topic and card = target_card and position = old_position;
-
-    if new_position < old_position then
-        update topics_cards set position = position + 1
-        where subject = subject and level = level and topic = target_topic and position >= new_position and position < old_position;
-    else
-        update topics_cards set position = position - 1
-        where subject = subject and level = level and topic = target_topic and position > old_position and position <= new_position;
-    end if;
-
-    update topics_cards set position = new_position
-    where subject = subject and level = level and topic = target_topic and card = target_card and position = top_position;
-end;
-$$;
-
-
-ALTER PROCEDURE flashback.reorder_topics_cards(IN subject integer, IN level flashback.expertise_level, IN target_topic integer, IN target_card integer, IN new_position integer) OWNER TO flashback;
 
 --
 -- Name: reset_password(integer, character varying); Type: PROCEDURE; Schema: flashback; Owner: flashback
@@ -4206,5 +4134,5 @@ GRANT ALL ON SCHEMA public TO flashback_client;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict SyolU9JGagdqRPupBoygmnm9N7yaeF9QirhFRZKJ3yeNxt6xfWz3WQckg5Sfu8v
+\unrestrict HzmRTBOWedggyQcyJbFGnkakQHVxIWxMtRQdf7ukW6hqfoGzpq05QAqauomfXJ1
 
