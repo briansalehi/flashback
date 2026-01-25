@@ -837,83 +837,93 @@ Card database::create_card(Card card) const
     return card;
 }
 
-void database::add_card_to_section(uint64_t card_id, uint64_t resource_id, uint64_t section_position) const
+void database::add_card_to_section(uint64_t const card_id, uint64_t const resource_id, uint64_t const section_position) const
 {
 }
 
-void database::add_card_to_topic(uint64_t card_id, uint64_t subject_id, uint64_t topic_position, expertise_level topic_level) const
+void database::add_card_to_topic(uint64_t const card_id, uint64_t const subject_id, uint64_t const topic_position, expertise_level const topic_level) const
 {
 }
 
-void database::edit_card_headline(uint64_t card_id, std::string headline) const
+void database::edit_card_headline(uint64_t const card_id, std::string headline) const
 {
 }
 
-void database::remove_card(uint64_t card_id) const
+void database::remove_card(uint64_t const card_id) const
 {
 }
 
-void database::merge_cards(uint64_t source_id, uint64_t target_id) const
+void database::merge_cards(uint64_t const source_id, uint64_t const target_id) const
 {
 }
 
-std::map<uint64_t, Card> database::search_cards(std::string_view search_pattern) const
-{
-    return {};
-}
-
-void database::move_card_to_section(uint64_t card_id, uint64_t resource_id, uint64_t section_position) const
-{
-}
-
-void database::move_card_to_topic(uint64_t card_id, uint64_t subject_id, uint64_t topic_position, expertise_level topic_level) const
-{
-}
-
-Block database::create_block(uint64_t card_id, Block block) const
+std::map<uint64_t, Card> database::search_cards(uint64_t const subject_id, expertise_level const level, std::string_view search_pattern) const
 {
     return {};
 }
 
-std::map<uint64_t, Block> database::get_blocks(uint64_t card_id) const
+void database::move_card_to_section(uint64_t const card_id, uint64_t const resource_id, uint64_t const section_position) const
+{
+}
+
+void database::move_card_to_topic(uint64_t const card_id, uint64_t const subject_id, uint64_t const topic_position, expertise_level const topic_level) const
+{
+}
+
+std::vector<Card> database::get_section_cards(uint64_t resource_id, uint64_t sections_position) const
 {
     return {};
 }
 
-void database::remove_block(uint64_t card_id, uint64_t block_position) const
-{
-}
-
-void database::edit_block_content(uint64_t card_id, uint64_t block_position, std::string) const
-{
-}
-
-void database::edit_block_type(uint64_t card_id, uint64_t block_position, Block::content_type type) const
-{
-}
-
-void database::edit_block_extension(uint64_t card_id, uint64_t block_position, std::string extension) const
-{
-}
-
-void database::edit_block_metadata(uint64_t card_id, uint64_t block_position, std::string metadata) const
-{
-}
-
-void database::reorder_block(uint64_t card_id, uint64_t block_position, uint64_t target_position) const
-{
-}
-
-void database::merge_blocks(uint64_t card_id, uint64_t source_position, uint64_t target_position) const
-{
-}
-
-std::pair<Block, Block> database::split_block(uint64_t card_id, uint64_t block_position) const
+std::vector<Card> database::get_topic_cards(uint64_t subject_id, uint64_t topic_position, expertise_level topic_level) const
 {
     return {};
 }
 
-void database::move_block(uint64_t card_id, uint64_t block_position, uint64_t target_card_id, uint64_t target_position) const
+Block database::create_block(uint64_t const card_id, Block block) const
+{
+    return {};
+}
+
+std::map<uint64_t, Block> database::get_blocks(uint64_t const card_id) const
+{
+    return {};
+}
+
+void database::remove_block(uint64_t const card_id, uint64_t const block_position) const
+{
+}
+
+void database::edit_block_content(uint64_t const card_id, uint64_t const block_position, std::string content) const
+{
+}
+
+void database::edit_block_type(uint64_t const card_id, uint64_t const block_position, Block::content_type const type) const
+{
+}
+
+void database::edit_block_extension(uint64_t const card_id, uint64_t const block_position, std::string extension) const
+{
+}
+
+void database::edit_block_metadata(uint64_t const card_id, uint64_t const block_position, std::string metadata) const
+{
+}
+
+void database::reorder_block(uint64_t const card_id, uint64_t const block_position, uint64_t const target_position) const
+{
+}
+
+void database::merge_blocks(uint64_t const card_id, uint64_t const source_position, uint64_t const target_position) const
+{
+}
+
+std::pair<Block, Block> database::split_block(uint64_t const card_id, uint64_t const block_position) const
+{
+    return {};
+}
+
+void database::move_block(uint64_t const card_id, uint64_t const block_position, uint64_t const target_card_id, uint64_t const target_position) const
 {
 }
 

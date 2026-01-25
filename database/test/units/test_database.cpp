@@ -2385,26 +2385,424 @@ TEST_F(test_database, create_card)
 
 TEST_F(test_database, add_card_to_section)
 {
+    flashback::Resource resource{};
+    flashback::Section section{};
+    flashback::Card card{};
+    std::chrono::seconds const production{std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch())};
+    std::chrono::seconds const expiration{production + std::chrono::years{1}};
+    resource.clear_id();
+    resource.set_name("C++ Book");
+    resource.set_type(flashback::Resource::book);
+    resource.set_pattern(flashback::Resource::chapter);
+    resource.set_link(R"(https://flashback.eu.com)");
+    resource.set_production(production.count());
+    resource.set_expiration(expiration.count());
+    section.clear_position();
+    section.set_name("Chapter 1");
+    section.set_link(R"(https://flashback.eu.com/chapter1)");
+    card.clear_id();
+    card.set_state(flashback::Card::draft);
+    card.set_headline("Have you considered using Flashback?");
+
+    ASSERT_NO_THROW(resource = m_database->create_resource(resource));
+    ASSERT_GT(resource.id(), 0);
+    ASSERT_NO_THROW(section = m_database->create_section(resource.id(), section.position(), section.name(), section.link()));
+    ASSERT_GT(section.position(), 0);
+    ASSERT_NO_THROW(card = m_database->create_card(card));
+    ASSERT_GT(card.id(), 0);
+    EXPECT_NO_THROW(m_database->add_card_to_section(card.id(), resource.id(), section.position()));
 }
 
 TEST_F(test_database, add_card_to_topic)
 {
+    flashback::Resource resource{};
+    flashback::Section section{};
+    flashback::Card card{};
+    flashback::Subject subject{};
+    flashback::Topic topic{};
+    std::chrono::seconds const production{std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch())};
+    std::chrono::seconds const expiration{production + std::chrono::years{1}};
+    resource.clear_id();
+    resource.set_name("C++ Book");
+    resource.set_type(flashback::Resource::book);
+    resource.set_pattern(flashback::Resource::chapter);
+    resource.set_link(R"(https://flashback.eu.com)");
+    resource.set_production(production.count());
+    resource.set_expiration(expiration.count());
+    section.clear_position();
+    section.set_name("Chapter 1");
+    section.set_link(R"(https://flashback.eu.com/chapter1)");
+    card.clear_id();
+    card.set_state(flashback::Card::draft);
+    card.set_headline("Have you considered using Flashback?");
+    subject.clear_id();
+    subject.set_name("C++");
+    topic.clear_position();
+    topic.set_level(flashback::expertise_level::surface);
+    topic.set_name("Reflection");
+
+    ASSERT_NO_THROW(resource = m_database->create_resource(resource));
+    ASSERT_GT(resource.id(), 0);
+    ASSERT_NO_THROW(section = m_database->create_section(resource.id(), section.position(), section.name(), section.link()));
+    ASSERT_EQ(section.position(), 1);
+    ASSERT_NO_THROW(card = m_database->create_card(card));
+    ASSERT_GT(card.id(), 0);
+    ASSERT_NO_THROW(m_database->add_card_to_section(card.id(), resource.id(), section.position()));
+    ASSERT_NO_THROW(subject = m_database->create_subject(subject.name()));
+    ASSERT_GT(subject.id(), 0);
+    ASSERT_NO_THROW(topic = m_database->create_topic(subject.id(), topic.name(), topic.level(), topic.position()));
+    ASSERT_EQ(topic.position(), 1);
+    EXPECT_NO_THROW(m_database->add_card_to_topic(card.id(), subject.id(), topic.position(), topic.level()));
+}
+
+TEST_F(test_database, get_section_cards)
+{
+    flashback::Resource resource{};
+    flashback::Section section{};
+    flashback::Card card{};
+    flashback::Subject subject{};
+    flashback::Topic topic{};
+    std::chrono::seconds const production{std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch())};
+    std::chrono::seconds const expiration{production + std::chrono::years{1}};
+    resource.clear_id();
+    resource.set_name("C++ Book");
+    resource.set_type(flashback::Resource::book);
+    resource.set_pattern(flashback::Resource::chapter);
+    resource.set_link(R"(https://flashback.eu.com)");
+    resource.set_production(production.count());
+    resource.set_expiration(expiration.count());
+    section.clear_position();
+    section.set_name("Chapter 1");
+    section.set_link(R"(https://flashback.eu.com/chapter1)");
+    card.clear_id();
+    card.set_state(flashback::Card::draft);
+    card.set_headline("Have you considered using Flashback?");
+    subject.clear_id();
+    subject.set_name("C++");
+    topic.clear_position();
+    topic.set_level(flashback::expertise_level::surface);
+    topic.set_name("Reflection");
+
+    ASSERT_NO_THROW(resource = m_database->create_resource(resource));
+    ASSERT_GT(resource.id(), 0);
+    ASSERT_NO_THROW(section = m_database->create_section(resource.id(), section.position(), section.name(), section.link()));
+    ASSERT_EQ(section.position(), 1);
+    ASSERT_NO_THROW(card = m_database->create_card(card));
+    ASSERT_GT(card.id(), 0);
+    ASSERT_NO_THROW(m_database->add_card_to_section(card.id(), resource.id(), section.position()));
+    ASSERT_NO_THROW(subject = m_database->create_subject(subject.name()));
+    ASSERT_GT(subject.id(), 0);
+    ASSERT_NO_THROW(topic = m_database->create_topic(subject.id(), topic.name(), topic.level(), topic.position()));
+    ASSERT_EQ(topic.position(), 1);
+    ASSERT_NO_THROW(m_database->add_card_to_topic(card.id(), subject.id(), topic.position(), topic.level()));
+    std::vector<flashback::Card> cards{};
+    EXPECT_NO_THROW(cards = m_database->get_section_cards(resource.id(), section.position()));
+    EXPECT_THAT(cards, testing::SizeIs(1));
+    ASSERT_NO_THROW(cards.at(0).id());
+    EXPECT_GT(cards.at(0).id(), card.id());
+}
+
+TEST_F(test_database, get_topic_cards)
+{
+    flashback::Resource resource{};
+    flashback::Section section{};
+    flashback::Card card{};
+    flashback::Subject subject{};
+    flashback::Topic topic{};
+    std::chrono::seconds const production{std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch())};
+    std::chrono::seconds const expiration{production + std::chrono::years{1}};
+    resource.clear_id();
+    resource.set_name("C++ Book");
+    resource.set_type(flashback::Resource::book);
+    resource.set_pattern(flashback::Resource::chapter);
+    resource.set_link(R"(https://flashback.eu.com)");
+    resource.set_production(production.count());
+    resource.set_expiration(expiration.count());
+    section.clear_position();
+    section.set_name("Chapter 1");
+    section.set_link(R"(https://flashback.eu.com/chapter1)");
+    card.clear_id();
+    card.set_state(flashback::Card::draft);
+    card.set_headline("Have you considered using Flashback?");
+    subject.clear_id();
+    subject.set_name("C++");
+    topic.clear_position();
+    topic.set_level(flashback::expertise_level::surface);
+    topic.set_name("Reflection");
+
+    ASSERT_NO_THROW(resource = m_database->create_resource(resource));
+    ASSERT_GT(resource.id(), 0);
+    ASSERT_NO_THROW(section = m_database->create_section(resource.id(), section.position(), section.name(), section.link()));
+    ASSERT_EQ(section.position(), 1);
+    ASSERT_NO_THROW(card = m_database->create_card(card));
+    ASSERT_GT(card.id(), 0);
+    ASSERT_NO_THROW(m_database->add_card_to_section(card.id(), resource.id(), section.position()));
+    ASSERT_NO_THROW(subject = m_database->create_subject(subject.name()));
+    ASSERT_GT(subject.id(), 0);
+    ASSERT_NO_THROW(topic = m_database->create_topic(subject.id(), topic.name(), topic.level(), topic.position()));
+    ASSERT_EQ(topic.position(), 1);
+    ASSERT_NO_THROW(m_database->add_card_to_topic(card.id(), subject.id(), topic.position(), topic.level()));
+    std::vector<flashback::Card> cards{};
+    EXPECT_NO_THROW(cards = m_database->get_topic_cards(subject.id(), topic.position(), topic.level()));
+    EXPECT_THAT(cards, testing::SizeIs(1));
+    ASSERT_NO_THROW(cards.at(0).id());
+    EXPECT_GT(cards.at(0).id(), card.id());
 }
 
 TEST_F(test_database, edit_card_headline)
 {
+    flashback::Resource resource{};
+    flashback::Section section{};
+    flashback::Card card{};
+    flashback::Subject subject{};
+    flashback::Topic topic{};
+    std::chrono::seconds const production{std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch())};
+    std::chrono::seconds const expiration{production + std::chrono::years{1}};
+    resource.clear_id();
+    resource.set_name("C++ Book");
+    resource.set_type(flashback::Resource::book);
+    resource.set_pattern(flashback::Resource::chapter);
+    resource.set_link(R"(https://flashback.eu.com)");
+    resource.set_production(production.count());
+    resource.set_expiration(expiration.count());
+    section.clear_position();
+    section.set_name("Chapter 1");
+    section.set_link(R"(https://flashback.eu.com/chapter1)");
+    card.clear_id();
+    card.set_state(flashback::Card::draft);
+    card.set_headline("Have you considered using Flashback?");
+    subject.clear_id();
+    subject.set_name("C++");
+    topic.clear_position();
+    topic.set_level(flashback::expertise_level::surface);
+    topic.set_name("Reflection");
+
+    ASSERT_NO_THROW(resource = m_database->create_resource(resource));
+    ASSERT_GT(resource.id(), 0);
+    ASSERT_NO_THROW(section = m_database->create_section(resource.id(), section.position(), section.name(), section.link()));
+    ASSERT_EQ(section.position(), 1);
+    ASSERT_NO_THROW(card = m_database->create_card(card));
+    ASSERT_GT(card.id(), 0);
+    ASSERT_NO_THROW(m_database->add_card_to_section(card.id(), resource.id(), section.position()));
+    ASSERT_NO_THROW(subject = m_database->create_subject(subject.name()));
+    ASSERT_GT(subject.id(), 0);
+    ASSERT_NO_THROW(topic = m_database->create_topic(subject.id(), topic.name(), topic.level(), topic.position()));
+    ASSERT_EQ(topic.position(), 1);
+    ASSERT_NO_THROW(m_database->add_card_to_topic(card.id(), subject.id(), topic.position(), topic.level()));
+    std::vector<flashback::Card> cards{};
+    constexpr auto modified_headline{"Haven't you started using Flashback yet?"};
+    EXPECT_NO_THROW(m_database->edit_card_headline(card.id(), modified_headline));
+    ASSERT_NO_THROW(cards = m_database->get_topic_cards(subject.id(), topic.position(), topic.level()));
+    ASSERT_THAT(cards, testing::SizeIs(1));
+    ASSERT_NO_THROW(cards.at(0).id());
+    EXPECT_GT(cards.at(0).id(), card.id());
+    EXPECT_EQ(cards.at(0).headline(), modified_headline);
 }
 
 TEST_F(test_database, remove_card)
 {
+    flashback::Resource resource{};
+    flashback::Section section{};
+    flashback::Card first_card{};
+    flashback::Card second_card{};
+    flashback::Card third_card{};
+    flashback::Subject subject{};
+    flashback::Topic topic{};
+    std::chrono::seconds const production{std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch())};
+    std::chrono::seconds const expiration{production + std::chrono::years{1}};
+    resource.clear_id();
+    resource.set_name("C++ Book");
+    resource.set_type(flashback::Resource::book);
+    resource.set_pattern(flashback::Resource::chapter);
+    resource.set_link(R"(https://flashback.eu.com)");
+    resource.set_production(production.count());
+    resource.set_expiration(expiration.count());
+    section.clear_position();
+    section.set_name("Chapter 1");
+    section.set_link(R"(https://flashback.eu.com/chapter1)");
+    first_card.clear_id();
+    first_card.set_state(flashback::Card::draft);
+    first_card.set_headline("Have you considered using Flashback?");
+    second_card.clear_id();
+    second_card.set_state(flashback::Card::draft);
+    second_card.set_headline("Haven't you started using Flashback yet?");
+    third_card.clear_id();
+    third_card.set_state(flashback::Card::draft);
+    third_card.set_headline("Aren't you tired of not achieving your goals?");
+    subject.clear_id();
+    subject.set_name("C++");
+    topic.clear_position();
+    topic.set_level(flashback::expertise_level::surface);
+    topic.set_name("Reflection");
+
+    ASSERT_NO_THROW(resource = m_database->create_resource(resource));
+    ASSERT_GT(resource.id(), 0);
+    ASSERT_NO_THROW(section = m_database->create_section(resource.id(), section.position(), section.name(), section.link()));
+    ASSERT_GT(section.position(), 0);
+    ASSERT_NO_THROW(first_card = m_database->create_card(first_card));
+    ASSERT_GT(first_card.id(), 0);
+    ASSERT_NO_THROW(m_database->add_card_to_section(first_card.id(), resource.id(), section.position()));
+    ASSERT_NO_THROW(second_card = m_database->create_card(second_card));
+    ASSERT_GT(second_card.id(), 0);
+    ASSERT_NO_THROW(m_database->add_card_to_section(second_card.id(), resource.id(), section.position()));
+    ASSERT_NO_THROW(third_card = m_database->create_card(third_card));
+    ASSERT_GT(third_card.id(), 0);
+    ASSERT_NO_THROW(m_database->add_card_to_section(third_card.id(), resource.id(), section.position()));
+    ASSERT_NO_THROW(subject = m_database->create_subject(subject.name()));
+    ASSERT_GT(subject.id(), 0);
+    ASSERT_NO_THROW(topic = m_database->create_topic(subject.id(), topic.name(), topic.level(), topic.position()));
+    ASSERT_EQ(topic.position(), 1);
+    ASSERT_NO_THROW(m_database->add_card_to_topic(first_card.id(), subject.id(), topic.position(), topic.level()));
+    ASSERT_NO_THROW(m_database->add_card_to_topic(second_card.id(), subject.id(), topic.position(), topic.level()));
+    ASSERT_NO_THROW(m_database->add_card_to_topic(third_card.id(), subject.id(), topic.position(), topic.level()));
+    std::vector<flashback::Card> cards{};
+    ASSERT_NO_THROW(cards = m_database->get_topic_cards(subject.id(), topic.position(), topic.level()));
+    ASSERT_THAT(cards, testing::SizeIs(3));
+    ASSERT_NO_THROW(cards = m_database->get_section_cards(resource.id(), section.position()));
+    ASSERT_THAT(cards, testing::SizeIs(3));
+    EXPECT_NO_THROW(m_database->remove_card(second_card.id()));
+    ASSERT_NO_THROW(cards = m_database->get_topic_cards(subject.id(), topic.position(), topic.level()));
+    ASSERT_THAT(cards, testing::SizeIs(2));
+    ASSERT_NO_THROW(cards = m_database->get_section_cards(resource.id(), section.position()));
+    ASSERT_THAT(cards, testing::SizeIs(2));
 }
 
 TEST_F(test_database, merge_cards)
 {
+    flashback::Resource resource{};
+    flashback::Section section{};
+    flashback::Card first_card{};
+    flashback::Card second_card{};
+    flashback::Card third_card{};
+    flashback::Subject subject{};
+    flashback::Topic topic{};
+    std::chrono::seconds const production{std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch())};
+    std::chrono::seconds const expiration{production + std::chrono::years{1}};
+    resource.clear_id();
+    resource.set_name("C++ Book");
+    resource.set_type(flashback::Resource::book);
+    resource.set_pattern(flashback::Resource::chapter);
+    resource.set_link(R"(https://flashback.eu.com)");
+    resource.set_production(production.count());
+    resource.set_expiration(expiration.count());
+    section.clear_position();
+    section.set_name("Chapter 1");
+    section.set_link(R"(https://flashback.eu.com/chapter1)");
+    first_card.clear_id();
+    first_card.set_state(flashback::Card::draft);
+    first_card.set_headline("Have you considered using Flashback?");
+    second_card.clear_id();
+    second_card.set_state(flashback::Card::draft);
+    second_card.set_headline("Haven't you started using Flashback yet?");
+    third_card.clear_id();
+    third_card.set_state(flashback::Card::draft);
+    third_card.set_headline("Aren't you tired of not achieving your goals?");
+    subject.clear_id();
+    subject.set_name("C++");
+    topic.clear_position();
+    topic.set_level(flashback::expertise_level::surface);
+    topic.set_name("Reflection");
+
+    ASSERT_NO_THROW(resource = m_database->create_resource(resource));
+    ASSERT_GT(resource.id(), 0);
+    ASSERT_NO_THROW(section = m_database->create_section(resource.id(), section.position(), section.name(), section.link()));
+    ASSERT_GT(section.position(), 0);
+    ASSERT_NO_THROW(first_card = m_database->create_card(first_card));
+    ASSERT_GT(first_card.id(), 0);
+    ASSERT_NO_THROW(m_database->add_card_to_section(first_card.id(), resource.id(), section.position()));
+    ASSERT_NO_THROW(second_card = m_database->create_card(second_card));
+    ASSERT_GT(second_card.id(), 0);
+    ASSERT_NO_THROW(m_database->add_card_to_section(second_card.id(), resource.id(), section.position()));
+    ASSERT_NO_THROW(third_card = m_database->create_card(third_card));
+    ASSERT_GT(third_card.id(), 0);
+    ASSERT_NO_THROW(m_database->add_card_to_section(third_card.id(), resource.id(), section.position()));
+    ASSERT_NO_THROW(subject = m_database->create_subject(subject.name()));
+    ASSERT_GT(subject.id(), 0);
+    ASSERT_NO_THROW(topic = m_database->create_topic(subject.id(), topic.name(), topic.level(), topic.position()));
+    ASSERT_EQ(topic.position(), 1);
+    ASSERT_NO_THROW(m_database->add_card_to_topic(first_card.id(), subject.id(), topic.position(), topic.level()));
+    ASSERT_NO_THROW(m_database->add_card_to_topic(second_card.id(), subject.id(), topic.position(), topic.level()));
+    ASSERT_NO_THROW(m_database->add_card_to_topic(third_card.id(), subject.id(), topic.position(), topic.level()));
+    std::vector<flashback::Card> cards{};
+    ASSERT_NO_THROW(cards = m_database->get_topic_cards(subject.id(), topic.position(), topic.level()));
+    ASSERT_THAT(cards, testing::SizeIs(3));
+    ASSERT_NO_THROW(cards = m_database->get_section_cards(resource.id(), section.position()));
+    ASSERT_THAT(cards, testing::SizeIs(3));
+    EXPECT_NO_THROW(m_database->merge_cards(first_card.id(), third_card.id()));
+    ASSERT_NO_THROW(cards = m_database->get_topic_cards(subject.id(), topic.position(), topic.level()));
+    ASSERT_THAT(cards, testing::SizeIs(2));
+    ASSERT_NO_THROW(cards = m_database->get_section_cards(resource.id(), section.position()));
+    ASSERT_THAT(cards, testing::SizeIs(2));
 }
 
 TEST_F(test_database, search_cards)
 {
+    flashback::Resource resource{};
+    flashback::Section section{};
+    flashback::Card first_card{};
+    flashback::Card second_card{};
+    flashback::Card third_card{};
+    flashback::Subject subject{};
+    flashback::Topic topic{};
+    std::chrono::seconds const production{std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch())};
+    std::chrono::seconds const expiration{production + std::chrono::years{1}};
+    resource.clear_id();
+    resource.set_name("C++ Book");
+    resource.set_type(flashback::Resource::book);
+    resource.set_pattern(flashback::Resource::chapter);
+    resource.set_link(R"(https://flashback.eu.com)");
+    resource.set_production(production.count());
+    resource.set_expiration(expiration.count());
+    section.clear_position();
+    section.set_name("Chapter 1");
+    section.set_link(R"(https://flashback.eu.com/chapter1)");
+    first_card.clear_id();
+    first_card.set_state(flashback::Card::draft);
+    first_card.set_headline("Have you considered using Flashback?");
+    second_card.clear_id();
+    second_card.set_state(flashback::Card::draft);
+    second_card.set_headline("Haven't you started using Flashback yet?");
+    third_card.clear_id();
+    third_card.set_state(flashback::Card::draft);
+    third_card.set_headline("Aren't you tired of not achieving your goals?");
+    subject.clear_id();
+    subject.set_name("C++");
+    topic.clear_position();
+    topic.set_level(flashback::expertise_level::surface);
+    topic.set_name("Reflection");
+
+    ASSERT_NO_THROW(resource = m_database->create_resource(resource));
+    ASSERT_GT(resource.id(), 0);
+    ASSERT_NO_THROW(section = m_database->create_section(resource.id(), section.position(), section.name(), section.link()));
+    ASSERT_GT(section.position(), 0);
+    ASSERT_NO_THROW(first_card = m_database->create_card(first_card));
+    ASSERT_GT(first_card.id(), 0);
+    ASSERT_NO_THROW(m_database->add_card_to_section(first_card.id(), resource.id(), section.position()));
+    ASSERT_NO_THROW(second_card = m_database->create_card(second_card));
+    ASSERT_GT(second_card.id(), 0);
+    ASSERT_NO_THROW(m_database->add_card_to_section(second_card.id(), resource.id(), section.position()));
+    ASSERT_NO_THROW(third_card = m_database->create_card(third_card));
+    ASSERT_GT(third_card.id(), 0);
+    ASSERT_NO_THROW(m_database->add_card_to_section(third_card.id(), resource.id(), section.position()));
+    ASSERT_NO_THROW(subject = m_database->create_subject(subject.name()));
+    ASSERT_GT(subject.id(), 0);
+    ASSERT_NO_THROW(topic = m_database->create_topic(subject.id(), topic.name(), topic.level(), topic.position()));
+    ASSERT_EQ(topic.position(), 1);
+    ASSERT_NO_THROW(m_database->add_card_to_topic(first_card.id(), subject.id(), topic.position(), topic.level()));
+    ASSERT_NO_THROW(m_database->add_card_to_topic(second_card.id(), subject.id(), topic.position(), topic.level()));
+    ASSERT_NO_THROW(m_database->add_card_to_topic(third_card.id(), subject.id(), topic.position(), topic.level()));
+    std::vector<flashback::Card> cards{};
+    ASSERT_NO_THROW(cards = m_database->get_topic_cards(subject.id(), topic.position(), topic.level()));
+    ASSERT_THAT(cards, testing::SizeIs(3));
+    ASSERT_NO_THROW(cards = m_database->get_section_cards(resource.id(), section.position()));
+    ASSERT_THAT(cards, testing::SizeIs(3));
+    std::map<uint64_t, flashback::Card> matched_cards{};
+    EXPECT_NO_THROW(matched_cards = m_database->search_cards(subject.id(), topic.level(), "flashback"));
+    EXPECT_THAT(matched_cards, testing::SizeIs(2));
+    EXPECT_NO_THROW(matched_cards = m_database->search_cards(subject.id(), topic.level(), "goal"));
+    EXPECT_THAT(matched_cards, testing::SizeIs(1));
+    ASSERT_NO_THROW(matched_cards.at(1).id());
+    EXPECT_EQ(matched_cards.at(1).id(), third_card.id());
 }
 
 TEST_F(test_database, move_card_to_section)

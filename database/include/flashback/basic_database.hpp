@@ -130,15 +130,15 @@ public:
     virtual void edit_card_headline(uint64_t card_id, std::string headline) const = 0;
     virtual void remove_card(uint64_t card_id) const = 0;
     virtual void merge_cards(uint64_t source_id, uint64_t target_id) const = 0;
-    [[nodiscard]] virtual std::map<uint64_t, Card> search_cards(std::string_view search_pattern) const = 0;
+    [[nodiscard]] virtual std::map<uint64_t, Card> search_cards(uint64_t subject_id, expertise_level level, std::string_view search_pattern) const = 0;
     virtual void move_card_to_section(uint64_t card_id, uint64_t resource_id, uint64_t section_position) const = 0;
     virtual void move_card_to_topic(uint64_t card_id, uint64_t subject_id, uint64_t topic_position, expertise_level topic_level) const = 0;
+    [[nodiscard]] virtual std::vector<Card> get_section_cards(uint64_t resource_id, uint64_t sections_position) const = 0;
+    [[nodiscard]] virtual std::vector<Card> get_topic_cards(uint64_t subject_id, uint64_t topic_position, expertise_level topic_level) const = 0;
     //get_card_weight
     //make_progress
     //get_study_cards
     //get_practice_cards
-    //get_topic_cards
-    //get_section_cards
     //mark_card_as_reviewed
     //mark_card_as_completed
     //get_variations
@@ -148,7 +148,7 @@ public:
     [[nodiscard]] virtual Block create_block(uint64_t card_id, Block block) const = 0;
     [[nodiscard]] virtual std::map<uint64_t, Block> get_blocks(uint64_t card_id) const = 0;
     virtual void remove_block(uint64_t card_id, uint64_t block_position) const = 0;
-    virtual void edit_block_content(uint64_t card_id, uint64_t block_position, std::string) const = 0;
+    virtual void edit_block_content(uint64_t card_id, uint64_t block_position, std::string content) const = 0;
     virtual void edit_block_type(uint64_t card_id, uint64_t block_position, Block::content_type type) const = 0;
     virtual void edit_block_extension(uint64_t card_id, uint64_t block_position, std::string extension) const = 0;
     virtual void edit_block_metadata(uint64_t card_id, uint64_t block_position, std::string metadata) const = 0;

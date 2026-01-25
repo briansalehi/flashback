@@ -109,15 +109,17 @@ public:
     void edit_card_headline(uint64_t card_id, std::string headline) const override;
     void remove_card(uint64_t card_id) const override;
     void merge_cards(uint64_t source_id, uint64_t target_id) const override;
-    [[nodiscard]] std::map<uint64_t, Card> search_cards(std::string_view search_pattern) const override;
+    [[nodiscard]] std::map<uint64_t, Card> search_cards(uint64_t subject_id, expertise_level level, std::string_view search_pattern) const override;
     void move_card_to_section(uint64_t card_id, uint64_t resource_id, uint64_t section_position) const override;
     void move_card_to_topic(uint64_t card_id, uint64_t subject_id, uint64_t topic_position, expertise_level topic_level) const override;
+    [[nodiscard]] virtual std::vector<Card> get_section_cards(uint64_t resource_id, uint64_t sections_position) const;
+    [[nodiscard]] virtual std::vector<Card> get_topic_cards(uint64_t subject_id, uint64_t topic_position, expertise_level topic_level) const;
 
     // blocks
     [[nodiscard]] Block create_block(uint64_t card_id, Block block) const override;
     [[nodiscard]] std::map<uint64_t, Block> get_blocks(uint64_t card_id) const override;
     void remove_block(uint64_t card_id, uint64_t block_position) const override;
-    void edit_block_content(uint64_t card_id, uint64_t block_position, std::string) const override;
+    void edit_block_content(uint64_t card_id, uint64_t block_position, std::string content) const override;
     void edit_block_type(uint64_t card_id, uint64_t block_position, Block::content_type type) const override;
     void edit_block_extension(uint64_t card_id, uint64_t block_position, std::string extension) const override;
     void edit_block_metadata(uint64_t card_id, uint64_t block_position, std::string metadata) const override;
