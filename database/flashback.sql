@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict Xd4DFPgC2NNaZyVoWtJlmDw8XINJCdZXJRgcL6GDOCfd8Lb8v4mdSuCBxephdjg
+\restrict IvRWOOtmbNFdAP2hHBaBM1FUu1PVfCdxakTrigaRjRoSDgPc49EGDdHOdNJpJKH
 
 -- Dumped from database version 16.11 (Ubuntu 16.11-0ubuntu0.24.04.1)
 -- Dumped by pg_dump version 16.11 (Ubuntu 16.11-0ubuntu0.24.04.1)
@@ -29926,7 +29926,6 @@ COPY flashback.topics_cards (topic, card, "position", subject, level) FROM stdin
 6	35	4	8	surface
 6	36	5	8	surface
 6	37	6	8	surface
-7	38	14	8	surface
 7	39	15	8	surface
 7	40	16	8	surface
 7	41	17	8	surface
@@ -30218,9 +30217,7 @@ COPY flashback.topics_cards (topic, card, "position", subject, level) FROM stdin
 12	2778	1	3	surface
 12	2780	2	3	surface
 12	2781	4	3	surface
-13	2778	1	3	surface
 14	2779	1	3	surface
-14	2781	2	3	surface
 15	2782	1	3	surface
 10	1749	1	3	surface
 10	1750	2	3	surface
@@ -30481,7 +30478,6 @@ COPY flashback.topics_cards (topic, card, "position", subject, level) FROM stdin
 21	57	2	11	surface
 21	65	3	11	surface
 21	66	4	11	surface
-21	67	5	11	surface
 21	68	6	11	surface
 21	69	7	11	surface
 21	70	8	11	surface
@@ -30545,35 +30541,6 @@ COPY flashback.topics_cards (topic, card, "position", subject, level) FROM stdin
 33	1913	38	11	surface
 33	1914	39	11	surface
 33	1915	40	11	surface
-34	1104	1	11	surface
-34	1105	2	11	surface
-34	1106	3	11	surface
-34	1107	4	11	surface
-34	1108	5	11	surface
-34	1109	6	11	surface
-34	1110	7	11	surface
-34	1111	8	11	surface
-34	1112	9	11	surface
-34	1113	10	11	surface
-34	1114	11	11	surface
-34	1115	12	11	surface
-34	1116	13	11	surface
-34	1117	14	11	surface
-34	1118	15	11	surface
-34	1119	16	11	surface
-34	1120	17	11	surface
-34	1121	18	11	surface
-34	1934	19	11	surface
-34	1935	20	11	surface
-34	1936	21	11	surface
-34	1937	22	11	surface
-34	1938	23	11	surface
-34	1939	24	11	surface
-34	1940	25	11	surface
-34	1941	26	11	surface
-34	1942	27	11	surface
-34	1943	28	11	surface
-34	1944	29	11	surface
 35	5063	1	11	surface
 35	5064	2	11	surface
 8	3462	4	24	surface
@@ -31851,6 +31818,14 @@ ALTER TABLE ONLY flashback.topics_cards
 
 
 --
+-- Name: topics_cards topics_cards_subject_card_key; Type: CONSTRAINT; Schema: flashback; Owner: flashback
+--
+
+ALTER TABLE ONLY flashback.topics_cards
+    ADD CONSTRAINT topics_cards_subject_card_key UNIQUE (subject, card);
+
+
+--
 -- Name: topics_cards topics_cards_subject_topic_level_position_key; Type: CONSTRAINT; Schema: flashback; Owner: flashback
 --
 
@@ -32318,5 +32293,5 @@ GRANT ALL ON SCHEMA public TO flashback_client;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict Xd4DFPgC2NNaZyVoWtJlmDw8XINJCdZXJRgcL6GDOCfd8Lb8v4mdSuCBxephdjg
+\unrestrict IvRWOOtmbNFdAP2hHBaBM1FUu1PVfCdxakTrigaRjRoSDgPc49EGDdHOdNJpJKH
 

@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict 5viBvpR2mJCsj0YOL7CXiyclrHJm9B4VBMLldvzMIOPU7lcJ8IM8s0SMHzjEGJV
+\restrict zrTTiFIAEZ5GO0a6qO4eBZVMe9akZCO6bJEcsENHXY5SdLqjJOzYJCwNKSFEVEG
 
 -- Dumped from database version 16.11 (Ubuntu 16.11-0ubuntu0.24.04.1)
 -- Dumped by pg_dump version 16.11 (Ubuntu 16.11-0ubuntu0.24.04.1)
@@ -3724,6 +3724,14 @@ ALTER TABLE ONLY flashback.topics_cards
 
 
 --
+-- Name: topics_cards topics_cards_subject_card_key; Type: CONSTRAINT; Schema: flashback; Owner: flashback
+--
+
+ALTER TABLE ONLY flashback.topics_cards
+    ADD CONSTRAINT topics_cards_subject_card_key UNIQUE (subject, card);
+
+
+--
 -- Name: topics_cards topics_cards_subject_topic_level_position_key; Type: CONSTRAINT; Schema: flashback; Owner: flashback
 --
 
@@ -4191,5 +4199,5 @@ GRANT ALL ON SCHEMA public TO flashback_client;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict 5viBvpR2mJCsj0YOL7CXiyclrHJm9B4VBMLldvzMIOPU7lcJ8IM8s0SMHzjEGJV
+\unrestrict zrTTiFIAEZ5GO0a6qO4eBZVMe9akZCO6bJEcsENHXY5SdLqjJOzYJCwNKSFEVEG
 
