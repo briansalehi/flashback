@@ -417,8 +417,9 @@ Resource database::create_resource(Resource const& resource) const
 
     if (!resource.name().empty())
     {
-        pqxx::row const row{query("select create_resource($1, $2, $3, $4, $5, $6) as id", resource.name(), resource_type_to_string(resource.type()),
-                                  section_pattern_to_string(resource.pattern()), resource.link(), resource.production(), resource.expiration()).at(0)};
+        pqxx::row const row{
+            query("select create_resource($1, $2, $3, $4, $5, $6) as id", resource.name(), resource_type_to_string(resource.type()),
+                  section_pattern_to_string(resource.pattern()), resource.link(), resource.production(), resource.expiration()).at(0)};
         generated_resource.set_id(row.at("id").as<uint64_t>());
     }
 
@@ -839,27 +840,47 @@ Card database::create_card(Card card) const
 
 void database::add_card_to_section(uint64_t const card_id, uint64_t const resource_id, uint64_t const section_position) const
 {
+    exec("select add_card_to_section($1, $2, $3) as position", card_id, resource_id, section_position);
 }
 
 void database::add_card_to_topic(uint64_t const card_id, uint64_t const subject_id, uint64_t const topic_position, expertise_level const topic_level) const
 {
+    exec("select add_card_to_topic($1, $2, $3, $4) as position", card_id, subject_id, topic_position, level_to_string(topic_level));
 }
 
 void database::edit_card_headline(uint64_t const card_id, std::string headline) const
 {
+    exec("call edit_card_headline($1, $2)", card_id, headline);
 }
 
 void database::remove_card(uint64_t const card_id) const
 {
+    exec("call remove_card($1)", card_id);
 }
 
-void database::merge_cards(uint64_t const source_id, uint64_t const target_id) const
+void database::merge_cards(uint64_t const source_id, uint64_t const target_id, std::string headline) const
 {
+    exec("call merge_cards($1, $2, $3)", source_id, target_id, std::move(headline));
 }
 
 std::map<uint64_t, Card> database::search_cards(uint64_t const subject_id, expertise_level const level, std::string_view search_pattern) const
 {
-    return {};
+    std::map<uint64_t, Card> matched{};
+
+    if (!search_pattern.empty())
+    {
+        for (pqxx::row const& row: query("select similarity, id, state, headline from search_cards($1, $2, $3) order by similarity", subject_id, level_to_string(level),
+                                         search_pattern))
+        {
+            uint64_t const similarity{row.at("similarity").as<uint64_t>()};
+            Card card{};
+            card.set_id(row.at("id").as<uint64_t>());
+            card.set_headline(row.at("headline").as<std::string>());
+            matched.insert({similarity, card});
+        }
+    }
+
+    return matched;
 }
 
 void database::move_card_to_section(uint64_t const card_id, uint64_t const resource_id, uint64_t const section_position) const
@@ -870,14 +891,37 @@ void database::move_card_to_topic(uint64_t const card_id, uint64_t const subject
 {
 }
 
-std::vector<Card> database::get_section_cards(uint64_t resource_id, uint64_t sections_position) const
+std::vector<Card> database::get_section_cards(uint64_t const resource_id, uint64_t const sections_position) const
 {
-    return {};
+    std::vector<Card> cards{};
+
+    for (pqxx::result const result{query("select id, state, headline from get_section_cards($1, $2)", resource_id, sections_position)}; pqxx::row const& row: result)
+    {
+        Card card{};
+        card.set_id(row.at("id").as<uint64_t>());
+        card.set_state(to_card_state(row.at("state").as<std::string>()));
+        card.set_headline(row.at("headline").as<std::string>());
+        cards.push_back(card);
+    }
+
+    return cards;
 }
 
-std::vector<Card> database::get_topic_cards(uint64_t subject_id, uint64_t topic_position, expertise_level topic_level) const
+std::vector<Card> database::get_topic_cards(uint64_t const subject_id, uint64_t const topic_position, expertise_level const topic_level) const
 {
-    return {};
+    std::vector<Card> cards{};
+
+    for (pqxx::result const result{query("select id, state, headline from get_topic_cards($1, $2, $3)", subject_id, topic_position, level_to_string(topic_level))};
+         pqxx::row const& row: result)
+    {
+        Card card{};
+        card.set_id(row.at("id").as<uint64_t>());
+        card.set_state(to_card_state(row.at("state").as<std::string>()));
+        card.set_headline(row.at("headline").as<std::string>());
+        cards.push_back(card);
+    }
+
+    return cards;
 }
 
 Block database::create_block(uint64_t const card_id, Block block) const

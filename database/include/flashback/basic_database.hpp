@@ -129,7 +129,7 @@ public:
     virtual void add_card_to_topic(uint64_t card_id, uint64_t subject_id, uint64_t topic_position, expertise_level topic_level) const = 0;
     virtual void edit_card_headline(uint64_t card_id, std::string headline) const = 0;
     virtual void remove_card(uint64_t card_id) const = 0;
-    virtual void merge_cards(uint64_t source_id, uint64_t target_id) const = 0;
+    virtual void merge_cards(uint64_t source_id, uint64_t target_id, std::string headline) const = 0;
     [[nodiscard]] virtual std::map<uint64_t, Card> search_cards(uint64_t subject_id, expertise_level level, std::string_view search_pattern) const = 0;
     virtual void move_card_to_section(uint64_t card_id, uint64_t resource_id, uint64_t section_position) const = 0;
     virtual void move_card_to_topic(uint64_t card_id, uint64_t subject_id, uint64_t topic_position, expertise_level topic_level) const = 0;

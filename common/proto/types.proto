@@ -52,8 +52,8 @@ message Resource {
 message Card {
     enum card_state {
         draft = 0;
-        completed = 1;
-        review = 2;
+        reviewed = 1;
+        completed = 2;
         approved = 3;
         released = 4;
         rejected = 5;

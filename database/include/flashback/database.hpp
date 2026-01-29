@@ -108,12 +108,12 @@ public:
     void add_card_to_topic(uint64_t card_id, uint64_t subject_id, uint64_t topic_position, expertise_level topic_level) const override;
     void edit_card_headline(uint64_t card_id, std::string headline) const override;
     void remove_card(uint64_t card_id) const override;
-    void merge_cards(uint64_t source_id, uint64_t target_id) const override;
+    void merge_cards(uint64_t source_id, uint64_t target_id, std::string) const override;
     [[nodiscard]] std::map<uint64_t, Card> search_cards(uint64_t subject_id, expertise_level level, std::string_view search_pattern) const override;
     void move_card_to_section(uint64_t card_id, uint64_t resource_id, uint64_t section_position) const override;
     void move_card_to_topic(uint64_t card_id, uint64_t subject_id, uint64_t topic_position, expertise_level topic_level) const override;
-    [[nodiscard]] virtual std::vector<Card> get_section_cards(uint64_t resource_id, uint64_t sections_position) const;
-    [[nodiscard]] virtual std::vector<Card> get_topic_cards(uint64_t subject_id, uint64_t topic_position, expertise_level topic_level) const;
+    [[nodiscard]] std::vector<Card> get_section_cards(uint64_t resource_id, uint64_t sections_position) const override;
+    [[nodiscard]] std::vector<Card> get_topic_cards(uint64_t subject_id, uint64_t topic_position, expertise_level topic_level) const override;
 
     // blocks
     [[nodiscard]] Block create_block(uint64_t card_id, Block block) const override;
@@ -273,7 +273,47 @@ private:
         return pattern;
     }
 
+    static Card::card_state to_card_state(std::string_view const state_string)
+    {
+        Card::card_state state{};
+
+        if (state_string == "draft") state = Card::draft;
+        else if (state_string == "reviewed") state = Card::reviewed;
+        else if (state_string == "completed") state = Card::completed;
+        else if (state_string == "approved") state = Card::approved;
+        else if (state_string == "released") state = Card::released;
+        else if (state_string == "rejected") state = Card::rejected;
+        else throw std::runtime_error("invalid card state");
+
+        return state;
+    }
+
+    static std::string card_state_to_string(Card::card_state const state)
+    {
+        std::string state_string{};
+
+        switch (state)
+        {
+        case Card::draft: state_string = "draft";
+            break;
+        case Card::reviewed: state_string = "reviewed";
+            break;
+        case Card::completed: state_string = "completed";
+            break;
+        case Card::approved: state_string = "approved";
+            break;
+        case Card::released: state_string = "released";
+            break;
+        case Card::rejected: state_string = "rejected";
+            break;
+        default: throw std::runtime_error("invalid card state");
+        }
+
+        return state_string;
+    }
+
 private:
     std::unique_ptr<pqxx::connection> m_connection;
 };
+
 } // flashback

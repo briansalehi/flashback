@@ -2,15 +2,14 @@
 -- PostgreSQL database dump
 --
 
-\restrict HzmRTBOWedggyQcyJbFGnkakQHVxIWxMtRQdf7ukW6hqfoGzpq05QAqauomfXJ1
+\restrict FBDLBtOFlibfza2E9TDafIjjpgh5xaaYtZb0I7Xm9XLlkSUvRrutKqy8dDSTuFY
 
--- Dumped from database version 18.1
--- Dumped by pg_dump version 18.0
+-- Dumped from database version 16.11 (Ubuntu 16.11-0ubuntu0.24.04.1)
+-- Dumped by pg_dump version 16.11 (Ubuntu 16.11-0ubuntu0.24.04.1)
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
 SET idle_in_transaction_session_timeout = 0;
-SET transaction_timeout = 0;
 SET client_encoding = 'UTF8';
 SET standard_conforming_strings = on;
 SELECT pg_catalog.set_config('search_path', '', false);
@@ -206,79 +205,41 @@ ALTER TYPE flashback.user_state OWNER TO flashback;
 -- Name: add_card_to_section(integer, integer, integer); Type: FUNCTION; Schema: flashback; Owner: flashback
 --
 
-CREATE FUNCTION flashback.add_card_to_section(resource integer, section integer, card integer) RETURNS integer
+CREATE FUNCTION flashback.add_card_to_section(card_id integer, resource_id integer, section_position integer) RETURNS integer
     LANGUAGE plpgsql
     AS $$
 declare top_position integer;
 begin
-    select coalesce(max(position), 0) + 1 into top_position from sections_cards sc where sc.resource = add_card_to_section.resource and sc.section = add_card_to_section.section;
-    insert into sections_cards (resource, section, card, position) values (resource, section, card, top_position);
-    update cards set state = 'completed'::card_state where id = card;
-    return top_position;
-end;
-$$;
+    select coalesce(max(position), 0) + 1 into top_position from sections_cards sc where sc.resource = resource_id and sc.section = section_position;
 
-
-ALTER FUNCTION flashback.add_card_to_section(resource integer, section integer, card integer) OWNER TO flashback;
-
---
--- Name: add_card_to_section(integer, integer, integer, integer); Type: PROCEDURE; Schema: flashback; Owner: flashback
---
-
-CREATE PROCEDURE flashback.add_card_to_section(IN resource integer, IN section integer, IN card integer, IN "position" integer)
-    LANGUAGE plpgsql
-    AS $$
-begin
-    insert into sections_cards (resource, section, card, position) values (resource, section, card, position);
-    update cards set state = 'completed'::card_state where id = card;
-end;
-$$;
-
-
-ALTER PROCEDURE flashback.add_card_to_section(IN resource integer, IN section integer, IN card integer, IN "position" integer) OWNER TO flashback;
-
---
--- Name: add_card_to_topic(integer, flashback.expertise_level, integer, integer); Type: FUNCTION; Schema: flashback; Owner: flashback
---
-
-CREATE FUNCTION flashback.add_card_to_topic(subject integer, level flashback.expertise_level, topic integer, card integer) RETURNS integer
-    LANGUAGE plpgsql
-    AS $$
-declare top_position integer;
-begin
-    select coalesce(max(position), 0) + 1 into top_position
-    from topics_cards tc
-    where tc.subject = add_card_to_topic.subject and tc.level = add_card_to_topic.level and tc.topic = add_card_to_topic.topic;
-
-    insert into topics_cards (subject, level, topic, card, position)
-    values (add_card_to_topic.subject, add_card_to_topic.level, add_card_to_topic.topic, add_card_to_topic.card, top_position);
-
-    update cards set state = 'review'::card_state where cards.id = add_card_to_topic.card;
+    insert into sections_cards (resource, section, card, position) values (resource_id, section_position, card_id, top_position);
 
     return top_position;
 end;
 $$;
 
 
-ALTER FUNCTION flashback.add_card_to_topic(subject integer, level flashback.expertise_level, topic integer, card integer) OWNER TO flashback;
+ALTER FUNCTION flashback.add_card_to_section(card_id integer, resource_id integer, section_position integer) OWNER TO flashback;
 
 --
--- Name: add_card_to_topic(integer, flashback.expertise_level, integer, integer, integer); Type: PROCEDURE; Schema: flashback; Owner: flashback
+-- Name: add_card_to_topic(integer, integer, integer, flashback.expertise_level); Type: FUNCTION; Schema: flashback; Owner: flashback
 --
 
-CREATE PROCEDURE flashback.add_card_to_topic(IN subject integer, IN level flashback.expertise_level, IN topic integer, IN card integer, IN "position" integer)
+CREATE FUNCTION flashback.add_card_to_topic(card_id integer, subject_id integer, topic_position integer, topic_level flashback.expertise_level) RETURNS integer
     LANGUAGE plpgsql
     AS $$
+declare top_position integer;
 begin
-    insert into topics_cards (subject, level, topic, card, position)
-    values (add_card_to_topic.subject, add_card_to_topic.level, add_card_to_topic.topic, add_card_to_topic.card, add_card_to_topic.position);
+    select coalesce(max(t.position), 0) + 1 into top_position from topics_cards t where t.subject = subject_id and t.level = topic_level and t.topic = topic_position;
 
-    update cards set state = 'review'::card_state where cards.id = add_card_to_topic.card;
+    insert into topics_cards (subject, level, topic, card, position) values (subject_id, topic_level, topic_position, card_id, top_position);
+
+    return top_position;
 end;
 $$;
 
 
-ALTER PROCEDURE flashback.add_card_to_topic(IN subject integer, IN level flashback.expertise_level, IN topic integer, IN card integer, IN "position" integer) OWNER TO flashback;
+ALTER FUNCTION flashback.add_card_to_topic(card_id integer, subject_id integer, topic_position integer, topic_level flashback.expertise_level) OWNER TO flashback;
 
 --
 -- Name: add_milestone(integer, flashback.expertise_level, integer); Type: FUNCTION; Schema: flashback; Owner: flashback
@@ -1378,19 +1339,16 @@ ALTER FUNCTION flashback.get_roadmaps("user" integer) OWNER TO flashback;
 -- Name: get_section_cards(integer, integer); Type: FUNCTION; Schema: flashback; Owner: flashback
 --
 
-CREATE FUNCTION flashback.get_section_cards(resource_id integer, section_id integer) RETURNS TABLE(id integer, "position" integer, state flashback.card_state, headline text)
+CREATE FUNCTION flashback.get_section_cards(resource_id integer, section_position integer) RETURNS TABLE(id integer, state flashback.card_state, headline flashback.citext)
     LANGUAGE plpgsql
     AS $$
 begin
-    return query
-    select cards.id, sc."position", cards.state, cards.headline
-    from sections_cards sc
-    join cards on cards.id = sc.card
-    where sc.resource = resource_id and sc.section = section_id;
-end; $$;
+    return query select c.id, c.state, c.headline from sections_cards sc join cards c on c.id = sc.card where sc.resource = resource_id and sc.section = section_position;
+end;
+$$;
 
 
-ALTER FUNCTION flashback.get_section_cards(resource_id integer, section_id integer) OWNER TO flashback;
+ALTER FUNCTION flashback.get_section_cards(resource_id integer, section_position integer) OWNER TO flashback;
 
 --
 -- Name: get_sections(integer); Type: FUNCTION; Schema: flashback; Owner: flashback
@@ -1447,26 +1405,19 @@ end; $$;
 ALTER FUNCTION flashback.get_topic_assessments(user_id integer, subject_id integer, topic_position integer, max_level flashback.expertise_level) OWNER TO flashback;
 
 --
--- Name: get_topic_cards(integer, integer, integer); Type: FUNCTION; Schema: flashback; Owner: flashback
+-- Name: get_topic_cards(integer, integer, flashback.expertise_level); Type: FUNCTION; Schema: flashback; Owner: flashback
 --
 
-CREATE FUNCTION flashback.get_topic_cards(roadmap_id integer, subject_id integer, topic_position integer) RETURNS TABLE(card integer, "position" integer, state flashback.card_state, headline text)
+CREATE FUNCTION flashback.get_topic_cards(subject_id integer, topic_position integer, topic_level flashback.expertise_level) RETURNS TABLE(id integer, state flashback.card_state, headline flashback.citext)
     LANGUAGE plpgsql
     AS $$
 begin
-    return query
-    select cards.id, tc."position", cards.state, cards.headline
-    from milestones m
-    join topics_cards tc on tc.subject = m.subject
-    join cards on cards.id = tc.card
-    where m.roadmap = roadmap_id
-    and m.subject = subject_id
-    and tc.topic = topic_position;
+    return query select c.id, c.state, c.headline from topics_cards tc join cards c on c.id = tc.card where tc.subject = subject_id and tc.topic = topic_position and tc.level = topic_level;
 end;
 $$;
 
 
-ALTER FUNCTION flashback.get_topic_cards(roadmap_id integer, subject_id integer, topic_position integer) OWNER TO flashback;
+ALTER FUNCTION flashback.get_topic_cards(subject_id integer, topic_position integer, topic_level flashback.expertise_level) OWNER TO flashback;
 
 --
 -- Name: get_topics(integer, flashback.expertise_level); Type: FUNCTION; Schema: flashback; Owner: flashback
@@ -1792,37 +1743,35 @@ ALTER PROCEDURE flashback.merge_blocks(IN selected_card integer, VARIADIC block_
 -- Name: merge_cards(integer, integer, character varying); Type: PROCEDURE; Schema: flashback; Owner: flashback
 --
 
-CREATE PROCEDURE flashback.merge_cards(IN lhs integer, IN rhs integer, IN new_headline character varying)
+CREATE PROCEDURE flashback.merge_cards(IN source_id integer, IN target_id integer, IN target_headline character varying)
     LANGUAGE plpgsql
     AS $$
-declare rhs_top_position integer;
+declare target_top_block_position integer;
 begin
-    select coalesce(max(position), 0) + 1 into rhs_top_position from blocks where card = lhs;
+    select coalesce(max(position), 0) + 1 into target_top_block_position from blocks where card = target_id;
 
-    update blocks set position = position + rhs_top_position, card = lhs where card = rhs;
+    update blocks set position = position + target_top_block_position, card = target_id where card = source_id;
 
-    update cards set headline = new_headline where id = lhs;
+    update cards set headline = target_headline where id = target_id;
 
-    if not exists (
-        select 1 from topics_cards tc join topics_cards tcc on tcc.subject = tc.subject and tcc.topic = tc.topic and tcc.level = tc.level where tc.card = lhs and tcc.card = rhs
-    )
+    if not exists (select 1 from topics_cards tc join topics_cards tcc on tcc.subject = tc.subject and tcc.topic = tc.topic and tcc.level = tc.level where tc.card = source_id and tcc.card = target_id)
     then
-        update topics_cards set card = lhs where card = rhs;
+        update topics_cards set card = target_id where card = source_id;
     end if;
 
     if not exists (
-        select 1 from sections_cards sc join sections_cards scc on scc.resource = sc.resource and scc.section = sc.section where sc.card = lhs and scc.card = rhs
+        select 1 from sections_cards sc join sections_cards scc on scc.resource = sc.resource and scc.section = sc.section where sc.card = source_id and scc.card = target_id
     )
     then
-        update sections_cards set card = lhs where card = rhs;
+        update sections_cards set card = target_id where card = source_id;
     end if;
 
-    delete from cards where id = rhs;
+    delete from cards where id = source_id;
 end;
 $$;
 
 
-ALTER PROCEDURE flashback.merge_cards(IN lhs integer, IN rhs integer, IN new_headline character varying) OWNER TO flashback;
+ALTER PROCEDURE flashback.merge_cards(IN source_id integer, IN target_id integer, IN target_headline character varying) OWNER TO flashback;
 
 --
 -- Name: merge_presenters(integer, integer); Type: PROCEDURE; Schema: flashback; Owner: flashback
@@ -2074,6 +2023,21 @@ end; $$;
 
 
 ALTER PROCEDURE flashback.remove_block(IN card_id integer, IN block_position integer) OWNER TO flashback;
+
+--
+-- Name: remove_card(integer); Type: PROCEDURE; Schema: flashback; Owner: flashback
+--
+
+CREATE PROCEDURE flashback.remove_card(IN card_id integer)
+    LANGUAGE plpgsql
+    AS $$
+begin
+    delete from cards where id = card_id;
+end;
+$$;
+
+
+ALTER PROCEDURE flashback.remove_card(IN card_id integer) OWNER TO flashback;
 
 --
 -- Name: remove_milestone(integer, integer); Type: PROCEDURE; Schema: flashback; Owner: flashback
@@ -2784,7 +2748,7 @@ ALTER TABLE flashback.blocks_activities ALTER COLUMN id ADD GENERATED ALWAYS AS 
 
 CREATE TABLE flashback.cards (
     id integer NOT NULL,
-    headline text,
+    headline flashback.citext,
     state flashback.card_state DEFAULT 'draft'::flashback.card_state NOT NULL
 );
 
@@ -3706,6 +3670,13 @@ ALTER TABLE ONLY flashback.users
 
 
 --
+-- Name: cards_headline_trigram; Type: INDEX; Schema: flashback; Owner: flashback
+--
+
+CREATE INDEX cards_headline_trigram ON flashback.cards USING gin (headline flashback.gin_trgm_ops);
+
+
+--
 -- Name: presenters_name_trigram; Type: INDEX; Schema: flashback; Owner: flashback
 --
 
@@ -4134,5 +4105,5 @@ GRANT ALL ON SCHEMA public TO flashback_client;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict HzmRTBOWedggyQcyJbFGnkakQHVxIWxMtRQdf7ukW6hqfoGzpq05QAqauomfXJ1
+\unrestrict FBDLBtOFlibfza2E9TDafIjjpgh5xaaYtZb0I7Xm9XLlkSUvRrutKqy8dDSTuFY
 
