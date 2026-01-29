@@ -3950,7 +3950,7 @@ TEST_F(test_database, edit_block_metadata)
     ASSERT_NO_THROW(second_topic = m_database->create_topic(second_subject.id(), second_topic.name(), second_topic.level(), second_topic.position()));
     ASSERT_THAT(second_topic.position(), Eq(1));
     ASSERT_NO_THROW(third_topic = m_database->create_topic(second_subject.id(), third_topic.name(), third_topic.level(), third_topic.position()));
-    ASSERT_THAT(third_topic.position(), Eq(1));
+    ASSERT_THAT(third_topic.position(), Eq(2));
     ASSERT_NO_THROW(m_database->add_card_to_topic(first_card.id(), first_subject.id(), first_topic.position(), first_topic.level()));
     ASSERT_NO_THROW(m_database->add_card_to_topic(second_card.id(), second_subject.id(), second_topic.position(), second_topic.level()));
     ASSERT_NO_THROW(m_database->add_card_to_topic(third_card.id(), second_subject.id(), third_topic.position(), third_topic.level()));
@@ -4128,12 +4128,13 @@ TEST_F(test_database, reorder_block)
     EXPECT_THAT(blocks, testing::SizeIs(3));
     ASSERT_NO_THROW(blocks.at(1).position());
     ASSERT_NO_THROW(blocks.at(2).position());
+    ASSERT_NO_THROW(blocks.at(3).position());
     EXPECT_THAT(blocks.at(1).position(), Eq(1));
-    EXPECT_THAT(blocks.at(1).content(), Eq(third_block.content()));
-    EXPECT_THAT(blocks.at(1).type(), Eq(third_block.type()));
+    EXPECT_THAT(blocks.at(1).content(), Eq(second_block.content()));
+    EXPECT_THAT(blocks.at(1).type(), Eq(second_block.type()));
     EXPECT_THAT(blocks.at(2).position(), Eq(2));
-    EXPECT_THAT(blocks.at(2).content(), Eq(second_block.content()));
-    EXPECT_THAT(blocks.at(2).type(), Eq(second_block.type()));
+    EXPECT_THAT(blocks.at(2).content(), Eq(third_block.content()));
+    EXPECT_THAT(blocks.at(2).type(), Eq(third_block.type()));
     EXPECT_THAT(blocks.at(3).position(), Eq(3));
     EXPECT_THAT(blocks.at(3).content(), Eq(first_block.content()));
     EXPECT_THAT(blocks.at(3).type(), Eq(first_block.type()));

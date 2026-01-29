@@ -956,7 +956,7 @@ std::map<uint64_t, Block> database::get_blocks(uint64_t const card_id) const
         block.set_position(position);
         block.set_type(to_content_type(row.at("type").as<std::string>()));
         block.set_extension(row.at("extension").as<std::string>());
-        block.set_metadata(row.at("metadata").as<std::string>());
+        block.set_metadata(row.at("metadata").is_null() ? "" : row.at("metadata").as<std::string>());
         block.set_content(row.at("content").as<std::string>());
         blocks.insert({position, block});
     }

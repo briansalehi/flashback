@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict JXW8cdMQ1uxEBkxHWCfVwwwVlaUaK9Kiwz7ZTBskOgMrL0BXBv5GTnqOlCyUKuH
+\restrict 5viBvpR2mJCsj0YOL7CXiyclrHJm9B4VBMLldvzMIOPU7lcJ8IM8s0SMHzjEGJV
 
 -- Dumped from database version 16.11 (Ubuntu 16.11-0ubuntu0.24.04.1)
 -- Dumped by pg_dump version 16.11 (Ubuntu 16.11-0ubuntu0.24.04.1)
@@ -859,16 +859,31 @@ ALTER PROCEDURE flashback.edit_block_content(IN card_id integer, IN block_positi
 -- Name: edit_block_extension(integer, integer, character varying); Type: PROCEDURE; Schema: flashback; Owner: flashback
 --
 
-CREATE PROCEDURE flashback.edit_block_extension(IN selected_card integer, IN block integer, IN new_extension character varying)
+CREATE PROCEDURE flashback.edit_block_extension(IN card_id integer, IN block_position integer, IN block_extension character varying)
     LANGUAGE plpgsql
     AS $$
 begin
-    update blocks set extension = new_extension where card = selected_card and position = block;
+    update blocks set extension = block_extension where card = card_id and position = block_position;
 end;
 $$;
 
 
-ALTER PROCEDURE flashback.edit_block_extension(IN selected_card integer, IN block integer, IN new_extension character varying) OWNER TO flashback;
+ALTER PROCEDURE flashback.edit_block_extension(IN card_id integer, IN block_position integer, IN block_extension character varying) OWNER TO flashback;
+
+--
+-- Name: edit_block_metadata(integer, integer, character varying); Type: PROCEDURE; Schema: flashback; Owner: flashback
+--
+
+CREATE PROCEDURE flashback.edit_block_metadata(IN card_id integer, IN block_position integer, IN block_metadata character varying)
+    LANGUAGE plpgsql
+    AS $$
+begin
+    update blocks set metadata = block_metadata where card = card_id and position = block_position;
+end;
+$$;
+
+
+ALTER PROCEDURE flashback.edit_block_metadata(IN card_id integer, IN block_position integer, IN block_metadata character varying) OWNER TO flashback;
 
 --
 -- Name: edit_card_headline(integer, character varying); Type: PROCEDURE; Schema: flashback; Owner: flashback
@@ -2296,6 +2311,37 @@ CREATE PROCEDURE flashback.rename_user(IN id integer, IN name character varying)
 
 
 ALTER PROCEDURE flashback.rename_user(IN id integer, IN name character varying) OWNER TO flashback;
+
+--
+-- Name: reorder_block(integer, integer, integer); Type: PROCEDURE; Schema: flashback; Owner: flashback
+--
+
+CREATE PROCEDURE flashback.reorder_block(IN card_id integer, IN block_position integer, IN target_position integer)
+    LANGUAGE plpgsql
+    AS $$
+declare temporary_position integer = -1;
+declare safe_margin integer;
+begin
+    if block_position <> target_position then
+        update blocks set position = temporary_position where card = card_id and position = block_position;
+
+        if target_position < block_position then
+            select max(coalesce(position, 0)) + 1 into safe_margin from blocks where card = card_id;
+            update blocks set position = position + safe_margin where card = card_id and position >= target_position and position < block_position;
+        else
+            update blocks set position = position - 1 where card = card_id and position <= target_position and position > block_position;
+        end if;
+
+        update blocks set position = target_position where card = card_id and position = temporary_position;
+
+        if target_position < block_position then
+            update blocks set position = position - safe_margin + target_position where card = card_id and position >= safe_margin;
+        end if;
+    end if;
+end; $$;
+
+
+ALTER PROCEDURE flashback.reorder_block(IN card_id integer, IN block_position integer, IN target_position integer) OWNER TO flashback;
 
 --
 -- Name: reorder_blocks(integer, integer, integer); Type: PROCEDURE; Schema: flashback; Owner: flashback
@@ -4145,5 +4191,5 @@ GRANT ALL ON SCHEMA public TO flashback_client;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict JXW8cdMQ1uxEBkxHWCfVwwwVlaUaK9Kiwz7ZTBskOgMrL0BXBv5GTnqOlCyUKuH
+\unrestrict 5viBvpR2mJCsj0YOL7CXiyclrHJm9B4VBMLldvzMIOPU7lcJ8IM8s0SMHzjEGJV
 
