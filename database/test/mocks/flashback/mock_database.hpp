@@ -126,7 +126,7 @@ public:
     MOCK_METHOD(void, edit_block_metadata, (uint64_t, uint64_t, std::string), (const, override));
     MOCK_METHOD(void, reorder_block, (uint64_t, uint64_t, uint64_t), (const, override));
     MOCK_METHOD(void, merge_blocks, (uint64_t, uint64_t, uint64_t), (const, override));
-    MOCK_METHOD((std::pair<flashback::Block, flashback::Block>), split_block, (uint64_t, uint64_t), (const, override));
+    MOCK_METHOD((std::map<uint64_t, flashback::Block>), split_block, (uint64_t, uint64_t), (const, override));
     MOCK_METHOD(void, move_block, (uint64_t, uint64_t, uint64_t, uint64_t), (const, override));
 
     // practices

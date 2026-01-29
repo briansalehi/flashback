@@ -15,9 +15,10 @@ using testing::A;
 using testing::An;
 using testing::Eq;
 using testing::Ne;
-using testing::SizeIs;
 using testing::Gt;
 using testing::Lt;
+using testing::SizeIs;
+using testing::IsEmpty;
 
 class test_database: public testing::Test
 {
@@ -4281,7 +4282,7 @@ TEST_F(test_database, merge_blocks)
     EXPECT_THAT(blocks.at(1).position(), Eq(1));
     EXPECT_THAT(blocks.at(2).position(), Eq(2));
     std::ostringstream combined_content{};
-    combined_content << first_block.content() << '\n' << third_block.content();
+    combined_content << first_block.content() << "\n\n" << third_block.content();
     EXPECT_THAT(blocks.at(1).content(), Eq(second_block.content()));
     EXPECT_THAT(blocks.at(2).content(), Eq(combined_content.str()));
     EXPECT_NO_THROW(m_database->merge_blocks(second_card.id(), fourth_block.position(), fifth_block.position()));
@@ -4294,7 +4295,7 @@ TEST_F(test_database, merge_blocks)
     EXPECT_THAT(blocks.at(1).position(), Eq(1));
     combined_content.str("");
     combined_content.clear();
-    combined_content << fourth_block.content() << '\n' << fifth_block.content();
+    combined_content << fourth_block.content() << "\n\n" << fifth_block.content();
     EXPECT_THAT(blocks.at(1).content(), Eq(combined_content.str()));
 }
 
@@ -4413,6 +4414,10 @@ TEST_F(test_database, split_block)
     ASSERT_THAT(cards, testing::SizeIs(2));
     ASSERT_NO_THROW(cards = m_database->get_section_cards(resource.id(), second_section.position()));
     ASSERT_THAT(cards, testing::SizeIs(1));
+    std::ostringstream split_content{};
+    split_content << second_block.content() << "\n\n\n" << third_block.content();
+    first_block.set_content(split_content.str());
+    ASSERT_THAT(first_block.content(), Eq(split_content.str()));
     ASSERT_NO_THROW(first_block = m_database->create_block(first_card.id(), first_block));
     ASSERT_NO_THROW(second_block = m_database->create_block(first_card.id(), second_block));
     ASSERT_NO_THROW(third_block = m_database->create_block(first_card.id(), third_block));
@@ -4426,23 +4431,33 @@ TEST_F(test_database, split_block)
     std::map<uint64_t, flashback::Block> blocks{};
     ASSERT_NO_THROW(blocks = m_database->get_blocks(first_card.id()));
     ASSERT_THAT(blocks, testing::SizeIs(3));
+    ASSERT_NO_THROW(blocks.at(1).content());
+    ASSERT_THAT(blocks.at(1).content(), split_content.str());
     ASSERT_NO_THROW(blocks = m_database->get_blocks(second_card.id()));
     ASSERT_THAT(blocks, testing::SizeIs(2));
     ASSERT_NO_THROW(blocks = m_database->get_blocks(third_card.id()));
     ASSERT_THAT(blocks, testing::IsEmpty());
-    std::ostringstream split_content{};
-    split_content << first_block.content() << '\n' << '\n' << second_block.content();
-    first_block.set_content(split_content.str());
-    std::pair<flashback::Block, flashback::Block> split_blocks{};
+    std::map<uint64_t, flashback::Block> split_blocks{};
     EXPECT_NO_THROW(split_blocks = m_database->split_block(first_card.id(), first_block.position()));
     EXPECT_NO_THROW(blocks = m_database->get_blocks(first_card.id()));
     EXPECT_THAT(blocks, testing::SizeIs(4)) << "The card must have one more block after splitting a card in two";
-    ASSERT_NO_THROW(split_blocks.first.position());
-    ASSERT_NO_THROW(split_blocks.second.position());
-    EXPECT_THAT(split_blocks.first.position(), Eq(1));
-    EXPECT_THAT(split_blocks.second.position(), Eq(2));
-    EXPECT_EQ(split_blocks.first.content(), first_block.content()) << "Two blocks must have their content separated";
-    EXPECT_EQ(split_blocks.second.content(), second_block.content()) << "Two blocks must have their content separated";
+    ASSERT_NO_THROW(blocks.at(1).content());
+    EXPECT_THAT(blocks.at(1).content(), Eq(second_block.content()));
+    EXPECT_THAT(blocks.at(2).content(), Eq(third_block.content()));
+    EXPECT_THAT(blocks.at(1).content() + "\n\n" + blocks.at(2).content(), Eq(second_block.content() + "\n\n" + third_block.content()));
+    ASSERT_THAT(split_blocks, SizeIs(2));
+    ASSERT_NO_THROW(split_blocks.at(1).position());
+    ASSERT_NO_THROW(split_blocks.at(2).position());
+    ASSERT_THAT(split_blocks.at(1).position(), Eq(1));
+    ASSERT_THAT(split_blocks.at(2).position(), Eq(2));
+    EXPECT_THAT(split_blocks.at(1).position(), Eq(1));
+    EXPECT_THAT(split_blocks.at(2).position(), Eq(2));
+    EXPECT_THAT(split_blocks.at(1).content(), Eq(second_block.content())) << "Two blocks must have their content separated";
+    EXPECT_THAT(split_blocks.at(2).content(), Eq(third_block.content())) << "Two blocks must have their content separated";
+    ASSERT_NO_THROW(blocks = m_database->get_blocks(second_card.id()));
+    ASSERT_THAT(blocks, SizeIs(2)) << "Blocks of other cards should be left untouched";
+    ASSERT_NO_THROW(blocks = m_database->get_blocks(third_card.id()));
+    ASSERT_THAT(blocks, IsEmpty()) << "Blocks of other cards should be left untouched";
 }
 
 TEST_F(test_database, move_block)

@@ -999,28 +999,21 @@ void database::merge_blocks(uint64_t const card_id, uint64_t const source_positi
     exec("call merge_blocks($1, $2, $3)", card_id, source_position, target_position);
 }
 
-std::pair<Block, Block> database::split_block(uint64_t const card_id, uint64_t const block_position) const
+std::map<uint64_t, Block> database::split_block(uint64_t const card_id, uint64_t const block_position) const
 {
-    std::pair<Block, Block> blocks{};
+    std::map<uint64_t, Block> blocks{};
+    pqxx::result const result{query("select position, type, extension, metadata, content from split_block($1, $2)", card_id, block_position)};
+    int const rows{result.size()};
 
-    if ( pqxx::result const result{query("select position, type, extension, metadata, content from split_block($1, $2)", card_id, block_position)}; result.size() == 2)
+    for (pqxx::row const& row: result)
     {
-        Block first{};
-        Block second{};
-        pqxx::row const& first_row{result.at(0)};
-        pqxx::row const& second_row{result.at(1)};
-        first.set_position(first_row.at("position").as<uint64_t>());
-        first.set_type(to_content_type(first_row.at("type").as<std::string>()));
-        first.set_extension(first_row.at("extension").as<std::string>());
-        first.set_metadata(first_row.at("metadata").as<std::string>());
-        first.set_content(first_row.at("content").as<std::string>());
-        second.set_position(second_row.at("position").as<uint64_t>());
-        second.set_type(to_content_type(second_row.at("type").as<std::string>()));
-        second.set_extension(second_row.at("extension").as<std::string>());
-        second.set_metadata(second_row.at("metadata").as<std::string>());
-        second.set_content(second_row.at("content").as<std::string>());
-        blocks.first = first;
-        blocks.second = second;
+        Block block{};
+        block.set_position(row.at("position").as<uint64_t>());
+        block.set_type(to_content_type(row.at("type").as<std::string>()));
+        block.set_extension(row.at("extension").as<std::string>());
+        block.set_metadata(row.at("metadata").is_null() ? "" : row.at("metadata").as<std::string>());
+        block.set_content(row.at("content").as<std::string>());
+        blocks.insert({block.position(), block});
     }
 
     return blocks;

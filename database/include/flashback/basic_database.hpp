@@ -154,7 +154,7 @@ public:
     virtual void edit_block_metadata(uint64_t card_id, uint64_t block_position, std::string metadata) const = 0;
     virtual void reorder_block(uint64_t card_id, uint64_t block_position, uint64_t target_position) const = 0;
     virtual void merge_blocks(uint64_t card_id, uint64_t source_position, uint64_t target_position) const = 0;
-    [[nodiscard]] virtual std::pair<Block, Block> split_block(uint64_t card_id, uint64_t block_position) const = 0;
+    [[nodiscard]] virtual std::map<uint64_t, Block> split_block(uint64_t card_id, uint64_t block_position) const = 0;
     virtual void move_block(uint64_t card_id, uint64_t block_position, uint64_t target_card_id, uint64_t target_position) const = 0;
 
     // assessments

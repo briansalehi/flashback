@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict 2aeERgtatapxx7H78fqWClcAR8KkzZJhS0vZVcV9InumGhWKM4CBUJyenhXxL8f
+\restrict N94Gbn9zjFPQzS9Eac0TSYTya59BM7dPFCHovcGzHwZl69zSDF6ei6eeLdCKllF
 
 -- Dumped from database version 16.11 (Ubuntu 16.11-0ubuntu0.24.04.1)
 -- Dumped by pg_dump version 16.11 (Ubuntu 16.11-0ubuntu0.24.04.1)
@@ -1745,7 +1745,7 @@ begin
 
         -- create a new record on the top most position
         insert into blocks (card, position, content, type, extension)
-        select selected_card, swap_position, string_agg(coalesce(content, ''), E'\n' order by position), lower_type, lower_extension
+        select selected_card, swap_position, string_agg(coalesce(content, ''), E'\n\n' order by position), lower_type, lower_extension
         from blocks where card = selected_card and position in (upper_position, lower_position);
 
         -- remove the two merged blocks
@@ -2665,53 +2665,49 @@ end; $$;
 ALTER FUNCTION flashback.search_topics(subject_id integer, topic_level flashback.expertise_level, search_pattern character varying) OWNER TO flashback;
 
 --
--- Name: split_block(integer, integer); Type: PROCEDURE; Schema: flashback; Owner: flashback
+-- Name: split_block(integer, integer); Type: FUNCTION; Schema: flashback; Owner: flashback
 --
 
-CREATE PROCEDURE flashback.split_block(IN card integer, IN block integer)
+CREATE FUNCTION flashback.split_block(card_id integer, block_position integer) RETURNS TABLE("position" integer, type flashback.content_type, extension character varying, metadata character varying, content text)
     LANGUAGE plpgsql
     AS $$
 declare parts_count integer;
-declare type content_type;
-declare extension varchar(20);
+declare block_type content_type;
+declare block_extension varchar(20);
 declare margin integer;
 begin
     create temp table block_parts as
-    select row_number() over () - 1 + block as position, part
+    select row_number() over () - 1 + block_position as position, part
     from (
-        select regexp_split_to_table(content, E'\n\n\n+') as part
-        from blocks where blocks.card = split_block.card and blocks.position = block
+        select regexp_split_to_table(b.content, E'\n\n\n+') as part from blocks b where b.card = card_id and b.position = block_position
     );
 
-    select count(position) into parts_count from block_parts;
+    select count(b.position) into parts_count from block_parts b;
 
-    select coalesce(max(position), 1) - block into margin
-    from blocks where blocks.card = split_block.card;
+    select coalesce(max(b.position), 1) - block_position into margin from blocks b where b.card = card_id;
 
-    select blocks.type, blocks.extension into type, extension
-    from blocks where blocks.card = split_block.card and blocks.position = block;
+    select b.type, b.extension into block_type, block_extension from blocks b where b.card = card_id and b.position = block_position;
 
-    update blocks set position = position + margin
-    where blocks.card = split_block.card and blocks.position > block;
+    update blocks b set position = b.position + margin where b.card = card_id and b.position > block_position;
 
-    --update blocks set position = new_position from (
+    --update blocks b set position = new_position from (
     --    select row_number() over (order by position) - 1 + position + parts_count as new_position, position as old_position
-    --    from blocks where blocks.card = split_block.card and blocks.position > block
-    --) where blocks.card = split_block.card and blocks.position = old_position;
+    --    from blocks bb where bb.card = card_id and bb.position > block_position
+    --) where b.card = card_id and b.position = old_position;
 
-    delete from blocks where blocks.card = split_block.card and position = block;
+    delete from blocks b where b.card = card_id and b.position = block_position;
 
-    insert into blocks (card, position, content, type, extension)
-    select split_block.card, block_parts.position, part, type, extension from block_parts;
+    insert into blocks (card, position, content, type, extension) select card_id, block_parts.position, part, block_type, block_extension from block_parts;
 
-    update blocks set position = position - margin + parts_count - 1
-    where blocks.card = split_block.card and blocks.position > block + margin;
+    update blocks b set position = b.position - margin + parts_count - 1 where b.card = card_id and b.position > block_position + margin;
 
     drop table block_parts;
+
+    return query select b.position, b.type, b.extension, b.metadata, b.content from blocks b where b.card = card_id and b.position between block_position and block_position + parts_count - 1;
 end; $$;
 
 
-ALTER PROCEDURE flashback.split_block(IN card integer, IN block integer) OWNER TO flashback;
+ALTER FUNCTION flashback.split_block(card_id integer, block_position integer) OWNER TO flashback;
 
 --
 -- Name: user_exists(character varying); Type: FUNCTION; Schema: flashback; Owner: flashback
@@ -4199,5 +4195,5 @@ GRANT ALL ON SCHEMA public TO flashback_client;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict 2aeERgtatapxx7H78fqWClcAR8KkzZJhS0vZVcV9InumGhWKM4CBUJyenhXxL8f
+\unrestrict N94Gbn9zjFPQzS9Eac0TSYTya59BM7dPFCHovcGzHwZl69zSDF6ei6eeLdCKllF
 
