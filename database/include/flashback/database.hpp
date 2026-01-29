@@ -110,8 +110,8 @@ public:
     void remove_card(uint64_t card_id) const override;
     void merge_cards(uint64_t source_id, uint64_t target_id, std::string) const override;
     [[nodiscard]] std::map<uint64_t, Card> search_cards(uint64_t subject_id, expertise_level level, std::string_view search_pattern) const override;
-    void move_card_to_section(uint64_t card_id, uint64_t resource_id, uint64_t section_position) const override;
-    void move_card_to_topic(uint64_t card_id, uint64_t subject_id, uint64_t topic_position, expertise_level topic_level) const override;
+    void move_card_to_section(uint64_t card_id, uint64_t resource_id, uint64_t section_position, uint64_t target_section_position) const override;
+    void move_card_to_topic(uint64_t card_id, uint64_t subject_id, uint64_t topic_position, expertise_level topic_level, uint64_t target_position, expertise_level target_level) const override;
     [[nodiscard]] std::vector<Card> get_section_cards(uint64_t resource_id, uint64_t sections_position) const override;
     [[nodiscard]] std::vector<Card> get_topic_cards(uint64_t subject_id, uint64_t topic_position, expertise_level topic_level) const override;
 
@@ -310,6 +310,36 @@ private:
         }
 
         return state_string;
+    }
+
+    static Block::content_type to_content_type(std::string_view const type_string)
+    {
+        Block::content_type type{};
+
+        if (type_string == "code") type = Block::code;
+        else if (type_string == "text") type = Block::text;
+        else if (type_string == "image") type = Block::image;
+        else throw std::runtime_error("invalid card state");
+
+        return type;
+    }
+
+    static std::string content_type_to_string(Block::content_type const type)
+    {
+        std::string type_string{};
+
+        switch (type)
+        {
+        case Block::code: type_string = "code";
+            break;
+        case Block::text: type_string = "text";
+            break;
+        case Block::image: type_string = "image";
+            break;
+        default: throw std::runtime_error("invalid content type");
+        }
+
+        return type_string;
     }
 
 private:

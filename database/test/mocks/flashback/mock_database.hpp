@@ -98,23 +98,23 @@ public:
     MOCK_METHOD(void, reorder_topic, (uint64_t, flashback::expertise_level, uint64_t, uint64_t), (const, override));
     MOCK_METHOD(void, remove_topic, (uint64_t, flashback::expertise_level, uint64_t), (const, override));
     MOCK_METHOD(void, merge_topics, (uint64_t, flashback::expertise_level, uint64_t, uint64_t), (const, override));
-    MOCK_METHOD(void, rename_topic, (uint64_t, expertise_level, uint64_t, std::string), (const, override));
-    MOCK_METHOD(void, move_topic, (uint64_t, expertise_level, uint64_t, uint64_t, uint64_t), (const, override));
-    MOCK_METHOD((std::map<uint64_t, Topic>), search_topics, (uint64_t, expertise_level, std::string_view), (const, override));
+    MOCK_METHOD(void, rename_topic, (uint64_t, flashback::expertise_level, uint64_t, std::string), (const, override));
+    MOCK_METHOD(void, move_topic, (uint64_t, flashback::expertise_level, uint64_t, uint64_t, uint64_t), (const, override));
+    MOCK_METHOD((std::map<uint64_t, Topic>), search_topics, (uint64_t, flashback::expertise_level, std::string_view), (const, override));
     MOCK_METHOD(void, change_topic_level, (uint64_t, uint64_t, flashback::expertise_level, flashback::expertise_level), (const, override));
 
     // cards
     MOCK_METHOD(flashback::Card, create_card, (flashback::Card), (const, override));
     MOCK_METHOD(void, add_card_to_section, (uint64_t, uint64_t, uint64_t), (const, override));
-    MOCK_METHOD(void, add_card_to_topic, (uint64_t, uint64_t, uint64_t, expertise_level), (const, override));
+    MOCK_METHOD(void, add_card_to_topic, (uint64_t, uint64_t, uint64_t, flashback::expertise_level), (const, override));
     MOCK_METHOD(void, edit_card_headline, (uint64_t, std::string), (const, override));
     MOCK_METHOD(void, remove_card, (uint64_t), (const, override));
     MOCK_METHOD(void, merge_cards, (uint64_t, uint64_t, std::string), (const, override));
     MOCK_METHOD((std::map<uint64_t, flashback::Card>), search_cards, (uint64_t, flashback::expertise_level, std::string_view), (const, override));
-    MOCK_METHOD(void, move_card_to_section, (uint64_t, uint64_t, uint64_t), (const, override));
-    MOCK_METHOD(void, move_card_to_topic, (uint64_t, uint64_t, uint64_t, expertise_level), (const, override));
+    MOCK_METHOD(void, move_card_to_section, (uint64_t, uint64_t, uint64_t, uint64_t), (const, override));
+    MOCK_METHOD(void, move_card_to_topic, (uint64_t, uint64_t, uint64_t, flashback::expertise_level, uint64_t, flashback::expertise_level), (const, override));
     MOCK_METHOD(std::vector<Card>, get_section_cards, (uint64_t, uint64_t), (const, override));
-    MOCK_METHOD(std::vector<Card>, get_topic_cards, (uint64_t, uint64_t, expertise_level), (const, override));
+    MOCK_METHOD(std::vector<Card>, get_topic_cards, (uint64_t, uint64_t, flashback::expertise_level), (const, override));
 
     // blocks
     MOCK_METHOD(flashback::Block, create_block, (uint64_t, flashback::Block), (const, override));

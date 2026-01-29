@@ -883,12 +883,14 @@ std::map<uint64_t, Card> database::search_cards(uint64_t const subject_id, exper
     return matched;
 }
 
-void database::move_card_to_section(uint64_t const card_id, uint64_t const resource_id, uint64_t const section_position) const
+void database::move_card_to_section(uint64_t const card_id, uint64_t const resource_id, uint64_t const section_position, uint64_t const target_section_position) const
 {
+    exec("call move_card_to_section($1, $2, $3, $4)", card_id, resource_id, section_position, target_section_position);
 }
 
-void database::move_card_to_topic(uint64_t const card_id, uint64_t const subject_id, uint64_t const topic_position, expertise_level const topic_level) const
+void database::move_card_to_topic(uint64_t const card_id, uint64_t const subject_id, uint64_t const topic_position, expertise_level const topic_level, uint64_t const target_position, expertise_level const target_level) const
 {
+    exec("call move_card_to_topic($1, $2, $3, $4, $5, $6)", card_id, subject_id, topic_position, level_to_string(topic_level), target_position, level_to_string(target_level));
 }
 
 std::vector<Card> database::get_section_cards(uint64_t const resource_id, uint64_t const sections_position) const
@@ -926,49 +928,107 @@ std::vector<Card> database::get_topic_cards(uint64_t const subject_id, uint64_t 
 
 Block database::create_block(uint64_t const card_id, Block block) const
 {
-    return {};
+    if (!block.extension().empty() && !block.content().empty())
+    {
+        if (block.position() > 0)
+        {
+            exec("call create_block($1, $2, $3, $4, $5, $6)", card_id, content_type_to_string(block.type()), block.extension(), block.content(), block.metadata(), block.position());
+        }
+        else
+        {
+            if (pqxx::result const result{query("select create_block($1, $2, $3, $4, $5) as id", card_id, content_type_to_string(block.type()), block.extension(), block.content(), block.metadata())}; result.size() == 1)
+            {
+                block.set_position(result.at(0).at("id").as<uint64_t>());
+            }
+        }
+    }
+    return block;
 }
 
 std::map<uint64_t, Block> database::get_blocks(uint64_t const card_id) const
 {
-    return {};
+    std::map<uint64_t, Block> blocks{};
+
+    for (pqxx::result const result{query("select position, type, extension, metadata, content from get_blocks($1)", card_id)}; pqxx::row const& row: result)
+    {
+        Block block{};
+        uint64_t const position{row.at("position").as<uint64_t>()};
+        block.set_position(position);
+        block.set_type(to_content_type(row.at("type").as<std::string>()));
+        block.set_extension(row.at("extension").as<std::string>());
+        block.set_metadata(row.at("metadata").as<std::string>());
+        block.set_content(row.at("content").as<std::string>());
+        blocks.insert({position, block});
+    }
+
+    return blocks;
 }
 
 void database::remove_block(uint64_t const card_id, uint64_t const block_position) const
 {
+    exec("call remove_block($1, $2)", card_id, block_position);
 }
 
 void database::edit_block_content(uint64_t const card_id, uint64_t const block_position, std::string content) const
 {
+    exec("call edit_block_content($1, $2, $3)", card_id, block_position, content);
 }
 
 void database::edit_block_type(uint64_t const card_id, uint64_t const block_position, Block::content_type const type) const
 {
+    exec("call edit_block_type($1, $2, $3)", card_id, block_position, content_type_to_string(type));
 }
 
 void database::edit_block_extension(uint64_t const card_id, uint64_t const block_position, std::string extension) const
 {
+    exec("call edit_block_extension($1, $2, $3)", card_id, block_position, extension);
 }
 
 void database::edit_block_metadata(uint64_t const card_id, uint64_t const block_position, std::string metadata) const
 {
+    exec("call edit_block_metadata($1, $2, $3)", card_id, block_position, metadata);
 }
 
 void database::reorder_block(uint64_t const card_id, uint64_t const block_position, uint64_t const target_position) const
 {
+    exec("call reorder_block($1, $2, $3)", card_id, block_position, target_position);
 }
 
 void database::merge_blocks(uint64_t const card_id, uint64_t const source_position, uint64_t const target_position) const
 {
+    exec("call merge_blocks($1, $2, $3)", card_id, source_position, target_position);
 }
 
 std::pair<Block, Block> database::split_block(uint64_t const card_id, uint64_t const block_position) const
 {
-    return {};
+    std::pair<Block, Block> blocks{};
+
+    if ( pqxx::result const result{query("select position, type, extension, metadata, content from split_block($1, $2)", card_id, block_position)}; result.size() == 2)
+    {
+        Block first{};
+        Block second{};
+        pqxx::row const& first_row{result.at(0)};
+        pqxx::row const& second_row{result.at(1)};
+        first.set_position(first_row.at("position").as<uint64_t>());
+        first.set_type(to_content_type(first_row.at("type").as<std::string>()));
+        first.set_extension(first_row.at("extension").as<std::string>());
+        first.set_metadata(first_row.at("metadata").as<std::string>());
+        first.set_content(first_row.at("content").as<std::string>());
+        second.set_position(second_row.at("position").as<uint64_t>());
+        second.set_type(to_content_type(second_row.at("type").as<std::string>()));
+        second.set_extension(second_row.at("extension").as<std::string>());
+        second.set_metadata(second_row.at("metadata").as<std::string>());
+        second.set_content(second_row.at("content").as<std::string>());
+        blocks.first = first;
+        blocks.second = second;
+    }
+
+    return blocks;
 }
 
 void database::move_block(uint64_t const card_id, uint64_t const block_position, uint64_t const target_card_id, uint64_t const target_position) const
 {
+    exec("call move_block($1, $2, $3, $4)", card_id, block_position, target_card_id, target_position);
 }
 
 Resource database::create_nerve(uint64_t const user_id, std::string resource_name, uint64_t const subject_id, uint64_t const expiration) const
