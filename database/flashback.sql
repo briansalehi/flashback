@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict IvRWOOtmbNFdAP2hHBaBM1FUu1PVfCdxakTrigaRjRoSDgPc49EGDdHOdNJpJKH
+\restrict 2RjJuCX7UpUif1MXMDOolhznedvElgRaxBoOEEhYkM8X31ZCnZV3SXQC0txjNgC
 
 -- Dumped from database version 16.11 (Ubuntu 16.11-0ubuntu0.24.04.1)
 -- Dumped by pg_dump version 16.11 (Ubuntu 16.11-0ubuntu0.24.04.1)
@@ -1745,7 +1745,7 @@ begin
 
         -- create a new record on the top most position
         insert into blocks (card, position, content, type, extension)
-        select selected_card, swap_position, string_agg(coalesce(content, ''), E'\n\n' order by position), lower_type, lower_extension
+        select selected_card, swap_position, string_agg(coalesce(content, ''), E'\n' order by position), lower_type, lower_extension
         from blocks where card = selected_card and position in (upper_position, lower_position);
 
         -- remove the two merged blocks
@@ -32293,5 +32293,5 @@ GRANT ALL ON SCHEMA public TO flashback_client;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict IvRWOOtmbNFdAP2hHBaBM1FUu1PVfCdxakTrigaRjRoSDgPc49EGDdHOdNJpJKH
+\unrestrict 2RjJuCX7UpUif1MXMDOolhznedvElgRaxBoOEEhYkM8X31ZCnZV3SXQC0txjNgC
 

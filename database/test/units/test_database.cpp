@@ -1,6 +1,7 @@
 #include <memory>
 #include <ranges>
 #include <vector>
+#include <sstream>
 #include <exception>
 #include <algorithm>
 #include <filesystem>
@@ -4281,8 +4282,8 @@ TEST_F(test_database, merge_blocks)
     EXPECT_THAT(blocks.at(2).position(), Eq(2));
     std::ostringstream combined_content{};
     combined_content << first_block.content() << '\n' << third_block.content();
-    EXPECT_THAT(blocks.at(1).content(), Eq(combined_content.str()));
-    EXPECT_THAT(blocks.at(2).content(), Eq(second_block.content()));
+    EXPECT_THAT(blocks.at(1).content(), Eq(second_block.content()));
+    EXPECT_THAT(blocks.at(2).content(), Eq(combined_content.str()));
     EXPECT_NO_THROW(m_database->merge_blocks(second_card.id(), fourth_block.position(), fifth_block.position()));
     EXPECT_NO_THROW(blocks = m_database->get_blocks(second_card.id()));
     ASSERT_THAT(blocks, testing::SizeIs(1));
@@ -4291,6 +4292,7 @@ TEST_F(test_database, merge_blocks)
     ASSERT_THAT(blocks, testing::SizeIs(1));
     ASSERT_NO_THROW(blocks.at(1).position());
     EXPECT_THAT(blocks.at(1).position(), Eq(1));
+    combined_content.str("");
     combined_content.clear();
     combined_content << fourth_block.content() << '\n' << fifth_block.content();
     EXPECT_THAT(blocks.at(1).content(), Eq(combined_content.str()));
