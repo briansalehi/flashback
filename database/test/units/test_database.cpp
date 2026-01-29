@@ -3089,10 +3089,10 @@ TEST_F(test_database, create_block)
     fourth_block.set_extension("jpg");
     fourth_block.set_metadata("logo");
     fourth_block.set_content("https://flashback.eu.com/logo");
-    fourth_block.set_type(flashback::Block::code);
-    fourth_block.set_extension("py");
-    fourth_block.clear_metadata();
-    fourth_block.set_content("print('Flashback');");
+    fifth_block.set_type(flashback::Block::code);
+    fifth_block.set_extension("py");
+    fifth_block.clear_metadata();
+    fifth_block.set_content("print('Flashback');");
 
     ASSERT_NO_THROW(resource = m_database->create_resource(resource));
     ASSERT_THAT(resource.id(), Gt(0));
@@ -3136,8 +3136,8 @@ TEST_F(test_database, create_block)
     EXPECT_NO_THROW(first_block = m_database->create_block(first_card.id(), first_block));
     EXPECT_NO_THROW(second_block = m_database->create_block(first_card.id(), second_block));
     EXPECT_NO_THROW(third_block = m_database->create_block(first_card.id(), third_block));
-    EXPECT_NO_THROW(fourth_block = m_database->create_block(first_card.id(), fourth_block));
-    EXPECT_NO_THROW(fifth_block = m_database->create_block(first_card.id(), fifth_block));
+    EXPECT_NO_THROW(fourth_block = m_database->create_block(second_card.id(), fourth_block));
+    EXPECT_NO_THROW(fifth_block = m_database->create_block(second_card.id(), fifth_block));
     EXPECT_THAT(first_block.position(), Eq(1));
     EXPECT_THAT(second_block.position(), Eq(2));
     EXPECT_THAT(third_block.position(), Eq(3));
@@ -3216,10 +3216,10 @@ TEST_F(test_database, get_blocks)
     fourth_block.set_extension("jpg");
     fourth_block.set_metadata("logo");
     fourth_block.set_content("https://flashback.eu.com/logo");
-    fourth_block.set_type(flashback::Block::code);
-    fourth_block.set_extension("py");
-    fourth_block.clear_metadata();
-    fourth_block.set_content("print('Flashback');");
+    fifth_block.set_type(flashback::Block::code);
+    fifth_block.set_extension("py");
+    fifth_block.clear_metadata();
+    fifth_block.set_content("print('Flashback');");
 
     ASSERT_NO_THROW(resource = m_database->create_resource(resource));
     ASSERT_THAT(resource.id(), Gt(0));
@@ -3350,10 +3350,10 @@ TEST_F(test_database, remove_block)
     fourth_block.set_extension("jpg");
     fourth_block.set_metadata("logo");
     fourth_block.set_content("https://flashback.eu.com/logo");
-    fourth_block.set_type(flashback::Block::code);
-    fourth_block.set_extension("py");
-    fourth_block.clear_metadata();
-    fourth_block.set_content("print('Flashback');");
+    fifth_block.set_type(flashback::Block::code);
+    fifth_block.set_extension("py");
+    fifth_block.clear_metadata();
+    fifth_block.set_content("print('Flashback');");
 
     ASSERT_NO_THROW(resource = m_database->create_resource(resource));
     ASSERT_THAT(resource.id(), Gt(0));
@@ -3417,12 +3417,14 @@ TEST_F(test_database, remove_block)
     EXPECT_THAT(blocks, testing::SizeIs(2));
     ASSERT_NO_THROW(blocks.at(1).position());
     EXPECT_THAT(blocks.at(1).position(), Eq(1));
+    EXPECT_THAT(blocks.at(1).content(), Eq(first_block.content()));
     ASSERT_NO_THROW(blocks.at(2).position());
     EXPECT_THAT(blocks.at(1).position(), Eq(1));
     EXPECT_NO_THROW(blocks = m_database->get_blocks(second_card.id()));
     EXPECT_THAT(blocks, testing::SizeIs(1));
     ASSERT_NO_THROW(blocks.at(1).position());
     EXPECT_THAT(blocks.at(1).position(), Eq(1));
+    EXPECT_THAT(blocks.at(1).content(), Eq(fifth_block.content()));
     EXPECT_NO_THROW(blocks = m_database->get_blocks(third_card.id()));
     EXPECT_THAT(blocks, testing::IsEmpty());
 }
@@ -3498,10 +3500,10 @@ TEST_F(test_database, edit_block_content)
     fourth_block.set_extension("jpg");
     fourth_block.set_metadata("logo");
     fourth_block.set_content("https://flashback.eu.com/logo");
-    fourth_block.set_type(flashback::Block::code);
-    fourth_block.set_extension("py");
-    fourth_block.clear_metadata();
-    fourth_block.set_content("print('Flashback');");
+    fifth_block.set_type(flashback::Block::code);
+    fifth_block.set_extension("py");
+    fifth_block.clear_metadata();
+    fifth_block.set_content("print('Flashback');");
 
     ASSERT_NO_THROW(resource = m_database->create_resource(resource));
     ASSERT_THAT(resource.id(), Gt(0));
@@ -3562,8 +3564,10 @@ TEST_F(test_database, edit_block_content)
     EXPECT_NO_THROW(m_database->edit_block_content(second_card.id(), fourth_block.position(), first_block.content()));
     EXPECT_NO_THROW(blocks = m_database->get_blocks(second_card.id()));
     EXPECT_THAT(blocks, testing::SizeIs(2));
+    ASSERT_NO_THROW(blocks.at(1).position());
+    EXPECT_THAT(blocks.at(1).content(), Eq(first_block.content()));
     ASSERT_NO_THROW(blocks.at(2).position());
-    EXPECT_THAT(blocks.at(2).content(), Eq(first_block.content()));
+    EXPECT_THAT(blocks.at(2).content(), Eq(fifth_block.content()));
 }
 
 TEST_F(test_database, edit_block_type)
@@ -3637,10 +3641,10 @@ TEST_F(test_database, edit_block_type)
     fourth_block.set_extension("jpg");
     fourth_block.set_metadata("logo");
     fourth_block.set_content("https://flashback.eu.com/logo");
-    fourth_block.set_type(flashback::Block::code);
-    fourth_block.set_extension("py");
-    fourth_block.clear_metadata();
-    fourth_block.set_content("print('Flashback');");
+    fifth_block.set_type(flashback::Block::code);
+    fifth_block.set_extension("py");
+    fifth_block.clear_metadata();
+    fifth_block.set_content("print('Flashback');");
 
     ASSERT_NO_THROW(resource = m_database->create_resource(resource));
     ASSERT_THAT(resource.id(), Gt(0));
@@ -3776,10 +3780,10 @@ TEST_F(test_database, edit_block_extension)
     fourth_block.set_extension("jpg");
     fourth_block.set_metadata("logo");
     fourth_block.set_content("https://flashback.eu.com/logo");
-    fourth_block.set_type(flashback::Block::code);
-    fourth_block.set_extension("py");
-    fourth_block.clear_metadata();
-    fourth_block.set_content("print('Flashback');");
+    fifth_block.set_type(flashback::Block::code);
+    fifth_block.set_extension("py");
+    fifth_block.clear_metadata();
+    fifth_block.set_content("print('Flashback');");
 
     ASSERT_NO_THROW(resource = m_database->create_resource(resource));
     ASSERT_THAT(resource.id(), Gt(0));
@@ -3915,10 +3919,10 @@ TEST_F(test_database, edit_block_metadata)
     fourth_block.set_extension("jpg");
     fourth_block.set_metadata("logo");
     fourth_block.set_content("https://flashback.eu.com/logo");
-    fourth_block.set_type(flashback::Block::code);
-    fourth_block.set_extension("py");
-    fourth_block.clear_metadata();
-    fourth_block.set_content("print('Flashback');");
+    fifth_block.set_type(flashback::Block::code);
+    fifth_block.set_extension("py");
+    fifth_block.clear_metadata();
+    fifth_block.set_content("print('Flashback');");
 
     ASSERT_NO_THROW(resource = m_database->create_resource(resource));
     ASSERT_THAT(resource.id(), Gt(0));
@@ -4054,10 +4058,10 @@ TEST_F(test_database, reorder_block)
     fourth_block.set_extension("jpg");
     fourth_block.set_metadata("logo");
     fourth_block.set_content("https://flashback.eu.com/logo");
-    fourth_block.set_type(flashback::Block::code);
-    fourth_block.set_extension("py");
-    fourth_block.clear_metadata();
-    fourth_block.set_content("print('Flashback');");
+    fifth_block.set_type(flashback::Block::code);
+    fifth_block.set_extension("py");
+    fifth_block.clear_metadata();
+    fifth_block.set_content("print('Flashback');");
 
     ASSERT_NO_THROW(resource = m_database->create_resource(resource));
     ASSERT_THAT(resource.id(), Gt(0));
@@ -4202,10 +4206,10 @@ TEST_F(test_database, merge_blocks)
     fourth_block.set_extension("jpg");
     fourth_block.set_metadata("logo");
     fourth_block.set_content("https://flashback.eu.com/logo");
-    fourth_block.set_type(flashback::Block::code);
-    fourth_block.set_extension("py");
-    fourth_block.clear_metadata();
-    fourth_block.set_content("print('Flashback');");
+    fifth_block.set_type(flashback::Block::code);
+    fifth_block.set_extension("py");
+    fifth_block.clear_metadata();
+    fifth_block.set_content("print('Flashback');");
 
     ASSERT_NO_THROW(resource = m_database->create_resource(resource));
     ASSERT_THAT(resource.id(), Gt(0));
@@ -4358,10 +4362,10 @@ TEST_F(test_database, split_block)
     fourth_block.set_extension("jpg");
     fourth_block.set_metadata("logo");
     fourth_block.set_content("https://flashback.eu.com/logo");
-    fourth_block.set_type(flashback::Block::code);
-    fourth_block.set_extension("py");
-    fourth_block.clear_metadata();
-    fourth_block.set_content("print('Flashback');");
+    fifth_block.set_type(flashback::Block::code);
+    fifth_block.set_extension("py");
+    fifth_block.clear_metadata();
+    fifth_block.set_content("print('Flashback');");
 
     ASSERT_NO_THROW(resource = m_database->create_resource(resource));
     ASSERT_THAT(resource.id(), Gt(0));
@@ -4505,10 +4509,10 @@ TEST_F(test_database, move_block)
     fourth_block.set_extension("jpg");
     fourth_block.set_metadata("logo");
     fourth_block.set_content("https://flashback.eu.com/logo");
-    fourth_block.set_type(flashback::Block::code);
-    fourth_block.set_extension("py");
-    fourth_block.clear_metadata();
-    fourth_block.set_content("print('Flashback');");
+    fifth_block.set_type(flashback::Block::code);
+    fifth_block.set_extension("py");
+    fifth_block.clear_metadata();
+    fifth_block.set_content("print('Flashback');");
 
     ASSERT_NO_THROW(resource = m_database->create_resource(resource));
     ASSERT_THAT(resource.id(), Gt(0));

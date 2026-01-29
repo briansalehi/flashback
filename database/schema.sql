@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict kmAwt7rafbRhBgcsvuTKttBFGn8bjaWcOdvCfvoWWC1IDGqxjM7LqrVKfO9KCsO
+\restrict 97aDu9PcXuh7j7ZU1xFc9a0Qd29oruV0loXV2akcYSMZIVMuWhAlFjyR2pR89y7
 
 -- Dumped from database version 16.11 (Ubuntu 16.11-0ubuntu0.24.04.1)
 -- Dumped by pg_dump version 16.11 (Ubuntu 16.11-0ubuntu0.24.04.1)
@@ -493,39 +493,39 @@ $$;
 ALTER PROCEDURE flashback.create_assessment(IN subject_id integer, IN subject_level flashback.expertise_level, IN topic_position integer, IN card_id integer) OWNER TO flashback;
 
 --
--- Name: create_block(integer, flashback.content_type, character varying, text); Type: FUNCTION; Schema: flashback; Owner: flashback
+-- Name: create_block(integer, flashback.content_type, character varying, text, character varying); Type: FUNCTION; Schema: flashback; Owner: flashback
 --
 
-CREATE FUNCTION flashback.create_block(card integer, type flashback.content_type, extension character varying, content text) RETURNS integer
+CREATE FUNCTION flashback.create_block(card_id integer, block_type flashback.content_type, block_extension character varying, block_content text, block_metadata character varying) RETURNS integer
     LANGUAGE plpgsql
     AS $$
 declare next_position integer;
 begin
-    select coalesce(max(position), 0) + 1 into next_position from blocks b where b.card = create_block.card;
+    select coalesce(max(position), 0) + 1 into next_position from blocks b where b.card = card_id;
 
-    insert into blocks (card, position, content, type, extension) values (card, next_position, content, type, extension);
+    insert into blocks (card, type, extension, content, metadata, position) values (card_id, block_type, block_extension, block_content, block_metadata, next_position);
 
     return next_position;
 end;
 $$;
 
 
-ALTER FUNCTION flashback.create_block(card integer, type flashback.content_type, extension character varying, content text) OWNER TO flashback;
+ALTER FUNCTION flashback.create_block(card_id integer, block_type flashback.content_type, block_extension character varying, block_content text, block_metadata character varying) OWNER TO flashback;
 
 --
--- Name: create_block(integer, flashback.content_type, character varying, text, integer); Type: PROCEDURE; Schema: flashback; Owner: flashback
+-- Name: create_block(integer, flashback.content_type, character varying, text, character varying, integer); Type: PROCEDURE; Schema: flashback; Owner: flashback
 --
 
-CREATE PROCEDURE flashback.create_block(IN card integer, IN type flashback.content_type, IN extension character varying, IN content text, IN "position" integer)
+CREATE PROCEDURE flashback.create_block(IN card_id integer, IN block_type flashback.content_type, IN block_extension character varying, IN block_content text, IN block_metadata character varying, IN block_position integer)
     LANGUAGE plpgsql
     AS $$
 begin
-    insert into blocks (card, position, content, type, extension) values (card, position, content, type, extension);
+    insert into blocks (card, type, extension, content, metadata, position) values (card_id, block_type, block_extension, block_content, block_metadata, block_position);
 end;
 $$;
 
 
-ALTER PROCEDURE flashback.create_block(IN card integer, IN type flashback.content_type, IN extension character varying, IN content text, IN "position" integer) OWNER TO flashback;
+ALTER PROCEDURE flashback.create_block(IN card_id integer, IN block_type flashback.content_type, IN block_extension character varying, IN block_content text, IN block_metadata character varying, IN block_position integer) OWNER TO flashback;
 
 --
 -- Name: create_card(text); Type: FUNCTION; Schema: flashback; Owner: flashback
@@ -857,6 +857,20 @@ CREATE PROCEDURE flashback.edit_block(IN card integer, IN block integer, IN cont
 ALTER PROCEDURE flashback.edit_block(IN card integer, IN block integer, IN content text) OWNER TO flashback;
 
 --
+-- Name: edit_block_content(integer, integer, text); Type: PROCEDURE; Schema: flashback; Owner: flashback
+--
+
+CREATE PROCEDURE flashback.edit_block_content(IN card_id integer, IN block_position integer, IN block_content text)
+    LANGUAGE plpgsql
+    AS $$
+begin
+    update blocks set content = block_content where card = card_id and position = block_position;
+end; $$;
+
+
+ALTER PROCEDURE flashback.edit_block_content(IN card_id integer, IN block_position integer, IN block_content text) OWNER TO flashback;
+
+--
 -- Name: edit_card_headline(integer, character varying); Type: PROCEDURE; Schema: flashback; Owner: flashback
 --
 
@@ -1062,12 +1076,16 @@ ALTER FUNCTION flashback.get_assimilation_coverage(user_id integer, assessment_i
 -- Name: get_blocks(integer); Type: FUNCTION; Schema: flashback; Owner: flashback
 --
 
-CREATE FUNCTION flashback.get_blocks(card integer) RETURNS TABLE("position" integer, type flashback.content_type, extension character varying, content text)
+CREATE FUNCTION flashback.get_blocks(card_id integer) RETURNS TABLE("position" integer, type flashback.content_type, extension character varying, content text, metadata character varying)
     LANGUAGE plpgsql
-    AS $$ begin return query select blocks."position", blocks.type, blocks.extension, blocks.content from blocks where blocks.card = get_blocks.card; end; $$;
+    AS $$
+begin
+    return query select b.position, b.type, b.extension, b.content, b.metadata from blocks b where b.card = card_id;
+end;
+$$;
 
 
-ALTER FUNCTION flashback.get_blocks(card integer) OWNER TO flashback;
+ALTER FUNCTION flashback.get_blocks(card_id integer) OWNER TO flashback;
 
 --
 -- Name: get_cards(integer, integer, flashback.expertise_level); Type: FUNCTION; Schema: flashback; Owner: flashback
@@ -4127,5 +4145,5 @@ GRANT ALL ON SCHEMA public TO flashback_client;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict kmAwt7rafbRhBgcsvuTKttBFGn8bjaWcOdvCfvoWWC1IDGqxjM7LqrVKfO9KCsO
+\unrestrict 97aDu9PcXuh7j7ZU1xFc9a0Qd29oruV0loXV2akcYSMZIVMuWhAlFjyR2pR89y7
 
