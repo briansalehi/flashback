@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict N94Gbn9zjFPQzS9Eac0TSYTya59BM7dPFCHovcGzHwZl69zSDF6ei6eeLdCKllF
+\restrict kEUDjCcGwpBNvZ0Zit1xdmzxBDcRmDzFWNunoIYwIcuklRof6fYc8Dh6PYzLRLn
 
 -- Dumped from database version 16.11 (Ubuntu 16.11-0ubuntu0.24.04.1)
 -- Dumped by pg_dump version 16.11 (Ubuntu 16.11-0ubuntu0.24.04.1)
@@ -1936,6 +1936,32 @@ $$;
 
 
 ALTER PROCEDURE flashback.merge_topics(IN subject_id integer, IN topic_level flashback.expertise_level, IN source_topic integer, IN target_topic integer) OWNER TO flashback;
+
+--
+-- Name: move_block(integer, integer, integer, integer); Type: PROCEDURE; Schema: flashback; Owner: flashback
+--
+
+CREATE PROCEDURE flashback.move_block(IN card_id integer, IN block_position integer, IN target_card integer, IN target_position integer)
+    LANGUAGE plpgsql
+    AS $$
+declare source_top_position integer;
+declare target_top_position integer;
+begin
+    select max(coalesce(position, 0)) + 1 into source_top_position from blocks where card = card_id;
+
+    select max(coalesce(position, 0)) + 1 into target_top_position from blocks where card = target_card;
+
+    if target_position > 0 and block_position > 0 then
+        call reorder_block(card_id, block_position, source_top_position);
+
+        update blocks set card = target_card, position = target_top_position where card = card_id and position = source_top_position;
+
+        call reorder_block(target_card, target_top_position, target_position);
+    end if;
+end; $$;
+
+
+ALTER PROCEDURE flashback.move_block(IN card_id integer, IN block_position integer, IN target_card integer, IN target_position integer) OWNER TO flashback;
 
 --
 -- Name: move_card_to_section(integer, integer, integer, integer); Type: PROCEDURE; Schema: flashback; Owner: flashback
@@ -4195,5 +4221,5 @@ GRANT ALL ON SCHEMA public TO flashback_client;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict N94Gbn9zjFPQzS9Eac0TSYTya59BM7dPFCHovcGzHwZl69zSDF6ei6eeLdCKllF
+\unrestrict kEUDjCcGwpBNvZ0Zit1xdmzxBDcRmDzFWNunoIYwIcuklRof6fYc8Dh6PYzLRLn
 
