@@ -888,9 +888,9 @@ void database::move_card_to_section(uint64_t const card_id, uint64_t const resou
     exec("call move_card_to_section($1, $2, $3, $4)", card_id, resource_id, section_position, target_section_position);
 }
 
-void database::move_card_to_topic(uint64_t const card_id, uint64_t const subject_id, uint64_t const topic_position, expertise_level const topic_level, uint64_t const target_position, expertise_level const target_level) const
+void database::move_card_to_topic(uint64_t const card_id, uint64_t const subject_id, uint64_t const topic_position, expertise_level const topic_level, uint64_t const target_subject, uint64_t const target_position, expertise_level const target_level) const
 {
-    exec("call move_card_to_topic($1, $2, $3, $4, $5, $6)", card_id, subject_id, topic_position, level_to_string(topic_level), target_position, level_to_string(target_level));
+    exec("call move_card_to_topic($1, $2, $3, $4, $5, $6, $7)", card_id, subject_id, topic_position, level_to_string(topic_level), target_subject, target_position, level_to_string(target_level));
 }
 
 std::vector<Card> database::get_section_cards(uint64_t const resource_id, uint64_t const sections_position) const

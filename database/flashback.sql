@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict Tj9CwM0TXXclWaxiSiSbXpwkQ6e4hS8X8M8549PaPjFfrEfIc1nAXrFaZdX1kBh
+\restrict aLfVbsdvFWehq2gh1jGqD2cXqPfRz18hffT2SkzASj2sqtWMytw23XDbc2hfLwZ
 
 -- Dumped from database version 16.11 (Ubuntu 16.11-0ubuntu0.24.04.1)
 -- Dumped by pg_dump version 16.11 (Ubuntu 16.11-0ubuntu0.24.04.1)
@@ -1905,56 +1905,56 @@ $$;
 ALTER PROCEDURE flashback.merge_topics(IN subject_id integer, IN topic_level flashback.expertise_level, IN source_topic integer, IN target_topic integer) OWNER TO flashback;
 
 --
--- Name: move_card_to_section(integer, integer, integer, integer); Type: FUNCTION; Schema: flashback; Owner: flashback
+-- Name: move_card_to_section(integer, integer, integer, integer); Type: PROCEDURE; Schema: flashback; Owner: flashback
 --
 
-CREATE FUNCTION flashback.move_card_to_section(selected_card integer, current_resource integer, current_section integer, target_section integer) RETURNS integer
+CREATE PROCEDURE flashback.move_card_to_section(IN card_id integer, IN resource_id integer, IN current_section integer, IN target_section integer)
     LANGUAGE plpgsql
     AS $$
 declare card_position integer;
 declare last_position integer;
 begin
-    select coalesce(position, 1) into card_position from sections_cards where resource = current_resource and section = current_section and card = selected_card;
+    select coalesce(position, 1) into card_position from sections_cards where resource = resource_id and section = current_section and card = card_id;
 
     if current_section <> target_section then
-        select coalesce(max(position), 0) + 1 into last_position from sections_cards where resource = current_resource and section = target_section;
-        select last_position into card_position;
-        update sections_cards set section = target_section where resource = current_resource and section = current_section and card = selected_card;
-        update sections_cards t set position = tt.new_position from (select position, row_number() over (order by position) as new_position from sections_cards where resource = current_resource and section = current_section) tt where t.resource = current_resource and t.section = current_section and t.position = tt.position;
-    end if;
+        select coalesce(max(position), 0) + 1 into last_position from sections_cards where resource = resource_id and section = target_section;
 
-    return card_position;
+        update sections_cards set section = target_section, position = last_position where resource = resource_id and section = current_section and card = card_id;
+
+        update sections_cards t set position = tt.updated_position from (
+            select position, row_number() over (order by position) as updated_position from sections_cards where resource = resource_id and section = current_section
+        ) tt where t.resource = resource_id and t.section = current_section and t.position = tt.position;
+    end if;
 end;
 $$;
 
 
-ALTER FUNCTION flashback.move_card_to_section(selected_card integer, current_resource integer, current_section integer, target_section integer) OWNER TO flashback;
+ALTER PROCEDURE flashback.move_card_to_section(IN card_id integer, IN resource_id integer, IN current_section integer, IN target_section integer) OWNER TO flashback;
 
 --
--- Name: move_card_to_topic(integer, integer, flashback.expertise_level, integer, integer); Type: FUNCTION; Schema: flashback; Owner: flashback
+-- Name: move_card_to_topic(integer, integer, integer, flashback.expertise_level, integer, integer, flashback.expertise_level); Type: PROCEDURE; Schema: flashback; Owner: flashback
 --
 
-CREATE FUNCTION flashback.move_card_to_topic(selected_card integer, current_subject integer, current_level flashback.expertise_level, current_topic integer, target_topic integer) RETURNS integer
+CREATE PROCEDURE flashback.move_card_to_topic(IN card_id integer, IN subject_id integer, IN topic_position integer, IN topic_level flashback.expertise_level, IN target_subject integer, IN target_topic integer, IN target_level flashback.expertise_level)
     LANGUAGE plpgsql
     AS $$
-declare card_position integer;
 declare last_position integer;
 begin
-    select coalesce(position, 1) into card_position from topics_cards where subject = current_subject and topic = target_topic and level = current_level and card = selected_card;
+    if (subject_id <> target_subject) or (subject_id = target_subject and topic_position <> target_topic)
+    then
+        select coalesce(max(position), 0) + 1 into last_position from topics_cards where subject = target_subject and topic = target_topic and level = target_level;
 
-    if current_topic <> target_topic then
-        select coalesce(max(position), 0) + 1 into last_position from topics_cards where subject = current_subject and topic = target_topic and level = current_level;
-        select last_position into card_position;
-        update topics_cards set topic = target_topic, position = last_position where subject = current_subject and topic = current_topic and level = current_level and card = selected_card;
-        update topics_cards t set position = tt.new_position from (select position, row_number() over (order by position) as new_position from topics_cards where subject = current_subject and topic = current_topic and level = current_level) tt where t.subject = current_subject and t.topic = current_topic and t.level = current_level and t.position = tt.position;
+        update topics_cards set subject = target_subject, topic = target_topic, position = last_position, level = target_level where subject = subject_id and topic = topic_position and level = topic_level and card = card_id;
+
+        update topics_cards t set position = tt.updated_position from (
+            select position, row_number() over (order by position) as updated_position from topics_cards where subject = subject_id and topic = topic_position and level = topic_level
+        ) tt where t.subject = subject_id and t.topic = topic_position and t.level = topic_level and t.position = tt.position;
     end if;
-
-    return card_position;
 end;
 $$;
 
 
-ALTER FUNCTION flashback.move_card_to_topic(selected_card integer, current_subject integer, current_level flashback.expertise_level, current_topic integer, target_topic integer) OWNER TO flashback;
+ALTER PROCEDURE flashback.move_card_to_topic(IN card_id integer, IN subject_id integer, IN topic_position integer, IN topic_level flashback.expertise_level, IN target_subject integer, IN target_topic integer, IN target_level flashback.expertise_level) OWNER TO flashback;
 
 --
 -- Name: move_section(integer, integer, integer, integer); Type: PROCEDURE; Schema: flashback; Owner: flashback
@@ -32254,5 +32254,5 @@ GRANT ALL ON SCHEMA public TO flashback_client;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict Tj9CwM0TXXclWaxiSiSbXpwkQ6e4hS8X8M8549PaPjFfrEfIc1nAXrFaZdX1kBh
+\unrestrict aLfVbsdvFWehq2gh1jGqD2cXqPfRz18hffT2SkzASj2sqtWMytw23XDbc2hfLwZ
 

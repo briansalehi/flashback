@@ -10,6 +10,14 @@
 #include <flashback/database.hpp>
 #include <flashback/exception.hpp>
 
+using testing::A;
+using testing::An;
+using testing::Eq;
+using testing::Ne;
+using testing::SizeIs;
+using testing::Gt;
+using testing::Lt;
+
 class test_database: public testing::Test
 {
 protected:
@@ -42,7 +50,7 @@ protected:
         uint64_t user_id{};
 
         EXPECT_NO_THROW(user_id = m_database->create_user(m_user->name(), m_user->email(), m_user->hash()));
-        EXPECT_GT(user_id, 0);
+        EXPECT_THAT(user_id, Gt(0));
 
         return user_id;
     }
@@ -105,7 +113,7 @@ TEST_F(test_database, CreateDuplicateUser)
 {
     uint64_t user_id{};
     EXPECT_NO_THROW(user_id = m_database->create_user(m_user->name(), m_user->email(), m_user->hash()));
-    ASSERT_EQ(user_id, 0);
+    ASSERT_THAT(user_id, Eq(0));
 }
 
 TEST_F(test_database, CreateSession)
@@ -123,23 +131,23 @@ TEST_F(test_database, GetUserWithDevice)
 {
     std::unique_ptr<flashback::User> user = m_database->get_user(m_user->token(), m_user->device());
 
-    ASSERT_EQ(user, nullptr);
+    ASSERT_THAT(user, Eq(nullptr));
 
     std::string unknown_device{R"(33333333-3333-3333-3333-333333333333)"};
     user = m_database->get_user(m_user->token(), m_user->device());
 
-    ASSERT_EQ(user, nullptr);
+    ASSERT_THAT(user, Eq(nullptr));
     ASSERT_TRUE(m_database->create_session(m_user->id(), m_user->token(), m_user->device()));
 
     user = m_database->get_user(m_user->token(), m_user->device());
 
-    ASSERT_NE(user, nullptr);
-    EXPECT_GT(user->id(), 0);
-    EXPECT_EQ(user->name(), m_user->name());
-    EXPECT_EQ(user->email(), m_user->email());
-    EXPECT_EQ(user->hash(), m_user->hash());
-    EXPECT_EQ(user->token(), m_user->token());
-    EXPECT_EQ(user->device(), m_user->device());
+    ASSERT_THAT(user, Ne(nullptr));
+    EXPECT_THAT(user->id(), Gt(0));
+    EXPECT_THAT(user->name(), Eq(m_user->name()));
+    EXPECT_THAT(user->email(), Eq(m_user->email()));
+    EXPECT_THAT(user->hash(), Eq(m_user->hash()));
+    EXPECT_THAT(user->token(), Eq(m_user->token()));
+    EXPECT_THAT(user->device(), Eq(m_user->device()));
     EXPECT_TRUE(user->password().empty());
     EXPECT_FALSE(user->verified());
 }
@@ -149,15 +157,15 @@ TEST_F(test_database, GetUserWithEmail)
     std::string non_existing_email{"non_existing_user@flashback.eu.com"};
     std::unique_ptr<flashback::User> user{m_database->get_user(non_existing_email)};
 
-    ASSERT_EQ(user, nullptr);
+    ASSERT_THAT(user, Eq(nullptr));
 
     user = m_database->get_user(m_user->email());
 
-    ASSERT_NE(user, nullptr);
-    EXPECT_GT(user->id(), 0);
-    EXPECT_EQ(user->name(), m_user->name());
-    EXPECT_EQ(user->email(), m_user->email());
-    EXPECT_EQ(user->hash(), m_user->hash());
+    ASSERT_THAT(user, Ne(nullptr));
+    EXPECT_THAT(user->id(), Gt(0));
+    EXPECT_THAT(user->name(), Eq(m_user->name()));
+    EXPECT_THAT(user->email(), Eq(m_user->email()));
+    EXPECT_THAT(user->hash(), Eq(m_user->hash()));
     EXPECT_TRUE(user->token().empty());
     EXPECT_TRUE(user->device().empty());
     EXPECT_TRUE(user->password().empty());
@@ -181,13 +189,13 @@ TEST_F(test_database, RevokeSessionsExceptSelectedToken)
     m_database->revoke_sessions_except(m_user->id(), m_user->token());
 
     user = m_database->get_user(m_user->token(), m_user->device());
-    EXPECT_NE(user, nullptr);
+    EXPECT_THAT(user, Ne(nullptr));
 
     user = m_database->get_user(token1, device1);
-    ASSERT_EQ(user, nullptr);
+    ASSERT_THAT(user, Eq(nullptr));
 
     user = m_database->get_user(token2, device2);
-    EXPECT_EQ(user, nullptr);
+    EXPECT_THAT(user, Eq(nullptr));
 }
 
 TEST_F(test_database, RevokeSessionsWithNonExistingToken)
@@ -218,10 +226,10 @@ TEST_F(test_database, RevokeSingleSession)
     m_database->revoke_session(m_user->id(), token);
 
     user = m_database->get_user(token, device);
-    ASSERT_EQ(user, nullptr);
+    ASSERT_THAT(user, Eq(nullptr));
 
     user = m_database->get_user(m_user->token(), m_user->device());
-    EXPECT_NE(user, nullptr);
+    EXPECT_THAT(user, Ne(nullptr));
 }
 
 TEST_F(test_database, ResetPassword)
@@ -233,14 +241,14 @@ TEST_F(test_database, ResetPassword)
 
     user = m_database->get_user(m_user->token(), m_user->device());
 
-    ASSERT_NE(user, nullptr);
-    EXPECT_EQ(user->hash(), m_user->hash());
+    ASSERT_THAT(user, Ne(nullptr));
+    EXPECT_THAT(user->hash(), Eq(m_user->hash()));
 
     m_database->reset_password(m_user->id(), hash);
 
     user = m_database->get_user(m_user->token(), m_user->device());
-    ASSERT_NE(user, nullptr);
-    EXPECT_EQ(user->hash(), hash);
+    ASSERT_THAT(user, Ne(nullptr));
+    EXPECT_THAT(user->hash(), Eq(hash));
 }
 
 TEST_F(test_database, UserExists)
@@ -262,15 +270,15 @@ TEST_F(test_database, CreateRoadmap)
     quoted_roadmap.set_name("O'Reilly Technical Editor");
 
     EXPECT_NO_THROW(primary_roadmap = m_database->create_roadmap(m_user->id(), primary_roadmap.name()));
-    EXPECT_GT(primary_roadmap.id(), 0);
+    EXPECT_THAT(primary_roadmap.id(), Gt(0));
 
     EXPECT_NO_THROW(secondary_roadmap = m_database->create_roadmap(m_user->id(), secondary_roadmap.name()));
-    EXPECT_GT(secondary_roadmap.id(), 0);
+    EXPECT_THAT(secondary_roadmap.id(), Gt(0));
 
     EXPECT_THROW(failed_roadmap = m_database->create_roadmap(m_user->id(), primary_roadmap.name()), pqxx::unique_violation);
 
     EXPECT_NO_THROW(quoted_roadmap = m_database->create_roadmap(m_user->id(), quoted_roadmap.name()));
-    EXPECT_GT(quoted_roadmap.id(), 0);
+    EXPECT_THAT(quoted_roadmap.id(), Gt(0));
 
     EXPECT_THROW(failed_roadmap = m_database->create_roadmap(m_user->id(), ""), flashback::client_exception);
 }
@@ -287,11 +295,11 @@ TEST_F(test_database, GetRoadmaps)
     EXPECT_THAT(roadmaps, testing::IsEmpty()) << "No roadmap was created so far, container should be empty";
 
     ASSERT_NO_THROW(primary_roadmap = m_database->create_roadmap(m_user->id(), primary_roadmap.name()));
-    ASSERT_GT(primary_roadmap.id(), 0);
+    ASSERT_THAT(primary_roadmap.id(), Gt(0));
     primary_roadmap.set_id(primary_roadmap.id());
 
     ASSERT_NO_THROW(secondary_roadmap = m_database->create_roadmap(m_user->id(), secondary_roadmap.name()));
-    ASSERT_GT(secondary_roadmap.id(), 0);
+    ASSERT_THAT(secondary_roadmap.id(), Gt(0));
 
     roadmaps = m_database->get_roadmaps(m_user->id());
     EXPECT_THAT(roadmaps, testing::SizeIs(2)) << "Both of the existing roadmaps was assigned to user, so container should contain both";
@@ -306,19 +314,19 @@ TEST_F(test_database, RenameRoadmap)
     std::vector<flashback::Roadmap> roadmaps{};
 
     ASSERT_NO_THROW(roadmap = m_database->create_roadmap(m_user->id(), roadmap.name()));
-    ASSERT_GT(roadmap.id(), 0);
+    ASSERT_THAT(roadmap.id(), Gt(0));
 
     EXPECT_NO_THROW(m_database->rename_roadmap(roadmap.id(), modified_name));
     ASSERT_NO_THROW(roadmaps = m_database->get_roadmaps(m_user->id()));
-    EXPECT_EQ(roadmaps.size(), 1);
+    EXPECT_THAT(roadmaps.size(), Eq(1));
     ASSERT_NO_THROW(roadmap = roadmaps.at(0));
-    EXPECT_EQ(roadmaps.at(0).name(), modified_name);
+    EXPECT_THAT(roadmaps.at(0).name(), Eq(modified_name));
 
     EXPECT_NO_THROW(m_database->rename_roadmap(roadmap.id(), name_with_quotes));
     ASSERT_NO_THROW(roadmaps = m_database->get_roadmaps(m_user->id()));
-    EXPECT_EQ(roadmaps.size(), 1);
+    EXPECT_THAT(roadmaps.size(), Eq(1));
     ASSERT_NO_THROW(roadmap = roadmaps.at(0));
-    EXPECT_EQ(roadmap.name(), name_with_quotes);
+    EXPECT_THAT(roadmap.name(), Eq(name_with_quotes));
 
     EXPECT_THROW(m_database->rename_roadmap(roadmap.id(), ""), flashback::client_exception);
 }
@@ -333,13 +341,13 @@ TEST_F(test_database, RemoveRoadmap)
 
     ASSERT_NO_THROW(primary_roadmap = m_database->create_roadmap(m_user->id(), primary_roadmap.name()));
     ASSERT_NO_THROW(secondary_roadmap = m_database->create_roadmap(m_user->id(), secondary_roadmap.name()));
-    ASSERT_GT(primary_roadmap.id(), 0);
-    ASSERT_GT(secondary_roadmap.id(), 0);
+    ASSERT_THAT(primary_roadmap.id(), Gt(0));
+    ASSERT_THAT(secondary_roadmap.id(), Gt(0));
 
     EXPECT_NO_THROW(m_database->remove_roadmap(primary_roadmap.id()));
     ASSERT_THAT(m_database->get_roadmaps(m_user->id()), testing::SizeIs(1)) << "Of two existing roadmaps, one should remain";
     EXPECT_NO_THROW(primary_roadmap = m_database->get_roadmaps(m_user->id()).at(0));
-    EXPECT_EQ(primary_roadmap.name(), secondary_roadmap.name());
+    EXPECT_THAT(primary_roadmap.name(), Eq(secondary_roadmap.name()));
 
     EXPECT_NO_THROW(m_database->remove_roadmap(primary_roadmap.id())) << "Deleting non-existing roadmap should not throw an exception";
 }
@@ -387,15 +395,15 @@ TEST_F(test_database, CreateSubject)
     std::string subject_name{"Git"};
 
     EXPECT_NO_THROW(subject = m_database->create_subject(subject_name));
-    EXPECT_EQ(subject.name(), subject_name);
-    EXPECT_GT(subject.id(), 0);
+    EXPECT_THAT(subject.name(), Eq(subject_name));
+    EXPECT_THAT(subject.id(), Gt(0));
 
     EXPECT_THROW(subject = m_database->create_subject(subject_name), pqxx::unique_violation) << "Subjects must be unique";
 
     subject_name = "Linus' Operating System";
     EXPECT_NO_THROW(subject = m_database->create_subject(subject_name)) << "Subjects with quotes in their name should not be a problem";
-    EXPECT_EQ(subject.name(), subject_name);
-    EXPECT_GT(subject.id(), 0);
+    EXPECT_THAT(subject.name(), Eq(subject_name));
+    EXPECT_THAT(subject.id(), Gt(0));
 
     subject_name.clear();
     EXPECT_THROW(subject = m_database->create_subject(subject_name), flashback::client_exception) << "Subjects with empty names are not allowed";
@@ -411,17 +419,17 @@ TEST_F(test_database, SearchSubjects)
 
     ASSERT_NO_THROW(subject = m_database->create_subject(irrelevant_subject));
     ASSERT_EQ(subject.name(), irrelevant_subject) << "Subject sample 1 should be created before performing search";
-    ASSERT_GT(subject.id(), 0);
+    ASSERT_THAT(subject.id(), Gt(0));
 
     ASSERT_NO_THROW(subject = m_database->create_subject(subject_name)) << "Subject sample 2 should be created before performing search";
-    ASSERT_EQ(subject.name(), subject_name);
-    ASSERT_GT(subject.id(), 0);
+    ASSERT_THAT(subject.name(), Eq(subject_name));
+    ASSERT_THAT(subject.id(), Gt(0));
 
     EXPECT_NO_THROW(matches = m_database->search_subjects(name_pattern));
     EXPECT_EQ(matches.size(), 1) << "Only one of the two existing objects should be similar";
     EXPECT_NO_THROW(matches.at(1)) << "The first and only match should be in the first position";
-    EXPECT_EQ(matches.at(1).id(), subject.id());
-    EXPECT_EQ(matches.at(1).name(), subject.name());
+    EXPECT_THAT(matches.at(1).id(), Eq(subject.id()));
+    EXPECT_THAT(matches.at(1).name(), Eq(subject.name()));
 
     EXPECT_NO_THROW(matches = m_database->search_subjects(""));
     EXPECT_TRUE(matches.empty()) << "Searching empty name should not have any results";
@@ -437,12 +445,12 @@ TEST_F(test_database, RenameSubject)
     flashback::Subject subject{};
 
     ASSERT_NO_THROW(subject = m_database->create_subject(irrelevant_name));
-    ASSERT_EQ(subject.name(), irrelevant_name);
-    ASSERT_GT(subject.id(), 0);
+    ASSERT_THAT(subject.name(), Eq(irrelevant_name));
+    ASSERT_THAT(subject.id(), Gt(0));
 
     ASSERT_NO_THROW(subject = m_database->create_subject(initial_name));
-    ASSERT_EQ(subject.name(), initial_name);
-    ASSERT_GT(subject.id(), 0);
+    ASSERT_THAT(subject.name(), Eq(initial_name));
+    ASSERT_THAT(subject.id(), Gt(0));
 
     ASSERT_NO_THROW(matches = m_database->search_subjects(initial_name));
     ASSERT_EQ(matches.size(), 1) << "Irrelevant subject should not be visible in search results, there must be only one matching subject";
@@ -455,7 +463,7 @@ TEST_F(test_database, RenameSubject)
     EXPECT_NO_THROW(matches = m_database->search_subjects(modified_name));
     ASSERT_EQ(matches.size(), 1) << "New name of the subject should be the only match";
     ASSERT_NO_THROW(matches.at(expected_position));
-    EXPECT_EQ(matches.at(expected_position).name(), modified_name);
+    EXPECT_THAT(matches.at(expected_position).name(), Eq(modified_name));
 
     EXPECT_THROW(m_database->rename_subject(subject.id(), ""), flashback::client_exception) << "Empty subject names should be declined";
 
@@ -470,7 +478,7 @@ TEST_F(test_database, AddMilestone)
     expected_roadmap.set_name("Open Source Expert");
 
     ASSERT_NO_THROW(returning_roadmap = m_database->create_roadmap(m_user->id(), expected_roadmap.name()));
-    ASSERT_GT(returning_roadmap.id(), 0);
+    ASSERT_THAT(returning_roadmap.id(), Gt(0));
 
     for (auto const& name: subject_names)
     {
@@ -479,12 +487,12 @@ TEST_F(test_database, AddMilestone)
         flashback::Milestone milestone;
         expected_subject.set_name(name);
         ASSERT_NO_THROW(returning_subject = m_database->create_subject(expected_subject.name()));
-        ASSERT_EQ(returning_subject.name(), expected_subject.name());
-        ASSERT_GT(returning_subject.id(), 0);
+        ASSERT_THAT(returning_subject.name(), Eq(expected_subject.name()));
+        ASSERT_THAT(returning_subject.id(), Gt(0));
         EXPECT_NO_THROW(milestone = m_database->add_milestone(returning_subject.id(), flashback::expertise_level::surface, returning_roadmap.id()));
-        EXPECT_GT(milestone.id(), 0);
-        EXPECT_GT(milestone.position(), 0);
-        EXPECT_EQ(milestone.level(), flashback::expertise_level::surface);
+        EXPECT_THAT(milestone.id(), Gt(0));
+        EXPECT_THAT(milestone.position(), Gt(0));
+        EXPECT_THAT(milestone.level(), Eq(flashback::expertise_level::surface));
     }
 }
 
@@ -496,7 +504,7 @@ TEST_F(test_database, AddMilestoneWithPosition)
     expected_roadmap.set_name("Open Source Expert");
 
     ASSERT_NO_THROW(returning_roadmap = m_database->create_roadmap(m_user->id(), expected_roadmap.name()));
-    ASSERT_GT(returning_roadmap.id(), 0);
+    ASSERT_THAT(returning_roadmap.id(), Gt(0));
 
     uint64_t position{};
 
@@ -508,8 +516,8 @@ TEST_F(test_database, AddMilestoneWithPosition)
         flashback::Milestone milestone;
         expected_subject.set_name(name);
         ASSERT_NO_THROW(returning_subject = m_database->create_subject(expected_subject.name()));
-        ASSERT_EQ(returning_subject.name(), expected_subject.name());
-        ASSERT_GT(returning_subject.id(), 0);
+        ASSERT_THAT(returning_subject.name(), Eq(expected_subject.name()));
+        ASSERT_THAT(returning_subject.id(), Gt(0));
         EXPECT_NO_THROW(milestone = m_database->add_milestone(returning_subject.id(), flashback::expertise_level::surface, returning_roadmap.id(), position));
     }
 }
@@ -523,7 +531,7 @@ TEST_F(test_database, GetMilestones)
     expected_roadmap.set_name("Open Source Expert");
 
     ASSERT_NO_THROW(returning_roadmap = m_database->create_roadmap(m_user->id(), expected_roadmap.name()));
-    ASSERT_GT(returning_roadmap.id(), 0);
+    ASSERT_THAT(returning_roadmap.id(), Gt(0));
 
     for (auto const& name: subject_names)
     {
@@ -532,21 +540,21 @@ TEST_F(test_database, GetMilestones)
         flashback::Milestone milestone;
         expected_subject.set_name(name);
         ASSERT_NO_THROW(returning_subject = m_database->create_subject(expected_subject.name()));
-        ASSERT_EQ(returning_subject.name(), expected_subject.name());
-        ASSERT_GT(returning_subject.id(), 0);
+        ASSERT_THAT(returning_subject.name(), Eq(expected_subject.name()));
+        ASSERT_THAT(returning_subject.id(), Gt(0));
         EXPECT_NO_THROW(milestone = m_database->add_milestone(returning_subject.id(), flashback::expertise_level::surface, returning_roadmap.id()));
-        EXPECT_EQ(milestone.id(), returning_subject.id());
-        EXPECT_EQ(milestone.level(), flashback::expertise_level::surface);
+        EXPECT_THAT(milestone.id(), Eq(returning_subject.id()));
+        EXPECT_THAT(milestone.level(), Eq(flashback::expertise_level::surface));
     }
 
     EXPECT_NO_THROW(milestones = m_database->get_milestones(returning_roadmap.id()));
-    ASSERT_EQ(milestones.size(), subject_names.size());
+    ASSERT_THAT(milestones.size(), Eq(subject_names.size()));
 
     for (auto const& milestone: milestones)
     {
-        EXPECT_GT(milestone.position(), 0);
+        EXPECT_THAT(milestone.position(), Gt(0));
         auto const& iter = std::ranges::find_if(subject_names, [&milestone](auto const& name) { return name == milestone.name(); });
-        EXPECT_NE(iter, subject_names.cend());
+        EXPECT_THAT(iter, Ne(subject_names.cend()));
     }
 }
 
@@ -564,15 +572,15 @@ TEST_F(test_database, AddRequirement)
     required_milestone.set_level(flashback::expertise_level::depth);
 
     ASSERT_NO_THROW(roadmap = m_database->create_roadmap(m_user->id(), roadmap.name()));
-    ASSERT_GT(roadmap.id(), 0);
+    ASSERT_THAT(roadmap.id(), Gt(0));
     ASSERT_NO_THROW(dependent_subject = m_database->create_subject(dependent_subject.name()));
-    ASSERT_GT(dependent_subject.id(), 0);
+    ASSERT_THAT(dependent_subject.id(), Gt(0));
     ASSERT_NO_THROW(required_subject = m_database->create_subject(required_subject.name()));
-    ASSERT_GT(dependent_subject.id(), 0);
+    ASSERT_THAT(dependent_subject.id(), Gt(0));
     ASSERT_NO_THROW(dependent_milestone = m_database->add_milestone(dependent_subject.id(), dependent_milestone.level(), roadmap.id()));
-    ASSERT_EQ(dependent_milestone.id(), dependent_subject.id());
+    ASSERT_THAT(dependent_milestone.id(), Eq(dependent_subject.id()));
     ASSERT_NO_THROW(required_milestone = m_database->add_milestone(required_subject.id(), required_milestone.level(), roadmap.id()));
-    ASSERT_EQ(required_milestone.id(), required_subject.id());
+    ASSERT_THAT(required_milestone.id(), Eq(required_subject.id()));
     EXPECT_NO_THROW(m_database->add_requirement(roadmap.id(), dependent_milestone, required_milestone));
 }
 
@@ -591,20 +599,20 @@ TEST_F(test_database, GetRequirements)
     required_milestone.set_level(flashback::expertise_level::depth);
 
     ASSERT_NO_THROW(roadmap = m_database->create_roadmap(m_user->id(), roadmap.name()));
-    ASSERT_GT(roadmap.id(), 0);
+    ASSERT_THAT(roadmap.id(), Gt(0));
     ASSERT_NO_THROW(dependent_subject = m_database->create_subject(dependent_subject.name()));
-    ASSERT_GT(dependent_subject.id(), 0);
+    ASSERT_THAT(dependent_subject.id(), Gt(0));
     ASSERT_NO_THROW(required_subject = m_database->create_subject(required_subject.name()));
-    ASSERT_GT(required_subject.id(), 0);
+    ASSERT_THAT(required_subject.id(), Gt(0));
     ASSERT_NO_THROW(dependent_milestone = m_database->add_milestone(dependent_subject.id(), dependent_milestone.level(), roadmap.id()));
-    ASSERT_EQ(dependent_milestone.id(), dependent_subject.id());
+    ASSERT_THAT(dependent_milestone.id(), Eq(dependent_subject.id()));
     ASSERT_NO_THROW(required_milestone = m_database->add_milestone(required_subject.id(), required_milestone.level(), roadmap.id()));
-    ASSERT_EQ(required_milestone.id(), required_subject.id());
+    ASSERT_THAT(required_milestone.id(), Eq(required_subject.id()));
     ASSERT_NO_THROW(m_database->add_requirement(roadmap.id(), dependent_milestone, required_milestone));
     EXPECT_NO_THROW(requirements = m_database->get_requirements(roadmap.id(), dependent_milestone.id(), dependent_milestone.level()));
-    ASSERT_EQ(requirements.size(), 1);
+    ASSERT_THAT(requirements.size(), Eq(1));
     ASSERT_NO_THROW(requirements.at(0).id());
-    EXPECT_EQ(requirements.at(0).id(), required_milestone.id());
+    EXPECT_THAT(requirements.at(0).id(), Eq(required_milestone.id()));
 }
 
 TEST_F(test_database, CloneRoadmap)
@@ -619,15 +627,15 @@ TEST_F(test_database, CloneRoadmap)
     roadmap.set_name("Theoretical Physicist");
 
     ASSERT_NO_THROW(user_id = m_database->create_user(m_user->name(), "another@flashback.eu.com", m_user->hash()));
-    ASSERT_GT(user_id, 0);
+    ASSERT_THAT(user_id, Gt(0));
     ASSERT_TRUE(m_database->create_session(user_id, std::move(token), std::move(device)));
     ASSERT_NO_THROW(roadmap = m_database->create_roadmap(m_user->id(), roadmap.name()));
-    ASSERT_GT(roadmap.id(), 0);
+    ASSERT_THAT(roadmap.id(), Gt(0));
     EXPECT_NO_THROW(cloned_roadmap = m_database->clone_roadmap(user_id, roadmap.id())) << "Roadmap should be cloned for the new user";
     ASSERT_NO_THROW(roadmaps = m_database->get_roadmaps(user_id));
     EXPECT_EQ(roadmaps.size(), 1) << "New user should have one cloned roadmap";
     EXPECT_NO_THROW(roadmaps.at(0).id());
-    EXPECT_GT(roadmaps.at(0).id(), 0);
+    EXPECT_THAT(roadmaps.at(0).id(), Gt(0));
     EXPECT_NE(roadmaps.at(0).id(), roadmap.id()) << "Cloned roadmap should not have the same ID as the original roadmap";
 }
 
@@ -654,9 +662,9 @@ TEST_F(test_database, ReorderMilestone)
     ASSERT_NO_THROW(milestone_pos1 = m_database->add_milestone(subject_pos1.id(), level, roadmap.id()));
     ASSERT_NO_THROW(milestone_pos2 = m_database->add_milestone(subject_pos2.id(), level, roadmap.id()));
     ASSERT_NO_THROW(milestone_pos3 = m_database->add_milestone(subject_pos3.id(), level, roadmap.id()));
-    EXPECT_EQ(milestone_pos1.position(), 1);
-    EXPECT_EQ(milestone_pos2.position(), 2);
-    EXPECT_EQ(milestone_pos3.position(), 3);
+    EXPECT_THAT(milestone_pos1.position(), Eq(1));
+    EXPECT_THAT(milestone_pos2.position(), Eq(2));
+    EXPECT_THAT(milestone_pos3.position(), Eq(3));
     ASSERT_NO_THROW(milestones = m_database->get_milestones(roadmap.id()));
     ASSERT_THAT(milestones, testing::SizeIs(3));
     ASSERT_NO_THROW(milestones.at(0).id());
@@ -700,16 +708,16 @@ TEST_F(test_database, RemoveMilestone)
     roadmap.set_name("Theoretical Physicist");
 
     ASSERT_NO_THROW(roadmap = m_database->create_roadmap(m_user->id(), roadmap.name()));
-    ASSERT_GT(roadmap.id(), 0);
+    ASSERT_THAT(roadmap.id(), Gt(0));
 
     for (std::string const& name: {"Calculus", "Linear Algebra", "Graph Theory"})
     {
         flashback::Subject subject{};
         flashback::Milestone milestone{};
         ASSERT_NO_THROW(subject = m_database->create_subject(name));
-        ASSERT_GT(subject.id(), 0);
+        ASSERT_THAT(subject.id(), Gt(0));
         ASSERT_NO_THROW(milestone = m_database->add_milestone(subject.id(), flashback::expertise_level::depth, roadmap.id()));
-        ASSERT_EQ(milestone.id(), subject.id());
+        ASSERT_THAT(milestone.id(), Eq(subject.id()));
     }
 
     ASSERT_NO_THROW(milestones = m_database->get_milestones(roadmap.id()));
@@ -720,8 +728,8 @@ TEST_F(test_database, RemoveMilestone)
     ASSERT_THAT(milestones, SizeIs(2));
     ASSERT_NO_THROW(milestones.at(0).id());
     ASSERT_NO_THROW(milestones.at(1).id());
-    EXPECT_GT(milestones.at(0).id(), 0);
-    EXPECT_GT(milestones.at(1).id(), 0);
+    EXPECT_THAT(milestones.at(0).id(), Gt(0));
+    EXPECT_THAT(milestones.at(1).id(), Gt(0));
 }
 
 TEST_F(test_database, ChangeMilestoneLevel)
@@ -736,24 +744,24 @@ TEST_F(test_database, ChangeMilestoneLevel)
     roadmap.set_name("Theoretical Physicist");
 
     ASSERT_NO_THROW(roadmap = m_database->create_roadmap(m_user->id(), roadmap.name()));
-    ASSERT_GT(roadmap.id(), 0);
+    ASSERT_THAT(roadmap.id(), Gt(0));
 
     subject.set_name("Calculus");
     ASSERT_NO_THROW(subject = m_database->create_subject(subject.name()));
-    ASSERT_GT(subject.id(), 0);
+    ASSERT_THAT(subject.id(), Gt(0));
     ASSERT_NO_THROW(milestone = m_database->add_milestone(subject.id(), flashback::expertise_level::depth, roadmap.id()));
-    ASSERT_EQ(milestone.id(), subject.id());
+    ASSERT_THAT(milestone.id(), Eq(subject.id()));
     ASSERT_NO_THROW(milestones = m_database->get_milestones(roadmap.id()));
     ASSERT_THAT(milestones, SizeIs(1));
     ASSERT_NO_THROW(modified_milestone = milestones.at(0));
-    ASSERT_EQ(modified_milestone.id(), subject.id());
-    EXPECT_EQ(modified_milestone.level(), flashback::expertise_level::depth);
+    ASSERT_THAT(modified_milestone.id(), Eq(subject.id()));
+    EXPECT_THAT(modified_milestone.level(), Eq(flashback::expertise_level::depth));
     EXPECT_NO_THROW(m_database->change_milestone_level(roadmap.id(), milestone.id(), flashback::expertise_level::surface));
     ASSERT_NO_THROW(milestones = m_database->get_milestones(roadmap.id()));
     ASSERT_THAT(milestones, SizeIs(1));
     ASSERT_NO_THROW(modified_milestone = milestones.at(0));
-    ASSERT_EQ(modified_milestone.id(), subject.id());
-    EXPECT_EQ(modified_milestone.level(), flashback::expertise_level::surface);
+    ASSERT_THAT(modified_milestone.id(), Eq(subject.id()));
+    EXPECT_THAT(modified_milestone.level(), Eq(flashback::expertise_level::surface));
 }
 
 TEST_F(test_database, remove_subject)
@@ -771,7 +779,7 @@ TEST_F(test_database, remove_subject)
     }
 
     flashback::Subject const subject = subjects.at(0);
-    ASSERT_GT(subject.id(), 0);
+    ASSERT_THAT(subject.id(), Gt(0));
     ASSERT_FALSE(subject.name().empty());
     EXPECT_NO_THROW(matched_subjects = m_database->search_subjects(subject.name()));
     EXPECT_THAT(matched_subjects, SizeIs(1)) << "Subject should appear in the search result before being removed";
@@ -825,24 +833,24 @@ TEST_F(test_database, create_resource)
     resource.set_expiration(expiration);
 
     EXPECT_NO_THROW(resource = m_database->create_resource(resource));
-    EXPECT_GT(resource.id(), 0);
-    EXPECT_EQ(resource.name(), name);
-    EXPECT_EQ(resource.type(), type);
-    EXPECT_EQ(resource.pattern(), pattern);
-    EXPECT_EQ(resource.link(), link);
-    EXPECT_EQ(resource.production(), production);
-    EXPECT_EQ(resource.expiration(), expiration);
+    EXPECT_THAT(resource.id(), Gt(0));
+    EXPECT_THAT(resource.name(), Eq(name));
+    EXPECT_THAT(resource.type(), Eq(type));
+    EXPECT_THAT(resource.pattern(), Eq(pattern));
+    EXPECT_THAT(resource.link(), Eq(link));
+    EXPECT_THAT(resource.production(), Eq(production));
+    EXPECT_THAT(resource.expiration(), Eq(expiration));
 
     resource.clear_id();
     resource.clear_name();
     EXPECT_NO_THROW(resource = m_database->create_resource(resource));
     EXPECT_EQ(resource.id(), 0) << "Resource with empty name should be created";
     EXPECT_TRUE(resource.name().empty());
-    EXPECT_EQ(resource.type(), type);
-    EXPECT_EQ(resource.pattern(), pattern);
-    EXPECT_EQ(resource.link(), link);
-    EXPECT_EQ(resource.production(), production);
-    EXPECT_EQ(resource.expiration(), expiration);
+    EXPECT_THAT(resource.type(), Eq(type));
+    EXPECT_THAT(resource.pattern(), Eq(pattern));
+    EXPECT_THAT(resource.link(), Eq(link));
+    EXPECT_THAT(resource.production(), Eq(production));
+    EXPECT_THAT(resource.expiration(), Eq(expiration));
 }
 
 TEST_F(test_database, add_resource_to_subject)
@@ -862,9 +870,9 @@ TEST_F(test_database, add_resource_to_subject)
     subject.set_name("Algorithms");
 
     ASSERT_NO_THROW(resource = m_database->create_resource(resource));
-    ASSERT_GT(resource.id(), 0);
+    ASSERT_THAT(resource.id(), Gt(0));
     ASSERT_NO_THROW(subject = m_database->create_subject(subject.name()));
-    ASSERT_GT(subject.id(), 0);
+    ASSERT_THAT(subject.id(), Gt(0));
     EXPECT_NO_THROW(m_database->add_resource_to_subject(resource.id(), subject.id()));
 }
 
@@ -895,12 +903,12 @@ TEST_F(test_database, get_resources)
     subject.set_name("Algorithms");
 
     ASSERT_NO_THROW(resource = m_database->create_resource(resource));
-    ASSERT_GT(resource.id(), 0);
+    ASSERT_THAT(resource.id(), Gt(0));
     ASSERT_NO_THROW(secondary_resource = m_database->create_resource(secondary_resource));
-    ASSERT_GT(secondary_resource.id(), 0);
-    ASSERT_NE(resource.id(), secondary_resource.id());
+    ASSERT_THAT(secondary_resource.id(), Gt(0));
+    ASSERT_THAT(resource.id(), Ne(secondary_resource.id()));
     ASSERT_NO_THROW(subject = m_database->create_subject(subject.name()));
-    ASSERT_GT(subject.id(), 0);
+    ASSERT_THAT(subject.id(), Gt(0));
     EXPECT_NO_THROW(resources = m_database->get_resources(subject.id() + 1));
     EXPECT_THAT(resources, SizeIs(0)) << "Invalid subject should not have resources";
     ASSERT_NO_THROW(m_database->add_resource_to_subject(resource.id(), subject.id()));
@@ -908,13 +916,13 @@ TEST_F(test_database, get_resources)
     EXPECT_NO_THROW(resources = m_database->get_resources(subject.id()));
     EXPECT_THAT(resources, SizeIs(2));
     ASSERT_NO_THROW(resources.at(0).id());
-    EXPECT_EQ(resources.at(0).id(), resource.id());
-    EXPECT_EQ(resources.at(0).name(), resource.name());
-    EXPECT_EQ(resources.at(0).type(), resource.type());
-    EXPECT_EQ(resources.at(0).pattern(), resource.pattern());
-    EXPECT_EQ(resources.at(0).link(), resource.link());
-    EXPECT_EQ(resources.at(0).production(), resource.production());
-    EXPECT_EQ(resources.at(0).expiration(), resource.expiration());
+    EXPECT_THAT(resources.at(0).id(), Eq(resource.id()));
+    EXPECT_THAT(resources.at(0).name(), Eq(resource.name()));
+    EXPECT_THAT(resources.at(0).type(), Eq(resource.type()));
+    EXPECT_THAT(resources.at(0).pattern(), Eq(resource.pattern()));
+    EXPECT_THAT(resources.at(0).link(), Eq(resource.link()));
+    EXPECT_THAT(resources.at(0).production(), Eq(resource.production()));
+    EXPECT_THAT(resources.at(0).expiration(), Eq(resource.expiration()));
 }
 
 TEST_F(test_database, drop_resource_from_subject)
@@ -944,12 +952,12 @@ TEST_F(test_database, drop_resource_from_subject)
     subject.set_name("JavaScript");
 
     ASSERT_NO_THROW(resource = m_database->create_resource(resource));
-    ASSERT_GT(resource.id(), 0);
+    ASSERT_THAT(resource.id(), Gt(0));
     ASSERT_NO_THROW(secondary_resource = m_database->create_resource(secondary_resource));
-    ASSERT_GT(secondary_resource.id(), 0);
-    ASSERT_NE(resource.id(), secondary_resource.id());
+    ASSERT_THAT(secondary_resource.id(), Gt(0));
+    ASSERT_THAT(resource.id(), Ne(secondary_resource.id()));
     ASSERT_NO_THROW(subject = m_database->create_subject(subject.name()));
-    ASSERT_GT(subject.id(), 0);
+    ASSERT_THAT(subject.id(), Gt(0));
     ASSERT_NO_THROW(m_database->add_resource_to_subject(resource.id(), subject.id()));
     EXPECT_NO_THROW(resources = m_database->get_resources(subject.id()));
     EXPECT_THAT(resources, SizeIs(1));
@@ -979,7 +987,7 @@ TEST_F(test_database, search_resources)
     subject.set_name("CMake");
 
     ASSERT_NO_THROW(subject = m_database->create_subject(subject.name()));
-    ASSERT_GT(subject.id(), 0);
+    ASSERT_THAT(subject.id(), Gt(0));
 
     for (std::string const& name: {"Modern CMake", "Old CMake", "CMake Alternatives", "CMake for C++", "GNU Make", "Make Manual", "Irrelevant"})
     {
@@ -991,7 +999,7 @@ TEST_F(test_database, search_resources)
         resource.set_production(production);
         resource.set_expiration(expiration);
         ASSERT_NO_THROW(resource = m_database->create_resource(resource));
-        ASSERT_GT(resource.id(), 0);
+        ASSERT_THAT(resource.id(), Gt(0));
         ASSERT_NO_THROW(m_database->add_resource_to_subject(resource.id(), subject.id()));
         resources.push_back(std::move(resource));
     }
@@ -1025,23 +1033,23 @@ TEST_F(test_database, edit_resource_link)
     subject.set_name("JavaScript");
 
     ASSERT_NO_THROW(resource = m_database->create_resource(resource));
-    ASSERT_GT(resource.id(), 0);
+    ASSERT_THAT(resource.id(), Gt(0));
     ASSERT_NO_THROW(subject = m_database->create_subject(subject.name()));
-    ASSERT_GT(subject.id(), 0);
+    ASSERT_THAT(subject.id(), Gt(0));
     ASSERT_NO_THROW(m_database->add_resource_to_subject(resource.id(), subject.id()));
     ASSERT_NO_THROW(resources = m_database->get_resources(subject.id()));
     ASSERT_THAT(resources, SizeIs(1));
     ASSERT_NO_THROW(resources.at(0).id());
-    ASSERT_EQ(resources.at(0).id(), resource.id());
-    EXPECT_EQ(resources.at(0).link(), resource.link());
-    EXPECT_NE(resources.at(0).link(), modified_link);
+    ASSERT_THAT(resources.at(0).id(), Eq(resource.id()));
+    EXPECT_THAT(resources.at(0).link(), Eq(resource.link()));
+    EXPECT_THAT(resources.at(0).link(), Ne(modified_link));
     EXPECT_NO_THROW(m_database->edit_resource_link(resource.id(), modified_link));
     ASSERT_NO_THROW(resources = m_database->get_resources(subject.id()));
     ASSERT_THAT(resources, SizeIs(1));
     ASSERT_NO_THROW(resources.at(0).id());
-    ASSERT_EQ(resources.at(0).id(), resource.id());
-    EXPECT_NE(resources.at(0).link(), resource.link());
-    EXPECT_EQ(resources.at(0).link(), modified_link);
+    ASSERT_THAT(resources.at(0).id(), Eq(resource.id()));
+    EXPECT_THAT(resources.at(0).link(), Ne(resource.link()));
+    EXPECT_THAT(resources.at(0).link(), Eq(modified_link));
 }
 
 TEST_F(test_database, change_resource_type)
@@ -1065,23 +1073,23 @@ TEST_F(test_database, change_resource_type)
     subject.set_name("JavaScript");
 
     ASSERT_NO_THROW(resource = m_database->create_resource(resource));
-    ASSERT_GT(resource.id(), 0);
+    ASSERT_THAT(resource.id(), Gt(0));
     ASSERT_NO_THROW(subject = m_database->create_subject(subject.name()));
-    ASSERT_GT(subject.id(), 0);
+    ASSERT_THAT(subject.id(), Gt(0));
     ASSERT_NO_THROW(m_database->add_resource_to_subject(resource.id(), subject.id()));
     ASSERT_NO_THROW(resources = m_database->get_resources(subject.id()));
     ASSERT_THAT(resources, SizeIs(1));
     ASSERT_NO_THROW(resources.at(0).id());
-    ASSERT_EQ(resources.at(0).id(), resource.id());
-    EXPECT_EQ(resources.at(0).type(), resource.type());
-    EXPECT_NE(resources.at(0).type(), modified_type);
+    ASSERT_THAT(resources.at(0).id(), Eq(resource.id()));
+    EXPECT_THAT(resources.at(0).type(), Eq(resource.type()));
+    EXPECT_THAT(resources.at(0).type(), Ne(modified_type));
     EXPECT_NO_THROW(m_database->change_resource_type(resource.id(), modified_type));
     ASSERT_NO_THROW(resources = m_database->get_resources(subject.id()));
     ASSERT_THAT(resources, SizeIs(1));
     ASSERT_NO_THROW(resources.at(0).id());
-    ASSERT_EQ(resources.at(0).id(), resource.id());
-    EXPECT_NE(resources.at(0).type(), resource.type());
-    EXPECT_EQ(resources.at(0).type(), modified_type);
+    ASSERT_THAT(resources.at(0).id(), Eq(resource.id()));
+    EXPECT_THAT(resources.at(0).type(), Ne(resource.type()));
+    EXPECT_THAT(resources.at(0).type(), Eq(modified_type));
 }
 
 TEST_F(test_database, change_section_pattern)
@@ -1105,23 +1113,23 @@ TEST_F(test_database, change_section_pattern)
     subject.set_name("JavaScript");
 
     ASSERT_NO_THROW(resource = m_database->create_resource(resource));
-    ASSERT_GT(resource.id(), 0);
+    ASSERT_THAT(resource.id(), Gt(0));
     ASSERT_NO_THROW(subject = m_database->create_subject(subject.name()));
-    ASSERT_GT(subject.id(), 0);
+    ASSERT_THAT(subject.id(), Gt(0));
     ASSERT_NO_THROW(m_database->add_resource_to_subject(resource.id(), subject.id()));
     ASSERT_NO_THROW(resources = m_database->get_resources(subject.id()));
     ASSERT_THAT(resources, SizeIs(1));
     ASSERT_NO_THROW(resources.at(0).id());
-    ASSERT_EQ(resources.at(0).id(), resource.id());
-    EXPECT_EQ(resources.at(0).pattern(), resource.pattern());
-    EXPECT_NE(resources.at(0).pattern(), modified_pattern);
+    ASSERT_THAT(resources.at(0).id(), Eq(resource.id()));
+    EXPECT_THAT(resources.at(0).pattern(), Eq(resource.pattern()));
+    EXPECT_THAT(resources.at(0).pattern(), Ne(modified_pattern));
     EXPECT_NO_THROW(m_database->change_section_pattern(resource.id(), modified_pattern));
     ASSERT_NO_THROW(resources = m_database->get_resources(subject.id()));
     ASSERT_THAT(resources, SizeIs(1));
     ASSERT_NO_THROW(resources.at(0).id());
-    ASSERT_EQ(resources.at(0).id(), resource.id());
-    EXPECT_NE(resources.at(0).pattern(), resource.pattern());
-    EXPECT_EQ(resources.at(0).pattern(), modified_pattern);
+    ASSERT_THAT(resources.at(0).id(), Eq(resource.id()));
+    EXPECT_THAT(resources.at(0).pattern(), Ne(resource.pattern()));
+    EXPECT_THAT(resources.at(0).pattern(), Eq(modified_pattern));
 }
 
 TEST_F(test_database, edit_resource_production)
@@ -1145,23 +1153,23 @@ TEST_F(test_database, edit_resource_production)
     subject.set_name("JavaScript");
 
     ASSERT_NO_THROW(resource = m_database->create_resource(resource));
-    ASSERT_GT(resource.id(), 0);
+    ASSERT_THAT(resource.id(), Gt(0));
     ASSERT_NO_THROW(subject = m_database->create_subject(subject.name()));
-    ASSERT_GT(subject.id(), 0);
+    ASSERT_THAT(subject.id(), Gt(0));
     ASSERT_NO_THROW(m_database->add_resource_to_subject(resource.id(), subject.id()));
     ASSERT_NO_THROW(resources = m_database->get_resources(subject.id()));
     ASSERT_THAT(resources, SizeIs(1));
     ASSERT_NO_THROW(resources.at(0).id());
-    ASSERT_EQ(resources.at(0).id(), resource.id());
-    EXPECT_EQ(resources.at(0).production(), resource.production());
-    EXPECT_NE(resources.at(0).production(), modified_production);
+    ASSERT_THAT(resources.at(0).id(), Eq(resource.id()));
+    EXPECT_THAT(resources.at(0).production(), Eq(resource.production()));
+    EXPECT_THAT(resources.at(0).production(), Ne(modified_production));
     EXPECT_NO_THROW(m_database->edit_resource_production(resource.id(), modified_production));
     ASSERT_NO_THROW(resources = m_database->get_resources(subject.id()));
     ASSERT_THAT(resources, SizeIs(1));
     ASSERT_NO_THROW(resources.at(0).id());
-    ASSERT_EQ(resources.at(0).id(), resource.id());
-    EXPECT_NE(resources.at(0).production(), resource.production());
-    EXPECT_EQ(resources.at(0).production(), modified_production);
+    ASSERT_THAT(resources.at(0).id(), Eq(resource.id()));
+    EXPECT_THAT(resources.at(0).production(), Ne(resource.production()));
+    EXPECT_THAT(resources.at(0).production(), Eq(modified_production));
 }
 
 TEST_F(test_database, edit_resource_expiration)
@@ -1185,23 +1193,23 @@ TEST_F(test_database, edit_resource_expiration)
     subject.set_name("JavaScript");
 
     ASSERT_NO_THROW(resource = m_database->create_resource(resource));
-    ASSERT_GT(resource.id(), 0);
+    ASSERT_THAT(resource.id(), Gt(0));
     ASSERT_NO_THROW(subject = m_database->create_subject(subject.name()));
-    ASSERT_GT(subject.id(), 0);
+    ASSERT_THAT(subject.id(), Gt(0));
     ASSERT_NO_THROW(m_database->add_resource_to_subject(resource.id(), subject.id()));
     ASSERT_NO_THROW(resources = m_database->get_resources(subject.id()));
     ASSERT_THAT(resources, SizeIs(1));
     ASSERT_NO_THROW(resources.at(0).id());
-    ASSERT_EQ(resources.at(0).id(), resource.id());
-    EXPECT_EQ(resources.at(0).expiration(), resource.expiration());
-    EXPECT_NE(resources.at(0).expiration(), modified_expiration);
+    ASSERT_THAT(resources.at(0).id(), Eq(resource.id()));
+    EXPECT_THAT(resources.at(0).expiration(), Eq(resource.expiration()));
+    EXPECT_THAT(resources.at(0).expiration(), Ne(modified_expiration));
     EXPECT_NO_THROW(m_database->edit_resource_expiration(resource.id(), modified_expiration));
     ASSERT_NO_THROW(resources = m_database->get_resources(subject.id()));
     ASSERT_THAT(resources, SizeIs(1));
     ASSERT_NO_THROW(resources.at(0).id());
-    ASSERT_EQ(resources.at(0).id(), resource.id());
-    EXPECT_NE(resources.at(0).expiration(), resource.expiration());
-    EXPECT_EQ(resources.at(0).expiration(), modified_expiration);
+    ASSERT_THAT(resources.at(0).id(), Eq(resource.id()));
+    EXPECT_THAT(resources.at(0).expiration(), Ne(resource.expiration()));
+    EXPECT_THAT(resources.at(0).expiration(), Eq(modified_expiration));
 }
 
 TEST_F(test_database, rename_resource)
@@ -1225,23 +1233,23 @@ TEST_F(test_database, rename_resource)
     subject.set_name("JavaScript");
 
     ASSERT_NO_THROW(resource = m_database->create_resource(resource));
-    ASSERT_GT(resource.id(), 0);
+    ASSERT_THAT(resource.id(), Gt(0));
     ASSERT_NO_THROW(subject = m_database->create_subject(subject.name()));
-    ASSERT_GT(subject.id(), 0);
+    ASSERT_THAT(subject.id(), Gt(0));
     ASSERT_NO_THROW(m_database->add_resource_to_subject(resource.id(), subject.id()));
     ASSERT_NO_THROW(resources = m_database->get_resources(subject.id()));
     ASSERT_THAT(resources, SizeIs(1));
     ASSERT_NO_THROW(resources.at(0).id());
-    ASSERT_EQ(resources.at(0).id(), resource.id());
-    EXPECT_EQ(resources.at(0).name(), resource.name());
-    EXPECT_NE(resources.at(0).name(), modified_name);
+    ASSERT_THAT(resources.at(0).id(), Eq(resource.id()));
+    EXPECT_THAT(resources.at(0).name(), Eq(resource.name()));
+    EXPECT_THAT(resources.at(0).name(), Ne(modified_name));
     EXPECT_NO_THROW(m_database->rename_resource(resource.id(), modified_name));
     ASSERT_NO_THROW(resources = m_database->get_resources(subject.id()));
     ASSERT_THAT(resources, SizeIs(1));
     ASSERT_NO_THROW(resources.at(0).id());
-    ASSERT_EQ(resources.at(0).id(), resource.id());
-    EXPECT_NE(resources.at(0).name(), resource.name());
-    EXPECT_EQ(resources.at(0).name(), modified_name);
+    ASSERT_THAT(resources.at(0).id(), Eq(resource.id()));
+    EXPECT_THAT(resources.at(0).name(), Ne(resource.name()));
+    EXPECT_THAT(resources.at(0).name(), Eq(modified_name));
 }
 
 TEST_F(test_database, remove_resource)
@@ -1271,11 +1279,11 @@ TEST_F(test_database, remove_resource)
     subject.set_name("JavaScript");
 
     ASSERT_NO_THROW(resource = m_database->create_resource(resource));
-    ASSERT_GT(resource.id(), 0);
+    ASSERT_THAT(resource.id(), Gt(0));
     ASSERT_NO_THROW(secondary_resource = m_database->create_resource(secondary_resource));
-    ASSERT_GT(secondary_resource.id(), 0);
+    ASSERT_THAT(secondary_resource.id(), Gt(0));
     ASSERT_NO_THROW(subject = m_database->create_subject(subject.name()));
-    ASSERT_GT(subject.id(), 0);
+    ASSERT_THAT(subject.id(), Gt(0));
     ASSERT_NO_THROW(m_database->add_resource_to_subject(resource.id(), subject.id()));
     ASSERT_NO_THROW(m_database->add_resource_to_subject(secondary_resource.id(), subject.id()));
     ASSERT_NO_THROW(resources = m_database->get_resources(subject.id()));
@@ -1312,11 +1320,11 @@ TEST_F(test_database, merge_resources)
     subject.set_name("JavaScript");
 
     ASSERT_NO_THROW(resource = m_database->create_resource(resource));
-    ASSERT_GT(resource.id(), 0);
+    ASSERT_THAT(resource.id(), Gt(0));
     ASSERT_NO_THROW(secondary_resource = m_database->create_resource(secondary_resource));
-    ASSERT_GT(secondary_resource.id(), 0);
+    ASSERT_THAT(secondary_resource.id(), Gt(0));
     ASSERT_NO_THROW(subject = m_database->create_subject(subject.name()));
-    ASSERT_GT(subject.id(), 0);
+    ASSERT_THAT(subject.id(), Gt(0));
     ASSERT_NO_THROW(m_database->add_resource_to_subject(resource.id(), subject.id()));
     ASSERT_NO_THROW(m_database->add_resource_to_subject(secondary_resource.id(), subject.id()));
     ASSERT_NO_THROW(resources = m_database->get_resources(subject.id()));
@@ -1332,8 +1340,8 @@ TEST_F(test_database, create_provider)
     flashback::Provider provider{};
     provider.set_name(name);
     EXPECT_NO_THROW(provider = m_database->create_provider(provider.name()));
-    EXPECT_GT(provider.id(), 0);
-    EXPECT_EQ(provider.name(), name);
+    EXPECT_THAT(provider.id(), Gt(0));
+    EXPECT_THAT(provider.name(), Eq(name));
 }
 
 TEST_F(test_database, add_provider)
@@ -1356,9 +1364,9 @@ TEST_F(test_database, add_provider)
     provider.set_name("Brian Salehi");
 
     ASSERT_NO_THROW(resource = m_database->create_resource(resource));
-    ASSERT_GT(resource.id(), 0);
+    ASSERT_THAT(resource.id(), Gt(0));
     ASSERT_NO_THROW(provider = m_database->create_provider(provider.name()));
-    ASSERT_GT(provider.id(), 0);
+    ASSERT_THAT(provider.id(), Gt(0));
     EXPECT_NO_THROW(m_database->add_provider(resource.id(), provider.id()));
 }
 
@@ -1382,9 +1390,9 @@ TEST_F(test_database, drop_provider)
     provider.set_name("Brian Salehi");
 
     ASSERT_NO_THROW(resource = m_database->create_resource(resource));
-    ASSERT_GT(resource.id(), 0);
+    ASSERT_THAT(resource.id(), Gt(0));
     ASSERT_NO_THROW(provider = m_database->create_provider(provider.name()));
-    ASSERT_GT(provider.id(), 0);
+    ASSERT_THAT(provider.id(), Gt(0));
     EXPECT_NO_THROW(m_database->drop_provider(resource.id(), provider.id()));
 }
 
@@ -1394,8 +1402,8 @@ TEST_F(test_database, create_presenter)
     flashback::Presenter presenter{};
     presenter.set_name(name);
     EXPECT_NO_THROW(presenter = m_database->create_presenter(presenter.name()));
-    EXPECT_GT(presenter.id(), 0);
-    EXPECT_EQ(presenter.name(), name);
+    EXPECT_THAT(presenter.id(), Gt(0));
+    EXPECT_THAT(presenter.name(), Eq(name));
 }
 
 TEST_F(test_database, add_presenter)
@@ -1418,9 +1426,9 @@ TEST_F(test_database, add_presenter)
     presenter.set_name("Brian Salehi");
 
     ASSERT_NO_THROW(resource = m_database->create_resource(resource));
-    ASSERT_GT(resource.id(), 0);
+    ASSERT_THAT(resource.id(), Gt(0));
     ASSERT_NO_THROW(presenter = m_database->create_presenter(presenter.name()));
-    ASSERT_GT(presenter.id(), 0);
+    ASSERT_THAT(presenter.id(), Gt(0));
     EXPECT_NO_THROW(m_database->add_presenter(resource.id(), presenter.id()));
 }
 
@@ -1444,9 +1452,9 @@ TEST_F(test_database, drop_presenter)
     presenter.set_name("Brian Salehi");
 
     ASSERT_NO_THROW(resource = m_database->create_resource(resource));
-    ASSERT_GT(resource.id(), 0);
+    ASSERT_THAT(resource.id(), Gt(0));
     ASSERT_NO_THROW(presenter = m_database->create_presenter(presenter.name()));
-    ASSERT_GT(presenter.id(), 0);
+    ASSERT_THAT(presenter.id(), Gt(0));
     EXPECT_NO_THROW(m_database->drop_presenter(resource.id(), presenter.id()));
 }
 
@@ -1463,8 +1471,8 @@ TEST_F(test_database, search_providers)
         flashback::Provider provider{};
         provider.set_name(name);
         ASSERT_NO_THROW(provider = m_database->create_provider(name));
-        ASSERT_GT(provider.id(), 0);
-        ASSERT_EQ(provider.name(), name);
+        ASSERT_THAT(provider.id(), Gt(0));
+        ASSERT_THAT(provider.name(), Eq(name));
         existing_providers.push_back(provider);
     }
 
@@ -1472,8 +1480,8 @@ TEST_F(test_database, search_providers)
     EXPECT_NO_THROW(matched_providers = m_database->search_providers("Doe"));
     EXPECT_THAT(matched_providers, SizeIs(2));
     ASSERT_NO_THROW(matched_providers.at(1).id());
-    EXPECT_NE(matched_providers.at(1).name(), "Brian Salehi");
-    EXPECT_NE(matched_providers.at(2).name(), "Brian Salehi");
+    EXPECT_THAT(matched_providers.at(1).name(), Ne("Brian Salehi"));
+    EXPECT_THAT(matched_providers.at(2).name(), Ne("Brian Salehi"));
 
     EXPECT_NO_THROW(matched_providers = m_database->search_providers(""));
     EXPECT_THAT(matched_providers, IsEmpty());
@@ -1490,8 +1498,8 @@ TEST_F(test_database, rename_provider)
     flashback::Provider provider{};
     provider.set_name("John Doe");
     ASSERT_NO_THROW(provider = m_database->create_provider(provider.name()));
-    ASSERT_GT(provider.id(), 0);
-    ASSERT_NE(provider.name(), modified_name);
+    ASSERT_THAT(provider.id(), Gt(0));
+    ASSERT_THAT(provider.name(), Ne(modified_name));
 
     EXPECT_NO_THROW(m_database->rename_provider(provider.id(), modified_name));
     EXPECT_NO_THROW(matched_providers = m_database->search_providers("Doe"));
@@ -1512,8 +1520,8 @@ TEST_F(test_database, remove_provider)
         flashback::Provider provider{};
         provider.set_name(name);
         ASSERT_NO_THROW(provider = m_database->create_provider(name));
-        ASSERT_GT(provider.id(), 0);
-        ASSERT_EQ(provider.name(), name);
+        ASSERT_THAT(provider.id(), Gt(0));
+        ASSERT_THAT(provider.name(), Eq(name));
     }
 
     EXPECT_NO_THROW(matched_providers = m_database->search_providers("Doe"));
@@ -1535,8 +1543,8 @@ TEST_F(test_database, merge_providers)
         flashback::Provider provider{};
         provider.set_name(name);
         ASSERT_NO_THROW(provider = m_database->create_provider(name));
-        ASSERT_GT(provider.id(), 0);
-        ASSERT_EQ(provider.name(), name);
+        ASSERT_THAT(provider.id(), Gt(0));
+        ASSERT_THAT(provider.name(), Eq(name));
     }
 
     ASSERT_NO_THROW(matched_providers = m_database->search_providers("Doe"));
@@ -1561,8 +1569,8 @@ TEST_F(test_database, search_presenters)
         flashback::Presenter presenter{};
         presenter.set_name(name);
         ASSERT_NO_THROW(presenter = m_database->create_presenter(name));
-        ASSERT_GT(presenter.id(), 0);
-        ASSERT_EQ(presenter.name(), name);
+        ASSERT_THAT(presenter.id(), Gt(0));
+        ASSERT_THAT(presenter.name(), Eq(name));
         existing_presenters.push_back(presenter);
     }
 
@@ -1570,8 +1578,8 @@ TEST_F(test_database, search_presenters)
     EXPECT_NO_THROW(matched_presenters = m_database->search_presenters("Doe"));
     EXPECT_THAT(matched_presenters, SizeIs(2));
     ASSERT_NO_THROW(matched_presenters.at(1).id());
-    EXPECT_NE(matched_presenters.at(1).name(), "Brian Salehi");
-    EXPECT_NE(matched_presenters.at(2).name(), "Brian Salehi");
+    EXPECT_THAT(matched_presenters.at(1).name(), Ne("Brian Salehi"));
+    EXPECT_THAT(matched_presenters.at(2).name(), Ne("Brian Salehi"));
 
     EXPECT_NO_THROW(matched_presenters = m_database->search_presenters(""));
     EXPECT_THAT(matched_presenters, IsEmpty());
@@ -1588,8 +1596,8 @@ TEST_F(test_database, rename_presenter)
     flashback::Presenter presenter{};
     presenter.set_name("John Doe");
     ASSERT_NO_THROW(presenter = m_database->create_presenter(presenter.name()));
-    ASSERT_GT(presenter.id(), 0);
-    ASSERT_NE(presenter.name(), modified_name);
+    ASSERT_THAT(presenter.id(), Gt(0));
+    ASSERT_THAT(presenter.name(), Ne(modified_name));
 
     EXPECT_NO_THROW(m_database->rename_presenter(presenter.id(), modified_name));
     EXPECT_NO_THROW(matched_presenters = m_database->search_presenters("Doe"));
@@ -1610,8 +1618,8 @@ TEST_F(test_database, remove_presenter)
         flashback::Presenter presenter{};
         presenter.set_name(name);
         ASSERT_NO_THROW(presenter = m_database->create_presenter(name));
-        ASSERT_GT(presenter.id(), 0);
-        ASSERT_EQ(presenter.name(), name);
+        ASSERT_THAT(presenter.id(), Gt(0));
+        ASSERT_THAT(presenter.name(), Eq(name));
     }
 
     EXPECT_NO_THROW(matched_presenters = m_database->search_presenters("Doe"));
@@ -1633,8 +1641,8 @@ TEST_F(test_database, merge_presenters)
         flashback::Presenter presenter{};
         presenter.set_name(name);
         ASSERT_NO_THROW(presenter = m_database->create_presenter(name));
-        ASSERT_GT(presenter.id(), 0);
-        ASSERT_EQ(presenter.name(), name);
+        ASSERT_THAT(presenter.id(), Gt(0));
+        ASSERT_THAT(presenter.name(), Eq(name));
     }
 
     ASSERT_NO_THROW(matched_presenters = m_database->search_presenters("Doe"));
@@ -1655,9 +1663,9 @@ TEST_F(test_database, create_nerve)
     auto const expiration{std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch() + std::chrono::years{4})};
 
     ASSERT_NO_THROW(subject = m_database->create_subject(subject.name()));
-    ASSERT_GT(subject.id(), 0);
+    ASSERT_THAT(subject.id(), Gt(0));
     EXPECT_NO_THROW(resource = m_database->create_nerve(m_user->id(), resource.name(), subject.id(), expiration.count()));
-    EXPECT_GT(resource.id(), 0);
+    EXPECT_THAT(resource.id(), Gt(0));
 }
 
 TEST_F(test_database, get_nerves)
@@ -1674,23 +1682,23 @@ TEST_F(test_database, get_nerves)
     std::vector<flashback::Resource> nerves{};
 
     ASSERT_NO_THROW(subject = m_database->create_subject(subject.name()));
-    ASSERT_GT(subject.id(), 0);
+    ASSERT_THAT(subject.id(), Gt(0));
     EXPECT_NO_THROW(resource = m_database->create_nerve(m_user->id(), resource.name(), subject.id(), expiration.count()));
-    EXPECT_GT(resource.id(), 0);
+    EXPECT_THAT(resource.id(), Gt(0));
     EXPECT_NO_THROW(nerves = m_database->get_nerves(m_user->id()));
     ASSERT_THAT(nerves, SizeIs(1));
     ASSERT_NO_THROW(nerves.at(0).id());
     EXPECT_THAT(nerves.at(0).id(), resource.id());
-    EXPECT_EQ(nerves.at(0).name(), expected_name);
-    EXPECT_EQ(nerves.at(0).type(), flashback::Resource::nerve);
-    EXPECT_EQ(nerves.at(0).pattern(), flashback::Resource::synapse);
+    EXPECT_THAT(nerves.at(0).name(), Eq(expected_name));
+    EXPECT_THAT(nerves.at(0).type(), Eq(flashback::Resource::nerve));
+    EXPECT_THAT(nerves.at(0).pattern(), Eq(flashback::Resource::synapse));
     EXPECT_TRUE(nerves.at(0).link().empty());
-    EXPECT_GT(nerves.at(0).production(), 0);
-    EXPECT_EQ(nerves.at(0).expiration(), expiration.count());
+    EXPECT_THAT(nerves.at(0).production(), Gt(0));
+    EXPECT_THAT(nerves.at(0).expiration(), Eq(expiration.count()));
     EXPECT_NO_THROW(resources = m_database->get_resources(subject.id()));
     ASSERT_THAT(resources, SizeIs(1));
     ASSERT_NO_THROW(resources.at(0).id());
-    EXPECT_EQ(resources.at(0).id(), resource.id());
+    EXPECT_THAT(resources.at(0).id(), Eq(resource.id()));
 }
 
 TEST_F(test_database, create_section)
@@ -1710,7 +1718,7 @@ TEST_F(test_database, create_section)
     resource.set_expiration(expiration.count());
 
     ASSERT_NO_THROW(resource = m_database->create_resource(resource));
-    ASSERT_GT(resource.id(), 0);
+    ASSERT_THAT(resource.id(), Gt(0));
 
     for (std::string const& name: {"Chapter 1", "Chapter 2", "Chapter 3"})
     {
@@ -1718,8 +1726,8 @@ TEST_F(test_database, create_section)
         section.clear_position();
         section.clear_link();
         EXPECT_NO_THROW(section = m_database->create_section(resource.id(), section.position(), section.name(), section.link()));
-        EXPECT_GT(section.position(), 0);
-        EXPECT_EQ(section.name(), name);
+        EXPECT_THAT(section.position(), Gt(0));
+        EXPECT_THAT(section.name(), Eq(name));
         EXPECT_TRUE(section.link().empty());
     }
 }
@@ -1741,7 +1749,7 @@ TEST_F(test_database, get_sections)
     resource.set_expiration(expiration.count());
 
     ASSERT_NO_THROW(resource = m_database->create_resource(resource));
-    ASSERT_GT(resource.id(), 0);
+    ASSERT_THAT(resource.id(), Gt(0));
 
     for (std::string const& name: {"Chapter 1", "Chapter 2", "Chapter 3"})
     {
@@ -1749,7 +1757,7 @@ TEST_F(test_database, get_sections)
         section.clear_position();
         section.clear_link();
         ASSERT_NO_THROW(section = m_database->create_section(resource.id(), section.position(), section.name(), section.link()));
-        ASSERT_GT(section.position(), 0);
+        ASSERT_THAT(section.position(), Gt(0));
     }
 
     EXPECT_NO_THROW(sections = m_database->get_sections(resource.id()));
@@ -1773,7 +1781,7 @@ TEST_F(test_database, remove_section)
     resource.set_expiration(expiration.count());
 
     ASSERT_NO_THROW(resource = m_database->create_resource(resource));
-    ASSERT_GT(resource.id(), 0);
+    ASSERT_THAT(resource.id(), Gt(0));
 
     for (std::string const& name: {"Chapter 1", "Chapter 2", "Chapter 3"})
     {
@@ -1781,8 +1789,8 @@ TEST_F(test_database, remove_section)
         section.clear_position();
         section.clear_link();
         ASSERT_NO_THROW(section = m_database->create_section(resource.id(), section.position(), section.name(), section.link()));
-        ASSERT_GT(section.position(), 0);
-        ASSERT_EQ(section.name(), name);
+        ASSERT_THAT(section.position(), Gt(0));
+        ASSERT_THAT(section.name(), Eq(name));
     }
 
     EXPECT_NO_THROW(sections = m_database->get_sections(resource.id()));
@@ -1809,7 +1817,7 @@ TEST_F(test_database, reorder_section)
     resource.set_expiration(expiration.count());
 
     ASSERT_NO_THROW(resource = m_database->create_resource(resource));
-    ASSERT_GT(resource.id(), 0);
+    ASSERT_THAT(resource.id(), Gt(0));
 
     for (std::string const& name: {"Chapter 1", "Chapter 2", "Chapter 3"})
     {
@@ -1817,8 +1825,8 @@ TEST_F(test_database, reorder_section)
         section.clear_position();
         section.clear_link();
         ASSERT_NO_THROW(section = m_database->create_section(resource.id(), section.position(), section.name(), section.link()));
-        ASSERT_GT(section.position(), 0);
-        ASSERT_EQ(section.name(), name);
+        ASSERT_THAT(section.position(), Gt(0));
+        ASSERT_THAT(section.name(), Eq(name));
     }
 
     EXPECT_NO_THROW(sections = m_database->get_sections(resource.id()));
@@ -1836,9 +1844,9 @@ TEST_F(test_database, reorder_section)
     ASSERT_NO_THROW(sections.at(3).position());
     ASSERT_NO_THROW(sections.at(3).name());
     EXPECT_EQ(sections.at(1).position(), source_position) << "A B C becomes B C A";
-    EXPECT_EQ(sections.at(2).name(), target_name);
-    EXPECT_EQ(sections.at(3).position(), target_position);
-    EXPECT_EQ(sections.at(3).name(), source_name);
+    EXPECT_THAT(sections.at(2).name(), Eq(target_name));
+    EXPECT_THAT(sections.at(3).position(), Eq(target_position));
+    EXPECT_THAT(sections.at(3).name(), Eq(source_name));
 }
 
 TEST_F(test_database, merge_sections)
@@ -1858,7 +1866,7 @@ TEST_F(test_database, merge_sections)
     resource.set_expiration(expiration.count());
 
     ASSERT_NO_THROW(resource = m_database->create_resource(resource));
-    ASSERT_GT(resource.id(), 0);
+    ASSERT_THAT(resource.id(), Gt(0));
 
     for (std::string const& name: {"Chapter 1", "Chapter 2", "Chapter 3"})
     {
@@ -1866,8 +1874,8 @@ TEST_F(test_database, merge_sections)
         section.clear_position();
         section.clear_link();
         ASSERT_NO_THROW(section = m_database->create_section(resource.id(), section.position(), section.name(), section.link()));
-        ASSERT_GT(section.position(), 0);
-        ASSERT_EQ(section.name(), name);
+        ASSERT_THAT(section.position(), Gt(0));
+        ASSERT_THAT(section.name(), Eq(name));
     }
 
     EXPECT_NO_THROW(sections = m_database->get_sections(resource.id()));
@@ -1898,7 +1906,7 @@ TEST_F(test_database, rename_section)
     resource.set_expiration(expiration.count());
 
     ASSERT_NO_THROW(resource = m_database->create_resource(resource));
-    ASSERT_GT(resource.id(), 0);
+    ASSERT_THAT(resource.id(), Gt(0));
 
     for (std::string const& name: {"Chapter 1", "Chapter 2", "Chapter 3"})
     {
@@ -1906,20 +1914,20 @@ TEST_F(test_database, rename_section)
         section.clear_position();
         section.clear_link();
         ASSERT_NO_THROW(section = m_database->create_section(resource.id(), section.position(), section.name(), section.link()));
-        ASSERT_GT(section.position(), 0);
-        ASSERT_EQ(section.name(), name);
+        ASSERT_THAT(section.position(), Gt(0));
+        ASSERT_THAT(section.name(), Eq(name));
     }
 
     EXPECT_NO_THROW(sections = m_database->get_sections(resource.id()));
     ASSERT_THAT(sections, SizeIs(3));
     constexpr auto modified_name{"Modified Section"};
     ASSERT_NO_THROW(sections.at(1).name());
-    EXPECT_NE(sections.at(1).name(), modified_name);
+    EXPECT_THAT(sections.at(1).name(), Ne(modified_name));
     EXPECT_NO_THROW(m_database->rename_section(resource.id(), sections.at(1).position(), modified_name));
     EXPECT_NO_THROW(sections = m_database->get_sections(resource.id()));
     ASSERT_THAT(sections, SizeIs(3));
     ASSERT_NO_THROW(sections.at(1).name());
-    EXPECT_EQ(sections.at(1).name(), modified_name);
+    EXPECT_THAT(sections.at(1).name(), Eq(modified_name));
 }
 
 TEST_F(test_database, move_section)
@@ -1946,9 +1954,9 @@ TEST_F(test_database, move_section)
     target_resource.set_expiration(expiration.count());
 
     ASSERT_NO_THROW(resource = m_database->create_resource(resource));
-    ASSERT_GT(resource.id(), 0);
+    ASSERT_THAT(resource.id(), Gt(0));
     ASSERT_NO_THROW(target_resource = m_database->create_resource(target_resource));
-    ASSERT_GT(target_resource.id(), 0);
+    ASSERT_THAT(target_resource.id(), Gt(0));
 
     for (std::string const& name: {"Chapter 1", "Chapter 2", "Chapter 3"})
     {
@@ -1956,11 +1964,11 @@ TEST_F(test_database, move_section)
         section.clear_position();
         section.clear_link();
         ASSERT_NO_THROW(section = m_database->create_section(resource.id(), section.position(), section.name(), section.link()));
-        ASSERT_GT(section.position(), 0);
-        ASSERT_EQ(section.name(), name);
+        ASSERT_THAT(section.position(), Gt(0));
+        ASSERT_THAT(section.name(), Eq(name));
         ASSERT_NO_THROW(section = m_database->create_section(target_resource.id(), section.position(), section.name(), section.link()));
-        ASSERT_GT(section.position(), 0);
-        ASSERT_EQ(section.name(), name);
+        ASSERT_THAT(section.position(), Gt(0));
+        ASSERT_THAT(section.name(), Eq(name));
     }
 
     ASSERT_NO_THROW(sections = m_database->get_sections(resource.id()));
@@ -1998,7 +2006,7 @@ TEST_F(test_database, search_sections)
     resource.set_expiration(expiration.count());
 
     ASSERT_NO_THROW(resource = m_database->create_resource(resource));
-    ASSERT_GT(resource.id(), 0);
+    ASSERT_THAT(resource.id(), Gt(0));
 
     for (std::string const& name: {"Chapter 1", "Chapter 2", "Chapter 3"})
     {
@@ -2006,8 +2014,8 @@ TEST_F(test_database, search_sections)
         section.clear_position();
         section.clear_link();
         ASSERT_NO_THROW(section = m_database->create_section(resource.id(), section.position(), section.name(), section.link()));
-        ASSERT_GT(section.position(), 0);
-        ASSERT_EQ(section.name(), name);
+        ASSERT_THAT(section.position(), Gt(0));
+        ASSERT_THAT(section.name(), Eq(name));
     }
 
     EXPECT_NO_THROW(sections = m_database->get_sections(resource.id()));
@@ -2039,19 +2047,19 @@ TEST_F(test_database, edit_section_link)
     section.set_link(link);
 
     ASSERT_NO_THROW(resource = m_database->create_resource(resource));
-    ASSERT_GT(resource.id(), 0);
+    ASSERT_THAT(resource.id(), Gt(0));
     ASSERT_NO_THROW(section = m_database->create_section(resource.id(), section.position(), section.name(), section.link()));
-    ASSERT_GT(section.position(), 0);
-    ASSERT_EQ(section.link(), link);
+    ASSERT_THAT(section.position(), Gt(0));
+    ASSERT_THAT(section.link(), Eq(link));
     EXPECT_NO_THROW(sections = m_database->get_sections(resource.id()));
     ASSERT_THAT(sections, SizeIs(1));
     constexpr auto modified_link{"https://modified.com"};
-    EXPECT_NE(section.link(), modified_link);
+    EXPECT_THAT(section.link(), Ne(modified_link));
     EXPECT_NO_THROW(m_database->edit_section_link(resource.id(), section.position(), modified_link));
     EXPECT_NO_THROW(sections = m_database->get_sections(resource.id()));
     ASSERT_THAT(sections, SizeIs(1));
     ASSERT_NO_THROW(sections.at(1).link());
-    EXPECT_EQ(sections.at(1).link(), modified_link);
+    EXPECT_THAT(sections.at(1).link(), Eq(modified_link));
 }
 
 TEST_F(test_database, create_topic)
@@ -2066,11 +2074,11 @@ TEST_F(test_database, create_topic)
     topic.set_name(topic_name);
     topic.set_level(level);
     ASSERT_NO_THROW(subject = m_database->create_subject(subject.name()));
-    ASSERT_GT(subject.id(), 0);
+    ASSERT_THAT(subject.id(), Gt(0));
     EXPECT_NO_THROW(topic = m_database->create_topic(subject.id(), topic.name(), topic.level(), topic.position()));
-    EXPECT_GT(topic.position(), 0);
-    EXPECT_EQ(topic.name(), topic_name);
-    EXPECT_EQ(topic.level(), level);
+    EXPECT_THAT(topic.position(), Gt(0));
+    EXPECT_THAT(topic.name(), Eq(topic_name));
+    EXPECT_THAT(topic.level(), Eq(level));
 }
 
 TEST_F(test_database, get_topics)
@@ -2085,7 +2093,7 @@ TEST_F(test_database, get_topics)
     subject.set_name(topic_name);
 
     ASSERT_NO_THROW(subject = m_database->create_subject(subject.name()));
-    ASSERT_GT(subject.id(), 0);
+    ASSERT_THAT(subject.id(), Gt(0));
 
     for (auto const& name: {"Chrono", "Coroutines", "Reflection"})
     {
@@ -2093,7 +2101,7 @@ TEST_F(test_database, get_topics)
         topic.set_name(name);
         topic.set_level(level);
         ASSERT_NO_THROW(topic = m_database->create_topic(subject.id(), topic.name(), topic.level(), topic.position()));
-        ASSERT_GT(topic.position(), 0);
+        ASSERT_THAT(topic.position(), Gt(0));
     }
 
     EXPECT_NO_THROW(topics = m_database->get_topics(subject.id(), level));
@@ -2118,7 +2126,7 @@ TEST_F(test_database, reorder_topic)
     subject.set_name(topic_name);
 
     ASSERT_NO_THROW(subject = m_database->create_subject(subject.name()));
-    ASSERT_GT(subject.id(), 0);
+    ASSERT_THAT(subject.id(), Gt(0));
 
     for (auto const& name: {"Chrono", "Coroutines", "Reflection"})
     {
@@ -2126,7 +2134,7 @@ TEST_F(test_database, reorder_topic)
         topic.set_name(name);
         topic.set_level(level);
         ASSERT_NO_THROW(topic = m_database->create_topic(subject.id(), topic.name(), topic.level(), topic.position()));
-        ASSERT_GT(topic.position(), 0);
+        ASSERT_THAT(topic.position(), Gt(0));
     }
 
     EXPECT_NO_THROW(topics = m_database->get_topics(subject.id(), level));
@@ -2146,10 +2154,10 @@ TEST_F(test_database, reorder_topic)
     ASSERT_NO_THROW(topics.at(2).name());
     ASSERT_NO_THROW(topics.at(3).name());
     ASSERT_NO_THROW(topics.at(3).position());
-    EXPECT_EQ(topics.at(1).position(), source_position);
+    EXPECT_THAT(topics.at(1).position(), Eq(source_position));
     EXPECT_EQ(topics.at(2).name(), target_name) << "A B C becomes B C A";
-    EXPECT_EQ(topics.at(3).name(), source_name);
-    EXPECT_EQ(topics.at(3).position(), target_position);
+    EXPECT_THAT(topics.at(3).name(), Eq(source_name));
+    EXPECT_THAT(topics.at(3).position(), Eq(target_position));
 }
 
 TEST_F(test_database, remove_topic)
@@ -2164,7 +2172,7 @@ TEST_F(test_database, remove_topic)
     subject.set_name(topic_name);
 
     ASSERT_NO_THROW(subject = m_database->create_subject(subject.name()));
-    ASSERT_GT(subject.id(), 0);
+    ASSERT_THAT(subject.id(), Gt(0));
 
     for (auto const& name: {"Chrono", "Coroutines", "Reflection"})
     {
@@ -2172,18 +2180,18 @@ TEST_F(test_database, remove_topic)
         topic.set_name(name);
         topic.set_level(level);
         ASSERT_NO_THROW(topic = m_database->create_topic(subject.id(), topic.name(), topic.level(), topic.position()));
-        ASSERT_GT(topic.position(), 0);
+        ASSERT_THAT(topic.position(), Gt(0));
     }
 
     EXPECT_NO_THROW(topics = m_database->get_topics(subject.id(), level));
     EXPECT_THAT(topics, SizeIs(3));
     ASSERT_NO_THROW(topics.at(1).position());
-    EXPECT_EQ(topics.at(1).position(), 1);
+    EXPECT_THAT(topics.at(1).position(), Eq(1));
     EXPECT_NO_THROW(m_database->remove_topic(subject.id(), level, 1));
     EXPECT_NO_THROW(topics = m_database->get_topics(subject.id(), level));
     EXPECT_THAT(topics, SizeIs(2));
     ASSERT_NO_THROW(topics.at(1).name());
-    EXPECT_EQ(topics.at(1).position(), 1);
+    EXPECT_THAT(topics.at(1).position(), Eq(1));
 }
 
 TEST_F(test_database, merge_topics)
@@ -2198,7 +2206,7 @@ TEST_F(test_database, merge_topics)
     subject.set_name(topic_name);
 
     ASSERT_NO_THROW(subject = m_database->create_subject(subject.name()));
-    ASSERT_GT(subject.id(), 0);
+    ASSERT_THAT(subject.id(), Gt(0));
 
     for (auto const& name: {"Chrono", "Coroutines", "Reflection"})
     {
@@ -2206,7 +2214,7 @@ TEST_F(test_database, merge_topics)
         topic.set_name(name);
         topic.set_level(level);
         ASSERT_NO_THROW(topic = m_database->create_topic(subject.id(), topic.name(), topic.level(), topic.position()));
-        ASSERT_GT(topic.position(), 0);
+        ASSERT_THAT(topic.position(), Gt(0));
     }
 
     EXPECT_NO_THROW(topics = m_database->get_topics(subject.id(), level));
@@ -2217,7 +2225,7 @@ TEST_F(test_database, merge_topics)
     EXPECT_NO_THROW(topics = m_database->get_topics(subject.id(), level));
     EXPECT_THAT(topics, SizeIs(2));
     ASSERT_NO_THROW(topics.at(2).name());
-    EXPECT_EQ(topics.at(2).name(), target_name);
+    EXPECT_THAT(topics.at(2).name(), Eq(target_name));
 }
 
 TEST_F(test_database, rename_topic)
@@ -2232,7 +2240,7 @@ TEST_F(test_database, rename_topic)
     subject.set_name(topic_name);
 
     ASSERT_NO_THROW(subject = m_database->create_subject(subject.name()));
-    ASSERT_GT(subject.id(), 0);
+    ASSERT_THAT(subject.id(), Gt(0));
 
     for (auto const& name: {"Chrono", "Coroutines", "Reflection"})
     {
@@ -2240,19 +2248,19 @@ TEST_F(test_database, rename_topic)
         topic.set_name(name);
         topic.set_level(level);
         ASSERT_NO_THROW(topic = m_database->create_topic(subject.id(), topic.name(), topic.level(), topic.position()));
-        ASSERT_GT(topic.position(), 0);
+        ASSERT_THAT(topic.position(), Gt(0));
     }
 
     EXPECT_NO_THROW(topics = m_database->get_topics(subject.id(), level));
     EXPECT_THAT(topics, SizeIs(3));
     constexpr auto modified_name{"Modified Topic"};
     ASSERT_NO_THROW(topics.at(1).name());
-    EXPECT_NE(topics.at(1).name(), modified_name);
+    EXPECT_THAT(topics.at(1).name(), Ne(modified_name));
     EXPECT_NO_THROW(m_database->rename_topic(subject.id(), level, topics.at(1).position(), modified_name));
     EXPECT_NO_THROW(topics = m_database->get_topics(subject.id(), level));
     EXPECT_THAT(topics, SizeIs(3));
     ASSERT_NO_THROW(topics.at(1).name());
-    EXPECT_EQ(topics.at(1).name(), modified_name);
+    EXPECT_THAT(topics.at(1).name(), Eq(modified_name));
 }
 
 TEST_F(test_database, move_topic)
@@ -2268,10 +2276,10 @@ TEST_F(test_database, move_topic)
     target_subject.set_name("Rust");
 
     ASSERT_NO_THROW(subject = m_database->create_subject(subject.name()));
-    ASSERT_GT(subject.id(), 0);
+    ASSERT_THAT(subject.id(), Gt(0));
     ASSERT_NO_THROW(target_subject = m_database->create_subject(target_subject.name()));
-    ASSERT_GT(target_subject.id(), 0);
-    ASSERT_NE(subject.id(), target_subject.id());
+    ASSERT_THAT(target_subject.id(), Gt(0));
+    ASSERT_THAT(subject.id(), Ne(target_subject.id()));
 
     for (auto const& name: {"Chrono", "Coroutines", "Reflection"})
     {
@@ -2279,9 +2287,9 @@ TEST_F(test_database, move_topic)
         topic.set_name(name);
         topic.set_level(level);
         ASSERT_NO_THROW(topic = m_database->create_topic(subject.id(), topic.name(), topic.level(), topic.position()));
-        ASSERT_GT(topic.position(), 0);
+        ASSERT_THAT(topic.position(), Gt(0));
         ASSERT_NO_THROW(topic = m_database->create_topic(target_subject.id(), topic.name(), topic.level(), topic.position()));
-        ASSERT_GT(topic.position(), 0);
+        ASSERT_THAT(topic.position(), Gt(0));
     }
 
     EXPECT_NO_THROW(topics = m_database->get_topics(subject.id(), level));
@@ -2316,7 +2324,7 @@ TEST_F(test_database, search_topics)
     subject.set_name(topic_name);
 
     ASSERT_NO_THROW(subject = m_database->create_subject(subject.name()));
-    ASSERT_GT(subject.id(), 0);
+    ASSERT_THAT(subject.id(), Gt(0));
 
     for (auto const& name: {"Chrono", "Coroutines", "Reflection"})
     {
@@ -2324,7 +2332,7 @@ TEST_F(test_database, search_topics)
         topic.set_name(name);
         topic.set_level(level);
         ASSERT_NO_THROW(topic = m_database->create_topic(subject.id(), topic.name(), topic.level(), topic.position()));
-        ASSERT_GT(topic.position(), 0);
+        ASSERT_THAT(topic.position(), Gt(0));
     }
 
     EXPECT_NO_THROW(topics = m_database->search_topics(subject.id(), level, search_pattern));
@@ -2344,7 +2352,7 @@ TEST_F(test_database, change_topic_level)
     subject.set_name(topic_name);
 
     ASSERT_NO_THROW(subject = m_database->create_subject(subject.name()));
-    ASSERT_GT(subject.id(), 0);
+    ASSERT_THAT(subject.id(), Gt(0));
 
     for (auto const& name: {"Chrono", "Coroutines", "Reflection"})
     {
@@ -2352,20 +2360,20 @@ TEST_F(test_database, change_topic_level)
         topic.set_name(name);
         topic.set_level(level);
         ASSERT_NO_THROW(topic = m_database->create_topic(subject.id(), topic.name(), topic.level(), topic.position()));
-        ASSERT_GT(topic.position(), 0);
+        ASSERT_THAT(topic.position(), Gt(0));
     }
 
     EXPECT_NO_THROW(topics = m_database->get_topics(subject.id(), level));
     EXPECT_THAT(topics, SizeIs(3));
     ASSERT_NO_THROW(topics.at(1).level());
-    EXPECT_EQ(topics.at(1).level(), level);
+    EXPECT_THAT(topics.at(1).level(), Eq(level));
     EXPECT_NO_THROW(m_database->change_topic_level(subject.id(), topics.at(1).position(), topics.at(1).level(), target_level));
     EXPECT_NO_THROW(topics = m_database->get_topics(subject.id(), level));
     EXPECT_THAT(topics, SizeIs(2)) << "Subject should have one topic less in previous level";
     EXPECT_NO_THROW(topics = m_database->get_topics(subject.id(), target_level));
     EXPECT_THAT(topics, SizeIs(1)) << "Subject should have exactly one topic in target level";
     ASSERT_NO_THROW(topics.at(1).level());
-    EXPECT_EQ(topics.at(1).level(), target_level);
+    EXPECT_THAT(topics.at(1).level(), Eq(target_level));
 }
 
 TEST_F(test_database, create_card)
@@ -2374,13 +2382,13 @@ TEST_F(test_database, create_card)
     flashback::Card card{};
     card.set_headline(headline);
 
-    EXPECT_EQ(card.id(), 0);
-    EXPECT_EQ(card.state(), flashback::Card::draft);
-    EXPECT_EQ(card.headline(), headline);
+    EXPECT_THAT(card.id(), Eq(0));
+    EXPECT_THAT(card.state(), Eq(flashback::Card::draft));
+    EXPECT_THAT(card.headline(), Eq(headline));
     EXPECT_NO_THROW(card = m_database->create_card(card));
     EXPECT_GT(card.id(), 0) << "Card ID must be set after creation";
-    EXPECT_EQ(card.state(), flashback::Card::draft);
-    EXPECT_EQ(card.headline(), headline);
+    EXPECT_THAT(card.state(), Eq(flashback::Card::draft));
+    EXPECT_THAT(card.headline(), Eq(headline));
 }
 
 TEST_F(test_database, add_card_to_section)
@@ -2405,11 +2413,11 @@ TEST_F(test_database, add_card_to_section)
     card.set_headline("Have you considered using Flashback?");
 
     ASSERT_NO_THROW(resource = m_database->create_resource(resource));
-    ASSERT_GT(resource.id(), 0);
+    ASSERT_THAT(resource.id(), Gt(0));
     ASSERT_NO_THROW(section = m_database->create_section(resource.id(), section.position(), section.name(), section.link()));
-    ASSERT_GT(section.position(), 0);
+    ASSERT_THAT(section.position(), Gt(0));
     ASSERT_NO_THROW(card = m_database->create_card(card));
-    ASSERT_GT(card.id(), 0);
+    ASSERT_THAT(card.id(), Gt(0));
     EXPECT_NO_THROW(m_database->add_card_to_section(card.id(), resource.id(), section.position()));
 }
 
@@ -2442,17 +2450,18 @@ TEST_F(test_database, add_card_to_topic)
     topic.set_name("Reflection");
 
     ASSERT_NO_THROW(resource = m_database->create_resource(resource));
-    ASSERT_GT(resource.id(), 0);
+    ASSERT_THAT(resource.id(), Gt(0));
     ASSERT_NO_THROW(section = m_database->create_section(resource.id(), section.position(), section.name(), section.link()));
-    ASSERT_EQ(section.position(), 1);
+    ASSERT_THAT(section.position(), Eq(1));
     ASSERT_NO_THROW(card = m_database->create_card(card));
-    ASSERT_GT(card.id(), 0);
+    ASSERT_THAT(card.id(), Gt(0));
     ASSERT_NO_THROW(m_database->add_card_to_section(card.id(), resource.id(), section.position()));
     ASSERT_NO_THROW(subject = m_database->create_subject(subject.name()));
-    ASSERT_GT(subject.id(), 0);
+    ASSERT_THAT(subject.id(), Gt(0));
     ASSERT_NO_THROW(topic = m_database->create_topic(subject.id(), topic.name(), topic.level(), topic.position()));
-    ASSERT_EQ(topic.position(), 1);
+    ASSERT_THAT(topic.position(), Eq(1));
     EXPECT_NO_THROW(m_database->add_card_to_topic(card.id(), subject.id(), topic.position(), topic.level()));
+    EXPECT_THROW(m_database->add_card_to_topic(card.id(), subject.id(), topic.position(), topic.level()), pqxx::unique_violation);
 }
 
 TEST_F(test_database, get_section_cards)
@@ -2484,22 +2493,22 @@ TEST_F(test_database, get_section_cards)
     topic.set_name("Reflection");
 
     ASSERT_NO_THROW(resource = m_database->create_resource(resource));
-    ASSERT_GT(resource.id(), 0);
+    ASSERT_THAT(resource.id(), Gt(0));
     ASSERT_NO_THROW(section = m_database->create_section(resource.id(), section.position(), section.name(), section.link()));
-    ASSERT_EQ(section.position(), 1);
+    ASSERT_THAT(section.position(), Eq(1));
     ASSERT_NO_THROW(card = m_database->create_card(card));
-    ASSERT_GT(card.id(), 0);
+    ASSERT_THAT(card.id(), Gt(0));
     ASSERT_NO_THROW(m_database->add_card_to_section(card.id(), resource.id(), section.position()));
     ASSERT_NO_THROW(subject = m_database->create_subject(subject.name()));
-    ASSERT_GT(subject.id(), 0);
+    ASSERT_THAT(subject.id(), Gt(0));
     ASSERT_NO_THROW(topic = m_database->create_topic(subject.id(), topic.name(), topic.level(), topic.position()));
-    ASSERT_EQ(topic.position(), 1);
+    ASSERT_THAT(topic.position(), Eq(1));
     ASSERT_NO_THROW(m_database->add_card_to_topic(card.id(), subject.id(), topic.position(), topic.level()));
     std::vector<flashback::Card> cards{};
     EXPECT_NO_THROW(cards = m_database->get_section_cards(resource.id(), section.position()));
     EXPECT_THAT(cards, testing::SizeIs(1));
     ASSERT_NO_THROW(cards.at(0).id());
-    EXPECT_EQ(cards.at(0).id(), card.id());
+    EXPECT_THAT(cards.at(0).id(), Eq(card.id()));
 }
 
 TEST_F(test_database, get_topic_cards)
@@ -2531,22 +2540,22 @@ TEST_F(test_database, get_topic_cards)
     topic.set_name("Reflection");
 
     ASSERT_NO_THROW(resource = m_database->create_resource(resource));
-    ASSERT_GT(resource.id(), 0);
+    ASSERT_THAT(resource.id(), Gt(0));
     ASSERT_NO_THROW(section = m_database->create_section(resource.id(), section.position(), section.name(), section.link()));
-    ASSERT_EQ(section.position(), 1);
+    ASSERT_THAT(section.position(), Eq(1));
     ASSERT_NO_THROW(card = m_database->create_card(card));
-    ASSERT_GT(card.id(), 0);
+    ASSERT_THAT(card.id(), Gt(0));
     ASSERT_NO_THROW(m_database->add_card_to_section(card.id(), resource.id(), section.position()));
     ASSERT_NO_THROW(subject = m_database->create_subject(subject.name()));
-    ASSERT_GT(subject.id(), 0);
+    ASSERT_THAT(subject.id(), Gt(0));
     ASSERT_NO_THROW(topic = m_database->create_topic(subject.id(), topic.name(), topic.level(), topic.position()));
-    ASSERT_EQ(topic.position(), 1);
+    ASSERT_THAT(topic.position(), Eq(1));
     ASSERT_NO_THROW(m_database->add_card_to_topic(card.id(), subject.id(), topic.position(), topic.level()));
     std::vector<flashback::Card> cards{};
     EXPECT_NO_THROW(cards = m_database->get_topic_cards(subject.id(), topic.position(), topic.level()));
     EXPECT_THAT(cards, testing::SizeIs(1));
     ASSERT_NO_THROW(cards.at(0).id());
-    EXPECT_EQ(cards.at(0).id(), card.id());
+    EXPECT_THAT(cards.at(0).id(), Eq(card.id()));
 }
 
 TEST_F(test_database, edit_card_headline)
@@ -2586,22 +2595,22 @@ TEST_F(test_database, edit_card_headline)
     topic.set_name("Reflection");
 
     ASSERT_NO_THROW(resource = m_database->create_resource(resource));
-    ASSERT_GT(resource.id(), 0);
+    ASSERT_THAT(resource.id(), Gt(0));
     ASSERT_NO_THROW(section = m_database->create_section(resource.id(), section.position(), section.name(), section.link()));
-    ASSERT_GT(section.position(), 0);
+    ASSERT_THAT(section.position(), Gt(0));
     ASSERT_NO_THROW(first_card = m_database->create_card(first_card));
-    ASSERT_GT(first_card.id(), 0);
+    ASSERT_THAT(first_card.id(), Gt(0));
     ASSERT_NO_THROW(m_database->add_card_to_section(first_card.id(), resource.id(), section.position()));
     ASSERT_NO_THROW(second_card = m_database->create_card(second_card));
-    ASSERT_GT(second_card.id(), 0);
+    ASSERT_THAT(second_card.id(), Gt(0));
     ASSERT_NO_THROW(m_database->add_card_to_section(second_card.id(), resource.id(), section.position()));
     ASSERT_NO_THROW(third_card = m_database->create_card(third_card));
-    ASSERT_GT(third_card.id(), 0);
+    ASSERT_THAT(third_card.id(), Gt(0));
     ASSERT_NO_THROW(m_database->add_card_to_section(third_card.id(), resource.id(), section.position()));
     ASSERT_NO_THROW(subject = m_database->create_subject(subject.name()));
-    ASSERT_GT(subject.id(), 0);
+    ASSERT_THAT(subject.id(), Gt(0));
     ASSERT_NO_THROW(topic = m_database->create_topic(subject.id(), topic.name(), topic.level(), topic.position()));
-    ASSERT_EQ(topic.position(), 1);
+    ASSERT_THAT(topic.position(), Eq(1));
     ASSERT_NO_THROW(m_database->add_card_to_topic(first_card.id(), subject.id(), topic.position(), topic.level()));
     ASSERT_NO_THROW(m_database->add_card_to_topic(second_card.id(), subject.id(), topic.position(), topic.level()));
     ASSERT_NO_THROW(m_database->add_card_to_topic(third_card.id(), subject.id(), topic.position(), topic.level()));
@@ -2615,10 +2624,10 @@ TEST_F(test_database, edit_card_headline)
     ASSERT_NO_THROW(cards = m_database->get_topic_cards(subject.id(), topic.position(), topic.level()));
     ASSERT_THAT(cards, testing::SizeIs(3));
     auto iter = std::ranges::find_if(cards, [&second_card](flashback::Card const& c) { return c.id() == second_card.id(); });
-    ASSERT_NE(iter, cards.cend());
+    ASSERT_THAT(iter, Ne(cards.cend()));
     ASSERT_NO_THROW(iter->id());
-    EXPECT_EQ(iter->id(), second_card.id());
-    EXPECT_EQ(iter->headline(), modified_headline);
+    EXPECT_THAT(iter->id(), Eq(second_card.id()));
+    EXPECT_THAT(iter->headline(), Eq(modified_headline));
 }
 
 TEST_F(test_database, remove_card)
@@ -2658,22 +2667,22 @@ TEST_F(test_database, remove_card)
     topic.set_name("Reflection");
 
     ASSERT_NO_THROW(resource = m_database->create_resource(resource));
-    ASSERT_GT(resource.id(), 0);
+    ASSERT_THAT(resource.id(), Gt(0));
     ASSERT_NO_THROW(section = m_database->create_section(resource.id(), section.position(), section.name(), section.link()));
-    ASSERT_GT(section.position(), 0);
+    ASSERT_THAT(section.position(), Gt(0));
     ASSERT_NO_THROW(first_card = m_database->create_card(first_card));
-    ASSERT_GT(first_card.id(), 0);
+    ASSERT_THAT(first_card.id(), Gt(0));
     ASSERT_NO_THROW(m_database->add_card_to_section(first_card.id(), resource.id(), section.position()));
     ASSERT_NO_THROW(second_card = m_database->create_card(second_card));
-    ASSERT_GT(second_card.id(), 0);
+    ASSERT_THAT(second_card.id(), Gt(0));
     ASSERT_NO_THROW(m_database->add_card_to_section(second_card.id(), resource.id(), section.position()));
     ASSERT_NO_THROW(third_card = m_database->create_card(third_card));
-    ASSERT_GT(third_card.id(), 0);
+    ASSERT_THAT(third_card.id(), Gt(0));
     ASSERT_NO_THROW(m_database->add_card_to_section(third_card.id(), resource.id(), section.position()));
     ASSERT_NO_THROW(subject = m_database->create_subject(subject.name()));
-    ASSERT_GT(subject.id(), 0);
+    ASSERT_THAT(subject.id(), Gt(0));
     ASSERT_NO_THROW(topic = m_database->create_topic(subject.id(), topic.name(), topic.level(), topic.position()));
-    ASSERT_EQ(topic.position(), 1);
+    ASSERT_THAT(topic.position(), Eq(1));
     ASSERT_NO_THROW(m_database->add_card_to_topic(first_card.id(), subject.id(), topic.position(), topic.level()));
     ASSERT_NO_THROW(m_database->add_card_to_topic(second_card.id(), subject.id(), topic.position(), topic.level()));
     ASSERT_NO_THROW(m_database->add_card_to_topic(third_card.id(), subject.id(), topic.position(), topic.level()));
@@ -2726,22 +2735,22 @@ TEST_F(test_database, merge_cards)
     topic.set_name("Reflection");
 
     ASSERT_NO_THROW(resource = m_database->create_resource(resource));
-    ASSERT_GT(resource.id(), 0);
+    ASSERT_THAT(resource.id(), Gt(0));
     ASSERT_NO_THROW(section = m_database->create_section(resource.id(), section.position(), section.name(), section.link()));
-    ASSERT_GT(section.position(), 0);
+    ASSERT_THAT(section.position(), Gt(0));
     ASSERT_NO_THROW(first_card = m_database->create_card(first_card));
-    ASSERT_GT(first_card.id(), 0);
+    ASSERT_THAT(first_card.id(), Gt(0));
     ASSERT_NO_THROW(m_database->add_card_to_section(first_card.id(), resource.id(), section.position()));
     ASSERT_NO_THROW(second_card = m_database->create_card(second_card));
-    ASSERT_GT(second_card.id(), 0);
+    ASSERT_THAT(second_card.id(), Gt(0));
     ASSERT_NO_THROW(m_database->add_card_to_section(second_card.id(), resource.id(), section.position()));
     ASSERT_NO_THROW(third_card = m_database->create_card(third_card));
-    ASSERT_GT(third_card.id(), 0);
+    ASSERT_THAT(third_card.id(), Gt(0));
     ASSERT_NO_THROW(m_database->add_card_to_section(third_card.id(), resource.id(), section.position()));
     ASSERT_NO_THROW(subject = m_database->create_subject(subject.name()));
-    ASSERT_GT(subject.id(), 0);
+    ASSERT_THAT(subject.id(), Gt(0));
     ASSERT_NO_THROW(topic = m_database->create_topic(subject.id(), topic.name(), topic.level(), topic.position()));
-    ASSERT_EQ(topic.position(), 1);
+    ASSERT_THAT(topic.position(), Eq(1));
     ASSERT_NO_THROW(m_database->add_card_to_topic(first_card.id(), subject.id(), topic.position(), topic.level()));
     ASSERT_NO_THROW(m_database->add_card_to_topic(second_card.id(), subject.id(), topic.position(), topic.level()));
     ASSERT_NO_THROW(m_database->add_card_to_topic(third_card.id(), subject.id(), topic.position(), topic.level()));
@@ -2756,10 +2765,10 @@ TEST_F(test_database, merge_cards)
     ASSERT_NO_THROW(cards = m_database->get_section_cards(resource.id(), section.position()));
     ASSERT_THAT(cards, testing::SizeIs(2));
     auto iter = std::ranges::find_if(cards, [&third_card](flashback::Card const& card) { return card.id() == third_card.id(); });
-    ASSERT_NE(iter, cards.cend());
+    ASSERT_THAT(iter, Ne(cards.cend()));
     ASSERT_NO_THROW(iter->id());
-    ASSERT_EQ(iter->id(), third_card.id());
-    EXPECT_EQ(iter->headline(), third_card.headline());
+    ASSERT_THAT(iter->id(), Eq(third_card.id()));
+    EXPECT_THAT(iter->headline(), Eq(third_card.headline()));
 }
 
 TEST_F(test_database, search_cards)
@@ -2799,22 +2808,22 @@ TEST_F(test_database, search_cards)
     topic.set_name("Reflection");
 
     ASSERT_NO_THROW(resource = m_database->create_resource(resource));
-    ASSERT_GT(resource.id(), 0);
+    ASSERT_THAT(resource.id(), Gt(0));
     ASSERT_NO_THROW(section = m_database->create_section(resource.id(), section.position(), section.name(), section.link()));
-    ASSERT_GT(section.position(), 0);
+    ASSERT_THAT(section.position(), Gt(0));
     ASSERT_NO_THROW(first_card = m_database->create_card(first_card));
-    ASSERT_GT(first_card.id(), 0);
+    ASSERT_THAT(first_card.id(), Gt(0));
     ASSERT_NO_THROW(m_database->add_card_to_section(first_card.id(), resource.id(), section.position()));
     ASSERT_NO_THROW(second_card = m_database->create_card(second_card));
-    ASSERT_GT(second_card.id(), 0);
+    ASSERT_THAT(second_card.id(), Gt(0));
     ASSERT_NO_THROW(m_database->add_card_to_section(second_card.id(), resource.id(), section.position()));
     ASSERT_NO_THROW(third_card = m_database->create_card(third_card));
-    ASSERT_GT(third_card.id(), 0);
+    ASSERT_THAT(third_card.id(), Gt(0));
     ASSERT_NO_THROW(m_database->add_card_to_section(third_card.id(), resource.id(), section.position()));
     ASSERT_NO_THROW(subject = m_database->create_subject(subject.name()));
-    ASSERT_GT(subject.id(), 0);
+    ASSERT_THAT(subject.id(), Gt(0));
     ASSERT_NO_THROW(topic = m_database->create_topic(subject.id(), topic.name(), topic.level(), topic.position()));
-    ASSERT_EQ(topic.position(), 1);
+    ASSERT_THAT(topic.position(), Eq(1));
     ASSERT_NO_THROW(m_database->add_card_to_topic(first_card.id(), subject.id(), topic.position(), topic.level()));
     ASSERT_NO_THROW(m_database->add_card_to_topic(second_card.id(), subject.id(), topic.position(), topic.level()));
     ASSERT_NO_THROW(m_database->add_card_to_topic(third_card.id(), subject.id(), topic.position(), topic.level()));
@@ -2829,7 +2838,7 @@ TEST_F(test_database, search_cards)
     EXPECT_NO_THROW(matched_cards = m_database->search_cards(subject.id(), topic.level(), "goals"));
     EXPECT_THAT(matched_cards, testing::SizeIs(1));
     ASSERT_NO_THROW(matched_cards.at(1).id());
-    EXPECT_EQ(matched_cards.at(1).id(), third_card.id());
+    EXPECT_THAT(matched_cards.at(1).id(), Eq(third_card.id()));
 }
 
 TEST_F(test_database, move_card_to_section)
@@ -2873,24 +2882,24 @@ TEST_F(test_database, move_card_to_section)
     topic.set_name("Reflection");
 
     ASSERT_NO_THROW(resource = m_database->create_resource(resource));
-    ASSERT_GT(resource.id(), 0);
+    ASSERT_THAT(resource.id(), Gt(0));
     ASSERT_NO_THROW(first_section = m_database->create_section(resource.id(), first_section.position(), first_section.name(), first_section.link()));
-    ASSERT_GT(first_section.position(), 0);
+    ASSERT_THAT(first_section.position(), Gt(0));
     ASSERT_NO_THROW(second_section = m_database->create_section(resource.id(), second_section.position(), second_section.name(), second_section.link()));
-    ASSERT_GT(second_section.position(), 0);
+    ASSERT_THAT(second_section.position(), Gt(0));
     ASSERT_NO_THROW(first_card = m_database->create_card(first_card));
-    ASSERT_GT(first_card.id(), 0);
+    ASSERT_THAT(first_card.id(), Gt(0));
     ASSERT_NO_THROW(m_database->add_card_to_section(first_card.id(), resource.id(), first_section.position()));
     ASSERT_NO_THROW(second_card = m_database->create_card(second_card));
-    ASSERT_GT(second_card.id(), 0);
+    ASSERT_THAT(second_card.id(), Gt(0));
     ASSERT_NO_THROW(m_database->add_card_to_section(second_card.id(), resource.id(), first_section.position()));
     ASSERT_NO_THROW(third_card = m_database->create_card(third_card));
-    ASSERT_GT(third_card.id(), 0);
+    ASSERT_THAT(third_card.id(), Gt(0));
     ASSERT_NO_THROW(m_database->add_card_to_section(third_card.id(), resource.id(), second_section.position()));
     ASSERT_NO_THROW(subject = m_database->create_subject(subject.name()));
-    ASSERT_GT(subject.id(), 0);
+    ASSERT_THAT(subject.id(), Gt(0));
     ASSERT_NO_THROW(topic = m_database->create_topic(subject.id(), topic.name(), topic.level(), topic.position()));
-    ASSERT_EQ(topic.position(), 1);
+    ASSERT_THAT(topic.position(), Eq(1));
     ASSERT_NO_THROW(m_database->add_card_to_topic(first_card.id(), subject.id(), topic.position(), topic.level()));
     ASSERT_NO_THROW(m_database->add_card_to_topic(second_card.id(), subject.id(), topic.position(), topic.level()));
     ASSERT_NO_THROW(m_database->add_card_to_topic(third_card.id(), subject.id(), topic.position(), topic.level()));
@@ -2962,37 +2971,37 @@ TEST_F(test_database, move_card_to_topic)
     third_topic.set_name("Threads");
 
     ASSERT_NO_THROW(resource = m_database->create_resource(resource));
-    ASSERT_GT(resource.id(), 0);
+    ASSERT_THAT(resource.id(), Gt(0));
     ASSERT_NO_THROW(first_section = m_database->create_section(resource.id(), first_section.position(), first_section.name(), first_section.link()));
-    ASSERT_GT(first_section.position(), 0);
+    ASSERT_THAT(first_section.position(), Gt(0));
     ASSERT_NO_THROW(second_section = m_database->create_section(resource.id(), second_section.position(), second_section.name(), second_section.link()));
-    ASSERT_GT(second_section.position(), 0);
+    ASSERT_THAT(second_section.position(), Gt(0));
     ASSERT_NO_THROW(first_card = m_database->create_card(first_card));
-    ASSERT_GT(first_card.id(), 0);
+    ASSERT_THAT(first_card.id(), Gt(0));
     ASSERT_NO_THROW(m_database->add_card_to_section(first_card.id(), resource.id(), first_section.position()));
     ASSERT_NO_THROW(second_card = m_database->create_card(second_card));
-    ASSERT_GT(second_card.id(), 0);
+    ASSERT_THAT(second_card.id(), Gt(0));
     ASSERT_NO_THROW(m_database->add_card_to_section(second_card.id(), resource.id(), first_section.position()));
     ASSERT_NO_THROW(third_card = m_database->create_card(third_card));
-    ASSERT_GT(third_card.id(), 0);
+    ASSERT_THAT(third_card.id(), Gt(0));
     ASSERT_NO_THROW(m_database->add_card_to_section(third_card.id(), resource.id(), second_section.position()));
     ASSERT_NO_THROW(first_subject = m_database->create_subject(first_subject.name()));
-    ASSERT_GT(first_subject.id(), 0);
+    ASSERT_THAT(first_subject.id(), Gt(0));
     ASSERT_NO_THROW(second_subject = m_database->create_subject(second_subject.name()));
-    ASSERT_GT(second_subject.id(), 0);
+    ASSERT_THAT(second_subject.id(), Gt(0));
     ASSERT_NO_THROW(first_topic = m_database->create_topic(first_subject.id(), first_topic.name(), first_topic.level(), first_topic.position()));
-    ASSERT_EQ(first_topic.position(), 1);
+    ASSERT_THAT(first_topic.position(), Eq(1));
     ASSERT_NO_THROW(second_topic = m_database->create_topic(second_subject.id(), second_topic.name(), second_topic.level(), second_topic.position()));
-    ASSERT_EQ(second_topic.position(), 1);
+    ASSERT_THAT(second_topic.position(), Eq(1));
     ASSERT_NO_THROW(third_topic = m_database->create_topic(second_subject.id(), third_topic.name(), third_topic.level(), third_topic.position()));
-    ASSERT_EQ(third_topic.position(), 1);
+    ASSERT_THAT(third_topic.position(), Eq(2));
     ASSERT_NO_THROW(m_database->add_card_to_topic(first_card.id(), first_subject.id(), first_topic.position(), first_topic.level()));
-    ASSERT_NO_THROW(m_database->add_card_to_topic(second_card.id(), first_subject.id(), second_topic.position(), second_topic.level()));
+    ASSERT_NO_THROW(m_database->add_card_to_topic(second_card.id(), second_subject.id(), second_topic.position(), second_topic.level()));
     ASSERT_NO_THROW(m_database->add_card_to_topic(third_card.id(), second_subject.id(), third_topic.position(), third_topic.level()));
     std::vector<flashback::Card> cards{};
     ASSERT_NO_THROW(cards = m_database->get_topic_cards(first_subject.id(), first_topic.position(), first_topic.level()));
     ASSERT_THAT(cards, testing::SizeIs(1));
-    ASSERT_NO_THROW(cards = m_database->get_topic_cards(first_subject.id(), second_topic.position(), second_topic.level()));
+    ASSERT_NO_THROW(cards = m_database->get_topic_cards(second_subject.id(), second_topic.position(), second_topic.level()));
     ASSERT_THAT(cards, testing::SizeIs(1));
     ASSERT_NO_THROW(cards = m_database->get_topic_cards(second_subject.id(), third_topic.position(), third_topic.level()));
     ASSERT_THAT(cards, testing::SizeIs(1));
@@ -3000,10 +3009,10 @@ TEST_F(test_database, move_card_to_topic)
     ASSERT_THAT(cards, testing::SizeIs(2));
     ASSERT_NO_THROW(cards = m_database->get_section_cards(resource.id(), second_section.position()));
     ASSERT_THAT(cards, testing::SizeIs(1));
-    EXPECT_NO_THROW(m_database->move_card_to_topic(first_card.id(), first_subject.id(), first_topic.position(), first_topic.level(), second_topic.position(), second_topic.level()));
+    EXPECT_NO_THROW(m_database->move_card_to_topic(first_card.id(), first_subject.id(), first_topic.position(), first_topic.level(), second_subject.id(), second_topic.position(), second_topic.level()));
     ASSERT_NO_THROW(cards = m_database->get_topic_cards(first_subject.id(), first_topic.position(), first_topic.level()));
     ASSERT_THAT(cards, testing::IsEmpty());
-    ASSERT_NO_THROW(cards = m_database->get_topic_cards(first_subject.id(), second_topic.position(), second_topic.level()));
+    ASSERT_NO_THROW(cards = m_database->get_topic_cards(second_subject.id(), second_topic.position(), second_topic.level()));
     ASSERT_THAT(cards, testing::SizeIs(2));
     ASSERT_NO_THROW(cards = m_database->get_topic_cards(second_subject.id(), third_topic.position(), third_topic.level()));
     ASSERT_THAT(cards, testing::SizeIs(1));
@@ -3086,37 +3095,37 @@ TEST_F(test_database, create_block)
     fourth_block.set_content("print('Flashback');");
 
     ASSERT_NO_THROW(resource = m_database->create_resource(resource));
-    ASSERT_GT(resource.id(), 0);
+    ASSERT_THAT(resource.id(), Gt(0));
     ASSERT_NO_THROW(first_section = m_database->create_section(resource.id(), first_section.position(), first_section.name(), first_section.link()));
-    ASSERT_GT(first_section.position(), 0);
+    ASSERT_THAT(first_section.position(), Gt(0));
     ASSERT_NO_THROW(second_section = m_database->create_section(resource.id(), second_section.position(), second_section.name(), second_section.link()));
-    ASSERT_GT(second_section.position(), 0);
+    ASSERT_THAT(second_section.position(), Gt(0));
     ASSERT_NO_THROW(first_card = m_database->create_card(first_card));
-    ASSERT_GT(first_card.id(), 0);
+    ASSERT_THAT(first_card.id(), Gt(0));
     ASSERT_NO_THROW(m_database->add_card_to_section(first_card.id(), resource.id(), first_section.position()));
     ASSERT_NO_THROW(second_card = m_database->create_card(second_card));
-    ASSERT_GT(second_card.id(), 0);
+    ASSERT_THAT(second_card.id(), Gt(0));
     ASSERT_NO_THROW(m_database->add_card_to_section(second_card.id(), resource.id(), first_section.position()));
     ASSERT_NO_THROW(third_card = m_database->create_card(third_card));
-    ASSERT_GT(third_card.id(), 0);
+    ASSERT_THAT(third_card.id(), Gt(0));
     ASSERT_NO_THROW(m_database->add_card_to_section(third_card.id(), resource.id(), second_section.position()));
     ASSERT_NO_THROW(first_subject = m_database->create_subject(first_subject.name()));
-    ASSERT_GT(first_subject.id(), 0);
+    ASSERT_THAT(first_subject.id(), Gt(0));
     ASSERT_NO_THROW(second_subject = m_database->create_subject(second_subject.name()));
-    ASSERT_GT(second_subject.id(), 0);
+    ASSERT_THAT(second_subject.id(), Gt(0));
     ASSERT_NO_THROW(first_topic = m_database->create_topic(first_subject.id(), first_topic.name(), first_topic.level(), first_topic.position()));
-    ASSERT_EQ(first_topic.position(), 1);
+    ASSERT_THAT(first_topic.position(), Eq(1));
     ASSERT_NO_THROW(second_topic = m_database->create_topic(second_subject.id(), second_topic.name(), second_topic.level(), second_topic.position()));
-    ASSERT_EQ(second_topic.position(), 1);
+    ASSERT_THAT(second_topic.position(), Eq(1));
     ASSERT_NO_THROW(third_topic = m_database->create_topic(second_subject.id(), third_topic.name(), third_topic.level(), third_topic.position()));
-    ASSERT_EQ(third_topic.position(), 1);
+    ASSERT_THAT(third_topic.position(), Eq(2));
     ASSERT_NO_THROW(m_database->add_card_to_topic(first_card.id(), first_subject.id(), first_topic.position(), first_topic.level()));
-    ASSERT_NO_THROW(m_database->add_card_to_topic(second_card.id(), first_subject.id(), second_topic.position(), second_topic.level()));
+    ASSERT_NO_THROW(m_database->add_card_to_topic(second_card.id(), second_subject.id(), second_topic.position(), second_topic.level()));
     ASSERT_NO_THROW(m_database->add_card_to_topic(third_card.id(), second_subject.id(), third_topic.position(), third_topic.level()));
     std::vector<flashback::Card> cards{};
     ASSERT_NO_THROW(cards = m_database->get_topic_cards(first_subject.id(), first_topic.position(), first_topic.level()));
     ASSERT_THAT(cards, testing::SizeIs(1));
-    ASSERT_NO_THROW(cards = m_database->get_topic_cards(first_subject.id(), second_topic.position(), second_topic.level()));
+    ASSERT_NO_THROW(cards = m_database->get_topic_cards(second_subject.id(), second_topic.position(), second_topic.level()));
     ASSERT_THAT(cards, testing::SizeIs(1));
     ASSERT_NO_THROW(cards = m_database->get_topic_cards(second_subject.id(), third_topic.position(), third_topic.level()));
     ASSERT_THAT(cards, testing::SizeIs(1));
@@ -3129,11 +3138,11 @@ TEST_F(test_database, create_block)
     EXPECT_NO_THROW(third_block = m_database->create_block(first_card.id(), third_block));
     EXPECT_NO_THROW(fourth_block = m_database->create_block(first_card.id(), fourth_block));
     EXPECT_NO_THROW(fifth_block = m_database->create_block(first_card.id(), fifth_block));
-    EXPECT_EQ(first_block.position(), 1);
-    EXPECT_EQ(second_block.position(), 2);
-    EXPECT_EQ(third_block.position(), 3);
-    EXPECT_EQ(fourth_block.position(), 1);
-    EXPECT_EQ(fifth_block.position(), 2);
+    EXPECT_THAT(first_block.position(), Eq(1));
+    EXPECT_THAT(second_block.position(), Eq(2));
+    EXPECT_THAT(third_block.position(), Eq(3));
+    EXPECT_THAT(fourth_block.position(), Eq(1));
+    EXPECT_THAT(fifth_block.position(), Eq(2));
 }
 
 TEST_F(test_database, get_blocks)
@@ -3213,37 +3222,37 @@ TEST_F(test_database, get_blocks)
     fourth_block.set_content("print('Flashback');");
 
     ASSERT_NO_THROW(resource = m_database->create_resource(resource));
-    ASSERT_GT(resource.id(), 0);
+    ASSERT_THAT(resource.id(), Gt(0));
     ASSERT_NO_THROW(first_section = m_database->create_section(resource.id(), first_section.position(), first_section.name(), first_section.link()));
-    ASSERT_GT(first_section.position(), 0);
+    ASSERT_THAT(first_section.position(), Gt(0));
     ASSERT_NO_THROW(second_section = m_database->create_section(resource.id(), second_section.position(), second_section.name(), second_section.link()));
-    ASSERT_GT(second_section.position(), 0);
+    ASSERT_THAT(second_section.position(), Gt(0));
     ASSERT_NO_THROW(first_card = m_database->create_card(first_card));
-    ASSERT_GT(first_card.id(), 0);
+    ASSERT_THAT(first_card.id(), Gt(0));
     ASSERT_NO_THROW(second_card = m_database->create_card(second_card));
-    ASSERT_GT(second_card.id(), 0);
+    ASSERT_THAT(second_card.id(), Gt(0));
     ASSERT_NO_THROW(third_card = m_database->create_card(third_card));
-    ASSERT_GT(third_card.id(), 0);
+    ASSERT_THAT(third_card.id(), Gt(0));
     ASSERT_NO_THROW(m_database->add_card_to_section(first_card.id(), resource.id(), first_section.position()));
     ASSERT_NO_THROW(m_database->add_card_to_section(second_card.id(), resource.id(), first_section.position()));
     ASSERT_NO_THROW(m_database->add_card_to_section(third_card.id(), resource.id(), second_section.position()));
     ASSERT_NO_THROW(first_subject = m_database->create_subject(first_subject.name()));
-    ASSERT_GT(first_subject.id(), 0);
+    ASSERT_THAT(first_subject.id(), Gt(0));
     ASSERT_NO_THROW(second_subject = m_database->create_subject(second_subject.name()));
-    ASSERT_GT(second_subject.id(), 0);
+    ASSERT_THAT(second_subject.id(), Gt(0));
     ASSERT_NO_THROW(first_topic = m_database->create_topic(first_subject.id(), first_topic.name(), first_topic.level(), first_topic.position()));
-    ASSERT_EQ(first_topic.position(), 1);
+    ASSERT_THAT(first_topic.position(), Eq(1));
     ASSERT_NO_THROW(second_topic = m_database->create_topic(second_subject.id(), second_topic.name(), second_topic.level(), second_topic.position()));
-    ASSERT_EQ(second_topic.position(), 1);
+    ASSERT_THAT(second_topic.position(), Eq(1));
     ASSERT_NO_THROW(third_topic = m_database->create_topic(second_subject.id(), third_topic.name(), third_topic.level(), third_topic.position()));
-    ASSERT_EQ(third_topic.position(), 1);
+    ASSERT_THAT(third_topic.position(), Eq(2));
     ASSERT_NO_THROW(m_database->add_card_to_topic(first_card.id(), first_subject.id(), first_topic.position(), first_topic.level()));
-    ASSERT_NO_THROW(m_database->add_card_to_topic(second_card.id(), first_subject.id(), second_topic.position(), second_topic.level()));
+    ASSERT_NO_THROW(m_database->add_card_to_topic(second_card.id(), second_subject.id(), second_topic.position(), second_topic.level()));
     ASSERT_NO_THROW(m_database->add_card_to_topic(third_card.id(), second_subject.id(), third_topic.position(), third_topic.level()));
     std::vector<flashback::Card> cards{};
     ASSERT_NO_THROW(cards = m_database->get_topic_cards(first_subject.id(), first_topic.position(), first_topic.level()));
     ASSERT_THAT(cards, testing::SizeIs(1));
-    ASSERT_NO_THROW(cards = m_database->get_topic_cards(first_subject.id(), second_topic.position(), second_topic.level()));
+    ASSERT_NO_THROW(cards = m_database->get_topic_cards(second_subject.id(), second_topic.position(), second_topic.level()));
     ASSERT_THAT(cards, testing::SizeIs(1));
     ASSERT_NO_THROW(cards = m_database->get_topic_cards(second_subject.id(), third_topic.position(), third_topic.level()));
     ASSERT_THAT(cards, testing::SizeIs(1));
@@ -3256,11 +3265,11 @@ TEST_F(test_database, get_blocks)
     ASSERT_NO_THROW(third_block = m_database->create_block(first_card.id(), third_block));
     ASSERT_NO_THROW(fourth_block = m_database->create_block(second_card.id(), fourth_block));
     ASSERT_NO_THROW(fifth_block = m_database->create_block(second_card.id(), fifth_block));
-    ASSERT_EQ(first_block.position(), 1);
-    ASSERT_EQ(second_block.position(), 2);
-    ASSERT_EQ(third_block.position(), 3);
-    ASSERT_EQ(fourth_block.position(), 1);
-    ASSERT_EQ(fifth_block.position(), 2);
+    ASSERT_THAT(first_block.position(), Eq(1));
+    ASSERT_THAT(second_block.position(), Eq(2));
+    ASSERT_THAT(third_block.position(), Eq(3));
+    ASSERT_THAT(fourth_block.position(), Eq(1));
+    ASSERT_THAT(fifth_block.position(), Eq(2));
     std::map<uint64_t, flashback::Block> blocks{};
     EXPECT_NO_THROW(blocks = m_database->get_blocks(first_card.id()));
     EXPECT_THAT(blocks, testing::SizeIs(3));
@@ -3347,37 +3356,37 @@ TEST_F(test_database, remove_block)
     fourth_block.set_content("print('Flashback');");
 
     ASSERT_NO_THROW(resource = m_database->create_resource(resource));
-    ASSERT_GT(resource.id(), 0);
+    ASSERT_THAT(resource.id(), Gt(0));
     ASSERT_NO_THROW(first_section = m_database->create_section(resource.id(), first_section.position(), first_section.name(), first_section.link()));
-    ASSERT_GT(first_section.position(), 0);
+    ASSERT_THAT(first_section.position(), Gt(0));
     ASSERT_NO_THROW(second_section = m_database->create_section(resource.id(), second_section.position(), second_section.name(), second_section.link()));
-    ASSERT_GT(second_section.position(), 0);
+    ASSERT_THAT(second_section.position(), Gt(0));
     ASSERT_NO_THROW(first_card = m_database->create_card(first_card));
-    ASSERT_GT(first_card.id(), 0);
+    ASSERT_THAT(first_card.id(), Gt(0));
     ASSERT_NO_THROW(second_card = m_database->create_card(second_card));
-    ASSERT_GT(second_card.id(), 0);
+    ASSERT_THAT(second_card.id(), Gt(0));
     ASSERT_NO_THROW(third_card = m_database->create_card(third_card));
-    ASSERT_GT(third_card.id(), 0);
+    ASSERT_THAT(third_card.id(), Gt(0));
     ASSERT_NO_THROW(m_database->add_card_to_section(first_card.id(), resource.id(), first_section.position()));
     ASSERT_NO_THROW(m_database->add_card_to_section(second_card.id(), resource.id(), first_section.position()));
     ASSERT_NO_THROW(m_database->add_card_to_section(third_card.id(), resource.id(), second_section.position()));
     ASSERT_NO_THROW(first_subject = m_database->create_subject(first_subject.name()));
-    ASSERT_GT(first_subject.id(), 0);
+    ASSERT_THAT(first_subject.id(), Gt(0));
     ASSERT_NO_THROW(second_subject = m_database->create_subject(second_subject.name()));
-    ASSERT_GT(second_subject.id(), 0);
+    ASSERT_THAT(second_subject.id(), Gt(0));
     ASSERT_NO_THROW(first_topic = m_database->create_topic(first_subject.id(), first_topic.name(), first_topic.level(), first_topic.position()));
-    ASSERT_EQ(first_topic.position(), 1);
+    ASSERT_THAT(first_topic.position(), Eq(1));
     ASSERT_NO_THROW(second_topic = m_database->create_topic(second_subject.id(), second_topic.name(), second_topic.level(), second_topic.position()));
-    ASSERT_EQ(second_topic.position(), 1);
+    ASSERT_THAT(second_topic.position(), Eq(1));
     ASSERT_NO_THROW(third_topic = m_database->create_topic(second_subject.id(), third_topic.name(), third_topic.level(), third_topic.position()));
-    ASSERT_EQ(third_topic.position(), 1);
+    ASSERT_THAT(third_topic.position(), Eq(2));
     ASSERT_NO_THROW(m_database->add_card_to_topic(first_card.id(), first_subject.id(), first_topic.position(), first_topic.level()));
-    ASSERT_NO_THROW(m_database->add_card_to_topic(second_card.id(), first_subject.id(), second_topic.position(), second_topic.level()));
+    ASSERT_NO_THROW(m_database->add_card_to_topic(second_card.id(), second_subject.id(), second_topic.position(), second_topic.level()));
     ASSERT_NO_THROW(m_database->add_card_to_topic(third_card.id(), second_subject.id(), third_topic.position(), third_topic.level()));
     std::vector<flashback::Card> cards{};
     ASSERT_NO_THROW(cards = m_database->get_topic_cards(first_subject.id(), first_topic.position(), first_topic.level()));
     ASSERT_THAT(cards, testing::SizeIs(1));
-    ASSERT_NO_THROW(cards = m_database->get_topic_cards(first_subject.id(), second_topic.position(), second_topic.level()));
+    ASSERT_NO_THROW(cards = m_database->get_topic_cards(second_subject.id(), second_topic.position(), second_topic.level()));
     ASSERT_THAT(cards, testing::SizeIs(1));
     ASSERT_NO_THROW(cards = m_database->get_topic_cards(second_subject.id(), third_topic.position(), third_topic.level()));
     ASSERT_THAT(cards, testing::SizeIs(1));
@@ -3390,11 +3399,11 @@ TEST_F(test_database, remove_block)
     ASSERT_NO_THROW(third_block = m_database->create_block(first_card.id(), third_block));
     ASSERT_NO_THROW(fourth_block = m_database->create_block(second_card.id(), fourth_block));
     ASSERT_NO_THROW(fifth_block = m_database->create_block(second_card.id(), fifth_block));
-    ASSERT_EQ(first_block.position(), 1);
-    ASSERT_EQ(second_block.position(), 2);
-    ASSERT_EQ(third_block.position(), 3);
-    ASSERT_EQ(fourth_block.position(), 1);
-    ASSERT_EQ(fifth_block.position(), 2);
+    ASSERT_THAT(first_block.position(), Eq(1));
+    ASSERT_THAT(second_block.position(), Eq(2));
+    ASSERT_THAT(third_block.position(), Eq(3));
+    ASSERT_THAT(fourth_block.position(), Eq(1));
+    ASSERT_THAT(fifth_block.position(), Eq(2));
     std::map<uint64_t, flashback::Block> blocks{};
     ASSERT_NO_THROW(blocks = m_database->get_blocks(first_card.id()));
     ASSERT_THAT(blocks, testing::SizeIs(3));
@@ -3407,13 +3416,13 @@ TEST_F(test_database, remove_block)
     EXPECT_NO_THROW(blocks = m_database->get_blocks(first_card.id()));
     EXPECT_THAT(blocks, testing::SizeIs(2));
     ASSERT_NO_THROW(blocks.at(1).position());
-    EXPECT_EQ(blocks.at(1).position(), 1);
+    EXPECT_THAT(blocks.at(1).position(), Eq(1));
     ASSERT_NO_THROW(blocks.at(2).position());
-    EXPECT_EQ(blocks.at(1).position(), 1);
+    EXPECT_THAT(blocks.at(1).position(), Eq(1));
     EXPECT_NO_THROW(blocks = m_database->get_blocks(second_card.id()));
     EXPECT_THAT(blocks, testing::SizeIs(1));
     ASSERT_NO_THROW(blocks.at(1).position());
-    EXPECT_EQ(blocks.at(1).position(), 1);
+    EXPECT_THAT(blocks.at(1).position(), Eq(1));
     EXPECT_NO_THROW(blocks = m_database->get_blocks(third_card.id()));
     EXPECT_THAT(blocks, testing::IsEmpty());
 }
@@ -3495,37 +3504,37 @@ TEST_F(test_database, edit_block_content)
     fourth_block.set_content("print('Flashback');");
 
     ASSERT_NO_THROW(resource = m_database->create_resource(resource));
-    ASSERT_GT(resource.id(), 0);
+    ASSERT_THAT(resource.id(), Gt(0));
     ASSERT_NO_THROW(first_section = m_database->create_section(resource.id(), first_section.position(), first_section.name(), first_section.link()));
-    ASSERT_GT(first_section.position(), 0);
+    ASSERT_THAT(first_section.position(), Gt(0));
     ASSERT_NO_THROW(second_section = m_database->create_section(resource.id(), second_section.position(), second_section.name(), second_section.link()));
-    ASSERT_GT(second_section.position(), 0);
+    ASSERT_THAT(second_section.position(), Gt(0));
     ASSERT_NO_THROW(first_card = m_database->create_card(first_card));
-    ASSERT_GT(first_card.id(), 0);
+    ASSERT_THAT(first_card.id(), Gt(0));
     ASSERT_NO_THROW(second_card = m_database->create_card(second_card));
-    ASSERT_GT(second_card.id(), 0);
+    ASSERT_THAT(second_card.id(), Gt(0));
     ASSERT_NO_THROW(third_card = m_database->create_card(third_card));
-    ASSERT_GT(third_card.id(), 0);
+    ASSERT_THAT(third_card.id(), Gt(0));
     ASSERT_NO_THROW(m_database->add_card_to_section(first_card.id(), resource.id(), first_section.position()));
     ASSERT_NO_THROW(m_database->add_card_to_section(second_card.id(), resource.id(), first_section.position()));
     ASSERT_NO_THROW(m_database->add_card_to_section(third_card.id(), resource.id(), second_section.position()));
     ASSERT_NO_THROW(first_subject = m_database->create_subject(first_subject.name()));
-    ASSERT_GT(first_subject.id(), 0);
+    ASSERT_THAT(first_subject.id(), Gt(0));
     ASSERT_NO_THROW(second_subject = m_database->create_subject(second_subject.name()));
-    ASSERT_GT(second_subject.id(), 0);
+    ASSERT_THAT(second_subject.id(), Gt(0));
     ASSERT_NO_THROW(first_topic = m_database->create_topic(first_subject.id(), first_topic.name(), first_topic.level(), first_topic.position()));
-    ASSERT_EQ(first_topic.position(), 1);
+    ASSERT_THAT(first_topic.position(), Eq(1));
     ASSERT_NO_THROW(second_topic = m_database->create_topic(second_subject.id(), second_topic.name(), second_topic.level(), second_topic.position()));
-    ASSERT_EQ(second_topic.position(), 1);
+    ASSERT_THAT(second_topic.position(), Eq(1));
     ASSERT_NO_THROW(third_topic = m_database->create_topic(second_subject.id(), third_topic.name(), third_topic.level(), third_topic.position()));
-    ASSERT_EQ(third_topic.position(), 1);
+    ASSERT_THAT(third_topic.position(), Eq(2));
     ASSERT_NO_THROW(m_database->add_card_to_topic(first_card.id(), first_subject.id(), first_topic.position(), first_topic.level()));
-    ASSERT_NO_THROW(m_database->add_card_to_topic(second_card.id(), first_subject.id(), second_topic.position(), second_topic.level()));
+    ASSERT_NO_THROW(m_database->add_card_to_topic(second_card.id(), second_subject.id(), second_topic.position(), second_topic.level()));
     ASSERT_NO_THROW(m_database->add_card_to_topic(third_card.id(), second_subject.id(), third_topic.position(), third_topic.level()));
     std::vector<flashback::Card> cards{};
     ASSERT_NO_THROW(cards = m_database->get_topic_cards(first_subject.id(), first_topic.position(), first_topic.level()));
     ASSERT_THAT(cards, testing::SizeIs(1));
-    ASSERT_NO_THROW(cards = m_database->get_topic_cards(first_subject.id(), second_topic.position(), second_topic.level()));
+    ASSERT_NO_THROW(cards = m_database->get_topic_cards(second_subject.id(), second_topic.position(), second_topic.level()));
     ASSERT_THAT(cards, testing::SizeIs(1));
     ASSERT_NO_THROW(cards = m_database->get_topic_cards(second_subject.id(), third_topic.position(), third_topic.level()));
     ASSERT_THAT(cards, testing::SizeIs(1));
@@ -3538,11 +3547,11 @@ TEST_F(test_database, edit_block_content)
     ASSERT_NO_THROW(third_block = m_database->create_block(first_card.id(), third_block));
     ASSERT_NO_THROW(fourth_block = m_database->create_block(second_card.id(), fourth_block));
     ASSERT_NO_THROW(fifth_block = m_database->create_block(second_card.id(), fifth_block));
-    ASSERT_EQ(first_block.position(), 1);
-    ASSERT_EQ(second_block.position(), 2);
-    ASSERT_EQ(third_block.position(), 3);
-    ASSERT_EQ(fourth_block.position(), 1);
-    ASSERT_EQ(fifth_block.position(), 2);
+    ASSERT_THAT(first_block.position(), Eq(1));
+    ASSERT_THAT(second_block.position(), Eq(2));
+    ASSERT_THAT(third_block.position(), Eq(3));
+    ASSERT_THAT(fourth_block.position(), Eq(1));
+    ASSERT_THAT(fifth_block.position(), Eq(2));
     std::map<uint64_t, flashback::Block> blocks{};
     ASSERT_NO_THROW(blocks = m_database->get_blocks(first_card.id()));
     ASSERT_THAT(blocks, testing::SizeIs(3));
@@ -3554,7 +3563,7 @@ TEST_F(test_database, edit_block_content)
     EXPECT_NO_THROW(blocks = m_database->get_blocks(second_card.id()));
     EXPECT_THAT(blocks, testing::SizeIs(2));
     ASSERT_NO_THROW(blocks.at(2).position());
-    EXPECT_EQ(blocks.at(2).content(), first_block.content());
+    EXPECT_THAT(blocks.at(2).content(), Eq(first_block.content()));
 }
 
 TEST_F(test_database, edit_block_type)
@@ -3634,37 +3643,37 @@ TEST_F(test_database, edit_block_type)
     fourth_block.set_content("print('Flashback');");
 
     ASSERT_NO_THROW(resource = m_database->create_resource(resource));
-    ASSERT_GT(resource.id(), 0);
+    ASSERT_THAT(resource.id(), Gt(0));
     ASSERT_NO_THROW(first_section = m_database->create_section(resource.id(), first_section.position(), first_section.name(), first_section.link()));
-    ASSERT_GT(first_section.position(), 0);
+    ASSERT_THAT(first_section.position(), Gt(0));
     ASSERT_NO_THROW(second_section = m_database->create_section(resource.id(), second_section.position(), second_section.name(), second_section.link()));
-    ASSERT_GT(second_section.position(), 0);
+    ASSERT_THAT(second_section.position(), Gt(0));
     ASSERT_NO_THROW(first_card = m_database->create_card(first_card));
-    ASSERT_GT(first_card.id(), 0);
+    ASSERT_THAT(first_card.id(), Gt(0));
     ASSERT_NO_THROW(second_card = m_database->create_card(second_card));
-    ASSERT_GT(second_card.id(), 0);
+    ASSERT_THAT(second_card.id(), Gt(0));
     ASSERT_NO_THROW(third_card = m_database->create_card(third_card));
-    ASSERT_GT(third_card.id(), 0);
+    ASSERT_THAT(third_card.id(), Gt(0));
     ASSERT_NO_THROW(m_database->add_card_to_section(first_card.id(), resource.id(), first_section.position()));
     ASSERT_NO_THROW(m_database->add_card_to_section(second_card.id(), resource.id(), first_section.position()));
     ASSERT_NO_THROW(m_database->add_card_to_section(third_card.id(), resource.id(), second_section.position()));
     ASSERT_NO_THROW(first_subject = m_database->create_subject(first_subject.name()));
-    ASSERT_GT(first_subject.id(), 0);
+    ASSERT_THAT(first_subject.id(), Gt(0));
     ASSERT_NO_THROW(second_subject = m_database->create_subject(second_subject.name()));
-    ASSERT_GT(second_subject.id(), 0);
+    ASSERT_THAT(second_subject.id(), Gt(0));
     ASSERT_NO_THROW(first_topic = m_database->create_topic(first_subject.id(), first_topic.name(), first_topic.level(), first_topic.position()));
-    ASSERT_EQ(first_topic.position(), 1);
+    ASSERT_THAT(first_topic.position(), Eq(1));
     ASSERT_NO_THROW(second_topic = m_database->create_topic(second_subject.id(), second_topic.name(), second_topic.level(), second_topic.position()));
-    ASSERT_EQ(second_topic.position(), 1);
+    ASSERT_THAT(second_topic.position(), Eq(1));
     ASSERT_NO_THROW(third_topic = m_database->create_topic(second_subject.id(), third_topic.name(), third_topic.level(), third_topic.position()));
-    ASSERT_EQ(third_topic.position(), 1);
+    ASSERT_THAT(third_topic.position(), Eq(2));
     ASSERT_NO_THROW(m_database->add_card_to_topic(first_card.id(), first_subject.id(), first_topic.position(), first_topic.level()));
-    ASSERT_NO_THROW(m_database->add_card_to_topic(second_card.id(), first_subject.id(), second_topic.position(), second_topic.level()));
+    ASSERT_NO_THROW(m_database->add_card_to_topic(second_card.id(), second_subject.id(), second_topic.position(), second_topic.level()));
     ASSERT_NO_THROW(m_database->add_card_to_topic(third_card.id(), second_subject.id(), third_topic.position(), third_topic.level()));
     std::vector<flashback::Card> cards{};
     ASSERT_NO_THROW(cards = m_database->get_topic_cards(first_subject.id(), first_topic.position(), first_topic.level()));
     ASSERT_THAT(cards, testing::SizeIs(1));
-    ASSERT_NO_THROW(cards = m_database->get_topic_cards(first_subject.id(), second_topic.position(), second_topic.level()));
+    ASSERT_NO_THROW(cards = m_database->get_topic_cards(second_subject.id(), second_topic.position(), second_topic.level()));
     ASSERT_THAT(cards, testing::SizeIs(1));
     ASSERT_NO_THROW(cards = m_database->get_topic_cards(second_subject.id(), third_topic.position(), third_topic.level()));
     ASSERT_THAT(cards, testing::SizeIs(1));
@@ -3677,11 +3686,11 @@ TEST_F(test_database, edit_block_type)
     ASSERT_NO_THROW(third_block = m_database->create_block(first_card.id(), third_block));
     ASSERT_NO_THROW(fourth_block = m_database->create_block(second_card.id(), fourth_block));
     ASSERT_NO_THROW(fifth_block = m_database->create_block(second_card.id(), fifth_block));
-    ASSERT_EQ(first_block.position(), 1);
-    ASSERT_EQ(second_block.position(), 2);
-    ASSERT_EQ(third_block.position(), 3);
-    ASSERT_EQ(fourth_block.position(), 1);
-    ASSERT_EQ(fifth_block.position(), 2);
+    ASSERT_THAT(first_block.position(), Eq(1));
+    ASSERT_THAT(second_block.position(), Eq(2));
+    ASSERT_THAT(third_block.position(), Eq(3));
+    ASSERT_THAT(fourth_block.position(), Eq(1));
+    ASSERT_THAT(fifth_block.position(), Eq(2));
     std::map<uint64_t, flashback::Block> blocks{};
     ASSERT_NO_THROW(blocks = m_database->get_blocks(first_card.id()));
     ASSERT_THAT(blocks, testing::SizeIs(3));
@@ -3693,7 +3702,7 @@ TEST_F(test_database, edit_block_type)
     EXPECT_NO_THROW(blocks = m_database->get_blocks(second_card.id()));
     EXPECT_THAT(blocks, testing::SizeIs(2));
     ASSERT_NO_THROW(blocks.at(2).position());
-    EXPECT_EQ(blocks.at(2).type(), first_block.type());
+    EXPECT_THAT(blocks.at(2).type(), Eq(first_block.type()));
 }
 
 TEST_F(test_database, edit_block_extension)
@@ -3773,37 +3782,37 @@ TEST_F(test_database, edit_block_extension)
     fourth_block.set_content("print('Flashback');");
 
     ASSERT_NO_THROW(resource = m_database->create_resource(resource));
-    ASSERT_GT(resource.id(), 0);
+    ASSERT_THAT(resource.id(), Gt(0));
     ASSERT_NO_THROW(first_section = m_database->create_section(resource.id(), first_section.position(), first_section.name(), first_section.link()));
-    ASSERT_GT(first_section.position(), 0);
+    ASSERT_THAT(first_section.position(), Gt(0));
     ASSERT_NO_THROW(second_section = m_database->create_section(resource.id(), second_section.position(), second_section.name(), second_section.link()));
-    ASSERT_GT(second_section.position(), 0);
+    ASSERT_THAT(second_section.position(), Gt(0));
     ASSERT_NO_THROW(first_card = m_database->create_card(first_card));
-    ASSERT_GT(first_card.id(), 0);
+    ASSERT_THAT(first_card.id(), Gt(0));
     ASSERT_NO_THROW(second_card = m_database->create_card(second_card));
-    ASSERT_GT(second_card.id(), 0);
+    ASSERT_THAT(second_card.id(), Gt(0));
     ASSERT_NO_THROW(third_card = m_database->create_card(third_card));
-    ASSERT_GT(third_card.id(), 0);
+    ASSERT_THAT(third_card.id(), Gt(0));
     ASSERT_NO_THROW(m_database->add_card_to_section(first_card.id(), resource.id(), first_section.position()));
     ASSERT_NO_THROW(m_database->add_card_to_section(second_card.id(), resource.id(), first_section.position()));
     ASSERT_NO_THROW(m_database->add_card_to_section(third_card.id(), resource.id(), second_section.position()));
     ASSERT_NO_THROW(first_subject = m_database->create_subject(first_subject.name()));
-    ASSERT_GT(first_subject.id(), 0);
+    ASSERT_THAT(first_subject.id(), Gt(0));
     ASSERT_NO_THROW(second_subject = m_database->create_subject(second_subject.name()));
-    ASSERT_GT(second_subject.id(), 0);
+    ASSERT_THAT(second_subject.id(), Gt(0));
     ASSERT_NO_THROW(first_topic = m_database->create_topic(first_subject.id(), first_topic.name(), first_topic.level(), first_topic.position()));
-    ASSERT_EQ(first_topic.position(), 1);
+    ASSERT_THAT(first_topic.position(), Eq(1));
     ASSERT_NO_THROW(second_topic = m_database->create_topic(second_subject.id(), second_topic.name(), second_topic.level(), second_topic.position()));
-    ASSERT_EQ(second_topic.position(), 1);
+    ASSERT_THAT(second_topic.position(), Eq(1));
     ASSERT_NO_THROW(third_topic = m_database->create_topic(second_subject.id(), third_topic.name(), third_topic.level(), third_topic.position()));
-    ASSERT_EQ(third_topic.position(), 1);
+    ASSERT_THAT(third_topic.position(), Eq(2));
     ASSERT_NO_THROW(m_database->add_card_to_topic(first_card.id(), first_subject.id(), first_topic.position(), first_topic.level()));
-    ASSERT_NO_THROW(m_database->add_card_to_topic(second_card.id(), first_subject.id(), second_topic.position(), second_topic.level()));
+    ASSERT_NO_THROW(m_database->add_card_to_topic(second_card.id(), second_subject.id(), second_topic.position(), second_topic.level()));
     ASSERT_NO_THROW(m_database->add_card_to_topic(third_card.id(), second_subject.id(), third_topic.position(), third_topic.level()));
     std::vector<flashback::Card> cards{};
     ASSERT_NO_THROW(cards = m_database->get_topic_cards(first_subject.id(), first_topic.position(), first_topic.level()));
     ASSERT_THAT(cards, testing::SizeIs(1));
-    ASSERT_NO_THROW(cards = m_database->get_topic_cards(first_subject.id(), second_topic.position(), second_topic.level()));
+    ASSERT_NO_THROW(cards = m_database->get_topic_cards(second_subject.id(), second_topic.position(), second_topic.level()));
     ASSERT_THAT(cards, testing::SizeIs(1));
     ASSERT_NO_THROW(cards = m_database->get_topic_cards(second_subject.id(), third_topic.position(), third_topic.level()));
     ASSERT_THAT(cards, testing::SizeIs(1));
@@ -3816,11 +3825,11 @@ TEST_F(test_database, edit_block_extension)
     ASSERT_NO_THROW(third_block = m_database->create_block(first_card.id(), third_block));
     ASSERT_NO_THROW(fourth_block = m_database->create_block(second_card.id(), fourth_block));
     ASSERT_NO_THROW(fifth_block = m_database->create_block(second_card.id(), fifth_block));
-    ASSERT_EQ(first_block.position(), 1);
-    ASSERT_EQ(second_block.position(), 2);
-    ASSERT_EQ(third_block.position(), 3);
-    ASSERT_EQ(fourth_block.position(), 1);
-    ASSERT_EQ(fifth_block.position(), 2);
+    ASSERT_THAT(first_block.position(), Eq(1));
+    ASSERT_THAT(second_block.position(), Eq(2));
+    ASSERT_THAT(third_block.position(), Eq(3));
+    ASSERT_THAT(fourth_block.position(), Eq(1));
+    ASSERT_THAT(fifth_block.position(), Eq(2));
     std::map<uint64_t, flashback::Block> blocks{};
     ASSERT_NO_THROW(blocks = m_database->get_blocks(first_card.id()));
     ASSERT_THAT(blocks, testing::SizeIs(3));
@@ -3832,7 +3841,7 @@ TEST_F(test_database, edit_block_extension)
     EXPECT_NO_THROW(blocks = m_database->get_blocks(second_card.id()));
     EXPECT_THAT(blocks, testing::SizeIs(2));
     ASSERT_NO_THROW(blocks.at(2).position());
-    EXPECT_EQ(blocks.at(2).extension(), first_block.extension());
+    EXPECT_THAT(blocks.at(2).extension(), Eq(first_block.extension()));
 }
 
 TEST_F(test_database, edit_block_metadata)
@@ -3912,37 +3921,37 @@ TEST_F(test_database, edit_block_metadata)
     fourth_block.set_content("print('Flashback');");
 
     ASSERT_NO_THROW(resource = m_database->create_resource(resource));
-    ASSERT_GT(resource.id(), 0);
+    ASSERT_THAT(resource.id(), Gt(0));
     ASSERT_NO_THROW(first_section = m_database->create_section(resource.id(), first_section.position(), first_section.name(), first_section.link()));
-    ASSERT_GT(first_section.position(), 0);
+    ASSERT_THAT(first_section.position(), Gt(0));
     ASSERT_NO_THROW(second_section = m_database->create_section(resource.id(), second_section.position(), second_section.name(), second_section.link()));
-    ASSERT_GT(second_section.position(), 0);
+    ASSERT_THAT(second_section.position(), Gt(0));
     ASSERT_NO_THROW(first_card = m_database->create_card(first_card));
-    ASSERT_GT(first_card.id(), 0);
+    ASSERT_THAT(first_card.id(), Gt(0));
     ASSERT_NO_THROW(second_card = m_database->create_card(second_card));
-    ASSERT_GT(second_card.id(), 0);
+    ASSERT_THAT(second_card.id(), Gt(0));
     ASSERT_NO_THROW(third_card = m_database->create_card(third_card));
-    ASSERT_GT(third_card.id(), 0);
+    ASSERT_THAT(third_card.id(), Gt(0));
     ASSERT_NO_THROW(m_database->add_card_to_section(first_card.id(), resource.id(), first_section.position()));
     ASSERT_NO_THROW(m_database->add_card_to_section(second_card.id(), resource.id(), first_section.position()));
     ASSERT_NO_THROW(m_database->add_card_to_section(third_card.id(), resource.id(), second_section.position()));
     ASSERT_NO_THROW(first_subject = m_database->create_subject(first_subject.name()));
-    ASSERT_GT(first_subject.id(), 0);
+    ASSERT_THAT(first_subject.id(), Gt(0));
     ASSERT_NO_THROW(second_subject = m_database->create_subject(second_subject.name()));
-    ASSERT_GT(second_subject.id(), 0);
+    ASSERT_THAT(second_subject.id(), Gt(0));
     ASSERT_NO_THROW(first_topic = m_database->create_topic(first_subject.id(), first_topic.name(), first_topic.level(), first_topic.position()));
-    ASSERT_EQ(first_topic.position(), 1);
+    ASSERT_THAT(first_topic.position(), Eq(1));
     ASSERT_NO_THROW(second_topic = m_database->create_topic(second_subject.id(), second_topic.name(), second_topic.level(), second_topic.position()));
-    ASSERT_EQ(second_topic.position(), 1);
+    ASSERT_THAT(second_topic.position(), Eq(1));
     ASSERT_NO_THROW(third_topic = m_database->create_topic(second_subject.id(), third_topic.name(), third_topic.level(), third_topic.position()));
-    ASSERT_EQ(third_topic.position(), 1);
+    ASSERT_THAT(third_topic.position(), Eq(1));
     ASSERT_NO_THROW(m_database->add_card_to_topic(first_card.id(), first_subject.id(), first_topic.position(), first_topic.level()));
-    ASSERT_NO_THROW(m_database->add_card_to_topic(second_card.id(), first_subject.id(), second_topic.position(), second_topic.level()));
+    ASSERT_NO_THROW(m_database->add_card_to_topic(second_card.id(), second_subject.id(), second_topic.position(), second_topic.level()));
     ASSERT_NO_THROW(m_database->add_card_to_topic(third_card.id(), second_subject.id(), third_topic.position(), third_topic.level()));
     std::vector<flashback::Card> cards{};
     ASSERT_NO_THROW(cards = m_database->get_topic_cards(first_subject.id(), first_topic.position(), first_topic.level()));
     ASSERT_THAT(cards, testing::SizeIs(1));
-    ASSERT_NO_THROW(cards = m_database->get_topic_cards(first_subject.id(), second_topic.position(), second_topic.level()));
+    ASSERT_NO_THROW(cards = m_database->get_topic_cards(second_subject.id(), second_topic.position(), second_topic.level()));
     ASSERT_THAT(cards, testing::SizeIs(1));
     ASSERT_NO_THROW(cards = m_database->get_topic_cards(second_subject.id(), third_topic.position(), third_topic.level()));
     ASSERT_THAT(cards, testing::SizeIs(1));
@@ -3955,11 +3964,11 @@ TEST_F(test_database, edit_block_metadata)
     ASSERT_NO_THROW(third_block = m_database->create_block(first_card.id(), third_block));
     ASSERT_NO_THROW(fourth_block = m_database->create_block(second_card.id(), fourth_block));
     ASSERT_NO_THROW(fifth_block = m_database->create_block(second_card.id(), fifth_block));
-    ASSERT_EQ(first_block.position(), 1);
-    ASSERT_EQ(second_block.position(), 2);
-    ASSERT_EQ(third_block.position(), 3);
-    ASSERT_EQ(fourth_block.position(), 1);
-    ASSERT_EQ(fifth_block.position(), 2);
+    ASSERT_THAT(first_block.position(), Eq(1));
+    ASSERT_THAT(second_block.position(), Eq(2));
+    ASSERT_THAT(third_block.position(), Eq(3));
+    ASSERT_THAT(fourth_block.position(), Eq(1));
+    ASSERT_THAT(fifth_block.position(), Eq(2));
     std::map<uint64_t, flashback::Block> blocks{};
     ASSERT_NO_THROW(blocks = m_database->get_blocks(first_card.id()));
     ASSERT_THAT(blocks, testing::SizeIs(3));
@@ -3971,7 +3980,7 @@ TEST_F(test_database, edit_block_metadata)
     EXPECT_NO_THROW(blocks = m_database->get_blocks(second_card.id()));
     EXPECT_THAT(blocks, testing::SizeIs(2));
     ASSERT_NO_THROW(blocks.at(2).position());
-    EXPECT_EQ(blocks.at(2).metadata(), first_block.metadata());
+    EXPECT_THAT(blocks.at(2).metadata(), Eq(first_block.metadata()));
 }
 
 TEST_F(test_database, reorder_block)
@@ -4051,37 +4060,37 @@ TEST_F(test_database, reorder_block)
     fourth_block.set_content("print('Flashback');");
 
     ASSERT_NO_THROW(resource = m_database->create_resource(resource));
-    ASSERT_GT(resource.id(), 0);
+    ASSERT_THAT(resource.id(), Gt(0));
     ASSERT_NO_THROW(first_section = m_database->create_section(resource.id(), first_section.position(), first_section.name(), first_section.link()));
-    ASSERT_GT(first_section.position(), 0);
+    ASSERT_THAT(first_section.position(), Gt(0));
     ASSERT_NO_THROW(second_section = m_database->create_section(resource.id(), second_section.position(), second_section.name(), second_section.link()));
-    ASSERT_GT(second_section.position(), 0);
+    ASSERT_THAT(second_section.position(), Gt(0));
     ASSERT_NO_THROW(first_card = m_database->create_card(first_card));
-    ASSERT_GT(first_card.id(), 0);
+    ASSERT_THAT(first_card.id(), Gt(0));
     ASSERT_NO_THROW(second_card = m_database->create_card(second_card));
-    ASSERT_GT(second_card.id(), 0);
+    ASSERT_THAT(second_card.id(), Gt(0));
     ASSERT_NO_THROW(third_card = m_database->create_card(third_card));
-    ASSERT_GT(third_card.id(), 0);
+    ASSERT_THAT(third_card.id(), Gt(0));
     ASSERT_NO_THROW(m_database->add_card_to_section(first_card.id(), resource.id(), first_section.position()));
     ASSERT_NO_THROW(m_database->add_card_to_section(second_card.id(), resource.id(), first_section.position()));
     ASSERT_NO_THROW(m_database->add_card_to_section(third_card.id(), resource.id(), second_section.position()));
     ASSERT_NO_THROW(first_subject = m_database->create_subject(first_subject.name()));
-    ASSERT_GT(first_subject.id(), 0);
+    ASSERT_THAT(first_subject.id(), Gt(0));
     ASSERT_NO_THROW(second_subject = m_database->create_subject(second_subject.name()));
-    ASSERT_GT(second_subject.id(), 0);
+    ASSERT_THAT(second_subject.id(), Gt(0));
     ASSERT_NO_THROW(first_topic = m_database->create_topic(first_subject.id(), first_topic.name(), first_topic.level(), first_topic.position()));
-    ASSERT_EQ(first_topic.position(), 1);
+    ASSERT_THAT(first_topic.position(), Eq(1));
     ASSERT_NO_THROW(second_topic = m_database->create_topic(second_subject.id(), second_topic.name(), second_topic.level(), second_topic.position()));
-    ASSERT_EQ(second_topic.position(), 1);
+    ASSERT_THAT(second_topic.position(), Eq(1));
     ASSERT_NO_THROW(third_topic = m_database->create_topic(second_subject.id(), third_topic.name(), third_topic.level(), third_topic.position()));
-    ASSERT_EQ(third_topic.position(), 1);
+    ASSERT_THAT(third_topic.position(), Eq(2));
     ASSERT_NO_THROW(m_database->add_card_to_topic(first_card.id(), first_subject.id(), first_topic.position(), first_topic.level()));
-    ASSERT_NO_THROW(m_database->add_card_to_topic(second_card.id(), first_subject.id(), second_topic.position(), second_topic.level()));
+    ASSERT_NO_THROW(m_database->add_card_to_topic(second_card.id(), second_subject.id(), second_topic.position(), second_topic.level()));
     ASSERT_NO_THROW(m_database->add_card_to_topic(third_card.id(), second_subject.id(), third_topic.position(), third_topic.level()));
     std::vector<flashback::Card> cards{};
     ASSERT_NO_THROW(cards = m_database->get_topic_cards(first_subject.id(), first_topic.position(), first_topic.level()));
     ASSERT_THAT(cards, testing::SizeIs(1));
-    ASSERT_NO_THROW(cards = m_database->get_topic_cards(first_subject.id(), second_topic.position(), second_topic.level()));
+    ASSERT_NO_THROW(cards = m_database->get_topic_cards(second_subject.id(), second_topic.position(), second_topic.level()));
     ASSERT_THAT(cards, testing::SizeIs(1));
     ASSERT_NO_THROW(cards = m_database->get_topic_cards(second_subject.id(), third_topic.position(), third_topic.level()));
     ASSERT_THAT(cards, testing::SizeIs(1));
@@ -4094,11 +4103,11 @@ TEST_F(test_database, reorder_block)
     ASSERT_NO_THROW(third_block = m_database->create_block(first_card.id(), third_block));
     ASSERT_NO_THROW(fourth_block = m_database->create_block(second_card.id(), fourth_block));
     ASSERT_NO_THROW(fifth_block = m_database->create_block(second_card.id(), fifth_block));
-    ASSERT_EQ(first_block.position(), 1);
-    ASSERT_EQ(second_block.position(), 2);
-    ASSERT_EQ(third_block.position(), 3);
-    ASSERT_EQ(fourth_block.position(), 1);
-    ASSERT_EQ(fifth_block.position(), 2);
+    ASSERT_THAT(first_block.position(), Eq(1));
+    ASSERT_THAT(second_block.position(), Eq(2));
+    ASSERT_THAT(third_block.position(), Eq(3));
+    ASSERT_THAT(fourth_block.position(), Eq(1));
+    ASSERT_THAT(fifth_block.position(), Eq(2));
     std::map<uint64_t, flashback::Block> blocks{};
     ASSERT_NO_THROW(blocks = m_database->get_blocks(first_card.id()));
     ASSERT_THAT(blocks, testing::SizeIs(3));
@@ -4111,15 +4120,15 @@ TEST_F(test_database, reorder_block)
     EXPECT_THAT(blocks, testing::SizeIs(3));
     ASSERT_NO_THROW(blocks.at(1).position());
     ASSERT_NO_THROW(blocks.at(2).position());
-    EXPECT_EQ(blocks.at(1).position(), 1);
-    EXPECT_EQ(blocks.at(1).content(), third_block.content());
-    EXPECT_EQ(blocks.at(1).type(), third_block.type());
-    EXPECT_EQ(blocks.at(2).position(), 2);
-    EXPECT_EQ(blocks.at(2).content(), second_block.content());
-    EXPECT_EQ(blocks.at(2).type(), second_block.type());
-    EXPECT_EQ(blocks.at(3).position(), 3);
-    EXPECT_EQ(blocks.at(3).content(), first_block.content());
-    EXPECT_EQ(blocks.at(3).type(), first_block.type());
+    EXPECT_THAT(blocks.at(1).position(), Eq(1));
+    EXPECT_THAT(blocks.at(1).content(), Eq(third_block.content()));
+    EXPECT_THAT(blocks.at(1).type(), Eq(third_block.type()));
+    EXPECT_THAT(blocks.at(2).position(), Eq(2));
+    EXPECT_THAT(blocks.at(2).content(), Eq(second_block.content()));
+    EXPECT_THAT(blocks.at(2).type(), Eq(second_block.type()));
+    EXPECT_THAT(blocks.at(3).position(), Eq(3));
+    EXPECT_THAT(blocks.at(3).content(), Eq(first_block.content()));
+    EXPECT_THAT(blocks.at(3).type(), Eq(first_block.type()));
 }
 
 TEST_F(test_database, merge_blocks)
@@ -4199,37 +4208,37 @@ TEST_F(test_database, merge_blocks)
     fourth_block.set_content("print('Flashback');");
 
     ASSERT_NO_THROW(resource = m_database->create_resource(resource));
-    ASSERT_GT(resource.id(), 0);
+    ASSERT_THAT(resource.id(), Gt(0));
     ASSERT_NO_THROW(first_section = m_database->create_section(resource.id(), first_section.position(), first_section.name(), first_section.link()));
-    ASSERT_GT(first_section.position(), 0);
+    ASSERT_THAT(first_section.position(), Gt(0));
     ASSERT_NO_THROW(second_section = m_database->create_section(resource.id(), second_section.position(), second_section.name(), second_section.link()));
-    ASSERT_GT(second_section.position(), 0);
+    ASSERT_THAT(second_section.position(), Gt(0));
     ASSERT_NO_THROW(first_card = m_database->create_card(first_card));
-    ASSERT_GT(first_card.id(), 0);
+    ASSERT_THAT(first_card.id(), Gt(0));
     ASSERT_NO_THROW(second_card = m_database->create_card(second_card));
-    ASSERT_GT(second_card.id(), 0);
+    ASSERT_THAT(second_card.id(), Gt(0));
     ASSERT_NO_THROW(third_card = m_database->create_card(third_card));
-    ASSERT_GT(third_card.id(), 0);
+    ASSERT_THAT(third_card.id(), Gt(0));
     ASSERT_NO_THROW(m_database->add_card_to_section(first_card.id(), resource.id(), first_section.position()));
     ASSERT_NO_THROW(m_database->add_card_to_section(second_card.id(), resource.id(), first_section.position()));
     ASSERT_NO_THROW(m_database->add_card_to_section(third_card.id(), resource.id(), second_section.position()));
     ASSERT_NO_THROW(first_subject = m_database->create_subject(first_subject.name()));
-    ASSERT_GT(first_subject.id(), 0);
+    ASSERT_THAT(first_subject.id(), Gt(0));
     ASSERT_NO_THROW(second_subject = m_database->create_subject(second_subject.name()));
-    ASSERT_GT(second_subject.id(), 0);
+    ASSERT_THAT(second_subject.id(), Gt(0));
     ASSERT_NO_THROW(first_topic = m_database->create_topic(first_subject.id(), first_topic.name(), first_topic.level(), first_topic.position()));
-    ASSERT_EQ(first_topic.position(), 1);
+    ASSERT_THAT(first_topic.position(), Eq(1));
     ASSERT_NO_THROW(second_topic = m_database->create_topic(second_subject.id(), second_topic.name(), second_topic.level(), second_topic.position()));
-    ASSERT_EQ(second_topic.position(), 1);
+    ASSERT_THAT(second_topic.position(), Eq(1));
     ASSERT_NO_THROW(third_topic = m_database->create_topic(second_subject.id(), third_topic.name(), third_topic.level(), third_topic.position()));
-    ASSERT_EQ(third_topic.position(), 1);
+    ASSERT_THAT(third_topic.position(), Eq(2));
     ASSERT_NO_THROW(m_database->add_card_to_topic(first_card.id(), first_subject.id(), first_topic.position(), first_topic.level()));
-    ASSERT_NO_THROW(m_database->add_card_to_topic(second_card.id(), first_subject.id(), second_topic.position(), second_topic.level()));
+    ASSERT_NO_THROW(m_database->add_card_to_topic(second_card.id(), second_subject.id(), second_topic.position(), second_topic.level()));
     ASSERT_NO_THROW(m_database->add_card_to_topic(third_card.id(), second_subject.id(), third_topic.position(), third_topic.level()));
     std::vector<flashback::Card> cards{};
     ASSERT_NO_THROW(cards = m_database->get_topic_cards(first_subject.id(), first_topic.position(), first_topic.level()));
     ASSERT_THAT(cards, testing::SizeIs(1));
-    ASSERT_NO_THROW(cards = m_database->get_topic_cards(first_subject.id(), second_topic.position(), second_topic.level()));
+    ASSERT_NO_THROW(cards = m_database->get_topic_cards(second_subject.id(), second_topic.position(), second_topic.level()));
     ASSERT_THAT(cards, testing::SizeIs(1));
     ASSERT_NO_THROW(cards = m_database->get_topic_cards(second_subject.id(), third_topic.position(), third_topic.level()));
     ASSERT_THAT(cards, testing::SizeIs(1));
@@ -4242,11 +4251,11 @@ TEST_F(test_database, merge_blocks)
     ASSERT_NO_THROW(third_block = m_database->create_block(first_card.id(), third_block));
     ASSERT_NO_THROW(fourth_block = m_database->create_block(second_card.id(), fourth_block));
     ASSERT_NO_THROW(fifth_block = m_database->create_block(second_card.id(), fifth_block));
-    ASSERT_EQ(first_block.position(), 1);
-    ASSERT_EQ(second_block.position(), 2);
-    ASSERT_EQ(third_block.position(), 3);
-    ASSERT_EQ(fourth_block.position(), 1);
-    ASSERT_EQ(fifth_block.position(), 2);
+    ASSERT_THAT(first_block.position(), Eq(1));
+    ASSERT_THAT(second_block.position(), Eq(2));
+    ASSERT_THAT(third_block.position(), Eq(3));
+    ASSERT_THAT(fourth_block.position(), Eq(1));
+    ASSERT_THAT(fifth_block.position(), Eq(2));
     std::map<uint64_t, flashback::Block> blocks{};
     ASSERT_NO_THROW(blocks = m_database->get_blocks(first_card.id()));
     ASSERT_THAT(blocks, testing::SizeIs(3));
@@ -4259,12 +4268,12 @@ TEST_F(test_database, merge_blocks)
     ASSERT_THAT(blocks, testing::SizeIs(2));
     ASSERT_NO_THROW(blocks.at(1).position());
     ASSERT_NO_THROW(blocks.at(2).position());
-    EXPECT_EQ(blocks.at(1).position(), 1);
-    EXPECT_EQ(blocks.at(2).position(), 2);
+    EXPECT_THAT(blocks.at(1).position(), Eq(1));
+    EXPECT_THAT(blocks.at(2).position(), Eq(2));
     std::ostringstream combined_content{};
     combined_content << first_block.content() << '\n' << third_block.content();
-    EXPECT_EQ(blocks.at(1).content(), combined_content.str());
-    EXPECT_EQ(blocks.at(2).content(), second_block.content());
+    EXPECT_THAT(blocks.at(1).content(), Eq(combined_content.str()));
+    EXPECT_THAT(blocks.at(2).content(), Eq(second_block.content()));
     EXPECT_NO_THROW(m_database->merge_blocks(second_card.id(), fourth_block.position(), fifth_block.position()));
     EXPECT_NO_THROW(blocks = m_database->get_blocks(second_card.id()));
     ASSERT_THAT(blocks, testing::SizeIs(1));
@@ -4272,10 +4281,10 @@ TEST_F(test_database, merge_blocks)
     EXPECT_NO_THROW(blocks = m_database->get_blocks(second_card.id()));
     ASSERT_THAT(blocks, testing::SizeIs(1));
     ASSERT_NO_THROW(blocks.at(1).position());
-    EXPECT_EQ(blocks.at(1).position(), 1);
+    EXPECT_THAT(blocks.at(1).position(), Eq(1));
     combined_content.clear();
     combined_content << fourth_block.content() << '\n' << fifth_block.content();
-    EXPECT_EQ(blocks.at(1).content(), combined_content.str());
+    EXPECT_THAT(blocks.at(1).content(), Eq(combined_content.str()));
 }
 
 TEST_F(test_database, split_block)
@@ -4355,37 +4364,37 @@ TEST_F(test_database, split_block)
     fourth_block.set_content("print('Flashback');");
 
     ASSERT_NO_THROW(resource = m_database->create_resource(resource));
-    ASSERT_GT(resource.id(), 0);
+    ASSERT_THAT(resource.id(), Gt(0));
     ASSERT_NO_THROW(first_section = m_database->create_section(resource.id(), first_section.position(), first_section.name(), first_section.link()));
-    ASSERT_GT(first_section.position(), 0);
+    ASSERT_THAT(first_section.position(), Gt(0));
     ASSERT_NO_THROW(second_section = m_database->create_section(resource.id(), second_section.position(), second_section.name(), second_section.link()));
-    ASSERT_GT(second_section.position(), 0);
+    ASSERT_THAT(second_section.position(), Gt(0));
     ASSERT_NO_THROW(first_card = m_database->create_card(first_card));
-    ASSERT_GT(first_card.id(), 0);
+    ASSERT_THAT(first_card.id(), Gt(0));
     ASSERT_NO_THROW(second_card = m_database->create_card(second_card));
-    ASSERT_GT(second_card.id(), 0);
+    ASSERT_THAT(second_card.id(), Gt(0));
     ASSERT_NO_THROW(third_card = m_database->create_card(third_card));
-    ASSERT_GT(third_card.id(), 0);
+    ASSERT_THAT(third_card.id(), Gt(0));
     ASSERT_NO_THROW(m_database->add_card_to_section(first_card.id(), resource.id(), first_section.position()));
     ASSERT_NO_THROW(m_database->add_card_to_section(second_card.id(), resource.id(), first_section.position()));
     ASSERT_NO_THROW(m_database->add_card_to_section(third_card.id(), resource.id(), second_section.position()));
     ASSERT_NO_THROW(first_subject = m_database->create_subject(first_subject.name()));
-    ASSERT_GT(first_subject.id(), 0);
+    ASSERT_THAT(first_subject.id(), Gt(0));
     ASSERT_NO_THROW(second_subject = m_database->create_subject(second_subject.name()));
-    ASSERT_GT(second_subject.id(), 0);
+    ASSERT_THAT(second_subject.id(), Gt(0));
     ASSERT_NO_THROW(first_topic = m_database->create_topic(first_subject.id(), first_topic.name(), first_topic.level(), first_topic.position()));
-    ASSERT_EQ(first_topic.position(), 1);
+    ASSERT_THAT(first_topic.position(), Eq(1));
     ASSERT_NO_THROW(second_topic = m_database->create_topic(second_subject.id(), second_topic.name(), second_topic.level(), second_topic.position()));
-    ASSERT_EQ(second_topic.position(), 1);
+    ASSERT_THAT(second_topic.position(), Eq(1));
     ASSERT_NO_THROW(third_topic = m_database->create_topic(second_subject.id(), third_topic.name(), third_topic.level(), third_topic.position()));
-    ASSERT_EQ(third_topic.position(), 1);
+    ASSERT_THAT(third_topic.position(), Eq(2));
     ASSERT_NO_THROW(m_database->add_card_to_topic(first_card.id(), first_subject.id(), first_topic.position(), first_topic.level()));
-    ASSERT_NO_THROW(m_database->add_card_to_topic(second_card.id(), first_subject.id(), second_topic.position(), second_topic.level()));
+    ASSERT_NO_THROW(m_database->add_card_to_topic(second_card.id(), second_subject.id(), second_topic.position(), second_topic.level()));
     ASSERT_NO_THROW(m_database->add_card_to_topic(third_card.id(), second_subject.id(), third_topic.position(), third_topic.level()));
     std::vector<flashback::Card> cards{};
     ASSERT_NO_THROW(cards = m_database->get_topic_cards(first_subject.id(), first_topic.position(), first_topic.level()));
     ASSERT_THAT(cards, testing::SizeIs(1));
-    ASSERT_NO_THROW(cards = m_database->get_topic_cards(first_subject.id(), second_topic.position(), second_topic.level()));
+    ASSERT_NO_THROW(cards = m_database->get_topic_cards(second_subject.id(), second_topic.position(), second_topic.level()));
     ASSERT_THAT(cards, testing::SizeIs(1));
     ASSERT_NO_THROW(cards = m_database->get_topic_cards(second_subject.id(), third_topic.position(), third_topic.level()));
     ASSERT_THAT(cards, testing::SizeIs(1));
@@ -4398,11 +4407,11 @@ TEST_F(test_database, split_block)
     ASSERT_NO_THROW(third_block = m_database->create_block(first_card.id(), third_block));
     ASSERT_NO_THROW(fourth_block = m_database->create_block(second_card.id(), fourth_block));
     ASSERT_NO_THROW(fifth_block = m_database->create_block(second_card.id(), fifth_block));
-    ASSERT_EQ(first_block.position(), 1);
-    ASSERT_EQ(second_block.position(), 2);
-    ASSERT_EQ(third_block.position(), 3);
-    ASSERT_EQ(fourth_block.position(), 1);
-    ASSERT_EQ(fifth_block.position(), 2);
+    ASSERT_THAT(first_block.position(), Eq(1));
+    ASSERT_THAT(second_block.position(), Eq(2));
+    ASSERT_THAT(third_block.position(), Eq(3));
+    ASSERT_THAT(fourth_block.position(), Eq(1));
+    ASSERT_THAT(fifth_block.position(), Eq(2));
     std::map<uint64_t, flashback::Block> blocks{};
     ASSERT_NO_THROW(blocks = m_database->get_blocks(first_card.id()));
     ASSERT_THAT(blocks, testing::SizeIs(3));
@@ -4419,8 +4428,8 @@ TEST_F(test_database, split_block)
     EXPECT_THAT(blocks, testing::SizeIs(4)) << "The card must have one more block after splitting a card in two";
     ASSERT_NO_THROW(split_blocks.first.position());
     ASSERT_NO_THROW(split_blocks.second.position());
-    EXPECT_EQ(split_blocks.first.position(), 1);
-    EXPECT_EQ(split_blocks.second.position(), 2);
+    EXPECT_THAT(split_blocks.first.position(), Eq(1));
+    EXPECT_THAT(split_blocks.second.position(), Eq(2));
     EXPECT_EQ(split_blocks.first.content(), first_block.content()) << "Two blocks must have their content separated";
     EXPECT_EQ(split_blocks.second.content(), second_block.content()) << "Two blocks must have their content separated";
 }
@@ -4502,37 +4511,37 @@ TEST_F(test_database, move_block)
     fourth_block.set_content("print('Flashback');");
 
     ASSERT_NO_THROW(resource = m_database->create_resource(resource));
-    ASSERT_GT(resource.id(), 0);
+    ASSERT_THAT(resource.id(), Gt(0));
     ASSERT_NO_THROW(first_section = m_database->create_section(resource.id(), first_section.position(), first_section.name(), first_section.link()));
-    ASSERT_GT(first_section.position(), 0);
+    ASSERT_THAT(first_section.position(), Gt(0));
     ASSERT_NO_THROW(second_section = m_database->create_section(resource.id(), second_section.position(), second_section.name(), second_section.link()));
-    ASSERT_GT(second_section.position(), 0);
+    ASSERT_THAT(second_section.position(), Gt(0));
     ASSERT_NO_THROW(first_card = m_database->create_card(first_card));
-    ASSERT_GT(first_card.id(), 0);
+    ASSERT_THAT(first_card.id(), Gt(0));
     ASSERT_NO_THROW(second_card = m_database->create_card(second_card));
-    ASSERT_GT(second_card.id(), 0);
+    ASSERT_THAT(second_card.id(), Gt(0));
     ASSERT_NO_THROW(third_card = m_database->create_card(third_card));
-    ASSERT_GT(third_card.id(), 0);
+    ASSERT_THAT(third_card.id(), Gt(0));
     ASSERT_NO_THROW(m_database->add_card_to_section(first_card.id(), resource.id(), first_section.position()));
     ASSERT_NO_THROW(m_database->add_card_to_section(second_card.id(), resource.id(), first_section.position()));
     ASSERT_NO_THROW(m_database->add_card_to_section(third_card.id(), resource.id(), second_section.position()));
     ASSERT_NO_THROW(first_subject = m_database->create_subject(first_subject.name()));
-    ASSERT_GT(first_subject.id(), 0);
+    ASSERT_THAT(first_subject.id(), Gt(0));
     ASSERT_NO_THROW(second_subject = m_database->create_subject(second_subject.name()));
-    ASSERT_GT(second_subject.id(), 0);
+    ASSERT_THAT(second_subject.id(), Gt(0));
     ASSERT_NO_THROW(first_topic = m_database->create_topic(first_subject.id(), first_topic.name(), first_topic.level(), first_topic.position()));
-    ASSERT_EQ(first_topic.position(), 1);
+    ASSERT_THAT(first_topic.position(), Eq(1));
     ASSERT_NO_THROW(second_topic = m_database->create_topic(second_subject.id(), second_topic.name(), second_topic.level(), second_topic.position()));
-    ASSERT_EQ(second_topic.position(), 1);
+    ASSERT_THAT(second_topic.position(), Eq(1));
     ASSERT_NO_THROW(third_topic = m_database->create_topic(second_subject.id(), third_topic.name(), third_topic.level(), third_topic.position()));
-    ASSERT_EQ(third_topic.position(), 1);
+    ASSERT_THAT(third_topic.position(), Eq(2));
     ASSERT_NO_THROW(m_database->add_card_to_topic(first_card.id(), first_subject.id(), first_topic.position(), first_topic.level()));
-    ASSERT_NO_THROW(m_database->add_card_to_topic(second_card.id(), first_subject.id(), second_topic.position(), second_topic.level()));
+    ASSERT_NO_THROW(m_database->add_card_to_topic(second_card.id(), second_subject.id(), second_topic.position(), second_topic.level()));
     ASSERT_NO_THROW(m_database->add_card_to_topic(third_card.id(), second_subject.id(), third_topic.position(), third_topic.level()));
     std::vector<flashback::Card> cards{};
     ASSERT_NO_THROW(cards = m_database->get_topic_cards(first_subject.id(), first_topic.position(), first_topic.level()));
     ASSERT_THAT(cards, testing::SizeIs(1));
-    ASSERT_NO_THROW(cards = m_database->get_topic_cards(first_subject.id(), second_topic.position(), second_topic.level()));
+    ASSERT_NO_THROW(cards = m_database->get_topic_cards(second_subject.id(), second_topic.position(), second_topic.level()));
     ASSERT_THAT(cards, testing::SizeIs(1));
     ASSERT_NO_THROW(cards = m_database->get_topic_cards(second_subject.id(), third_topic.position(), third_topic.level()));
     ASSERT_THAT(cards, testing::SizeIs(1));
@@ -4545,11 +4554,11 @@ TEST_F(test_database, move_block)
     ASSERT_NO_THROW(third_block = m_database->create_block(first_card.id(), third_block));
     ASSERT_NO_THROW(fourth_block = m_database->create_block(second_card.id(), fourth_block));
     ASSERT_NO_THROW(fifth_block = m_database->create_block(second_card.id(), fifth_block));
-    ASSERT_EQ(first_block.position(), 1);
-    ASSERT_EQ(second_block.position(), 2);
-    ASSERT_EQ(third_block.position(), 3);
-    ASSERT_EQ(fourth_block.position(), 1);
-    ASSERT_EQ(fifth_block.position(), 2);
+    ASSERT_THAT(first_block.position(), Eq(1));
+    ASSERT_THAT(second_block.position(), Eq(2));
+    ASSERT_THAT(third_block.position(), Eq(3));
+    ASSERT_THAT(fourth_block.position(), Eq(1));
+    ASSERT_THAT(fifth_block.position(), Eq(2));
     std::map<uint64_t, flashback::Block> blocks{};
     ASSERT_NO_THROW(blocks = m_database->get_blocks(first_card.id()));
     ASSERT_THAT(blocks, testing::SizeIs(3));
@@ -4562,40 +4571,39 @@ TEST_F(test_database, move_block)
     EXPECT_THAT(blocks, testing::SizeIs(2));
     ASSERT_NO_THROW(blocks.at(1).position());
     ASSERT_NO_THROW(blocks.at(2).position());
-    EXPECT_EQ(blocks.at(1).position(), 1);
-    EXPECT_EQ(blocks.at(2).position(), 2);
-    EXPECT_EQ(blocks.at(1).content(), second_block.content());
-    EXPECT_EQ(blocks.at(2).content(), third_block.content());
+    EXPECT_THAT(blocks.at(1).position(), Eq(1));
+    EXPECT_THAT(blocks.at(2).position(), Eq(2));
+    EXPECT_THAT(blocks.at(1).content(), Eq(second_block.content()));
+    EXPECT_THAT(blocks.at(2).content(), Eq(third_block.content()));
     EXPECT_NO_THROW(blocks = m_database->get_blocks(second_card.id()));
     EXPECT_THAT(blocks, testing::SizeIs(3));
     ASSERT_NO_THROW(blocks.at(1).position());
     ASSERT_NO_THROW(blocks.at(2).position());
     ASSERT_NO_THROW(blocks.at(3).position());
-    EXPECT_EQ(blocks.at(1).position(), 1);
-    EXPECT_EQ(blocks.at(2).position(), 2);
-    EXPECT_EQ(blocks.at(3).position(), 3);
-    EXPECT_EQ(blocks.at(1).content(), fourth_block.content());
-    EXPECT_EQ(blocks.at(2).content(), fifth_block.content());
-    EXPECT_EQ(blocks.at(3).content(), first_block.content());
+    EXPECT_THAT(blocks.at(1).position(), Eq(1));
+    EXPECT_THAT(blocks.at(2).position(), Eq(2));
+    EXPECT_THAT(blocks.at(3).position(), Eq(3));
+    EXPECT_THAT(blocks.at(1).content(), Eq(fourth_block.content()));
+    EXPECT_THAT(blocks.at(2).content(), Eq(fifth_block.content()));
+    EXPECT_THAT(blocks.at(3).content(), Eq(first_block.content()));
     EXPECT_NO_THROW(m_database->move_block(first_card.id(), third_block.position(), second_card.id(), 1));
     EXPECT_NO_THROW(blocks = m_database->get_blocks(first_card.id()));
     EXPECT_THAT(blocks, testing::SizeIs(1));
     ASSERT_NO_THROW(blocks.at(1).position());
-    EXPECT_EQ(blocks.at(1).position(), 1);
-    EXPECT_EQ(blocks.at(1).content(), second_block.content());
+    EXPECT_THAT(blocks.at(1).position(), Eq(1));
+    EXPECT_THAT(blocks.at(1).content(), Eq(second_block.content()));
     EXPECT_NO_THROW(blocks = m_database->get_blocks(second_card.id()));
     EXPECT_THAT(blocks, testing::SizeIs(4));
     ASSERT_NO_THROW(blocks.at(1).position());
     ASSERT_NO_THROW(blocks.at(2).position());
     ASSERT_NO_THROW(blocks.at(3).position());
     ASSERT_NO_THROW(blocks.at(4).position());
-    EXPECT_EQ(blocks.at(1).position(), 1);
-    EXPECT_EQ(blocks.at(2).position(), 2);
-    EXPECT_EQ(blocks.at(3).position(), 3);
-    EXPECT_EQ(blocks.at(4).position(), 4);
-    EXPECT_EQ(blocks.at(2).content(), third_block.content());
-    EXPECT_EQ(blocks.at(2).content(), fourth_block.content());
-    EXPECT_EQ(blocks.at(3).content(), fifth_block.content());
-    EXPECT_EQ(blocks.at(4).content(), first_block.content());
+    EXPECT_THAT(blocks.at(1).position(), Eq(1));
+    EXPECT_THAT(blocks.at(2).position(), Eq(2));
+    EXPECT_THAT(blocks.at(3).position(), Eq(3));
+    EXPECT_THAT(blocks.at(4).position(), Eq(4));
+    EXPECT_THAT(blocks.at(2).content(), Eq(third_block.content()));
+    EXPECT_THAT(blocks.at(2).content(), Eq(fourth_block.content()));
+    EXPECT_THAT(blocks.at(3).content(), Eq(fifth_block.content()));
+    EXPECT_THAT(blocks.at(4).content(), Eq(first_block.content()));
 }
-
