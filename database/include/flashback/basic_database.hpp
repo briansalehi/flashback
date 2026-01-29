@@ -149,7 +149,7 @@ public:
     [[nodiscard]] virtual std::map<uint64_t, Block> get_blocks(uint64_t card_id) const = 0;
     virtual void remove_block(uint64_t card_id, uint64_t block_position) const = 0;
     virtual void edit_block_content(uint64_t card_id, uint64_t block_position, std::string content) const = 0;
-    virtual void edit_block_type(uint64_t card_id, uint64_t block_position, Block::content_type type) const = 0;
+    virtual void change_block_type(uint64_t card_id, uint64_t block_position, Block::content_type type) const = 0;
     virtual void edit_block_extension(uint64_t card_id, uint64_t block_position, std::string extension) const = 0;
     virtual void edit_block_metadata(uint64_t card_id, uint64_t block_position, std::string metadata) const = 0;
     virtual void reorder_block(uint64_t card_id, uint64_t block_position, uint64_t target_position) const = 0;

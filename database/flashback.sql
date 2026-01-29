@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict PPJpmjhrIeecN19sg9TCLPzswxg4X1i71LlWvO6DllpV4by47AVaHQPFDKy3pYw
+\restrict fl3uWA1Ybh9FilgghB5gTFpi6srIa9wxnKldqhUM4LGgwDtq1dkdHyg5Othcjpu
 
 -- Dumped from database version 16.11 (Ubuntu 16.11-0ubuntu0.24.04.1)
 -- Dumped by pg_dump version 16.11 (Ubuntu 16.11-0ubuntu0.24.04.1)
@@ -355,34 +355,19 @@ CREATE PROCEDURE flashback.add_resource_to_subject(IN resource_id integer, IN su
 ALTER PROCEDURE flashback.add_resource_to_subject(IN resource_id integer, IN subject_id integer) OWNER TO flashback;
 
 --
--- Name: change_block_extension(integer, integer, character varying); Type: PROCEDURE; Schema: flashback; Owner: flashback
---
-
-CREATE PROCEDURE flashback.change_block_extension(IN selected_card integer, IN block integer, IN new_extension character varying)
-    LANGUAGE plpgsql
-    AS $$
-begin
-    update blocks set extension = new_extension where card = selected_card and position = block;
-end;
-$$;
-
-
-ALTER PROCEDURE flashback.change_block_extension(IN selected_card integer, IN block integer, IN new_extension character varying) OWNER TO flashback;
-
---
 -- Name: change_block_type(integer, integer, flashback.content_type); Type: PROCEDURE; Schema: flashback; Owner: flashback
 --
 
-CREATE PROCEDURE flashback.change_block_type(IN selected_card integer, IN block integer, IN new_type flashback.content_type)
+CREATE PROCEDURE flashback.change_block_type(IN card_id integer, IN block_position integer, IN block_type flashback.content_type)
     LANGUAGE plpgsql
     AS $$
 begin
-    update blocks set type = new_type where card = selected_card and position = block;
+    update blocks set type = block_type where card = card_id and position = block_position;
 end;
 $$;
 
 
-ALTER PROCEDURE flashback.change_block_type(IN selected_card integer, IN block integer, IN new_type flashback.content_type) OWNER TO flashback;
+ALTER PROCEDURE flashback.change_block_type(IN card_id integer, IN block_position integer, IN block_type flashback.content_type) OWNER TO flashback;
 
 --
 -- Name: change_milestone_level(integer, integer, flashback.expertise_level); Type: PROCEDURE; Schema: flashback; Owner: flashback
@@ -869,6 +854,21 @@ end; $$;
 
 
 ALTER PROCEDURE flashback.edit_block_content(IN card_id integer, IN block_position integer, IN block_content text) OWNER TO flashback;
+
+--
+-- Name: edit_block_extension(integer, integer, character varying); Type: PROCEDURE; Schema: flashback; Owner: flashback
+--
+
+CREATE PROCEDURE flashback.edit_block_extension(IN selected_card integer, IN block integer, IN new_extension character varying)
+    LANGUAGE plpgsql
+    AS $$
+begin
+    update blocks set extension = new_extension where card = selected_card and position = block;
+end;
+$$;
+
+
+ALTER PROCEDURE flashback.edit_block_extension(IN selected_card integer, IN block integer, IN new_extension character varying) OWNER TO flashback;
 
 --
 -- Name: edit_card_headline(integer, character varying); Type: PROCEDURE; Schema: flashback; Owner: flashback
@@ -32272,5 +32272,5 @@ GRANT ALL ON SCHEMA public TO flashback_client;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict PPJpmjhrIeecN19sg9TCLPzswxg4X1i71LlWvO6DllpV4by47AVaHQPFDKy3pYw
+\unrestrict fl3uWA1Ybh9FilgghB5gTFpi6srIa9wxnKldqhUM4LGgwDtq1dkdHyg5Othcjpu
 

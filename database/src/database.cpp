@@ -974,9 +974,9 @@ void database::edit_block_content(uint64_t const card_id, uint64_t const block_p
     exec("call edit_block_content($1, $2, $3)", card_id, block_position, content);
 }
 
-void database::edit_block_type(uint64_t const card_id, uint64_t const block_position, Block::content_type const type) const
+void database::change_block_type(uint64_t const card_id, uint64_t const block_position, Block::content_type const type) const
 {
-    exec("call edit_block_type($1, $2, $3)", card_id, block_position, content_type_to_string(type));
+    exec("call change_block_type($1, $2, $3)", card_id, block_position, content_type_to_string(type));
 }
 
 void database::edit_block_extension(uint64_t const card_id, uint64_t const block_position, std::string extension) const

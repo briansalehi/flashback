@@ -121,7 +121,7 @@ public:
     MOCK_METHOD((std::map<uint64_t, flashback::Block>), get_blocks, (uint64_t), (const, override));
     MOCK_METHOD(void, remove_block, (uint64_t, uint64_t), (const, override));
     MOCK_METHOD(void, edit_block_content, (uint64_t, uint64_t, std::string), (const, override));
-    MOCK_METHOD(void, edit_block_type, (uint64_t, uint64_t, flashback::Block::content_type), (const, override));
+    MOCK_METHOD(void, change_block_type, (uint64_t, uint64_t, flashback::Block::content_type), (const, override));
     MOCK_METHOD(void, edit_block_extension, (uint64_t, uint64_t, std::string), (const, override));
     MOCK_METHOD(void, edit_block_metadata, (uint64_t, uint64_t, std::string), (const, override));
     MOCK_METHOD(void, reorder_block, (uint64_t, uint64_t, uint64_t), (const, override));

@@ -120,7 +120,7 @@ public:
     [[nodiscard]] std::map<uint64_t, Block> get_blocks(uint64_t card_id) const override;
     void remove_block(uint64_t card_id, uint64_t block_position) const override;
     void edit_block_content(uint64_t card_id, uint64_t block_position, std::string content) const override;
-    void edit_block_type(uint64_t card_id, uint64_t block_position, Block::content_type type) const override;
+    void change_block_type(uint64_t card_id, uint64_t block_position, Block::content_type type) const override;
     void edit_block_extension(uint64_t card_id, uint64_t block_position, std::string extension) const override;
     void edit_block_metadata(uint64_t card_id, uint64_t block_position, std::string metadata) const override;
     void reorder_block(uint64_t card_id, uint64_t block_position, uint64_t target_position) const override;

@@ -3567,7 +3567,7 @@ TEST_F(test_database, edit_block_content)
     ASSERT_NO_THROW(blocks.at(1).position());
     EXPECT_THAT(blocks.at(1).content(), Eq(first_block.content()));
     ASSERT_NO_THROW(blocks.at(2).position());
-    EXPECT_THAT(blocks.at(2).content(), Eq(fifth_block.content()));
+    EXPECT_THAT(blocks.at(2).content(), Eq(fifth_block.content())) << "Content of this block should be left untouched";
 }
 
 TEST_F(test_database, edit_block_type)
@@ -3702,7 +3702,7 @@ TEST_F(test_database, edit_block_type)
     ASSERT_THAT(blocks, testing::SizeIs(2));
     ASSERT_NO_THROW(blocks = m_database->get_blocks(third_card.id()));
     ASSERT_THAT(blocks, testing::IsEmpty());
-    EXPECT_NO_THROW(m_database->edit_block_type(second_card.id(), fourth_block.position(), first_block.type()));
+    EXPECT_NO_THROW(m_database->change_block_type(second_card.id(), fourth_block.position(), first_block.type()));
     EXPECT_NO_THROW(blocks = m_database->get_blocks(second_card.id()));
     EXPECT_THAT(blocks, testing::SizeIs(2));
     ASSERT_NO_THROW(blocks.at(2).position());
@@ -3844,8 +3844,10 @@ TEST_F(test_database, edit_block_extension)
     EXPECT_NO_THROW(m_database->edit_block_extension(second_card.id(), fourth_block.position(), first_block.extension()));
     EXPECT_NO_THROW(blocks = m_database->get_blocks(second_card.id()));
     EXPECT_THAT(blocks, testing::SizeIs(2));
+    ASSERT_NO_THROW(blocks.at(1).position());
+    EXPECT_THAT(blocks.at(1).extension(), Eq(first_block.extension()));
     ASSERT_NO_THROW(blocks.at(2).position());
-    EXPECT_THAT(blocks.at(2).extension(), Eq(first_block.extension()));
+    EXPECT_THAT(blocks.at(2).extension(), Eq(fifth_block.extension())) << "Type of this block should be left unchanged";
 }
 
 TEST_F(test_database, edit_block_metadata)
@@ -3983,8 +3985,10 @@ TEST_F(test_database, edit_block_metadata)
     EXPECT_NO_THROW(m_database->edit_block_metadata(second_card.id(), fourth_block.position(), first_block.metadata()));
     EXPECT_NO_THROW(blocks = m_database->get_blocks(second_card.id()));
     EXPECT_THAT(blocks, testing::SizeIs(2));
+    ASSERT_NO_THROW(blocks.at(1).position());
+    EXPECT_THAT(blocks.at(1).metadata(), Eq(first_block.metadata()));
     ASSERT_NO_THROW(blocks.at(2).position());
-    EXPECT_THAT(blocks.at(2).metadata(), Eq(first_block.metadata()));
+    EXPECT_THAT(blocks.at(2).metadata(), Eq(fifth_block.metadata())) << "Metadata of this block should be left unchanged";
 }
 
 TEST_F(test_database, reorder_block)
