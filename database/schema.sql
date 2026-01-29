@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict FBDLBtOFlibfza2E9TDafIjjpgh5xaaYtZb0I7Xm9XLlkSUvRrutKqy8dDSTuFY
+\restrict Sg9fckiHgygU2HAeXl0Vcp917Leyx7SRTakZWLrdAQ0mVp14A2iOcUlKn1aYBgf
 
 -- Dumped from database version 16.11 (Ubuntu 16.11-0ubuntu0.24.04.1)
 -- Dumped by pg_dump version 16.11 (Ubuntu 16.11-0ubuntu0.24.04.1)
@@ -2450,6 +2450,28 @@ end; $$;
 ALTER PROCEDURE flashback.revoke_sessions_except(IN user_id integer, IN active_token character varying) OWNER TO flashback;
 
 --
+-- Name: search_cards(integer, flashback.expertise_level, character varying); Type: FUNCTION; Schema: flashback; Owner: flashback
+--
+
+CREATE FUNCTION flashback.search_cards(subject_id integer, milestone_level flashback.expertise_level, search_pattern character varying) RETURNS TABLE(similarity bigint, id integer, state flashback.card_state, headline flashback.citext)
+    LANGUAGE plpgsql
+    AS $$
+begin
+    set pg_trgm.similarity_threshold = 0.1;
+
+    return query
+    select row_number() over (order by c.headline <-> search_pattern), c.id, c.state, c.headline
+    from topics_cards t
+    join cards c on c.id = t.card
+    where t.subject = subject_id and t.level <= milestone_level and c.headline % search_pattern
+    limit 50;
+end;
+$$;
+
+
+ALTER FUNCTION flashback.search_cards(subject_id integer, milestone_level flashback.expertise_level, search_pattern character varying) OWNER TO flashback;
+
+--
 -- Name: search_presenters(character varying); Type: FUNCTION; Schema: flashback; Owner: flashback
 --
 
@@ -4105,5 +4127,5 @@ GRANT ALL ON SCHEMA public TO flashback_client;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict FBDLBtOFlibfza2E9TDafIjjpgh5xaaYtZb0I7Xm9XLlkSUvRrutKqy8dDSTuFY
+\unrestrict Sg9fckiHgygU2HAeXl0Vcp917Leyx7SRTakZWLrdAQ0mVp14A2iOcUlKn1aYBgf
 

@@ -2826,7 +2826,7 @@ TEST_F(test_database, search_cards)
     std::map<uint64_t, flashback::Card> matched_cards{};
     EXPECT_NO_THROW(matched_cards = m_database->search_cards(subject.id(), topic.level(), "flashback"));
     EXPECT_THAT(matched_cards, testing::SizeIs(2));
-    EXPECT_NO_THROW(matched_cards = m_database->search_cards(subject.id(), topic.level(), "goal"));
+    EXPECT_NO_THROW(matched_cards = m_database->search_cards(subject.id(), topic.level(), "goals"));
     EXPECT_THAT(matched_cards, testing::SizeIs(1));
     ASSERT_NO_THROW(matched_cards.at(1).id());
     EXPECT_EQ(matched_cards.at(1).id(), third_card.id());
