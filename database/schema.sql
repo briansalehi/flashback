@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict 8iIRGTvVjARG7BDp3qYVlN1LPHw8v2IcbHEg7XBOe1cWXEnkRvKSSPROKFRfeYG
+\restrict D9KGdKto8hq0UfcYzzEj7i53luqt3DsPxH3y0LTIOIhhnxd9LNTwtpVkXN8sKpj
 
 -- Dumped from database version 18.1
 -- Dumped by pg_dump version 18.0
@@ -231,9 +231,9 @@ CREATE FUNCTION flashback.add_card_to_topic(card_id integer, subject_id integer,
     AS $$
 declare top_position integer;
 begin
-    select coalesce(max(t.position), 0) + 1 into top_position from topics_cards t where t.subject = subject_id and t.level = topic_level and t.topic = topic_position;
+    select coalesce(max(t.position), 0) + 1 into top_position from topic_cards t where t.subject = subject_id and t.level = topic_level and t.topic = topic_position;
 
-    insert into topics_cards (subject, level, topic, card, position) values (subject_id, topic_level, topic_position, card_id, top_position);
+    insert into topic_cards (subject, level, topic, card, position) values (subject_id, topic_level, topic_position, card_id, top_position);
 
     return top_position;
 end;
@@ -1080,7 +1080,7 @@ begin
     return query
     select ac.subject, ac.topic, ac.level, bool_and(coalesce(p.progression, 0) >= 3) as assimilated
     from get_assessment_coverage(assessment_id) ac
-    join topics_cards tc on tc.subject = ac.subject and tc.topic = ac.topic and tc.level = ac.level
+    join topic_cards tc on tc.subject = ac.subject and tc.topic = ac.topic and tc.level = ac.level
     left join progress p on p.user = user_id and p.card = tc.card and p.last_practice > now() - '10 days'::interval
     group by ac.subject, ac.topic, ac.level;
 end; $$;
@@ -1113,7 +1113,7 @@ CREATE FUNCTION flashback.get_cards(user_id integer, subject_id integer, max_lev
 begin
     return query
     select tc.topic, tc.level, tc.card, tc.position, p.last_practice, p.duration
-    from topics_cards tc
+    from topic_cards tc
     left join progress p on p.user = user_id  and p.card = tc.card
     where tc.subject = subject_id and tc.level <= max_level;
 end;
@@ -1159,7 +1159,7 @@ CREATE FUNCTION flashback.get_lost_cards() RETURNS TABLE(sid integer, level flas
 begin
     return query
     select tc.subject as sid, tc.level, tc.topic as tid, tc.position, tc.card, s.name as subject, t.name as topic, c.state, c.headline
-    from topics_cards tc
+    from topic_cards tc
     join topics t on t.subject = tc.subject and t.position = tc.topic and t.level = tc.level
     join subjects s on s.id = tc.subject
     join cards c on c.id = tc.card
@@ -1232,14 +1232,14 @@ begin
     then
         return query
         select c.id, c.state, c.headline
-        from topics_cards tc
+        from topic_cards tc
         join cards c on c.id = tc.card
         left join progress p on p.user = user_id and p.card = tc.card
         where tc.subject = subject_id and tc.level <= cognitive_level and tc.topic = topic_position and coalesce(p.last_practice, long_time_ago) < last_acceptable_read;
     else
         return query
         select c.id, c.state, c.headline
-        from topics_cards tc
+        from topic_cards tc
         join cards c on c.id = tc.card
         left join progress p on p.user = user_id and p.card = tc.card
         where tc.subject = subject_id and tc.level <= cognitive_level and tc.topic = topic_position;
@@ -1431,7 +1431,7 @@ CREATE FUNCTION flashback.get_topic_cards(subject_id integer, topic_position int
     LANGUAGE plpgsql
     AS $$
 begin
-    return query select c.id, c.state, c.headline from topics_cards tc join cards c on c.id = tc.card where tc.subject = subject_id and tc.topic = topic_position and tc.level = topic_level;
+    return query select c.id, c.state, c.headline from topic_cards tc join cards c on c.id = tc.card where tc.subject = subject_id and tc.topic = topic_position and tc.level = topic_level;
 end;
 $$;
 
@@ -1475,16 +1475,16 @@ $$;
 ALTER FUNCTION flashback.get_unreviewed_section_cards() OWNER TO flashback;
 
 --
--- Name: get_unreviewed_topics_cards(); Type: FUNCTION; Schema: flashback; Owner: flashback
+-- Name: get_unreviewed_topic_cards(); Type: FUNCTION; Schema: flashback; Owner: flashback
 --
 
-CREATE FUNCTION flashback.get_unreviewed_topics_cards() RETURNS TABLE(sid integer, level flashback.expertise_level, tid integer, "position" integer, card integer, subject character varying, topic character varying, state flashback.card_state, headline text)
+CREATE FUNCTION flashback.get_unreviewed_topic_cards() RETURNS TABLE(sid integer, level flashback.expertise_level, tid integer, "position" integer, card integer, subject character varying, topic character varying, state flashback.card_state, headline text)
     LANGUAGE plpgsql
     AS $$
 begin
     return query
     select tc.subject as sid, tc.level, tc.topic as tid, tc.position, tc.card, s.name as subject, t.name as topic, c.state, c.headline
-    from topics_cards tc
+    from topic_cards tc
     join topics t on t.subject = tc.subject and t.position = tc.topic and t.level = tc.level
     join subjects s on s.id = tc.subject
     join cards c on c.id = tc.card
@@ -1494,7 +1494,7 @@ end;
 $$;
 
 
-ALTER FUNCTION flashback.get_unreviewed_topics_cards() OWNER TO flashback;
+ALTER FUNCTION flashback.get_unreviewed_topic_cards() OWNER TO flashback;
 
 --
 -- Name: get_unshelved_resources(); Type: FUNCTION; Schema: flashback; Owner: flashback
@@ -1580,7 +1580,7 @@ begin
         select count(cards.id) > 0
         from cards
         join section_cards s on s.card = cards.id
-        join topics_cards t on t.card = cards.id
+        join topic_cards t on t.card = cards.id
         where s.resource = target_resource and t.subject = target_subject
     );
 end; $$;
@@ -1775,9 +1775,9 @@ begin
 
     update cards set headline = target_headline where id = target_id;
 
-    if not exists (select 1 from topics_cards tc join topics_cards tcc on tcc.subject = tc.subject and tcc.topic = tc.topic and tcc.level = tc.level where tc.card = source_id and tcc.card = target_id)
+    if not exists (select 1 from topic_cards tc join topic_cards tcc on tcc.subject = tc.subject and tcc.topic = tc.topic and tcc.level = tc.level where tc.card = source_id and tcc.card = target_id)
     then
-        update topics_cards set card = target_id where card = source_id;
+        update topic_cards set card = target_id where card = source_id;
     end if;
 
     if not exists (
@@ -1908,9 +1908,9 @@ CREATE PROCEDURE flashback.merge_topics(IN subject_id integer, IN topic_level fl
     AS $$
 declare top_position integer;
 begin
-    select max(coalesce(position, 0)) into top_position from topics_cards where subject = subject_id and level = topic_level and topic = target_topic;
+    select max(coalesce(position, 0)) into top_position from topic_cards where subject = subject_id and level = topic_level and topic = target_topic;
 
-    update topics_cards set topic = target_topic, position = position + top_position where subject = subject_id and level = topic_level and topic = source_topic;
+    update topic_cards set topic = target_topic, position = position + top_position where subject = subject_id and level = topic_level and topic = source_topic;
 
     delete from topics where subject = subject_id and level = topic_level and position = source_topic;
 
@@ -1989,12 +1989,12 @@ declare last_position integer;
 begin
     if (subject_id <> target_subject) or (subject_id = target_subject and topic_position <> target_topic)
     then
-        select coalesce(max(position), 0) + 1 into last_position from topics_cards where subject = target_subject and topic = target_topic and level = target_level;
+        select coalesce(max(position), 0) + 1 into last_position from topic_cards where subject = target_subject and topic = target_topic and level = target_level;
 
-        update topics_cards set subject = target_subject, topic = target_topic, position = last_position, level = target_level where subject = subject_id and topic = topic_position and level = topic_level and card = card_id;
+        update topic_cards set subject = target_subject, topic = target_topic, position = last_position, level = target_level where subject = subject_id and topic = topic_position and level = topic_level and card = card_id;
 
-        update topics_cards t set position = tt.updated_position from (
-            select position, row_number() over (order by position) as updated_position from topics_cards where subject = subject_id and topic = topic_position and level = topic_level
+        update topic_cards t set position = tt.updated_position from (
+            select position, row_number() over (order by position) as updated_position from topic_cards where subject = subject_id and topic = topic_position and level = topic_level
         ) tt where t.subject = subject_id and t.topic = topic_position and t.level = topic_level and t.position = tt.position;
     end if;
 end;
@@ -2186,7 +2186,7 @@ CREATE PROCEDURE flashback.remove_subject(IN subject_id integer)
     LANGUAGE plpgsql
     AS $$
 begin
-    if not exists (select 1 from topics_cards where subject = subject_id) then
+    if not exists (select 1 from topic_cards where subject = subject_id) then
         delete from subjects where id = subject_id;
     end if;
 end; $$;
@@ -2202,7 +2202,7 @@ CREATE PROCEDURE flashback.remove_topic(IN subject_id integer, IN topic_level fl
     LANGUAGE plpgsql
     AS $$
 begin
-    if not exists (select 1 from topics_cards where subject = subject_id) then
+    if not exists (select 1 from topic_cards where subject = subject_id) then
         delete from topics where subject = subject_id and level = topic_level and position = topic_position;
 
         update topics set position = position - 1 where subject = subject_id and level = topic_level and position > topic_position;
@@ -2539,7 +2539,7 @@ begin
 
     return query
     select row_number() over (order by c.headline <-> search_pattern), c.id, c.state, c.headline
-    from topics_cards t
+    from topic_cards t
     join cards c on c.id = t.card
     where t.subject = subject_id and t.level <= milestone_level and c.headline % search_pattern
     limit 50;
@@ -3375,11 +3375,11 @@ ALTER TABLE flashback.subjects ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY 
 --
 
 CREATE TABLE flashback.topic_cards (
-    topic integer CONSTRAINT topics_cards_topic_not_null NOT NULL,
-    card integer CONSTRAINT topics_cards_card_not_null NOT NULL,
-    "position" integer CONSTRAINT topics_cards_position_not_null NOT NULL,
-    subject integer CONSTRAINT topics_cards_subject_not_null NOT NULL,
-    level flashback.expertise_level CONSTRAINT topics_cards_level_not_null NOT NULL
+    topic integer NOT NULL,
+    card integer NOT NULL,
+    "position" integer NOT NULL,
+    subject integer NOT NULL,
+    level flashback.expertise_level NOT NULL
 );
 
 
@@ -3718,35 +3718,35 @@ ALTER TABLE ONLY flashback.subjects
 
 
 --
+-- Name: topic_cards topic_cards_pkey; Type: CONSTRAINT; Schema: flashback; Owner: flashback
+--
+
+ALTER TABLE ONLY flashback.topic_cards
+    ADD CONSTRAINT topic_cards_pkey PRIMARY KEY (subject, level, topic, card);
+
+
+--
+-- Name: topic_cards topic_cards_unique_card_key; Type: CONSTRAINT; Schema: flashback; Owner: flashback
+--
+
+ALTER TABLE ONLY flashback.topic_cards
+    ADD CONSTRAINT topic_cards_unique_card_key UNIQUE (subject, card);
+
+
+--
+-- Name: topic_cards topic_cards_unique_position_key; Type: CONSTRAINT; Schema: flashback; Owner: flashback
+--
+
+ALTER TABLE ONLY flashback.topic_cards
+    ADD CONSTRAINT topic_cards_unique_position_key UNIQUE (subject, topic, level, "position");
+
+
+--
 -- Name: topics_activities topics_activities_pkey; Type: CONSTRAINT; Schema: flashback; Owner: flashback
 --
 
 ALTER TABLE ONLY flashback.topics_activities
     ADD CONSTRAINT topics_activities_pkey PRIMARY KEY (id);
-
-
---
--- Name: topic_cards topics_cards_pkey; Type: CONSTRAINT; Schema: flashback; Owner: flashback
---
-
-ALTER TABLE ONLY flashback.topic_cards
-    ADD CONSTRAINT topics_cards_pkey PRIMARY KEY (subject, level, topic, card);
-
-
---
--- Name: topic_cards topics_cards_subject_card_key; Type: CONSTRAINT; Schema: flashback; Owner: flashback
---
-
-ALTER TABLE ONLY flashback.topic_cards
-    ADD CONSTRAINT topics_cards_subject_card_key UNIQUE (subject, card);
-
-
---
--- Name: topic_cards topics_cards_subject_topic_level_position_key; Type: CONSTRAINT; Schema: flashback; Owner: flashback
---
-
-ALTER TABLE ONLY flashback.topic_cards
-    ADD CONSTRAINT topics_cards_subject_topic_level_position_key UNIQUE (subject, topic, level, "position");
 
 
 --
@@ -4166,6 +4166,22 @@ ALTER TABLE ONLY flashback.subjects_activities
 
 
 --
+-- Name: topic_cards topic_cards_card_fkey; Type: FK CONSTRAINT; Schema: flashback; Owner: flashback
+--
+
+ALTER TABLE ONLY flashback.topic_cards
+    ADD CONSTRAINT topic_cards_card_fkey FOREIGN KEY (card) REFERENCES flashback.cards(id) ON UPDATE CASCADE ON DELETE CASCADE;
+
+
+--
+-- Name: topic_cards topic_cards_subject_level_topic_fkey; Type: FK CONSTRAINT; Schema: flashback; Owner: flashback
+--
+
+ALTER TABLE ONLY flashback.topic_cards
+    ADD CONSTRAINT topic_cards_subject_level_topic_fkey FOREIGN KEY (subject, level, topic) REFERENCES flashback.topics(subject, level, "position") ON UPDATE CASCADE ON DELETE CASCADE;
+
+
+--
 -- Name: topics_activities topics_activities_subject_level_position_fkey; Type: FK CONSTRAINT; Schema: flashback; Owner: flashback
 --
 
@@ -4182,22 +4198,6 @@ ALTER TABLE ONLY flashback.topics_activities
 
 
 --
--- Name: topic_cards topics_cards_card_fkey; Type: FK CONSTRAINT; Schema: flashback; Owner: flashback
---
-
-ALTER TABLE ONLY flashback.topic_cards
-    ADD CONSTRAINT topics_cards_card_fkey FOREIGN KEY (card) REFERENCES flashback.cards(id) ON UPDATE CASCADE ON DELETE CASCADE;
-
-
---
--- Name: topic_cards topics_cards_subject_level_topic_fkey; Type: FK CONSTRAINT; Schema: flashback; Owner: flashback
---
-
-ALTER TABLE ONLY flashback.topic_cards
-    ADD CONSTRAINT topics_cards_subject_level_topic_fkey FOREIGN KEY (subject, level, topic) REFERENCES flashback.topics(subject, level, "position") ON UPDATE CASCADE ON DELETE CASCADE;
-
-
---
 -- Name: SCHEMA public; Type: ACL; Schema: -; Owner: flashback
 --
 
@@ -4209,5 +4209,5 @@ GRANT ALL ON SCHEMA public TO flashback_client;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict 8iIRGTvVjARG7BDp3qYVlN1LPHw8v2IcbHEg7XBOe1cWXEnkRvKSSPROKFRfeYG
+\unrestrict D9KGdKto8hq0UfcYzzEj7i53luqt3DsPxH3y0LTIOIhhnxd9LNTwtpVkXN8sKpj
 
