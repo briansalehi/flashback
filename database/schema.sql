@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict CIguLCpP7eHdup4AlDZ97iq6KkUOhrPzuVuDjhkpcYMg7GaYImxnGB15K7vJNe3
+\restrict 4eyDEy0wmN8tBEqe20lh07kK4hGlwTu4zyGs559WHEwR08uykUsnWGGH9lW6siE
 
 -- Dumped from database version 18.1
 -- Dumped by pg_dump version 18.0
@@ -1216,60 +1216,68 @@ CREATE FUNCTION flashback.get_out_of_shelves() RETURNS TABLE(id integer, name ch
 ALTER FUNCTION flashback.get_out_of_shelves() OWNER TO flashback;
 
 --
--- Name: get_practice_cards(integer, integer, flashback.expertise_level); Type: FUNCTION; Schema: flashback; Owner: flashback
+-- Name: get_practice_cards(integer, integer, integer); Type: FUNCTION; Schema: flashback; Owner: flashback
 --
 
-CREATE FUNCTION flashback.get_practice_cards(user_id integer, subject_id integer, subject_level flashback.expertise_level) RETURNS TABLE(topic integer, level flashback.expertise_level, card integer, "position" integer, last_practice timestamp with time zone, duration integer)
+CREATE FUNCTION flashback.get_practice_cards(user_id integer, subject_id integer, topic_position integer) RETURNS TABLE(id integer, state flashback.card_state, headline flashback.citext)
     LANGUAGE plpgsql
     AS $$
+declare cognitive_level expertise_level;
 declare last_acceptable_read timestamp with time zone = now() - interval '7 days';
 declare long_time_ago timestamp with time zone = now() - interval '100 days';
 begin
-    if get_practice_mode(user_id, subject_id, subject_level) = 'aggressive'::practice_mode
+    cognitive_level := get_user_cognitive_level(user_id, subject_id);
+
+    if get_practice_mode(user_id, subject_id, cognitive_level) = 'aggressive'::practice_mode
     then
         return query
-        select g.topic, g.level, g.card, g.position, null::timestamp with time zone, null::integer
-        from get_cards(user_id, subject_id, subject_level) g
-        where coalesce(g.last_practice, long_time_ago) < last_acceptable_read;
+        select c.id, c.state, c.headline
+        from topics_cards tc
+        join cards c on c.id = tc.card
+        left join progress p on p.user = user_id and p.card = tc.card
+        where tc.subject = subject_id and tc.level <= cognitive_level and tc.topic = topic_position and coalesce(p.last_practice, long_time_ago) < last_acceptable_read;
     else
         return query
-        select g.topic, g.level, g.card, g.position, g.last_practice, g.duration
-        from get_cards(user_id, subject_id, subject_level) g;
+        select c.id, c.state, c.headline
+        from topics_cards tc
+        join cards c on c.id = tc.card
+        left join progress p on p.user = user_id and p.card = tc.card
+        where tc.subject = subject_id and tc.level <= cognitive_level and tc.topic = topic_position;
     end if;
 end; $$;
 
 
-ALTER FUNCTION flashback.get_practice_cards(user_id integer, subject_id integer, subject_level flashback.expertise_level) OWNER TO flashback;
+ALTER FUNCTION flashback.get_practice_cards(user_id integer, subject_id integer, topic_position integer) OWNER TO flashback;
 
 --
 -- Name: get_practice_mode(integer, integer, flashback.expertise_level); Type: FUNCTION; Schema: flashback; Owner: flashback
 --
 
-CREATE FUNCTION flashback.get_practice_mode(user_id integer, subject_id integer, subject_level flashback.expertise_level) RETURNS flashback.practice_mode
+CREATE FUNCTION flashback.get_practice_mode(user_id integer, subject_id integer, topic_level flashback.expertise_level) RETURNS flashback.practice_mode
     LANGUAGE plpgsql
     AS $$
 declare mode practice_mode;
 declare long_time_ago timestamp with time zone = now() - interval '100 days';
 declare longest_acceptable_inactivity interval = interval '10 days';
 declare longest_acceptable_unreached interval = interval '7 days';
-declare most_recent_practice interval;
 declare last_recent_practice interval;
+declare least_recent_practice interval;
 declare unread_cards integer;
 begin
     select
         now() - coalesce(max(g.last_practice), long_time_ago),
         now() - coalesce(min(g.last_practice), long_time_ago),
         count(*) filter (where g.last_practice is null)
-        into most_recent_practice, last_recent_practice, unread_cards
-    from get_cards(user_id, subject_id, subject_level) g;
+        into last_recent_practice, least_recent_practice, unread_cards
+    from get_cards(user_id, subject_id, topic_level) g;
 
     -- unread cards immediately result in aggressive mode
     -- consequently, users in progressive mode will directly jump into an unread card when a new card drops
     if unread_cards > 0
         -- long interrupts result in memory loss which should be recovered by aggressive mode
-        or most_recent_practice >= longest_acceptable_inactivity
+        or last_recent_practice >= longest_acceptable_inactivity
         -- any card not being reached by user later than a certain period during progressive practice is considered forgotten and should be reached immediately
-        or last_recent_practice >= longest_acceptable_unreached
+        or least_recent_practice >= longest_acceptable_unreached
     then
         select 'aggressive'::practice_mode into mode;
     else
@@ -1280,45 +1288,22 @@ begin
 end; $$;
 
 
-ALTER FUNCTION flashback.get_practice_mode(user_id integer, subject_id integer, subject_level flashback.expertise_level) OWNER TO flashback;
-
---
--- Name: get_practice_topics(integer); Type: FUNCTION; Schema: flashback; Owner: flashback
---
-
-CREATE FUNCTION flashback.get_practice_topics(roadmap_id integer) RETURNS TABLE(milestone integer, subject integer, topic integer, level flashback.expertise_level)
-    LANGUAGE plpgsql
-    AS $$
-begin
-    return query
-    select m.position as milestone, m.subject, t.position as topic, m.level
-    from milestones m
-    join topics t on t.subject = m.subject and t.level <= m.level
-    where m.roadmap = roadmap_id;
-end;
-$$;
-
-
-ALTER FUNCTION flashback.get_practice_topics(roadmap_id integer) OWNER TO flashback;
+ALTER FUNCTION flashback.get_practice_mode(user_id integer, subject_id integer, topic_level flashback.expertise_level) OWNER TO flashback;
 
 --
 -- Name: get_practice_topics(integer, integer); Type: FUNCTION; Schema: flashback; Owner: flashback
 --
 
-CREATE FUNCTION flashback.get_practice_topics(roadmap_id integer, subject_id integer) RETURNS TABLE(milestone integer, subject integer, topic integer, level flashback.expertise_level)
+CREATE FUNCTION flashback.get_practice_topics(user_id integer, subject_id integer) RETURNS TABLE("position" integer, name flashback.citext, level flashback.expertise_level)
     LANGUAGE plpgsql
     AS $$
 begin
-    return query
-    select m.position as milestone, m.subject, t.position as topic, m.level
-    from milestones m
-    join topics t on t.subject = m.subject and t.level <= m.level
-    where m.roadmap = roadmap_id and m.subject = subject_id;
+    return query select t.position, t.name, t.level from topics t where t.subject = subject_id and t.level <= get_user_cognitive_level(user_id, subject_id);
 end;
 $$;
 
 
-ALTER FUNCTION flashback.get_practice_topics(roadmap_id integer, subject_id integer) OWNER TO flashback;
+ALTER FUNCTION flashback.get_practice_topics(user_id integer, subject_id integer) OWNER TO flashback;
 
 --
 -- Name: get_requirements(integer, integer, flashback.expertise_level); Type: FUNCTION; Schema: flashback; Owner: flashback
@@ -1568,12 +1553,14 @@ CREATE FUNCTION flashback.get_user_cognitive_level(user_id integer, subject_id i
     LANGUAGE plpgsql
     AS $$
 declare cognitive_level expertise_level;
+declare mode practice_mode;
 begin
-    select t.level into cognitive_level
+    select t.level, get_practice_mode(user_id, t.subject, t.level) as mode into cognitive_level, mode
     from topics t
     where t.subject = subject_id
     group by t.subject, t.level
-    order by get_practice_mode(user_id, t.subject, t.level) = 'progressive'::practice_mode desc, t.level limit 1;
+    order by mode desc, t.level
+    limit 1;
 
     return cognitive_level;
 end; $$;
@@ -4222,5 +4209,5 @@ GRANT ALL ON SCHEMA public TO flashback_client;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict CIguLCpP7eHdup4AlDZ97iq6KkUOhrPzuVuDjhkpcYMg7GaYImxnGB15K7vJNe3
+\unrestrict 4eyDEy0wmN8tBEqe20lh07kK4hGlwTu4zyGs559WHEwR08uykUsnWGGH9lW6siE
 

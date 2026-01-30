@@ -130,6 +130,8 @@ public:
     MOCK_METHOD(void, move_block, (uint64_t, uint64_t, uint64_t, uint64_t), (const, override));
 
     // practices
+
+    // assessments
     MOCK_METHOD(expertise_level, get_user_cognitive_level, (uint64_t, uint64_t), (const, override));
 };
 } // flashback

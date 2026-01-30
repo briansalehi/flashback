@@ -97,3 +97,9 @@ message User {
     string device = 9;
     string hash = 10;
 }
+
+enum practice_mode {
+    aggressive = 0;
+    progressive = 1;
+    selective = 2;
+}
