@@ -61,6 +61,8 @@ namespace flashback
         virtual void remove_subject(uint64_t id) const = 0;
         virtual void merge_subjects(uint64_t source, uint64_t target) const = 0;
         [[nodiscard]] virtual std::map<uint64_t, Subject> search_subjects(std::string_view search_pattern) const = 0;
+        //add_alias
+        //remove_alias
 
         // topics
         [[nodiscard]] virtual Topic create_topic(uint64_t subject_id, std::string name,
@@ -168,7 +170,6 @@ namespace flashback
                                 uint64_t target_position) const = 0;
 
         // progress
-        virtual void make_progress(uint64_t user_id, uint64_t card_id, uint64_t duration, practice_mode mode) const = 0;
         [[nodiscard]] virtual expertise_level get_user_cognitive_level(uint64_t user_id, uint64_t subject_id) const = 0;
         virtual practice_mode get_practice_mode(uint64_t user_id, uint64_t subject_id, expertise_level level) const = 0;
         virtual std::map<uint64_t, Topic> get_practice_topics(uint64_t user_id, uint64_t subject_id) const = 0;
@@ -176,29 +177,36 @@ namespace flashback
                                                      uint64_t topic_position) const = 0;
         virtual std::vector<Resource> get_study_resources(uint64_t user_id) const = 0;
         virtual std::map<uint64_t, Section> get_study_sections(uint64_t user_id, uint64_t resource_id) const = 0;
-        virtual std::map<uint64_t, Card> get_study_cards(uint64_t user_id, uint64_t resource_id, uint64_t section_position) const = 0;
-        virtual void mark_card_as_reviewed() const = 0;
-        virtual void mark_card_as_completed() const = 0;
-        virtual void mark_section_as_reviewed() const = 0;
-        virtual void mark_section_as_completed() const = 0;
-        virtual void mark_resource_as_completed() const = 0;
-        virtual void get_section_state() const = 0;
-        virtual void get_resource_state() const = 0;
-        virtual void get_variations() const = 0;
-        virtual void is_absolute() const = 0;
-        virtual void get_card_weight() const = 0;
-        virtual void get_topic_weight() const = 0;
-        virtual void get_subject_weight() const = 0;
-        virtual void get_roadmap_weight() const = 0;
+        virtual std::map<uint64_t, Card> get_study_cards(uint64_t user_id, uint64_t resource_id,
+                                                         uint64_t section_position) const = 0;
+        virtual void mark_card_as_reviewed(uint64_t card_id) const = 0;
+        virtual void mark_card_as_completed(uint64_t card_id) const = 0;
+        virtual void mark_section_as_reviewed(uint64_t resource_id, uint64_t section_position) const = 0;
+        virtual void mark_section_as_completed(uint64_t resource_id, uint64_t section_position) const = 0;
+        virtual void mark_card_as_approved(uint64_t card_id) const = 0;
+        virtual void mark_card_as_released(uint64_t card_id) const = 0;
+        virtual void make_progress(uint64_t user_id, uint64_t card_id, uint64_t duration, practice_mode mode) const = 0;
+        virtual closure_state get_section_state(uint64_t resource_id, uint64_t section_position) const = 0;
+        virtual closure_state get_resource_state(uint64_t resource_id) const = 0;
+        virtual Weight get_progress_weight(uint64_t user_id) const = 0;
+        virtual std::vector<Card> get_variations(uint64_t card_id) const = 0;
+        virtual bool is_absolute(uint64_t card_id) const = 0;
 
         // assessments
-        virtual void create_assessment() const = 0;
-        virtual void add_card_to_assessment() const = 0;
-        virtual void get_assessments() const = 0;
-        virtual void get_assessment_coverage() const = 0;
-        virtual void get_assimilation_coverage() const = 0;
-        virtual void expand_assessment() const = 0;
-        virtual void diminish_assessment() const = 0;
+        virtual void create_assessment(uint64_t subject_id, expertise_level level, uint64_t topic_position,
+                                       uint64_t card_id) const = 0;
+        virtual void get_topic_coverage(uint64_t assessment_id) const = 0;
+        virtual void get_assessment_coverage(uint64_t subject_id, uint64_t topic_position,
+                                             expertise_level max_level) const = 0;
+        virtual void get_assimilation_coverage(uint64_t user_id, uint64_t assessment_id) const = 0;
+        virtual std::vector<Card> get_topic_assessments(uint64_t user_id, uint64_t subject_id, uint64_t topic_position,
+                                                        expertise_level max_level) const = 0;
+        virtual std::vector<Card> get_assessments(uint64_t user_id, uint64_t subject_id, uint64_t topic_position) const
+        = 0;
+        virtual void expand_assessment(uint64_t assessment_id, uint64_t subject_id, expertise_level level,
+                                       uint64_t topic_position) const = 0;
+        virtual void diminish_assessment(uint64_t assessment_id, uint64_t subject_id, expertise_level level,
+                                         uint64_t topic_position) const = 0;
 
         // nerves
         [[nodiscard]] virtual Resource create_nerve(uint64_t user_id, std::string resource_name, uint64_t subject_id,
@@ -210,7 +218,7 @@ namespace flashback
         //get_lost_cards
         //get_out_of_shelves
         //get_unshelved_resources
-        //get_unapproved_topics_cards
+        //get_unapproved_topic_cards
 
         // client
         //certify_client

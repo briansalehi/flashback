@@ -6,15 +6,18 @@
 
 namespace flashback
 {
-class database: public basic_database
+class database : public basic_database
 {
 public:
-    explicit database(std::string client, std::string name = "flashback", std::string address = "localhost", std::string port = "5432");
+    explicit database(std::string client, std::string name = "flashback", std::string address = "localhost",
+                      std::string port = "5432");
     ~database() override = default;
 
     // users
-    [[nodiscard]] bool create_session(uint64_t user_id, std::string_view token, std::string_view device) const override;
-    [[nodiscard]] uint64_t create_user(std::string_view name, std::string_view email, std::string_view hash) const override;
+    [[nodiscard]] bool
+    create_session(uint64_t user_id, std::string_view token, std::string_view device) const override;
+    [[nodiscard]] uint64_t
+    create_user(std::string_view name, std::string_view email, std::string_view hash) const override;
     void reset_password(uint64_t user_id, std::string_view hash) const override;
     [[nodiscard]] bool user_exists(std::string_view email) const override;
     [[nodiscard]] std::unique_ptr<User> get_user(std::string_view email) const override;
@@ -32,16 +35,19 @@ public:
     // subjects
     [[nodiscard]] Subject create_subject(std::string name) const override;
     [[nodiscard]] std::map<uint64_t, Subject> search_subjects(std::string_view search_pattern) const override;
-    void rename_subject(uint64_t id, std::string name) const override;
-    void remove_subject(uint64_t id) const override;
+    void rename_subject(uint64_t subject_id, std::string name) const override;
+    void remove_subject(uint64_t subject_id) const override;
     void merge_subjects(uint64_t source, uint64_t target) const override;
 
     // milestones
-    [[nodiscard]] Milestone add_milestone(uint64_t subject_id, expertise_level subject_level, uint64_t roadmap_id) const override;
-    [[nodiscard]] Milestone add_milestone(uint64_t subject_id, expertise_level subject_level, uint64_t roadmap_id, uint64_t position) const override;
+    [[nodiscard]] Milestone add_milestone(uint64_t subject_id, expertise_level subject_level,
+                                          uint64_t roadmap_id) const override;
+    [[nodiscard]] Milestone add_milestone(uint64_t subject_id, expertise_level subject_level, uint64_t roadmap_id,
+                                          uint64_t position) const override;
     [[nodiscard]] std::vector<Milestone> get_milestones(uint64_t roadmap_id) const override;
     void add_requirement(uint64_t roadmap_id, Milestone milestone, Milestone required_milestone) const override;
-    [[nodiscard]] std::vector<Milestone> get_requirements(uint64_t roadmap_id, uint64_t subject_id, expertise_level subject_level) const override;
+    [[nodiscard]] std::vector<Milestone> get_requirements(uint64_t roadmap_id, uint64_t subject_id,
+                                                          expertise_level subject_level) const override;
     [[nodiscard]] Roadmap clone_roadmap(uint64_t user_id, uint64_t roadmap_id) const override;
     void reorder_milestone(uint64_t roadmap_id, uint64_t current_position, uint64_t target_position) const override;
     void remove_milestone(uint64_t roadmap_id, uint64_t subject_id) const override;
@@ -63,26 +69,36 @@ public:
     void merge_resources(uint64_t source_id, uint64_t target_id) const override;
 
     // sections
-    [[nodiscard]] Section create_section(uint64_t resource_id, uint64_t position, std::string name, std::string link) const override;
+    [[nodiscard]] Section create_section(uint64_t resource_id, uint64_t position, std::string name,
+                                         std::string link) const override;
     [[nodiscard]] std::map<uint64_t, Section> get_sections(uint64_t resource_id) const override;
     void remove_section(uint64_t resource_id, uint64_t position) const override;
     void reorder_section(uint64_t resource_id, uint64_t current_position, uint64_t target_position) const override;
     void merge_sections(uint64_t resource_id, uint64_t source_position, uint64_t target_position) const override;
     void rename_section(uint64_t resource_id, uint64_t position, std::string name) const override;
-    void move_section(uint64_t resource_id, uint64_t position, uint64_t target_resource_id, uint64_t target_position) const override;
-    [[nodiscard]] std::map<uint64_t, Section> search_sections(uint64_t resource_id, std::string_view search_pattern) const override;
+    void move_section(uint64_t resource_id, uint64_t position, uint64_t target_resource_id,
+                      uint64_t target_position) const override;
+    [[nodiscard]] std::map<uint64_t, Section> search_sections(uint64_t resource_id,
+                                                              std::string_view search_pattern) const override;
     void edit_section_link(uint64_t resource_id, uint64_t position, std::string link) const override;
 
     // topics
-    [[nodiscard]] Topic create_topic(uint64_t subject_id, std::string name, expertise_level level, uint64_t position) const override;
+    [[nodiscard]] Topic create_topic(uint64_t subject_id, std::string name, expertise_level level,
+                                     uint64_t position) const override;
     [[nodiscard]] std::map<uint64_t, Topic> get_topics(uint64_t subject_id, expertise_level level) const override;
-    void reorder_topic(uint64_t subject_id, expertise_level level, uint64_t source_position, uint64_t target_position) const override;
+    void reorder_topic(uint64_t subject_id, expertise_level level, uint64_t source_position,
+                       uint64_t target_position) const override;
     void remove_topic(uint64_t subject_id, expertise_level level, uint64_t position) const override;
-    void merge_topics(uint64_t subject_id, expertise_level level, uint64_t source_position, uint64_t target_position) const override;
-    void rename_topic(uint64_t subject_id, expertise_level level, uint64_t position, std::string name) const override;
-    void move_topic(uint64_t subject_id, expertise_level level, uint64_t position, uint64_t target_subject_id, uint64_t target_position) const override;
-    [[nodiscard]] std::map<uint64_t, Topic> search_topics(uint64_t subject_id, expertise_level level, std::string_view search_pattern) const override;
-    void change_topic_level(uint64_t subject_id, uint64_t position, flashback::expertise_level level, flashback::expertise_level target) const override;
+    void merge_topics(uint64_t subject_id, expertise_level level, uint64_t source_position,
+                      uint64_t target_position) const override;
+    void rename_topic(uint64_t subject_id, expertise_level level, uint64_t position,
+                      std::string name) const override;
+    void move_topic(uint64_t subject_id, expertise_level level, uint64_t position, uint64_t target_subject_id,
+                    uint64_t target_position) const override;
+    [[nodiscard]] std::map<uint64_t, Topic> search_topics(uint64_t subject_id, expertise_level level,
+                                                          std::string_view search_pattern) const override;
+    void change_topic_level(uint64_t subject_id, uint64_t position, flashback::expertise_level level,
+                            flashback::expertise_level target) const override;
 
     // providers
     [[nodiscard]] Provider create_provider(std::string name) const override;
@@ -105,15 +121,22 @@ public:
     // cards
     [[nodiscard]] Card create_card(Card card) const override;
     void add_card_to_section(uint64_t card_id, uint64_t resource_id, uint64_t section_position) const override;
-    void add_card_to_topic(uint64_t card_id, uint64_t subject_id, uint64_t topic_position, expertise_level topic_level) const override;
+    void add_card_to_topic(uint64_t card_id, uint64_t subject_id, uint64_t topic_position,
+                           expertise_level topic_level) const override;
     void edit_card_headline(uint64_t card_id, std::string headline) const override;
     void remove_card(uint64_t card_id) const override;
     void merge_cards(uint64_t source_id, uint64_t target_id, std::string) const override;
-    [[nodiscard]] std::map<uint64_t, Card> search_cards(uint64_t subject_id, expertise_level level, std::string_view search_pattern) const override;
-    void move_card_to_section(uint64_t card_id, uint64_t resource_id, uint64_t section_position, uint64_t target_section_position) const override;
-    void move_card_to_topic(uint64_t card_id, uint64_t subject_id, uint64_t topic_position, expertise_level topic_level, uint64_t target_subject, uint64_t target_position, expertise_level target_level) const override;
-    [[nodiscard]] std::vector<Card> get_section_cards(uint64_t resource_id, uint64_t sections_position) const override;
-    [[nodiscard]] std::vector<Card> get_topic_cards(uint64_t subject_id, uint64_t topic_position, expertise_level topic_level) const override;
+    [[nodiscard]] std::map<uint64_t, Card> search_cards(uint64_t subject_id, expertise_level level,
+                                                        std::string_view search_pattern) const override;
+    void move_card_to_section(uint64_t card_id, uint64_t resource_id, uint64_t section_position,
+                              uint64_t target_section_position) const override;
+    void move_card_to_topic(uint64_t card_id, uint64_t subject_id, uint64_t topic_position,
+                            expertise_level topic_level, uint64_t target_subject, uint64_t target_position,
+                            expertise_level target_level) const override;
+    [[nodiscard]] std::vector<Card>
+    get_section_cards(uint64_t resource_id, uint64_t sections_position) const override;
+    [[nodiscard]] std::vector<Card> get_topic_cards(uint64_t subject_id, uint64_t topic_position,
+                                                    expertise_level topic_level) const override;
 
     // blocks
     [[nodiscard]] Block create_block(uint64_t card_id, Block block) const override;
@@ -126,14 +149,51 @@ public:
     void reorder_block(uint64_t card_id, uint64_t block_position, uint64_t target_position) const override;
     void merge_blocks(uint64_t card_id, uint64_t source_position, uint64_t target_position) const override;
     [[nodiscard]] std::map<uint64_t, Block> split_block(uint64_t card_id, uint64_t block_position) const override;
-    void move_block(uint64_t card_id, uint64_t block_position, uint64_t target_card_id, uint64_t target_position) const override;
+    void move_block(uint64_t card_id, uint64_t block_position, uint64_t target_card_id,
+                    uint64_t target_position) const override;
 
     // nerves
-    [[nodiscard]] Resource create_nerve(uint64_t user_id, std::string resource_name, uint64_t subject_id, uint64_t expiration) const override;
+    [[nodiscard]] Resource create_nerve(uint64_t user_id, std::string resource_name, uint64_t subject_id,
+                                        uint64_t expiration) const override;
     [[nodiscard]] std::vector<Resource> get_nerves(uint64_t user_id) const override;
 
     // practices
     [[nodiscard]] expertise_level get_user_cognitive_level(uint64_t user_id, uint64_t subject_id) const override;
+    practice_mode get_practice_mode(uint64_t user_id, uint64_t subject_id, expertise_level level) const override;
+    std::map<uint64_t, Topic> get_practice_topics(uint64_t user_id, uint64_t subject_id) const override;
+    std::vector<Card> get_practice_cards(uint64_t user_id, uint64_t subject_id, uint64_t topic_position) const override;
+    std::vector<Resource> get_study_resources(uint64_t user_id) const override;
+    std::map<uint64_t, Section> get_study_sections(uint64_t user_id, uint64_t resource_id) const override;
+    std::map<uint64_t, Card>
+    get_study_cards(uint64_t user_id, uint64_t resource_id, uint64_t section_position) const override;
+    void mark_card_as_reviewed(uint64_t card_id) const override;
+    void mark_card_as_completed(uint64_t card_id) const override;
+    void mark_section_as_reviewed(uint64_t resource_id, uint64_t section_position) const override;
+    void mark_section_as_completed(uint64_t resource_id, uint64_t section_position) const override;
+    void mark_card_as_approved(uint64_t card_id) const override;
+    void mark_card_as_released(uint64_t card_id) const override;
+    void make_progress(uint64_t user_id, uint64_t card_id, uint64_t duration, practice_mode mode) const override;
+    closure_state get_section_state(uint64_t resource_id, uint64_t section_position) const override;
+    closure_state get_resource_state(uint64_t resource_id) const override;
+    Weight get_progress_weight(uint64_t user_id) const override;
+    std::vector<Card> get_variations(uint64_t card_id) const override;
+    bool is_absolute(uint64_t card_id) const override;
+
+    // assessments
+    void create_assessment(uint64_t subject_id, expertise_level level, uint64_t topic_position,
+                           uint64_t card_id) const override;
+    void get_topic_coverage(uint64_t assessment_id) const override;
+    void get_assessment_coverage(uint64_t subject_id, uint64_t topic_position,
+                                 expertise_level max_level) const override;
+    void get_assimilation_coverage(uint64_t user_id, uint64_t assessment_id) const override;
+    std::vector<Card> get_topic_assessments(uint64_t user_id, uint64_t subject_id, uint64_t topic_position,
+                                            expertise_level max_level) const override;
+    std::vector<Card>
+    get_assessments(uint64_t user_id, uint64_t subject_id, uint64_t topic_position) const override;
+    void expand_assessment(uint64_t assessment_id, uint64_t subject_id, expertise_level level,
+                           uint64_t topic_position) const override;
+    void diminish_assessment(uint64_t assessment_id, uint64_t subject_id, expertise_level level,
+                             uint64_t topic_position) const override;
 
 private:
     template <typename... Args>
@@ -342,8 +402,6 @@ private:
         return type_string;
     }
 
-private:
     std::unique_ptr<pqxx::connection> m_connection;
 };
-
 } // flashback

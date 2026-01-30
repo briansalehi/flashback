@@ -7,4 +7,6 @@ CMakeUserPresets.txt
 *.rpm
 *.deb
 *.tar
+*.js
 _CPack_Packages/
+node_modules

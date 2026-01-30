@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict D9KGdKto8hq0UfcYzzEj7i53luqt3DsPxH3y0LTIOIhhnxd9LNTwtpVkXN8sKpj
+\restrict 45HxyJfWfmaID4RgmGELdAxoVytVM0icOmMuMtpDw5y9FfeavKUqtJmKoz3wqhc
 
 -- Dumped from database version 18.1
 -- Dumped by pg_dump version 18.0
@@ -80,6 +80,19 @@ CREATE TYPE flashback.card_state AS ENUM (
 
 
 ALTER TYPE flashback.card_state OWNER TO flashback;
+
+--
+-- Name: closure_state; Type: TYPE; Schema: flashback; Owner: flashback
+--
+
+CREATE TYPE flashback.closure_state AS ENUM (
+    'draft',
+    'reviewed',
+    'completed'
+);
+
+
+ALTER TYPE flashback.closure_state OWNER TO flashback;
 
 --
 -- Name: content_type; Type: TYPE; Schema: flashback; Owner: flashback
@@ -1005,24 +1018,6 @@ end; $$;
 ALTER FUNCTION flashback.estimate_read_time(card_id integer) OWNER TO flashback;
 
 --
--- Name: get_assessment_coverage(integer); Type: FUNCTION; Schema: flashback; Owner: flashback
---
-
-CREATE FUNCTION flashback.get_assessment_coverage(assessment_id integer) RETURNS TABLE(subject integer, topic integer, level flashback.expertise_level)
-    LANGUAGE plpgsql
-    AS $$
-begin
-    return query
-    select a.subject, a.topic, a.level
-    from assessments a
-    where a.card = assessment_id;
-end;
-$$;
-
-
-ALTER FUNCTION flashback.get_assessment_coverage(assessment_id integer) OWNER TO flashback;
-
---
 -- Name: get_assessment_coverage(integer, integer, flashback.expertise_level); Type: FUNCTION; Schema: flashback; Owner: flashback
 --
 
@@ -1047,10 +1042,10 @@ $$;
 ALTER FUNCTION flashback.get_assessment_coverage(subject_id integer, topic_position integer, max_level flashback.expertise_level) OWNER TO flashback;
 
 --
--- Name: get_assessments(integer, integer, integer, flashback.expertise_level); Type: FUNCTION; Schema: flashback; Owner: flashback
+-- Name: get_assessments(integer, integer, integer); Type: FUNCTION; Schema: flashback; Owner: flashback
 --
 
-CREATE FUNCTION flashback.get_assessments(user_id integer, subject_id integer, topic_position integer, max_level flashback.expertise_level) RETURNS TABLE(level flashback.expertise_level, assessment integer, assimilations bigint)
+CREATE FUNCTION flashback.get_assessments(user_id integer, subject_id integer, topic_position integer) RETURNS TABLE(level flashback.expertise_level, assessment integer, assimilations bigint)
     LANGUAGE plpgsql
     AS $$
 begin 
@@ -1067,7 +1062,7 @@ begin
 end; $$;
 
 
-ALTER FUNCTION flashback.get_assessments(user_id integer, subject_id integer, topic_position integer, max_level flashback.expertise_level) OWNER TO flashback;
+ALTER FUNCTION flashback.get_assessments(user_id integer, subject_id integer, topic_position integer) OWNER TO flashback;
 
 --
 -- Name: get_assimilation_coverage(integer, integer); Type: FUNCTION; Schema: flashback; Owner: flashback
@@ -1078,11 +1073,11 @@ CREATE FUNCTION flashback.get_assimilation_coverage(user_id integer, assessment_
     AS $$
 begin
     return query
-    select ac.subject, ac.topic, ac.level, bool_and(coalesce(p.progression, 0) >= 3) as assimilated
-    from get_assessment_coverage(assessment_id) ac
-    join topic_cards tc on tc.subject = ac.subject and tc.topic = ac.topic and tc.level = ac.level
+    select tc.subject, tc.topic, tc.level, bool_and(coalesce(p.progression, 0) >= 3) as assimilated
+    from get_topic_coverage(assessment_id) tc
+    join topic_cards tc on tc.subject = tc.subject and tc.topic = tc.topic and tc.level = tc.level
     left join progress p on p.user = user_id and p.card = tc.card and p.last_practice > now() - '10 days'::interval
-    group by ac.subject, ac.topic, ac.level;
+    group by tc.subject, tc.topic, tc.level;
 end; $$;
 
 
@@ -1388,6 +1383,27 @@ $$;
 ALTER FUNCTION flashback.get_sections(resource_id integer) OWNER TO flashback;
 
 --
+-- Name: get_study_resources(integer); Type: FUNCTION; Schema: flashback; Owner: flashback
+--
+
+CREATE FUNCTION flashback.get_study_resources(roadmap_id integer) RETURNS TABLE(id integer, name flashback.citext, type flashback.resource_type, pattern flashback.section_pattern, link character varying, production integer, expiration integer)
+    LANGUAGE plpgsql
+    AS $$
+begin
+    return query
+    select r.id, r.name, r.type, r.pattern, r.link, r.production, r.expiration
+    from milestones m
+    join shelves s on s.subject = m.subject
+    join section_cards sc on sc.resource = s.resource
+    join resources r on r.id = sc.resource
+    where m.roadmap = roadmap_id
+    group by r.id, r.name, r.type, r.pattern, r.link, r.production, r.expiration;
+end; $$;
+
+
+ALTER FUNCTION flashback.get_study_resources(roadmap_id integer) OWNER TO flashback;
+
+--
 -- Name: get_subject_resources(character varying); Type: FUNCTION; Schema: flashback; Owner: flashback
 --
 
@@ -1437,6 +1453,24 @@ $$;
 
 
 ALTER FUNCTION flashback.get_topic_cards(subject_id integer, topic_position integer, topic_level flashback.expertise_level) OWNER TO flashback;
+
+--
+-- Name: get_topic_coverage(integer); Type: FUNCTION; Schema: flashback; Owner: flashback
+--
+
+CREATE FUNCTION flashback.get_topic_coverage(assessment_id integer) RETURNS TABLE(subject integer, topic integer, level flashback.expertise_level)
+    LANGUAGE plpgsql
+    AS $$
+begin
+    return query
+    select a.subject, a.topic, a.level
+    from assessments a
+    where a.card = assessment_id;
+end;
+$$;
+
+
+ALTER FUNCTION flashback.get_topic_coverage(assessment_id integer) OWNER TO flashback;
 
 --
 -- Name: get_topics(integer, flashback.expertise_level); Type: FUNCTION; Schema: flashback; Owner: flashback
@@ -3223,7 +3257,8 @@ CREATE TABLE flashback.sections (
     resource integer NOT NULL,
     "position" integer NOT NULL,
     name flashback.citext,
-    link character varying(2000)
+    link character varying(2000),
+    state flashback.closure_state DEFAULT 'draft'::flashback.closure_state NOT NULL
 );
 
 
@@ -4209,5 +4244,5 @@ GRANT ALL ON SCHEMA public TO flashback_client;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict D9KGdKto8hq0UfcYzzEj7i53luqt3DsPxH3y0LTIOIhhnxd9LNTwtpVkXN8sKpj
+\unrestrict 45HxyJfWfmaID4RgmGELdAxoVytVM0icOmMuMtpDw5y9FfeavKUqtJmKoz3wqhc
 

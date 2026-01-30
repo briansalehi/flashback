@@ -4637,3 +4637,111 @@ TEST_F(test_database, move_block)
     EXPECT_THAT(blocks.at(3).content(), Eq(fifth_block.content()));
     EXPECT_THAT(blocks.at(4).content(), Eq(first_block.content()));
 }
+
+TEST_F(test_database, get_user_cognitive_level)
+{
+}
+
+TEST_F(test_database, get_practice_mode)
+{
+}
+
+TEST_F(test_database, get_practice_topics)
+{
+}
+
+TEST_F(test_database, get_practice_cards)
+{
+}
+
+TEST_F(test_database, get_study_resources)
+{
+}
+
+TEST_F(test_database, get_study_sections)
+{
+}
+
+TEST_F(test_database, get_study_cards)
+{
+}
+
+TEST_F(test_database, mark_card_as_reviewed)
+{
+}
+
+TEST_F(test_database, mark_card_as_completed)
+{
+}
+
+TEST_F(test_database, mark_section_as_reviewed)
+{
+}
+
+TEST_F(test_database, mark_section_as_completed)
+{
+}
+
+TEST_F(test_database, mark_card_as_approved)
+{
+}
+
+TEST_F(test_database, mark_card_as_released)
+{
+}
+
+TEST_F(test_database, make_progress)
+{
+}
+
+TEST_F(test_database, get_section_state)
+{
+}
+
+TEST_F(test_database, get_resource_state)
+{
+}
+
+TEST_F(test_database, get_progress_weight)
+{
+}
+
+TEST_F(test_database, get_variations)
+{
+}
+
+TEST_F(test_database, is_absolute)
+{
+}
+
+TEST_F(test_database, create_assessment)
+{
+}
+
+TEST_F(test_database, get_topic_coverage)
+{
+}
+
+TEST_F(test_database, get_assessment_coverage)
+{
+}
+
+TEST_F(test_database, get_assimilation_coverage)
+{
+}
+
+TEST_F(test_database, get_topic_assessments)
+{
+}
+
+TEST_F(test_database, get_assessments)
+{
+}
+
+TEST_F(test_database, expand_assessment)
+{
+}
+
+TEST_F(test_database, diminish_assessment)
+{
+}

@@ -103,3 +103,14 @@ enum practice_mode {
     progressive = 1;
     selective = 2;
 }
+
+enum closure_state {
+    draft = 0;
+    reviewed = 1;
+    completed = 2;
+}
+
+message Weight {
+    uint64 resources = 1;
+    uint64 sections = 2;
+}

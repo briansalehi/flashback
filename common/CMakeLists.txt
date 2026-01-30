@@ -11,7 +11,8 @@ include(CTest)
 find_package(Protobuf 3.19.0 REQUIRED)
 find_package(gRPC 1.48.0 REQUIRED)
 find_package(GTest 1.15.0)
-find_program(grpc_cpp_plugin NAMES grpc_cpp_plugin REQUIRED)
+find_program(GRPC_CPP_PLUGIN_EXECUTABLE NAMES grpc_cpp_plugin REQUIRED)
+find_program(NPM_EXECUTABLE NAMES npm REQUIRED)
 
 file(GLOB source_files RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} src/*.cpp)
 file(GLOB header_files RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} include/flashback/*.hpp)
@@ -37,18 +38,42 @@ set(server_sources
     ${CMAKE_CURRENT_BINARY_DIR}/server.grpc.pb.cc
 )
 
+set(client_sources
+    ${CMAKE_CURRENT_BINARY_DIR}/types_pb.js
+    ${CMAKE_CURRENT_BINARY_DIR}/requests_pb.js
+    ${CMAKE_CURRENT_BINARY_DIR}/server_pb.js
+    ${CMAKE_CURRENT_BINARY_DIR}/server_grpc_web_pb.js
+)
+
+set(PROTOC_GEN_GRPC_WEB_EXECUTABLE ${CMAKE_CURRENT_SOURCE_DIR}/deps/node_modules/protoc-gen-grpc-web/bin/protoc-gen-grpc-web)
+
 add_custom_command(
-    OUTPUT ${server_sources} ${server_headers}
+    OUTPUT ${PROTOC_GEN_GRPC_WEB_EXECUTABLE}
+    COMMAND ${NPM_EXECUTABLE}
+    ARGS install --loglevel silent --no-package-lock --save-dev
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/deps
+    COMMENT "Installing protoc-gen-grpc-web for client"
+)
+
+add_custom_command(
+    OUTPUT ${server_sources} ${server_headers} ${client_source}
     COMMAND ${Protobuf_PROTOC_EXECUTABLE}
     ARGS
-        --grpc_out=${CMAKE_CURRENT_BINARY_DIR}
-        --cpp_out=${CMAKE_CURRENT_BINARY_DIR}
-        --plugin=protoc-gen-grpc=${grpc_cpp_plugin}
         -I ${CMAKE_CURRENT_SOURCE_DIR}/proto
-        -I ${Protobuf_INCLUDE_DIRS}
+        --cpp_out=${CMAKE_CURRENT_BINARY_DIR}
+        --grpc_out=${CMAKE_CURRENT_BINARY_DIR}
+        --plugin=protoc-gen-grpc=${GRPC_CPP_PLUGIN_EXECUTABLE}
+        ${proto_files}
+    COMMAND ${Protobuf_PROTOC_EXECUTABLE}
+    ARGS
+        -I ${CMAKE_CURRENT_SOURCE_DIR}/proto
+        --js_out=import_style=commonjs:${CMAKE_CURRENT_BINARY_DIR}
+        --grpc-web_out=import_style=commonjs,mode=grpcwebtext:${CMAKE_CURRENT_BINARY_DIR}
+        --plugin=protoc-gen-grpc-web=${PROTOC_GEN_GRPC_WEB_EXECUTABLE}
         ${proto_files}
     DEPENDS
-        ${proto_files}
+        ${proto_files} ${PROTOC_GEN_GRPC_WEB_EXECUTABLE}
+    COMMENT "Generating grpc sources"
 )
 
 add_library(common STATIC)

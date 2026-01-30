@@ -281,19 +281,19 @@ std::map<uint64_t, Subject> database::search_subjects(std::string_view search_pa
     return subjects;
 }
 
-void database::rename_subject(uint64_t const id, std::string name) const
+void database::rename_subject(uint64_t const subject_id, std::string name) const
 {
     if (name.empty())
     {
         throw client_exception("Subject name cannot be empty");
     }
 
-    exec("call rename_subject($1, $2)", id, std::move(name));
+    exec("call rename_subject($1, $2)", subject_id, std::move(name));
 }
 
-void database::remove_subject(uint64_t const id) const
+void database::remove_subject(uint64_t const subject_id) const
 {
-    exec("call remove_subject($1)", id);
+    exec("call remove_subject($1)", subject_id);
 }
 
 void database::merge_subjects(uint64_t source, uint64_t target) const
@@ -1068,4 +1068,126 @@ expertise_level database::get_user_cognitive_level(uint64_t const user_id, uint6
     }
 
     return level;
+}
+
+practice_mode database::get_practice_mode(uint64_t const user_id, uint64_t const subject_id, expertise_level const level) const
+{
+    return {};
+}
+
+std::map<uint64_t, Topic> database::get_practice_topics(uint64_t const user_id, uint64_t const subject_id) const
+{
+    return {};
+}
+
+std::vector<Card> database::get_practice_cards(uint64_t const user_id, uint64_t const subject_id, uint64_t const topic_position) const
+{
+    return {};
+}
+
+std::vector<Resource> database::get_study_resources(uint64_t const user_id) const
+{
+    return {};
+}
+
+std::map<uint64_t, Section> database::get_study_sections(uint64_t const user_id, uint64_t const resource_id) const
+{
+    return {};
+}
+
+std::map<uint64_t, Card> database::get_study_cards(uint64_t const user_id, uint64_t const resource_id,
+    uint64_t const section_position) const
+{
+    return {};
+}
+
+void database::mark_card_as_reviewed(uint64_t const card_id) const
+{
+}
+
+void database::mark_card_as_completed(uint64_t const card_id) const
+{
+}
+
+void database::mark_section_as_reviewed(uint64_t const resource_id, uint64_t const section_position) const
+{
+}
+
+void database::mark_section_as_completed(uint64_t const resource_id, uint64_t const section_position) const
+{
+}
+
+void database::mark_card_as_approved(uint64_t const card_id) const
+{
+}
+
+void database::mark_card_as_released(uint64_t const card_id) const
+{
+}
+
+void database::make_progress(uint64_t const user_id, uint64_t const card_id, uint64_t const duration, practice_mode const mode) const
+{
+}
+
+closure_state database::get_section_state(uint64_t const resource_id, uint64_t const section_position) const
+{
+    return {};
+}
+
+closure_state database::get_resource_state(uint64_t const resource_id) const
+{
+    return {};
+}
+
+Weight database::get_progress_weight(uint64_t const user_id) const
+{
+    return {};
+}
+
+std::vector<Card> database::get_variations(uint64_t const card_id) const
+{
+    return {};
+}
+
+bool database::is_absolute(uint64_t const card_id) const
+{
+    return {};
+}
+
+void database::create_assessment(uint64_t const subject_id, expertise_level const level, uint64_t const topic_position,
+    uint64_t const card_id) const
+{
+}
+
+void database::get_topic_coverage(uint64_t const assessment_id) const
+{
+}
+
+void database::get_assessment_coverage(uint64_t const subject_id, uint64_t const topic_position, expertise_level const max_level) const
+{
+}
+
+void database::get_assimilation_coverage(uint64_t const user_id, uint64_t const assessment_id) const
+{
+}
+
+std::vector<Card> database::get_topic_assessments(uint64_t const user_id, uint64_t const subject_id, uint64_t const topic_position,
+    expertise_level const max_level) const
+{
+    return {};
+}
+
+std::vector<Card> database::get_assessments(uint64_t const user_id, uint64_t const subject_id, uint64_t const topic_position) const
+{
+    return {};
+}
+
+void database::expand_assessment(uint64_t const assessment_id, uint64_t const subject_id, expertise_level const level,
+    uint64_t const topic_position) const
+{
+}
+
+void database::diminish_assessment(uint64_t const assessment_id, uint64_t const subject_id, expertise_level const level,
+    uint64_t const topic_position) const
+{
 }
