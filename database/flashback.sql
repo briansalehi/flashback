@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict qNzaIYR2C0h2BbYF9PtbknfOMXGZ7uIL0IIQZPokdiPcUUPuPQ8UDSWTZSVDVZ9
+\restrict YkEFLDc04M4RCfM19Y7jkQkzXhPuLu8q97UQ9oLbiX1tH2zHRapMP1t3YcdWNPR
 
 -- Dumped from database version 18.1
 -- Dumped by pg_dump version 18.0
@@ -211,9 +211,9 @@ CREATE FUNCTION flashback.add_card_to_section(card_id integer, resource_id integ
     AS $$
 declare top_position integer;
 begin
-    select coalesce(max(position), 0) + 1 into top_position from sections_cards sc where sc.resource = resource_id and sc.section = section_position;
+    select coalesce(max(position), 0) + 1 into top_position from section_cards sc where sc.resource = resource_id and sc.section = section_position;
 
-    insert into sections_cards (resource, section, card, position) values (resource_id, section_position, card_id, top_position);
+    insert into section_cards (resource, section, card, position) values (resource_id, section_position, card_id, top_position);
 
     return top_position;
 end;
@@ -1138,7 +1138,7 @@ begin
     return query
     select sc.resource as rid, sc.section as sid, sc.position, sc.card, r.name as resource, se.name as section, c.state, c.headline
     from cards c
-    join sections_cards sc on c.id = sc.card
+    join section_cards sc on c.id = sc.card
     join sections se on se.resource = sc.resource and se.position = sc.section
     join resources r on r.id = sc.resource
     where c.headline = card_headline and sc.card <> card_id
@@ -1163,7 +1163,7 @@ begin
     join topics t on t.subject = tc.subject and t.position = tc.topic and t.level = tc.level
     join subjects s on s.id = tc.subject
     join cards c on c.id = tc.card
-    where tc.card not in (select sc.card from sections_cards sc)
+    where tc.card not in (select sc.card from section_cards sc)
     order by tc.subject, tc.level, tc.topic, tc.position;
 end;
 $$;
@@ -1362,7 +1362,7 @@ CREATE FUNCTION flashback.get_section_cards(resource_id integer, section_positio
     LANGUAGE plpgsql
     AS $$
 begin
-    return query select c.id, c.state, c.headline from sections_cards sc join cards c on c.id = sc.card where sc.resource = resource_id and sc.section = section_position;
+    return query select c.id, c.state, c.headline from section_cards sc join cards c on c.id = sc.card where sc.resource = resource_id and sc.section = section_position;
 end;
 $$;
 
@@ -1453,16 +1453,16 @@ end; $$;
 ALTER FUNCTION flashback.get_topics(subject_id integer, topic_level flashback.expertise_level) OWNER TO flashback;
 
 --
--- Name: get_unreviewed_sections_cards(); Type: FUNCTION; Schema: flashback; Owner: flashback
+-- Name: get_unreviewed_section_cards(); Type: FUNCTION; Schema: flashback; Owner: flashback
 --
 
-CREATE FUNCTION flashback.get_unreviewed_sections_cards() RETURNS TABLE(rid integer, sid integer, "position" integer, card integer, resource character varying, section character varying, state flashback.card_state, headline text)
+CREATE FUNCTION flashback.get_unreviewed_section_cards() RETURNS TABLE(rid integer, sid integer, "position" integer, card integer, resource character varying, section character varying, state flashback.card_state, headline text)
     LANGUAGE plpgsql
     AS $$
 begin
     return query
     select sc.resource, sc.section, sc.position, sc.card, r.name, s.name, c.state, c.headline
-    from sections_cards sc
+    from section_cards sc
     join sections s on s.resource = sc.resource and s.position = sc.section
     join resources r on r.id = sc.resource
     join cards c on c.id = sc.card
@@ -1472,7 +1472,7 @@ end;
 $$;
 
 
-ALTER FUNCTION flashback.get_unreviewed_sections_cards() OWNER TO flashback;
+ALTER FUNCTION flashback.get_unreviewed_section_cards() OWNER TO flashback;
 
 --
 -- Name: get_unreviewed_topics_cards(); Type: FUNCTION; Schema: flashback; Owner: flashback
@@ -1579,7 +1579,7 @@ begin
     return (
         select count(cards.id) > 0
         from cards
-        join sections_cards s on s.card = cards.id
+        join section_cards s on s.card = cards.id
         join topics_cards t on t.card = cards.id
         where s.resource = target_resource and t.subject = target_subject
     );
@@ -1781,10 +1781,10 @@ begin
     end if;
 
     if not exists (
-        select 1 from sections_cards sc join sections_cards scc on scc.resource = sc.resource and scc.section = sc.section where sc.card = source_id and scc.card = target_id
+        select 1 from section_cards sc join section_cards scc on scc.resource = sc.resource and scc.section = sc.section where sc.card = source_id and scc.card = target_id
     )
     then
-        update sections_cards set card = target_id where card = source_id;
+        update section_cards set card = target_id where card = source_id;
     end if;
 
     delete from cards where id = source_id;
@@ -1864,9 +1864,9 @@ CREATE PROCEDURE flashback.merge_sections(IN resource_id integer, IN source_sect
     AS $$
 declare top_position integer;
 begin
-    select max(coalesce(position, 0)) into top_position from sections_cards where resource = resource_id and section = target_section;
+    select max(coalesce(position, 0)) into top_position from section_cards where resource = resource_id and section = target_section;
 
-    update sections_cards set section = target_section, position = position + top_position where resource = resource_id and section = source_section;
+    update section_cards set section = target_section, position = position + top_position where resource = resource_id and section = source_section;
 
     delete from sections where resource = resource_id and position = source_section;
 
@@ -1961,15 +1961,15 @@ CREATE PROCEDURE flashback.move_card_to_section(IN card_id integer, IN resource_
 declare card_position integer;
 declare last_position integer;
 begin
-    select coalesce(position, 1) into card_position from sections_cards where resource = resource_id and section = current_section and card = card_id;
+    select coalesce(position, 1) into card_position from section_cards where resource = resource_id and section = current_section and card = card_id;
 
     if current_section <> target_section then
-        select coalesce(max(position), 0) + 1 into last_position from sections_cards where resource = resource_id and section = target_section;
+        select coalesce(max(position), 0) + 1 into last_position from section_cards where resource = resource_id and section = target_section;
 
-        update sections_cards set section = target_section, position = last_position where resource = resource_id and section = current_section and card = card_id;
+        update section_cards set section = target_section, position = last_position where resource = resource_id and section = current_section and card = card_id;
 
-        update sections_cards t set position = tt.updated_position from (
-            select position, row_number() over (order by position) as updated_position from sections_cards where resource = resource_id and section = current_section
+        update section_cards t set position = tt.updated_position from (
+            select position, row_number() over (order by position) as updated_position from section_cards where resource = resource_id and section = current_section
         ) tt where t.resource = resource_id and t.section = current_section and t.position = tt.position;
     end if;
 end;
@@ -2138,7 +2138,7 @@ CREATE PROCEDURE flashback.remove_resource(IN resource_id integer)
     LANGUAGE plpgsql
     AS $$
 begin
-    if not exists (select 1 from sections_cards where resource = resource_id) then
+    if not exists (select 1 from section_cards where resource = resource_id) then
         delete from resources where id = resource_id;
     end if;
 end;
@@ -2169,7 +2169,7 @@ CREATE PROCEDURE flashback.remove_section(IN resource_id integer, IN section_pos
     LANGUAGE plpgsql
     AS $$
 begin
-    if not exists (select 1 from sections_cards where resource = resource_id) then
+    if not exists (select 1 from section_cards where resource = resource_id) then
         delete from sections where resource = resource_id and position = section_position;
     end if;
 end;
@@ -3202,6 +3202,20 @@ ALTER TABLE flashback.roadmaps ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY 
 
 
 --
+-- Name: section_cards; Type: TABLE; Schema: flashback; Owner: flashback
+--
+
+CREATE TABLE flashback.section_cards (
+    resource integer NOT NULL,
+    section integer NOT NULL,
+    card integer NOT NULL,
+    "position" integer NOT NULL
+);
+
+
+ALTER TABLE flashback.section_cards OWNER TO flashback;
+
+--
 -- Name: sections; Type: TABLE; Schema: flashback; Owner: flashback
 --
 
@@ -3244,20 +3258,6 @@ ALTER TABLE flashback.sections_activities ALTER COLUMN id ADD GENERATED ALWAYS A
     CACHE 1
 );
 
-
---
--- Name: sections_cards; Type: TABLE; Schema: flashback; Owner: flashback
---
-
-CREATE TABLE flashback.sections_cards (
-    resource integer NOT NULL,
-    section integer NOT NULL,
-    card integer NOT NULL,
-    "position" integer NOT NULL
-);
-
-
-ALTER TABLE flashback.sections_cards OWNER TO flashback;
 
 --
 -- Name: sessions; Type: TABLE; Schema: flashback; Owner: flashback
@@ -3371,6 +3371,21 @@ ALTER TABLE flashback.subjects ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY 
 
 
 --
+-- Name: topic_cards; Type: TABLE; Schema: flashback; Owner: flashback
+--
+
+CREATE TABLE flashback.topic_cards (
+    topic integer CONSTRAINT topics_cards_topic_not_null NOT NULL,
+    card integer CONSTRAINT topics_cards_card_not_null NOT NULL,
+    "position" integer CONSTRAINT topics_cards_position_not_null NOT NULL,
+    subject integer CONSTRAINT topics_cards_subject_not_null NOT NULL,
+    level flashback.expertise_level CONSTRAINT topics_cards_level_not_null NOT NULL
+);
+
+
+ALTER TABLE flashback.topic_cards OWNER TO flashback;
+
+--
 -- Name: topics; Type: TABLE; Schema: flashback; Owner: flashback
 --
 
@@ -3414,21 +3429,6 @@ ALTER TABLE flashback.topics_activities ALTER COLUMN id ADD GENERATED ALWAYS AS 
     CACHE 1
 );
 
-
---
--- Name: topics_cards; Type: TABLE; Schema: flashback; Owner: flashback
---
-
-CREATE TABLE flashback.topics_cards (
-    topic integer NOT NULL,
-    card integer NOT NULL,
-    "position" integer NOT NULL,
-    subject integer NOT NULL,
-    level flashback.expertise_level NOT NULL
-);
-
-
-ALTER TABLE flashback.topics_cards OWNER TO flashback;
 
 --
 -- Name: users; Type: TABLE; Schema: flashback; Owner: flashback
@@ -21930,1861 +21930,10 @@ COPY flashback.roadmaps_activities (id, "user", roadmap, action, "time") FROM st
 
 
 --
--- Data for Name: sections; Type: TABLE DATA; Schema: flashback; Owner: flashback
+-- Data for Name: section_cards; Type: TABLE DATA; Schema: flashback; Owner: flashback
 --
 
-COPY flashback.sections (resource, "position", name, link) FROM stdin;
-14	1	\N	\N
-14	2	\N	\N
-14	3	\N	\N
-14	4	\N	\N
-14	5	\N	\N
-14	6	\N	\N
-14	7	\N	\N
-14	8	\N	\N
-14	9	\N	\N
-14	10	\N	\N
-14	11	\N	\N
-14	12	\N	\N
-14	13	\N	\N
-14	14	\N	\N
-14	15	\N	\N
-14	16	\N	\N
-14	17	\N	\N
-14	18	\N	\N
-14	19	\N	\N
-14	20	\N	\N
-14	21	\N	\N
-14	22	\N	\N
-14	23	\N	\N
-15	1	\N	\N
-15	2	\N	\N
-15	3	\N	\N
-15	4	\N	\N
-15	5	\N	\N
-15	6	\N	\N
-15	7	\N	\N
-15	8	\N	\N
-15	9	\N	\N
-15	10	\N	\N
-15	11	\N	\N
-15	12	\N	\N
-15	13	\N	\N
-17	1	\N	\N
-17	2	\N	\N
-17	3	\N	\N
-17	4	\N	\N
-17	5	\N	\N
-17	6	\N	\N
-17	7	\N	\N
-17	8	\N	\N
-17	9	\N	\N
-17	10	\N	\N
-17	11	\N	\N
-17	12	\N	\N
-17	13	\N	\N
-17	14	\N	\N
-17	15	\N	\N
-17	16	\N	\N
-17	17	\N	\N
-17	18	\N	\N
-17	19	\N	\N
-17	20	\N	\N
-17	21	\N	\N
-18	1	\N	\N
-18	2	\N	\N
-18	3	\N	\N
-18	4	\N	\N
-18	5	\N	\N
-18	6	\N	\N
-18	7	\N	\N
-18	8	\N	\N
-18	9	\N	\N
-18	10	\N	\N
-18	11	\N	\N
-18	12	\N	\N
-18	13	\N	\N
-18	14	\N	\N
-18	15	\N	\N
-18	16	\N	\N
-18	17	\N	\N
-18	18	\N	\N
-18	19	\N	\N
-18	20	\N	\N
-18	21	\N	\N
-18	22	\N	\N
-18	23	\N	\N
-18	24	\N	\N
-18	25	\N	\N
-18	26	\N	\N
-18	27	\N	\N
-18	28	\N	\N
-18	29	\N	\N
-18	30	\N	\N
-18	31	\N	\N
-19	1	\N	\N
-19	2	\N	\N
-19	3	\N	\N
-19	4	\N	\N
-19	5	\N	\N
-19	6	\N	\N
-19	7	\N	\N
-19	8	\N	\N
-19	9	\N	\N
-19	10	\N	\N
-19	11	\N	\N
-20	1	\N	\N
-20	2	\N	\N
-20	3	\N	\N
-20	4	\N	\N
-20	5	\N	\N
-20	6	\N	\N
-21	1	\N	\N
-21	2	\N	\N
-21	3	\N	\N
-21	4	\N	\N
-21	5	\N	\N
-21	6	\N	\N
-21	7	\N	\N
-21	8	\N	\N
-21	9	\N	\N
-21	10	\N	\N
-21	11	\N	\N
-21	12	\N	\N
-21	13	\N	\N
-21	14	\N	\N
-21	15	\N	\N
-21	16	\N	\N
-21	17	\N	\N
-21	18	\N	\N
-21	19	\N	\N
-21	20	\N	\N
-22	1	\N	\N
-22	2	\N	\N
-22	3	\N	\N
-22	4	\N	\N
-22	5	\N	\N
-22	6	\N	\N
-22	7	\N	\N
-22	8	\N	\N
-22	9	\N	\N
-22	10	\N	\N
-22	11	\N	\N
-22	12	\N	\N
-22	13	\N	\N
-22	14	\N	\N
-22	15	\N	\N
-22	16	\N	\N
-22	17	\N	\N
-22	18	\N	\N
-22	19	\N	\N
-22	20	\N	\N
-22	21	\N	\N
-22	22	\N	\N
-22	23	\N	\N
-22	24	\N	\N
-22	25	\N	\N
-22	26	\N	\N
-22	27	\N	\N
-22	28	\N	\N
-22	29	\N	\N
-22	30	\N	\N
-22	31	\N	\N
-22	32	\N	\N
-22	33	\N	\N
-22	34	\N	\N
-23	1	\N	\N
-23	2	\N	\N
-23	3	\N	\N
-23	4	\N	\N
-23	5	\N	\N
-23	6	\N	\N
-23	7	\N	\N
-23	8	\N	\N
-23	9	\N	\N
-23	10	\N	\N
-23	11	\N	\N
-23	12	\N	\N
-23	13	\N	\N
-23	14	\N	\N
-23	15	\N	\N
-23	16	\N	\N
-23	17	\N	\N
-23	18	\N	\N
-23	19	\N	\N
-23	20	\N	\N
-24	1	\N	\N
-24	2	\N	\N
-24	3	\N	\N
-24	4	\N	\N
-24	5	\N	\N
-24	6	\N	\N
-24	7	\N	\N
-24	8	\N	\N
-24	9	\N	\N
-24	10	\N	\N
-24	11	\N	\N
-24	12	\N	\N
-24	13	\N	\N
-24	14	\N	\N
-24	15	\N	\N
-24	16	\N	\N
-24	17	\N	\N
-24	18	\N	\N
-25	3	Manipulating Users and Connections	\N
-25	5	Advanced Statements	\N
-25	7	Server-Side Programming	\N
-25	8	Triggers and Rules	\N
-25	11	Transactions, MVCC, WALs, and Checkpoints	\N
-25	14	Logging and Auditing	\N
-25	15	Backup and Restore	\N
-25	17	Physical Replication	\N
-25	19	Useful Tools and Extensions	\N
-26	1	\N	\N
-26	2	\N	\N
-26	3	\N	\N
-26	4	\N	\N
-26	5	\N	\N
-26	6	\N	\N
-26	7	\N	\N
-26	8	\N	\N
-26	9	\N	\N
-26	10	\N	\N
-26	11	\N	\N
-26	12	\N	\N
-26	13	\N	\N
-26	14	\N	\N
-26	15	\N	\N
-26	16	\N	\N
-27	1	\N	\N
-27	2	\N	\N
-27	3	\N	\N
-27	4	\N	\N
-27	5	\N	\N
-27	6	\N	\N
-27	7	\N	\N
-27	8	\N	\N
-27	9	\N	\N
-27	10	\N	\N
-29	1	\N	\N
-29	2	\N	\N
-29	3	\N	\N
-29	4	\N	\N
-29	5	\N	\N
-29	6	\N	\N
-29	7	\N	\N
-29	8	\N	\N
-29	9	\N	\N
-29	10	\N	\N
-29	11	\N	\N
-29	12	\N	\N
-29	13	\N	\N
-29	14	\N	\N
-29	15	\N	\N
-29	16	\N	\N
-29	17	\N	\N
-29	18	\N	\N
-29	19	\N	\N
-29	20	\N	\N
-29	21	\N	\N
-30	1	\N	\N
-30	2	\N	\N
-30	3	\N	\N
-30	4	\N	\N
-30	5	\N	\N
-30	6	\N	\N
-30	7	\N	\N
-30	8	\N	\N
-30	9	\N	\N
-30	10	\N	\N
-30	11	\N	\N
-30	12	\N	\N
-30	13	\N	\N
-30	14	\N	\N
-30	15	\N	\N
-31	1	\N	\N
-31	2	\N	\N
-31	3	\N	\N
-31	4	\N	\N
-31	5	\N	\N
-31	6	\N	\N
-31	7	\N	\N
-31	8	\N	\N
-31	9	\N	\N
-31	10	\N	\N
-31	11	\N	\N
-31	12	\N	\N
-32	1	\N	\N
-32	2	\N	\N
-32	3	\N	\N
-32	4	\N	\N
-32	5	\N	\N
-32	6	\N	\N
-32	7	\N	\N
-32	8	\N	\N
-32	9	\N	\N
-32	10	\N	\N
-32	11	\N	\N
-32	12	\N	\N
-33	1	\N	\N
-33	2	\N	\N
-33	3	\N	\N
-33	4	\N	\N
-33	5	\N	\N
-33	6	\N	\N
-33	7	\N	\N
-33	8	\N	\N
-33	9	\N	\N
-33	10	\N	\N
-33	11	\N	\N
-33	12	\N	\N
-34	1	\N	\N
-34	2	\N	\N
-34	3	\N	\N
-34	4	\N	\N
-34	5	\N	\N
-34	6	\N	\N
-34	7	\N	\N
-34	8	\N	\N
-34	9	\N	\N
-34	10	\N	\N
-34	11	\N	\N
-34	12	\N	\N
-35	1	\N	\N
-35	2	\N	\N
-35	3	\N	\N
-35	4	\N	\N
-35	5	\N	\N
-35	6	\N	\N
-35	7	\N	\N
-35	8	\N	\N
-35	9	\N	\N
-35	10	\N	\N
-35	11	\N	\N
-35	12	\N	\N
-35	13	\N	\N
-35	14	\N	\N
-35	15	\N	\N
-35	16	\N	\N
-35	17	\N	\N
-35	18	\N	\N
-35	19	\N	\N
-35	20	\N	\N
-35	21	\N	\N
-35	22	\N	\N
-35	23	\N	\N
-35	24	\N	\N
-37	1	\N	\N
-37	2	\N	\N
-37	3	\N	\N
-37	4	\N	\N
-37	5	\N	\N
-37	6	\N	\N
-37	7	\N	\N
-37	8	\N	\N
-37	9	\N	\N
-37	10	\N	\N
-37	11	\N	\N
-37	12	\N	\N
-37	13	\N	\N
-37	14	\N	\N
-37	15	\N	\N
-37	16	\N	\N
-37	17	\N	\N
-37	18	\N	\N
-38	1	\N	\N
-38	2	\N	\N
-38	3	\N	\N
-38	4	\N	\N
-38	5	\N	\N
-38	6	\N	\N
-38	7	\N	\N
-38	8	\N	\N
-38	9	\N	\N
-39	1	\N	\N
-39	2	\N	\N
-39	3	\N	\N
-39	4	\N	\N
-39	5	\N	\N
-39	6	\N	\N
-39	7	\N	\N
-39	8	\N	\N
-39	9	\N	\N
-39	10	\N	\N
-39	11	\N	\N
-40	1	\N	\N
-40	2	\N	\N
-40	3	\N	\N
-40	4	\N	\N
-40	5	\N	\N
-40	6	\N	\N
-40	7	\N	\N
-41	1	\N	\N
-41	2	\N	\N
-41	3	\N	\N
-41	4	\N	\N
-41	5	\N	\N
-41	6	\N	\N
-41	7	\N	\N
-41	8	\N	\N
-41	9	\N	\N
-41	10	\N	\N
-41	11	\N	\N
-41	12	\N	\N
-41	13	\N	\N
-41	14	\N	\N
-41	15	\N	\N
-41	16	\N	\N
-41	17	\N	\N
-41	18	\N	\N
-41	19	\N	\N
-41	20	\N	\N
-41	21	\N	\N
-42	1	\N	\N
-42	2	\N	\N
-42	3	\N	\N
-42	4	\N	\N
-42	5	\N	\N
-42	6	\N	\N
-42	7	\N	\N
-42	8	\N	\N
-42	9	\N	\N
-42	10	\N	\N
-42	11	\N	\N
-42	12	\N	\N
-42	13	\N	\N
-43	1	\N	\N
-43	2	\N	\N
-43	3	\N	\N
-43	4	\N	\N
-43	5	\N	\N
-43	6	\N	\N
-43	7	\N	\N
-43	8	\N	\N
-43	9	\N	\N
-43	10	\N	\N
-43	11	\N	\N
-43	12	\N	\N
-43	13	\N	\N
-43	14	\N	\N
-43	15	\N	\N
-43	16	\N	\N
-43	17	\N	\N
-43	18	\N	\N
-43	19	\N	\N
-43	20	\N	\N
-43	21	\N	\N
-43	22	\N	\N
-43	23	\N	\N
-43	24	\N	\N
-43	25	\N	\N
-43	26	\N	\N
-43	27	\N	\N
-43	28	\N	\N
-43	29	\N	\N
-43	30	\N	\N
-43	31	\N	\N
-43	32	\N	\N
-43	33	\N	\N
-43	34	\N	\N
-43	35	\N	\N
-43	36	\N	\N
-43	37	\N	\N
-43	38	\N	\N
-43	39	\N	\N
-43	40	\N	\N
-43	41	\N	\N
-43	42	\N	\N
-43	43	\N	\N
-44	1	\N	\N
-44	2	\N	\N
-44	3	\N	\N
-44	4	\N	\N
-44	5	\N	\N
-44	6	\N	\N
-44	7	\N	\N
-44	8	\N	\N
-44	9	\N	\N
-44	10	\N	\N
-44	11	\N	\N
-44	12	\N	\N
-44	13	\N	\N
-44	14	\N	\N
-45	1	\N	\N
-45	2	\N	\N
-45	3	\N	\N
-45	4	\N	\N
-45	5	\N	\N
-45	6	\N	\N
-45	7	\N	\N
-45	8	\N	\N
-45	9	\N	\N
-45	10	\N	\N
-45	11	\N	\N
-45	12	\N	\N
-45	13	\N	\N
-45	14	\N	\N
-45	15	\N	\N
-45	16	\N	\N
-46	1	\N	\N
-46	2	\N	\N
-46	3	\N	\N
-46	4	\N	\N
-46	5	\N	\N
-46	6	\N	\N
-46	7	\N	\N
-46	8	\N	\N
-46	9	\N	\N
-46	10	\N	\N
-46	11	\N	\N
-46	12	\N	\N
-46	13	\N	\N
-46	14	\N	\N
-46	15	\N	\N
-46	16	\N	\N
-46	17	\N	\N
-46	18	\N	\N
-46	19	\N	\N
-46	20	\N	\N
-46	21	\N	\N
-46	22	\N	\N
-46	23	\N	\N
-46	24	\N	\N
-46	25	\N	\N
-46	26	\N	\N
-46	27	\N	\N
-46	28	\N	\N
-46	29	\N	\N
-46	30	\N	\N
-46	31	\N	\N
-46	32	\N	\N
-46	33	\N	\N
-46	34	\N	\N
-46	35	\N	\N
-46	36	\N	\N
-46	37	\N	\N
-46	38	\N	\N
-46	39	\N	\N
-46	40	\N	\N
-46	41	\N	\N
-46	42	\N	\N
-46	43	\N	\N
-46	44	\N	\N
-46	45	\N	\N
-46	46	\N	\N
-46	47	\N	\N
-46	48	\N	\N
-46	49	\N	\N
-46	50	\N	\N
-46	51	\N	\N
-46	52	\N	\N
-46	53	\N	\N
-46	54	\N	\N
-46	55	\N	\N
-46	56	\N	\N
-46	57	\N	\N
-46	58	\N	\N
-46	59	\N	\N
-46	60	\N	\N
-46	61	\N	\N
-46	62	\N	\N
-46	63	\N	\N
-46	64	\N	\N
-47	1	\N	\N
-47	2	\N	\N
-47	3	\N	\N
-47	4	\N	\N
-47	5	\N	\N
-47	6	\N	\N
-47	7	\N	\N
-47	8	\N	\N
-47	9	\N	\N
-47	10	\N	\N
-47	11	\N	\N
-47	12	\N	\N
-47	13	\N	\N
-47	14	\N	\N
-47	15	\N	\N
-47	16	\N	\N
-49	1	\N	\N
-49	2	\N	\N
-49	3	\N	\N
-49	4	\N	\N
-49	5	\N	\N
-49	6	\N	\N
-49	7	\N	\N
-49	8	\N	\N
-49	9	\N	\N
-49	10	\N	\N
-49	11	\N	\N
-49	12	\N	\N
-50	1	\N	\N
-50	2	\N	\N
-50	3	\N	\N
-50	4	\N	\N
-50	5	\N	\N
-50	6	\N	\N
-50	7	\N	\N
-50	8	\N	\N
-50	9	\N	\N
-50	10	\N	\N
-50	11	\N	\N
-50	12	\N	\N
-50	13	\N	\N
-50	14	\N	\N
-50	15	\N	\N
-50	16	\N	\N
-50	17	\N	\N
-50	18	\N	\N
-50	19	\N	\N
-50	20	\N	\N
-50	21	\N	\N
-50	22	\N	\N
-50	23	\N	\N
-51	1	\N	\N
-51	2	\N	\N
-51	3	\N	\N
-51	4	\N	\N
-51	5	\N	\N
-51	6	\N	\N
-51	7	\N	\N
-51	8	\N	\N
-51	9	\N	\N
-51	10	\N	\N
-51	11	\N	\N
-51	12	\N	\N
-51	13	\N	\N
-51	14	\N	\N
-52	1	\N	\N
-52	2	\N	\N
-52	3	\N	\N
-52	4	\N	\N
-52	5	\N	\N
-52	6	\N	\N
-52	7	\N	\N
-52	8	\N	\N
-52	9	\N	\N
-52	10	\N	\N
-52	11	\N	\N
-52	12	\N	\N
-52	13	\N	\N
-52	14	\N	\N
-52	15	\N	\N
-52	16	\N	\N
-52	17	\N	\N
-52	18	\N	\N
-52	19	\N	\N
-52	20	\N	\N
-52	21	\N	\N
-52	22	\N	\N
-52	23	\N	\N
-52	24	\N	\N
-52	25	\N	\N
-52	26	\N	\N
-52	27	\N	\N
-53	1	\N	\N
-53	2	\N	\N
-53	3	\N	\N
-53	4	\N	\N
-53	5	\N	\N
-53	6	\N	\N
-53	7	\N	\N
-53	8	\N	\N
-53	9	\N	\N
-53	10	\N	\N
-53	11	\N	\N
-53	12	\N	\N
-53	13	\N	\N
-53	14	\N	\N
-53	15	\N	\N
-53	16	\N	\N
-53	17	\N	\N
-53	18	\N	\N
-53	19	\N	\N
-53	20	\N	\N
-53	21	\N	\N
-53	22	\N	\N
-53	23	\N	\N
-53	24	\N	\N
-53	25	\N	\N
-54	1	\N	\N
-54	2	\N	\N
-54	3	\N	\N
-54	4	\N	\N
-54	5	\N	\N
-54	6	\N	\N
-54	7	\N	\N
-54	8	\N	\N
-54	9	\N	\N
-54	10	\N	\N
-54	11	\N	\N
-54	12	\N	\N
-54	13	\N	\N
-54	14	\N	\N
-54	15	\N	\N
-54	16	\N	\N
-54	17	\N	\N
-54	18	\N	\N
-54	19	\N	\N
-55	1	\N	\N
-55	2	\N	\N
-55	3	\N	\N
-55	4	\N	\N
-55	5	\N	\N
-55	6	\N	\N
-55	7	\N	\N
-55	8	\N	\N
-55	9	\N	\N
-55	10	\N	\N
-55	11	\N	\N
-55	12	\N	\N
-55	13	\N	\N
-55	14	\N	\N
-55	15	\N	\N
-55	16	\N	\N
-56	1	\N	\N
-56	2	\N	\N
-56	3	\N	\N
-56	4	\N	\N
-56	5	\N	\N
-56	6	\N	\N
-56	7	\N	\N
-56	8	\N	\N
-56	9	\N	\N
-56	10	\N	\N
-56	11	\N	\N
-56	12	\N	\N
-57	1	\N	\N
-57	2	\N	\N
-57	3	\N	\N
-57	4	\N	\N
-57	5	\N	\N
-57	6	\N	\N
-57	7	\N	\N
-57	8	\N	\N
-57	9	\N	\N
-57	10	\N	\N
-57	11	\N	\N
-57	12	\N	\N
-58	1	\N	\N
-58	2	\N	\N
-58	3	\N	\N
-58	4	\N	\N
-58	5	\N	\N
-58	6	\N	\N
-58	7	\N	\N
-58	8	\N	\N
-58	9	\N	\N
-58	10	\N	\N
-58	11	\N	\N
-58	12	\N	\N
-58	13	\N	\N
-58	14	\N	\N
-58	15	\N	\N
-58	16	\N	\N
-58	17	\N	\N
-59	1	\N	\N
-59	2	\N	\N
-59	3	\N	\N
-59	4	\N	\N
-59	5	\N	\N
-59	6	\N	\N
-59	7	\N	\N
-59	8	\N	\N
-59	9	\N	\N
-59	10	\N	\N
-59	11	\N	\N
-59	12	\N	\N
-59	13	\N	\N
-60	1	\N	\N
-60	2	\N	\N
-60	3	\N	\N
-60	4	\N	\N
-60	5	\N	\N
-60	6	\N	\N
-60	7	\N	\N
-60	8	\N	\N
-60	9	\N	\N
-60	10	\N	\N
-60	11	\N	\N
-60	12	\N	\N
-60	13	\N	\N
-60	14	\N	\N
-60	15	\N	\N
-60	16	\N	\N
-60	17	\N	\N
-60	18	\N	\N
-60	19	\N	\N
-60	20	\N	\N
-60	21	\N	\N
-60	22	\N	\N
-61	1	\N	\N
-61	2	\N	\N
-61	3	\N	\N
-61	4	\N	\N
-61	5	\N	\N
-61	6	\N	\N
-62	1	\N	\N
-62	2	\N	\N
-62	3	\N	\N
-62	4	\N	\N
-62	5	\N	\N
-62	6	\N	\N
-62	7	\N	\N
-62	8	\N	\N
-62	9	\N	\N
-62	10	\N	\N
-62	11	\N	\N
-62	12	\N	\N
-62	13	\N	\N
-62	14	\N	\N
-62	15	\N	\N
-62	16	\N	\N
-62	17	\N	\N
-62	18	\N	\N
-62	19	\N	\N
-62	20	\N	\N
-62	21	\N	\N
-62	22	\N	\N
-62	23	\N	\N
-62	24	\N	\N
-62	25	\N	\N
-62	26	\N	\N
-62	27	\N	\N
-62	28	\N	\N
-62	29	\N	\N
-63	1	\N	\N
-64	1	\N	\N
-64	2	\N	\N
-64	3	\N	\N
-64	4	\N	\N
-64	5	\N	\N
-64	6	\N	\N
-64	7	\N	\N
-64	8	\N	\N
-64	9	\N	\N
-64	10	\N	\N
-64	11	\N	\N
-64	12	\N	\N
-64	13	\N	\N
-64	14	\N	\N
-65	1	\N	\N
-65	2	\N	\N
-65	3	\N	\N
-65	4	\N	\N
-65	5	\N	\N
-65	6	\N	\N
-65	7	\N	\N
-65	8	\N	\N
-65	9	\N	\N
-65	10	\N	\N
-65	11	\N	\N
-65	12	\N	\N
-65	13	\N	\N
-65	14	\N	\N
-65	15	\N	\N
-65	16	\N	\N
-65	17	\N	\N
-66	1	\N	\N
-66	2	\N	\N
-66	3	\N	\N
-66	4	\N	\N
-66	5	\N	\N
-66	6	\N	\N
-66	7	\N	\N
-66	8	\N	\N
-66	9	\N	\N
-66	10	\N	\N
-66	11	\N	\N
-66	12	\N	\N
-66	13	\N	\N
-66	14	\N	\N
-66	15	\N	\N
-66	16	\N	\N
-66	17	\N	\N
-66	18	\N	\N
-66	19	\N	\N
-66	20	\N	\N
-66	21	\N	\N
-66	22	\N	\N
-66	23	\N	\N
-66	24	\N	\N
-66	25	\N	\N
-66	26	\N	\N
-66	27	\N	\N
-66	28	\N	\N
-66	29	\N	\N
-66	30	\N	\N
-66	31	\N	\N
-66	32	\N	\N
-66	33	\N	\N
-66	34	\N	\N
-66	35	\N	\N
-66	36	\N	\N
-66	37	\N	\N
-66	38	\N	\N
-66	39	\N	\N
-66	40	\N	\N
-66	41	\N	\N
-66	42	\N	\N
-66	43	\N	\N
-66	44	\N	\N
-67	1	\N	\N
-67	2	\N	\N
-67	3	\N	\N
-67	4	\N	\N
-67	5	\N	\N
-67	6	\N	\N
-67	7	\N	\N
-67	8	\N	\N
-67	9	\N	\N
-67	10	\N	\N
-67	11	\N	\N
-67	12	\N	\N
-67	13	\N	\N
-67	14	\N	\N
-67	15	\N	\N
-67	16	\N	\N
-68	1	\N	\N
-68	2	\N	\N
-68	3	\N	\N
-68	4	\N	\N
-68	5	\N	\N
-68	6	\N	\N
-68	7	\N	\N
-68	8	\N	\N
-68	9	\N	\N
-68	10	\N	\N
-68	11	\N	\N
-68	12	\N	\N
-68	13	\N	\N
-68	14	\N	\N
-68	15	\N	\N
-68	16	\N	\N
-68	17	\N	\N
-68	18	\N	\N
-68	19	\N	\N
-68	20	\N	\N
-68	21	\N	\N
-68	22	\N	\N
-68	23	\N	\N
-68	24	\N	\N
-68	25	\N	\N
-68	26	\N	\N
-68	27	\N	\N
-68	28	\N	\N
-68	29	\N	\N
-68	30	\N	\N
-68	31	\N	\N
-68	32	\N	\N
-68	33	\N	\N
-68	34	\N	\N
-68	35	\N	\N
-68	36	\N	\N
-68	37	\N	\N
-68	38	\N	\N
-68	39	\N	\N
-68	40	\N	\N
-68	41	\N	\N
-68	42	\N	\N
-68	43	\N	\N
-68	44	\N	\N
-68	45	\N	\N
-68	46	\N	\N
-68	47	\N	\N
-68	48	\N	\N
-68	49	\N	\N
-68	50	\N	\N
-68	51	\N	\N
-71	1	\N	\N
-71	2	\N	\N
-71	3	\N	\N
-71	4	\N	\N
-71	5	\N	\N
-71	6	\N	\N
-71	7	\N	\N
-71	8	\N	\N
-71	9	\N	\N
-71	10	\N	\N
-71	11	\N	\N
-72	1	\N	\N
-72	2	\N	\N
-72	3	\N	\N
-72	4	\N	\N
-72	5	\N	\N
-72	6	\N	\N
-72	7	\N	\N
-72	8	\N	\N
-72	9	\N	\N
-72	10	\N	\N
-72	11	\N	\N
-72	12	\N	\N
-72	13	\N	\N
-72	14	\N	\N
-72	15	\N	\N
-72	16	\N	\N
-72	17	\N	\N
-72	18	\N	\N
-72	19	\N	\N
-72	20	\N	\N
-72	21	\N	\N
-72	22	\N	\N
-72	23	\N	\N
-72	24	\N	\N
-72	25	\N	\N
-72	26	\N	\N
-72	27	\N	\N
-72	28	\N	\N
-72	29	\N	\N
-72	30	\N	\N
-72	31	\N	\N
-72	32	\N	\N
-72	33	\N	\N
-72	34	\N	\N
-72	35	\N	\N
-72	36	\N	\N
-74	1	\N	\N
-74	2	\N	\N
-74	3	\N	\N
-74	4	\N	\N
-74	5	\N	\N
-74	6	\N	\N
-74	7	\N	\N
-74	8	\N	\N
-74	9	\N	\N
-74	10	\N	\N
-74	11	\N	\N
-74	12	\N	\N
-74	13	\N	\N
-74	14	\N	\N
-74	15	\N	\N
-74	16	\N	\N
-74	17	\N	\N
-74	18	\N	\N
-74	19	\N	\N
-74	20	\N	\N
-74	21	\N	\N
-75	1	\N	\N
-75	2	\N	\N
-75	3	\N	\N
-75	4	\N	\N
-75	5	\N	\N
-75	6	\N	\N
-75	7	\N	\N
-75	8	\N	\N
-75	9	\N	\N
-75	10	\N	\N
-75	11	\N	\N
-75	12	\N	\N
-76	1	\N	\N
-76	2	\N	\N
-76	3	\N	\N
-76	4	\N	\N
-76	5	\N	\N
-76	6	\N	\N
-76	7	\N	\N
-76	8	\N	\N
-76	9	\N	\N
-76	10	\N	\N
-76	11	\N	\N
-76	12	\N	\N
-76	13	\N	\N
-76	14	\N	\N
-77	1	\N	\N
-77	2	\N	\N
-77	3	\N	\N
-77	4	\N	\N
-77	5	\N	\N
-77	6	\N	\N
-77	7	\N	\N
-77	8	\N	\N
-77	9	\N	\N
-77	10	\N	\N
-77	11	\N	\N
-77	12	\N	\N
-77	13	\N	\N
-77	14	\N	\N
-77	15	\N	\N
-77	16	\N	\N
-77	17	\N	\N
-77	18	\N	\N
-77	19	\N	\N
-77	20	\N	\N
-77	21	\N	\N
-78	1	\N	\N
-78	2	\N	\N
-78	3	\N	\N
-78	4	\N	\N
-78	5	\N	\N
-78	6	\N	\N
-78	7	\N	\N
-78	8	\N	\N
-78	9	\N	\N
-78	10	\N	\N
-78	11	\N	\N
-78	12	\N	\N
-78	13	\N	\N
-78	14	\N	\N
-78	15	\N	\N
-78	16	\N	\N
-78	17	\N	\N
-78	18	\N	\N
-78	19	\N	\N
-78	20	\N	\N
-78	21	\N	\N
-78	22	\N	\N
-78	23	\N	\N
-78	24	\N	\N
-78	25	\N	\N
-78	26	\N	\N
-78	27	\N	\N
-78	28	\N	\N
-78	29	\N	\N
-78	30	\N	\N
-78	31	\N	\N
-78	32	\N	\N
-78	33	\N	\N
-78	34	\N	\N
-78	35	\N	\N
-78	36	\N	\N
-78	37	\N	\N
-78	38	\N	\N
-78	39	\N	\N
-69	2	Chapter 2	\N
-70	1	Chapter 1	\N
-78	40	\N	\N
-78	41	\N	\N
-78	42	\N	\N
-78	43	\N	\N
-78	44	\N	\N
-78	45	\N	\N
-78	46	\N	\N
-78	47	\N	\N
-79	1	\N	\N
-79	2	\N	\N
-79	3	\N	\N
-79	4	\N	\N
-79	5	\N	\N
-79	6	\N	\N
-79	7	\N	\N
-79	8	\N	\N
-79	9	\N	\N
-79	10	\N	\N
-79	11	\N	\N
-79	12	\N	\N
-81	1	\N	\N
-81	2	\N	\N
-81	3	\N	\N
-81	4	\N	\N
-81	5	\N	\N
-81	6	\N	\N
-81	7	\N	\N
-81	8	\N	\N
-81	9	\N	\N
-81	10	\N	\N
-81	11	\N	\N
-81	12	\N	\N
-81	13	\N	\N
-82	1	\N	\N
-82	2	\N	\N
-82	3	\N	\N
-82	4	\N	\N
-82	5	\N	\N
-82	6	\N	\N
-82	7	\N	\N
-82	8	\N	\N
-82	9	\N	\N
-82	10	\N	\N
-82	11	\N	\N
-82	12	\N	\N
-82	13	\N	\N
-82	14	\N	\N
-82	15	\N	\N
-82	16	\N	\N
-82	17	\N	\N
-82	18	\N	\N
-82	19	\N	\N
-82	20	\N	\N
-83	1	\N	\N
-83	2	\N	\N
-83	3	\N	\N
-83	4	\N	\N
-83	5	\N	\N
-83	6	\N	\N
-83	7	\N	\N
-83	8	\N	\N
-83	9	\N	\N
-83	10	\N	\N
-83	11	\N	\N
-83	12	\N	\N
-84	1	\N	\N
-84	2	\N	\N
-84	3	\N	\N
-84	4	\N	\N
-84	5	\N	\N
-84	6	\N	\N
-84	7	\N	\N
-84	8	\N	\N
-84	9	\N	\N
-84	10	\N	\N
-84	11	\N	\N
-84	12	\N	\N
-84	13	\N	\N
-84	14	\N	\N
-84	15	\N	\N
-84	16	\N	\N
-84	17	\N	\N
-85	1	\N	\N
-85	2	\N	\N
-85	3	\N	\N
-85	4	\N	\N
-85	5	\N	\N
-85	6	\N	\N
-85	7	\N	\N
-85	8	\N	\N
-85	9	\N	\N
-85	10	\N	\N
-85	11	\N	\N
-85	12	\N	\N
-85	13	\N	\N
-85	14	\N	\N
-85	15	\N	\N
-85	16	\N	\N
-85	17	\N	\N
-86	1	\N	\N
-86	2	\N	\N
-86	3	\N	\N
-86	4	\N	\N
-86	5	\N	\N
-86	6	\N	\N
-86	7	\N	\N
-86	8	\N	\N
-86	9	\N	\N
-86	10	\N	\N
-86	11	\N	\N
-86	12	\N	\N
-86	13	\N	\N
-86	14	\N	\N
-86	15	\N	\N
-86	16	\N	\N
-86	17	\N	\N
-86	18	\N	\N
-86	19	\N	\N
-86	20	\N	\N
-87	1	\N	\N
-87	2	\N	\N
-87	3	\N	\N
-87	4	\N	\N
-87	5	\N	\N
-87	6	\N	\N
-87	7	\N	\N
-87	8	\N	\N
-87	9	\N	\N
-87	10	\N	\N
-87	11	\N	\N
-87	12	\N	\N
-87	13	\N	\N
-87	14	\N	\N
-87	15	\N	\N
-88	1	\N	\N
-88	2	\N	\N
-88	3	\N	\N
-88	4	\N	\N
-88	5	\N	\N
-88	6	\N	\N
-88	7	\N	\N
-88	8	\N	\N
-88	9	\N	\N
-88	10	\N	\N
-88	11	\N	\N
-88	12	\N	\N
-88	13	\N	\N
-88	14	\N	\N
-88	15	\N	\N
-89	1	\N	\N
-90	1	\N	\N
-90	2	\N	\N
-90	3	\N	\N
-90	4	\N	\N
-90	5	\N	\N
-90	6	\N	\N
-90	7	\N	\N
-90	8	\N	\N
-90	9	\N	\N
-90	10	\N	\N
-90	11	\N	\N
-90	12	\N	\N
-90	13	\N	\N
-90	14	\N	\N
-90	15	\N	\N
-91	1	\N	\N
-92	1	\N	\N
-92	2	\N	\N
-92	3	\N	\N
-92	4	\N	\N
-92	5	\N	\N
-92	6	\N	\N
-92	7	\N	\N
-92	8	\N	\N
-92	9	\N	\N
-92	10	\N	\N
-92	11	\N	\N
-93	1	\N	\N
-93	2	\N	\N
-93	3	\N	\N
-93	4	\N	\N
-93	5	\N	\N
-93	6	\N	\N
-93	7	\N	\N
-94	1	\N	\N
-95	1	\N	\N
-95	2	\N	\N
-95	3	\N	\N
-95	4	\N	\N
-95	5	\N	\N
-95	6	\N	\N
-95	7	\N	\N
-95	8	\N	\N
-95	9	\N	\N
-95	10	\N	\N
-95	11	\N	\N
-95	12	\N	\N
-95	13	\N	\N
-95	14	\N	\N
-95	15	\N	\N
-95	16	\N	\N
-95	17	\N	\N
-95	18	\N	\N
-95	19	\N	\N
-95	20	\N	\N
-95	21	\N	\N
-95	22	\N	\N
-95	23	\N	\N
-95	24	\N	\N
-95	25	\N	\N
-95	26	\N	\N
-95	27	\N	\N
-95	28	\N	\N
-96	1	\N	\N
-96	2	\N	\N
-96	3	\N	\N
-96	4	\N	\N
-96	5	\N	\N
-96	6	\N	\N
-96	7	\N	\N
-96	8	\N	\N
-96	9	\N	\N
-96	10	\N	\N
-96	11	\N	\N
-96	12	\N	\N
-96	13	\N	\N
-96	14	\N	\N
-96	15	\N	\N
-96	16	\N	\N
-96	17	\N	\N
-96	18	\N	\N
-97	1	\N	\N
-97	2	\N	\N
-97	3	\N	\N
-97	4	\N	\N
-97	5	\N	\N
-98	1	\N	\N
-98	2	\N	\N
-98	3	\N	\N
-98	4	\N	\N
-98	5	\N	\N
-98	6	\N	\N
-98	7	\N	\N
-98	8	\N	\N
-98	9	\N	\N
-98	10	\N	\N
-98	11	\N	\N
-98	12	\N	\N
-98	13	\N	\N
-98	14	\N	\N
-98	15	\N	\N
-98	16	\N	\N
-98	17	\N	\N
-98	18	\N	\N
-98	19	\N	\N
-98	20	\N	\N
-99	1	\N	\N
-101	1	\N	\N
-101	2	\N	\N
-101	3	\N	\N
-101	4	\N	\N
-101	5	\N	\N
-101	6	\N	\N
-101	7	\N	\N
-101	8	\N	\N
-101	9	\N	\N
-101	10	\N	\N
-101	11	\N	\N
-101	12	\N	\N
-101	13	\N	\N
-101	14	\N	\N
-102	1	\N	\N
-102	2	\N	\N
-102	3	\N	\N
-102	4	\N	\N
-102	5	\N	\N
-102	6	\N	\N
-102	7	\N	\N
-102	8	\N	\N
-102	9	\N	\N
-102	10	\N	\N
-102	11	\N	\N
-102	12	\N	\N
-103	1	\N	\N
-103	2	\N	\N
-103	3	\N	\N
-103	4	\N	\N
-103	5	\N	\N
-103	6	\N	\N
-104	1	\N	\N
-104	2	\N	\N
-104	3	\N	\N
-104	4	\N	\N
-104	5	\N	\N
-104	6	\N	\N
-104	7	\N	\N
-104	8	\N	\N
-104	9	\N	\N
-104	10	\N	\N
-104	11	\N	\N
-104	12	\N	\N
-104	13	\N	\N
-105	1	\N	\N
-105	2	\N	\N
-105	3	\N	\N
-105	4	\N	\N
-105	5	\N	\N
-105	6	\N	\N
-105	7	\N	\N
-107	1	\N	\N
-107	2	\N	\N
-107	3	\N	\N
-107	4	\N	\N
-107	5	\N	\N
-107	6	\N	\N
-107	7	\N	\N
-107	8	\N	\N
-107	9	\N	\N
-107	10	\N	\N
-107	11	\N	\N
-107	12	\N	\N
-107	13	\N	\N
-108	1	\N	\N
-108	2	\N	\N
-108	3	\N	\N
-108	4	\N	\N
-108	5	\N	\N
-108	6	\N	\N
-108	7	\N	\N
-109	1	\N	\N
-109	2	\N	\N
-109	3	\N	\N
-109	4	\N	\N
-109	5	\N	\N
-109	6	\N	\N
-109	7	\N	\N
-109	8	\N	\N
-109	9	\N	\N
-109	10	\N	\N
-109	11	\N	\N
-110	1	\N	\N
-110	2	\N	\N
-110	3	\N	\N
-110	4	\N	\N
-110	5	\N	\N
-110	6	\N	\N
-106	3	Learning Graphical User Interfaces	\N
-106	6	Learning Object Classification	\N
-106	8	Video Surveillance, Background Modeling, and Morphological Operations	\N
-106	11	Text Recognition with Tesseract	\N
-110	7	\N	\N
-110	8	\N	\N
-110	9	\N	\N
-110	10	\N	\N
-100	3	Mocking for Dummies	\N
-100	5	Mocking Cheat Sheet	\N
-100	7	Mocking Reference	\N
-110	11	\N	\N
-110	12	\N	\N
-110	13	\N	\N
-110	14	\N	\N
-110	15	\N	\N
-110	16	\N	\N
-111	1	\N	\N
-111	2	\N	\N
-111	3	\N	\N
-111	4	\N	\N
-111	5	\N	\N
-111	6	\N	\N
-111	7	\N	\N
-111	8	\N	\N
-111	9	\N	\N
-111	10	\N	\N
-111	11	\N	\N
-111	12	\N	\N
-111	13	\N	\N
-112	1	\N	\N
-112	2	\N	\N
-112	3	\N	\N
-112	4	\N	\N
-112	5	\N	\N
-112	6	\N	\N
-112	7	\N	\N
-112	8	\N	\N
-112	9	\N	\N
-112	10	\N	\N
-112	11	\N	\N
-112	12	\N	\N
-112	13	\N	\N
-112	14	\N	\N
-112	15	\N	\N
-112	16	\N	\N
-112	17	\N	\N
-112	18	\N	\N
-112	19	\N	\N
-113	1	\N	\N
-113	2	\N	\N
-113	3	\N	\N
-113	4	\N	\N
-113	5	\N	\N
-115	1	\N	\N
-115	2	\N	\N
-115	3	\N	\N
-115	4	\N	\N
-115	5	\N	\N
-115	6	\N	\N
-115	7	\N	\N
-115	8	\N	\N
-115	9	\N	\N
-115	10	\N	\N
-115	11	\N	\N
-115	12	\N	\N
-115	13	\N	\N
-115	14	\N	\N
-115	15	\N	\N
-115	16	\N	\N
-115	17	\N	\N
-115	18	\N	\N
-115	19	\N	\N
-115	20	\N	\N
-115	21	\N	\N
-115	22	\N	\N
-115	23	\N	\N
-115	24	\N	\N
-115	25	\N	\N
-118	1	\N	\N
-118	2	\N	\N
-118	3	\N	\N
-118	4	\N	\N
-118	5	\N	\N
-118	6	\N	\N
-118	7	\N	\N
-118	8	\N	\N
-118	9	\N	\N
-118	10	\N	\N
-118	11	\N	\N
-118	12	\N	\N
-118	13	\N	\N
-119	1	\N	\N
-119	2	\N	\N
-119	3	\N	\N
-119	4	\N	\N
-119	5	\N	\N
-119	6	\N	\N
-119	7	\N	\N
-119	8	\N	\N
-119	9	\N	\N
-119	10	\N	\N
-119	11	\N	\N
-119	12	\N	\N
-119	13	\N	\N
-119	14	\N	\N
-119	15	\N	\N
-119	16	\N	\N
-119	17	\N	\N
-119	18	\N	\N
-121	1	\N	\N
-122	1	\N	\N
-122	2	\N	\N
-122	3	\N	\N
-122	4	\N	\N
-122	5	\N	\N
-122	6	\N	\N
-122	7	\N	\N
-122	8	\N	\N
-122	9	\N	\N
-122	10	\N	\N
-122	11	\N	\N
-122	12	\N	\N
-122	13	\N	\N
-122	14	\N	\N
-123	1	\N	\N
-123	2	\N	\N
-123	3	\N	\N
-123	4	\N	\N
-123	5	\N	\N
-123	6	\N	\N
-123	7	\N	\N
-123	8	\N	\N
-123	9	\N	\N
-124	1	\N	\N
-124	2	\N	\N
-124	3	\N	\N
-124	4	\N	\N
-124	5	\N	\N
-124	6	\N	\N
-124	7	\N	\N
-124	8	\N	\N
-124	9	\N	\N
-124	10	\N	\N
-124	11	\N	\N
-124	12	\N	\N
-126	1	\N	\N
-125	2	Template Method	\N
-125	3	Command	\N
-125	5	Chain of Responsibility	\N
-125	7	Mediator	\N
-125	8	Visitor	\N
-125	10	State	\N
-125	11	Iterator	\N
-126	2	\N	\N
-126	3	\N	\N
-126	4	\N	\N
-126	5	\N	\N
-126	6	\N	\N
-126	7	\N	\N
-127	1	\N	\N
-127	2	\N	\N
-127	3	\N	\N
-127	4	\N	\N
-127	5	\N	\N
-127	6	\N	\N
-127	7	\N	\N
-127	8	\N	\N
-127	9	\N	\N
-127	10	\N	\N
-127	11	\N	\N
-127	12	\N	\N
-127	13	\N	\N
-127	14	\N	\N
-127	15	\N	\N
-127	16	\N	\N
-127	17	\N	\N
-127	18	\N	\N
-127	19	\N	\N
-127	20	\N	\N
-127	21	\N	\N
-128	1	\N	\N
-128	2	\N	\N
-128	3	\N	\N
-128	4	\N	\N
-128	5	\N	\N
-128	6	\N	\N
-128	7	\N	\N
-116	1	Algorithms and Data Structures Made Easy	https://youtube.com/playlist?list=PL2EF13wm-hWBZxHel48KrVo-R-fG_rpm7
-128	8	\N	\N
-128	9	\N	\N
-128	10	\N	\N
-129	1	\N	\N
-129	2	\N	\N
-129	3	\N	\N
-129	4	\N	\N
-129	5	\N	\N
-129	6	\N	\N
-129	7	\N	\N
-129	8	\N	\N
-129	9	\N	\N
-129	10	\N	\N
-129	11	\N	\N
-129	12	\N	\N
-129	13	\N	\N
-129	14	\N	\N
-129	15	\N	\N
-129	16	\N	\N
-129	17	\N	\N
-129	18	\N	\N
-129	19	\N	\N
-129	20	\N	\N
-129	21	\N	\N
-129	22	\N	\N
-129	23	\N	\N
-129	24	\N	\N
-129	25	\N	\N
-129	26	\N	\N
-129	27	\N	\N
-129	28	\N	\N
-129	29	\N	\N
-129	30	\N	\N
-129	31	\N	\N
-129	32	\N	\N
-129	33	\N	\N
-129	34	\N	\N
-129	35	\N	\N
-129	36	\N	\N
-129	37	\N	\N
-129	38	\N	\N
-129	39	\N	\N
-129	40	\N	\N
-129	41	\N	\N
-129	42	\N	\N
-129	43	\N	\N
-129	44	\N	\N
-129	45	\N	\N
-129	46	\N	\N
-129	47	\N	\N
-130	1	\N	\N
-131	1	\N	\N
-131	2	\N	\N
-131	3	\N	\N
-131	4	\N	\N
-131	5	\N	\N
-131	6	\N	\N
-131	7	\N	\N
-131	8	\N	\N
-132	1	\N	\N
-132	2	\N	\N
-132	3	\N	\N
-132	4	\N	\N
-132	5	\N	\N
-132	6	\N	\N
-132	7	\N	\N
-132	8	\N	\N
-132	9	\N	\N
-132	10	\N	\N
-132	11	\N	\N
-132	12	\N	\N
-132	13	\N	\N
-132	14	\N	\N
-132	15	\N	\N
-132	16	\N	\N
-132	17	\N	\N
-132	18	\N	\N
-132	19	\N	\N
-134	1	\N	\N
-134	2	\N	\N
-134	3	\N	\N
-134	4	\N	\N
-134	5	\N	\N
-134	6	\N	\N
-134	7	\N	\N
-134	8	\N	\N
-134	9	\N	\N
-135	1	\N	\N
-1	1	https://youtu.be/CwYILWyTRMQ	\N
-108	8	2	\N
-125	1	Strategy	\N
-125	4	Memento	\N
-125	6	Observer	\N
-125	9	Interpreter	\N
-108	9	3	\N
-136	1	Fundamental of SELinux Concepts	\N
-137	1	https://youtu.be/Tl6xOw6Au88	\N
-137	2	https://youtu.be/rF3ymTBeZ_k	\N
-137	3	https://youtu.be/clqL--vqToE?feature=shared	\N
-137	4	https://youtu.be/nXJdxxXjkvA	\N
-137	5	https://youtu.be/TLH7tDk6OP4	\N
-137	6	https://youtu.be/XMPeAVx3Cls	\N
-137	7	https://youtu.be/TgoJ51OwSeA	\N
-137	8	https://youtu.be/d-3A3Y2C-Fc?feature=shared	\N
-137	9	https://youtu.be/1h9T3-X_1qQ	\N
-137	10	https://youtu.be/07nVHYb_vV0	\N
-137	11	https://youtu.be/Do4G_es2vm8	\N
-137	12	https://youtu.be/1V5ewUKIM1I	\N
-137	13	https://youtu.be/R8CQjsNYdvY	\N
-137	14	https://youtu.be/KeAkWb4wgsc	\N
-137	15	https://youtu.be/0p4l-rIGTfs	\N
-137	16	https://youtu.be/T-4Q7i6mNeM	\N
-137	17	https://youtu.be/ArquIrMD-0M	\N
-137	18	https://youtu.be/z55PFrvuBqk	\N
-137	19	https://youtu.be/speTBP-NXJo	\N
-138	1	Introduction to Ethical Hacking	\N
-138	2	Building a Penetration Testing Lab	\N
-25	1	Introduction to PostgreSQL	\N
-25	2	Getting to Know Your Cluster	\N
-25	4	Basic Statements	\N
-25	6	Window Functions	\N
-25	9	Partitioning	\N
-25	10	Users, Roles, and Database Security	\N
-25	12	Extending the Database	\N
-25	13	Query Tuning, Indexes, and Performance Optimization	\N
-25	16	Configuration and Monitoring	\N
-25	18	Logical Replication	\N
-137	20	https://youtu.be/D7aDAXWi5SM	\N
-114	1	https://youtu.be/J7fYddslH0Q	\N
-140	1	https://youtu.be/kXe-YkJ9nBs	\N
-106	1	Getting Started with OpenCV	\N
-106	2	An Introduction to the Basics of OpenCV	\N
-106	5	Automated Optical Inspection, Object Segmentation, and Detection	\N
-106	7	Detecting Face Parts and Overlaying Masks	\N
-106	9	Learning Object Tracking	\N
-106	12	Deep Learning with OpenCV	\N
-106	10	Developing Segmentation Algorithms for Text Recognition	\N
-106	4	Delving into Histogram and Filters	\N
-100	1	GoogleTest Primer	\N
-100	2	Advanced Topics	\N
-205	1	\N	\N
-114	2	https://youtu.be/qfKFfQSxvA8	\N
-100	4	Mocking Cookbook	\N
-100	6	Testing Reference	\N
-100	9	Matchers	\N
-100	8	Assertions	\N
-100	10	Actions	\N
-151	1	Installation	\N
-151	2	ftxui	\N
-151	3	ftxui/screen	\N
-151	4	ftxui/dom	\N
-151	5	ftxui/component	\N
-151	6	C++20 Modules	\N
-151	7	POSIX Piped Input in FTXUI	\N
-205	2	\N	\N
-205	3	\N	\N
-205	4	\N	\N
-205	5	\N	\N
-205	6	\N	\N
-205	7	\N	\N
-205	8	\N	\N
-205	9	\N	\N
-205	10	\N	\N
-205	11	\N	\N
-205	12	\N	\N
-205	13	\N	\N
-205	14	\N	\N
-205	15	\N	\N
-205	16	\N	\N
-205	17	\N	\N
-205	18	\N	\N
-205	19	\N	\N
-205	20	\N	\N
-215	1	https://youtu.be/k76LN8dSxx4	\N
-1	2	https://youtu.be/whaPQ5BU2y8	\N
-1	3	https://youtu.be/Hk4fv4dD0UQ	\N
-1	4	https://youtu.be/K5Kg8TOTKjU	\N
-69	1	Chapter 1	\N
-69	3	Chapter 3	\N
-70	2	Chapter 2	\N
-70	3	Chapter 3	\N
-69	4	Chapter 4	\N
-\.
-
-
---
--- Data for Name: sections_activities; Type: TABLE DATA; Schema: flashback; Owner: flashback
---
-
-COPY flashback.sections_activities (id, "user", resource, "position", action, "time") FROM stdin;
-\.
-
-
---
--- Data for Name: sections_cards; Type: TABLE DATA; Schema: flashback; Owner: flashback
---
-
-COPY flashback.sections_cards (resource, section, card, "position") FROM stdin;
+COPY flashback.section_cards (resource, section, card, "position") FROM stdin;
 1	1	1	1
 1	1	2	2
 1	1	3	3
@@ -28139,6 +26288,1857 @@ COPY flashback.sections_cards (resource, section, card, "position") FROM stdin;
 
 
 --
+-- Data for Name: sections; Type: TABLE DATA; Schema: flashback; Owner: flashback
+--
+
+COPY flashback.sections (resource, "position", name, link) FROM stdin;
+14	1	\N	\N
+14	2	\N	\N
+14	3	\N	\N
+14	4	\N	\N
+14	5	\N	\N
+14	6	\N	\N
+14	7	\N	\N
+14	8	\N	\N
+14	9	\N	\N
+14	10	\N	\N
+14	11	\N	\N
+14	12	\N	\N
+14	13	\N	\N
+14	14	\N	\N
+14	15	\N	\N
+14	16	\N	\N
+14	17	\N	\N
+14	18	\N	\N
+14	19	\N	\N
+14	20	\N	\N
+14	21	\N	\N
+14	22	\N	\N
+14	23	\N	\N
+15	1	\N	\N
+15	2	\N	\N
+15	3	\N	\N
+15	4	\N	\N
+15	5	\N	\N
+15	6	\N	\N
+15	7	\N	\N
+15	8	\N	\N
+15	9	\N	\N
+15	10	\N	\N
+15	11	\N	\N
+15	12	\N	\N
+15	13	\N	\N
+17	1	\N	\N
+17	2	\N	\N
+17	3	\N	\N
+17	4	\N	\N
+17	5	\N	\N
+17	6	\N	\N
+17	7	\N	\N
+17	8	\N	\N
+17	9	\N	\N
+17	10	\N	\N
+17	11	\N	\N
+17	12	\N	\N
+17	13	\N	\N
+17	14	\N	\N
+17	15	\N	\N
+17	16	\N	\N
+17	17	\N	\N
+17	18	\N	\N
+17	19	\N	\N
+17	20	\N	\N
+17	21	\N	\N
+18	1	\N	\N
+18	2	\N	\N
+18	3	\N	\N
+18	4	\N	\N
+18	5	\N	\N
+18	6	\N	\N
+18	7	\N	\N
+18	8	\N	\N
+18	9	\N	\N
+18	10	\N	\N
+18	11	\N	\N
+18	12	\N	\N
+18	13	\N	\N
+18	14	\N	\N
+18	15	\N	\N
+18	16	\N	\N
+18	17	\N	\N
+18	18	\N	\N
+18	19	\N	\N
+18	20	\N	\N
+18	21	\N	\N
+18	22	\N	\N
+18	23	\N	\N
+18	24	\N	\N
+18	25	\N	\N
+18	26	\N	\N
+18	27	\N	\N
+18	28	\N	\N
+18	29	\N	\N
+18	30	\N	\N
+18	31	\N	\N
+19	1	\N	\N
+19	2	\N	\N
+19	3	\N	\N
+19	4	\N	\N
+19	5	\N	\N
+19	6	\N	\N
+19	7	\N	\N
+19	8	\N	\N
+19	9	\N	\N
+19	10	\N	\N
+19	11	\N	\N
+20	1	\N	\N
+20	2	\N	\N
+20	3	\N	\N
+20	4	\N	\N
+20	5	\N	\N
+20	6	\N	\N
+21	1	\N	\N
+21	2	\N	\N
+21	3	\N	\N
+21	4	\N	\N
+21	5	\N	\N
+21	6	\N	\N
+21	7	\N	\N
+21	8	\N	\N
+21	9	\N	\N
+21	10	\N	\N
+21	11	\N	\N
+21	12	\N	\N
+21	13	\N	\N
+21	14	\N	\N
+21	15	\N	\N
+21	16	\N	\N
+21	17	\N	\N
+21	18	\N	\N
+21	19	\N	\N
+21	20	\N	\N
+22	1	\N	\N
+22	2	\N	\N
+22	3	\N	\N
+22	4	\N	\N
+22	5	\N	\N
+22	6	\N	\N
+22	7	\N	\N
+22	8	\N	\N
+22	9	\N	\N
+22	10	\N	\N
+22	11	\N	\N
+22	12	\N	\N
+22	13	\N	\N
+22	14	\N	\N
+22	15	\N	\N
+22	16	\N	\N
+22	17	\N	\N
+22	18	\N	\N
+22	19	\N	\N
+22	20	\N	\N
+22	21	\N	\N
+22	22	\N	\N
+22	23	\N	\N
+22	24	\N	\N
+22	25	\N	\N
+22	26	\N	\N
+22	27	\N	\N
+22	28	\N	\N
+22	29	\N	\N
+22	30	\N	\N
+22	31	\N	\N
+22	32	\N	\N
+22	33	\N	\N
+22	34	\N	\N
+23	1	\N	\N
+23	2	\N	\N
+23	3	\N	\N
+23	4	\N	\N
+23	5	\N	\N
+23	6	\N	\N
+23	7	\N	\N
+23	8	\N	\N
+23	9	\N	\N
+23	10	\N	\N
+23	11	\N	\N
+23	12	\N	\N
+23	13	\N	\N
+23	14	\N	\N
+23	15	\N	\N
+23	16	\N	\N
+23	17	\N	\N
+23	18	\N	\N
+23	19	\N	\N
+23	20	\N	\N
+24	1	\N	\N
+24	2	\N	\N
+24	3	\N	\N
+24	4	\N	\N
+24	5	\N	\N
+24	6	\N	\N
+24	7	\N	\N
+24	8	\N	\N
+24	9	\N	\N
+24	10	\N	\N
+24	11	\N	\N
+24	12	\N	\N
+24	13	\N	\N
+24	14	\N	\N
+24	15	\N	\N
+24	16	\N	\N
+24	17	\N	\N
+24	18	\N	\N
+25	3	Manipulating Users and Connections	\N
+25	5	Advanced Statements	\N
+25	7	Server-Side Programming	\N
+25	8	Triggers and Rules	\N
+25	11	Transactions, MVCC, WALs, and Checkpoints	\N
+25	14	Logging and Auditing	\N
+25	15	Backup and Restore	\N
+25	17	Physical Replication	\N
+25	19	Useful Tools and Extensions	\N
+26	1	\N	\N
+26	2	\N	\N
+26	3	\N	\N
+26	4	\N	\N
+26	5	\N	\N
+26	6	\N	\N
+26	7	\N	\N
+26	8	\N	\N
+26	9	\N	\N
+26	10	\N	\N
+26	11	\N	\N
+26	12	\N	\N
+26	13	\N	\N
+26	14	\N	\N
+26	15	\N	\N
+26	16	\N	\N
+27	1	\N	\N
+27	2	\N	\N
+27	3	\N	\N
+27	4	\N	\N
+27	5	\N	\N
+27	6	\N	\N
+27	7	\N	\N
+27	8	\N	\N
+27	9	\N	\N
+27	10	\N	\N
+29	1	\N	\N
+29	2	\N	\N
+29	3	\N	\N
+29	4	\N	\N
+29	5	\N	\N
+29	6	\N	\N
+29	7	\N	\N
+29	8	\N	\N
+29	9	\N	\N
+29	10	\N	\N
+29	11	\N	\N
+29	12	\N	\N
+29	13	\N	\N
+29	14	\N	\N
+29	15	\N	\N
+29	16	\N	\N
+29	17	\N	\N
+29	18	\N	\N
+29	19	\N	\N
+29	20	\N	\N
+29	21	\N	\N
+30	1	\N	\N
+30	2	\N	\N
+30	3	\N	\N
+30	4	\N	\N
+30	5	\N	\N
+30	6	\N	\N
+30	7	\N	\N
+30	8	\N	\N
+30	9	\N	\N
+30	10	\N	\N
+30	11	\N	\N
+30	12	\N	\N
+30	13	\N	\N
+30	14	\N	\N
+30	15	\N	\N
+31	1	\N	\N
+31	2	\N	\N
+31	3	\N	\N
+31	4	\N	\N
+31	5	\N	\N
+31	6	\N	\N
+31	7	\N	\N
+31	8	\N	\N
+31	9	\N	\N
+31	10	\N	\N
+31	11	\N	\N
+31	12	\N	\N
+32	1	\N	\N
+32	2	\N	\N
+32	3	\N	\N
+32	4	\N	\N
+32	5	\N	\N
+32	6	\N	\N
+32	7	\N	\N
+32	8	\N	\N
+32	9	\N	\N
+32	10	\N	\N
+32	11	\N	\N
+32	12	\N	\N
+33	1	\N	\N
+33	2	\N	\N
+33	3	\N	\N
+33	4	\N	\N
+33	5	\N	\N
+33	6	\N	\N
+33	7	\N	\N
+33	8	\N	\N
+33	9	\N	\N
+33	10	\N	\N
+33	11	\N	\N
+33	12	\N	\N
+34	1	\N	\N
+34	2	\N	\N
+34	3	\N	\N
+34	4	\N	\N
+34	5	\N	\N
+34	6	\N	\N
+34	7	\N	\N
+34	8	\N	\N
+34	9	\N	\N
+34	10	\N	\N
+34	11	\N	\N
+34	12	\N	\N
+35	1	\N	\N
+35	2	\N	\N
+35	3	\N	\N
+35	4	\N	\N
+35	5	\N	\N
+35	6	\N	\N
+35	7	\N	\N
+35	8	\N	\N
+35	9	\N	\N
+35	10	\N	\N
+35	11	\N	\N
+35	12	\N	\N
+35	13	\N	\N
+35	14	\N	\N
+35	15	\N	\N
+35	16	\N	\N
+35	17	\N	\N
+35	18	\N	\N
+35	19	\N	\N
+35	20	\N	\N
+35	21	\N	\N
+35	22	\N	\N
+35	23	\N	\N
+35	24	\N	\N
+37	1	\N	\N
+37	2	\N	\N
+37	3	\N	\N
+37	4	\N	\N
+37	5	\N	\N
+37	6	\N	\N
+37	7	\N	\N
+37	8	\N	\N
+37	9	\N	\N
+37	10	\N	\N
+37	11	\N	\N
+37	12	\N	\N
+37	13	\N	\N
+37	14	\N	\N
+37	15	\N	\N
+37	16	\N	\N
+37	17	\N	\N
+37	18	\N	\N
+38	1	\N	\N
+38	2	\N	\N
+38	3	\N	\N
+38	4	\N	\N
+38	5	\N	\N
+38	6	\N	\N
+38	7	\N	\N
+38	8	\N	\N
+38	9	\N	\N
+39	1	\N	\N
+39	2	\N	\N
+39	3	\N	\N
+39	4	\N	\N
+39	5	\N	\N
+39	6	\N	\N
+39	7	\N	\N
+39	8	\N	\N
+39	9	\N	\N
+39	10	\N	\N
+39	11	\N	\N
+40	1	\N	\N
+40	2	\N	\N
+40	3	\N	\N
+40	4	\N	\N
+40	5	\N	\N
+40	6	\N	\N
+40	7	\N	\N
+41	1	\N	\N
+41	2	\N	\N
+41	3	\N	\N
+41	4	\N	\N
+41	5	\N	\N
+41	6	\N	\N
+41	7	\N	\N
+41	8	\N	\N
+41	9	\N	\N
+41	10	\N	\N
+41	11	\N	\N
+41	12	\N	\N
+41	13	\N	\N
+41	14	\N	\N
+41	15	\N	\N
+41	16	\N	\N
+41	17	\N	\N
+41	18	\N	\N
+41	19	\N	\N
+41	20	\N	\N
+41	21	\N	\N
+42	1	\N	\N
+42	2	\N	\N
+42	3	\N	\N
+42	4	\N	\N
+42	5	\N	\N
+42	6	\N	\N
+42	7	\N	\N
+42	8	\N	\N
+42	9	\N	\N
+42	10	\N	\N
+42	11	\N	\N
+42	12	\N	\N
+42	13	\N	\N
+43	1	\N	\N
+43	2	\N	\N
+43	3	\N	\N
+43	4	\N	\N
+43	5	\N	\N
+43	6	\N	\N
+43	7	\N	\N
+43	8	\N	\N
+43	9	\N	\N
+43	10	\N	\N
+43	11	\N	\N
+43	12	\N	\N
+43	13	\N	\N
+43	14	\N	\N
+43	15	\N	\N
+43	16	\N	\N
+43	17	\N	\N
+43	18	\N	\N
+43	19	\N	\N
+43	20	\N	\N
+43	21	\N	\N
+43	22	\N	\N
+43	23	\N	\N
+43	24	\N	\N
+43	25	\N	\N
+43	26	\N	\N
+43	27	\N	\N
+43	28	\N	\N
+43	29	\N	\N
+43	30	\N	\N
+43	31	\N	\N
+43	32	\N	\N
+43	33	\N	\N
+43	34	\N	\N
+43	35	\N	\N
+43	36	\N	\N
+43	37	\N	\N
+43	38	\N	\N
+43	39	\N	\N
+43	40	\N	\N
+43	41	\N	\N
+43	42	\N	\N
+43	43	\N	\N
+44	1	\N	\N
+44	2	\N	\N
+44	3	\N	\N
+44	4	\N	\N
+44	5	\N	\N
+44	6	\N	\N
+44	7	\N	\N
+44	8	\N	\N
+44	9	\N	\N
+44	10	\N	\N
+44	11	\N	\N
+44	12	\N	\N
+44	13	\N	\N
+44	14	\N	\N
+45	1	\N	\N
+45	2	\N	\N
+45	3	\N	\N
+45	4	\N	\N
+45	5	\N	\N
+45	6	\N	\N
+45	7	\N	\N
+45	8	\N	\N
+45	9	\N	\N
+45	10	\N	\N
+45	11	\N	\N
+45	12	\N	\N
+45	13	\N	\N
+45	14	\N	\N
+45	15	\N	\N
+45	16	\N	\N
+46	1	\N	\N
+46	2	\N	\N
+46	3	\N	\N
+46	4	\N	\N
+46	5	\N	\N
+46	6	\N	\N
+46	7	\N	\N
+46	8	\N	\N
+46	9	\N	\N
+46	10	\N	\N
+46	11	\N	\N
+46	12	\N	\N
+46	13	\N	\N
+46	14	\N	\N
+46	15	\N	\N
+46	16	\N	\N
+46	17	\N	\N
+46	18	\N	\N
+46	19	\N	\N
+46	20	\N	\N
+46	21	\N	\N
+46	22	\N	\N
+46	23	\N	\N
+46	24	\N	\N
+46	25	\N	\N
+46	26	\N	\N
+46	27	\N	\N
+46	28	\N	\N
+46	29	\N	\N
+46	30	\N	\N
+46	31	\N	\N
+46	32	\N	\N
+46	33	\N	\N
+46	34	\N	\N
+46	35	\N	\N
+46	36	\N	\N
+46	37	\N	\N
+46	38	\N	\N
+46	39	\N	\N
+46	40	\N	\N
+46	41	\N	\N
+46	42	\N	\N
+46	43	\N	\N
+46	44	\N	\N
+46	45	\N	\N
+46	46	\N	\N
+46	47	\N	\N
+46	48	\N	\N
+46	49	\N	\N
+46	50	\N	\N
+46	51	\N	\N
+46	52	\N	\N
+46	53	\N	\N
+46	54	\N	\N
+46	55	\N	\N
+46	56	\N	\N
+46	57	\N	\N
+46	58	\N	\N
+46	59	\N	\N
+46	60	\N	\N
+46	61	\N	\N
+46	62	\N	\N
+46	63	\N	\N
+46	64	\N	\N
+47	1	\N	\N
+47	2	\N	\N
+47	3	\N	\N
+47	4	\N	\N
+47	5	\N	\N
+47	6	\N	\N
+47	7	\N	\N
+47	8	\N	\N
+47	9	\N	\N
+47	10	\N	\N
+47	11	\N	\N
+47	12	\N	\N
+47	13	\N	\N
+47	14	\N	\N
+47	15	\N	\N
+47	16	\N	\N
+49	1	\N	\N
+49	2	\N	\N
+49	3	\N	\N
+49	4	\N	\N
+49	5	\N	\N
+49	6	\N	\N
+49	7	\N	\N
+49	8	\N	\N
+49	9	\N	\N
+49	10	\N	\N
+49	11	\N	\N
+49	12	\N	\N
+50	1	\N	\N
+50	2	\N	\N
+50	3	\N	\N
+50	4	\N	\N
+50	5	\N	\N
+50	6	\N	\N
+50	7	\N	\N
+50	8	\N	\N
+50	9	\N	\N
+50	10	\N	\N
+50	11	\N	\N
+50	12	\N	\N
+50	13	\N	\N
+50	14	\N	\N
+50	15	\N	\N
+50	16	\N	\N
+50	17	\N	\N
+50	18	\N	\N
+50	19	\N	\N
+50	20	\N	\N
+50	21	\N	\N
+50	22	\N	\N
+50	23	\N	\N
+51	1	\N	\N
+51	2	\N	\N
+51	3	\N	\N
+51	4	\N	\N
+51	5	\N	\N
+51	6	\N	\N
+51	7	\N	\N
+51	8	\N	\N
+51	9	\N	\N
+51	10	\N	\N
+51	11	\N	\N
+51	12	\N	\N
+51	13	\N	\N
+51	14	\N	\N
+52	1	\N	\N
+52	2	\N	\N
+52	3	\N	\N
+52	4	\N	\N
+52	5	\N	\N
+52	6	\N	\N
+52	7	\N	\N
+52	8	\N	\N
+52	9	\N	\N
+52	10	\N	\N
+52	11	\N	\N
+52	12	\N	\N
+52	13	\N	\N
+52	14	\N	\N
+52	15	\N	\N
+52	16	\N	\N
+52	17	\N	\N
+52	18	\N	\N
+52	19	\N	\N
+52	20	\N	\N
+52	21	\N	\N
+52	22	\N	\N
+52	23	\N	\N
+52	24	\N	\N
+52	25	\N	\N
+52	26	\N	\N
+52	27	\N	\N
+53	1	\N	\N
+53	2	\N	\N
+53	3	\N	\N
+53	4	\N	\N
+53	5	\N	\N
+53	6	\N	\N
+53	7	\N	\N
+53	8	\N	\N
+53	9	\N	\N
+53	10	\N	\N
+53	11	\N	\N
+53	12	\N	\N
+53	13	\N	\N
+53	14	\N	\N
+53	15	\N	\N
+53	16	\N	\N
+53	17	\N	\N
+53	18	\N	\N
+53	19	\N	\N
+53	20	\N	\N
+53	21	\N	\N
+53	22	\N	\N
+53	23	\N	\N
+53	24	\N	\N
+53	25	\N	\N
+54	1	\N	\N
+54	2	\N	\N
+54	3	\N	\N
+54	4	\N	\N
+54	5	\N	\N
+54	6	\N	\N
+54	7	\N	\N
+54	8	\N	\N
+54	9	\N	\N
+54	10	\N	\N
+54	11	\N	\N
+54	12	\N	\N
+54	13	\N	\N
+54	14	\N	\N
+54	15	\N	\N
+54	16	\N	\N
+54	17	\N	\N
+54	18	\N	\N
+54	19	\N	\N
+55	1	\N	\N
+55	2	\N	\N
+55	3	\N	\N
+55	4	\N	\N
+55	5	\N	\N
+55	6	\N	\N
+55	7	\N	\N
+55	8	\N	\N
+55	9	\N	\N
+55	10	\N	\N
+55	11	\N	\N
+55	12	\N	\N
+55	13	\N	\N
+55	14	\N	\N
+55	15	\N	\N
+55	16	\N	\N
+56	1	\N	\N
+56	2	\N	\N
+56	3	\N	\N
+56	4	\N	\N
+56	5	\N	\N
+56	6	\N	\N
+56	7	\N	\N
+56	8	\N	\N
+56	9	\N	\N
+56	10	\N	\N
+56	11	\N	\N
+56	12	\N	\N
+57	1	\N	\N
+57	2	\N	\N
+57	3	\N	\N
+57	4	\N	\N
+57	5	\N	\N
+57	6	\N	\N
+57	7	\N	\N
+57	8	\N	\N
+57	9	\N	\N
+57	10	\N	\N
+57	11	\N	\N
+57	12	\N	\N
+58	1	\N	\N
+58	2	\N	\N
+58	3	\N	\N
+58	4	\N	\N
+58	5	\N	\N
+58	6	\N	\N
+58	7	\N	\N
+58	8	\N	\N
+58	9	\N	\N
+58	10	\N	\N
+58	11	\N	\N
+58	12	\N	\N
+58	13	\N	\N
+58	14	\N	\N
+58	15	\N	\N
+58	16	\N	\N
+58	17	\N	\N
+59	1	\N	\N
+59	2	\N	\N
+59	3	\N	\N
+59	4	\N	\N
+59	5	\N	\N
+59	6	\N	\N
+59	7	\N	\N
+59	8	\N	\N
+59	9	\N	\N
+59	10	\N	\N
+59	11	\N	\N
+59	12	\N	\N
+59	13	\N	\N
+60	1	\N	\N
+60	2	\N	\N
+60	3	\N	\N
+60	4	\N	\N
+60	5	\N	\N
+60	6	\N	\N
+60	7	\N	\N
+60	8	\N	\N
+60	9	\N	\N
+60	10	\N	\N
+60	11	\N	\N
+60	12	\N	\N
+60	13	\N	\N
+60	14	\N	\N
+60	15	\N	\N
+60	16	\N	\N
+60	17	\N	\N
+60	18	\N	\N
+60	19	\N	\N
+60	20	\N	\N
+60	21	\N	\N
+60	22	\N	\N
+61	1	\N	\N
+61	2	\N	\N
+61	3	\N	\N
+61	4	\N	\N
+61	5	\N	\N
+61	6	\N	\N
+62	1	\N	\N
+62	2	\N	\N
+62	3	\N	\N
+62	4	\N	\N
+62	5	\N	\N
+62	6	\N	\N
+62	7	\N	\N
+62	8	\N	\N
+62	9	\N	\N
+62	10	\N	\N
+62	11	\N	\N
+62	12	\N	\N
+62	13	\N	\N
+62	14	\N	\N
+62	15	\N	\N
+62	16	\N	\N
+62	17	\N	\N
+62	18	\N	\N
+62	19	\N	\N
+62	20	\N	\N
+62	21	\N	\N
+62	22	\N	\N
+62	23	\N	\N
+62	24	\N	\N
+62	25	\N	\N
+62	26	\N	\N
+62	27	\N	\N
+62	28	\N	\N
+62	29	\N	\N
+63	1	\N	\N
+64	1	\N	\N
+64	2	\N	\N
+64	3	\N	\N
+64	4	\N	\N
+64	5	\N	\N
+64	6	\N	\N
+64	7	\N	\N
+64	8	\N	\N
+64	9	\N	\N
+64	10	\N	\N
+64	11	\N	\N
+64	12	\N	\N
+64	13	\N	\N
+64	14	\N	\N
+65	1	\N	\N
+65	2	\N	\N
+65	3	\N	\N
+65	4	\N	\N
+65	5	\N	\N
+65	6	\N	\N
+65	7	\N	\N
+65	8	\N	\N
+65	9	\N	\N
+65	10	\N	\N
+65	11	\N	\N
+65	12	\N	\N
+65	13	\N	\N
+65	14	\N	\N
+65	15	\N	\N
+65	16	\N	\N
+65	17	\N	\N
+66	1	\N	\N
+66	2	\N	\N
+66	3	\N	\N
+66	4	\N	\N
+66	5	\N	\N
+66	6	\N	\N
+66	7	\N	\N
+66	8	\N	\N
+66	9	\N	\N
+66	10	\N	\N
+66	11	\N	\N
+66	12	\N	\N
+66	13	\N	\N
+66	14	\N	\N
+66	15	\N	\N
+66	16	\N	\N
+66	17	\N	\N
+66	18	\N	\N
+66	19	\N	\N
+66	20	\N	\N
+66	21	\N	\N
+66	22	\N	\N
+66	23	\N	\N
+66	24	\N	\N
+66	25	\N	\N
+66	26	\N	\N
+66	27	\N	\N
+66	28	\N	\N
+66	29	\N	\N
+66	30	\N	\N
+66	31	\N	\N
+66	32	\N	\N
+66	33	\N	\N
+66	34	\N	\N
+66	35	\N	\N
+66	36	\N	\N
+66	37	\N	\N
+66	38	\N	\N
+66	39	\N	\N
+66	40	\N	\N
+66	41	\N	\N
+66	42	\N	\N
+66	43	\N	\N
+66	44	\N	\N
+67	1	\N	\N
+67	2	\N	\N
+67	3	\N	\N
+67	4	\N	\N
+67	5	\N	\N
+67	6	\N	\N
+67	7	\N	\N
+67	8	\N	\N
+67	9	\N	\N
+67	10	\N	\N
+67	11	\N	\N
+67	12	\N	\N
+67	13	\N	\N
+67	14	\N	\N
+67	15	\N	\N
+67	16	\N	\N
+68	1	\N	\N
+68	2	\N	\N
+68	3	\N	\N
+68	4	\N	\N
+68	5	\N	\N
+68	6	\N	\N
+68	7	\N	\N
+68	8	\N	\N
+68	9	\N	\N
+68	10	\N	\N
+68	11	\N	\N
+68	12	\N	\N
+68	13	\N	\N
+68	14	\N	\N
+68	15	\N	\N
+68	16	\N	\N
+68	17	\N	\N
+68	18	\N	\N
+68	19	\N	\N
+68	20	\N	\N
+68	21	\N	\N
+68	22	\N	\N
+68	23	\N	\N
+68	24	\N	\N
+68	25	\N	\N
+68	26	\N	\N
+68	27	\N	\N
+68	28	\N	\N
+68	29	\N	\N
+68	30	\N	\N
+68	31	\N	\N
+68	32	\N	\N
+68	33	\N	\N
+68	34	\N	\N
+68	35	\N	\N
+68	36	\N	\N
+68	37	\N	\N
+68	38	\N	\N
+68	39	\N	\N
+68	40	\N	\N
+68	41	\N	\N
+68	42	\N	\N
+68	43	\N	\N
+68	44	\N	\N
+68	45	\N	\N
+68	46	\N	\N
+68	47	\N	\N
+68	48	\N	\N
+68	49	\N	\N
+68	50	\N	\N
+68	51	\N	\N
+71	1	\N	\N
+71	2	\N	\N
+71	3	\N	\N
+71	4	\N	\N
+71	5	\N	\N
+71	6	\N	\N
+71	7	\N	\N
+71	8	\N	\N
+71	9	\N	\N
+71	10	\N	\N
+71	11	\N	\N
+72	1	\N	\N
+72	2	\N	\N
+72	3	\N	\N
+72	4	\N	\N
+72	5	\N	\N
+72	6	\N	\N
+72	7	\N	\N
+72	8	\N	\N
+72	9	\N	\N
+72	10	\N	\N
+72	11	\N	\N
+72	12	\N	\N
+72	13	\N	\N
+72	14	\N	\N
+72	15	\N	\N
+72	16	\N	\N
+72	17	\N	\N
+72	18	\N	\N
+72	19	\N	\N
+72	20	\N	\N
+72	21	\N	\N
+72	22	\N	\N
+72	23	\N	\N
+72	24	\N	\N
+72	25	\N	\N
+72	26	\N	\N
+72	27	\N	\N
+72	28	\N	\N
+72	29	\N	\N
+72	30	\N	\N
+72	31	\N	\N
+72	32	\N	\N
+72	33	\N	\N
+72	34	\N	\N
+72	35	\N	\N
+72	36	\N	\N
+74	1	\N	\N
+74	2	\N	\N
+74	3	\N	\N
+74	4	\N	\N
+74	5	\N	\N
+74	6	\N	\N
+74	7	\N	\N
+74	8	\N	\N
+74	9	\N	\N
+74	10	\N	\N
+74	11	\N	\N
+74	12	\N	\N
+74	13	\N	\N
+74	14	\N	\N
+74	15	\N	\N
+74	16	\N	\N
+74	17	\N	\N
+74	18	\N	\N
+74	19	\N	\N
+74	20	\N	\N
+74	21	\N	\N
+75	1	\N	\N
+75	2	\N	\N
+75	3	\N	\N
+75	4	\N	\N
+75	5	\N	\N
+75	6	\N	\N
+75	7	\N	\N
+75	8	\N	\N
+75	9	\N	\N
+75	10	\N	\N
+75	11	\N	\N
+75	12	\N	\N
+76	1	\N	\N
+76	2	\N	\N
+76	3	\N	\N
+76	4	\N	\N
+76	5	\N	\N
+76	6	\N	\N
+76	7	\N	\N
+76	8	\N	\N
+76	9	\N	\N
+76	10	\N	\N
+76	11	\N	\N
+76	12	\N	\N
+76	13	\N	\N
+76	14	\N	\N
+77	1	\N	\N
+77	2	\N	\N
+77	3	\N	\N
+77	4	\N	\N
+77	5	\N	\N
+77	6	\N	\N
+77	7	\N	\N
+77	8	\N	\N
+77	9	\N	\N
+77	10	\N	\N
+77	11	\N	\N
+77	12	\N	\N
+77	13	\N	\N
+77	14	\N	\N
+77	15	\N	\N
+77	16	\N	\N
+77	17	\N	\N
+77	18	\N	\N
+77	19	\N	\N
+77	20	\N	\N
+77	21	\N	\N
+78	1	\N	\N
+78	2	\N	\N
+78	3	\N	\N
+78	4	\N	\N
+78	5	\N	\N
+78	6	\N	\N
+78	7	\N	\N
+78	8	\N	\N
+78	9	\N	\N
+78	10	\N	\N
+78	11	\N	\N
+78	12	\N	\N
+78	13	\N	\N
+78	14	\N	\N
+78	15	\N	\N
+78	16	\N	\N
+78	17	\N	\N
+78	18	\N	\N
+78	19	\N	\N
+78	20	\N	\N
+78	21	\N	\N
+78	22	\N	\N
+78	23	\N	\N
+78	24	\N	\N
+78	25	\N	\N
+78	26	\N	\N
+78	27	\N	\N
+78	28	\N	\N
+78	29	\N	\N
+78	30	\N	\N
+78	31	\N	\N
+78	32	\N	\N
+78	33	\N	\N
+78	34	\N	\N
+78	35	\N	\N
+78	36	\N	\N
+78	37	\N	\N
+78	38	\N	\N
+78	39	\N	\N
+69	2	Chapter 2	\N
+70	1	Chapter 1	\N
+78	40	\N	\N
+78	41	\N	\N
+78	42	\N	\N
+78	43	\N	\N
+78	44	\N	\N
+78	45	\N	\N
+78	46	\N	\N
+78	47	\N	\N
+79	1	\N	\N
+79	2	\N	\N
+79	3	\N	\N
+79	4	\N	\N
+79	5	\N	\N
+79	6	\N	\N
+79	7	\N	\N
+79	8	\N	\N
+79	9	\N	\N
+79	10	\N	\N
+79	11	\N	\N
+79	12	\N	\N
+81	1	\N	\N
+81	2	\N	\N
+81	3	\N	\N
+81	4	\N	\N
+81	5	\N	\N
+81	6	\N	\N
+81	7	\N	\N
+81	8	\N	\N
+81	9	\N	\N
+81	10	\N	\N
+81	11	\N	\N
+81	12	\N	\N
+81	13	\N	\N
+82	1	\N	\N
+82	2	\N	\N
+82	3	\N	\N
+82	4	\N	\N
+82	5	\N	\N
+82	6	\N	\N
+82	7	\N	\N
+82	8	\N	\N
+82	9	\N	\N
+82	10	\N	\N
+82	11	\N	\N
+82	12	\N	\N
+82	13	\N	\N
+82	14	\N	\N
+82	15	\N	\N
+82	16	\N	\N
+82	17	\N	\N
+82	18	\N	\N
+82	19	\N	\N
+82	20	\N	\N
+83	1	\N	\N
+83	2	\N	\N
+83	3	\N	\N
+83	4	\N	\N
+83	5	\N	\N
+83	6	\N	\N
+83	7	\N	\N
+83	8	\N	\N
+83	9	\N	\N
+83	10	\N	\N
+83	11	\N	\N
+83	12	\N	\N
+84	1	\N	\N
+84	2	\N	\N
+84	3	\N	\N
+84	4	\N	\N
+84	5	\N	\N
+84	6	\N	\N
+84	7	\N	\N
+84	8	\N	\N
+84	9	\N	\N
+84	10	\N	\N
+84	11	\N	\N
+84	12	\N	\N
+84	13	\N	\N
+84	14	\N	\N
+84	15	\N	\N
+84	16	\N	\N
+84	17	\N	\N
+85	1	\N	\N
+85	2	\N	\N
+85	3	\N	\N
+85	4	\N	\N
+85	5	\N	\N
+85	6	\N	\N
+85	7	\N	\N
+85	8	\N	\N
+85	9	\N	\N
+85	10	\N	\N
+85	11	\N	\N
+85	12	\N	\N
+85	13	\N	\N
+85	14	\N	\N
+85	15	\N	\N
+85	16	\N	\N
+85	17	\N	\N
+86	1	\N	\N
+86	2	\N	\N
+86	3	\N	\N
+86	4	\N	\N
+86	5	\N	\N
+86	6	\N	\N
+86	7	\N	\N
+86	8	\N	\N
+86	9	\N	\N
+86	10	\N	\N
+86	11	\N	\N
+86	12	\N	\N
+86	13	\N	\N
+86	14	\N	\N
+86	15	\N	\N
+86	16	\N	\N
+86	17	\N	\N
+86	18	\N	\N
+86	19	\N	\N
+86	20	\N	\N
+87	1	\N	\N
+87	2	\N	\N
+87	3	\N	\N
+87	4	\N	\N
+87	5	\N	\N
+87	6	\N	\N
+87	7	\N	\N
+87	8	\N	\N
+87	9	\N	\N
+87	10	\N	\N
+87	11	\N	\N
+87	12	\N	\N
+87	13	\N	\N
+87	14	\N	\N
+87	15	\N	\N
+88	1	\N	\N
+88	2	\N	\N
+88	3	\N	\N
+88	4	\N	\N
+88	5	\N	\N
+88	6	\N	\N
+88	7	\N	\N
+88	8	\N	\N
+88	9	\N	\N
+88	10	\N	\N
+88	11	\N	\N
+88	12	\N	\N
+88	13	\N	\N
+88	14	\N	\N
+88	15	\N	\N
+89	1	\N	\N
+90	1	\N	\N
+90	2	\N	\N
+90	3	\N	\N
+90	4	\N	\N
+90	5	\N	\N
+90	6	\N	\N
+90	7	\N	\N
+90	8	\N	\N
+90	9	\N	\N
+90	10	\N	\N
+90	11	\N	\N
+90	12	\N	\N
+90	13	\N	\N
+90	14	\N	\N
+90	15	\N	\N
+91	1	\N	\N
+92	1	\N	\N
+92	2	\N	\N
+92	3	\N	\N
+92	4	\N	\N
+92	5	\N	\N
+92	6	\N	\N
+92	7	\N	\N
+92	8	\N	\N
+92	9	\N	\N
+92	10	\N	\N
+92	11	\N	\N
+93	1	\N	\N
+93	2	\N	\N
+93	3	\N	\N
+93	4	\N	\N
+93	5	\N	\N
+93	6	\N	\N
+93	7	\N	\N
+94	1	\N	\N
+95	1	\N	\N
+95	2	\N	\N
+95	3	\N	\N
+95	4	\N	\N
+95	5	\N	\N
+95	6	\N	\N
+95	7	\N	\N
+95	8	\N	\N
+95	9	\N	\N
+95	10	\N	\N
+95	11	\N	\N
+95	12	\N	\N
+95	13	\N	\N
+95	14	\N	\N
+95	15	\N	\N
+95	16	\N	\N
+95	17	\N	\N
+95	18	\N	\N
+95	19	\N	\N
+95	20	\N	\N
+95	21	\N	\N
+95	22	\N	\N
+95	23	\N	\N
+95	24	\N	\N
+95	25	\N	\N
+95	26	\N	\N
+95	27	\N	\N
+95	28	\N	\N
+96	1	\N	\N
+96	2	\N	\N
+96	3	\N	\N
+96	4	\N	\N
+96	5	\N	\N
+96	6	\N	\N
+96	7	\N	\N
+96	8	\N	\N
+96	9	\N	\N
+96	10	\N	\N
+96	11	\N	\N
+96	12	\N	\N
+96	13	\N	\N
+96	14	\N	\N
+96	15	\N	\N
+96	16	\N	\N
+96	17	\N	\N
+96	18	\N	\N
+97	1	\N	\N
+97	2	\N	\N
+97	3	\N	\N
+97	4	\N	\N
+97	5	\N	\N
+98	1	\N	\N
+98	2	\N	\N
+98	3	\N	\N
+98	4	\N	\N
+98	5	\N	\N
+98	6	\N	\N
+98	7	\N	\N
+98	8	\N	\N
+98	9	\N	\N
+98	10	\N	\N
+98	11	\N	\N
+98	12	\N	\N
+98	13	\N	\N
+98	14	\N	\N
+98	15	\N	\N
+98	16	\N	\N
+98	17	\N	\N
+98	18	\N	\N
+98	19	\N	\N
+98	20	\N	\N
+99	1	\N	\N
+101	1	\N	\N
+101	2	\N	\N
+101	3	\N	\N
+101	4	\N	\N
+101	5	\N	\N
+101	6	\N	\N
+101	7	\N	\N
+101	8	\N	\N
+101	9	\N	\N
+101	10	\N	\N
+101	11	\N	\N
+101	12	\N	\N
+101	13	\N	\N
+101	14	\N	\N
+102	1	\N	\N
+102	2	\N	\N
+102	3	\N	\N
+102	4	\N	\N
+102	5	\N	\N
+102	6	\N	\N
+102	7	\N	\N
+102	8	\N	\N
+102	9	\N	\N
+102	10	\N	\N
+102	11	\N	\N
+102	12	\N	\N
+103	1	\N	\N
+103	2	\N	\N
+103	3	\N	\N
+103	4	\N	\N
+103	5	\N	\N
+103	6	\N	\N
+104	1	\N	\N
+104	2	\N	\N
+104	3	\N	\N
+104	4	\N	\N
+104	5	\N	\N
+104	6	\N	\N
+104	7	\N	\N
+104	8	\N	\N
+104	9	\N	\N
+104	10	\N	\N
+104	11	\N	\N
+104	12	\N	\N
+104	13	\N	\N
+105	1	\N	\N
+105	2	\N	\N
+105	3	\N	\N
+105	4	\N	\N
+105	5	\N	\N
+105	6	\N	\N
+105	7	\N	\N
+107	1	\N	\N
+107	2	\N	\N
+107	3	\N	\N
+107	4	\N	\N
+107	5	\N	\N
+107	6	\N	\N
+107	7	\N	\N
+107	8	\N	\N
+107	9	\N	\N
+107	10	\N	\N
+107	11	\N	\N
+107	12	\N	\N
+107	13	\N	\N
+108	1	\N	\N
+108	2	\N	\N
+108	3	\N	\N
+108	4	\N	\N
+108	5	\N	\N
+108	6	\N	\N
+108	7	\N	\N
+109	1	\N	\N
+109	2	\N	\N
+109	3	\N	\N
+109	4	\N	\N
+109	5	\N	\N
+109	6	\N	\N
+109	7	\N	\N
+109	8	\N	\N
+109	9	\N	\N
+109	10	\N	\N
+109	11	\N	\N
+110	1	\N	\N
+110	2	\N	\N
+110	3	\N	\N
+110	4	\N	\N
+110	5	\N	\N
+110	6	\N	\N
+106	3	Learning Graphical User Interfaces	\N
+106	6	Learning Object Classification	\N
+106	8	Video Surveillance, Background Modeling, and Morphological Operations	\N
+106	11	Text Recognition with Tesseract	\N
+110	7	\N	\N
+110	8	\N	\N
+110	9	\N	\N
+110	10	\N	\N
+100	3	Mocking for Dummies	\N
+100	5	Mocking Cheat Sheet	\N
+100	7	Mocking Reference	\N
+110	11	\N	\N
+110	12	\N	\N
+110	13	\N	\N
+110	14	\N	\N
+110	15	\N	\N
+110	16	\N	\N
+111	1	\N	\N
+111	2	\N	\N
+111	3	\N	\N
+111	4	\N	\N
+111	5	\N	\N
+111	6	\N	\N
+111	7	\N	\N
+111	8	\N	\N
+111	9	\N	\N
+111	10	\N	\N
+111	11	\N	\N
+111	12	\N	\N
+111	13	\N	\N
+112	1	\N	\N
+112	2	\N	\N
+112	3	\N	\N
+112	4	\N	\N
+112	5	\N	\N
+112	6	\N	\N
+112	7	\N	\N
+112	8	\N	\N
+112	9	\N	\N
+112	10	\N	\N
+112	11	\N	\N
+112	12	\N	\N
+112	13	\N	\N
+112	14	\N	\N
+112	15	\N	\N
+112	16	\N	\N
+112	17	\N	\N
+112	18	\N	\N
+112	19	\N	\N
+113	1	\N	\N
+113	2	\N	\N
+113	3	\N	\N
+113	4	\N	\N
+113	5	\N	\N
+115	1	\N	\N
+115	2	\N	\N
+115	3	\N	\N
+115	4	\N	\N
+115	5	\N	\N
+115	6	\N	\N
+115	7	\N	\N
+115	8	\N	\N
+115	9	\N	\N
+115	10	\N	\N
+115	11	\N	\N
+115	12	\N	\N
+115	13	\N	\N
+115	14	\N	\N
+115	15	\N	\N
+115	16	\N	\N
+115	17	\N	\N
+115	18	\N	\N
+115	19	\N	\N
+115	20	\N	\N
+115	21	\N	\N
+115	22	\N	\N
+115	23	\N	\N
+115	24	\N	\N
+115	25	\N	\N
+118	1	\N	\N
+118	2	\N	\N
+118	3	\N	\N
+118	4	\N	\N
+118	5	\N	\N
+118	6	\N	\N
+118	7	\N	\N
+118	8	\N	\N
+118	9	\N	\N
+118	10	\N	\N
+118	11	\N	\N
+118	12	\N	\N
+118	13	\N	\N
+119	1	\N	\N
+119	2	\N	\N
+119	3	\N	\N
+119	4	\N	\N
+119	5	\N	\N
+119	6	\N	\N
+119	7	\N	\N
+119	8	\N	\N
+119	9	\N	\N
+119	10	\N	\N
+119	11	\N	\N
+119	12	\N	\N
+119	13	\N	\N
+119	14	\N	\N
+119	15	\N	\N
+119	16	\N	\N
+119	17	\N	\N
+119	18	\N	\N
+121	1	\N	\N
+122	1	\N	\N
+122	2	\N	\N
+122	3	\N	\N
+122	4	\N	\N
+122	5	\N	\N
+122	6	\N	\N
+122	7	\N	\N
+122	8	\N	\N
+122	9	\N	\N
+122	10	\N	\N
+122	11	\N	\N
+122	12	\N	\N
+122	13	\N	\N
+122	14	\N	\N
+123	1	\N	\N
+123	2	\N	\N
+123	3	\N	\N
+123	4	\N	\N
+123	5	\N	\N
+123	6	\N	\N
+123	7	\N	\N
+123	8	\N	\N
+123	9	\N	\N
+124	1	\N	\N
+124	2	\N	\N
+124	3	\N	\N
+124	4	\N	\N
+124	5	\N	\N
+124	6	\N	\N
+124	7	\N	\N
+124	8	\N	\N
+124	9	\N	\N
+124	10	\N	\N
+124	11	\N	\N
+124	12	\N	\N
+126	1	\N	\N
+125	2	Template Method	\N
+125	3	Command	\N
+125	5	Chain of Responsibility	\N
+125	7	Mediator	\N
+125	8	Visitor	\N
+125	10	State	\N
+125	11	Iterator	\N
+126	2	\N	\N
+126	3	\N	\N
+126	4	\N	\N
+126	5	\N	\N
+126	6	\N	\N
+126	7	\N	\N
+127	1	\N	\N
+127	2	\N	\N
+127	3	\N	\N
+127	4	\N	\N
+127	5	\N	\N
+127	6	\N	\N
+127	7	\N	\N
+127	8	\N	\N
+127	9	\N	\N
+127	10	\N	\N
+127	11	\N	\N
+127	12	\N	\N
+127	13	\N	\N
+127	14	\N	\N
+127	15	\N	\N
+127	16	\N	\N
+127	17	\N	\N
+127	18	\N	\N
+127	19	\N	\N
+127	20	\N	\N
+127	21	\N	\N
+128	1	\N	\N
+128	2	\N	\N
+128	3	\N	\N
+128	4	\N	\N
+128	5	\N	\N
+128	6	\N	\N
+128	7	\N	\N
+116	1	Algorithms and Data Structures Made Easy	https://youtube.com/playlist?list=PL2EF13wm-hWBZxHel48KrVo-R-fG_rpm7
+128	8	\N	\N
+128	9	\N	\N
+128	10	\N	\N
+129	1	\N	\N
+129	2	\N	\N
+129	3	\N	\N
+129	4	\N	\N
+129	5	\N	\N
+129	6	\N	\N
+129	7	\N	\N
+129	8	\N	\N
+129	9	\N	\N
+129	10	\N	\N
+129	11	\N	\N
+129	12	\N	\N
+129	13	\N	\N
+129	14	\N	\N
+129	15	\N	\N
+129	16	\N	\N
+129	17	\N	\N
+129	18	\N	\N
+129	19	\N	\N
+129	20	\N	\N
+129	21	\N	\N
+129	22	\N	\N
+129	23	\N	\N
+129	24	\N	\N
+129	25	\N	\N
+129	26	\N	\N
+129	27	\N	\N
+129	28	\N	\N
+129	29	\N	\N
+129	30	\N	\N
+129	31	\N	\N
+129	32	\N	\N
+129	33	\N	\N
+129	34	\N	\N
+129	35	\N	\N
+129	36	\N	\N
+129	37	\N	\N
+129	38	\N	\N
+129	39	\N	\N
+129	40	\N	\N
+129	41	\N	\N
+129	42	\N	\N
+129	43	\N	\N
+129	44	\N	\N
+129	45	\N	\N
+129	46	\N	\N
+129	47	\N	\N
+130	1	\N	\N
+131	1	\N	\N
+131	2	\N	\N
+131	3	\N	\N
+131	4	\N	\N
+131	5	\N	\N
+131	6	\N	\N
+131	7	\N	\N
+131	8	\N	\N
+132	1	\N	\N
+132	2	\N	\N
+132	3	\N	\N
+132	4	\N	\N
+132	5	\N	\N
+132	6	\N	\N
+132	7	\N	\N
+132	8	\N	\N
+132	9	\N	\N
+132	10	\N	\N
+132	11	\N	\N
+132	12	\N	\N
+132	13	\N	\N
+132	14	\N	\N
+132	15	\N	\N
+132	16	\N	\N
+132	17	\N	\N
+132	18	\N	\N
+132	19	\N	\N
+134	1	\N	\N
+134	2	\N	\N
+134	3	\N	\N
+134	4	\N	\N
+134	5	\N	\N
+134	6	\N	\N
+134	7	\N	\N
+134	8	\N	\N
+134	9	\N	\N
+135	1	\N	\N
+1	1	https://youtu.be/CwYILWyTRMQ	\N
+108	8	2	\N
+125	1	Strategy	\N
+125	4	Memento	\N
+125	6	Observer	\N
+125	9	Interpreter	\N
+108	9	3	\N
+136	1	Fundamental of SELinux Concepts	\N
+137	1	https://youtu.be/Tl6xOw6Au88	\N
+137	2	https://youtu.be/rF3ymTBeZ_k	\N
+137	3	https://youtu.be/clqL--vqToE?feature=shared	\N
+137	4	https://youtu.be/nXJdxxXjkvA	\N
+137	5	https://youtu.be/TLH7tDk6OP4	\N
+137	6	https://youtu.be/XMPeAVx3Cls	\N
+137	7	https://youtu.be/TgoJ51OwSeA	\N
+137	8	https://youtu.be/d-3A3Y2C-Fc?feature=shared	\N
+137	9	https://youtu.be/1h9T3-X_1qQ	\N
+137	10	https://youtu.be/07nVHYb_vV0	\N
+137	11	https://youtu.be/Do4G_es2vm8	\N
+137	12	https://youtu.be/1V5ewUKIM1I	\N
+137	13	https://youtu.be/R8CQjsNYdvY	\N
+137	14	https://youtu.be/KeAkWb4wgsc	\N
+137	15	https://youtu.be/0p4l-rIGTfs	\N
+137	16	https://youtu.be/T-4Q7i6mNeM	\N
+137	17	https://youtu.be/ArquIrMD-0M	\N
+137	18	https://youtu.be/z55PFrvuBqk	\N
+137	19	https://youtu.be/speTBP-NXJo	\N
+138	1	Introduction to Ethical Hacking	\N
+138	2	Building a Penetration Testing Lab	\N
+25	1	Introduction to PostgreSQL	\N
+25	2	Getting to Know Your Cluster	\N
+25	4	Basic Statements	\N
+25	6	Window Functions	\N
+25	9	Partitioning	\N
+25	10	Users, Roles, and Database Security	\N
+25	12	Extending the Database	\N
+25	13	Query Tuning, Indexes, and Performance Optimization	\N
+25	16	Configuration and Monitoring	\N
+25	18	Logical Replication	\N
+137	20	https://youtu.be/D7aDAXWi5SM	\N
+114	1	https://youtu.be/J7fYddslH0Q	\N
+140	1	https://youtu.be/kXe-YkJ9nBs	\N
+106	1	Getting Started with OpenCV	\N
+106	2	An Introduction to the Basics of OpenCV	\N
+106	5	Automated Optical Inspection, Object Segmentation, and Detection	\N
+106	7	Detecting Face Parts and Overlaying Masks	\N
+106	9	Learning Object Tracking	\N
+106	12	Deep Learning with OpenCV	\N
+106	10	Developing Segmentation Algorithms for Text Recognition	\N
+106	4	Delving into Histogram and Filters	\N
+100	1	GoogleTest Primer	\N
+100	2	Advanced Topics	\N
+205	1	\N	\N
+114	2	https://youtu.be/qfKFfQSxvA8	\N
+100	4	Mocking Cookbook	\N
+100	6	Testing Reference	\N
+100	9	Matchers	\N
+100	8	Assertions	\N
+100	10	Actions	\N
+151	1	Installation	\N
+151	2	ftxui	\N
+151	3	ftxui/screen	\N
+151	4	ftxui/dom	\N
+151	5	ftxui/component	\N
+151	6	C++20 Modules	\N
+151	7	POSIX Piped Input in FTXUI	\N
+205	2	\N	\N
+205	3	\N	\N
+205	4	\N	\N
+205	5	\N	\N
+205	6	\N	\N
+205	7	\N	\N
+205	8	\N	\N
+205	9	\N	\N
+205	10	\N	\N
+205	11	\N	\N
+205	12	\N	\N
+205	13	\N	\N
+205	14	\N	\N
+205	15	\N	\N
+205	16	\N	\N
+205	17	\N	\N
+205	18	\N	\N
+205	19	\N	\N
+205	20	\N	\N
+215	1	https://youtu.be/k76LN8dSxx4	\N
+1	2	https://youtu.be/whaPQ5BU2y8	\N
+1	3	https://youtu.be/Hk4fv4dD0UQ	\N
+1	4	https://youtu.be/K5Kg8TOTKjU	\N
+69	1	Chapter 1	\N
+69	3	Chapter 3	\N
+70	2	Chapter 2	\N
+70	3	Chapter 3	\N
+69	4	Chapter 4	\N
+\.
+
+
+--
+-- Data for Name: sections_activities; Type: TABLE DATA; Schema: flashback; Owner: flashback
+--
+
+COPY flashback.sections_activities (id, "user", resource, "position", action, "time") FROM stdin;
+\.
+
+
+--
 -- Data for Name: sessions; Type: TABLE DATA; Schema: flashback; Owner: flashback
 --
 
@@ -28483,699 +28483,10 @@ COPY flashback.subjects_activities (id, "user", subject, action, "time") FROM st
 
 
 --
--- Data for Name: topics; Type: TABLE DATA; Schema: flashback; Owner: flashback
+-- Data for Name: topic_cards; Type: TABLE DATA; Schema: flashback; Owner: flashback
 --
 
-COPY flashback.topics ("position", name, subject, level) FROM stdin;
-1	Compiling with NASM	2	surface
-2	Debugging with GNU Debugger	2	surface
-3	Analyzing Binary Objects	2	surface
-4	Numeric Representations	2	surface
-5	Registers	2	surface
-6	Invoking System Calls	2	surface
-7	Memory Sections	2	surface
-8	External Functions	2	surface
-9	Integral Arithmetic Operations	2	surface
-10	Floating Point Arithmetic Operations	2	surface
-11	Bitwise Operations	2	surface
-12	Execution Flow Control	2	surface
-13	Repeating Execution	2	surface
-14	Memory Operations	2	surface
-15	Stack Operations	2	surface
-16	Stack Alignment	2	surface
-17	Procedures	2	surface
-18	Local Memory Sections	2	surface
-19	External Linkage	2	surface
-20	Inline Functions	2	surface
-21	Macros	2	surface
-22	Input/Output System Calls	2	surface
-23	Stack Overflow	2	surface
-24	Command Line Arguments	2	surface
-25	File Operations	2	surface
-26	Vector Registeres Support	2	surface
-31	Scale Service	7	surface
-15	Create Variable	5	surface
-34	Workflows	5	surface
-4	Scalar Class Template	15	surface
-13	Drawing Rectangle	15	surface
-18	Including OpenCV Headers	15	surface
-36	Class Non-static Member Declaration	6	surface
-37	No Discard Attribute	6	surface
-38	This Deduction	6	surface
-39	Templates	6	surface
-40	Typename	6	surface
-41	Template Translation Phases	6	surface
-42	Function Template Definition	6	surface
-43	Abbreviated Function Template	6	surface
-44	Function Template Usage	6	surface
-45	Function Template Argument Deduction	6	surface
-46	Multiple Function Template Parameters	6	surface
-47	NonType Template Parameter	6	surface
-48	Template Template Parameter	6	surface
-49	Variadic Template	6	surface
-50	Fold Expression	6	surface
-51	Automatic Return Type Deduction	6	surface
-52	Default Template Arguments	6	surface
-53	Overloading Function Templates	6	surface
-54	Concept	6	surface
-55	Concept Declaration	6	surface
-56	Standard Concepts	6	surface
-57	Class Template	6	surface
-58	Class Template Argument	6	surface
-59	Class Template Friend Function	6	surface
-60	Class Template Specialization	6	surface
-61	Class Template Default Parameters	6	surface
-62	Alias Templates	6	surface
-63	Class Template Argument Deduction	6	surface
-64	Class Template Argument Deduction Guides	6	surface
-65	Range-based loop	6	surface
-66	Object Alignment	6	surface
-67	Operators	6	surface
-68	Operator Overloading	6	surface
-69	Cooked User-Defined Literals	6	surface
-70	Raw User-Defined Literals	6	surface
-71	Move Semantics	6	surface
-72	Fallback Copy	6	surface
-73	Moved From State	6	surface
-74	Rvalue Reference	6	surface
-75	Generated Special Member Functions	6	surface
-76	Move Operation Pitfalls	6	surface
-77	Disabling Move Operations	6	surface
-78	Value Semantics	6	surface
-79	Virtual Functions	6	surface
-80	Inheritance	6	surface
-81	Streams	6	surface
-82	Input Streams	6	surface
-83	Output Streams	6	surface
-84	File Streams	6	surface
-85	Sync Streams	6	surface
-86	String Streams	6	surface
-87	Span Streams	6	surface
-88	Containers	6	surface
-89	Vector	6	surface
-90	String	6	surface
-91	Numeric to String Conversion	6	surface
-92	String Literals	6	surface
-93	Raw String Literals	6	surface
-94	String View	6	surface
-95	String Operations	6	surface
-96	Text Formatting	6	surface
-97	Text Printing	6	surface
-98	Regular Expressions	6	surface
-99	Numeric	6	surface
-100	Complex	6	surface
-101	Random	6	surface
-102	Chrono Duration	6	surface
-103	Chrono Time Point	6	surface
-104	Chrono Clocks	6	surface
-105	Chrono Literals	6	surface
-106	Chrono Date	6	surface
-107	Chrono Date Literals	6	surface
-108	Chrono File Clocks	6	surface
-109	Ranges	6	surface
-110	Sentinels	6	surface
-111	Iterators	6	surface
-112	Overlapping Iterators	6	surface
-113	Data Structures	6	surface
-114	Singly Linked List	6	surface
-115	Doubly Linked List	6	surface
-116	Algorithms	6	surface
-117	Parallel Algorithms	6	surface
-118	Comparing Algorithms	6	surface
-119	Ranges Algorithms	6	surface
-120	Equality Checking Algorithms	6	surface
-121	Iterating Algorithms	6	surface
-122	Swapping Algorithms	6	surface
-123	Sorting Algorithms	6	surface
-124	Partitioning Algorithms	6	surface
-125	Sorted Range Algorithms	6	surface
-126	Linear Operation Algorithms	6	surface
-127	Set Operation Algorithms	6	surface
-128	Transformation Algorithms	6	surface
-129	Permutation Transform Algorithms	6	surface
-218	Template Method Pattern	6	surface
-130	Boolean Reduction Algorithms	6	surface
-131	Strings Algorithms	6	surface
-132	Views	6	surface
-133	Contracts	6	surface
-134	Contract Types	6	surface
-135	Contract Violation	6	surface
-136	Contract Violation Handler	6	surface
-137	Contract Controlling Modes	6	surface
-138	Virtual Function Contracts	6	surface
-139	Inter Process Communication	6	surface
-140	Concurrency	6	surface
-141	Thread Construction	6	surface
-142	Thread Destructor	6	surface
-143	Joining Threads	6	surface
-144	Detaching Threads	6	surface
-145	Moving Threads	6	surface
-146	Stop Source	6	surface
-147	Stop Token	6	surface
-148	Stop Callback	6	surface
-149	Hardware Concurrency	6	surface
-150	Synchronization	6	surface
-151	Mutex	6	surface
-152	Lock Guard	6	surface
-153	Scoped Lock	6	surface
-154	Unique Lock	6	surface
-155	Shared Mutex	6	surface
-156	Shared Lock	6	surface
-157	Timed Mutex	6	surface
-158	Shared Timed Mutex	6	surface
-159	Recursive Mutex	6	surface
-160	Conditional Variable	6	surface
-161	Atomic	6	surface
-162	Thread Safe Static Initialization	6	surface
-163	Once Flag	6	surface
-164	Future	6	surface
-165	Async	6	surface
-166	Promise	6	surface
-167	Packaged Task	6	surface
-5	Point Class Template	15	surface
-14	Drawing Text	15	surface
-23	Mouse Integration	15	surface
-32	Remove Service	7	surface
-2	Configuring Project	5	surface
-3	Writing CMake Listfile	5	surface
-6	Cache Manipulation	5	surface
-7	Listing Cache Information	5	surface
-8	Listing Build Information	5	surface
-9	Logging	5	surface
-10	Trace Mode	5	surface
-16	Variable Scope	5	surface
-25	Find Packages	5	surface
-1	Daemon	7	surface
-2	Client	7	surface
-3	Context Listing	7	surface
-4	Context Creation	7	surface
-5	Context Switch	7	surface
-6	Image Listing	7	surface
-7	Image Searching	7	surface
-8	Image Pulling	7	surface
-9	Image Inspecting	7	surface
-10	Image Building	7	surface
-42	Create Network	7	surface
-11	Image Removing	7	surface
-12	Image Verification	7	surface
-13	Container Running	7	surface
-14	Container Restarting	7	surface
-1	Debug Information Generation	9	surface
-2	Text User Interface	9	surface
-3	Command History	9	surface
-4	Starting Execution	9	surface
-5	Attaching Process	9	surface
-6	Detaching Process	9	surface
-7	Source Listing	9	surface
-8	Breakpoints	9	surface
-9	Breakpoint Creation	9	surface
-10	Breakpoint Removal	9	surface
-11	Breakpoint Conditional	9	surface
-12	Breakpoint Skipping	9	surface
-13	Breakpoint Availability	9	surface
-14	Breakpoint Saving	9	surface
-15	Watchpoint Creation	9	surface
-16	Execution Flow	9	surface
-17	Memory Examination	9	surface
-18	Thread Tracking	9	surface
-19	Backtrace	9	surface
-20	Core Dump Control	9	surface
-21	Core Dump Generation	9	surface
-22	Memory Inspection	9	surface
-23	Memory Modification	9	surface
-24	Shell Command Execution	9	surface
-25	Debugger Configuration	9	surface
-1	Porcelain Commands	10	surface
-2	Plumbing Commands	10	surface
-3	Config	10	surface
-4	Alias	10	surface
-5	Branch	10	surface
-6	Stash	10	surface
-7	Log	10	surface
-8	Push	10	surface
-9	Clone	10	surface
-10	Partial Clone	10	surface
-11	Remote	10	surface
-12	Fetch	10	surface
-13	Blame	10	surface
-14	Reflog	10	surface
-15	Diff	10	surface
-16	Reused Recorded Resolution	10	surface
-17	Maitainance	10	surface
-18	Commit Graph	10	surface
-19	Filesystem Monitor	10	surface
-20	Multipack Indexes	10	surface
-21	Reachability Bitmaps	10	surface
-22	Geometric Repacking	10	surface
-23	Sparse Checkout	10	surface
-15	Container Listing	7	surface
-16	Remove Container	7	surface
-17	Dockerfile	7	surface
-18	Tag Image	7	surface
-19	Publish Image	7	surface
-1	Basic Data Types	15	surface
-6	Size Class Template	15	surface
-9	Complex Class Template	15	surface
-11	Drawing	15	surface
-15	Annotating	15	surface
-20	Swarm Structure	7	surface
-32	Building Cross Platform Targets	5	surface
-21	Swarm Initializing	7	surface
-1	Document	12	surface
-2	Package	12	surface
-3	Common Packages	12	surface
-4	Unicode Text	12	surface
-5	New Line	12	surface
-6	Text Format	12	surface
-7	Text Color	12	surface
-8	Inline Math	12	surface
-9	Block Math	12	surface
-1	RAID	13	surface
-2	Running RAID	13	surface
-3	RAID Status	13	surface
-4	Making RAID Permanent	13	surface
-5	Monitoring RAID	13	surface
-6	Stopping RAID	13	surface
-7	Removing RAID	13	surface
-8	Extending RAID	13	surface
-1	Functions	14	surface
-1	Terminologies	18	surface
-2	Postgres Structure	18	surface
-3	Installation	18	surface
-4	Postgres Client	18	surface
-1	Qt Installation	19	surface
-2	Qt Widgets	19	surface
-3	QML	19	surface
-4	Core Elements	19	surface
-5	Item	19	surface
-6	Window	19	surface
-7	Rectangle	19	surface
-8	Text	19	surface
-9	Property Alias	19	surface
-22	Define Executables	5	surface
-29	Policies	5	surface
-10	Signals	19	surface
-11	Image	19	surface
-12	Mouse Area	19	surface
-13	Component	19	surface
-1	Binary Analysis	20	surface
-1	Configuration	21	surface
-2	Server	21	surface
-3	Client	21	surface
-1	Memcheck	22	surface
-2	Helgrind	22	surface
-3	Callgrind	22	surface
-4	Cachegrind	22	surface
-5	Running with GDB	22	surface
-1	Embedded Linux Development	8	surface
-2	Host Toolchains	8	surface
-3	Cross Toolchains	8	surface
-4	Crosstool-ng Installation	8	surface
-5	Crosstool-ng Configuration	8	surface
-6	Building Toolchain	8	surface
-7	Using Toolchains	8	surface
-8	U-Boot Configuration	8	surface
-9	Raspberry Pi	8	surface
-10	U-Boot Kernel Loading	8	surface
-11	U-Boot Command Line	8	surface
-13	Quick Emulator	8	surface
-14	Yocto Project	8	surface
-15	Patch Files	8	surface
-16	Yocto Principles	8	surface
-17	Bitbake	8	surface
-18	Recipe	8	surface
-19	Metadata	8	surface
-20	Poky	8	surface
-21	Image Creation	8	surface
-12	Device Tree Specification	8	surface
-1	Workflow Structure	27	surface
-2	Runner	27	surface
-3	Jobs	27	surface
-4	Steps	27	surface
-5	Checkout	27	surface
-6	Node Setup	27	surface
-7	Creating A Release	27	surface
-8	Uploading Release Assets	27	surface
-9	Storing Cache	27	surface
-10	Storing Artifacts	27	surface
-11	Restoring Artifacts	27	surface
-12	Deleting Stored Artifacts	27	surface
-13	Job Conditions	27	surface
-14	Job Failure	27	surface
-15	Outputs	27	surface
-16	Runner Matrix	27	surface
-17	Permissions	27	surface
-7	Rectangle Class Template	15	surface
-18	Log Annotations	27	surface
-19	Running Workflows Locally	27	surface
-20	Creating Actions	27	surface
-2	Ethical Hacking	45	surface
-3	Penetration Testing	45	surface
-9	Locating Tools	13	surface
-10	System Monitoring	13	surface
-11	Working Directory	13	surface
-12	User Management	13	surface
-13	System Domain	13	surface
-14	Kernel Management	13	surface
-15	Output Generators	13	surface
-16	Removing Files	13	surface
-17	Creating Directories	13	surface
-1	Building Executable	6	surface
-5	Backup Strategies	18	surface
-6	Logical Backup	18	surface
-7	Physical Backup	18	surface
-8	Text Backup	18	surface
-9	Restore Text Backup	18	surface
-10	Configure Search Path	18	surface
-11	Formatted Backup	18	surface
-12	Restore Formatted Backup	18	surface
-13	Backup Cluster	18	surface
-14	Scheduling Backup	18	surface
-15	Copying Data	18	surface
-16	Point in Time Recovery	18	surface
-2	Fundamental Data Types	6	surface
-1	Asynchronous IO Context	3	surface
-2	Asynchronous Event Processing Loop	3	surface
-3	Queueing Asynchronous Tasks	3	surface
-4	Serializing Event Processing Loop	3	surface
-5	Handling Exceptional Event Processing Loop Control FLow	3	surface
-6	Deadline Timer	3	surface
-7	Endpoint	3	surface
-8	Active Socket	3	surface
-10	Acceptor	3	surface
-9	Passive Socket	3	surface
-11	Resolving DNS	3	surface
-12	Synchronous TCP Client	3	surface
-13	Synchronous TCP Connection	3	surface
-14	Asynchronous TCP Connection	3	surface
-15	Writing into and Reading from Socket	3	surface
-2	Developer Options	44	surface
-3	Warning Options	44	surface
-1	Poky Build System	26	surface
-2	Bitbake	26	surface
-3	Create Build Environment	26	surface
-4	Basic Configuration	26	surface
-5	Build Images	26	surface
-6	Run Images	26	surface
-7	Toaster	26	surface
-8	Metadata	26	surface
-9	Recipe	26	surface
-10	Fetch Source	26	surface
-11	Run Recipe	26	surface
-43	Network Listing	7	surface
-44	Use Network	7	surface
-4	Variables	5	surface
-23	Define Libraries	5	surface
-27	Subdirectories	5	surface
-1	Performance Analysis	17	surface
-12	Troubleshoot Build	26	surface
-13	Build Process	26	surface
-14	Configure Build	26	surface
-15	Package Format	26	surface
-16	Installation Script	26	surface
-17	Shared State Cache	26	surface
-18	Recipe Variables	26	surface
-19	Root Filesystem	26	surface
-20	Package Index	26	surface
-21	Write Recipe	26	surface
-22	Toolchain	26	surface
-8	Rotated Rectangle Class Template	15	surface
-1	Tools	5	surface
-5	Configuring Targets	5	surface
-11	Presets	5	surface
-12	Building Project	5	surface
-13	Cache Cleaning	5	surface
-14	Installing Targets	5	surface
-18	CMake Script	5	surface
-19	Extenal Command	5	surface
-20	Manual	5	surface
-26	Testing	5	surface
-30	Exporting Executables	5	surface
-33	Writing Presets	5	surface
-2	Linux Kernel Source Tree	11	surface
-3	Linux Kernel Configuration System	11	surface
-4	Kconfig Semantics	11	surface
-5	Linux Kernel Build System	11	surface
-6	Installing Kernel Build Artifacts	11	surface
-7	Cleaning Up Kernel Source Tree	11	surface
-1	Embedded Linux Domain	11	surface
-9	Module Listing	11	surface
-10	Module Information Retrieval	11	surface
-11	Module Loading	11	surface
-12	Module Dependencies	11	surface
-13	Module Removal	11	surface
-14	Module Configuration	11	surface
-15	Module Skeleton	11	surface
-16	Module Building	11	surface
-17	Module Parameters	11	surface
-18	Device Tree Specification	11	surface
-2	Test Case	24	surface
-3	Test Fixture	24	surface
-4	Setup Fixture	24	surface
-5	Destruct Fixture	24	surface
-22	Swarm Listing	7	surface
-23	Swarm Joining	7	surface
-24	Swarm Security	7	surface
-25	Swarm Modification	7	surface
-26	Swarm Secret	7	surface
-28	Create Service	7	surface
-34	Plugin Installation	7	surface
-35	Plugin Listing	7	surface
-36	Volume Creation	7	surface
-37	Volume Listing	7	surface
-38	Volume Inspecting	7	surface
-39	Volume Deletion	7	surface
-40	Volume Attachment	7	surface
-41	Volume Corruption	7	surface
-45	Create Service Replica	7	surface
-19	Compiling Device Tree Source	11	surface
-20	Building Bootloader	11	surface
-21	Booting the Kernel	11	surface
-22	Kernel Command Line	11	surface
-23	Initial RAM Filesystem	11	surface
-24	Udev	11	surface
-25	Kernel Locking	11	surface
-26	Spinlocks	11	surface
-27	Mutexes	11	surface
-28	Kernel Timer	11	surface
-29	Kernel Sleeping	11	surface
-30	Wait Queue	11	surface
-31	Wait Event	11	surface
-32	Wake Up	11	surface
-33	Module Structure	11	surface
-34	Module Synchronization	11	surface
-35	Kernel Tracing	11	surface
-8	Running Kernel	11	surface
-8	Writing Mocks	24	surface
-9	Expectations	24	surface
-1	Writing Assertions	24	surface
-6	Configuring Tests	24	surface
-29	List Services	7	surface
-33	Troubleshoot Service	7	surface
-2	Matrix Class Template	15	surface
-3	Vector Class Template	15	surface
-16	Modules	15	surface
-17	Installation	15	surface
-19	CMake Integration	15	surface
-20	Basic Image Operations	15	surface
-21	Options	5	surface
-24	Set Target Properties	5	surface
-28	Fetch Content	5	surface
-10	Matrix Operations	15	surface
-22	Window Management	15	surface
-27	Swarm Backup	7	surface
-30	Inspect Service	7	surface
-17	Generators	5	surface
-12	Drawing Circle	15	surface
-21	Capture Video	15	surface
-24	File Storage	15	surface
-31	Exporting Libraries	5	surface
-1	Library Integration	51	surface
-2	Library Structure	51	surface
-3	Dimension	51	surface
-4	Color	51	surface
-5	Pixel	51	surface
-6	Screen	51	surface
-7	Pixel Manipulation	51	surface
-8	Cursor Control	51	surface
-9	Elements	51	surface
-10	Decorators	51	surface
-11	Text	51	surface
-12	Vertical Text	51	surface
-13	Paragraph	51	surface
-14	Border	51	surface
-15	Window	51	surface
-16	Separator	51	surface
-17	Gauge	51	surface
-18	Graph	51	surface
-19	Colors	51	surface
-20	Linear Gradient	51	surface
-21	Style	51	surface
-22	Layout	51	surface
-23	Table	51	surface
-24	Canvas	51	surface
-25	Input	51	surface
-26	Menu	51	surface
-27	Toggle	51	surface
-28	CheckBox	51	surface
-29	RadioBox	51	surface
-30	Dropdown	51	surface
-31	Slider	51	surface
-32	Renderer	51	surface
-33	CatchEvent	51	surface
-34	Maybe	51	surface
-35	Collapsible	51	surface
-36	Container	51	surface
-37	ResizableSplit	51	surface
-38	Process Custom Events	51	surface
-39	C++20 Modules	51	surface
-1	Piped Input	51	depth
-35	Target Properties	5	surface
-36	Packaging	5	surface
-37	CTest	5	surface
-38	Configure CTest	5	surface
-39	Build with CTest	5	surface
-40	Parallel Execution	5	surface
-41	Compiler Warnings	5	surface
-42	Linters	5	surface
-43	Launchers	5	surface
-44	Build Output Scraping	5	surface
-45	Instrumentation	5	surface
-46	File Attachment	5	surface
-47	Test Granularity	5	surface
-48	Cross Compiling	5	surface
-7	Running Tests	24	surface
-10	Assertions	24	surface
-11	Matchers	24	surface
-49	Common Package Specification	5	surface
-50	File Set	5	surface
-51	Install Tree	5	surface
-52	Package Config	5	surface
-1	Mandatory Access Control	58	surface
-2	Discretionary Access Control Commands	58	surface
-3	Enabling SELinux	58	surface
-4	Contexts	58	surface
-5	Process Attributes	58	surface
-6	Type Enforcement	58	surface
-7	Roles	58	surface
-8	Users	58	surface
-9	Sensitivity	58	surface
-10	Categories	58	surface
-18	Manual Pages	13	surface
-19	Moving Files	13	surface
-20	Changing Directory	13	surface
-21	Listing Directory Entries	13	surface
-22	Stream Manipulators	13	surface
-23	Grep	13	surface
-24	Sed	13	surface
-3	Variable Initialization	6	surface
-4	Constant Initialization	6	surface
-5	Uniform Initialization	6	surface
-6	Aggregate Initialization	6	surface
-11	Defining Policies	58	surface
-12	Unconfined Domains	58	surface
-7	Designated Initialization	6	surface
-8	Function Declaration	6	surface
-9	Constant Expression	6	surface
-10	Constant Evaluation	6	surface
-11	Conditional Constant Evaluation	6	surface
-12	Lambda	6	surface
-13	Raw Pointer	6	surface
-14	Smart Pointer	6	surface
-15	Unique Pointer	6	surface
-16	Shared Pointer	6	surface
-17	Weak Pointer	6	surface
-18	Namespace Abbreviation	6	surface
-19	Unnamed Namespaces	6	surface
-20	Inline Namespaces	6	surface
-21	Nested Namespaces	6	surface
-22	Modules	6	surface
-23	Module Interface Unit	6	surface
-24	Module Interface Partition	6	surface
-25	Module Implementation Partition	6	surface
-26	Automatic Type Deduction	6	surface
-27	Structured Binding	6	surface
-28	Typedef	6	surface
-29	Type Aliases	6	surface
-30	Enumerations	6	surface
-31	Variants	6	surface
-32	Optional Return Type	6	surface
-33	Expected Return Type	6	surface
-34	Three-Way Comparison Operator	6	surface
-35	Class Default Constructors	6	surface
-168	Semaphore	6	surface
-169	Semaphore Properties	6	surface
-170	Counting Semaphore	6	surface
-171	Binary Semaphore	6	surface
-172	Latch	6	surface
-173	Barrier	6	surface
-174	Processes	6	surface
-175	Coroutine	6	surface
-176	Monostate Pattern	6	surface
-177	Path Terminalogy	6	surface
-178	Filesystem Error Handling	6	surface
-179	File Types	6	surface
-180	Path Construction	6	surface
-181	Path Inspection	6	surface
-182	Path Conversion	6	surface
-183	Path Relativity	6	surface
-184	Generic Paths	6	surface
-185	Path Expansion	6	surface
-186	Path Modification	6	surface
-187	Path Reduction	6	surface
-188	Path Comparison	6	surface
-189	File Existence Checking	6	surface
-190	File Type Checking	6	surface
-191	Filesystem Attributes Querying	6	surface
-192	Filesystem Attributes Modification	6	surface
-193	Filesystem Existence Checking	6	surface
-194	File Status	6	surface
-195	File Permissions	6	surface
-196	File Creation	6	surface
-197	Directory Creation	6	surface
-198	Symbolic Link Creation	6	surface
-199	Hard Link Creation	6	surface
-200	File Copy	6	surface
-201	File Removal	6	surface
-202	Filesystem Path Conversion	6	surface
-203	Directory Iteration	6	surface
-204	Directory Entries	6	surface
-205	Logging	6	surface
-206	Design Patterns	6	surface
-207	Creational Design Patterns	6	surface
-208	Factory Method Design Pattern	6	surface
-209	Abstract Factory Design Pattern	6	surface
-210	Builder Design Pattern	6	surface
-211	Prototype Design Pattern	6	surface
-212	Singleton Design Pattern	6	surface
-213	Behavioral Design Patterns	6	surface
-214	Strategy	6	surface
-215	Null Object	6	surface
-216	Static Strategy	6	surface
-217	Returning Value from Threads	6	surface
-219	Command Pattern	6	surface
-220	Memento Pattern	6	surface
-221	Chain of Responsibility Pattern	6	surface
-222	Observer Pattern	6	surface
-2	Hotspot	17	surface
-1	CA Private Key	16	surface
-2	CA Certificate	16	surface
-\.
-
-
---
--- Data for Name: topics_activities; Type: TABLE DATA; Schema: flashback; Owner: flashback
---
-
-COPY flashback.topics_activities (id, "user", topic, action, "time", subject, level) FROM stdin;
-\.
-
-
---
--- Data for Name: topics_cards; Type: TABLE DATA; Schema: flashback; Owner: flashback
---
-
-COPY flashback.topics_cards (topic, card, "position", subject, level) FROM stdin;
+COPY flashback.topic_cards (topic, card, "position", subject, level) FROM stdin;
 140	3665	1	6	surface
 4	4015	2	2	surface
 9	4028	1	2	surface
@@ -31428,6 +30739,695 @@ COPY flashback.topics_cards (topic, card, "position", subject, level) FROM stdin
 
 
 --
+-- Data for Name: topics; Type: TABLE DATA; Schema: flashback; Owner: flashback
+--
+
+COPY flashback.topics ("position", name, subject, level) FROM stdin;
+1	Compiling with NASM	2	surface
+2	Debugging with GNU Debugger	2	surface
+3	Analyzing Binary Objects	2	surface
+4	Numeric Representations	2	surface
+5	Registers	2	surface
+6	Invoking System Calls	2	surface
+7	Memory Sections	2	surface
+8	External Functions	2	surface
+9	Integral Arithmetic Operations	2	surface
+10	Floating Point Arithmetic Operations	2	surface
+11	Bitwise Operations	2	surface
+12	Execution Flow Control	2	surface
+13	Repeating Execution	2	surface
+14	Memory Operations	2	surface
+15	Stack Operations	2	surface
+16	Stack Alignment	2	surface
+17	Procedures	2	surface
+18	Local Memory Sections	2	surface
+19	External Linkage	2	surface
+20	Inline Functions	2	surface
+21	Macros	2	surface
+22	Input/Output System Calls	2	surface
+23	Stack Overflow	2	surface
+24	Command Line Arguments	2	surface
+25	File Operations	2	surface
+26	Vector Registeres Support	2	surface
+31	Scale Service	7	surface
+15	Create Variable	5	surface
+34	Workflows	5	surface
+4	Scalar Class Template	15	surface
+13	Drawing Rectangle	15	surface
+18	Including OpenCV Headers	15	surface
+36	Class Non-static Member Declaration	6	surface
+37	No Discard Attribute	6	surface
+38	This Deduction	6	surface
+39	Templates	6	surface
+40	Typename	6	surface
+41	Template Translation Phases	6	surface
+42	Function Template Definition	6	surface
+43	Abbreviated Function Template	6	surface
+44	Function Template Usage	6	surface
+45	Function Template Argument Deduction	6	surface
+46	Multiple Function Template Parameters	6	surface
+47	NonType Template Parameter	6	surface
+48	Template Template Parameter	6	surface
+49	Variadic Template	6	surface
+50	Fold Expression	6	surface
+51	Automatic Return Type Deduction	6	surface
+52	Default Template Arguments	6	surface
+53	Overloading Function Templates	6	surface
+54	Concept	6	surface
+55	Concept Declaration	6	surface
+56	Standard Concepts	6	surface
+57	Class Template	6	surface
+58	Class Template Argument	6	surface
+59	Class Template Friend Function	6	surface
+60	Class Template Specialization	6	surface
+61	Class Template Default Parameters	6	surface
+62	Alias Templates	6	surface
+63	Class Template Argument Deduction	6	surface
+64	Class Template Argument Deduction Guides	6	surface
+65	Range-based loop	6	surface
+66	Object Alignment	6	surface
+67	Operators	6	surface
+68	Operator Overloading	6	surface
+69	Cooked User-Defined Literals	6	surface
+70	Raw User-Defined Literals	6	surface
+71	Move Semantics	6	surface
+72	Fallback Copy	6	surface
+73	Moved From State	6	surface
+74	Rvalue Reference	6	surface
+75	Generated Special Member Functions	6	surface
+76	Move Operation Pitfalls	6	surface
+77	Disabling Move Operations	6	surface
+78	Value Semantics	6	surface
+79	Virtual Functions	6	surface
+80	Inheritance	6	surface
+81	Streams	6	surface
+82	Input Streams	6	surface
+83	Output Streams	6	surface
+84	File Streams	6	surface
+85	Sync Streams	6	surface
+86	String Streams	6	surface
+87	Span Streams	6	surface
+88	Containers	6	surface
+89	Vector	6	surface
+90	String	6	surface
+91	Numeric to String Conversion	6	surface
+92	String Literals	6	surface
+93	Raw String Literals	6	surface
+94	String View	6	surface
+95	String Operations	6	surface
+96	Text Formatting	6	surface
+97	Text Printing	6	surface
+98	Regular Expressions	6	surface
+99	Numeric	6	surface
+100	Complex	6	surface
+101	Random	6	surface
+102	Chrono Duration	6	surface
+103	Chrono Time Point	6	surface
+104	Chrono Clocks	6	surface
+105	Chrono Literals	6	surface
+106	Chrono Date	6	surface
+107	Chrono Date Literals	6	surface
+108	Chrono File Clocks	6	surface
+109	Ranges	6	surface
+110	Sentinels	6	surface
+111	Iterators	6	surface
+112	Overlapping Iterators	6	surface
+113	Data Structures	6	surface
+114	Singly Linked List	6	surface
+115	Doubly Linked List	6	surface
+116	Algorithms	6	surface
+117	Parallel Algorithms	6	surface
+118	Comparing Algorithms	6	surface
+119	Ranges Algorithms	6	surface
+120	Equality Checking Algorithms	6	surface
+121	Iterating Algorithms	6	surface
+122	Swapping Algorithms	6	surface
+123	Sorting Algorithms	6	surface
+124	Partitioning Algorithms	6	surface
+125	Sorted Range Algorithms	6	surface
+126	Linear Operation Algorithms	6	surface
+127	Set Operation Algorithms	6	surface
+128	Transformation Algorithms	6	surface
+129	Permutation Transform Algorithms	6	surface
+218	Template Method Pattern	6	surface
+130	Boolean Reduction Algorithms	6	surface
+131	Strings Algorithms	6	surface
+132	Views	6	surface
+133	Contracts	6	surface
+134	Contract Types	6	surface
+135	Contract Violation	6	surface
+136	Contract Violation Handler	6	surface
+137	Contract Controlling Modes	6	surface
+138	Virtual Function Contracts	6	surface
+139	Inter Process Communication	6	surface
+140	Concurrency	6	surface
+141	Thread Construction	6	surface
+142	Thread Destructor	6	surface
+143	Joining Threads	6	surface
+144	Detaching Threads	6	surface
+145	Moving Threads	6	surface
+146	Stop Source	6	surface
+147	Stop Token	6	surface
+148	Stop Callback	6	surface
+149	Hardware Concurrency	6	surface
+150	Synchronization	6	surface
+151	Mutex	6	surface
+152	Lock Guard	6	surface
+153	Scoped Lock	6	surface
+154	Unique Lock	6	surface
+155	Shared Mutex	6	surface
+156	Shared Lock	6	surface
+157	Timed Mutex	6	surface
+158	Shared Timed Mutex	6	surface
+159	Recursive Mutex	6	surface
+160	Conditional Variable	6	surface
+161	Atomic	6	surface
+162	Thread Safe Static Initialization	6	surface
+163	Once Flag	6	surface
+164	Future	6	surface
+165	Async	6	surface
+166	Promise	6	surface
+167	Packaged Task	6	surface
+5	Point Class Template	15	surface
+14	Drawing Text	15	surface
+23	Mouse Integration	15	surface
+32	Remove Service	7	surface
+2	Configuring Project	5	surface
+3	Writing CMake Listfile	5	surface
+6	Cache Manipulation	5	surface
+7	Listing Cache Information	5	surface
+8	Listing Build Information	5	surface
+9	Logging	5	surface
+10	Trace Mode	5	surface
+16	Variable Scope	5	surface
+25	Find Packages	5	surface
+1	Daemon	7	surface
+2	Client	7	surface
+3	Context Listing	7	surface
+4	Context Creation	7	surface
+5	Context Switch	7	surface
+6	Image Listing	7	surface
+7	Image Searching	7	surface
+8	Image Pulling	7	surface
+9	Image Inspecting	7	surface
+10	Image Building	7	surface
+42	Create Network	7	surface
+11	Image Removing	7	surface
+12	Image Verification	7	surface
+13	Container Running	7	surface
+14	Container Restarting	7	surface
+1	Debug Information Generation	9	surface
+2	Text User Interface	9	surface
+3	Command History	9	surface
+4	Starting Execution	9	surface
+5	Attaching Process	9	surface
+6	Detaching Process	9	surface
+7	Source Listing	9	surface
+8	Breakpoints	9	surface
+9	Breakpoint Creation	9	surface
+10	Breakpoint Removal	9	surface
+11	Breakpoint Conditional	9	surface
+12	Breakpoint Skipping	9	surface
+13	Breakpoint Availability	9	surface
+14	Breakpoint Saving	9	surface
+15	Watchpoint Creation	9	surface
+16	Execution Flow	9	surface
+17	Memory Examination	9	surface
+18	Thread Tracking	9	surface
+19	Backtrace	9	surface
+20	Core Dump Control	9	surface
+21	Core Dump Generation	9	surface
+22	Memory Inspection	9	surface
+23	Memory Modification	9	surface
+24	Shell Command Execution	9	surface
+25	Debugger Configuration	9	surface
+1	Porcelain Commands	10	surface
+2	Plumbing Commands	10	surface
+3	Config	10	surface
+4	Alias	10	surface
+5	Branch	10	surface
+6	Stash	10	surface
+7	Log	10	surface
+8	Push	10	surface
+9	Clone	10	surface
+10	Partial Clone	10	surface
+11	Remote	10	surface
+12	Fetch	10	surface
+13	Blame	10	surface
+14	Reflog	10	surface
+15	Diff	10	surface
+16	Reused Recorded Resolution	10	surface
+17	Maitainance	10	surface
+18	Commit Graph	10	surface
+19	Filesystem Monitor	10	surface
+20	Multipack Indexes	10	surface
+21	Reachability Bitmaps	10	surface
+22	Geometric Repacking	10	surface
+23	Sparse Checkout	10	surface
+15	Container Listing	7	surface
+16	Remove Container	7	surface
+17	Dockerfile	7	surface
+18	Tag Image	7	surface
+19	Publish Image	7	surface
+1	Basic Data Types	15	surface
+6	Size Class Template	15	surface
+9	Complex Class Template	15	surface
+11	Drawing	15	surface
+15	Annotating	15	surface
+20	Swarm Structure	7	surface
+32	Building Cross Platform Targets	5	surface
+21	Swarm Initializing	7	surface
+1	Document	12	surface
+2	Package	12	surface
+3	Common Packages	12	surface
+4	Unicode Text	12	surface
+5	New Line	12	surface
+6	Text Format	12	surface
+7	Text Color	12	surface
+8	Inline Math	12	surface
+9	Block Math	12	surface
+1	RAID	13	surface
+2	Running RAID	13	surface
+3	RAID Status	13	surface
+4	Making RAID Permanent	13	surface
+5	Monitoring RAID	13	surface
+6	Stopping RAID	13	surface
+7	Removing RAID	13	surface
+8	Extending RAID	13	surface
+1	Functions	14	surface
+1	Terminologies	18	surface
+2	Postgres Structure	18	surface
+3	Installation	18	surface
+4	Postgres Client	18	surface
+1	Qt Installation	19	surface
+2	Qt Widgets	19	surface
+3	QML	19	surface
+4	Core Elements	19	surface
+5	Item	19	surface
+6	Window	19	surface
+7	Rectangle	19	surface
+8	Text	19	surface
+9	Property Alias	19	surface
+22	Define Executables	5	surface
+29	Policies	5	surface
+10	Signals	19	surface
+11	Image	19	surface
+12	Mouse Area	19	surface
+13	Component	19	surface
+1	Binary Analysis	20	surface
+1	Configuration	21	surface
+2	Server	21	surface
+3	Client	21	surface
+1	Memcheck	22	surface
+2	Helgrind	22	surface
+3	Callgrind	22	surface
+4	Cachegrind	22	surface
+5	Running with GDB	22	surface
+1	Embedded Linux Development	8	surface
+2	Host Toolchains	8	surface
+3	Cross Toolchains	8	surface
+4	Crosstool-ng Installation	8	surface
+5	Crosstool-ng Configuration	8	surface
+6	Building Toolchain	8	surface
+7	Using Toolchains	8	surface
+8	U-Boot Configuration	8	surface
+9	Raspberry Pi	8	surface
+10	U-Boot Kernel Loading	8	surface
+11	U-Boot Command Line	8	surface
+13	Quick Emulator	8	surface
+14	Yocto Project	8	surface
+15	Patch Files	8	surface
+16	Yocto Principles	8	surface
+17	Bitbake	8	surface
+18	Recipe	8	surface
+19	Metadata	8	surface
+20	Poky	8	surface
+21	Image Creation	8	surface
+12	Device Tree Specification	8	surface
+1	Workflow Structure	27	surface
+2	Runner	27	surface
+3	Jobs	27	surface
+4	Steps	27	surface
+5	Checkout	27	surface
+6	Node Setup	27	surface
+7	Creating A Release	27	surface
+8	Uploading Release Assets	27	surface
+9	Storing Cache	27	surface
+10	Storing Artifacts	27	surface
+11	Restoring Artifacts	27	surface
+12	Deleting Stored Artifacts	27	surface
+13	Job Conditions	27	surface
+14	Job Failure	27	surface
+15	Outputs	27	surface
+16	Runner Matrix	27	surface
+17	Permissions	27	surface
+7	Rectangle Class Template	15	surface
+18	Log Annotations	27	surface
+19	Running Workflows Locally	27	surface
+20	Creating Actions	27	surface
+2	Ethical Hacking	45	surface
+3	Penetration Testing	45	surface
+9	Locating Tools	13	surface
+10	System Monitoring	13	surface
+11	Working Directory	13	surface
+12	User Management	13	surface
+13	System Domain	13	surface
+14	Kernel Management	13	surface
+15	Output Generators	13	surface
+16	Removing Files	13	surface
+17	Creating Directories	13	surface
+1	Building Executable	6	surface
+5	Backup Strategies	18	surface
+6	Logical Backup	18	surface
+7	Physical Backup	18	surface
+8	Text Backup	18	surface
+9	Restore Text Backup	18	surface
+10	Configure Search Path	18	surface
+11	Formatted Backup	18	surface
+12	Restore Formatted Backup	18	surface
+13	Backup Cluster	18	surface
+14	Scheduling Backup	18	surface
+15	Copying Data	18	surface
+16	Point in Time Recovery	18	surface
+2	Fundamental Data Types	6	surface
+1	Asynchronous IO Context	3	surface
+2	Asynchronous Event Processing Loop	3	surface
+3	Queueing Asynchronous Tasks	3	surface
+4	Serializing Event Processing Loop	3	surface
+5	Handling Exceptional Event Processing Loop Control FLow	3	surface
+6	Deadline Timer	3	surface
+7	Endpoint	3	surface
+8	Active Socket	3	surface
+10	Acceptor	3	surface
+9	Passive Socket	3	surface
+11	Resolving DNS	3	surface
+12	Synchronous TCP Client	3	surface
+13	Synchronous TCP Connection	3	surface
+14	Asynchronous TCP Connection	3	surface
+15	Writing into and Reading from Socket	3	surface
+2	Developer Options	44	surface
+3	Warning Options	44	surface
+1	Poky Build System	26	surface
+2	Bitbake	26	surface
+3	Create Build Environment	26	surface
+4	Basic Configuration	26	surface
+5	Build Images	26	surface
+6	Run Images	26	surface
+7	Toaster	26	surface
+8	Metadata	26	surface
+9	Recipe	26	surface
+10	Fetch Source	26	surface
+11	Run Recipe	26	surface
+43	Network Listing	7	surface
+44	Use Network	7	surface
+4	Variables	5	surface
+23	Define Libraries	5	surface
+27	Subdirectories	5	surface
+1	Performance Analysis	17	surface
+12	Troubleshoot Build	26	surface
+13	Build Process	26	surface
+14	Configure Build	26	surface
+15	Package Format	26	surface
+16	Installation Script	26	surface
+17	Shared State Cache	26	surface
+18	Recipe Variables	26	surface
+19	Root Filesystem	26	surface
+20	Package Index	26	surface
+21	Write Recipe	26	surface
+22	Toolchain	26	surface
+8	Rotated Rectangle Class Template	15	surface
+1	Tools	5	surface
+5	Configuring Targets	5	surface
+11	Presets	5	surface
+12	Building Project	5	surface
+13	Cache Cleaning	5	surface
+14	Installing Targets	5	surface
+18	CMake Script	5	surface
+19	Extenal Command	5	surface
+20	Manual	5	surface
+26	Testing	5	surface
+30	Exporting Executables	5	surface
+33	Writing Presets	5	surface
+2	Linux Kernel Source Tree	11	surface
+3	Linux Kernel Configuration System	11	surface
+4	Kconfig Semantics	11	surface
+5	Linux Kernel Build System	11	surface
+6	Installing Kernel Build Artifacts	11	surface
+7	Cleaning Up Kernel Source Tree	11	surface
+1	Embedded Linux Domain	11	surface
+9	Module Listing	11	surface
+10	Module Information Retrieval	11	surface
+11	Module Loading	11	surface
+12	Module Dependencies	11	surface
+13	Module Removal	11	surface
+14	Module Configuration	11	surface
+15	Module Skeleton	11	surface
+16	Module Building	11	surface
+17	Module Parameters	11	surface
+18	Device Tree Specification	11	surface
+2	Test Case	24	surface
+3	Test Fixture	24	surface
+4	Setup Fixture	24	surface
+5	Destruct Fixture	24	surface
+22	Swarm Listing	7	surface
+23	Swarm Joining	7	surface
+24	Swarm Security	7	surface
+25	Swarm Modification	7	surface
+26	Swarm Secret	7	surface
+28	Create Service	7	surface
+34	Plugin Installation	7	surface
+35	Plugin Listing	7	surface
+36	Volume Creation	7	surface
+37	Volume Listing	7	surface
+38	Volume Inspecting	7	surface
+39	Volume Deletion	7	surface
+40	Volume Attachment	7	surface
+41	Volume Corruption	7	surface
+45	Create Service Replica	7	surface
+19	Compiling Device Tree Source	11	surface
+20	Building Bootloader	11	surface
+21	Booting the Kernel	11	surface
+22	Kernel Command Line	11	surface
+23	Initial RAM Filesystem	11	surface
+24	Udev	11	surface
+25	Kernel Locking	11	surface
+26	Spinlocks	11	surface
+27	Mutexes	11	surface
+28	Kernel Timer	11	surface
+29	Kernel Sleeping	11	surface
+30	Wait Queue	11	surface
+31	Wait Event	11	surface
+32	Wake Up	11	surface
+33	Module Structure	11	surface
+34	Module Synchronization	11	surface
+35	Kernel Tracing	11	surface
+8	Running Kernel	11	surface
+8	Writing Mocks	24	surface
+9	Expectations	24	surface
+1	Writing Assertions	24	surface
+6	Configuring Tests	24	surface
+29	List Services	7	surface
+33	Troubleshoot Service	7	surface
+2	Matrix Class Template	15	surface
+3	Vector Class Template	15	surface
+16	Modules	15	surface
+17	Installation	15	surface
+19	CMake Integration	15	surface
+20	Basic Image Operations	15	surface
+21	Options	5	surface
+24	Set Target Properties	5	surface
+28	Fetch Content	5	surface
+10	Matrix Operations	15	surface
+22	Window Management	15	surface
+27	Swarm Backup	7	surface
+30	Inspect Service	7	surface
+17	Generators	5	surface
+12	Drawing Circle	15	surface
+21	Capture Video	15	surface
+24	File Storage	15	surface
+31	Exporting Libraries	5	surface
+1	Library Integration	51	surface
+2	Library Structure	51	surface
+3	Dimension	51	surface
+4	Color	51	surface
+5	Pixel	51	surface
+6	Screen	51	surface
+7	Pixel Manipulation	51	surface
+8	Cursor Control	51	surface
+9	Elements	51	surface
+10	Decorators	51	surface
+11	Text	51	surface
+12	Vertical Text	51	surface
+13	Paragraph	51	surface
+14	Border	51	surface
+15	Window	51	surface
+16	Separator	51	surface
+17	Gauge	51	surface
+18	Graph	51	surface
+19	Colors	51	surface
+20	Linear Gradient	51	surface
+21	Style	51	surface
+22	Layout	51	surface
+23	Table	51	surface
+24	Canvas	51	surface
+25	Input	51	surface
+26	Menu	51	surface
+27	Toggle	51	surface
+28	CheckBox	51	surface
+29	RadioBox	51	surface
+30	Dropdown	51	surface
+31	Slider	51	surface
+32	Renderer	51	surface
+33	CatchEvent	51	surface
+34	Maybe	51	surface
+35	Collapsible	51	surface
+36	Container	51	surface
+37	ResizableSplit	51	surface
+38	Process Custom Events	51	surface
+39	C++20 Modules	51	surface
+1	Piped Input	51	depth
+35	Target Properties	5	surface
+36	Packaging	5	surface
+37	CTest	5	surface
+38	Configure CTest	5	surface
+39	Build with CTest	5	surface
+40	Parallel Execution	5	surface
+41	Compiler Warnings	5	surface
+42	Linters	5	surface
+43	Launchers	5	surface
+44	Build Output Scraping	5	surface
+45	Instrumentation	5	surface
+46	File Attachment	5	surface
+47	Test Granularity	5	surface
+48	Cross Compiling	5	surface
+7	Running Tests	24	surface
+10	Assertions	24	surface
+11	Matchers	24	surface
+49	Common Package Specification	5	surface
+50	File Set	5	surface
+51	Install Tree	5	surface
+52	Package Config	5	surface
+1	Mandatory Access Control	58	surface
+2	Discretionary Access Control Commands	58	surface
+3	Enabling SELinux	58	surface
+4	Contexts	58	surface
+5	Process Attributes	58	surface
+6	Type Enforcement	58	surface
+7	Roles	58	surface
+8	Users	58	surface
+9	Sensitivity	58	surface
+10	Categories	58	surface
+18	Manual Pages	13	surface
+19	Moving Files	13	surface
+20	Changing Directory	13	surface
+21	Listing Directory Entries	13	surface
+22	Stream Manipulators	13	surface
+23	Grep	13	surface
+24	Sed	13	surface
+3	Variable Initialization	6	surface
+4	Constant Initialization	6	surface
+5	Uniform Initialization	6	surface
+6	Aggregate Initialization	6	surface
+11	Defining Policies	58	surface
+12	Unconfined Domains	58	surface
+7	Designated Initialization	6	surface
+8	Function Declaration	6	surface
+9	Constant Expression	6	surface
+10	Constant Evaluation	6	surface
+11	Conditional Constant Evaluation	6	surface
+12	Lambda	6	surface
+13	Raw Pointer	6	surface
+14	Smart Pointer	6	surface
+15	Unique Pointer	6	surface
+16	Shared Pointer	6	surface
+17	Weak Pointer	6	surface
+18	Namespace Abbreviation	6	surface
+19	Unnamed Namespaces	6	surface
+20	Inline Namespaces	6	surface
+21	Nested Namespaces	6	surface
+22	Modules	6	surface
+23	Module Interface Unit	6	surface
+24	Module Interface Partition	6	surface
+25	Module Implementation Partition	6	surface
+26	Automatic Type Deduction	6	surface
+27	Structured Binding	6	surface
+28	Typedef	6	surface
+29	Type Aliases	6	surface
+30	Enumerations	6	surface
+31	Variants	6	surface
+32	Optional Return Type	6	surface
+33	Expected Return Type	6	surface
+34	Three-Way Comparison Operator	6	surface
+35	Class Default Constructors	6	surface
+168	Semaphore	6	surface
+169	Semaphore Properties	6	surface
+170	Counting Semaphore	6	surface
+171	Binary Semaphore	6	surface
+172	Latch	6	surface
+173	Barrier	6	surface
+174	Processes	6	surface
+175	Coroutine	6	surface
+176	Monostate Pattern	6	surface
+177	Path Terminalogy	6	surface
+178	Filesystem Error Handling	6	surface
+179	File Types	6	surface
+180	Path Construction	6	surface
+181	Path Inspection	6	surface
+182	Path Conversion	6	surface
+183	Path Relativity	6	surface
+184	Generic Paths	6	surface
+185	Path Expansion	6	surface
+186	Path Modification	6	surface
+187	Path Reduction	6	surface
+188	Path Comparison	6	surface
+189	File Existence Checking	6	surface
+190	File Type Checking	6	surface
+191	Filesystem Attributes Querying	6	surface
+192	Filesystem Attributes Modification	6	surface
+193	Filesystem Existence Checking	6	surface
+194	File Status	6	surface
+195	File Permissions	6	surface
+196	File Creation	6	surface
+197	Directory Creation	6	surface
+198	Symbolic Link Creation	6	surface
+199	Hard Link Creation	6	surface
+200	File Copy	6	surface
+201	File Removal	6	surface
+202	Filesystem Path Conversion	6	surface
+203	Directory Iteration	6	surface
+204	Directory Entries	6	surface
+205	Logging	6	surface
+206	Design Patterns	6	surface
+207	Creational Design Patterns	6	surface
+208	Factory Method Design Pattern	6	surface
+209	Abstract Factory Design Pattern	6	surface
+210	Builder Design Pattern	6	surface
+211	Prototype Design Pattern	6	surface
+212	Singleton Design Pattern	6	surface
+213	Behavioral Design Patterns	6	surface
+214	Strategy	6	surface
+215	Null Object	6	surface
+216	Static Strategy	6	surface
+217	Returning Value from Threads	6	surface
+219	Command Pattern	6	surface
+220	Memento Pattern	6	surface
+221	Chain of Responsibility Pattern	6	surface
+222	Observer Pattern	6	surface
+2	Hotspot	17	surface
+1	CA Private Key	16	surface
+2	CA Certificate	16	surface
+\.
+
+
+--
+-- Data for Name: topics_activities; Type: TABLE DATA; Schema: flashback; Owner: flashback
+--
+
+COPY flashback.topics_activities (id, "user", topic, action, "time", subject, level) FROM stdin;
+\.
+
+
+--
 -- Data for Name: users; Type: TABLE DATA; Schema: flashback; Owner: flashback
 --
 
@@ -31732,27 +31732,27 @@ ALTER TABLE ONLY flashback.roadmaps
 
 
 --
+-- Name: section_cards section_cards_pkey; Type: CONSTRAINT; Schema: flashback; Owner: flashback
+--
+
+ALTER TABLE ONLY flashback.section_cards
+    ADD CONSTRAINT section_cards_pkey PRIMARY KEY (resource, section, card);
+
+
+--
+-- Name: section_cards section_cards_unique_position_key; Type: CONSTRAINT; Schema: flashback; Owner: flashback
+--
+
+ALTER TABLE ONLY flashback.section_cards
+    ADD CONSTRAINT section_cards_unique_position_key UNIQUE (resource, section, "position");
+
+
+--
 -- Name: sections_activities sections_activities_pkey; Type: CONSTRAINT; Schema: flashback; Owner: flashback
 --
 
 ALTER TABLE ONLY flashback.sections_activities
     ADD CONSTRAINT sections_activities_pkey PRIMARY KEY (id);
-
-
---
--- Name: sections_cards sections_cards_pkey; Type: CONSTRAINT; Schema: flashback; Owner: flashback
---
-
-ALTER TABLE ONLY flashback.sections_cards
-    ADD CONSTRAINT sections_cards_pkey PRIMARY KEY (resource, section, card);
-
-
---
--- Name: sections_cards sections_cards_resource_section_position_key; Type: CONSTRAINT; Schema: flashback; Owner: flashback
---
-
-ALTER TABLE ONLY flashback.sections_cards
-    ADD CONSTRAINT sections_cards_resource_section_position_key UNIQUE (resource, section, "position");
 
 
 --
@@ -31820,26 +31820,26 @@ ALTER TABLE ONLY flashback.topics_activities
 
 
 --
--- Name: topics_cards topics_cards_pkey; Type: CONSTRAINT; Schema: flashback; Owner: flashback
+-- Name: topic_cards topics_cards_pkey; Type: CONSTRAINT; Schema: flashback; Owner: flashback
 --
 
-ALTER TABLE ONLY flashback.topics_cards
+ALTER TABLE ONLY flashback.topic_cards
     ADD CONSTRAINT topics_cards_pkey PRIMARY KEY (subject, level, topic, card);
 
 
 --
--- Name: topics_cards topics_cards_subject_card_key; Type: CONSTRAINT; Schema: flashback; Owner: flashback
+-- Name: topic_cards topics_cards_subject_card_key; Type: CONSTRAINT; Schema: flashback; Owner: flashback
 --
 
-ALTER TABLE ONLY flashback.topics_cards
+ALTER TABLE ONLY flashback.topic_cards
     ADD CONSTRAINT topics_cards_subject_card_key UNIQUE (subject, card);
 
 
 --
--- Name: topics_cards topics_cards_subject_topic_level_position_key; Type: CONSTRAINT; Schema: flashback; Owner: flashback
+-- Name: topic_cards topics_cards_subject_topic_level_position_key; Type: CONSTRAINT; Schema: flashback; Owner: flashback
 --
 
-ALTER TABLE ONLY flashback.topics_cards
+ALTER TABLE ONLY flashback.topic_cards
     ADD CONSTRAINT topics_cards_subject_topic_level_position_key UNIQUE (subject, topic, level, "position");
 
 
@@ -32156,6 +32156,22 @@ ALTER TABLE ONLY flashback.roadmaps
 
 
 --
+-- Name: section_cards section_cards_card_fkey; Type: FK CONSTRAINT; Schema: flashback; Owner: flashback
+--
+
+ALTER TABLE ONLY flashback.section_cards
+    ADD CONSTRAINT section_cards_card_fkey FOREIGN KEY (card) REFERENCES flashback.cards(id) ON UPDATE CASCADE ON DELETE CASCADE;
+
+
+--
+-- Name: section_cards section_cards_resource_position_fkey; Type: FK CONSTRAINT; Schema: flashback; Owner: flashback
+--
+
+ALTER TABLE ONLY flashback.section_cards
+    ADD CONSTRAINT section_cards_resource_position_fkey FOREIGN KEY (resource, section) REFERENCES flashback.sections(resource, "position") ON UPDATE CASCADE ON DELETE CASCADE;
+
+
+--
 -- Name: sections_activities sections_activities_resource_position_fkey; Type: FK CONSTRAINT; Schema: flashback; Owner: flashback
 --
 
@@ -32169,22 +32185,6 @@ ALTER TABLE ONLY flashback.sections_activities
 
 ALTER TABLE ONLY flashback.sections_activities
     ADD CONSTRAINT sections_activities_user_fkey FOREIGN KEY ("user") REFERENCES flashback.users(id) ON UPDATE CASCADE;
-
-
---
--- Name: sections_cards sections_cards_card_fkey; Type: FK CONSTRAINT; Schema: flashback; Owner: flashback
---
-
-ALTER TABLE ONLY flashback.sections_cards
-    ADD CONSTRAINT sections_cards_card_fkey FOREIGN KEY (card) REFERENCES flashback.cards(id) ON UPDATE CASCADE ON DELETE CASCADE;
-
-
---
--- Name: sections_cards sections_cards_resource_position_fkey; Type: FK CONSTRAINT; Schema: flashback; Owner: flashback
---
-
-ALTER TABLE ONLY flashback.sections_cards
-    ADD CONSTRAINT sections_cards_resource_position_fkey FOREIGN KEY (resource, section) REFERENCES flashback.sections(resource, "position") ON UPDATE CASCADE ON DELETE CASCADE;
 
 
 --
@@ -32276,18 +32276,18 @@ ALTER TABLE ONLY flashback.topics_activities
 
 
 --
--- Name: topics_cards topics_cards_card_fkey; Type: FK CONSTRAINT; Schema: flashback; Owner: flashback
+-- Name: topic_cards topics_cards_card_fkey; Type: FK CONSTRAINT; Schema: flashback; Owner: flashback
 --
 
-ALTER TABLE ONLY flashback.topics_cards
+ALTER TABLE ONLY flashback.topic_cards
     ADD CONSTRAINT topics_cards_card_fkey FOREIGN KEY (card) REFERENCES flashback.cards(id) ON UPDATE CASCADE ON DELETE CASCADE;
 
 
 --
--- Name: topics_cards topics_cards_subject_level_topic_fkey; Type: FK CONSTRAINT; Schema: flashback; Owner: flashback
+-- Name: topic_cards topics_cards_subject_level_topic_fkey; Type: FK CONSTRAINT; Schema: flashback; Owner: flashback
 --
 
-ALTER TABLE ONLY flashback.topics_cards
+ALTER TABLE ONLY flashback.topic_cards
     ADD CONSTRAINT topics_cards_subject_level_topic_fkey FOREIGN KEY (subject, level, topic) REFERENCES flashback.topics(subject, level, "position") ON UPDATE CASCADE ON DELETE CASCADE;
 
 
@@ -32303,5 +32303,5 @@ GRANT ALL ON SCHEMA public TO flashback_client;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict qNzaIYR2C0h2BbYF9PtbknfOMXGZ7uIL0IIQZPokdiPcUUPuPQ8UDSWTZSVDVZ9
+\unrestrict YkEFLDc04M4RCfM19Y7jkQkzXhPuLu8q97UQ9oLbiX1tH2zHRapMP1t3YcdWNPR
 

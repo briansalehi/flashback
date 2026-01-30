@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict 4eyDEy0wmN8tBEqe20lh07kK4hGlwTu4zyGs559WHEwR08uykUsnWGGH9lW6siE
+\restrict 8iIRGTvVjARG7BDp3qYVlN1LPHw8v2IcbHEg7XBOe1cWXEnkRvKSSPROKFRfeYG
 
 -- Dumped from database version 18.1
 -- Dumped by pg_dump version 18.0
@@ -211,9 +211,9 @@ CREATE FUNCTION flashback.add_card_to_section(card_id integer, resource_id integ
     AS $$
 declare top_position integer;
 begin
-    select coalesce(max(position), 0) + 1 into top_position from sections_cards sc where sc.resource = resource_id and sc.section = section_position;
+    select coalesce(max(position), 0) + 1 into top_position from section_cards sc where sc.resource = resource_id and sc.section = section_position;
 
-    insert into sections_cards (resource, section, card, position) values (resource_id, section_position, card_id, top_position);
+    insert into section_cards (resource, section, card, position) values (resource_id, section_position, card_id, top_position);
 
     return top_position;
 end;
@@ -1138,7 +1138,7 @@ begin
     return query
     select sc.resource as rid, sc.section as sid, sc.position, sc.card, r.name as resource, se.name as section, c.state, c.headline
     from cards c
-    join sections_cards sc on c.id = sc.card
+    join section_cards sc on c.id = sc.card
     join sections se on se.resource = sc.resource and se.position = sc.section
     join resources r on r.id = sc.resource
     where c.headline = card_headline and sc.card <> card_id
@@ -1163,7 +1163,7 @@ begin
     join topics t on t.subject = tc.subject and t.position = tc.topic and t.level = tc.level
     join subjects s on s.id = tc.subject
     join cards c on c.id = tc.card
-    where tc.card not in (select sc.card from sections_cards sc)
+    where tc.card not in (select sc.card from section_cards sc)
     order by tc.subject, tc.level, tc.topic, tc.position;
 end;
 $$;
@@ -1362,7 +1362,7 @@ CREATE FUNCTION flashback.get_section_cards(resource_id integer, section_positio
     LANGUAGE plpgsql
     AS $$
 begin
-    return query select c.id, c.state, c.headline from sections_cards sc join cards c on c.id = sc.card where sc.resource = resource_id and sc.section = section_position;
+    return query select c.id, c.state, c.headline from section_cards sc join cards c on c.id = sc.card where sc.resource = resource_id and sc.section = section_position;
 end;
 $$;
 
@@ -1453,16 +1453,16 @@ end; $$;
 ALTER FUNCTION flashback.get_topics(subject_id integer, topic_level flashback.expertise_level) OWNER TO flashback;
 
 --
--- Name: get_unreviewed_sections_cards(); Type: FUNCTION; Schema: flashback; Owner: flashback
+-- Name: get_unreviewed_section_cards(); Type: FUNCTION; Schema: flashback; Owner: flashback
 --
 
-CREATE FUNCTION flashback.get_unreviewed_sections_cards() RETURNS TABLE(rid integer, sid integer, "position" integer, card integer, resource character varying, section character varying, state flashback.card_state, headline text)
+CREATE FUNCTION flashback.get_unreviewed_section_cards() RETURNS TABLE(rid integer, sid integer, "position" integer, card integer, resource character varying, section character varying, state flashback.card_state, headline text)
     LANGUAGE plpgsql
     AS $$
 begin
     return query
     select sc.resource, sc.section, sc.position, sc.card, r.name, s.name, c.state, c.headline
-    from sections_cards sc
+    from section_cards sc
     join sections s on s.resource = sc.resource and s.position = sc.section
     join resources r on r.id = sc.resource
     join cards c on c.id = sc.card
@@ -1472,7 +1472,7 @@ end;
 $$;
 
 
-ALTER FUNCTION flashback.get_unreviewed_sections_cards() OWNER TO flashback;
+ALTER FUNCTION flashback.get_unreviewed_section_cards() OWNER TO flashback;
 
 --
 -- Name: get_unreviewed_topics_cards(); Type: FUNCTION; Schema: flashback; Owner: flashback
@@ -1579,7 +1579,7 @@ begin
     return (
         select count(cards.id) > 0
         from cards
-        join sections_cards s on s.card = cards.id
+        join section_cards s on s.card = cards.id
         join topics_cards t on t.card = cards.id
         where s.resource = target_resource and t.subject = target_subject
     );
@@ -1781,10 +1781,10 @@ begin
     end if;
 
     if not exists (
-        select 1 from sections_cards sc join sections_cards scc on scc.resource = sc.resource and scc.section = sc.section where sc.card = source_id and scc.card = target_id
+        select 1 from section_cards sc join section_cards scc on scc.resource = sc.resource and scc.section = sc.section where sc.card = source_id and scc.card = target_id
     )
     then
-        update sections_cards set card = target_id where card = source_id;
+        update section_cards set card = target_id where card = source_id;
     end if;
 
     delete from cards where id = source_id;
@@ -1864,9 +1864,9 @@ CREATE PROCEDURE flashback.merge_sections(IN resource_id integer, IN source_sect
     AS $$
 declare top_position integer;
 begin
-    select max(coalesce(position, 0)) into top_position from sections_cards where resource = resource_id and section = target_section;
+    select max(coalesce(position, 0)) into top_position from section_cards where resource = resource_id and section = target_section;
 
-    update sections_cards set section = target_section, position = position + top_position where resource = resource_id and section = source_section;
+    update section_cards set section = target_section, position = position + top_position where resource = resource_id and section = source_section;
 
     delete from sections where resource = resource_id and position = source_section;
 
@@ -1961,15 +1961,15 @@ CREATE PROCEDURE flashback.move_card_to_section(IN card_id integer, IN resource_
 declare card_position integer;
 declare last_position integer;
 begin
-    select coalesce(position, 1) into card_position from sections_cards where resource = resource_id and section = current_section and card = card_id;
+    select coalesce(position, 1) into card_position from section_cards where resource = resource_id and section = current_section and card = card_id;
 
     if current_section <> target_section then
-        select coalesce(max(position), 0) + 1 into last_position from sections_cards where resource = resource_id and section = target_section;
+        select coalesce(max(position), 0) + 1 into last_position from section_cards where resource = resource_id and section = target_section;
 
-        update sections_cards set section = target_section, position = last_position where resource = resource_id and section = current_section and card = card_id;
+        update section_cards set section = target_section, position = last_position where resource = resource_id and section = current_section and card = card_id;
 
-        update sections_cards t set position = tt.updated_position from (
-            select position, row_number() over (order by position) as updated_position from sections_cards where resource = resource_id and section = current_section
+        update section_cards t set position = tt.updated_position from (
+            select position, row_number() over (order by position) as updated_position from section_cards where resource = resource_id and section = current_section
         ) tt where t.resource = resource_id and t.section = current_section and t.position = tt.position;
     end if;
 end;
@@ -2138,7 +2138,7 @@ CREATE PROCEDURE flashback.remove_resource(IN resource_id integer)
     LANGUAGE plpgsql
     AS $$
 begin
-    if not exists (select 1 from sections_cards where resource = resource_id) then
+    if not exists (select 1 from section_cards where resource = resource_id) then
         delete from resources where id = resource_id;
     end if;
 end;
@@ -2169,7 +2169,7 @@ CREATE PROCEDURE flashback.remove_section(IN resource_id integer, IN section_pos
     LANGUAGE plpgsql
     AS $$
 begin
-    if not exists (select 1 from sections_cards where resource = resource_id) then
+    if not exists (select 1 from section_cards where resource = resource_id) then
         delete from sections where resource = resource_id and position = section_position;
     end if;
 end;
@@ -3202,6 +3202,20 @@ ALTER TABLE flashback.roadmaps ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY 
 
 
 --
+-- Name: section_cards; Type: TABLE; Schema: flashback; Owner: flashback
+--
+
+CREATE TABLE flashback.section_cards (
+    resource integer NOT NULL,
+    section integer NOT NULL,
+    card integer NOT NULL,
+    "position" integer NOT NULL
+);
+
+
+ALTER TABLE flashback.section_cards OWNER TO flashback;
+
+--
 -- Name: sections; Type: TABLE; Schema: flashback; Owner: flashback
 --
 
@@ -3244,20 +3258,6 @@ ALTER TABLE flashback.sections_activities ALTER COLUMN id ADD GENERATED ALWAYS A
     CACHE 1
 );
 
-
---
--- Name: sections_cards; Type: TABLE; Schema: flashback; Owner: flashback
---
-
-CREATE TABLE flashback.sections_cards (
-    resource integer NOT NULL,
-    section integer NOT NULL,
-    card integer NOT NULL,
-    "position" integer NOT NULL
-);
-
-
-ALTER TABLE flashback.sections_cards OWNER TO flashback;
 
 --
 -- Name: sessions; Type: TABLE; Schema: flashback; Owner: flashback
@@ -3371,6 +3371,21 @@ ALTER TABLE flashback.subjects ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY 
 
 
 --
+-- Name: topic_cards; Type: TABLE; Schema: flashback; Owner: flashback
+--
+
+CREATE TABLE flashback.topic_cards (
+    topic integer CONSTRAINT topics_cards_topic_not_null NOT NULL,
+    card integer CONSTRAINT topics_cards_card_not_null NOT NULL,
+    "position" integer CONSTRAINT topics_cards_position_not_null NOT NULL,
+    subject integer CONSTRAINT topics_cards_subject_not_null NOT NULL,
+    level flashback.expertise_level CONSTRAINT topics_cards_level_not_null NOT NULL
+);
+
+
+ALTER TABLE flashback.topic_cards OWNER TO flashback;
+
+--
 -- Name: topics; Type: TABLE; Schema: flashback; Owner: flashback
 --
 
@@ -3414,21 +3429,6 @@ ALTER TABLE flashback.topics_activities ALTER COLUMN id ADD GENERATED ALWAYS AS 
     CACHE 1
 );
 
-
---
--- Name: topics_cards; Type: TABLE; Schema: flashback; Owner: flashback
---
-
-CREATE TABLE flashback.topics_cards (
-    topic integer NOT NULL,
-    card integer NOT NULL,
-    "position" integer NOT NULL,
-    subject integer NOT NULL,
-    level flashback.expertise_level NOT NULL
-);
-
-
-ALTER TABLE flashback.topics_cards OWNER TO flashback;
 
 --
 -- Name: users; Type: TABLE; Schema: flashback; Owner: flashback
@@ -3638,27 +3638,27 @@ ALTER TABLE ONLY flashback.roadmaps
 
 
 --
+-- Name: section_cards section_cards_pkey; Type: CONSTRAINT; Schema: flashback; Owner: flashback
+--
+
+ALTER TABLE ONLY flashback.section_cards
+    ADD CONSTRAINT section_cards_pkey PRIMARY KEY (resource, section, card);
+
+
+--
+-- Name: section_cards section_cards_unique_position_key; Type: CONSTRAINT; Schema: flashback; Owner: flashback
+--
+
+ALTER TABLE ONLY flashback.section_cards
+    ADD CONSTRAINT section_cards_unique_position_key UNIQUE (resource, section, "position");
+
+
+--
 -- Name: sections_activities sections_activities_pkey; Type: CONSTRAINT; Schema: flashback; Owner: flashback
 --
 
 ALTER TABLE ONLY flashback.sections_activities
     ADD CONSTRAINT sections_activities_pkey PRIMARY KEY (id);
-
-
---
--- Name: sections_cards sections_cards_pkey; Type: CONSTRAINT; Schema: flashback; Owner: flashback
---
-
-ALTER TABLE ONLY flashback.sections_cards
-    ADD CONSTRAINT sections_cards_pkey PRIMARY KEY (resource, section, card);
-
-
---
--- Name: sections_cards sections_cards_resource_section_position_key; Type: CONSTRAINT; Schema: flashback; Owner: flashback
---
-
-ALTER TABLE ONLY flashback.sections_cards
-    ADD CONSTRAINT sections_cards_resource_section_position_key UNIQUE (resource, section, "position");
 
 
 --
@@ -3726,26 +3726,26 @@ ALTER TABLE ONLY flashback.topics_activities
 
 
 --
--- Name: topics_cards topics_cards_pkey; Type: CONSTRAINT; Schema: flashback; Owner: flashback
+-- Name: topic_cards topics_cards_pkey; Type: CONSTRAINT; Schema: flashback; Owner: flashback
 --
 
-ALTER TABLE ONLY flashback.topics_cards
+ALTER TABLE ONLY flashback.topic_cards
     ADD CONSTRAINT topics_cards_pkey PRIMARY KEY (subject, level, topic, card);
 
 
 --
--- Name: topics_cards topics_cards_subject_card_key; Type: CONSTRAINT; Schema: flashback; Owner: flashback
+-- Name: topic_cards topics_cards_subject_card_key; Type: CONSTRAINT; Schema: flashback; Owner: flashback
 --
 
-ALTER TABLE ONLY flashback.topics_cards
+ALTER TABLE ONLY flashback.topic_cards
     ADD CONSTRAINT topics_cards_subject_card_key UNIQUE (subject, card);
 
 
 --
--- Name: topics_cards topics_cards_subject_topic_level_position_key; Type: CONSTRAINT; Schema: flashback; Owner: flashback
+-- Name: topic_cards topics_cards_subject_topic_level_position_key; Type: CONSTRAINT; Schema: flashback; Owner: flashback
 --
 
-ALTER TABLE ONLY flashback.topics_cards
+ALTER TABLE ONLY flashback.topic_cards
     ADD CONSTRAINT topics_cards_subject_topic_level_position_key UNIQUE (subject, topic, level, "position");
 
 
@@ -4062,6 +4062,22 @@ ALTER TABLE ONLY flashback.roadmaps
 
 
 --
+-- Name: section_cards section_cards_card_fkey; Type: FK CONSTRAINT; Schema: flashback; Owner: flashback
+--
+
+ALTER TABLE ONLY flashback.section_cards
+    ADD CONSTRAINT section_cards_card_fkey FOREIGN KEY (card) REFERENCES flashback.cards(id) ON UPDATE CASCADE ON DELETE CASCADE;
+
+
+--
+-- Name: section_cards section_cards_resource_position_fkey; Type: FK CONSTRAINT; Schema: flashback; Owner: flashback
+--
+
+ALTER TABLE ONLY flashback.section_cards
+    ADD CONSTRAINT section_cards_resource_position_fkey FOREIGN KEY (resource, section) REFERENCES flashback.sections(resource, "position") ON UPDATE CASCADE ON DELETE CASCADE;
+
+
+--
 -- Name: sections_activities sections_activities_resource_position_fkey; Type: FK CONSTRAINT; Schema: flashback; Owner: flashback
 --
 
@@ -4075,22 +4091,6 @@ ALTER TABLE ONLY flashback.sections_activities
 
 ALTER TABLE ONLY flashback.sections_activities
     ADD CONSTRAINT sections_activities_user_fkey FOREIGN KEY ("user") REFERENCES flashback.users(id) ON UPDATE CASCADE;
-
-
---
--- Name: sections_cards sections_cards_card_fkey; Type: FK CONSTRAINT; Schema: flashback; Owner: flashback
---
-
-ALTER TABLE ONLY flashback.sections_cards
-    ADD CONSTRAINT sections_cards_card_fkey FOREIGN KEY (card) REFERENCES flashback.cards(id) ON UPDATE CASCADE ON DELETE CASCADE;
-
-
---
--- Name: sections_cards sections_cards_resource_position_fkey; Type: FK CONSTRAINT; Schema: flashback; Owner: flashback
---
-
-ALTER TABLE ONLY flashback.sections_cards
-    ADD CONSTRAINT sections_cards_resource_position_fkey FOREIGN KEY (resource, section) REFERENCES flashback.sections(resource, "position") ON UPDATE CASCADE ON DELETE CASCADE;
 
 
 --
@@ -4182,18 +4182,18 @@ ALTER TABLE ONLY flashback.topics_activities
 
 
 --
--- Name: topics_cards topics_cards_card_fkey; Type: FK CONSTRAINT; Schema: flashback; Owner: flashback
+-- Name: topic_cards topics_cards_card_fkey; Type: FK CONSTRAINT; Schema: flashback; Owner: flashback
 --
 
-ALTER TABLE ONLY flashback.topics_cards
+ALTER TABLE ONLY flashback.topic_cards
     ADD CONSTRAINT topics_cards_card_fkey FOREIGN KEY (card) REFERENCES flashback.cards(id) ON UPDATE CASCADE ON DELETE CASCADE;
 
 
 --
--- Name: topics_cards topics_cards_subject_level_topic_fkey; Type: FK CONSTRAINT; Schema: flashback; Owner: flashback
+-- Name: topic_cards topics_cards_subject_level_topic_fkey; Type: FK CONSTRAINT; Schema: flashback; Owner: flashback
 --
 
-ALTER TABLE ONLY flashback.topics_cards
+ALTER TABLE ONLY flashback.topic_cards
     ADD CONSTRAINT topics_cards_subject_level_topic_fkey FOREIGN KEY (subject, level, topic) REFERENCES flashback.topics(subject, level, "position") ON UPDATE CASCADE ON DELETE CASCADE;
 
 
@@ -4209,5 +4209,5 @@ GRANT ALL ON SCHEMA public TO flashback_client;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict 4eyDEy0wmN8tBEqe20lh07kK4hGlwTu4zyGs559WHEwR08uykUsnWGGH9lW6siE
+\unrestrict 8iIRGTvVjARG7BDp3qYVlN1LPHw8v2IcbHEg7XBOe1cWXEnkRvKSSPROKFRfeYG
 
