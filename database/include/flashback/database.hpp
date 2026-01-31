@@ -202,6 +202,8 @@ private:
     static std::string content_type_to_string(Block::content_type const type);
     static closure_state to_closure_state(std::string_view const state_string);
     static std::string closure_state_to_string(closure_state const state);
+    static practice_mode to_practice_mode(std::string_view const mode_string);
+    static std::string practice_mode_to_string(practice_mode const mode);
 
     std::unique_ptr<pqxx::connection> m_connection;
     friend class ::test_database;

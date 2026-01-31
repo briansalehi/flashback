@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict eIEDzpE3HSLV1LQBvEQoISJXO36ojZk79aO6RfH8m9Tztuc49pVznTPfw28CLWB
+\restrict eO41hiyb8u3WAbVxvFyIg5ddsyea6ektVOV8LHbIXjnD5sODGUR8bF9APOd2iBB
 
 -- Dumped from database version 18.1
 -- Dumped by pg_dump version 18.0
@@ -2746,7 +2746,10 @@ ALTER FUNCTION flashback.split_block(card_id integer, block_position integer) OW
 
 CREATE PROCEDURE flashback.throw_back_progress(IN user_id integer, IN card_id integer, IN days integer)
     LANGUAGE plpgsql
-    AS $$ begin update progress set last_practice = now() - (days * '1 day'::interval) where user = user_id and card = card_id; end; $$;
+    AS $$
+begin
+    update progress set last_practice = now() - (days * '1 day'::interval) where "user" = user_id and card = card_id;
+end; $$;
 
 
 ALTER PROCEDURE flashback.throw_back_progress(IN user_id integer, IN card_id integer, IN days integer) OWNER TO flashback;
@@ -32332,5 +32335,5 @@ GRANT ALL ON SCHEMA public TO flashback_client;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict eIEDzpE3HSLV1LQBvEQoISJXO36ojZk79aO6RfH8m9Tztuc49pVznTPfw28CLWB
+\unrestrict eO41hiyb8u3WAbVxvFyIg5ddsyea6ektVOV8LHbIXjnD5sODGUR8bF9APOd2iBB
 

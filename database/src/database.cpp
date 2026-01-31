@@ -1104,7 +1104,20 @@ expertise_level database::get_user_cognitive_level(uint64_t const user_id, uint6
 
 practice_mode database::get_practice_mode(uint64_t const user_id, uint64_t const subject_id, expertise_level const level) const
 {
-    return {};
+    practice_mode mode{};
+    pqxx::result const result{query("select get_practice_mode($1, $2, $3) as mode", user_id, subject_id, level_to_string(level))};
+
+    if (result.size() == 1) [[likely]]
+    {
+        pqxx::row const& row{result.at(0)};
+        mode = to_practice_mode(row.at("mode").as<std::string>());
+    }
+    else [[unlikely]]
+    {
+        throw std::runtime_error("practice mode could not be retrieved");
+    }
+
+    return mode;
 }
 
 std::map<uint64_t, Topic> database::get_practice_topics(uint64_t const user_id, uint64_t const subject_id) const
@@ -1158,6 +1171,7 @@ void database::mark_card_as_released(uint64_t const card_id) const
 
 void database::make_progress(uint64_t const user_id, uint64_t const card_id, uint64_t const duration, practice_mode const mode) const
 {
+    exec("call make_progress($1, $2, $3, $4)", user_id, card_id, duration, practice_mode_to_string(mode));
 }
 
 closure_state database::get_section_state(uint64_t const resource_id, uint64_t const section_position) const
@@ -1437,8 +1451,38 @@ std::string database::closure_state_to_string(closure_state const state)
         break;
     case closure_state::completed: state_string = "completed";
         break;
-    default: throw std::runtime_error("invalid closure state");
+    default: throw std::runtime_error{"invalid closure state"};
     }
 
     return state_string;
+}
+
+practice_mode database::to_practice_mode(std::string_view const mode_string)
+{
+    practice_mode mode{};
+
+    if (mode_string == "aggressive") { mode = practice_mode::aggressive; }
+    else if (mode_string == "progressive") { mode = practice_mode::progressive; }
+    else if (mode_string == "selective") { mode = practice_mode::selective; }
+    else { throw std::runtime_error{"invalid practice mode"}; }
+
+    return mode;
+}
+
+std::string database::practice_mode_to_string(practice_mode const mode)
+{
+    std::string mode_string{};
+
+    switch (mode)
+    {
+    case practice_mode::aggressive: mode_string = "aggressive";
+        break;
+    case practice_mode::progressive: mode_string = "progressive";
+        break;
+    case practice_mode::selective: mode_string = "selective";
+        break;
+    default: throw std::runtime_error{"unhandled practice mode"};
+    }
+
+    return mode_string;
 }

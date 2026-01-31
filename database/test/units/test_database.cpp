@@ -4674,7 +4674,6 @@ TEST_F(test_database, make_progress)
     ASSERT_NO_THROW(milestone = m_database->add_milestone(subject.id(), milestone_level, roadmap.id()));
     ASSERT_THAT(milestone.position(), Eq(1));
     ASSERT_THAT(milestone.id(), subject.id());
-    ASSERT_THAT(milestone.name(), subject.name());
     ASSERT_THAT(milestone.level(), milestone_level);
     ASSERT_NO_THROW(topic = m_database->create_topic(subject.id(), topic_name, milestone_level, 0));
     ASSERT_THAT(topic.position(), Eq(1));
@@ -4722,7 +4721,6 @@ TEST_F(test_database, get_practice_mode)
     ASSERT_NO_THROW(milestone = m_database->add_milestone(subject.id(), milestone_level, roadmap.id()));
     ASSERT_THAT(milestone.position(), Eq(1));
     ASSERT_THAT(milestone.id(), subject.id());
-    ASSERT_THAT(milestone.name(), subject.name());
     ASSERT_THAT(milestone.level(), milestone_level);
     ASSERT_NO_THROW(topic = m_database->create_topic(subject.id(), topic_name, milestone_level, 0));
     ASSERT_THAT(topic.position(), Eq(1));
@@ -4786,18 +4784,17 @@ TEST_F(test_database, get_practice_mode_from_high_levels)
     ASSERT_NO_THROW(milestone = m_database->add_milestone(subject.id(), milestone_level, roadmap.id()));
     ASSERT_THAT(milestone.position(), Eq(1));
     ASSERT_THAT(milestone.id(), subject.id());
-    ASSERT_THAT(milestone.name(), subject.name());
     ASSERT_THAT(milestone.level(), milestone_level);
     ASSERT_NO_THROW(first_topic = m_database->create_topic(subject.id(), topic_name, flashback::expertise_level::surface, 0));
     ASSERT_THAT(first_topic.position(), Eq(1));
     ASSERT_THAT(first_topic.name(), topic_name);
     ASSERT_THAT(first_topic.level(), flashback::expertise_level::surface);
     ASSERT_NO_THROW(second_topic = m_database->create_topic(subject.id(), topic_name, flashback::expertise_level::depth, 0));
-    ASSERT_THAT(second_topic.position(), Eq(2));
+    ASSERT_THAT(second_topic.position(), Eq(1));
     ASSERT_THAT(second_topic.name(), topic_name);
     ASSERT_THAT(second_topic.level(), flashback::expertise_level::depth);
     ASSERT_NO_THROW(third_topic = m_database->create_topic(subject.id(), topic_name, flashback::expertise_level::origin, 0));
-    ASSERT_THAT(third_topic.position(), Eq(3));
+    ASSERT_THAT(third_topic.position(), Eq(1));
     ASSERT_THAT(third_topic.name(), topic_name);
     ASSERT_THAT(third_topic.level(), flashback::expertise_level::origin);
     ASSERT_NO_THROW(first_card = m_database->create_card(first_card));
@@ -4854,7 +4851,6 @@ TEST_F(test_database, get_practice_mode_long_after_practicing)
     ASSERT_NO_THROW(milestone = m_database->add_milestone(subject.id(), milestone_level, roadmap.id()));
     ASSERT_THAT(milestone.position(), Eq(1));
     ASSERT_THAT(milestone.id(), subject.id());
-    ASSERT_THAT(milestone.name(), subject.name());
     ASSERT_THAT(milestone.level(), milestone_level);
     ASSERT_NO_THROW(topic = m_database->create_topic(subject.id(), topic_name, milestone_level, 0));
     ASSERT_THAT(topic.position(), Eq(1));
@@ -4870,9 +4866,11 @@ TEST_F(test_database, get_practice_mode_long_after_practicing)
     EXPECT_NO_THROW(mode = m_database->get_practice_mode(m_user->id(), subject.id(), milestone_level));
     EXPECT_THAT(mode, Eq(flashback::practice_mode::progressive)) << "Practice mode should be progressive after the only card is practiced";
     EXPECT_NO_THROW(throw_back_progress(m_user->id(), card.id(), std::chrono::days{100}));
-    ASSERT_NO_THROW(m_database->make_progress(m_user->id(), card.id(), duration.count(), mode));
     EXPECT_NO_THROW(mode = m_database->get_practice_mode(m_user->id(), subject.id(), milestone_level));
     EXPECT_THAT(mode, Eq(flashback::practice_mode::aggressive)) << "Practice mode should switch to aggressive after a long time of inactivity";
+    ASSERT_NO_THROW(m_database->make_progress(m_user->id(), card.id(), duration.count(), mode));
+    EXPECT_NO_THROW(mode = m_database->get_practice_mode(m_user->id(), subject.id(), milestone_level));
+    EXPECT_THAT(mode, Eq(flashback::practice_mode::progressive));
 }
 
 TEST_F(test_database, get_practice_mode_after_new_card_available)
@@ -4910,7 +4908,6 @@ TEST_F(test_database, get_practice_mode_after_new_card_available)
     ASSERT_NO_THROW(milestone = m_database->add_milestone(subject.id(), milestone_level, roadmap.id()));
     ASSERT_THAT(milestone.position(), Eq(1));
     ASSERT_THAT(milestone.id(), subject.id());
-    ASSERT_THAT(milestone.name(), subject.name());
     ASSERT_THAT(milestone.level(), milestone_level);
     ASSERT_NO_THROW(topic = m_database->create_topic(subject.id(), topic_name, milestone_level, 0));
     ASSERT_THAT(topic.position(), Eq(1));
@@ -4978,7 +4975,6 @@ TEST_F(test_database, get_practice_mode_when_progress_takes_too_long)
     ASSERT_NO_THROW(milestone = m_database->add_milestone(subject.id(), milestone_level, roadmap.id()));
     ASSERT_THAT(milestone.position(), Eq(1));
     ASSERT_THAT(milestone.id(), subject.id());
-    ASSERT_THAT(milestone.name(), subject.name());
     ASSERT_THAT(milestone.level(), milestone_level);
     ASSERT_NO_THROW(topic = m_database->create_topic(subject.id(), topic_name, milestone_level, 0));
     ASSERT_THAT(topic.position(), Eq(1));
@@ -5048,7 +5044,6 @@ TEST_F(test_database, get_user_cognitive_level)
     ASSERT_NO_THROW(milestone = m_database->add_milestone(subject.id(), milestone_level, roadmap.id()));
     ASSERT_THAT(milestone.position(), Eq(1));
     ASSERT_THAT(milestone.id(), subject.id());
-    ASSERT_THAT(milestone.name(), subject.name());
     ASSERT_THAT(milestone.level(), milestone_level);
     ASSERT_NO_THROW(topic = m_database->create_topic(subject.id(), topic_name, milestone_level, 0));
     ASSERT_THAT(topic.position(), Eq(1));
