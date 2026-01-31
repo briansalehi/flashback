@@ -356,26 +356,28 @@ TEST_F(test_database, RemoveRoadmap)
 
 TEST_F(test_database, SearchRoadmaps)
 {
-    std::vector<std::string> const names{"Cloud Infrastructure",
-                                         "Quantitative Finance",
-                                         "Database Optimization",
-                                         "Forensic Accounting",
-                                         "Cybersecurity Governance",
-                                         "Data Visualization",
-                                         "Talent Acquisition",
-                                         "Supply Chain Logistics",
-                                         "Intellectual Property Law",
-                                         "Agile Project Management",
-                                         "Full-Stack Development",
-                                         "Backend Development",
-                                         "Digital Marketing",
-                                         "Content Marketing",
-                                         "Financial Analysis",
-                                         "Risk Analysis",
-                                         "Product Management",
-                                         "Project Management",
-                                         "Brand Strategy",
-                                         "Growth Strategy"};
+    std::vector<std::string> const names{
+        "Cloud Infrastructure",
+        "Quantitative Finance",
+        "Database Optimization",
+        "Forensic Accounting",
+        "Cybersecurity Governance",
+        "Data Visualization",
+        "Talent Acquisition",
+        "Supply Chain Logistics",
+        "Intellectual Property Law",
+        "Agile Project Management",
+        "Full-Stack Development",
+        "Backend Development",
+        "Digital Marketing",
+        "Content Marketing",
+        "Financial Analysis",
+        "Risk Analysis",
+        "Product Management",
+        "Project Management",
+        "Brand Strategy",
+        "Growth Strategy"
+    };
     std::map<uint64_t, flashback::Roadmap> search_results;
 
     for (std::string const& roadmap_name: names)
@@ -3011,7 +3013,9 @@ TEST_F(test_database, move_card_to_topic)
     ASSERT_THAT(cards, testing::SizeIs(2));
     ASSERT_NO_THROW(cards = m_database->get_section_cards(resource.id(), second_section.position()));
     ASSERT_THAT(cards, testing::SizeIs(1));
-    EXPECT_NO_THROW(m_database->move_card_to_topic(first_card.id(), first_subject.id(), first_topic.position(), first_topic.level(), second_subject.id(), second_topic.position(), second_topic.level()));
+    EXPECT_NO_THROW(
+        m_database->move_card_to_topic(first_card.id(), first_subject.id(), first_topic.position(), first_topic.level(), second_subject.id(), second_topic.position(), second_topic.
+            level()));
     ASSERT_NO_THROW(cards = m_database->get_topic_cards(first_subject.id(), first_topic.position(), first_topic.level()));
     ASSERT_THAT(cards, testing::IsEmpty());
     ASSERT_NO_THROW(cards = m_database->get_topic_cards(second_subject.id(), second_topic.position(), second_topic.level()));

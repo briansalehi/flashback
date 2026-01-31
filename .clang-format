@@ -42,12 +42,17 @@ IncludeCategories:
     Priority: 3
 IncludeIsMainRegex: '([-_](test|unittest))?$'
 IndentCaseBlocks: true
+IndentGotoLabels: false
 IndentWidth: 4
 InsertNewlineAtEOF: true
 MacroBlockBegin: ''
 MacroBlockEnd: ''
 NamespaceIndentation: Inner
 PointerAlignment: Left
+SpaceAfterCStyleCast: true
+SpaceBeforeCtorInitializerColon: false
+SpaceBeforeInheritanceColon: false
+SpaceBeforeRangeBasedForLoopColon: false
 SpaceInEmptyParentheses: false
 SpacesInAngles: false
 SpacesInConditionalStatement: false

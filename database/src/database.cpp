@@ -7,8 +7,7 @@
 
 using namespace flashback;
 
-database::database(std::string client, std::string name, std::string address, std::string port)
-    : m_connection{nullptr}
+database::database(std::string client, std::string name, std::string address, std::string port): m_connection{nullptr}
 {
     try
     {
@@ -108,11 +107,14 @@ std::unique_ptr<User> database::get_user(std::string_view email) const
         user->set_email(result.at("email").as<std::string>());
         user->set_verified(result.at("verified").as<bool>());
 
-        if (!result.at("hash").is_null()) user->set_hash(result.at("hash").as<std::string>());
+        if (!result.at("hash").is_null())
+            user->set_hash(result.at("hash").as<std::string>());
 
-        if (!result.at("token").is_null()) user->set_token(result.at("token").as<std::string>());
+        if (!result.at("token").is_null())
+            user->set_token(result.at("token").as<std::string>());
 
-        if (!result.at("device").is_null()) user->set_device(result.at("device").as<std::string>());
+        if (!result.at("device").is_null())
+            user->set_device(result.at("device").as<std::string>());
 
         std::tm tm{};
         std::istringstream stream{result.at("joined").as<std::string>()};
@@ -123,11 +125,16 @@ std::unique_ptr<User> database::get_user(std::string_view email) const
         auto timestamp{std::make_unique<google::protobuf::Timestamp>(google::protobuf::util::TimeUtil::SecondsToTimestamp(epoch))};
         user->set_allocated_joined(timestamp.release());
 
-        if (std::string const state_str{result.at("state").as<std::string>()}; state_str == "active") user->set_state(User::active);
-        else if (state_str == "inactive") user->set_state(User::inactive);
-        else if (state_str == "suspended") user->set_state(User::suspended);
-        else if (state_str == "banned") user->set_state(User::banned);
-        else throw std::runtime_error("unhandled user state");
+        if (std::string const state_str{result.at("state").as<std::string>()}; state_str == "active")
+            user->set_state(User::active);
+        else if (state_str == "inactive")
+            user->set_state(User::inactive);
+        else if (state_str == "suspended")
+            user->set_state(User::suspended);
+        else if (state_str == "banned")
+            user->set_state(User::banned);
+        else
+            throw std::runtime_error("unhandled user state");
     }
 
     return user;
@@ -147,11 +154,14 @@ std::unique_ptr<User> database::get_user(std::string_view token, std::string_vie
         user->set_email(result.at("email").as<std::string>());
         user->set_verified(result.at("verified").as<bool>());
 
-        if (!result.at("hash").is_null()) user->set_hash(result.at("hash").as<std::string>());
+        if (!result.at("hash").is_null())
+            user->set_hash(result.at("hash").as<std::string>());
 
-        if (!result.at("token").is_null()) user->set_token(result.at("token").as<std::string>());
+        if (!result.at("token").is_null())
+            user->set_token(result.at("token").as<std::string>());
 
-        if (!result.at("device").is_null()) user->set_device(result.at("device").as<std::string>());
+        if (!result.at("device").is_null())
+            user->set_device(result.at("device").as<std::string>());
 
         std::tm tm{};
         std::istringstream stream{result.at("joined").as<std::string>()};
@@ -162,11 +172,16 @@ std::unique_ptr<User> database::get_user(std::string_view token, std::string_vie
         auto timestamp{std::make_unique<google::protobuf::Timestamp>(google::protobuf::util::TimeUtil::SecondsToTimestamp(epoch))};
         user->set_allocated_joined(timestamp.release());
 
-        if (std::string const state_str{result.at("state").as<std::string>()}; state_str == "active") user->set_state(User::active);
-        else if (state_str == "inactive") user->set_state(User::inactive);
-        else if (state_str == "suspended") user->set_state(User::suspended);
-        else if (state_str == "banned") user->set_state(User::banned);
-        else throw std::runtime_error("unhandled user state");
+        if (std::string const state_str{result.at("state").as<std::string>()}; state_str == "active")
+            user->set_state(User::active);
+        else if (state_str == "inactive")
+            user->set_state(User::inactive);
+        else if (state_str == "suspended")
+            user->set_state(User::suspended);
+        else if (state_str == "banned")
+            user->set_state(User::banned);
+        else
+            throw std::runtime_error("unhandled user state");
     }
 
     return user;
@@ -367,8 +382,7 @@ std::vector<Milestone> database::get_requirements(uint64_t const roadmap_id, uin
 {
     std::vector<Milestone> requirements{};
 
-    for (auto const& row: query("select subject, position, name, required_level from get_requirements($1, $2, $3)", roadmap_id, subject_id,
-                                level_to_string(subject_level)))
+    for (auto const& row: query("select subject, position, name, required_level from get_requirements($1, $2, $3)", roadmap_id, subject_id, level_to_string(subject_level)))
     {
         Milestone milestone;
         milestone.set_id(row.at("subject").as<uint64_t>());
@@ -418,8 +432,9 @@ Resource database::create_resource(Resource const& resource) const
     if (!resource.name().empty())
     {
         pqxx::row const row{
-            query("select create_resource($1, $2, $3, $4, $5, $6) as id", resource.name(), resource_type_to_string(resource.type()),
-                  section_pattern_to_string(resource.pattern()), resource.link(), resource.production(), resource.expiration()).at(0)};
+            query("select create_resource($1, $2, $3, $4, $5, $6) as id", resource.name(), resource_type_to_string(resource.type()), section_pattern_to_string(resource.pattern()),
+                  resource.link(), resource.production(), resource.expiration()).at(0)
+        };
         generated_resource.set_id(row.at("id").as<uint64_t>());
     }
 
@@ -462,8 +477,7 @@ std::map<uint64_t, Resource> database::search_resources(std::string_view search_
 
     if (!search_pattern.empty())
     {
-        for (pqxx::row const& row: query("select similarity, id, name, type, pattern, link, production, expiration from search_resources($1) order by similarity",
-                                         search_pattern))
+        for (pqxx::row const& row: query("select similarity, id, name, type, pattern, link, production, expiration from search_resources($1) order by similarity", search_pattern))
         {
             uint64_t const similarity{row.at("similarity").as<uint64_t>()};
             Resource resource{};
@@ -669,8 +683,7 @@ void database::rename_topic(uint64_t const subject_id, expertise_level const lev
     exec("call rename_topic($1, $2, $3, $4)", subject_id, level_to_string(level), position, name);
 }
 
-void database::move_topic(uint64_t const subject_id, expertise_level const level, uint64_t const position, uint64_t const target_subject_id,
-                          uint64_t const target_position) const
+void database::move_topic(uint64_t const subject_id, expertise_level const level, uint64_t const position, uint64_t const target_subject_id, uint64_t const target_position) const
 {
     exec("call move_topic($1, $2, $3, $4, $5)", subject_id, level_to_string(level), position, target_subject_id, target_position);
 }
@@ -681,8 +694,8 @@ std::map<uint64_t, Topic> database::search_topics(uint64_t const subject_id, exp
 
     if (!search_pattern.empty())
     {
-        for (pqxx::row const& row: query("select similarity, position, name, level from search_topics($1, $2, $3) order by similarity", subject_id,
-                                         level_to_string(level), search_pattern))
+        for (pqxx::row const& row: query("select similarity, position, name, level from search_topics($1, $2, $3) order by similarity", subject_id, level_to_string(level),
+                                         search_pattern))
         {
             uint64_t const similarity{row.at("similarity").as<uint64_t>()};
             Topic topic{};
@@ -696,8 +709,7 @@ std::map<uint64_t, Topic> database::search_topics(uint64_t const subject_id, exp
     return topics;
 }
 
-void database::change_topic_level(uint64_t const subject_id, uint64_t const position, flashback::expertise_level const level,
-                                  flashback::expertise_level const target) const
+void database::change_topic_level(uint64_t const subject_id, uint64_t const position, flashback::expertise_level const level, flashback::expertise_level const target) const
 {
     exec("call change_topic_level($1, $2, $3, $4)", subject_id, position, level_to_string(level), level_to_string(target));
 }
@@ -888,9 +900,11 @@ void database::move_card_to_section(uint64_t const card_id, uint64_t const resou
     exec("call move_card_to_section($1, $2, $3, $4)", card_id, resource_id, section_position, target_section_position);
 }
 
-void database::move_card_to_topic(uint64_t const card_id, uint64_t const subject_id, uint64_t const topic_position, expertise_level const topic_level, uint64_t const target_subject, uint64_t const target_position, expertise_level const target_level) const
+void database::move_card_to_topic(uint64_t const card_id, uint64_t const subject_id, uint64_t const topic_position, expertise_level const topic_level,
+                                  uint64_t const target_subject, uint64_t const target_position, expertise_level const target_level) const
 {
-    exec("call move_card_to_topic($1, $2, $3, $4, $5, $6, $7)", card_id, subject_id, topic_position, level_to_string(topic_level), target_subject, target_position, level_to_string(target_level));
+    exec("call move_card_to_topic($1, $2, $3, $4, $5, $6, $7)", card_id, subject_id, topic_position, level_to_string(topic_level), target_subject, target_position,
+         level_to_string(target_level));
 }
 
 std::vector<Card> database::get_section_cards(uint64_t const resource_id, uint64_t const sections_position) const
@@ -932,11 +946,14 @@ Block database::create_block(uint64_t const card_id, Block block) const
     {
         if (block.position() > 0)
         {
-            exec("call create_block($1, $2, $3, $4, $5, $6)", card_id, content_type_to_string(block.type()), block.extension(), block.content(), block.metadata(), block.position());
+            exec("call create_block($1, $2, $3, $4, $5, $6)", card_id, content_type_to_string(block.type()), block.extension(), block.content(), block.metadata(),
+                 block.position());
         }
         else
         {
-            if (pqxx::result const result{query("select create_block($1, $2, $3, $4, $5) as id", card_id, content_type_to_string(block.type()), block.extension(), block.content(), block.metadata())}; result.size() == 1)
+            if (pqxx::result const result{
+                query("select create_block($1, $2, $3, $4, $5) as id", card_id, content_type_to_string(block.type()), block.extension(), block.content(), block.metadata())
+            }; result.size() == 1)
             {
                 block.set_position(result.at(0).at("id").as<uint64_t>());
             }
@@ -1095,8 +1112,7 @@ std::map<uint64_t, Section> database::get_study_sections(uint64_t const user_id,
     return {};
 }
 
-std::map<uint64_t, Card> database::get_study_cards(uint64_t const user_id, uint64_t const resource_id,
-    uint64_t const section_position) const
+std::map<uint64_t, Card> database::get_study_cards(uint64_t const user_id, uint64_t const resource_id, uint64_t const section_position) const
 {
     return {};
 }
@@ -1154,8 +1170,7 @@ bool database::is_absolute(uint64_t const card_id) const
     return {};
 }
 
-void database::create_assessment(uint64_t const subject_id, expertise_level const level, uint64_t const topic_position,
-    uint64_t const card_id) const
+void database::create_assessment(uint64_t const subject_id, expertise_level const level, uint64_t const topic_position, uint64_t const card_id) const
 {
 }
 
@@ -1171,8 +1186,7 @@ void database::get_assimilation_coverage(uint64_t const user_id, uint64_t const 
 {
 }
 
-std::vector<Card> database::get_topic_assessments(uint64_t const user_id, uint64_t const subject_id, uint64_t const topic_position,
-    expertise_level const max_level) const
+std::vector<Card> database::get_topic_assessments(uint64_t const user_id, uint64_t const subject_id, uint64_t const topic_position, expertise_level const max_level) const
 {
     return {};
 }
@@ -1182,12 +1196,10 @@ std::vector<Card> database::get_assessments(uint64_t const user_id, uint64_t con
     return {};
 }
 
-void database::expand_assessment(uint64_t const assessment_id, uint64_t const subject_id, expertise_level const level,
-    uint64_t const topic_position) const
+void database::expand_assessment(uint64_t const assessment_id, uint64_t const subject_id, expertise_level const level, uint64_t const topic_position) const
 {
 }
 
-void database::diminish_assessment(uint64_t const assessment_id, uint64_t const subject_id, expertise_level const level,
-    uint64_t const topic_position) const
+void database::diminish_assessment(uint64_t const assessment_id, uint64_t const subject_id, expertise_level const level, uint64_t const topic_position) const
 {
 }

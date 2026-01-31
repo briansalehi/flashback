@@ -6,18 +6,15 @@
 
 namespace flashback
 {
-class database : public basic_database
+class database: public basic_database
 {
 public:
-    explicit database(std::string client, std::string name = "flashback", std::string address = "localhost",
-                      std::string port = "5432");
+    explicit database(std::string client, std::string name = "flashback", std::string address = "localhost", std::string port = "5432");
     ~database() override = default;
 
     // users
-    [[nodiscard]] bool
-    create_session(uint64_t user_id, std::string_view token, std::string_view device) const override;
-    [[nodiscard]] uint64_t
-    create_user(std::string_view name, std::string_view email, std::string_view hash) const override;
+    [[nodiscard]] bool create_session(uint64_t user_id, std::string_view token, std::string_view device) const override;
+    [[nodiscard]] uint64_t create_user(std::string_view name, std::string_view email, std::string_view hash) const override;
     void reset_password(uint64_t user_id, std::string_view hash) const override;
     [[nodiscard]] bool user_exists(std::string_view email) const override;
     [[nodiscard]] std::unique_ptr<User> get_user(std::string_view email) const override;
@@ -40,14 +37,11 @@ public:
     void merge_subjects(uint64_t source, uint64_t target) const override;
 
     // milestones
-    [[nodiscard]] Milestone add_milestone(uint64_t subject_id, expertise_level subject_level,
-                                          uint64_t roadmap_id) const override;
-    [[nodiscard]] Milestone add_milestone(uint64_t subject_id, expertise_level subject_level, uint64_t roadmap_id,
-                                          uint64_t position) const override;
+    [[nodiscard]] Milestone add_milestone(uint64_t subject_id, expertise_level subject_level, uint64_t roadmap_id) const override;
+    [[nodiscard]] Milestone add_milestone(uint64_t subject_id, expertise_level subject_level, uint64_t roadmap_id, uint64_t position) const override;
     [[nodiscard]] std::vector<Milestone> get_milestones(uint64_t roadmap_id) const override;
     void add_requirement(uint64_t roadmap_id, Milestone milestone, Milestone required_milestone) const override;
-    [[nodiscard]] std::vector<Milestone> get_requirements(uint64_t roadmap_id, uint64_t subject_id,
-                                                          expertise_level subject_level) const override;
+    [[nodiscard]] std::vector<Milestone> get_requirements(uint64_t roadmap_id, uint64_t subject_id, expertise_level subject_level) const override;
     [[nodiscard]] Roadmap clone_roadmap(uint64_t user_id, uint64_t roadmap_id) const override;
     void reorder_milestone(uint64_t roadmap_id, uint64_t current_position, uint64_t target_position) const override;
     void remove_milestone(uint64_t roadmap_id, uint64_t subject_id) const override;
@@ -69,36 +63,26 @@ public:
     void merge_resources(uint64_t source_id, uint64_t target_id) const override;
 
     // sections
-    [[nodiscard]] Section create_section(uint64_t resource_id, uint64_t position, std::string name,
-                                         std::string link) const override;
+    [[nodiscard]] Section create_section(uint64_t resource_id, uint64_t position, std::string name, std::string link) const override;
     [[nodiscard]] std::map<uint64_t, Section> get_sections(uint64_t resource_id) const override;
     void remove_section(uint64_t resource_id, uint64_t position) const override;
     void reorder_section(uint64_t resource_id, uint64_t current_position, uint64_t target_position) const override;
     void merge_sections(uint64_t resource_id, uint64_t source_position, uint64_t target_position) const override;
     void rename_section(uint64_t resource_id, uint64_t position, std::string name) const override;
-    void move_section(uint64_t resource_id, uint64_t position, uint64_t target_resource_id,
-                      uint64_t target_position) const override;
-    [[nodiscard]] std::map<uint64_t, Section> search_sections(uint64_t resource_id,
-                                                              std::string_view search_pattern) const override;
+    void move_section(uint64_t resource_id, uint64_t position, uint64_t target_resource_id, uint64_t target_position) const override;
+    [[nodiscard]] std::map<uint64_t, Section> search_sections(uint64_t resource_id, std::string_view search_pattern) const override;
     void edit_section_link(uint64_t resource_id, uint64_t position, std::string link) const override;
 
     // topics
-    [[nodiscard]] Topic create_topic(uint64_t subject_id, std::string name, expertise_level level,
-                                     uint64_t position) const override;
+    [[nodiscard]] Topic create_topic(uint64_t subject_id, std::string name, expertise_level level, uint64_t position) const override;
     [[nodiscard]] std::map<uint64_t, Topic> get_topics(uint64_t subject_id, expertise_level level) const override;
-    void reorder_topic(uint64_t subject_id, expertise_level level, uint64_t source_position,
-                       uint64_t target_position) const override;
+    void reorder_topic(uint64_t subject_id, expertise_level level, uint64_t source_position, uint64_t target_position) const override;
     void remove_topic(uint64_t subject_id, expertise_level level, uint64_t position) const override;
-    void merge_topics(uint64_t subject_id, expertise_level level, uint64_t source_position,
-                      uint64_t target_position) const override;
-    void rename_topic(uint64_t subject_id, expertise_level level, uint64_t position,
-                      std::string name) const override;
-    void move_topic(uint64_t subject_id, expertise_level level, uint64_t position, uint64_t target_subject_id,
-                    uint64_t target_position) const override;
-    [[nodiscard]] std::map<uint64_t, Topic> search_topics(uint64_t subject_id, expertise_level level,
-                                                          std::string_view search_pattern) const override;
-    void change_topic_level(uint64_t subject_id, uint64_t position, flashback::expertise_level level,
-                            flashback::expertise_level target) const override;
+    void merge_topics(uint64_t subject_id, expertise_level level, uint64_t source_position, uint64_t target_position) const override;
+    void rename_topic(uint64_t subject_id, expertise_level level, uint64_t position, std::string name) const override;
+    void move_topic(uint64_t subject_id, expertise_level level, uint64_t position, uint64_t target_subject_id, uint64_t target_position) const override;
+    [[nodiscard]] std::map<uint64_t, Topic> search_topics(uint64_t subject_id, expertise_level level, std::string_view search_pattern) const override;
+    void change_topic_level(uint64_t subject_id, uint64_t position, flashback::expertise_level level, flashback::expertise_level target) const override;
 
     // providers
     [[nodiscard]] Provider create_provider(std::string name) const override;
@@ -121,22 +105,16 @@ public:
     // cards
     [[nodiscard]] Card create_card(Card card) const override;
     void add_card_to_section(uint64_t card_id, uint64_t resource_id, uint64_t section_position) const override;
-    void add_card_to_topic(uint64_t card_id, uint64_t subject_id, uint64_t topic_position,
-                           expertise_level topic_level) const override;
+    void add_card_to_topic(uint64_t card_id, uint64_t subject_id, uint64_t topic_position, expertise_level topic_level) const override;
     void edit_card_headline(uint64_t card_id, std::string headline) const override;
     void remove_card(uint64_t card_id) const override;
     void merge_cards(uint64_t source_id, uint64_t target_id, std::string) const override;
-    [[nodiscard]] std::map<uint64_t, Card> search_cards(uint64_t subject_id, expertise_level level,
-                                                        std::string_view search_pattern) const override;
-    void move_card_to_section(uint64_t card_id, uint64_t resource_id, uint64_t section_position,
-                              uint64_t target_section_position) const override;
-    void move_card_to_topic(uint64_t card_id, uint64_t subject_id, uint64_t topic_position,
-                            expertise_level topic_level, uint64_t target_subject, uint64_t target_position,
+    [[nodiscard]] std::map<uint64_t, Card> search_cards(uint64_t subject_id, expertise_level level, std::string_view search_pattern) const override;
+    void move_card_to_section(uint64_t card_id, uint64_t resource_id, uint64_t section_position, uint64_t target_section_position) const override;
+    void move_card_to_topic(uint64_t card_id, uint64_t subject_id, uint64_t topic_position, expertise_level topic_level, uint64_t target_subject, uint64_t target_position,
                             expertise_level target_level) const override;
-    [[nodiscard]] std::vector<Card>
-    get_section_cards(uint64_t resource_id, uint64_t sections_position) const override;
-    [[nodiscard]] std::vector<Card> get_topic_cards(uint64_t subject_id, uint64_t topic_position,
-                                                    expertise_level topic_level) const override;
+    [[nodiscard]] std::vector<Card> get_section_cards(uint64_t resource_id, uint64_t sections_position) const override;
+    [[nodiscard]] std::vector<Card> get_topic_cards(uint64_t subject_id, uint64_t topic_position, expertise_level topic_level) const override;
 
     // blocks
     [[nodiscard]] Block create_block(uint64_t card_id, Block block) const override;
@@ -149,12 +127,10 @@ public:
     void reorder_block(uint64_t card_id, uint64_t block_position, uint64_t target_position) const override;
     void merge_blocks(uint64_t card_id, uint64_t source_position, uint64_t target_position) const override;
     [[nodiscard]] std::map<uint64_t, Block> split_block(uint64_t card_id, uint64_t block_position) const override;
-    void move_block(uint64_t card_id, uint64_t block_position, uint64_t target_card_id,
-                    uint64_t target_position) const override;
+    void move_block(uint64_t card_id, uint64_t block_position, uint64_t target_card_id, uint64_t target_position) const override;
 
     // nerves
-    [[nodiscard]] Resource create_nerve(uint64_t user_id, std::string resource_name, uint64_t subject_id,
-                                        uint64_t expiration) const override;
+    [[nodiscard]] Resource create_nerve(uint64_t user_id, std::string resource_name, uint64_t subject_id, uint64_t expiration) const override;
     [[nodiscard]] std::vector<Resource> get_nerves(uint64_t user_id) const override;
 
     // practices
@@ -164,8 +140,7 @@ public:
     std::vector<Card> get_practice_cards(uint64_t user_id, uint64_t subject_id, uint64_t topic_position) const override;
     std::vector<Resource> get_study_resources(uint64_t user_id) const override;
     std::map<uint64_t, Section> get_study_sections(uint64_t user_id, uint64_t resource_id) const override;
-    std::map<uint64_t, Card>
-    get_study_cards(uint64_t user_id, uint64_t resource_id, uint64_t section_position) const override;
+    std::map<uint64_t, Card> get_study_cards(uint64_t user_id, uint64_t resource_id, uint64_t section_position) const override;
     void mark_card_as_reviewed(uint64_t card_id) const override;
     void mark_card_as_completed(uint64_t card_id) const override;
     void mark_section_as_reviewed(uint64_t resource_id, uint64_t section_position) const override;
@@ -180,20 +155,14 @@ public:
     bool is_absolute(uint64_t card_id) const override;
 
     // assessments
-    void create_assessment(uint64_t subject_id, expertise_level level, uint64_t topic_position,
-                           uint64_t card_id) const override;
+    void create_assessment(uint64_t subject_id, expertise_level level, uint64_t topic_position, uint64_t card_id) const override;
     void get_topic_coverage(uint64_t assessment_id) const override;
-    void get_assessment_coverage(uint64_t subject_id, uint64_t topic_position,
-                                 expertise_level max_level) const override;
+    void get_assessment_coverage(uint64_t subject_id, uint64_t topic_position, expertise_level max_level) const override;
     void get_assimilation_coverage(uint64_t user_id, uint64_t assessment_id) const override;
-    std::vector<Card> get_topic_assessments(uint64_t user_id, uint64_t subject_id, uint64_t topic_position,
-                                            expertise_level max_level) const override;
-    std::vector<Card>
-    get_assessments(uint64_t user_id, uint64_t subject_id, uint64_t topic_position) const override;
-    void expand_assessment(uint64_t assessment_id, uint64_t subject_id, expertise_level level,
-                           uint64_t topic_position) const override;
-    void diminish_assessment(uint64_t assessment_id, uint64_t subject_id, expertise_level level,
-                             uint64_t topic_position) const override;
+    std::vector<Card> get_topic_assessments(uint64_t user_id, uint64_t subject_id, uint64_t topic_position, expertise_level max_level) const override;
+    std::vector<Card> get_assessments(uint64_t user_id, uint64_t subject_id, uint64_t topic_position) const override;
+    void expand_assessment(uint64_t assessment_id, uint64_t subject_id, expertise_level level, uint64_t topic_position) const override;
+    void diminish_assessment(uint64_t assessment_id, uint64_t subject_id, expertise_level level, uint64_t topic_position) const override;
 
 private:
     template <typename... Args>
@@ -217,10 +186,14 @@ private:
     {
         expertise_level result{};
 
-        if (level == "surface") result = expertise_level::surface;
-        else if (level == "depth") result = expertise_level::depth;
-        else if (level == "origin") result = expertise_level::origin;
-        else throw std::runtime_error{"invalid expertise level"};
+        if (level == "surface")
+            result = expertise_level::surface;
+        else if (level == "depth")
+            result = expertise_level::depth;
+        else if (level == "origin")
+            result = expertise_level::origin;
+        else
+            throw std::runtime_error{"invalid expertise level"};
 
         return result;
     }
@@ -277,16 +250,26 @@ private:
     {
         Resource::resource_type type{};
 
-        if (type_string == "book") type = Resource::book;
-        else if (type_string == "website") type = Resource::website;
-        else if (type_string == "course") type = Resource::course;
-        else if (type_string == "video") type = Resource::video;
-        else if (type_string == "channel") type = Resource::channel;
-        else if (type_string == "mailing_list") type = Resource::mailing_list;
-        else if (type_string == "manual") type = Resource::manual;
-        else if (type_string == "slides") type = Resource::slides;
-        else if (type_string == "nerve") type = Resource::nerve;
-        else throw std::runtime_error("invalid resource type");
+        if (type_string == "book")
+            type = Resource::book;
+        else if (type_string == "website")
+            type = Resource::website;
+        else if (type_string == "course")
+            type = Resource::course;
+        else if (type_string == "video")
+            type = Resource::video;
+        else if (type_string == "channel")
+            type = Resource::channel;
+        else if (type_string == "mailing_list")
+            type = Resource::mailing_list;
+        else if (type_string == "manual")
+            type = Resource::manual;
+        else if (type_string == "slides")
+            type = Resource::slides;
+        else if (type_string == "nerve")
+            type = Resource::nerve;
+        else
+            throw std::runtime_error("invalid resource type");
 
         return type;
     }
@@ -321,14 +304,22 @@ private:
     {
         Resource::section_pattern pattern{};
 
-        if (pattern_string == "chapter") pattern = Resource::chapter;
-        else if (pattern_string == "page") pattern = Resource::page;
-        else if (pattern_string == "session") pattern = Resource::session;
-        else if (pattern_string == "episode") pattern = Resource::episode;
-        else if (pattern_string == "playlist") pattern = Resource::playlist;
-        else if (pattern_string == "post") pattern = Resource::post;
-        else if (pattern_string == "synapse") pattern = Resource::synapse;
-        else throw std::runtime_error("invalid section pattern");
+        if (pattern_string == "chapter")
+            pattern = Resource::chapter;
+        else if (pattern_string == "page")
+            pattern = Resource::page;
+        else if (pattern_string == "session")
+            pattern = Resource::session;
+        else if (pattern_string == "episode")
+            pattern = Resource::episode;
+        else if (pattern_string == "playlist")
+            pattern = Resource::playlist;
+        else if (pattern_string == "post")
+            pattern = Resource::post;
+        else if (pattern_string == "synapse")
+            pattern = Resource::synapse;
+        else
+            throw std::runtime_error("invalid section pattern");
 
         return pattern;
     }
@@ -337,13 +328,20 @@ private:
     {
         Card::card_state state{};
 
-        if (state_string == "draft") state = Card::draft;
-        else if (state_string == "reviewed") state = Card::reviewed;
-        else if (state_string == "completed") state = Card::completed;
-        else if (state_string == "approved") state = Card::approved;
-        else if (state_string == "released") state = Card::released;
-        else if (state_string == "rejected") state = Card::rejected;
-        else throw std::runtime_error("invalid card state");
+        if (state_string == "draft")
+            state = Card::draft;
+        else if (state_string == "reviewed")
+            state = Card::reviewed;
+        else if (state_string == "completed")
+            state = Card::completed;
+        else if (state_string == "approved")
+            state = Card::approved;
+        else if (state_string == "released")
+            state = Card::released;
+        else if (state_string == "rejected")
+            state = Card::rejected;
+        else
+            throw std::runtime_error("invalid card state");
 
         return state;
     }
@@ -376,10 +374,14 @@ private:
     {
         Block::content_type type{};
 
-        if (type_string == "code") type = Block::code;
-        else if (type_string == "text") type = Block::text;
-        else if (type_string == "image") type = Block::image;
-        else throw std::runtime_error("invalid card state");
+        if (type_string == "code")
+            type = Block::code;
+        else if (type_string == "text")
+            type = Block::text;
+        else if (type_string == "image")
+            type = Block::image;
+        else
+            throw std::runtime_error("invalid card state");
 
         return type;
     }
