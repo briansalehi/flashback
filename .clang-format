@@ -7,6 +7,9 @@ AlignConsecutiveAssignments: false
 AlignConsecutiveDeclarations: false
 AlignOperands: false
 AlignTrailingComments: false
+AllowShortCaseLabelsOnASingleLine: true
+AllowShortIfStatementsOnASingleLine: false
+AlwaysBreakAfterDefinitionReturnType: false
 AlwaysBreakTemplateDeclarations: Yes
 BraceWrapping: 
   AfterCaseLabel: true
@@ -28,8 +31,8 @@ BraceWrapping:
 BreakBeforeBraces: Custom
 BreakConstructorInitializers: AfterColon
 BreakConstructorInitializersBeforeComma: false
-ColumnLimit: 120
-ConstructorInitializerAllOnOneLineOrOnePerLine: false
+ColumnLimit: 180
+ConstructorInitializerAllOnOneLineOrOnePerLine: true
 IncludeCategories: 
   - Regex: '^<.*'
     Priority: 1
