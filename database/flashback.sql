@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict cCHZxQxst0J83goqBeBxszqAvY9ibKomNBCf1b8y8SF1ir6w7N9cYgAGCO3pf3J
+\restrict eIEDzpE3HSLV1LQBvEQoISJXO36ojZk79aO6RfH8m9Tztuc49pVznTPfw28CLWB
 
 -- Dumped from database version 18.1
 -- Dumped by pg_dump version 18.0
@@ -1099,25 +1099,6 @@ $$;
 ALTER FUNCTION flashback.get_blocks(card_id integer) OWNER TO flashback;
 
 --
--- Name: get_cards(integer, integer, flashback.expertise_level); Type: FUNCTION; Schema: flashback; Owner: flashback
---
-
-CREATE FUNCTION flashback.get_cards(user_id integer, subject_id integer, max_level flashback.expertise_level) RETURNS TABLE(topic integer, level flashback.expertise_level, card integer, "position" integer, last_practice timestamp with time zone, duration integer)
-    LANGUAGE plpgsql
-    AS $$
-begin
-    return query
-    select tc.topic, tc.level, tc.card, tc.position, p.last_practice, p.duration
-    from topic_cards tc
-    left join progress p on p.user = user_id  and p.card = tc.card
-    where tc.subject = subject_id and tc.level <= max_level;
-end;
-$$;
-
-
-ALTER FUNCTION flashback.get_cards(user_id integer, subject_id integer, max_level flashback.expertise_level) OWNER TO flashback;
-
---
 -- Name: get_duplicate_card(integer); Type: FUNCTION; Schema: flashback; Owner: flashback
 --
 
@@ -1255,24 +1236,26 @@ declare mode practice_mode;
 declare long_time_ago timestamp with time zone = now() - interval '100 days';
 declare longest_acceptable_inactivity interval = interval '10 days';
 declare longest_acceptable_unreached interval = interval '7 days';
+declare most_recent_practice interval;
 declare last_recent_practice interval;
-declare least_recent_practice interval;
 declare unread_cards integer;
 begin
     select
-        now() - coalesce(max(g.last_practice), long_time_ago),
-        now() - coalesce(min(g.last_practice), long_time_ago),
-        count(*) filter (where g.last_practice is null)
-        into last_recent_practice, least_recent_practice, unread_cards
-    from get_cards(user_id, subject_id, topic_level) g;
+        now() - coalesce(max(p.last_practice), long_time_ago),
+        now() - coalesce(min(p.last_practice), long_time_ago),
+        count(*) filter (where p.last_practice is null)
+        into most_recent_practice, last_recent_practice, unread_cards
+    from topic_cards tc
+    left join progress p on p.user = user_id and p.card = tc.card
+    where tc.subject = subject_id and tc.level <= topic_level;
 
     -- unread cards immediately result in aggressive mode
-    -- consequently, users in progressive mode will directly jump into an unread card when a new card drops
+    -- consequently, users in progressive mode will temporarily switch to aggressive when a new card is available
     if unread_cards > 0
         -- long interrupts result in memory loss which should be recovered by aggressive mode
-        or last_recent_practice >= longest_acceptable_inactivity
+        or most_recent_practice >= longest_acceptable_inactivity
         -- any card not being reached by user later than a certain period during progressive practice is considered forgotten and should be reached immediately
-        or least_recent_practice >= longest_acceptable_unreached
+        or last_recent_practice >= longest_acceptable_unreached
     then
         select 'aggressive'::practice_mode into mode;
     else
@@ -1368,14 +1351,14 @@ ALTER FUNCTION flashback.get_section_cards(resource_id integer, section_position
 -- Name: get_sections(integer); Type: FUNCTION; Schema: flashback; Owner: flashback
 --
 
-CREATE FUNCTION flashback.get_sections(resource_id integer) RETURNS TABLE("position" integer, name flashback.citext, link character varying)
+CREATE FUNCTION flashback.get_sections(resource_id integer) RETURNS TABLE("position" integer, state flashback.closure_state, name flashback.citext, link character varying)
     LANGUAGE plpgsql
     AS $$
 declare pattern section_pattern;
 begin
     select r.pattern into pattern from resources r where r.id = resource_id;
 
-    return query select s.position, coalesce(s.name, initcap(pattern || ' ' || s.position)::citext), s.link from sections s where s.resource = resource_id;
+    return query select s.position, s.state, coalesce(s.name, initcap(pattern || ' ' || s.position)::citext), s.link from sections s where s.resource = resource_id;
 end;
 $$;
 
@@ -2756,6 +2739,17 @@ end; $$;
 
 
 ALTER FUNCTION flashback.split_block(card_id integer, block_position integer) OWNER TO flashback;
+
+--
+-- Name: throw_back_progress(integer, integer, integer); Type: PROCEDURE; Schema: flashback; Owner: flashback
+--
+
+CREATE PROCEDURE flashback.throw_back_progress(IN user_id integer, IN card_id integer, IN days integer)
+    LANGUAGE plpgsql
+    AS $$ begin update progress set last_practice = now() - (days * '1 day'::interval) where user = user_id and card = card_id; end; $$;
+
+
+ALTER PROCEDURE flashback.throw_back_progress(IN user_id integer, IN card_id integer, IN days integer) OWNER TO flashback;
 
 --
 -- Name: user_exists(character varying); Type: FUNCTION; Schema: flashback; Owner: flashback
@@ -32338,5 +32332,5 @@ GRANT ALL ON SCHEMA public TO flashback_client;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict cCHZxQxst0J83goqBeBxszqAvY9ibKomNBCf1b8y8SF1ir6w7N9cYgAGCO3pf3J
+\unrestrict eIEDzpE3HSLV1LQBvEQoISJXO36ojZk79aO6RfH8m9Tztuc49pVznTPfw28CLWB
 

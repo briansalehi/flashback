@@ -4,12 +4,18 @@
 #include <server.grpc.pb.h>
 #include <flashback/basic_database.hpp>
 
+class test_database;
+
 namespace flashback
 {
 class database: public basic_database
 {
 public:
     explicit database(std::string client, std::string name = "flashback", std::string address = "localhost", std::string port = "5432");
+    database(database const& copy);
+    database& operator=(database const& copy);
+    database(database&& copy) noexcept;
+    database& operator=(database&& copy) noexcept;
     ~database() override = default;
 
     // users
@@ -182,228 +188,22 @@ private:
         work.commit();
     }
 
-    static expertise_level to_level(std::string_view const level)
-    {
-        expertise_level result{};
+    void throw_back_progress(uint64_t user_id, uint64_t card_id, uint64_t days) const;
 
-        if (level == "surface")
-            result = expertise_level::surface;
-        else if (level == "depth")
-            result = expertise_level::depth;
-        else if (level == "origin")
-            result = expertise_level::origin;
-        else
-            throw std::runtime_error{"invalid expertise level"};
-
-        return result;
-    }
-
-    static std::string level_to_string(expertise_level const level)
-    {
-        std::string result{};
-
-        switch (level)
-        {
-        case flashback::expertise_level::surface: result = "surface";
-            break;
-        case flashback::expertise_level::depth: result = "depth";
-            break;
-        case flashback::expertise_level::origin: result = "origin";
-            break;
-        default: throw std::runtime_error{"invalid expertise level"};
-        }
-
-        return result;
-    }
-
-    static std::string resource_type_to_string(Resource::resource_type const type)
-    {
-        std::string type_string{};
-
-        switch (type)
-        {
-        case Resource::book: type_string = "book";
-            break;
-        case Resource::website: type_string = "website";
-            break;
-        case Resource::course: type_string = "course";
-            break;
-        case Resource::video: type_string = "video";
-            break;
-        case Resource::channel: type_string = "channel";
-            break;
-        case Resource::mailing_list: type_string = "mailing_list";
-            break;
-        case Resource::manual: type_string = "manual";
-            break;
-        case Resource::slides: type_string = "slides";
-            break;
-        case Resource::nerve: type_string = "nerve";
-            break;
-        default: throw std::runtime_error("invalid resource type");
-        }
-
-        return type_string;
-    }
-
-    static Resource::resource_type to_resource_type(std::string_view const type_string)
-    {
-        Resource::resource_type type{};
-
-        if (type_string == "book")
-            type = Resource::book;
-        else if (type_string == "website")
-            type = Resource::website;
-        else if (type_string == "course")
-            type = Resource::course;
-        else if (type_string == "video")
-            type = Resource::video;
-        else if (type_string == "channel")
-            type = Resource::channel;
-        else if (type_string == "mailing_list")
-            type = Resource::mailing_list;
-        else if (type_string == "manual")
-            type = Resource::manual;
-        else if (type_string == "slides")
-            type = Resource::slides;
-        else if (type_string == "nerve")
-            type = Resource::nerve;
-        else
-            throw std::runtime_error("invalid resource type");
-
-        return type;
-    }
-
-    static std::string section_pattern_to_string(Resource::section_pattern const pattern)
-    {
-        std::string pattern_string{};
-
-        switch (pattern)
-        {
-        case Resource::chapter: pattern_string = "chapter";
-            break;
-        case Resource::page: pattern_string = "page";
-            break;
-        case Resource::session: pattern_string = "session";
-            break;
-        case Resource::episode: pattern_string = "episode";
-            break;
-        case Resource::playlist: pattern_string = "playlist";
-            break;
-        case Resource::post: pattern_string = "post";
-            break;
-        case Resource::synapse: pattern_string = "synapse";
-            break;
-        default: throw std::runtime_error("invalid section pattern");
-        }
-
-        return pattern_string;
-    }
-
-    static Resource::section_pattern to_section_pattern(std::string_view const pattern_string)
-    {
-        Resource::section_pattern pattern{};
-
-        if (pattern_string == "chapter")
-            pattern = Resource::chapter;
-        else if (pattern_string == "page")
-            pattern = Resource::page;
-        else if (pattern_string == "session")
-            pattern = Resource::session;
-        else if (pattern_string == "episode")
-            pattern = Resource::episode;
-        else if (pattern_string == "playlist")
-            pattern = Resource::playlist;
-        else if (pattern_string == "post")
-            pattern = Resource::post;
-        else if (pattern_string == "synapse")
-            pattern = Resource::synapse;
-        else
-            throw std::runtime_error("invalid section pattern");
-
-        return pattern;
-    }
-
-    static Card::card_state to_card_state(std::string_view const state_string)
-    {
-        Card::card_state state{};
-
-        if (state_string == "draft")
-            state = Card::draft;
-        else if (state_string == "reviewed")
-            state = Card::reviewed;
-        else if (state_string == "completed")
-            state = Card::completed;
-        else if (state_string == "approved")
-            state = Card::approved;
-        else if (state_string == "released")
-            state = Card::released;
-        else if (state_string == "rejected")
-            state = Card::rejected;
-        else
-            throw std::runtime_error("invalid card state");
-
-        return state;
-    }
-
-    static std::string card_state_to_string(Card::card_state const state)
-    {
-        std::string state_string{};
-
-        switch (state)
-        {
-        case Card::draft: state_string = "draft";
-            break;
-        case Card::reviewed: state_string = "reviewed";
-            break;
-        case Card::completed: state_string = "completed";
-            break;
-        case Card::approved: state_string = "approved";
-            break;
-        case Card::released: state_string = "released";
-            break;
-        case Card::rejected: state_string = "rejected";
-            break;
-        default: throw std::runtime_error("invalid card state");
-        }
-
-        return state_string;
-    }
-
-    static Block::content_type to_content_type(std::string_view const type_string)
-    {
-        Block::content_type type{};
-
-        if (type_string == "code")
-            type = Block::code;
-        else if (type_string == "text")
-            type = Block::text;
-        else if (type_string == "image")
-            type = Block::image;
-        else
-            throw std::runtime_error("invalid card state");
-
-        return type;
-    }
-
-    static std::string content_type_to_string(Block::content_type const type)
-    {
-        std::string type_string{};
-
-        switch (type)
-        {
-        case Block::code: type_string = "code";
-            break;
-        case Block::text: type_string = "text";
-            break;
-        case Block::image: type_string = "image";
-            break;
-        default: throw std::runtime_error("invalid content type");
-        }
-
-        return type_string;
-    }
+    static expertise_level to_level(std::string_view const level);
+    static std::string level_to_string(expertise_level const level);
+    static std::string resource_type_to_string(Resource::resource_type const type);
+    static Resource::resource_type to_resource_type(std::string_view const type_string);
+    static std::string section_pattern_to_string(Resource::section_pattern const pattern);
+    static Resource::section_pattern to_section_pattern(std::string_view const pattern_string);
+    static Card::card_state to_card_state(std::string_view const state_string);
+    static std::string card_state_to_string(Card::card_state const state);
+    static Block::content_type to_content_type(std::string_view const type_string);
+    static std::string content_type_to_string(Block::content_type const type);
+    static closure_state to_closure_state(std::string_view const state_string);
+    static std::string closure_state_to_string(closure_state const state);
 
     std::unique_ptr<pqxx::connection> m_connection;
+    friend class ::test_database;
 };
 } // flashback

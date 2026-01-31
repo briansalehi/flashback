@@ -35,6 +35,36 @@ database::database(std::string client, std::string name, std::string address, st
     }
 }
 
+database::database(database const& copy)
+{
+    std::string client{copy.m_connection->username()};
+    std::string address{copy.m_connection->hostname()};
+    std::string port{copy.m_connection->port()};
+    std::string name{copy.m_connection->dbname()};
+    m_connection = std::make_unique<pqxx::connection>(std::format("postgres://{}@{}:{}/{}", client, address, port, name));
+}
+
+database& database::operator=(database const& copy)
+{
+    std::string client{copy.m_connection->username()};
+    std::string address{copy.m_connection->hostname()};
+    std::string port{copy.m_connection->port()};
+    std::string name{copy.m_connection->dbname()};
+    m_connection = std::make_unique<pqxx::connection>(std::format("postgres://{}@{}:{}/{}", client, address, port, name));
+    return *this;
+}
+
+database::database(database&& copy) noexcept
+    : m_connection{std::move(copy.m_connection)}
+{
+}
+
+database& database::operator=(database&& copy) noexcept
+{
+    m_connection = std::move(copy.m_connection);
+    return *this;
+}
+
 bool database::create_session(uint64_t const user_id, std::string_view token, std::string_view device) const
 {
     bool result{};
@@ -107,14 +137,11 @@ std::unique_ptr<User> database::get_user(std::string_view email) const
         user->set_email(result.at("email").as<std::string>());
         user->set_verified(result.at("verified").as<bool>());
 
-        if (!result.at("hash").is_null())
-            user->set_hash(result.at("hash").as<std::string>());
+        if (!result.at("hash").is_null()) user->set_hash(result.at("hash").as<std::string>());
 
-        if (!result.at("token").is_null())
-            user->set_token(result.at("token").as<std::string>());
+        if (!result.at("token").is_null()) user->set_token(result.at("token").as<std::string>());
 
-        if (!result.at("device").is_null())
-            user->set_device(result.at("device").as<std::string>());
+        if (!result.at("device").is_null()) user->set_device(result.at("device").as<std::string>());
 
         std::tm tm{};
         std::istringstream stream{result.at("joined").as<std::string>()};
@@ -125,16 +152,11 @@ std::unique_ptr<User> database::get_user(std::string_view email) const
         auto timestamp{std::make_unique<google::protobuf::Timestamp>(google::protobuf::util::TimeUtil::SecondsToTimestamp(epoch))};
         user->set_allocated_joined(timestamp.release());
 
-        if (std::string const state_str{result.at("state").as<std::string>()}; state_str == "active")
-            user->set_state(User::active);
-        else if (state_str == "inactive")
-            user->set_state(User::inactive);
-        else if (state_str == "suspended")
-            user->set_state(User::suspended);
-        else if (state_str == "banned")
-            user->set_state(User::banned);
-        else
-            throw std::runtime_error("unhandled user state");
+        if (std::string const state_str{result.at("state").as<std::string>()}; state_str == "active") user->set_state(User::active);
+        else if (state_str == "inactive") user->set_state(User::inactive);
+        else if (state_str == "suspended") user->set_state(User::suspended);
+        else if (state_str == "banned") user->set_state(User::banned);
+        else throw std::runtime_error("unhandled user state");
     }
 
     return user;
@@ -154,14 +176,11 @@ std::unique_ptr<User> database::get_user(std::string_view token, std::string_vie
         user->set_email(result.at("email").as<std::string>());
         user->set_verified(result.at("verified").as<bool>());
 
-        if (!result.at("hash").is_null())
-            user->set_hash(result.at("hash").as<std::string>());
+        if (!result.at("hash").is_null()) user->set_hash(result.at("hash").as<std::string>());
 
-        if (!result.at("token").is_null())
-            user->set_token(result.at("token").as<std::string>());
+        if (!result.at("token").is_null()) user->set_token(result.at("token").as<std::string>());
 
-        if (!result.at("device").is_null())
-            user->set_device(result.at("device").as<std::string>());
+        if (!result.at("device").is_null()) user->set_device(result.at("device").as<std::string>());
 
         std::tm tm{};
         std::istringstream stream{result.at("joined").as<std::string>()};
@@ -172,16 +191,11 @@ std::unique_ptr<User> database::get_user(std::string_view token, std::string_vie
         auto timestamp{std::make_unique<google::protobuf::Timestamp>(google::protobuf::util::TimeUtil::SecondsToTimestamp(epoch))};
         user->set_allocated_joined(timestamp.release());
 
-        if (std::string const state_str{result.at("state").as<std::string>()}; state_str == "active")
-            user->set_state(User::active);
-        else if (state_str == "inactive")
-            user->set_state(User::inactive);
-        else if (state_str == "suspended")
-            user->set_state(User::suspended);
-        else if (state_str == "banned")
-            user->set_state(User::banned);
-        else
-            throw std::runtime_error("unhandled user state");
+        if (std::string const state_str{result.at("state").as<std::string>()}; state_str == "active") user->set_state(User::active);
+        else if (state_str == "inactive") user->set_state(User::inactive);
+        else if (state_str == "suspended") user->set_state(User::suspended);
+        else if (state_str == "banned") user->set_state(User::banned);
+        else throw std::runtime_error("unhandled user state");
     }
 
     return user;
@@ -562,10 +576,11 @@ std::map<uint64_t, Section> database::get_sections(uint64_t const resource_id) c
 {
     std::map<uint64_t, Section> sections{};
 
-    for (pqxx::row const& row: query("select position, name, link from get_sections($1) order by position", resource_id))
+    for (pqxx::row const& row: query("select position, state, name, link from get_sections($1) order by position", resource_id))
     {
         Section section{};
         section.set_position(row.at("position").as<uint64_t>());
+        section.set_state(to_closure_state(row.at("state").as<std::string>()));
         section.set_name(row.at("name").as<std::string>());
         section.set_link(row.at("link").is_null() ? "" : row.at("link").as<std::string>());
         sections.insert({section.position(), section});
@@ -1202,4 +1217,228 @@ void database::expand_assessment(uint64_t const assessment_id, uint64_t const su
 
 void database::diminish_assessment(uint64_t const assessment_id, uint64_t const subject_id, expertise_level const level, uint64_t const topic_position) const
 {
+}
+
+void database::throw_back_progress(uint64_t const user_id, uint64_t const card_id, uint64_t const days) const
+{
+    exec("call throw_back_progress($1, $2, $3)", user_id, card_id, days);
+}
+
+expertise_level database::to_level(std::string_view const level)
+{
+    expertise_level result{};
+
+    if (level == "surface") { result = expertise_level::surface; }
+    else if (level == "depth") { result = expertise_level::depth; }
+    else if (level == "origin") { result = expertise_level::origin; }
+    else { throw std::runtime_error{"invalid expertise level"}; }
+
+    return result;
+}
+
+std::string database::level_to_string(expertise_level const level)
+{
+    std::string result{};
+
+    switch (level)
+    {
+    case flashback::expertise_level::surface: result = "surface";
+        break;
+    case flashback::expertise_level::depth: result = "depth";
+        break;
+    case flashback::expertise_level::origin: result = "origin";
+        break;
+    default: throw std::runtime_error{"invalid expertise level"};
+    }
+
+    return result;
+}
+
+std::string database::resource_type_to_string(Resource::resource_type const type)
+{
+    std::string type_string{};
+
+    switch (type)
+    {
+    case Resource::book: type_string = "book";
+        break;
+    case Resource::website: type_string = "website";
+        break;
+    case Resource::course: type_string = "course";
+        break;
+    case Resource::video: type_string = "video";
+        break;
+    case Resource::channel: type_string = "channel";
+        break;
+    case Resource::mailing_list: type_string = "mailing_list";
+        break;
+    case Resource::manual: type_string = "manual";
+        break;
+    case Resource::slides: type_string = "slides";
+        break;
+    case Resource::nerve: type_string = "nerve";
+        break;
+    default: throw std::runtime_error("invalid resource type");
+    }
+
+    return type_string;
+}
+
+Resource::resource_type database::to_resource_type(std::string_view const type_string)
+{
+    Resource::resource_type type{};
+
+    if (type_string == "book") { type = Resource::book; }
+    else if (type_string == "website") { type = Resource::website; }
+    else if (type_string == "course") { type = Resource::course; }
+    else if (type_string == "video") { type = Resource::video; }
+    else if (type_string == "channel") { type = Resource::channel; }
+    else if (type_string == "mailing_list") { type = Resource::mailing_list; }
+    else if (type_string == "manual") { type = Resource::manual; }
+    else if (type_string == "slides") { type = Resource::slides; }
+    else if (type_string == "nerve") { type = Resource::nerve; }
+    else { throw std::runtime_error("invalid resource type"); }
+
+    return type;
+}
+
+std::string database::section_pattern_to_string(Resource::section_pattern const pattern)
+{
+    std::string pattern_string{};
+
+    switch (pattern)
+    {
+    case Resource::chapter: pattern_string = "chapter";
+        break;
+    case Resource::page: pattern_string = "page";
+        break;
+    case Resource::session: pattern_string = "session";
+        break;
+    case Resource::episode: pattern_string = "episode";
+        break;
+    case Resource::playlist: pattern_string = "playlist";
+        break;
+    case Resource::post: pattern_string = "post";
+        break;
+    case Resource::synapse: pattern_string = "synapse";
+        break;
+    default: throw std::runtime_error("invalid section pattern");
+    }
+
+    return pattern_string;
+}
+
+Resource::section_pattern database::to_section_pattern(std::string_view const pattern_string)
+{
+    Resource::section_pattern pattern{};
+
+    if (pattern_string == "chapter") { pattern = Resource::chapter; }
+    else if (pattern_string == "page") { pattern = Resource::page; }
+    else if (pattern_string == "session") { pattern = Resource::session; }
+    else if (pattern_string == "episode") { pattern = Resource::episode; }
+    else if (pattern_string == "playlist") { pattern = Resource::playlist; }
+    else if (pattern_string == "post") { pattern = Resource::post; }
+    else if (pattern_string == "synapse") { pattern = Resource::synapse; }
+    else { throw std::runtime_error("invalid section pattern"); }
+
+    return pattern;
+}
+
+Card::card_state database::to_card_state(std::string_view const state_string)
+{
+    Card::card_state state{};
+
+    if (state_string == "draft") { state = Card::draft; }
+    else if (state_string == "reviewed") { state = Card::reviewed; }
+    else if (state_string == "completed") { state = Card::completed; }
+    else if (state_string == "approved") { state = Card::approved; }
+    else if (state_string == "released") { state = Card::released; }
+    else if (state_string == "rejected") { state = Card::rejected; }
+    else { throw std::runtime_error("invalid card state"); }
+
+    return state;
+}
+
+std::string database::card_state_to_string(Card::card_state const state)
+{
+    std::string state_string{};
+
+    switch (state)
+    {
+    case Card::draft: state_string = "draft";
+        break;
+    case Card::reviewed: state_string = "reviewed";
+        break;
+    case Card::completed: state_string = "completed";
+        break;
+    case Card::approved: state_string = "approved";
+        break;
+    case Card::released: state_string = "released";
+        break;
+    case Card::rejected: state_string = "rejected";
+        break;
+    default: throw std::runtime_error("invalid card state");
+    }
+
+    return state_string;
+}
+
+Block::content_type database::to_content_type(std::string_view const type_string)
+{
+    Block::content_type type{};
+
+    if (type_string == "code") { type = Block::code; }
+    else if (type_string == "text") { type = Block::text; }
+    else if (type_string == "image") { type = Block::image; }
+    else { throw std::runtime_error("invalid card state"); }
+
+    return type;
+}
+
+std::string database::content_type_to_string(Block::content_type const type)
+{
+    std::string type_string{};
+
+    switch (type)
+    {
+    case Block::code: type_string = "code";
+        break;
+    case Block::text: type_string = "text";
+        break;
+    case Block::image: type_string = "image";
+        break;
+    default: throw std::runtime_error("invalid content type");
+    }
+
+    return type_string;
+}
+
+closure_state database::to_closure_state(std::string_view const state_string)
+{
+    closure_state state{};
+
+    if (state_string == "draft") { state = closure_state::draft; }
+    else if (state_string == "reviewed") { state = closure_state::reviewed; }
+    else if (state_string == "completed") { state = closure_state::completed; }
+    else { throw std::runtime_error("invalid card state"); }
+
+    return state;
+}
+
+std::string database::closure_state_to_string(closure_state const state)
+{
+    std::string state_string{};
+
+    switch (state)
+    {
+    case closure_state::draft: state_string = "draft";
+        break;
+    case closure_state::reviewed: state_string = "reviewed";
+        break;
+    case closure_state::completed: state_string = "completed";
+        break;
+    default: throw std::runtime_error("invalid closure state");
+    }
+
+    return state_string;
 }

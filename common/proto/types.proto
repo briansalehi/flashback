@@ -13,7 +13,7 @@ message Milestone { uint64 position = 1; uint64 id = 2; string name = 3; experti
 message Presenter { uint64 id = 1; string name = 2; }
 message Provider { uint64 id = 1; string name = 2; }
 message Topic { uint64 position = 1; string name = 2; expertise_level level = 3; }
-message Section { uint64 position = 1; string name = 2; string link =3; }
+message Section { uint64 position = 1; closure_state state = 2; string name = 3; string link =4; }
 
 message Resource {
     enum resource_type {

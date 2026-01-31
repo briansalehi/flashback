@@ -106,6 +106,11 @@ protected:
         removal.commit();
     }
 
+    void throw_back_progress(uint64_t const user_id, uint64_t const card_id, std::chrono::days const days)
+    {
+        m_database->throw_back_progress(user_id, card_id, days.count());
+    }
+
     std::unique_ptr<pqxx::connection> m_connection{nullptr};
     std::shared_ptr<flashback::database> m_database{nullptr};
     std::unique_ptr<flashback::User> m_user{nullptr};
@@ -4642,12 +4647,427 @@ TEST_F(test_database, move_block)
     EXPECT_THAT(blocks.at(4).content(), Eq(first_block.content()));
 }
 
-TEST_F(test_database, get_user_cognitive_level)
+TEST_F(test_database, make_progress)
 {
+    auto constexpr roadmap_name{"C++ Software Engineer"};
+    auto constexpr subject_name{"C++"};
+    auto constexpr topic_name{"Reflection"};
+    auto constexpr headline{"The first question?"};
+    auto milestone_level{flashback::expertise_level::surface};
+    auto cognitive_level{flashback::expertise_level::depth};
+    auto mode{flashback::practice_mode::aggressive};
+    std::chrono::seconds duration{10};
+    flashback::Roadmap roadmap{};
+    flashback::Subject subject{};
+    flashback::Milestone milestone{};
+    flashback::Topic topic{};
+    flashback::Card card{};
+    card.set_state(flashback::Card::draft);
+    card.set_headline(headline);
+
+    ASSERT_NO_THROW(roadmap = m_database->create_roadmap(m_user->id(), roadmap_name));
+    ASSERT_THAT(roadmap.id(), Gt(0));
+    ASSERT_THAT(roadmap.name(), Eq(roadmap_name));
+    ASSERT_NO_THROW(subject = m_database->create_subject(subject_name));
+    ASSERT_THAT(subject.id(), Gt(0));
+    ASSERT_THAT(subject.name(), Eq(subject_name));
+    ASSERT_NO_THROW(milestone = m_database->add_milestone(subject.id(), milestone_level, roadmap.id()));
+    ASSERT_THAT(milestone.position(), Eq(1));
+    ASSERT_THAT(milestone.id(), subject.id());
+    ASSERT_THAT(milestone.name(), subject.name());
+    ASSERT_THAT(milestone.level(), milestone_level);
+    ASSERT_NO_THROW(topic = m_database->create_topic(subject.id(), topic_name, milestone_level, 0));
+    ASSERT_THAT(topic.position(), Eq(1));
+    ASSERT_THAT(topic.name(), topic_name);
+    ASSERT_THAT(topic.level(), milestone_level);
+    ASSERT_NO_THROW(card = m_database->create_card(card));
+    ASSERT_THAT(card.id(), Gt(0));
+    ASSERT_THAT(card.headline(), Eq(headline));
+    ASSERT_NO_THROW(m_database->add_card_to_topic(card.id(), subject.id(), topic.position(), topic.level()));
+    EXPECT_NO_THROW(m_database->make_progress(m_user->id(), card.id(), duration.count(), mode));
 }
 
 TEST_F(test_database, get_practice_mode)
 {
+    auto constexpr roadmap_name{"C++ Software Engineer"};
+    auto constexpr subject_name{"C++"};
+    auto constexpr topic_name{"Reflection"};
+    auto constexpr first_headline{"The first question?"};
+    auto constexpr second_headline{"The second question?"};
+    auto constexpr third_headline{"The third question?"};
+    auto milestone_level{flashback::expertise_level::surface};
+    auto cognitive_level{flashback::expertise_level::depth};
+    auto mode{flashback::practice_mode::aggressive};
+    std::chrono::seconds duration{10};
+    flashback::Roadmap roadmap{};
+    flashback::Subject subject{};
+    flashback::Milestone milestone{};
+    flashback::Topic topic{};
+    flashback::Card first_card{};
+    flashback::Card second_card{};
+    flashback::Card third_card{};
+    first_card.set_state(flashback::Card::draft);
+    first_card.set_headline(first_headline);
+    second_card.set_state(flashback::Card::draft);
+    second_card.set_headline(second_headline);
+    third_card.set_state(flashback::Card::draft);
+    third_card.set_headline(third_headline);
+
+    ASSERT_NO_THROW(roadmap = m_database->create_roadmap(m_user->id(), roadmap_name));
+    ASSERT_THAT(roadmap.id(), Gt(0));
+    ASSERT_THAT(roadmap.name(), Eq(roadmap_name));
+    ASSERT_NO_THROW(subject = m_database->create_subject(subject_name));
+    ASSERT_THAT(subject.id(), Gt(0));
+    ASSERT_THAT(subject.name(), Eq(subject_name));
+    ASSERT_NO_THROW(milestone = m_database->add_milestone(subject.id(), milestone_level, roadmap.id()));
+    ASSERT_THAT(milestone.position(), Eq(1));
+    ASSERT_THAT(milestone.id(), subject.id());
+    ASSERT_THAT(milestone.name(), subject.name());
+    ASSERT_THAT(milestone.level(), milestone_level);
+    ASSERT_NO_THROW(topic = m_database->create_topic(subject.id(), topic_name, milestone_level, 0));
+    ASSERT_THAT(topic.position(), Eq(1));
+    ASSERT_THAT(topic.name(), topic_name);
+    ASSERT_THAT(topic.level(), milestone_level);
+    ASSERT_NO_THROW(first_card = m_database->create_card(first_card));
+    ASSERT_NO_THROW(second_card = m_database->create_card(second_card));
+    ASSERT_NO_THROW(third_card = m_database->create_card(third_card));
+    ASSERT_THAT(first_card.id(), Gt(0));
+    ASSERT_THAT(second_card.id(), Gt(0));
+    ASSERT_THAT(third_card.id(), Gt(0));
+    ASSERT_THAT(first_card.headline(), Eq(first_headline));
+    ASSERT_THAT(second_card.headline(), Eq(second_headline));
+    ASSERT_THAT(third_card.headline(), Eq(third_headline));
+    ASSERT_NO_THROW(m_database->add_card_to_topic(first_card.id(), subject.id(), topic.position(), topic.level()));
+    ASSERT_NO_THROW(m_database->add_card_to_topic(second_card.id(), subject.id(), topic.position(), topic.level()));
+    EXPECT_NO_THROW(mode = m_database->get_practice_mode(m_user->id(), subject.id(), milestone_level));
+    EXPECT_THAT(mode, Eq(flashback::practice_mode::aggressive)) << "There is no progress yet, practice mode should be aggressive";
+    ASSERT_NO_THROW(m_database->make_progress(m_user->id(), first_card.id(), duration.count(), mode));
+    EXPECT_NO_THROW(mode = m_database->get_practice_mode(m_user->id(), subject.id(), milestone_level));
+    EXPECT_THAT(mode, Eq(flashback::practice_mode::aggressive)) << "Practice mode should remain aggressive when only one of two cards is practiced";
+    ASSERT_NO_THROW(m_database->make_progress(m_user->id(), second_card.id(), duration.count(), mode));
+    EXPECT_NO_THROW(mode = m_database->get_practice_mode(m_user->id(), subject.id(), milestone_level));
+    EXPECT_THAT(mode, Eq(flashback::practice_mode::progressive)) << "Practice mode should be progressive after two cards are practiced";
+}
+
+TEST_F(test_database, get_practice_mode_from_high_levels)
+{
+    auto constexpr roadmap_name{"C++ Software Engineer"};
+    auto constexpr subject_name{"C++"};
+    auto constexpr topic_name{"Reflection"};
+    auto constexpr first_headline{"The first question?"};
+    auto constexpr second_headline{"The second question?"};
+    auto constexpr third_headline{"The third question?"};
+    auto milestone_level{flashback::expertise_level::depth};
+    auto higher_level{flashback::expertise_level::origin};
+    auto mode{flashback::practice_mode::aggressive};
+    std::chrono::seconds duration{10};
+    flashback::Roadmap roadmap{};
+    flashback::Subject subject{};
+    flashback::Milestone milestone{};
+    flashback::Topic first_topic{};
+    flashback::Topic second_topic{};
+    flashback::Topic third_topic{};
+    flashback::Card first_card{};
+    flashback::Card second_card{};
+    flashback::Card third_card{};
+    first_card.set_state(flashback::Card::draft);
+    first_card.set_headline(first_headline);
+    second_card.set_state(flashback::Card::draft);
+    second_card.set_headline(second_headline);
+    third_card.set_state(flashback::Card::draft);
+    third_card.set_headline(third_headline);
+
+    ASSERT_NO_THROW(roadmap = m_database->create_roadmap(m_user->id(), roadmap_name));
+    ASSERT_THAT(roadmap.id(), Gt(0));
+    ASSERT_THAT(roadmap.name(), Eq(roadmap_name));
+    ASSERT_NO_THROW(subject = m_database->create_subject(subject_name));
+    ASSERT_THAT(subject.id(), Gt(0));
+    ASSERT_THAT(subject.name(), Eq(subject_name));
+    ASSERT_NO_THROW(milestone = m_database->add_milestone(subject.id(), milestone_level, roadmap.id()));
+    ASSERT_THAT(milestone.position(), Eq(1));
+    ASSERT_THAT(milestone.id(), subject.id());
+    ASSERT_THAT(milestone.name(), subject.name());
+    ASSERT_THAT(milestone.level(), milestone_level);
+    ASSERT_NO_THROW(first_topic = m_database->create_topic(subject.id(), topic_name, flashback::expertise_level::surface, 0));
+    ASSERT_THAT(first_topic.position(), Eq(1));
+    ASSERT_THAT(first_topic.name(), topic_name);
+    ASSERT_THAT(first_topic.level(), flashback::expertise_level::surface);
+    ASSERT_NO_THROW(second_topic = m_database->create_topic(subject.id(), topic_name, flashback::expertise_level::depth, 0));
+    ASSERT_THAT(second_topic.position(), Eq(2));
+    ASSERT_THAT(second_topic.name(), topic_name);
+    ASSERT_THAT(second_topic.level(), flashback::expertise_level::depth);
+    ASSERT_NO_THROW(third_topic = m_database->create_topic(subject.id(), topic_name, flashback::expertise_level::origin, 0));
+    ASSERT_THAT(third_topic.position(), Eq(3));
+    ASSERT_THAT(third_topic.name(), topic_name);
+    ASSERT_THAT(third_topic.level(), flashback::expertise_level::origin);
+    ASSERT_NO_THROW(first_card = m_database->create_card(first_card));
+    ASSERT_NO_THROW(second_card = m_database->create_card(second_card));
+    ASSERT_NO_THROW(third_card = m_database->create_card(third_card));
+    ASSERT_THAT(first_card.id(), Gt(0));
+    ASSERT_THAT(second_card.id(), Gt(0));
+    ASSERT_THAT(third_card.id(), Gt(0));
+    ASSERT_THAT(first_card.headline(), Eq(first_headline));
+    ASSERT_THAT(second_card.headline(), Eq(second_headline));
+    ASSERT_THAT(third_card.headline(), Eq(third_headline));
+    ASSERT_NO_THROW(m_database->add_card_to_topic(first_card.id(), subject.id(), first_topic.position(), first_topic.level()));
+    ASSERT_NO_THROW(m_database->add_card_to_topic(second_card.id(), subject.id(), second_topic.position(), second_topic.level()));
+    ASSERT_NO_THROW(m_database->add_card_to_topic(third_card.id(), subject.id(), third_topic.position(), third_topic.level()));
+    EXPECT_NO_THROW(mode = m_database->get_practice_mode(m_user->id(), subject.id(), flashback::expertise_level::depth));
+    EXPECT_THAT(mode, Eq(flashback::practice_mode::aggressive));
+    ASSERT_NO_THROW(m_database->make_progress(m_user->id(), first_card.id(), duration.count(), mode));
+    EXPECT_NO_THROW(mode = m_database->get_practice_mode(m_user->id(), subject.id(), flashback::expertise_level::depth));
+    EXPECT_THAT(mode, Eq(flashback::practice_mode::aggressive));
+    ASSERT_NO_THROW(m_database->make_progress(m_user->id(), second_card.id(), duration.count(), mode));
+    EXPECT_NO_THROW(mode = m_database->get_practice_mode(m_user->id(), subject.id(), flashback::expertise_level::depth));
+    EXPECT_THAT(mode, Eq(flashback::practice_mode::progressive));
+    EXPECT_NO_THROW(mode = m_database->get_practice_mode(m_user->id(), subject.id(), flashback::expertise_level::origin));
+    EXPECT_THAT(mode, Eq(flashback::practice_mode::aggressive));
+    ASSERT_NO_THROW(m_database->make_progress(m_user->id(), third_card.id(), duration.count(), mode));
+    EXPECT_NO_THROW(mode = m_database->get_practice_mode(m_user->id(), subject.id(), flashback::expertise_level::origin));
+    EXPECT_THAT(mode, Eq(flashback::practice_mode::progressive));
+}
+
+TEST_F(test_database, get_practice_mode_long_after_practicing)
+{
+    auto constexpr roadmap_name{"C++ Software Engineer"};
+    auto constexpr subject_name{"C++"};
+    auto constexpr topic_name{"Reflection"};
+    auto constexpr headline{"The first question?"};
+    auto milestone_level{flashback::expertise_level::surface};
+    auto cognitive_level{flashback::expertise_level::depth};
+    auto mode{flashback::practice_mode::aggressive};
+    std::chrono::seconds duration{10};
+    flashback::Roadmap roadmap{};
+    flashback::Subject subject{};
+    flashback::Milestone milestone{};
+    flashback::Topic topic{};
+    flashback::Card card{};
+    card.set_state(flashback::Card::draft);
+    card.set_headline(headline);
+
+    ASSERT_NO_THROW(roadmap = m_database->create_roadmap(m_user->id(), roadmap_name));
+    ASSERT_THAT(roadmap.id(), Gt(0));
+    ASSERT_THAT(roadmap.name(), Eq(roadmap_name));
+    ASSERT_NO_THROW(subject = m_database->create_subject(subject_name));
+    ASSERT_THAT(subject.id(), Gt(0));
+    ASSERT_THAT(subject.name(), Eq(subject_name));
+    ASSERT_NO_THROW(milestone = m_database->add_milestone(subject.id(), milestone_level, roadmap.id()));
+    ASSERT_THAT(milestone.position(), Eq(1));
+    ASSERT_THAT(milestone.id(), subject.id());
+    ASSERT_THAT(milestone.name(), subject.name());
+    ASSERT_THAT(milestone.level(), milestone_level);
+    ASSERT_NO_THROW(topic = m_database->create_topic(subject.id(), topic_name, milestone_level, 0));
+    ASSERT_THAT(topic.position(), Eq(1));
+    ASSERT_THAT(topic.name(), topic_name);
+    ASSERT_THAT(topic.level(), milestone_level);
+    ASSERT_NO_THROW(card = m_database->create_card(card));
+    ASSERT_THAT(card.id(), Gt(0));
+    ASSERT_THAT(card.headline(), Eq(headline));
+    ASSERT_NO_THROW(m_database->add_card_to_topic(card.id(), subject.id(), topic.position(), topic.level()));
+    EXPECT_NO_THROW(mode = m_database->get_practice_mode(m_user->id(), subject.id(), milestone_level));
+    EXPECT_THAT(mode, Eq(flashback::practice_mode::aggressive)) << "There is no progress yet, practice mode should be aggressive";
+    ASSERT_NO_THROW(m_database->make_progress(m_user->id(), card.id(), duration.count(), mode));
+    EXPECT_NO_THROW(mode = m_database->get_practice_mode(m_user->id(), subject.id(), milestone_level));
+    EXPECT_THAT(mode, Eq(flashback::practice_mode::progressive)) << "Practice mode should be progressive after the only card is practiced";
+    EXPECT_NO_THROW(throw_back_progress(m_user->id(), card.id(), std::chrono::days{100}));
+    ASSERT_NO_THROW(m_database->make_progress(m_user->id(), card.id(), duration.count(), mode));
+    EXPECT_NO_THROW(mode = m_database->get_practice_mode(m_user->id(), subject.id(), milestone_level));
+    EXPECT_THAT(mode, Eq(flashback::practice_mode::aggressive)) << "Practice mode should switch to aggressive after a long time of inactivity";
+}
+
+TEST_F(test_database, get_practice_mode_after_new_card_available)
+{
+    auto constexpr roadmap_name{"C++ Software Engineer"};
+    auto constexpr subject_name{"C++"};
+    auto constexpr topic_name{"Reflection"};
+    auto constexpr first_headline{"The first question?"};
+    auto constexpr second_headline{"The second question?"};
+    auto constexpr third_headline{"The third question?"};
+    auto milestone_level{flashback::expertise_level::surface};
+    auto cognitive_level{flashback::expertise_level::depth};
+    auto mode{flashback::practice_mode::aggressive};
+    std::chrono::seconds duration{10};
+    flashback::Roadmap roadmap{};
+    flashback::Subject subject{};
+    flashback::Milestone milestone{};
+    flashback::Topic topic{};
+    flashback::Card first_card{};
+    flashback::Card second_card{};
+    flashback::Card third_card{};
+    first_card.set_state(flashback::Card::draft);
+    first_card.set_headline(first_headline);
+    second_card.set_state(flashback::Card::draft);
+    second_card.set_headline(second_headline);
+    third_card.set_state(flashback::Card::draft);
+    third_card.set_headline(third_headline);
+
+    ASSERT_NO_THROW(roadmap = m_database->create_roadmap(m_user->id(), roadmap_name));
+    ASSERT_THAT(roadmap.id(), Gt(0));
+    ASSERT_THAT(roadmap.name(), Eq(roadmap_name));
+    ASSERT_NO_THROW(subject = m_database->create_subject(subject_name));
+    ASSERT_THAT(subject.id(), Gt(0));
+    ASSERT_THAT(subject.name(), Eq(subject_name));
+    ASSERT_NO_THROW(milestone = m_database->add_milestone(subject.id(), milestone_level, roadmap.id()));
+    ASSERT_THAT(milestone.position(), Eq(1));
+    ASSERT_THAT(milestone.id(), subject.id());
+    ASSERT_THAT(milestone.name(), subject.name());
+    ASSERT_THAT(milestone.level(), milestone_level);
+    ASSERT_NO_THROW(topic = m_database->create_topic(subject.id(), topic_name, milestone_level, 0));
+    ASSERT_THAT(topic.position(), Eq(1));
+    ASSERT_THAT(topic.name(), topic_name);
+    ASSERT_THAT(topic.level(), milestone_level);
+    ASSERT_NO_THROW(first_card = m_database->create_card(first_card));
+    ASSERT_NO_THROW(second_card = m_database->create_card(second_card));
+    ASSERT_NO_THROW(third_card = m_database->create_card(third_card));
+    ASSERT_THAT(first_card.id(), Gt(0));
+    ASSERT_THAT(second_card.id(), Gt(0));
+    ASSERT_THAT(third_card.id(), Gt(0));
+    ASSERT_THAT(first_card.headline(), Eq(first_headline));
+    ASSERT_THAT(second_card.headline(), Eq(second_headline));
+    ASSERT_THAT(third_card.headline(), Eq(third_headline));
+    ASSERT_NO_THROW(m_database->add_card_to_topic(first_card.id(), subject.id(), topic.position(), topic.level()));
+    ASSERT_NO_THROW(m_database->add_card_to_topic(second_card.id(), subject.id(), topic.position(), topic.level()));
+    EXPECT_NO_THROW(mode = m_database->get_practice_mode(m_user->id(), subject.id(), milestone_level));
+    EXPECT_THAT(mode, Eq(flashback::practice_mode::aggressive)) << "There is no progress yet, practice mode should be aggressive";
+    EXPECT_NO_THROW(m_database->make_progress(m_user->id(), first_card.id(), duration.count(), mode));
+    EXPECT_NO_THROW(mode = m_database->get_practice_mode(m_user->id(), subject.id(), milestone_level));
+    EXPECT_THAT(mode, Eq(flashback::practice_mode::aggressive)) << "Practice mode should not switch to progressive after practicing one of the two cards";
+    EXPECT_NO_THROW(m_database->make_progress(m_user->id(), second_card.id(), duration.count(), mode));
+    EXPECT_NO_THROW(mode = m_database->get_practice_mode(m_user->id(), subject.id(), milestone_level));
+    EXPECT_THAT(mode, Eq(flashback::practice_mode::progressive)) << "Practice mode should switch to progressive after practicing two cards";
+    ASSERT_NO_THROW(m_database->add_card_to_topic(third_card.id(), subject.id(), topic.position(), topic.level()));
+    EXPECT_NO_THROW(mode = m_database->get_practice_mode(m_user->id(), subject.id(), milestone_level));
+    EXPECT_THAT(mode, Eq(flashback::practice_mode::aggressive)) << "Practice mode should switch to aggressive when there is a new card available";
+    EXPECT_NO_THROW(m_database->make_progress(m_user->id(), third_card.id(), duration.count(), mode));
+    EXPECT_NO_THROW(mode = m_database->get_practice_mode(m_user->id(), subject.id(), milestone_level));
+    EXPECT_THAT(mode, Eq(flashback::practice_mode::progressive)) << "Practice mode should switch back to progressive when new card is practiced";
+}
+
+TEST_F(test_database, get_practice_mode_when_progress_takes_too_long)
+{
+    auto constexpr roadmap_name{"C++ Software Engineer"};
+    auto constexpr subject_name{"C++"};
+    auto constexpr topic_name{"Reflection"};
+    auto constexpr first_headline{"The first question?"};
+    auto constexpr second_headline{"The second question?"};
+    auto constexpr third_headline{"The third question?"};
+    auto milestone_level{flashback::expertise_level::surface};
+    auto cognitive_level{flashback::expertise_level::depth};
+    auto mode{flashback::practice_mode::aggressive};
+    std::chrono::seconds duration{10};
+    flashback::Roadmap roadmap{};
+    flashback::Subject subject{};
+    flashback::Milestone milestone{};
+    flashback::Topic topic{};
+    flashback::Card first_card{};
+    flashback::Card second_card{};
+    flashback::Card third_card{};
+    first_card.set_state(flashback::Card::draft);
+    first_card.set_headline(first_headline);
+    second_card.set_state(flashback::Card::draft);
+    second_card.set_headline(second_headline);
+    third_card.set_state(flashback::Card::draft);
+    third_card.set_headline(third_headline);
+
+    ASSERT_NO_THROW(roadmap = m_database->create_roadmap(m_user->id(), roadmap_name));
+    ASSERT_THAT(roadmap.id(), Gt(0));
+    ASSERT_THAT(roadmap.name(), Eq(roadmap_name));
+    ASSERT_NO_THROW(subject = m_database->create_subject(subject_name));
+    ASSERT_THAT(subject.id(), Gt(0));
+    ASSERT_THAT(subject.name(), Eq(subject_name));
+    ASSERT_NO_THROW(milestone = m_database->add_milestone(subject.id(), milestone_level, roadmap.id()));
+    ASSERT_THAT(milestone.position(), Eq(1));
+    ASSERT_THAT(milestone.id(), subject.id());
+    ASSERT_THAT(milestone.name(), subject.name());
+    ASSERT_THAT(milestone.level(), milestone_level);
+    ASSERT_NO_THROW(topic = m_database->create_topic(subject.id(), topic_name, milestone_level, 0));
+    ASSERT_THAT(topic.position(), Eq(1));
+    ASSERT_THAT(topic.name(), topic_name);
+    ASSERT_THAT(topic.level(), milestone_level);
+    ASSERT_NO_THROW(first_card = m_database->create_card(first_card));
+    ASSERT_NO_THROW(second_card = m_database->create_card(second_card));
+    ASSERT_NO_THROW(third_card = m_database->create_card(third_card));
+    ASSERT_THAT(first_card.id(), Gt(0));
+    ASSERT_THAT(second_card.id(), Gt(0));
+    ASSERT_THAT(third_card.id(), Gt(0));
+    ASSERT_THAT(first_card.headline(), Eq(first_headline));
+    ASSERT_THAT(second_card.headline(), Eq(second_headline));
+    ASSERT_THAT(third_card.headline(), Eq(third_headline));
+    ASSERT_NO_THROW(m_database->add_card_to_topic(first_card.id(), subject.id(), topic.position(), topic.level()));
+    ASSERT_NO_THROW(m_database->add_card_to_topic(second_card.id(), subject.id(), topic.position(), topic.level()));
+    ASSERT_NO_THROW(m_database->add_card_to_topic(third_card.id(), subject.id(), topic.position(), topic.level()));
+    EXPECT_NO_THROW(mode = m_database->get_practice_mode(m_user->id(), subject.id(), milestone_level));
+    EXPECT_THAT(mode, Eq(flashback::practice_mode::aggressive));
+    EXPECT_NO_THROW(m_database->make_progress(m_user->id(), first_card.id(), duration.count(), mode));
+    EXPECT_NO_THROW(m_database->make_progress(m_user->id(), second_card.id(), duration.count(), mode));
+    EXPECT_NO_THROW(m_database->make_progress(m_user->id(), third_card.id(), duration.count(), mode));
+    EXPECT_NO_THROW(mode = m_database->get_practice_mode(m_user->id(), subject.id(), milestone_level));
+    EXPECT_THAT(mode, Eq(flashback::practice_mode::progressive));
+    EXPECT_NO_THROW(throw_back_progress(m_user->id(), first_card.id(), std::chrono::days{2}));
+    EXPECT_NO_THROW(throw_back_progress(m_user->id(), second_card.id(), std::chrono::days{5}));
+    EXPECT_NO_THROW(throw_back_progress(m_user->id(), third_card.id(), std::chrono::days{7}));
+    EXPECT_NO_THROW(mode = m_database->get_practice_mode(m_user->id(), subject.id(), milestone_level));
+    EXPECT_THAT(mode, Eq(flashback::practice_mode::aggressive)) << "Practice mode should switch to aggressive when the oldest practice exceeds 7 days in progressive";
+    EXPECT_NO_THROW(m_database->make_progress(m_user->id(), third_card.id(), duration.count(), mode));
+    EXPECT_NO_THROW(mode = m_database->get_practice_mode(m_user->id(), subject.id(), milestone_level));
+    EXPECT_THAT(mode, Eq(flashback::practice_mode::progressive)) << "Practice mode should be back to progressive after practicing the overdue card";
+}
+
+TEST_F(test_database, get_user_cognitive_level)
+{
+    auto constexpr roadmap_name{"C++ Software Engineer"};
+    auto constexpr subject_name{"C++"};
+    auto constexpr topic_name{"Reflection"};
+    auto constexpr first_headline{"The first question?"};
+    auto constexpr second_headline{"The second question?"};
+    auto constexpr third_headline{"The third question?"};
+    auto milestone_level{flashback::expertise_level::surface};
+    auto cognitive_level{flashback::expertise_level::depth};
+    auto mode{flashback::practice_mode::aggressive};
+    std::chrono::seconds duration{10};
+    flashback::Roadmap roadmap{};
+    flashback::Subject subject{};
+    flashback::Milestone milestone{};
+    flashback::Topic topic{};
+    flashback::Card first_card{};
+    flashback::Card second_card{};
+    flashback::Card third_card{};
+    first_card.set_state(flashback::Card::draft);
+    first_card.set_headline(first_headline);
+    second_card.set_state(flashback::Card::draft);
+    second_card.set_headline(second_headline);
+    third_card.set_state(flashback::Card::draft);
+    third_card.set_headline(third_headline);
+
+    ASSERT_NO_THROW(roadmap = m_database->create_roadmap(m_user->id(), roadmap_name));
+    ASSERT_THAT(roadmap.id(), Gt(0));
+    ASSERT_THAT(roadmap.name(), Eq(roadmap_name));
+    ASSERT_NO_THROW(subject = m_database->create_subject(subject_name));
+    ASSERT_THAT(subject.id(), Gt(0));
+    ASSERT_THAT(subject.name(), Eq(subject_name));
+    ASSERT_NO_THROW(milestone = m_database->add_milestone(subject.id(), milestone_level, roadmap.id()));
+    ASSERT_THAT(milestone.position(), Eq(1));
+    ASSERT_THAT(milestone.id(), subject.id());
+    ASSERT_THAT(milestone.name(), subject.name());
+    ASSERT_THAT(milestone.level(), milestone_level);
+    ASSERT_NO_THROW(topic = m_database->create_topic(subject.id(), topic_name, milestone_level, 0));
+    ASSERT_THAT(topic.position(), Eq(1));
+    ASSERT_THAT(topic.name(), topic_name);
+    ASSERT_THAT(topic.level(), milestone_level);
+    ASSERT_NO_THROW(first_card = m_database->create_card(first_card));
+    ASSERT_NO_THROW(second_card = m_database->create_card(second_card));
+    ASSERT_NO_THROW(third_card = m_database->create_card(third_card));
+    ASSERT_THAT(first_card.id(), Gt(0));
+    ASSERT_THAT(second_card.id(), Gt(0));
+    ASSERT_THAT(third_card.id(), Gt(0));
+    ASSERT_THAT(first_card.headline(), Eq(first_headline));
+    ASSERT_THAT(second_card.headline(), Eq(second_headline));
+    ASSERT_THAT(third_card.headline(), Eq(third_headline));
+    ASSERT_NO_THROW(m_database->add_card_to_topic(first_card.id(), subject.id(), topic.position(), topic.level()));
+    ASSERT_NO_THROW(m_database->add_card_to_topic(second_card.id(), subject.id(), topic.position(), topic.level()));
+    EXPECT_NO_THROW(m_database->make_progress(m_user->id(), first_card.id(), 10, mode));
+    EXPECT_NO_THROW(cognitive_level = m_database->get_user_cognitive_level(m_user->id(), subject.id()));
+    ASSERT_NO_THROW(m_database->add_card_to_topic(third_card.id(), subject.id(), topic.position(), topic.level()));
 }
 
 TEST_F(test_database, get_practice_topics)
@@ -4691,10 +5111,6 @@ TEST_F(test_database, mark_card_as_approved)
 }
 
 TEST_F(test_database, mark_card_as_released)
-{
-}
-
-TEST_F(test_database, make_progress)
 {
 }
 
