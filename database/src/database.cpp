@@ -1121,9 +1121,18 @@ practice_mode database::get_practice_mode(uint64_t const user_id, uint64_t const
     return mode;
 }
 
-std::map<uint64_t, Topic> database::get_practice_topics(uint64_t const user_id, uint64_t const subject_id) const
+std::vector<Topic> database::get_practice_topics(uint64_t const user_id, uint64_t const subject_id) const
 {
-    return {};
+    std::vector<Topic> topics{};
+    for (pqxx::result const result{query("select position, name, level from get_practice_topics($1, $2)", user_id, subject_id)}; pqxx::row const& row: result)
+    {
+        Topic topic{};
+        topic.set_position(row.at("position").as<uint64_t>());
+        topic.set_name(row.at("name").as<std::string>());
+        topic.set_level(to_level(row.at("level").as<std::string>()));
+        topics.push_back(topic);
+    }
+    return topics;
 }
 
 std::vector<Card> database::get_practice_cards(uint64_t const user_id, uint64_t const subject_id, uint64_t const topic_position) const

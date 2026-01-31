@@ -51,8 +51,8 @@ public:
 
     // subjects
     [[nodiscard]] virtual Subject create_subject(std::string name) const = 0;
-    virtual void rename_subject(uint64_t id, std::string name) const = 0;
-    virtual void remove_subject(uint64_t id) const = 0;
+    virtual void rename_subject(uint64_t subject_id, std::string name) const = 0;
+    virtual void remove_subject(uint64_t subject_id) const = 0;
     virtual void merge_subjects(uint64_t source, uint64_t target) const = 0;
     [[nodiscard]] virtual std::map<uint64_t, Subject> search_subjects(std::string_view search_pattern) const = 0;
     //add_alias
@@ -145,7 +145,7 @@ public:
     // progress
     [[nodiscard]] virtual expertise_level get_user_cognitive_level(uint64_t user_id, uint64_t subject_id) const = 0;
     virtual practice_mode get_practice_mode(uint64_t user_id, uint64_t subject_id, expertise_level level) const = 0;
-    virtual std::map<uint64_t, Topic> get_practice_topics(uint64_t user_id, uint64_t subject_id) const = 0;
+    virtual std::vector<Topic> get_practice_topics(uint64_t user_id, uint64_t subject_id) const = 0;
     virtual std::vector<Card> get_practice_cards(uint64_t user_id, uint64_t subject_id, uint64_t topic_position) const = 0;
     virtual std::vector<Resource> get_study_resources(uint64_t user_id) const = 0;
     virtual std::map<uint64_t, Section> get_study_sections(uint64_t user_id, uint64_t resource_id) const = 0;

@@ -142,7 +142,7 @@ public:
     // practices
     [[nodiscard]] expertise_level get_user_cognitive_level(uint64_t user_id, uint64_t subject_id) const override;
     practice_mode get_practice_mode(uint64_t user_id, uint64_t subject_id, expertise_level level) const override;
-    std::map<uint64_t, Topic> get_practice_topics(uint64_t user_id, uint64_t subject_id) const override;
+    std::vector<Topic> get_practice_topics(uint64_t user_id, uint64_t subject_id) const override;
     std::vector<Card> get_practice_cards(uint64_t user_id, uint64_t subject_id, uint64_t topic_position) const override;
     std::vector<Resource> get_study_resources(uint64_t user_id) const override;
     std::map<uint64_t, Section> get_study_sections(uint64_t user_id, uint64_t resource_id) const override;
