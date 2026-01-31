@@ -8,7 +8,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: prepare
-        run:  sudo apt install --yes --no-install-recommends cmake postgresql libreadline-dev npm make curl patch tar gzip bzip2 sed libboost-system-dev libboost-program-options-dev libgtest-dev libprotobuf-dev libgrpc++-dev protobuf-compiler-grpc libsodium-dev libgmock-dev
+        run:  sudo apt install --yes --no-install-recommends cmake postgresql libreadline-dev npm make curl patch tar gzip bzip2 sed libboost-system-dev libboost-program-options-dev libgtest-dev libprotobuf-dev libprotoc-dev libgrpc++-dev protobuf-compiler-grpc libsodium-dev libgmock-dev
       - name: checkout
         uses: actions/checkout@v4
       - name: install postgresql
