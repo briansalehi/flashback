@@ -46,13 +46,14 @@ set(client_sources
 )
 
 set(PROTOC_GEN_GRPC_WEB_EXECUTABLE ${CMAKE_CURRENT_SOURCE_DIR}/deps/node_modules/protoc-gen-grpc-web/bin/protoc-gen-grpc-web)
+set(PROTOC_GEN_JS_EXECUTABLE ${CMAKE_CURRENT_SOURCE_DIR}/deps/node_modules/protoc-gen-js/bin/protoc-gen-js)
 
 add_custom_command(
-    OUTPUT ${PROTOC_GEN_GRPC_WEB_EXECUTABLE}
+    OUTPUT ${PROTOC_GEN_GRPC_WEB_EXECUTABLE} ${PROTOC_GEN_JS_EXECUTABLE}
     COMMAND ${NPM_EXECUTABLE}
     ARGS install --loglevel silent --no-package-lock --save-dev
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/deps
-    COMMENT "Installing protoc-gen-grpc-web for client"
+    COMMENT "Installing protoc-gen-grpc-web and protoc-gen-js for client"
 )
 
 add_custom_command(
@@ -70,9 +71,10 @@ add_custom_command(
         --js_out=import_style=commonjs:${CMAKE_CURRENT_BINARY_DIR}
         --grpc-web_out=import_style=commonjs,mode=grpcwebtext:${CMAKE_CURRENT_BINARY_DIR}
         --plugin=protoc-gen-grpc-web=${PROTOC_GEN_GRPC_WEB_EXECUTABLE}
+        --plugin=protoc-gen-js=${PROTOC_GEN_JS_EXECUTABLE}
         ${proto_files}
     DEPENDS
-        ${proto_files} ${PROTOC_GEN_GRPC_WEB_EXECUTABLE}
+        ${proto_files} ${PROTOC_GEN_GRPC_WEB_EXECUTABLE} ${PROTOC_GEN_JS_EXECUTABLE}
     COMMENT "Generating grpc sources"
 )
 
