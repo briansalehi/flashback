@@ -1093,10 +1093,11 @@ std::vector<Resource> database::get_nerves(uint64_t const user_id) const
 expertise_level database::get_user_cognitive_level(uint64_t const user_id, uint64_t const subject_id) const
 {
     auto level{expertise_level::surface};
+    pqxx::result const result{query("select get_user_cognitive_level($1, $2) as level", user_id, subject_id)};
 
-    for (pqxx::result const result{query("select get_user_cognitive_level($1, $2)", user_id, subject_id)}; pqxx::row row: result)
+    if (result.size() == 1)
     {
-        level = to_level(row.at(0).as<std::string>());
+        level = to_level(result.at(0).at("level").as<std::string>());
     }
 
     return level;

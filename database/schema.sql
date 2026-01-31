@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict thBOLkRyhAIzXsqOT98jaxvhAK8b8Q286l5TnJKFigIx0dUIXJf0Mzqx8orde3C
+\restrict f7ucObrBLRPhWPQOUOCpHi0lWDdrilsuKDSYVPLaU0kYRfnXxkQEKfyzBLRUDGh
 
 -- Dumped from database version 18.1
 -- Dumped by pg_dump version 18.0
@@ -1572,12 +1572,21 @@ CREATE FUNCTION flashback.get_user_cognitive_level(user_id integer, subject_id i
 declare cognitive_level expertise_level;
 declare mode practice_mode;
 begin
-    select t.level, get_practice_mode(user_id, t.subject, t.level) as mode into cognitive_level, mode
+    select t.level into cognitive_level
     from topics t
-    where t.subject = subject_id
+    where t.subject = subject_id and get_practice_mode(user_id, t.subject, t.level) = 'aggressive'
     group by t.subject, t.level
-    order by mode desc, t.level
+    order by t.level
     limit 1;
+
+    if cognitive_level is null then
+        select t.level into cognitive_level
+        from topics t
+        where t.subject = subject_id and get_practice_mode(user_id, t.subject, t.level) = 'progressive'
+        group by t.subject, t.level
+        order by t.level desc
+        limit 1;
+    end if;
 
     return cognitive_level;
 end; $$;
@@ -4241,5 +4250,5 @@ GRANT ALL ON SCHEMA public TO flashback_client;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict thBOLkRyhAIzXsqOT98jaxvhAK8b8Q286l5TnJKFigIx0dUIXJf0Mzqx8orde3C
+\unrestrict f7ucObrBLRPhWPQOUOCpHi0lWDdrilsuKDSYVPLaU0kYRfnXxkQEKfyzBLRUDGh
 

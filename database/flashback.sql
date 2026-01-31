@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict eO41hiyb8u3WAbVxvFyIg5ddsyea6ektVOV8LHbIXjnD5sODGUR8bF9APOd2iBB
+\restrict LoLA6ASF7WYUJ55ZabgKt1yCgBhdK7WDmWsyB8covITntd8u0CFB0TcSTHXlTKZ
 
 -- Dumped from database version 18.1
 -- Dumped by pg_dump version 18.0
@@ -1572,12 +1572,21 @@ CREATE FUNCTION flashback.get_user_cognitive_level(user_id integer, subject_id i
 declare cognitive_level expertise_level;
 declare mode practice_mode;
 begin
-    select t.level, get_practice_mode(user_id, t.subject, t.level) as mode into cognitive_level, mode
+    select t.level into cognitive_level
     from topics t
-    where t.subject = subject_id
+    where t.subject = subject_id and get_practice_mode(user_id, t.subject, t.level) = 'aggressive'
     group by t.subject, t.level
-    order by mode desc, t.level
+    order by t.level
     limit 1;
+
+    if cognitive_level is null then
+        select t.level into cognitive_level
+        from topics t
+        where t.subject = subject_id and get_practice_mode(user_id, t.subject, t.level) = 'progressive'
+        group by t.subject, t.level
+        order by t.level desc
+        limit 1;
+    end if;
 
     return cognitive_level;
 end; $$;
@@ -21488,9 +21497,6 @@ COPY flashback.progress ("user", card, last_practice, duration, progression) FRO
 2	2830	2025-12-11 15:13:35.578784+01	18	0
 2	2829	2025-12-11 15:19:22.562916+01	347	0
 2	2831	2025-12-12 18:51:36.376569+01	16	0
-2	5469	2025-12-12 19:09:26.373575+01	4	0
-2	5470	2025-12-12 19:09:29.788286+01	3	0
-2	5559	2025-12-12 19:09:39.226149+01	10	0
 2	9	2025-12-12 19:21:40.739539+01	570	0
 2	3635	2025-12-12 19:23:25.210058+01	105	0
 2	3640	2025-12-12 19:23:52.044126+01	27	0
@@ -31486,7 +31492,7 @@ SELECT pg_catalog.setval('flashback.cards_activities_id_seq', 1, false);
 -- Name: cards_id_seq; Type: SEQUENCE SET; Schema: flashback; Owner: flashback
 --
 
-SELECT pg_catalog.setval('flashback.cards_id_seq', 5643, true);
+SELECT pg_catalog.setval('flashback.cards_id_seq', 5644, true);
 
 
 --
@@ -32335,5 +32341,5 @@ GRANT ALL ON SCHEMA public TO flashback_client;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict eO41hiyb8u3WAbVxvFyIg5ddsyea6ektVOV8LHbIXjnD5sODGUR8bF9APOd2iBB
+\unrestrict LoLA6ASF7WYUJ55ZabgKt1yCgBhdK7WDmWsyB8covITntd8u0CFB0TcSTHXlTKZ
 
