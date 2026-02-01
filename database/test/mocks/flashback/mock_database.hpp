@@ -144,7 +144,7 @@ public:
     MOCK_METHOD(void, mark_card_as_approved, (uint64_t), (const, override));
     MOCK_METHOD(void, mark_card_as_released, (uint64_t), (const, override));
     MOCK_METHOD(closure_state, get_resource_state, (uint64_t), (const, override));
-    MOCK_METHOD(Weight, get_progress_weight, (uint64_t), (const, override));
+    MOCK_METHOD(std::vector<Weight>, get_progress_weight, (uint64_t), (const, override));
     MOCK_METHOD(std::vector<Card>, get_variations, (uint64_t), (const, override));
     MOCK_METHOD(bool, is_absolute, (uint64_t), (const, override));
 

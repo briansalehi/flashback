@@ -158,7 +158,7 @@ public:
     virtual void mark_card_as_completed(uint64_t card_id) const = 0;
     virtual void mark_card_as_approved(uint64_t card_id) const = 0;
     virtual void mark_card_as_released(uint64_t card_id) const = 0;
-    virtual Weight get_progress_weight(uint64_t user_id) const = 0;
+    [[nodiscard]] virtual std::vector<Weight> get_progress_weight(uint64_t user_id) const = 0;
     virtual std::vector<Card> get_variations(uint64_t card_id) const = 0;
     virtual bool is_absolute(uint64_t card_id) const = 0;
 

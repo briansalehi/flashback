@@ -154,7 +154,7 @@ public:
     void mark_card_as_approved(uint64_t card_id) const override;
     void mark_card_as_released(uint64_t card_id) const override;
     void make_progress(uint64_t user_id, uint64_t card_id, uint64_t duration, practice_mode mode) const override;
-    Weight get_progress_weight(uint64_t user_id) const override;
+    [[nodiscard]] std::vector<Weight> get_progress_weight(uint64_t user_id) const override;
     std::vector<Card> get_variations(uint64_t card_id) const override;
     bool is_absolute(uint64_t card_id) const override;
 

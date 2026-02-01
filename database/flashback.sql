@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict A4zgKKTeg7qLdvukXR3rMgcPVTnzTj6I3EKWPCtjUZYENV2NDaQUwDeD7FIDgCN
+\restrict XqNBYEOwUBHyW0KhYDwGg1T1reZxqMQku4LyB7lqZ78Dk0i2YQVV3uR0JUWVWUt
 
 -- Dumped from database version 18.1
 -- Dumped by pg_dump version 18.0
@@ -1283,6 +1283,26 @@ $$;
 
 
 ALTER FUNCTION flashback.get_practice_topics(user_id integer, roadmap_id integer, subject_id integer) OWNER TO flashback;
+
+--
+-- Name: get_progress_weight(integer); Type: FUNCTION; Schema: flashback; Owner: flashback
+--
+
+CREATE FUNCTION flashback.get_progress_weight(user_id integer) RETURNS TABLE(id integer, name flashback.citext, type flashback.resource_type, pattern flashback.section_pattern, production integer, expiration integer, link character varying, percentage bigint)
+    LANGUAGE plpgsql
+    AS $$
+begin
+    return query
+    select r.id, r.name, r.type, r.pattern, r.production, r.expiration, r.link, count(p.card) * 100 / count(c.card)
+    from progress p right
+    join section_cards c on c.card = p.card
+    join resources r on r.id = c.resource
+    where p."user" = user_id and p.last_practice >= CURRENT_DATE::timestamp
+    group by r.id, r.name, r.type, r.pattern, r.production, r.expiration, r.link;
+end; $$;
+
+
+ALTER FUNCTION flashback.get_progress_weight(user_id integer) OWNER TO flashback;
 
 --
 -- Name: get_requirements(integer, integer, flashback.expertise_level); Type: FUNCTION; Schema: flashback; Owner: flashback
@@ -32587,5 +32607,5 @@ GRANT ALL ON SCHEMA public TO flashback_client;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict A4zgKKTeg7qLdvukXR3rMgcPVTnzTj6I3EKWPCtjUZYENV2NDaQUwDeD7FIDgCN
+\unrestrict XqNBYEOwUBHyW0KhYDwGg1T1reZxqMQku4LyB7lqZ78Dk0i2YQVV3uR0JUWVWUt
 

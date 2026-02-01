@@ -111,6 +111,6 @@ enum closure_state {
 }
 
 message Weight {
-    uint64 resources = 1;
-    uint64 sections = 2;
+    Resource resource = 1;
+    uint64 percentage = 2;
 }

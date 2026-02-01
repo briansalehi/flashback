@@ -5766,6 +5766,95 @@ TEST_F(test_database, mark_card_as_released)
 
 TEST_F(test_database, get_progress_weight)
 {
+    flashback::Roadmap roadmap{};
+    flashback::Subject subject{};
+    flashback::Milestone milestone{};
+    flashback::Topic topic{};
+    flashback::Resource first_resource{};
+    flashback::Resource second_resource{};
+    flashback::Resource third_resource{};
+    flashback::Section first_section{};
+    flashback::Section second_section{};
+    flashback::Section third_section{};
+    flashback::Card first_card{};
+    flashback::Card second_card{};
+    flashback::Card third_card{};
+    flashback::practice_mode mode{};
+    std::vector<flashback::Resource> resources{};
+    std::map<uint64_t, flashback::Resource> studying_resources{};
+
+    roadmap.set_name("C++ Software Engineer");
+    subject.set_name("C++");
+    milestone.set_level(flashback::expertise_level::depth);
+    topic.set_name("Reflection");
+    topic.set_level(flashback::expertise_level::surface);
+    first_resource.set_name("First C++ Resource");
+    first_resource.set_type(flashback::Resource::book);
+    first_resource.set_pattern(flashback::Resource::chapter);
+    second_resource.set_name("Second C++ Resource");
+    second_resource.set_type(flashback::Resource::manual);
+    second_resource.set_pattern(flashback::Resource::page);
+    third_resource.set_name("Personal Knowledge");
+    third_resource.set_type(flashback::Resource::nerve);
+    third_resource.set_pattern(flashback::Resource::synapse);
+    first_section.set_name("First C++ Resource Chapter 1");
+    second_section.set_name("Second C++ Resource Chapter 1");
+    third_section.set_name("Coroutine");
+    first_card.set_headline("First Card");
+    second_card.set_headline("Second Card");
+    third_card.set_headline("Third Card");
+
+    ASSERT_NO_THROW(roadmap = m_database->create_roadmap(m_user->id(), roadmap.name()));
+    ASSERT_THAT(roadmap.id(), Gt(0));
+    ASSERT_NO_THROW(subject = m_database->create_subject(subject.name()));
+    ASSERT_THAT(subject.id(), Gt(0));
+    ASSERT_NO_THROW(milestone = m_database->add_milestone(subject.id(), milestone.level(), roadmap.id()));
+    ASSERT_THAT(milestone.position(), Eq(1));
+    ASSERT_NO_THROW(topic = m_database->create_topic(subject.id(), topic.name(), topic.level(), 0));
+    ASSERT_THAT(topic.position(), Eq(1));
+    ASSERT_NO_THROW(first_resource = m_database->create_resource(first_resource));
+    ASSERT_THAT(first_resource.id(), Gt(0));
+    ASSERT_NO_THROW(second_resource = m_database->create_resource(second_resource));
+    ASSERT_THAT(second_resource.id(), Gt(0));
+    ASSERT_NO_THROW(m_database->add_resource_to_subject(first_resource.id(), subject.id()));
+    ASSERT_NO_THROW(m_database->add_resource_to_subject(second_resource.id(), subject.id()));
+    ASSERT_NO_THROW(third_resource = m_database->create_nerve(m_user->id(), third_resource.name(), subject.id(), 0));
+    ASSERT_THAT(third_resource.id(), Gt(0));
+    ASSERT_NO_THROW(first_section = m_database->create_section(first_resource.id(), 0, first_section.name(), first_section.link()));
+    ASSERT_THAT(first_section.position(), Eq(1));
+    ASSERT_NO_THROW(second_section = m_database->create_section(second_resource.id(), 0, second_section.name(), second_section.link()));
+    ASSERT_THAT(second_section.position(), Eq(1));
+    ASSERT_NO_THROW(third_section = m_database->create_section(third_resource.id(), 0, third_section.name(), third_section.link()));
+    ASSERT_THAT(third_section.position(), Eq(1));
+    ASSERT_NO_THROW(first_card = m_database->create_card(first_card));
+    ASSERT_THAT(first_card.id(), Gt(0));
+    ASSERT_NO_THROW(second_card = m_database->create_card(second_card));
+    ASSERT_THAT(second_card.id(), Gt(0));
+    ASSERT_NO_THROW(third_card = m_database->create_card(third_card));
+    ASSERT_THAT(third_card.id(), Gt(0));
+    ASSERT_NO_THROW(m_database->add_card_to_section(first_card.id(), first_resource.id(), first_section.position()));
+    ASSERT_NO_THROW(m_database->add_card_to_section(second_card.id(), second_resource.id(), second_section.position()));
+    ASSERT_NO_THROW(m_database->add_card_to_section(third_card.id(), third_resource.id(), third_section.position()));
+    ASSERT_NO_THROW(m_database->add_card_to_topic(first_card.id(), subject.id(), topic.position(), topic.level()));
+    ASSERT_NO_THROW(m_database->add_card_to_topic(second_card.id(), subject.id(), topic.position(), topic.level()));
+    ASSERT_NO_THROW(m_database->add_card_to_topic(third_card.id(), subject.id(), topic.position(), topic.level()));
+    ASSERT_NO_THROW(mode = m_database->get_practice_mode(m_user->id(), subject.id(), milestone.level()));
+    ASSERT_THAT(mode, Eq(flashback::practice_mode::aggressive));
+    ASSERT_NO_THROW(m_database->make_progress(m_user->id(), first_card.id(), 20, mode));
+    ASSERT_NO_THROW(m_database->make_progress(m_user->id(), second_card.id(), 20, mode));
+    ASSERT_NO_THROW(m_database->make_progress(m_user->id(), third_card.id(), 20, mode));
+    std::vector<flashback::Weight> weights{};
+    EXPECT_NO_THROW(weights = m_database->get_progress_weight(m_user->id()));
+    EXPECT_THAT(weights, SizeIs(3));
+    ASSERT_NO_THROW(weights.at(0).resource());
+    ASSERT_NO_THROW(weights.at(1).resource());
+    ASSERT_NO_THROW(weights.at(2).resource());
+    EXPECT_TRUE(weights.at(0).has_resource());
+    EXPECT_TRUE(weights.at(1).has_resource());
+    EXPECT_TRUE(weights.at(2).has_resource());
+    EXPECT_THAT(weights.at(0).percentage(), Eq(100));
+    EXPECT_THAT(weights.at(1).percentage(), Eq(100));
+    EXPECT_THAT(weights.at(2).percentage(), Eq(100));
 }
 
 TEST_F(test_database, get_variations)

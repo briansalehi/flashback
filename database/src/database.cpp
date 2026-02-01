@@ -1212,9 +1212,25 @@ void database::study(uint64_t user_id, uint64_t card_id, std::chrono::seconds du
     exec("call study($1, $2, $3)", user_id, card_id, duration.count());
 }
 
-Weight database::get_progress_weight(uint64_t const user_id) const
+std::vector<Weight> database::get_progress_weight(uint64_t const user_id) const
 {
-    return {};
+    std::vector<Weight> weights;
+    for (pqxx::row const& row: query("select id, name, type, pattern, production, expiration, link, percentage from get_progress_weight($1)", user_id))
+    {
+        Weight weight{};
+        auto resource{std::make_unique<Resource>()};
+        resource->set_id(row.at("id").as<uint64_t>());
+        resource->set_name(row.at("name").as<std::string>());
+        resource->set_type(to_resource_type(row.at("type").as<std::string>()));
+        resource->set_pattern(to_section_pattern(row.at("pattern").as<std::string>()));
+        resource->set_link(row.at("link").is_null() ? "" : row.at("link").as<std::string>());
+        resource->set_production(row.at("production").as<uint64_t>());
+        resource->set_expiration(row.at("expiration").as<uint64_t>());
+        weight.set_allocated_resource(resource.release());
+        weight.set_percentage(row.at("percentage").as<uint64_t>());
+        weights.push_back(weight);
+    }
+    return weights;
 }
 
 std::vector<Card> database::get_variations(uint64_t const card_id) const
