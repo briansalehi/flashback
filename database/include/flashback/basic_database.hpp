@@ -154,7 +154,6 @@ public:
     [[nodiscard]] virtual closure_state get_resource_state(uint64_t resource_id) const = 0;
     virtual void study(uint64_t user_id, uint64_t card_id, std::chrono::seconds duration) const = 0;
     [[nodiscard]] virtual std::map<uint64_t, Resource> get_study_resources(uint64_t user_id) const = 0;
-    virtual std::map<uint64_t, Card> get_study_cards(uint64_t user_id, uint64_t resource_id, uint64_t section_position) const = 0;
     virtual void mark_card_as_reviewed(uint64_t card_id) const = 0;
     virtual void mark_card_as_completed(uint64_t card_id) const = 0;
     virtual void mark_card_as_approved(uint64_t card_id) const = 0;

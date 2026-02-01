@@ -5576,24 +5576,192 @@ TEST_F(test_database, get_study_resources)
     EXPECT_THAT(studying_resources.at(3).id(), Eq(first_resource.id())) << "First resource was studied first, so it should appear as the last studied resource";
 }
 
-TEST_F(test_database, get_study_cards)
-{
-}
-
 TEST_F(test_database, mark_card_as_reviewed)
 {
+    flashback::Resource resource{};
+    flashback::Section section{};
+    flashback::Card card{};
+    std::vector<flashback::Card> cards{};
+    resource.set_name("C++ Resource");
+    resource.set_type(flashback::Resource::book);
+    resource.set_pattern(flashback::Resource::chapter);
+    resource.set_link("https://flashback.eu.com");
+    resource.set_production(std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count());
+    resource.set_expiration(std::chrono::duration_cast<std::chrono::seconds>((std::chrono::system_clock::now() + std::chrono::years(3)).time_since_epoch()).count());
+    section.set_name("Class");
+    card.set_headline("Some random headline");
+
+    ASSERT_NO_THROW(resource = m_database->create_resource(resource));
+    ASSERT_THAT(resource.id(), Gt(0));
+    ASSERT_NO_THROW(section = m_database->create_section(resource.id(), 0, section.name(), section.link()));
+    ASSERT_THAT(section.position(), Eq(1));
+    ASSERT_NO_THROW(card = m_database->create_card(card));
+    ASSERT_THAT(card.id(), Gt(0));
+    ASSERT_NO_THROW(m_database->add_card_to_section(card.id(), resource.id(), section.position()));
+    ASSERT_NO_THROW(cards = m_database->get_section_cards(resource.id(), section.position()));
+    ASSERT_THAT(cards, SizeIs(1));
+    ASSERT_NO_THROW(cards.at(0).id());
+    ASSERT_THAT(cards.at(0).id(), card.id());
+    ASSERT_THAT(cards.at(0).state(), flashback::Card::draft);
+    EXPECT_NO_THROW(m_database->mark_card_as_reviewed(card.id()));
+    EXPECT_NO_THROW(cards = m_database->get_section_cards(resource.id(), section.position()));
+    EXPECT_THAT(cards, SizeIs(1));
+    ASSERT_NO_THROW(cards.at(0).id());
+    EXPECT_THAT(cards.at(0).id(), card.id());
+    EXPECT_THAT(cards.at(0).state(), flashback::Card::reviewed);
 }
 
 TEST_F(test_database, mark_card_as_completed)
 {
+    flashback::Resource resource{};
+    flashback::Section section{};
+    flashback::Card card{};
+    std::vector<flashback::Card> cards{};
+    resource.set_name("C++ Resource");
+    resource.set_type(flashback::Resource::book);
+    resource.set_pattern(flashback::Resource::chapter);
+    resource.set_link("https://flashback.eu.com");
+    resource.set_production(std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count());
+    resource.set_expiration(std::chrono::duration_cast<std::chrono::seconds>((std::chrono::system_clock::now() + std::chrono::years(3)).time_since_epoch()).count());
+    section.set_name("Class");
+    card.set_headline("Some random headline");
+
+    ASSERT_NO_THROW(resource = m_database->create_resource(resource));
+    ASSERT_THAT(resource.id(), Gt(0));
+    ASSERT_NO_THROW(section = m_database->create_section(resource.id(), 0, section.name(), section.link()));
+    ASSERT_THAT(section.position(), Eq(1));
+    ASSERT_NO_THROW(card = m_database->create_card(card));
+    ASSERT_THAT(card.id(), Gt(0));
+    ASSERT_NO_THROW(m_database->add_card_to_section(card.id(), resource.id(), section.position()));
+    ASSERT_NO_THROW(cards = m_database->get_section_cards(resource.id(), section.position()));
+    ASSERT_THAT(cards, SizeIs(1));
+    ASSERT_NO_THROW(cards.at(0).id());
+    ASSERT_THAT(cards.at(0).id(), card.id());
+    ASSERT_THAT(cards.at(0).state(), flashback::Card::draft);
+    EXPECT_NO_THROW(m_database->mark_card_as_completed(card.id()));
+    EXPECT_NO_THROW(cards = m_database->get_section_cards(resource.id(), section.position()));
+    EXPECT_THAT(cards, SizeIs(1));
+    ASSERT_NO_THROW(cards.at(0).id());
+    EXPECT_THAT(cards.at(0).id(), card.id());
+    EXPECT_THAT(cards.at(0).state(), flashback::Card::draft);
+    EXPECT_NO_THROW(m_database->mark_card_as_reviewed(card.id()));
+    EXPECT_NO_THROW(m_database->mark_card_as_completed(card.id()));
+    EXPECT_NO_THROW(cards = m_database->get_section_cards(resource.id(), section.position()));
+    EXPECT_THAT(cards, SizeIs(1));
+    ASSERT_NO_THROW(cards.at(0).id());
+    EXPECT_THAT(cards.at(0).id(), card.id());
+    EXPECT_THAT(cards.at(0).state(), flashback::Card::completed);
+    EXPECT_NO_THROW(m_database->mark_card_as_reviewed(card.id()));
+    EXPECT_NO_THROW(cards = m_database->get_section_cards(resource.id(), section.position()));
+    EXPECT_THAT(cards, SizeIs(1));
+    ASSERT_NO_THROW(cards.at(0).id());
+    EXPECT_THAT(cards.at(0).id(), card.id());
+    EXPECT_THAT(cards.at(0).state(), flashback::Card::reviewed);
 }
 
 TEST_F(test_database, mark_card_as_approved)
 {
+    flashback::Resource resource{};
+    flashback::Section section{};
+    flashback::Card card{};
+    std::vector<flashback::Card> cards{};
+    resource.set_name("C++ Resource");
+    resource.set_type(flashback::Resource::book);
+    resource.set_pattern(flashback::Resource::chapter);
+    resource.set_link("https://flashback.eu.com");
+    resource.set_production(std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count());
+    resource.set_expiration(std::chrono::duration_cast<std::chrono::seconds>((std::chrono::system_clock::now() + std::chrono::years(3)).time_since_epoch()).count());
+    section.set_name("Class");
+    card.set_headline("Some random headline");
+
+    ASSERT_NO_THROW(resource = m_database->create_resource(resource));
+    ASSERT_THAT(resource.id(), Gt(0));
+    ASSERT_NO_THROW(section = m_database->create_section(resource.id(), 0, section.name(), section.link()));
+    ASSERT_THAT(section.position(), Eq(1));
+    ASSERT_NO_THROW(card = m_database->create_card(card));
+    ASSERT_THAT(card.id(), Gt(0));
+    ASSERT_NO_THROW(m_database->add_card_to_section(card.id(), resource.id(), section.position()));
+    ASSERT_NO_THROW(cards = m_database->get_section_cards(resource.id(), section.position()));
+    ASSERT_THAT(cards, SizeIs(1));
+    ASSERT_NO_THROW(cards.at(0).id());
+    ASSERT_THAT(cards.at(0).id(), card.id());
+    ASSERT_THAT(cards.at(0).state(), flashback::Card::draft);
+    EXPECT_NO_THROW(m_database->mark_card_as_approved(card.id()));
+    EXPECT_NO_THROW(cards = m_database->get_section_cards(resource.id(), section.position()));
+    EXPECT_THAT(cards, SizeIs(1));
+    ASSERT_NO_THROW(cards.at(0).id());
+    EXPECT_THAT(cards.at(0).id(), card.id());
+    EXPECT_THAT(cards.at(0).state(), flashback::Card::draft);
+    EXPECT_NO_THROW(m_database->mark_card_as_reviewed(card.id()));
+    EXPECT_NO_THROW(m_database->mark_card_as_approved(card.id()));
+    EXPECT_NO_THROW(cards = m_database->get_section_cards(resource.id(), section.position()));
+    EXPECT_THAT(cards, SizeIs(1));
+    ASSERT_NO_THROW(cards.at(0).id());
+    EXPECT_THAT(cards.at(0).id(), card.id());
+    EXPECT_THAT(cards.at(0).state(), flashback::Card::reviewed);
+    EXPECT_NO_THROW(m_database->mark_card_as_completed(card.id()));
+    EXPECT_NO_THROW(m_database->mark_card_as_approved(card.id()));
+    EXPECT_NO_THROW(cards = m_database->get_section_cards(resource.id(), section.position()));
+    EXPECT_THAT(cards, SizeIs(1));
+    ASSERT_NO_THROW(cards.at(0).id());
+    EXPECT_THAT(cards.at(0).id(), card.id());
+    EXPECT_THAT(cards.at(0).state(), flashback::Card::approved);
 }
 
 TEST_F(test_database, mark_card_as_released)
 {
+    flashback::Resource resource{};
+    flashback::Section section{};
+    flashback::Card card{};
+    std::vector<flashback::Card> cards{};
+    resource.set_name("C++ Resource");
+    resource.set_type(flashback::Resource::book);
+    resource.set_pattern(flashback::Resource::chapter);
+    resource.set_link("https://flashback.eu.com");
+    resource.set_production(std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count());
+    resource.set_expiration(std::chrono::duration_cast<std::chrono::seconds>((std::chrono::system_clock::now() + std::chrono::years(3)).time_since_epoch()).count());
+    section.set_name("Class");
+    card.set_headline("Some random headline");
+
+    ASSERT_NO_THROW(resource = m_database->create_resource(resource));
+    ASSERT_THAT(resource.id(), Gt(0));
+    ASSERT_NO_THROW(section = m_database->create_section(resource.id(), 0, section.name(), section.link()));
+    ASSERT_THAT(section.position(), Eq(1));
+    ASSERT_NO_THROW(card = m_database->create_card(card));
+    ASSERT_THAT(card.id(), Gt(0));
+    ASSERT_NO_THROW(m_database->add_card_to_section(card.id(), resource.id(), section.position()));
+    ASSERT_NO_THROW(cards = m_database->get_section_cards(resource.id(), section.position()));
+    ASSERT_THAT(cards, SizeIs(1));
+    ASSERT_NO_THROW(cards.at(0).id());
+    ASSERT_THAT(cards.at(0).id(), card.id());
+    ASSERT_THAT(cards.at(0).state(), flashback::Card::draft);
+    EXPECT_NO_THROW(m_database->mark_card_as_released(card.id()));
+    EXPECT_NO_THROW(cards = m_database->get_section_cards(resource.id(), section.position()));
+    EXPECT_THAT(cards, SizeIs(1));
+    ASSERT_NO_THROW(cards.at(0).id());
+    EXPECT_THAT(cards.at(0).id(), card.id());
+    EXPECT_THAT(cards.at(0).state(), flashback::Card::draft);
+    EXPECT_NO_THROW(m_database->mark_card_as_reviewed(card.id()));
+    EXPECT_NO_THROW(m_database->mark_card_as_released(card.id()));
+    EXPECT_NO_THROW(cards = m_database->get_section_cards(resource.id(), section.position()));
+    EXPECT_THAT(cards, SizeIs(1));
+    ASSERT_NO_THROW(cards.at(0).id());
+    EXPECT_THAT(cards.at(0).id(), card.id());
+    EXPECT_THAT(cards.at(0).state(), flashback::Card::reviewed);
+    EXPECT_NO_THROW(m_database->mark_card_as_completed(card.id()));
+    EXPECT_NO_THROW(m_database->mark_card_as_released(card.id()));
+    EXPECT_NO_THROW(cards = m_database->get_section_cards(resource.id(), section.position()));
+    EXPECT_THAT(cards, SizeIs(1));
+    ASSERT_NO_THROW(cards.at(0).id());
+    EXPECT_THAT(cards.at(0).id(), card.id());
+    EXPECT_THAT(cards.at(0).state(), flashback::Card::completed);
+    EXPECT_NO_THROW(m_database->mark_card_as_approved(card.id()));
+    EXPECT_NO_THROW(m_database->mark_card_as_released(card.id()));
+    EXPECT_NO_THROW(cards = m_database->get_section_cards(resource.id(), section.position()));
+    EXPECT_THAT(cards, SizeIs(1));
+    ASSERT_NO_THROW(cards.at(0).id());
+    EXPECT_THAT(cards.at(0).id(), card.id());
+    EXPECT_THAT(cards.at(0).state(), flashback::Card::released);
 }
 
 TEST_F(test_database, get_progress_weight)

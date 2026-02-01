@@ -1167,17 +1167,14 @@ std::map<uint64_t, Resource> database::get_study_resources(uint64_t const user_i
     return resources;
 }
 
-std::map<uint64_t, Card> database::get_study_cards(uint64_t const user_id, uint64_t const resource_id, uint64_t const section_position) const
-{
-    return {};
-}
-
 void database::mark_card_as_reviewed(uint64_t const card_id) const
 {
+    exec("call mark_card_as_reviewed($1)", card_id);
 }
 
 void database::mark_card_as_completed(uint64_t const card_id) const
 {
+    exec("call mark_card_as_completed($1)", card_id);
 }
 
 void database::mark_section_as_reviewed(uint64_t const resource_id, uint64_t const section_position) const
@@ -1192,10 +1189,12 @@ void database::mark_section_as_completed(uint64_t const resource_id, uint64_t co
 
 void database::mark_card_as_approved(uint64_t const card_id) const
 {
+    exec("call mark_card_as_approved($1)", card_id);
 }
 
 void database::mark_card_as_released(uint64_t const card_id) const
 {
+    exec("call mark_card_as_released($1)", card_id);
 }
 
 void database::make_progress(uint64_t const user_id, uint64_t const card_id, uint64_t const duration, practice_mode const mode) const

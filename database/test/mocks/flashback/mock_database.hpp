@@ -137,7 +137,6 @@ public:
     MOCK_METHOD(std::vector<Card>, get_practice_cards, (uint64_t, uint64_t, uint64_t, expertise_level, uint64_t), (const, override));
     MOCK_METHOD(void, study, (uint64_t, uint64_t, std::chrono::seconds), (const, override));
     MOCK_METHOD((std::map<uint64_t, Resource>), get_study_resources, (uint64_t), (const, override));
-    MOCK_METHOD((std::map<uint64_t, Card>), get_study_cards, (uint64_t, uint64_t, uint64_t), (const, override));
     MOCK_METHOD(void, mark_card_as_reviewed, (uint64_t), (const, override));
     MOCK_METHOD(void, mark_card_as_completed, (uint64_t), (const, override));
     MOCK_METHOD(void, mark_section_as_reviewed, (uint64_t, uint64_t), (const, override));

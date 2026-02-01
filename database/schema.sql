@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict BT6dKr3MkGTdthd9p2d62HTIhYCACOgnIf3CTFGdlXRhjJJ8peSoMif9brab4Ai
+\restrict CoVc4yZ0m34mvjCtUldflh8c5waYqRXM3fyPku7UgdX2fT3cd8jhOw9legjTifv
 
 -- Dumped from database version 18.1
 -- Dumped by pg_dump version 18.0
@@ -1748,6 +1748,82 @@ $$;
 
 
 ALTER PROCEDURE flashback.make_progress(IN user_id integer, IN card_id integer, IN time_duration integer, IN mode flashback.practice_mode) OWNER TO flashback;
+
+--
+-- Name: mark_card_as_approved(integer); Type: PROCEDURE; Schema: flashback; Owner: flashback
+--
+
+CREATE PROCEDURE flashback.mark_card_as_approved(IN card_id integer)
+    LANGUAGE plpgsql
+    AS $$
+declare current_state card_state;
+begin
+    select state into current_state from cards where id = card_id;
+
+    if current_state = 'completed'::card_state then
+        update cards set state = 'approved'::card_state where id = card_id;
+    end if;
+end; $$;
+
+
+ALTER PROCEDURE flashback.mark_card_as_approved(IN card_id integer) OWNER TO flashback;
+
+--
+-- Name: mark_card_as_completed(integer); Type: PROCEDURE; Schema: flashback; Owner: flashback
+--
+
+CREATE PROCEDURE flashback.mark_card_as_completed(IN card_id integer)
+    LANGUAGE plpgsql
+    AS $$
+declare current_state card_state;
+begin
+    select state into current_state from cards where id = card_id;
+
+    if current_state = 'reviewed'::card_state then
+        update cards set state = 'completed'::card_state where id = card_id;
+    end if;
+end; $$;
+
+
+ALTER PROCEDURE flashback.mark_card_as_completed(IN card_id integer) OWNER TO flashback;
+
+--
+-- Name: mark_card_as_released(integer); Type: PROCEDURE; Schema: flashback; Owner: flashback
+--
+
+CREATE PROCEDURE flashback.mark_card_as_released(IN card_id integer)
+    LANGUAGE plpgsql
+    AS $$
+declare current_state card_state;
+begin
+    select state into current_state from cards where id = card_id;
+
+    if current_state = 'approved'::card_state then
+        update cards set state = 'released'::card_state where id = card_id;
+    end if;
+end; $$;
+
+
+ALTER PROCEDURE flashback.mark_card_as_released(IN card_id integer) OWNER TO flashback;
+
+--
+-- Name: mark_card_as_reviewed(integer); Type: PROCEDURE; Schema: flashback; Owner: flashback
+--
+
+CREATE PROCEDURE flashback.mark_card_as_reviewed(IN card_id integer)
+    LANGUAGE plpgsql
+    AS $$
+declare current_state card_state;
+begin
+    select state into current_state from cards where id = card_id;
+
+    if current_state = 'draft'::card_state or current_state = 'completed'::card_state then
+        update cards set state = 'reviewed'::card_state where id = card_id;
+    end if;
+end; $$;
+
+
+ALTER PROCEDURE flashback.mark_card_as_reviewed(IN card_id integer) OWNER TO flashback;
 
 --
 -- Name: mark_section_as_completed(integer, integer); Type: PROCEDURE; Schema: flashback; Owner: flashback
@@ -4412,5 +4488,5 @@ GRANT ALL ON SCHEMA public TO flashback_client;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict BT6dKr3MkGTdthd9p2d62HTIhYCACOgnIf3CTFGdlXRhjJJ8peSoMif9brab4Ai
+\unrestrict CoVc4yZ0m34mvjCtUldflh8c5waYqRXM3fyPku7UgdX2fT3cd8jhOw9legjTifv
 
