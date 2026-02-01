@@ -5354,11 +5354,122 @@ TEST_F(test_database, get_practice_cards)
     EXPECT_THAT(cards, IsEmpty()) << "Cards from levels above the level of milestone should never appear";
 }
 
-TEST_F(test_database, get_study_resources)
+TEST_F(test_database, mark_section_as_reviewed)
 {
+    flashback::Resource resource{};
+    flashback::Section first_section{};
+    flashback::Section second_section{};
+    flashback::Section third_section{};
+    resource.set_name("C++ Resource");
+    resource.set_type(flashback::Resource::book);
+    resource.set_pattern(flashback::Resource::chapter);
+    resource.set_link("https://flashback.eu.com");
+    resource.set_production(std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count());
+    resource.set_expiration(std::chrono::duration_cast<std::chrono::seconds>((std::chrono::system_clock::now() + std::chrono::years(3)).time_since_epoch()).count());
+    first_section.set_name("Class");
+    second_section.set_name("Struct");
+    third_section.set_name("Lambda");
+
+    ASSERT_NO_THROW(resource = m_database->create_resource(resource));
+    ASSERT_THAT(resource.id(), Gt(0));
+    ASSERT_NO_THROW(first_section = m_database->create_section(resource.id(), 0, first_section.name(), first_section.link()));
+    ASSERT_THAT(first_section.position(), Eq(1));
+    ASSERT_NO_THROW(second_section = m_database->create_section(resource.id(), 0, second_section.name(), second_section.link()));
+    ASSERT_THAT(second_section.position(), Eq(2));
+    ASSERT_NO_THROW(third_section = m_database->create_section(resource.id(), 0, third_section.name(), third_section.link()));
+    ASSERT_THAT(third_section.position(), Eq(3));
+    EXPECT_NO_THROW(m_database->mark_section_as_reviewed(resource.id(), first_section.position()));
+    EXPECT_NO_THROW(m_database->mark_section_as_reviewed(resource.id(), second_section.position()));
+    EXPECT_NO_THROW(m_database->mark_section_as_reviewed(resource.id(), third_section.position()));
 }
 
-TEST_F(test_database, get_study_sections)
+TEST_F(test_database, mark_section_as_completed)
+{
+    flashback::Resource resource{};
+    flashback::Section first_section{};
+    flashback::Section second_section{};
+    flashback::Section third_section{};
+    resource.set_name("C++ Resource");
+    resource.set_type(flashback::Resource::book);
+    resource.set_pattern(flashback::Resource::chapter);
+    resource.set_link("https://flashback.eu.com");
+    resource.set_production(std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count());
+    resource.set_expiration(std::chrono::duration_cast<std::chrono::seconds>((std::chrono::system_clock::now() + std::chrono::years(3)).time_since_epoch()).count());
+    first_section.set_name("Class");
+    second_section.set_name("Struct");
+    third_section.set_name("Lambda");
+
+    ASSERT_NO_THROW(resource = m_database->create_resource(resource));
+    ASSERT_THAT(resource.id(), Gt(0));
+    ASSERT_NO_THROW(first_section = m_database->create_section(resource.id(), 0, first_section.name(), first_section.link()));
+    ASSERT_THAT(first_section.position(), Eq(1));
+    ASSERT_NO_THROW(second_section = m_database->create_section(resource.id(), 0, second_section.name(), second_section.link()));
+    ASSERT_THAT(second_section.position(), Eq(2));
+    ASSERT_NO_THROW(third_section = m_database->create_section(resource.id(), 0, third_section.name(), third_section.link()));
+    ASSERT_THAT(third_section.position(), Eq(3));
+    EXPECT_NO_THROW(m_database->mark_section_as_completed(resource.id(), first_section.position()));
+    EXPECT_NO_THROW(m_database->mark_section_as_completed(resource.id(), second_section.position()));
+    EXPECT_NO_THROW(m_database->mark_section_as_completed(resource.id(), third_section.position()));
+}
+
+TEST_F(test_database, get_resource_state)
+{
+    flashback::closure_state state{};
+    flashback::Resource resource{};
+    flashback::Section first_section{};
+    flashback::Section second_section{};
+    flashback::Section third_section{};
+    resource.set_name("C++ Resource");
+    resource.set_type(flashback::Resource::book);
+    resource.set_pattern(flashback::Resource::chapter);
+    resource.set_link("https://flashback.eu.com");
+    resource.set_production(std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count());
+    resource.set_expiration(std::chrono::duration_cast<std::chrono::seconds>((std::chrono::system_clock::now() + std::chrono::years(3)).time_since_epoch()).count());
+    first_section.set_name("Class");
+    second_section.set_name("Struct");
+    third_section.set_name("Lambda");
+
+    ASSERT_NO_THROW(resource = m_database->create_resource(resource));
+    ASSERT_THAT(resource.id(), Gt(0));
+    EXPECT_NO_THROW(state = m_database->get_resource_state(resource.id()));
+    EXPECT_THAT(state, Eq(flashback::closure_state::draft));
+    ASSERT_NO_THROW(first_section = m_database->create_section(resource.id(), 0, first_section.name(), first_section.link()));
+    ASSERT_THAT(first_section.position(), Eq(1));
+    EXPECT_NO_THROW(state = m_database->get_resource_state(resource.id()));
+    EXPECT_THAT(state, Eq(flashback::closure_state::draft));
+    EXPECT_NO_THROW(m_database->mark_section_as_reviewed(resource.id(), first_section.position()));
+    EXPECT_NO_THROW(state = m_database->get_resource_state(resource.id()));
+    EXPECT_THAT(state, Eq(flashback::closure_state::reviewed));
+    EXPECT_NO_THROW(m_database->mark_section_as_completed(resource.id(), first_section.position()));
+    EXPECT_NO_THROW(state = m_database->get_resource_state(resource.id()));
+    EXPECT_THAT(state, Eq(flashback::closure_state::completed));
+}
+
+TEST_F(test_database, study)
+{
+    flashback::Resource resource{};
+    flashback::Section section{};
+    flashback::Card card{};
+    resource.set_name("C++ Resource");
+    resource.set_type(flashback::Resource::book);
+    resource.set_pattern(flashback::Resource::chapter);
+    resource.set_link("https://flashback.eu.com");
+    resource.set_production(std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count());
+    resource.set_expiration(std::chrono::duration_cast<std::chrono::seconds>((std::chrono::system_clock::now() + std::chrono::years(3)).time_since_epoch()).count());
+    section.set_name("Class");
+    card.set_headline("Is this a study?");
+
+    ASSERT_NO_THROW(resource = m_database->create_resource(resource));
+    ASSERT_THAT(resource.id(), Gt(0));
+    ASSERT_NO_THROW(section = m_database->create_section(resource.id(), 0, section.name(), section.link()));
+    ASSERT_THAT(section.position(), Eq(1));
+    ASSERT_NO_THROW(card = m_database->create_card(card));
+    ASSERT_THAT(card.id(), Gt(0));
+    ASSERT_NO_THROW(m_database->add_card_to_section(card.id(), resource.id(), section.position()));
+    EXPECT_NO_THROW(m_database->study(m_user->id(), card.id(), std::chrono::seconds{20}));
+}
+
+TEST_F(test_database, get_study_resources)
 {
 }
 
@@ -5374,27 +5485,11 @@ TEST_F(test_database, mark_card_as_completed)
 {
 }
 
-TEST_F(test_database, mark_section_as_reviewed)
-{
-}
-
-TEST_F(test_database, mark_section_as_completed)
-{
-}
-
 TEST_F(test_database, mark_card_as_approved)
 {
 }
 
 TEST_F(test_database, mark_card_as_released)
-{
-}
-
-TEST_F(test_database, get_section_state)
-{
-}
-
-TEST_F(test_database, get_resource_state)
 {
 }
 

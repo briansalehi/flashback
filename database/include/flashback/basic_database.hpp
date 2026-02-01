@@ -143,12 +143,15 @@ public:
     virtual void move_block(uint64_t card_id, uint64_t block_position, uint64_t target_card_id, uint64_t target_position) const = 0;
 
     // progress
+    virtual void make_progress(uint64_t user_id, uint64_t card_id, uint64_t duration, practice_mode mode) const = 0;
     [[nodiscard]] virtual expertise_level get_user_cognitive_level(uint64_t user_id, uint64_t roadmap_id, uint64_t subject_id) const = 0;
-    virtual practice_mode get_practice_mode(uint64_t user_id, uint64_t subject_id, expertise_level level) const = 0;
-    virtual std::vector<Topic> get_practice_topics(uint64_t user_id, uint64_t roadmap_id, uint64_t subject_id) const = 0;
-    virtual std::vector<Card> get_practice_cards(uint64_t user_id, uint64_t roadmap_id, uint64_t subject_id, expertise_level level, uint64_t topic_position) const = 0;
-    virtual std::vector<Resource> get_study_resources(uint64_t user_id) const = 0;
-    virtual std::map<uint64_t, Section> get_study_sections(uint64_t user_id, uint64_t resource_id) const = 0;
+    [[nodiscard]] virtual practice_mode get_practice_mode(uint64_t user_id, uint64_t subject_id, expertise_level level) const = 0;
+    [[nodiscard]] virtual std::vector<Topic> get_practice_topics(uint64_t user_id, uint64_t roadmap_id, uint64_t subject_id) const = 0;
+    [[nodiscard]] virtual std::vector<Card> get_practice_cards(uint64_t user_id, uint64_t roadmap_id, uint64_t subject_id, expertise_level level, uint64_t topic_position) const =
+    0;
+    [[nodiscard]] virtual closure_state get_resource_state(uint64_t resource_id) const = 0;
+    virtual void study(uint64_t user_id, uint64_t card_id, std::chrono::seconds duration) const = 0;
+    [[nodiscard]] virtual std::map<uint64_t, Resource> get_study_resources(uint64_t user_id, uint64_t roadmap_id) const = 0;
     virtual std::map<uint64_t, Card> get_study_cards(uint64_t user_id, uint64_t resource_id, uint64_t section_position) const = 0;
     virtual void mark_card_as_reviewed(uint64_t card_id) const = 0;
     virtual void mark_card_as_completed(uint64_t card_id) const = 0;
@@ -156,9 +159,6 @@ public:
     virtual void mark_section_as_completed(uint64_t resource_id, uint64_t section_position) const = 0;
     virtual void mark_card_as_approved(uint64_t card_id) const = 0;
     virtual void mark_card_as_released(uint64_t card_id) const = 0;
-    virtual void make_progress(uint64_t user_id, uint64_t card_id, uint64_t duration, practice_mode mode) const = 0;
-    virtual closure_state get_section_state(uint64_t resource_id, uint64_t section_position) const = 0;
-    virtual closure_state get_resource_state(uint64_t resource_id) const = 0;
     virtual Weight get_progress_weight(uint64_t user_id) const = 0;
     virtual std::vector<Card> get_variations(uint64_t card_id) const = 0;
     virtual bool is_absolute(uint64_t card_id) const = 0;

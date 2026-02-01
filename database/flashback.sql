@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict GIacIrou1vP78LfaHC0ayWjsavh40fEWe7g4n183FSMR9NghQMPlcslnlumMTak
+\restrict BsqpAk2fC1yYAQbPtfNH6YQFtEVKJhcSjHQVZLGuwPP4Bdg7HRrYd1rVIkq2mac
 
 -- Dumped from database version 18.1
 -- Dumped by pg_dump version 18.0
@@ -1301,6 +1301,22 @@ end; $$;
 ALTER FUNCTION flashback.get_requirements(roadmap_id integer, subject_id integer, subject_level flashback.expertise_level) OWNER TO flashback;
 
 --
+-- Name: get_resource_state(integer); Type: FUNCTION; Schema: flashback; Owner: flashback
+--
+
+CREATE FUNCTION flashback.get_resource_state(resource_id integer) RETURNS flashback.closure_state
+    LANGUAGE plpgsql
+    AS $$
+declare resource_state closure_state;
+begin
+    select min(state) into resource_state from sections where resource = resource_id group by state;
+    return coalesce(resource_state, 'draft'::closure_state);
+end; $$;
+
+
+ALTER FUNCTION flashback.get_resource_state(resource_id integer) OWNER TO flashback;
+
+--
 -- Name: get_resources(integer); Type: FUNCTION; Schema: flashback; Owner: flashback
 --
 
@@ -1366,7 +1382,32 @@ ALTER FUNCTION flashback.get_sections(resource_id integer) OWNER TO flashback;
 -- Name: get_study_resources(integer); Type: FUNCTION; Schema: flashback; Owner: flashback
 --
 
-CREATE FUNCTION flashback.get_study_resources(roadmap_id integer) RETURNS TABLE(id integer, name flashback.citext, type flashback.resource_type, pattern flashback.section_pattern, link character varying, production integer, expiration integer)
+CREATE FUNCTION flashback.get_study_resources(user_id integer) RETURNS TABLE("position" bigint, id integer, name flashback.citext, type flashback.resource_type, pattern flashback.section_pattern, link character varying, production integer, expiration integer)
+    LANGUAGE plpgsql
+    AS $$
+begin
+    return query
+    select row_number() over (order by max(i.last_study)), r.id, r.name, r.type, r.pattern, r.link, r.production, r.expiration
+    from roadmaps a
+    join milestones m on m.roadmap = a.id
+    join shelves h on h.subject = m.subject
+    join resources r on r.id = h.resource
+    join sections s on s.resource = r.id and s.state < 'completed'
+    join section_cards c on c.resource = r.id and c.section = s.position
+    join studies i on i.card = c.card
+    where a."user" = user_id
+    group by r.id, r.name, r.type, r.pattern, r.link, r.production, r.expiration
+    order by r.id;
+end; $$;
+
+
+ALTER FUNCTION flashback.get_study_resources(user_id integer) OWNER TO flashback;
+
+--
+-- Name: get_study_resources(integer, integer); Type: FUNCTION; Schema: flashback; Owner: flashback
+--
+
+CREATE FUNCTION flashback.get_study_resources(user_id integer, roadmap_id integer) RETURNS TABLE(id integer, name flashback.citext, type flashback.resource_type, pattern flashback.section_pattern, link character varying, production integer, expiration integer)
     LANGUAGE plpgsql
     AS $$
 begin
@@ -1381,7 +1422,56 @@ begin
 end; $$;
 
 
-ALTER FUNCTION flashback.get_study_resources(roadmap_id integer) OWNER TO flashback;
+ALTER FUNCTION flashback.get_study_resources(user_id integer, roadmap_id integer) OWNER TO flashback;
+
+--
+-- Name: get_study_resources_variation_call(integer); Type: FUNCTION; Schema: flashback; Owner: flashback
+--
+
+CREATE FUNCTION flashback.get_study_resources_variation_call(user_id integer) RETURNS TABLE("position" bigint, id integer, name flashback.citext, type flashback.resource_type, pattern flashback.section_pattern, link character varying, production integer, expiration integer)
+    LANGUAGE plpgsql
+    AS $$
+begin
+    return query
+    select row_number() over (order by max(i.last_study)), r.id, r.name, r.type, r.pattern, r.link, r.production, r.expiration
+    from roadmaps a
+    join milestones m on m.roadmap = a.id
+    join shelves h on h.subject = m.subject
+    join resources r on r.id = h.resource and get_resource_state(r.id) < 'completed'
+    join section_cards c on c.resource = r.id
+    join studies i on i.card = c.card
+    where a."user" = user_id
+    group by r.id, r.name, r.type, r.pattern, r.link, r.production, r.expiration
+    order by r.id;
+end; $$;
+
+
+ALTER FUNCTION flashback.get_study_resources_variation_call(user_id integer) OWNER TO flashback;
+
+--
+-- Name: get_study_resources_variation_join(integer); Type: FUNCTION; Schema: flashback; Owner: flashback
+--
+
+CREATE FUNCTION flashback.get_study_resources_variation_join(user_id integer) RETURNS TABLE("position" bigint, id integer, name flashback.citext, type flashback.resource_type, pattern flashback.section_pattern, link character varying, production integer, expiration integer)
+    LANGUAGE plpgsql
+    AS $$
+begin
+    return query
+    select row_number() over (order by max(i.last_study)), r.id, r.name, r.type, r.pattern, r.link, r.production, r.expiration
+    from roadmaps a
+    join milestones m on m.roadmap = a.id
+    join shelves h on h.subject = m.subject
+    join resources r on r.id = h.resource
+    join sections s on s.resource = r.id and s.state < 'completed'
+    join section_cards c on c.resource = r.id and c.section = s.position
+    join studies i on i.card = c.card
+    where a."user" = user_id
+    group by r.id, r.name, r.type, r.pattern, r.link, r.production, r.expiration
+    order by r.id;
+end; $$;
+
+
+ALTER FUNCTION flashback.get_study_resources_variation_join(user_id integer) OWNER TO flashback;
 
 --
 -- Name: get_subject_resources(character varying); Type: FUNCTION; Schema: flashback; Owner: flashback
@@ -1672,6 +1762,34 @@ $$;
 
 
 ALTER PROCEDURE flashback.make_progress(IN user_id integer, IN card_id integer, IN time_duration integer, IN mode flashback.practice_mode) OWNER TO flashback;
+
+--
+-- Name: mark_section_as_completed(integer, integer); Type: PROCEDURE; Schema: flashback; Owner: flashback
+--
+
+CREATE PROCEDURE flashback.mark_section_as_completed(IN resource_id integer, IN section_position integer)
+    LANGUAGE plpgsql
+    AS $$
+begin
+    update sections set state = 'completed'::closure_state where resource = resource_id and position = section_position;
+end; $$;
+
+
+ALTER PROCEDURE flashback.mark_section_as_completed(IN resource_id integer, IN section_position integer) OWNER TO flashback;
+
+--
+-- Name: mark_section_as_reviewed(integer, integer); Type: PROCEDURE; Schema: flashback; Owner: flashback
+--
+
+CREATE PROCEDURE flashback.mark_section_as_reviewed(IN resource_id integer, IN section_position integer)
+    LANGUAGE plpgsql
+    AS $$
+begin
+    update sections set state = 'reviewed'::closure_state where resource = resource_id and position = section_position;
+end; $$;
+
+
+ALTER PROCEDURE flashback.mark_section_as_reviewed(IN resource_id integer, IN section_position integer) OWNER TO flashback;
 
 --
 -- Name: merge_blocks(integer); Type: PROCEDURE; Schema: flashback; Owner: flashback
@@ -2749,6 +2867,27 @@ end; $$;
 ALTER FUNCTION flashback.split_block(card_id integer, block_position integer) OWNER TO flashback;
 
 --
+-- Name: study(integer, integer, integer); Type: PROCEDURE; Schema: flashback; Owner: flashback
+--
+
+CREATE PROCEDURE flashback.study(IN user_id integer, IN card_id integer, IN time_duration integer)
+    LANGUAGE plpgsql
+    AS $$
+begin
+    insert into studies ("user", card, duration)
+    values (user_id, card_id, time_duration)
+    on conflict on constraint studies_pkey
+    do update set
+        duration = time_duration,
+        last_practice = now()
+    where studies."user" = user_id and studies.card = card_id;
+end;
+$$;
+
+
+ALTER PROCEDURE flashback.study(IN user_id integer, IN card_id integer, IN time_duration integer) OWNER TO flashback;
+
+--
 -- Name: throw_back_progress(integer, integer, integer); Type: PROCEDURE; Schema: flashback; Owner: flashback
 --
 
@@ -3354,6 +3493,20 @@ ALTER TABLE flashback.shelves_activities ALTER COLUMN id ADD GENERATED ALWAYS AS
     CACHE 1
 );
 
+
+--
+-- Name: studies; Type: TABLE; Schema: flashback; Owner: flashback
+--
+
+CREATE TABLE flashback.studies (
+    "user" integer NOT NULL,
+    card integer NOT NULL,
+    last_study timestamp with time zone DEFAULT now() NOT NULL,
+    duration integer NOT NULL
+);
+
+
+ALTER TABLE flashback.studies OWNER TO flashback;
 
 --
 -- Name: subjects; Type: TABLE; Schema: flashback; Owner: flashback
@@ -28428,6 +28581,14 @@ COPY flashback.shelves_activities (id, "user", resource, subject, action, "time"
 
 
 --
+-- Data for Name: studies; Type: TABLE DATA; Schema: flashback; Owner: flashback
+--
+
+COPY flashback.studies ("user", card, last_study, duration) FROM stdin;
+\.
+
+
+--
 -- Data for Name: subjects; Type: TABLE DATA; Schema: flashback; Owner: flashback
 --
 
@@ -31825,6 +31986,14 @@ ALTER TABLE ONLY flashback.shelves
 
 
 --
+-- Name: studies studies_pkey; Type: CONSTRAINT; Schema: flashback; Owner: flashback
+--
+
+ALTER TABLE ONLY flashback.studies
+    ADD CONSTRAINT studies_pkey PRIMARY KEY ("user", card);
+
+
+--
 -- Name: subjects_activities subjects_activities_pkey; Type: CONSTRAINT; Schema: flashback; Owner: flashback
 --
 
@@ -32281,6 +32450,22 @@ ALTER TABLE ONLY flashback.shelves
 
 
 --
+-- Name: studies studies_card_fkey; Type: FK CONSTRAINT; Schema: flashback; Owner: flashback
+--
+
+ALTER TABLE ONLY flashback.studies
+    ADD CONSTRAINT studies_card_fkey FOREIGN KEY (card) REFERENCES flashback.cards(id) ON UPDATE CASCADE ON DELETE CASCADE;
+
+
+--
+-- Name: studies studies_user_fkey; Type: FK CONSTRAINT; Schema: flashback; Owner: flashback
+--
+
+ALTER TABLE ONLY flashback.studies
+    ADD CONSTRAINT studies_user_fkey FOREIGN KEY ("user") REFERENCES flashback.users(id) ON UPDATE CASCADE ON DELETE CASCADE;
+
+
+--
 -- Name: subjects_activities subjects_activities_subject_fkey; Type: FK CONSTRAINT; Schema: flashback; Owner: flashback
 --
 
@@ -32340,5 +32525,5 @@ GRANT ALL ON SCHEMA public TO flashback_client;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict GIacIrou1vP78LfaHC0ayWjsavh40fEWe7g4n183FSMR9NghQMPlcslnlumMTak
+\unrestrict BsqpAk2fC1yYAQbPtfNH6YQFtEVKJhcSjHQVZLGuwPP4Bdg7HRrYd1rVIkq2mac
 

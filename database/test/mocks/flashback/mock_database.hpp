@@ -130,12 +130,13 @@ public:
     MOCK_METHOD(void, move_block, (uint64_t, uint64_t, uint64_t, uint64_t), (const, override));
 
     // practices
+    MOCK_METHOD(void, make_progress, (uint64_t, uint64_t, uint64_t, practice_mode), (const, override));
     MOCK_METHOD(expertise_level, get_user_cognitive_level, (uint64_t, uint64_t, uint64_t), (const, override));
     MOCK_METHOD(practice_mode, get_practice_mode, (uint64_t, uint64_t, expertise_level), (const, override));
     MOCK_METHOD((std::vector<Topic>), get_practice_topics, (uint64_t, uint64_t, uint64_t), (const, override));
     MOCK_METHOD(std::vector<Card>, get_practice_cards, (uint64_t, uint64_t, uint64_t, expertise_level, uint64_t), (const, override));
+    MOCK_METHOD(void, study, (uint64_t, uint64_t, std::chrono::seconds), (const, override));
     MOCK_METHOD(std::vector<Resource>, get_study_resources, (uint64_t), (const, override));
-    MOCK_METHOD((std::map<uint64_t, Section>), get_study_sections, (uint64_t, uint64_t), (const, override));
     MOCK_METHOD((std::map<uint64_t, Card>), get_study_cards, (uint64_t, uint64_t, uint64_t), (const, override));
     MOCK_METHOD(void, mark_card_as_reviewed, (uint64_t), (const, override));
     MOCK_METHOD(void, mark_card_as_completed, (uint64_t), (const, override));
@@ -143,8 +144,6 @@ public:
     MOCK_METHOD(void, mark_section_as_completed, (uint64_t, uint64_t), (const, override));
     MOCK_METHOD(void, mark_card_as_approved, (uint64_t), (const, override));
     MOCK_METHOD(void, mark_card_as_released, (uint64_t), (const, override));
-    MOCK_METHOD(void, make_progress, (uint64_t, uint64_t, uint64_t, practice_mode), (const, override));
-    MOCK_METHOD(closure_state, get_section_state, (uint64_t, uint64_t), (const, override));
     MOCK_METHOD(closure_state, get_resource_state, (uint64_t), (const, override));
     MOCK_METHOD(Weight, get_progress_weight, (uint64_t), (const, override));
     MOCK_METHOD(std::vector<Card>, get_variations, (uint64_t), (const, override));

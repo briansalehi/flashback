@@ -1135,10 +1135,13 @@ std::vector<Topic> database::get_practice_topics(uint64_t const user_id, uint64_
     return topics;
 }
 
-std::vector<Card> database::get_practice_cards(uint64_t const user_id, uint64_t const roadmap_id, uint64_t const subject_id, expertise_level const level, uint64_t const topic_position) const
+std::vector<Card> database::get_practice_cards(uint64_t const user_id, uint64_t const roadmap_id, uint64_t const subject_id, expertise_level const level,
+                                               uint64_t const topic_position) const
 {
     std::vector<Card> cards{};
-    for (pqxx::result const result{query("select id, state, headline from get_practice_cards($1, $2, $3, $4, $5)", user_id, roadmap_id, subject_id, level_to_string(level), topic_position)}; pqxx::row const& row: result)
+    for (pqxx::result const result{
+             query("select id, state, headline from get_practice_cards($1, $2, $3, $4, $5)", user_id, roadmap_id, subject_id, level_to_string(level), topic_position)
+         }; pqxx::row const& row: result)
     {
         Card card{};
         card.set_id(row.at("id").as<uint64_t>());
@@ -1149,14 +1152,13 @@ std::vector<Card> database::get_practice_cards(uint64_t const user_id, uint64_t 
     return cards;
 }
 
-std::vector<Resource> database::get_study_resources(uint64_t const user_id) const
+std::map<uint64_t, Resource> database::get_study_resources(uint64_t const user_id, uint64_t const resource_id) const
 {
-    return {};
-}
-
-std::map<uint64_t, Section> database::get_study_sections(uint64_t const user_id, uint64_t const resource_id) const
-{
-    return {};
+    std::map<uint64_t, Resource> resources;
+    for (pqxx::row const& row: query("select position "))
+    {
+    }
+    return resources;
 }
 
 std::map<uint64_t, Card> database::get_study_cards(uint64_t const user_id, uint64_t const resource_id, uint64_t const section_position) const
@@ -1174,10 +1176,12 @@ void database::mark_card_as_completed(uint64_t const card_id) const
 
 void database::mark_section_as_reviewed(uint64_t const resource_id, uint64_t const section_position) const
 {
+    exec("call mark_section_as_reviewed($1, $2)", resource_id, section_position);
 }
 
 void database::mark_section_as_completed(uint64_t const resource_id, uint64_t const section_position) const
 {
+    exec("call mark_section_as_completed($1, $2)", resource_id, section_position);
 }
 
 void database::mark_card_as_approved(uint64_t const card_id) const
@@ -1193,14 +1197,14 @@ void database::make_progress(uint64_t const user_id, uint64_t const card_id, uin
     exec("call make_progress($1, $2, $3, $4)", user_id, card_id, duration, practice_mode_to_string(mode));
 }
 
-closure_state database::get_section_state(uint64_t const resource_id, uint64_t const section_position) const
-{
-    return {};
-}
-
 closure_state database::get_resource_state(uint64_t const resource_id) const
 {
-    return {};
+    return to_closure_state(query("select get_resource_state($1) as state", resource_id).at(0).at("state").as<std::string>());
+}
+
+void database::study(uint64_t user_id, uint64_t card_id, std::chrono::seconds duration) const
+{
+    exec("call study($1, $2, $3)", user_id, card_id, duration.count());
 }
 
 Weight database::get_progress_weight(uint64_t const user_id) const
