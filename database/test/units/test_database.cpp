@@ -918,11 +918,11 @@ TEST_F(test_database, get_resources)
     ASSERT_THAT(resource.id(), Ne(secondary_resource.id()));
     ASSERT_NO_THROW(subject = m_database->create_subject(subject.name()));
     ASSERT_THAT(subject.id(), Gt(0));
-    EXPECT_NO_THROW(resources = m_database->get_resources(subject.id() + 1));
+    EXPECT_NO_THROW(resources = m_database->get_resources(m_user->id(), subject.id() + 1));
     EXPECT_THAT(resources, SizeIs(0)) << "Invalid subject should not have resources";
     ASSERT_NO_THROW(m_database->add_resource_to_subject(resource.id(), subject.id()));
     ASSERT_NO_THROW(m_database->add_resource_to_subject(secondary_resource.id(), subject.id()));
-    EXPECT_NO_THROW(resources = m_database->get_resources(subject.id()));
+    EXPECT_NO_THROW(resources = m_database->get_resources(m_user->id(), subject.id()));
     EXPECT_THAT(resources, SizeIs(2));
     ASSERT_NO_THROW(resources.at(0).id());
     EXPECT_THAT(resources.at(0).id(), Eq(resource.id()));
@@ -968,14 +968,14 @@ TEST_F(test_database, drop_resource_from_subject)
     ASSERT_NO_THROW(subject = m_database->create_subject(subject.name()));
     ASSERT_THAT(subject.id(), Gt(0));
     ASSERT_NO_THROW(m_database->add_resource_to_subject(resource.id(), subject.id()));
-    EXPECT_NO_THROW(resources = m_database->get_resources(subject.id()));
+    EXPECT_NO_THROW(resources = m_database->get_resources(m_user->id(), subject.id()));
     EXPECT_THAT(resources, SizeIs(1));
     resources.clear();
     ASSERT_NO_THROW(m_database->add_resource_to_subject(secondary_resource.id(), subject.id()));
-    EXPECT_NO_THROW(resources = m_database->get_resources(subject.id()));
+    EXPECT_NO_THROW(resources = m_database->get_resources(m_user->id(), subject.id()));
     EXPECT_THAT(resources, SizeIs(2));
     EXPECT_NO_THROW(m_database->drop_resource_from_subject(resource.id(), subject.id()));
-    EXPECT_NO_THROW(resources = m_database->get_resources(subject.id()));
+    EXPECT_NO_THROW(resources = m_database->get_resources(m_user->id(), subject.id()));
     EXPECT_THAT(resources, SizeIs(1));
     EXPECT_THAT(resources.at(0).id(), secondary_resource.id());
 }
@@ -1013,7 +1013,7 @@ TEST_F(test_database, search_resources)
         resources.push_back(std::move(resource));
     }
 
-    EXPECT_NO_THROW(resources = m_database->get_resources(subject.id()));
+    EXPECT_NO_THROW(resources = m_database->get_resources(m_user->id(), subject.id()));
     EXPECT_THAT(resources, SizeIs(7));
     EXPECT_NO_THROW(matched_resources = m_database->search_resources(search_pattern));
     EXPECT_THAT(matched_resources, SizeIs(6));
@@ -1046,14 +1046,14 @@ TEST_F(test_database, edit_resource_link)
     ASSERT_NO_THROW(subject = m_database->create_subject(subject.name()));
     ASSERT_THAT(subject.id(), Gt(0));
     ASSERT_NO_THROW(m_database->add_resource_to_subject(resource.id(), subject.id()));
-    ASSERT_NO_THROW(resources = m_database->get_resources(subject.id()));
+    ASSERT_NO_THROW(resources = m_database->get_resources(m_user->id(), subject.id()));
     ASSERT_THAT(resources, SizeIs(1));
     ASSERT_NO_THROW(resources.at(0).id());
     ASSERT_THAT(resources.at(0).id(), Eq(resource.id()));
     EXPECT_THAT(resources.at(0).link(), Eq(resource.link()));
     EXPECT_THAT(resources.at(0).link(), Ne(modified_link));
     EXPECT_NO_THROW(m_database->edit_resource_link(resource.id(), modified_link));
-    ASSERT_NO_THROW(resources = m_database->get_resources(subject.id()));
+    ASSERT_NO_THROW(resources = m_database->get_resources(m_user->id(), subject.id()));
     ASSERT_THAT(resources, SizeIs(1));
     ASSERT_NO_THROW(resources.at(0).id());
     ASSERT_THAT(resources.at(0).id(), Eq(resource.id()));
@@ -1086,14 +1086,14 @@ TEST_F(test_database, change_resource_type)
     ASSERT_NO_THROW(subject = m_database->create_subject(subject.name()));
     ASSERT_THAT(subject.id(), Gt(0));
     ASSERT_NO_THROW(m_database->add_resource_to_subject(resource.id(), subject.id()));
-    ASSERT_NO_THROW(resources = m_database->get_resources(subject.id()));
+    ASSERT_NO_THROW(resources = m_database->get_resources(m_user->id(), subject.id()));
     ASSERT_THAT(resources, SizeIs(1));
     ASSERT_NO_THROW(resources.at(0).id());
     ASSERT_THAT(resources.at(0).id(), Eq(resource.id()));
     EXPECT_THAT(resources.at(0).type(), Eq(resource.type()));
     EXPECT_THAT(resources.at(0).type(), Ne(modified_type));
     EXPECT_NO_THROW(m_database->change_resource_type(resource.id(), modified_type));
-    ASSERT_NO_THROW(resources = m_database->get_resources(subject.id()));
+    ASSERT_NO_THROW(resources = m_database->get_resources(m_user->id(), subject.id()));
     ASSERT_THAT(resources, SizeIs(1));
     ASSERT_NO_THROW(resources.at(0).id());
     ASSERT_THAT(resources.at(0).id(), Eq(resource.id()));
@@ -1126,14 +1126,14 @@ TEST_F(test_database, change_section_pattern)
     ASSERT_NO_THROW(subject = m_database->create_subject(subject.name()));
     ASSERT_THAT(subject.id(), Gt(0));
     ASSERT_NO_THROW(m_database->add_resource_to_subject(resource.id(), subject.id()));
-    ASSERT_NO_THROW(resources = m_database->get_resources(subject.id()));
+    ASSERT_NO_THROW(resources = m_database->get_resources(m_user->id(), subject.id()));
     ASSERT_THAT(resources, SizeIs(1));
     ASSERT_NO_THROW(resources.at(0).id());
     ASSERT_THAT(resources.at(0).id(), Eq(resource.id()));
     EXPECT_THAT(resources.at(0).pattern(), Eq(resource.pattern()));
     EXPECT_THAT(resources.at(0).pattern(), Ne(modified_pattern));
     EXPECT_NO_THROW(m_database->change_section_pattern(resource.id(), modified_pattern));
-    ASSERT_NO_THROW(resources = m_database->get_resources(subject.id()));
+    ASSERT_NO_THROW(resources = m_database->get_resources(m_user->id(), subject.id()));
     ASSERT_THAT(resources, SizeIs(1));
     ASSERT_NO_THROW(resources.at(0).id());
     ASSERT_THAT(resources.at(0).id(), Eq(resource.id()));
@@ -1166,14 +1166,14 @@ TEST_F(test_database, edit_resource_production)
     ASSERT_NO_THROW(subject = m_database->create_subject(subject.name()));
     ASSERT_THAT(subject.id(), Gt(0));
     ASSERT_NO_THROW(m_database->add_resource_to_subject(resource.id(), subject.id()));
-    ASSERT_NO_THROW(resources = m_database->get_resources(subject.id()));
+    ASSERT_NO_THROW(resources = m_database->get_resources(m_user->id(), subject.id()));
     ASSERT_THAT(resources, SizeIs(1));
     ASSERT_NO_THROW(resources.at(0).id());
     ASSERT_THAT(resources.at(0).id(), Eq(resource.id()));
     EXPECT_THAT(resources.at(0).production(), Eq(resource.production()));
     EXPECT_THAT(resources.at(0).production(), Ne(modified_production));
     EXPECT_NO_THROW(m_database->edit_resource_production(resource.id(), modified_production));
-    ASSERT_NO_THROW(resources = m_database->get_resources(subject.id()));
+    ASSERT_NO_THROW(resources = m_database->get_resources(m_user->id(), subject.id()));
     ASSERT_THAT(resources, SizeIs(1));
     ASSERT_NO_THROW(resources.at(0).id());
     ASSERT_THAT(resources.at(0).id(), Eq(resource.id()));
@@ -1206,14 +1206,14 @@ TEST_F(test_database, edit_resource_expiration)
     ASSERT_NO_THROW(subject = m_database->create_subject(subject.name()));
     ASSERT_THAT(subject.id(), Gt(0));
     ASSERT_NO_THROW(m_database->add_resource_to_subject(resource.id(), subject.id()));
-    ASSERT_NO_THROW(resources = m_database->get_resources(subject.id()));
+    ASSERT_NO_THROW(resources = m_database->get_resources(m_user->id(), subject.id()));
     ASSERT_THAT(resources, SizeIs(1));
     ASSERT_NO_THROW(resources.at(0).id());
     ASSERT_THAT(resources.at(0).id(), Eq(resource.id()));
     EXPECT_THAT(resources.at(0).expiration(), Eq(resource.expiration()));
     EXPECT_THAT(resources.at(0).expiration(), Ne(modified_expiration));
     EXPECT_NO_THROW(m_database->edit_resource_expiration(resource.id(), modified_expiration));
-    ASSERT_NO_THROW(resources = m_database->get_resources(subject.id()));
+    ASSERT_NO_THROW(resources = m_database->get_resources(m_user->id(), subject.id()));
     ASSERT_THAT(resources, SizeIs(1));
     ASSERT_NO_THROW(resources.at(0).id());
     ASSERT_THAT(resources.at(0).id(), Eq(resource.id()));
@@ -1246,14 +1246,14 @@ TEST_F(test_database, rename_resource)
     ASSERT_NO_THROW(subject = m_database->create_subject(subject.name()));
     ASSERT_THAT(subject.id(), Gt(0));
     ASSERT_NO_THROW(m_database->add_resource_to_subject(resource.id(), subject.id()));
-    ASSERT_NO_THROW(resources = m_database->get_resources(subject.id()));
+    ASSERT_NO_THROW(resources = m_database->get_resources(m_user->id(), subject.id()));
     ASSERT_THAT(resources, SizeIs(1));
     ASSERT_NO_THROW(resources.at(0).id());
     ASSERT_THAT(resources.at(0).id(), Eq(resource.id()));
     EXPECT_THAT(resources.at(0).name(), Eq(resource.name()));
     EXPECT_THAT(resources.at(0).name(), Ne(modified_name));
     EXPECT_NO_THROW(m_database->rename_resource(resource.id(), modified_name));
-    ASSERT_NO_THROW(resources = m_database->get_resources(subject.id()));
+    ASSERT_NO_THROW(resources = m_database->get_resources(m_user->id(), subject.id()));
     ASSERT_THAT(resources, SizeIs(1));
     ASSERT_NO_THROW(resources.at(0).id());
     ASSERT_THAT(resources.at(0).id(), Eq(resource.id()));
@@ -1295,10 +1295,10 @@ TEST_F(test_database, remove_resource)
     ASSERT_THAT(subject.id(), Gt(0));
     ASSERT_NO_THROW(m_database->add_resource_to_subject(resource.id(), subject.id()));
     ASSERT_NO_THROW(m_database->add_resource_to_subject(secondary_resource.id(), subject.id()));
-    ASSERT_NO_THROW(resources = m_database->get_resources(subject.id()));
+    ASSERT_NO_THROW(resources = m_database->get_resources(m_user->id(), subject.id()));
     ASSERT_THAT(resources, SizeIs(2));
     EXPECT_NO_THROW(m_database->remove_resource(resource.id()));
-    ASSERT_NO_THROW(resources = m_database->get_resources(subject.id()));
+    ASSERT_NO_THROW(resources = m_database->get_resources(m_user->id(), subject.id()));
     ASSERT_THAT(resources, SizeIs(1));
 }
 
@@ -1336,10 +1336,10 @@ TEST_F(test_database, merge_resources)
     ASSERT_THAT(subject.id(), Gt(0));
     ASSERT_NO_THROW(m_database->add_resource_to_subject(resource.id(), subject.id()));
     ASSERT_NO_THROW(m_database->add_resource_to_subject(secondary_resource.id(), subject.id()));
-    ASSERT_NO_THROW(resources = m_database->get_resources(subject.id()));
+    ASSERT_NO_THROW(resources = m_database->get_resources(m_user->id(), subject.id()));
     ASSERT_THAT(resources, SizeIs(2));
     EXPECT_NO_THROW(m_database->merge_resources(resource.id(), secondary_resource.id()));
-    ASSERT_NO_THROW(resources = m_database->get_resources(subject.id()));
+    ASSERT_NO_THROW(resources = m_database->get_resources(m_user->id(), subject.id()));
     ASSERT_THAT(resources, SizeIs(1));
 }
 
@@ -1688,26 +1688,31 @@ TEST_F(test_database, get_nerves)
     std::vector<flashback::Resource> resources{};
     std::string const expected_name{std::format("{}'s Knowledge in {}", m_user->name(), resource.name())};
     auto const expiration{std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch() + std::chrono::years{4})};
-    std::vector<flashback::Resource> nerves{};
 
     ASSERT_NO_THROW(subject = m_database->create_subject(subject.name()));
     ASSERT_THAT(subject.id(), Gt(0));
     EXPECT_NO_THROW(resource = m_database->create_nerve(m_user->id(), resource.name(), subject.id(), expiration.count()));
     EXPECT_THAT(resource.id(), Gt(0));
-    EXPECT_NO_THROW(nerves = m_database->get_nerves(m_user->id()));
-    ASSERT_THAT(nerves, SizeIs(1));
-    ASSERT_NO_THROW(nerves.at(0).id());
-    EXPECT_THAT(nerves.at(0).id(), resource.id());
-    EXPECT_THAT(nerves.at(0).name(), Eq(expected_name));
-    EXPECT_THAT(nerves.at(0).type(), Eq(flashback::Resource::nerve));
-    EXPECT_THAT(nerves.at(0).pattern(), Eq(flashback::Resource::synapse));
-    EXPECT_TRUE(nerves.at(0).link().empty());
-    EXPECT_THAT(nerves.at(0).production(), Gt(0));
-    EXPECT_THAT(nerves.at(0).expiration(), Eq(expiration.count()));
-    EXPECT_NO_THROW(resources = m_database->get_resources(subject.id()));
+    EXPECT_NO_THROW(resources = m_database->get_resources(m_user->id(), subject.id()));
     ASSERT_THAT(resources, SizeIs(1));
     ASSERT_NO_THROW(resources.at(0).id());
-    EXPECT_THAT(resources.at(0).id(), Eq(resource.id()));
+    EXPECT_THAT(resources.at(0).id(), resource.id());
+    EXPECT_THAT(resources.at(0).name(), Eq(expected_name));
+    EXPECT_THAT(resources.at(0).type(), Eq(flashback::Resource::nerve));
+    EXPECT_THAT(resources.at(0).pattern(), Eq(flashback::Resource::synapse));
+    EXPECT_TRUE(resources.at(0).link().empty());
+    EXPECT_THAT(resources.at(0).production(), Gt(0));
+    EXPECT_THAT(resources.at(0).expiration(), Eq(expiration.count()));
+    EXPECT_NO_THROW(resources = m_database->get_nerves(m_user->id()));
+    ASSERT_THAT(resources, SizeIs(1));
+    ASSERT_NO_THROW(resources.at(0).id());
+    EXPECT_THAT(resources.at(0).id(), resource.id());
+    EXPECT_THAT(resources.at(0).name(), Eq(expected_name));
+    EXPECT_THAT(resources.at(0).type(), Eq(flashback::Resource::nerve));
+    EXPECT_THAT(resources.at(0).pattern(), Eq(flashback::Resource::synapse));
+    EXPECT_TRUE(resources.at(0).link().empty());
+    EXPECT_THAT(resources.at(0).production(), Gt(0));
+    EXPECT_THAT(resources.at(0).expiration(), Eq(expiration.count()));
 }
 
 TEST_F(test_database, create_section)
@@ -5471,6 +5476,104 @@ TEST_F(test_database, study)
 
 TEST_F(test_database, get_study_resources)
 {
+    flashback::Roadmap roadmap{};
+    flashback::Subject subject{};
+    flashback::Milestone milestone{};
+    flashback::Topic topic{};
+    flashback::Resource first_resource{};
+    flashback::Resource second_resource{};
+    flashback::Resource third_resource{};
+    flashback::Section first_section{};
+    flashback::Section second_section{};
+    flashback::Section third_section{};
+    flashback::Card first_card{};
+    flashback::Card second_card{};
+    flashback::Card third_card{};
+    flashback::practice_mode mode{};
+    std::vector<flashback::Resource> resources{};
+    std::map<uint64_t, flashback::Resource> studying_resources{};
+
+    roadmap.set_name("C++ Software Engineer");
+    subject.set_name("C++");
+    milestone.set_level(flashback::expertise_level::depth);
+    topic.set_name("Reflection");
+    topic.set_level(flashback::expertise_level::surface);
+    first_resource.set_name("First C++ Resource");
+    first_resource.set_type(flashback::Resource::book);
+    first_resource.set_pattern(flashback::Resource::chapter);
+    second_resource.set_name("Second C++ Resource");
+    second_resource.set_type(flashback::Resource::manual);
+    second_resource.set_pattern(flashback::Resource::page);
+    third_resource.set_name("Personal Knowledge");
+    third_resource.set_type(flashback::Resource::nerve);
+    third_resource.set_pattern(flashback::Resource::synapse);
+    first_section.set_name("First C++ Resource Chapter 1");
+    second_section.set_name("Second C++ Resource Chapter 1");
+    third_section.set_name("Coroutine");
+    first_card.set_headline("First Card");
+    second_card.set_headline("Second Card");
+    third_card.set_headline("Third Card");
+
+    ASSERT_NO_THROW(roadmap = m_database->create_roadmap(m_user->id(), roadmap.name()));
+    ASSERT_THAT(roadmap.id(), Gt(0));
+    ASSERT_NO_THROW(subject = m_database->create_subject(subject.name()));
+    ASSERT_THAT(subject.id(), Gt(0));
+    ASSERT_NO_THROW(milestone = m_database->add_milestone(subject.id(), milestone.level(), roadmap.id()));
+    ASSERT_THAT(milestone.position(), Eq(1));
+    ASSERT_NO_THROW(topic = m_database->create_topic(subject.id(), topic.name(), topic.level(), 0));
+    ASSERT_THAT(topic.position(), Eq(1));
+    ASSERT_NO_THROW(first_resource = m_database->create_resource(first_resource));
+    ASSERT_THAT(first_resource.id(), Gt(0));
+    ASSERT_NO_THROW(second_resource = m_database->create_resource(second_resource));
+    ASSERT_THAT(second_resource.id(), Gt(0));
+    ASSERT_NO_THROW(m_database->add_resource_to_subject(first_resource.id(), subject.id()));
+    ASSERT_NO_THROW(m_database->add_resource_to_subject(second_resource.id(), subject.id()));
+    ASSERT_NO_THROW(third_resource = m_database->create_nerve(m_user->id(), third_resource.name(), subject.id(), 0));
+    ASSERT_THAT(third_resource.id(), Gt(0));
+    ASSERT_NO_THROW(first_section = m_database->create_section(first_resource.id(), 0, first_section.name(), first_section.link()));
+    ASSERT_THAT(first_section.position(), Eq(1));
+    ASSERT_NO_THROW(second_section = m_database->create_section(second_resource.id(), 0, second_section.name(), second_section.link()));
+    ASSERT_THAT(second_section.position(), Eq(1));
+    ASSERT_NO_THROW(third_section = m_database->create_section(third_resource.id(), 0, third_section.name(), third_section.link()));
+    ASSERT_THAT(third_section.position(), Eq(1));
+    ASSERT_NO_THROW(first_card = m_database->create_card(first_card));
+    ASSERT_THAT(first_card.id(), Gt(0));
+    ASSERT_NO_THROW(second_card = m_database->create_card(second_card));
+    ASSERT_THAT(second_card.id(), Gt(0));
+    ASSERT_NO_THROW(third_card = m_database->create_card(third_card));
+    ASSERT_THAT(third_card.id(), Gt(0));
+    ASSERT_NO_THROW(m_database->add_card_to_section(first_card.id(), first_resource.id(), first_section.position()));
+    ASSERT_NO_THROW(m_database->add_card_to_section(second_card.id(), second_resource.id(), second_section.position()));
+    ASSERT_NO_THROW(m_database->add_card_to_section(third_card.id(), third_resource.id(), third_section.position()));
+    ASSERT_NO_THROW(m_database->add_card_to_topic(first_card.id(), subject.id(), topic.position(), topic.level()));
+    ASSERT_NO_THROW(m_database->add_card_to_topic(second_card.id(), subject.id(), topic.position(), topic.level()));
+    ASSERT_NO_THROW(m_database->add_card_to_topic(third_card.id(), subject.id(), topic.position(), topic.level()));
+    ASSERT_NO_THROW(resources = m_database->get_resources(m_user->id(), subject.id()));
+    EXPECT_THAT(resources, SizeIs(3));
+    EXPECT_NO_THROW(studying_resources = m_database->get_study_resources(m_user->id()));
+    EXPECT_THAT(studying_resources, IsEmpty()) << "There should be no resources when none of the resources were studied";
+    ASSERT_NO_THROW(mode = m_database->get_practice_mode(m_user->id(), subject.id(), milestone.level()));
+    ASSERT_NO_THROW(m_database->make_progress(m_user->id(), first_card.id(), 20, mode));
+    EXPECT_NO_THROW(studying_resources = m_database->get_study_resources(m_user->id()));
+    EXPECT_THAT(studying_resources, IsEmpty()) << "There should be no resources when no study was recorded even when cards from existing resources are practiced";
+    ASSERT_NO_THROW(m_database->study(m_user->id(), first_card.id(), std::chrono::seconds{10}));
+    EXPECT_NO_THROW(studying_resources = m_database->get_study_resources(m_user->id()));
+    EXPECT_THAT(studying_resources, SizeIs(1)) << "One card was studied so there should be one resource in the studied resources list";
+    ASSERT_NO_THROW(studying_resources.at(1).id());
+    EXPECT_THAT(studying_resources.at(1).id(), Eq(first_resource.id())) << "First resource was explicitly marked as studied and should be in the studied resources";
+    ASSERT_NO_THROW(m_database->study(m_user->id(), second_card.id(), std::chrono::seconds{10}));
+    EXPECT_NO_THROW(studying_resources = m_database->get_study_resources(m_user->id()));
+    EXPECT_THAT(studying_resources, SizeIs(2));
+    ASSERT_NO_THROW(studying_resources.at(1).id());
+    EXPECT_THAT(studying_resources.at(1).id(), Eq(second_resource.id())) << "Second resource was studied more recently, so it should appear as first studied resource";
+    EXPECT_THAT(studying_resources.at(2).id(), Eq(first_resource.id())) << "First resource was studied before the last, so it should appear as the second studied resource";
+    ASSERT_NO_THROW(m_database->study(m_user->id(), third_card.id(), std::chrono::seconds{10}));
+    EXPECT_NO_THROW(studying_resources = m_database->get_study_resources(m_user->id()));
+    EXPECT_THAT(studying_resources, SizeIs(3)) << "Even if the resource is a nerve that belongs to the user it should appear as a studying resource";
+    ASSERT_NO_THROW(studying_resources.at(1).id());
+    EXPECT_THAT(studying_resources.at(1).id(), Eq(third_resource.id())) << "Third resource was studied more recently, so it should appear as first studied resource";
+    EXPECT_THAT(studying_resources.at(2).id(), Eq(second_resource.id())) << "Second resource was studied before the last, so it should appear as the second studied resource";
+    EXPECT_THAT(studying_resources.at(3).id(), Eq(first_resource.id())) << "First resource was studied first, so it should appear as the last studied resource";
 }
 
 TEST_F(test_database, get_study_cards)

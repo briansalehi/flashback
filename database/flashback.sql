@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict BsqpAk2fC1yYAQbPtfNH6YQFtEVKJhcSjHQVZLGuwPP4Bdg7HRrYd1rVIkq2mac
+\restrict 1UhaL2YfuWy4ipKUg3ePejpyujxzahfgrnndR7bhx9loKKycQAOI3UX8vT2gEI5
 
 -- Dumped from database version 18.1
 -- Dumped by pg_dump version 18.0
@@ -1173,7 +1173,11 @@ CREATE FUNCTION flashback.get_nerves(user_id integer) RETURNS TABLE(id integer, 
     LANGUAGE plpgsql
     AS $$
 begin
-    return query select r.id, r.name, r.type, r.pattern, r.link, r.production, r.expiration from resources r join nerves n on n.resource = r.id where n.user = user_id;
+    return query
+    select r.id, r.name, r.type, r.pattern, r.link, r.production, r.expiration
+    from resources r
+    join nerves n on n.resource = r.id
+    where n."user" = user_id;
 end;
 $$;
 
@@ -1317,19 +1321,23 @@ end; $$;
 ALTER FUNCTION flashback.get_resource_state(resource_id integer) OWNER TO flashback;
 
 --
--- Name: get_resources(integer); Type: FUNCTION; Schema: flashback; Owner: flashback
+-- Name: get_resources(integer, integer); Type: FUNCTION; Schema: flashback; Owner: flashback
 --
 
-CREATE FUNCTION flashback.get_resources(subject_id integer) RETURNS TABLE(id integer, name flashback.citext, type flashback.resource_type, pattern flashback.section_pattern, production integer, expiration integer, link character varying)
+CREATE FUNCTION flashback.get_resources(user_id integer, subject_id integer) RETURNS TABLE(id integer, name flashback.citext, type flashback.resource_type, pattern flashback.section_pattern, production integer, expiration integer, link character varying)
     LANGUAGE plpgsql
     AS $$
 begin
-    return query select r.id, r.name, r.type, r.pattern, r.production, r.expiration, r.link from resources r join shelves s on s.resource = r.id and s.subject = subject_id;
+    return query
+    select r.id, r.name, r.type, r.pattern, r.production, r.expiration, r.link
+    from resources r
+    join shelves s on s.resource = r.id and s.subject = subject_id
+    where (r.type <> 'nerve'::resource_type or r.id in (select n.resource from nerves n where n."user" = user_id));
 end;
 $$;
 
 
-ALTER FUNCTION flashback.get_resources(subject_id integer) OWNER TO flashback;
+ALTER FUNCTION flashback.get_resources(user_id integer, subject_id integer) OWNER TO flashback;
 
 --
 -- Name: get_roadmaps(integer); Type: FUNCTION; Schema: flashback; Owner: flashback
@@ -1387,42 +1395,20 @@ CREATE FUNCTION flashback.get_study_resources(user_id integer) RETURNS TABLE("po
     AS $$
 begin
     return query
-    select row_number() over (order by max(i.last_study)), r.id, r.name, r.type, r.pattern, r.link, r.production, r.expiration
+    select row_number() over (order by max(i.last_study) desc), r.id, r.name, r.type, r.pattern, r.link, r.production, r.expiration
     from roadmaps a
     join milestones m on m.roadmap = a.id
     join shelves h on h.subject = m.subject
-    join resources r on r.id = h.resource
+    join resources r on r.id = h.resource and case r.type when 'nerve'::resource_type then r.id in (select n.resource from nerves n where n."user" = user_id) else true end
     join sections s on s.resource = r.id and s.state < 'completed'
     join section_cards c on c.resource = r.id and c.section = s.position
     join studies i on i.card = c.card
     where a."user" = user_id
-    group by r.id, r.name, r.type, r.pattern, r.link, r.production, r.expiration
-    order by r.id;
-end; $$;
-
-
-ALTER FUNCTION flashback.get_study_resources(user_id integer) OWNER TO flashback;
-
---
--- Name: get_study_resources(integer, integer); Type: FUNCTION; Schema: flashback; Owner: flashback
---
-
-CREATE FUNCTION flashback.get_study_resources(user_id integer, roadmap_id integer) RETURNS TABLE(id integer, name flashback.citext, type flashback.resource_type, pattern flashback.section_pattern, link character varying, production integer, expiration integer)
-    LANGUAGE plpgsql
-    AS $$
-begin
-    return query
-    select r.id, r.name, r.type, r.pattern, r.link, r.production, r.expiration
-    from milestones m
-    join shelves s on s.subject = m.subject
-    join section_cards sc on sc.resource = s.resource
-    join resources r on r.id = sc.resource
-    where m.roadmap = roadmap_id
     group by r.id, r.name, r.type, r.pattern, r.link, r.production, r.expiration;
 end; $$;
 
 
-ALTER FUNCTION flashback.get_study_resources(user_id integer, roadmap_id integer) OWNER TO flashback;
+ALTER FUNCTION flashback.get_study_resources(user_id integer) OWNER TO flashback;
 
 --
 -- Name: get_study_resources_variation_call(integer); Type: FUNCTION; Schema: flashback; Owner: flashback
@@ -2879,7 +2865,7 @@ begin
     on conflict on constraint studies_pkey
     do update set
         duration = time_duration,
-        last_practice = now()
+        last_study = now()
     where studies."user" = user_id and studies.card = card_id;
 end;
 $$;
@@ -32525,5 +32511,5 @@ GRANT ALL ON SCHEMA public TO flashback_client;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict BsqpAk2fC1yYAQbPtfNH6YQFtEVKJhcSjHQVZLGuwPP4Bdg7HRrYd1rVIkq2mac
+\unrestrict 1UhaL2YfuWy4ipKUg3ePejpyujxzahfgrnndR7bhx9loKKycQAOI3UX8vT2gEI5
 

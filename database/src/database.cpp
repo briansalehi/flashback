@@ -460,11 +460,10 @@ void database::add_resource_to_subject(uint64_t const resource_id, uint64_t cons
     exec("call add_resource_to_subject($1, $2)", resource_id, subject_id);
 }
 
-std::vector<Resource> database::get_resources(uint64_t const subject_id) const
+std::vector<Resource> database::get_resources(uint64_t user_id, uint64_t const subject_id) const
 {
     std::vector<Resource> resources{};
-
-    for (pqxx::row const& row: query("select id, name, type, pattern, link, production, expiration from get_resources($1)", subject_id))
+    for (pqxx::row const& row: query("select id, name, type, pattern, link, production, expiration from get_resources($1, $2)", user_id, subject_id))
     {
         Resource resource{};
         resource.set_id(row.at("id").as<uint64_t>());
@@ -476,7 +475,6 @@ std::vector<Resource> database::get_resources(uint64_t const subject_id) const
         resource.set_expiration(row.at("expiration").as<uint64_t>());
         resources.push_back(resource);
     }
-
     return resources;
 }
 
@@ -1070,10 +1068,9 @@ Resource database::create_nerve(uint64_t const user_id, std::string resource_nam
     return resource;
 }
 
-std::vector<Resource> database::get_nerves(uint64_t const user_id) const
+std::vector<Resource> database::get_nerves(uint64_t user_id) const
 {
-    std::vector<Resource> nerves{};
-
+    std::vector<Resource> resources{};
     for (pqxx::row const& row: query("select id, name, type, pattern, link, production, expiration from get_nerves($1)", user_id))
     {
         Resource resource{};
@@ -1084,10 +1081,9 @@ std::vector<Resource> database::get_nerves(uint64_t const user_id) const
         resource.set_link(row.at("link").is_null() ? "" : row.at("link").as<std::string>());
         resource.set_production(row.at("production").as<uint64_t>());
         resource.set_expiration(row.at("expiration").as<uint64_t>());
-        nerves.push_back(resource);
+        resources.push_back(resource);
     }
-
-    return nerves;
+    return resources;
 }
 
 expertise_level database::get_user_cognitive_level(uint64_t const user_id, uint64_t const roadmap_id, uint64_t const subject_id) const
@@ -1152,11 +1148,21 @@ std::vector<Card> database::get_practice_cards(uint64_t const user_id, uint64_t 
     return cards;
 }
 
-std::map<uint64_t, Resource> database::get_study_resources(uint64_t const user_id, uint64_t const resource_id) const
+std::map<uint64_t, Resource> database::get_study_resources(uint64_t const user_id) const
 {
     std::map<uint64_t, Resource> resources;
-    for (pqxx::row const& row: query("select position "))
+    for (pqxx::row const& row: query("select position, id, name, type, pattern, link, production, expiration from get_study_resources($1) order by position", user_id))
     {
+        Resource resource{};
+        auto const position(row.at("position").as<uint64_t>());
+        resource.set_id(row.at("id").as<uint64_t>());
+        resource.set_name(row.at("name").as<std::string>());
+        resource.set_type(to_resource_type(row.at("type").as<std::string>()));
+        resource.set_pattern(to_section_pattern(row.at("pattern").as<std::string>()));
+        resource.set_link(row.at("link").is_null() ? "" : row.at("link").as<std::string>());
+        resource.set_production(row.at("production").as<uint64_t>());
+        resource.set_expiration(row.at("expiration").as<uint64_t>());
+        resources.insert({position, resource});
     }
     return resources;
 }

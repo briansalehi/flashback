@@ -72,7 +72,7 @@ public:
     // resources
     [[nodiscard]] virtual Resource create_resource(Resource const& resource) const = 0;
     virtual void add_resource_to_subject(uint64_t resource_id, uint64_t subject_id) const = 0;
-    [[nodiscard]] virtual std::vector<Resource> get_resources(uint64_t subject_id) const = 0;
+    [[nodiscard]] virtual std::vector<Resource> get_resources(uint64_t user_id, uint64_t subject_id) const = 0;
     virtual void drop_resource_from_subject(uint64_t resource_id, uint64_t subject_id) const = 0;
     [[nodiscard]] virtual std::map<uint64_t, Resource> search_resources(std::string_view search_pattern) const = 0;
     virtual void edit_resource_link(uint64_t resource_id, std::string link) const = 0;
@@ -151,7 +151,7 @@ public:
     0;
     [[nodiscard]] virtual closure_state get_resource_state(uint64_t resource_id) const = 0;
     virtual void study(uint64_t user_id, uint64_t card_id, std::chrono::seconds duration) const = 0;
-    [[nodiscard]] virtual std::map<uint64_t, Resource> get_study_resources(uint64_t user_id, uint64_t roadmap_id) const = 0;
+    [[nodiscard]] virtual std::map<uint64_t, Resource> get_study_resources(uint64_t user_id) const = 0;
     virtual std::map<uint64_t, Card> get_study_cards(uint64_t user_id, uint64_t resource_id, uint64_t section_position) const = 0;
     virtual void mark_card_as_reviewed(uint64_t card_id) const = 0;
     virtual void mark_card_as_completed(uint64_t card_id) const = 0;
