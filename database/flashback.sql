@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict sZhFNAVbKC6flSfyohoYdnjQDdUqxuNrJGUkj0vJchT95kA9SpjmfTk029VOGh4
+\restrict fw0HfUMogg06WMe2vMIVT7AeLj9STRyZvhta0iFr7aRDxW1PsJCLuvOiz1M9aIk
 
 -- Dumped from database version 18.1
 -- Dumped by pg_dump version 18.0
@@ -1269,19 +1269,22 @@ end; $$;
 ALTER FUNCTION flashback.get_practice_mode(user_id integer, subject_id integer, topic_level flashback.expertise_level) OWNER TO flashback;
 
 --
--- Name: get_practice_topics(integer, integer); Type: FUNCTION; Schema: flashback; Owner: flashback
+-- Name: get_practice_topics(integer, integer, integer); Type: FUNCTION; Schema: flashback; Owner: flashback
 --
 
-CREATE FUNCTION flashback.get_practice_topics(user_id integer, subject_id integer) RETURNS TABLE("position" integer, name flashback.citext, level flashback.expertise_level)
+CREATE FUNCTION flashback.get_practice_topics(user_id integer, roadmap_id integer, subject_id integer) RETURNS TABLE("position" integer, name flashback.citext, level flashback.expertise_level)
     LANGUAGE plpgsql
     AS $$
 begin
-    return query select t.position, t.name, t.level from topics t where t.subject = subject_id and t.level <= get_user_cognitive_level(user_id, subject_id);
+    return query
+    select t.position, t.name, t.level
+    from topics t
+    where t.subject = subject_id and t.level <= get_user_cognitive_level(user_id, roadmap_id, subject_id);
 end;
 $$;
 
 
-ALTER FUNCTION flashback.get_practice_topics(user_id integer, subject_id integer) OWNER TO flashback;
+ALTER FUNCTION flashback.get_practice_topics(user_id integer, roadmap_id integer, subject_id integer) OWNER TO flashback;
 
 --
 -- Name: get_requirements(integer, integer, flashback.expertise_level); Type: FUNCTION; Schema: flashback; Owner: flashback
@@ -1563,10 +1566,10 @@ end; $$;
 ALTER FUNCTION flashback.get_user(user_token character varying, user_device character varying) OWNER TO flashback;
 
 --
--- Name: get_user_cognitive_level(integer, integer); Type: FUNCTION; Schema: flashback; Owner: flashback
+-- Name: get_user_cognitive_level(integer, integer, integer); Type: FUNCTION; Schema: flashback; Owner: flashback
 --
 
-CREATE FUNCTION flashback.get_user_cognitive_level(user_id integer, subject_id integer) RETURNS flashback.expertise_level
+CREATE FUNCTION flashback.get_user_cognitive_level(user_id integer, roadmap_id integer, subject_id integer) RETURNS flashback.expertise_level
     LANGUAGE plpgsql
     AS $$
 declare cognitive_level expertise_level;
@@ -1574,7 +1577,8 @@ declare mode practice_mode;
 begin
     select t.level into cognitive_level
     from topics t
-    where t.subject = subject_id and get_practice_mode(user_id, t.subject, t.level) = 'aggressive'
+    join milestones m on m.subject = t.subject
+    where t.subject = subject_id and t.level <= m.level and get_practice_mode(user_id, t.subject, t.level) = 'aggressive'
     group by t.subject, t.level
     order by t.level
     limit 1;
@@ -1582,7 +1586,8 @@ begin
     if cognitive_level is null then
         select t.level into cognitive_level
         from topics t
-        where t.subject = subject_id and get_practice_mode(user_id, t.subject, t.level) = 'progressive'
+        join milestones m on m.subject = t.subject
+        where t.subject = subject_id and t.level <= m.level and get_practice_mode(user_id, t.subject, t.level) = 'progressive'
         group by t.subject, t.level
         order by t.level desc
         limit 1;
@@ -1592,7 +1597,7 @@ begin
 end; $$;
 
 
-ALTER FUNCTION flashback.get_user_cognitive_level(user_id integer, subject_id integer) OWNER TO flashback;
+ALTER FUNCTION flashback.get_user_cognitive_level(user_id integer, roadmap_id integer, subject_id integer) OWNER TO flashback;
 
 --
 -- Name: is_subject_relevant(integer, integer); Type: FUNCTION; Schema: flashback; Owner: flashback
@@ -32341,5 +32346,5 @@ GRANT ALL ON SCHEMA public TO flashback_client;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict sZhFNAVbKC6flSfyohoYdnjQDdUqxuNrJGUkj0vJchT95kA9SpjmfTk029VOGh4
+\unrestrict fw0HfUMogg06WMe2vMIVT7AeLj9STRyZvhta0iFr7aRDxW1PsJCLuvOiz1M9aIk
 

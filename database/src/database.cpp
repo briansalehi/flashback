@@ -1090,10 +1090,10 @@ std::vector<Resource> database::get_nerves(uint64_t const user_id) const
     return nerves;
 }
 
-expertise_level database::get_user_cognitive_level(uint64_t const user_id, uint64_t const subject_id) const
+expertise_level database::get_user_cognitive_level(uint64_t const user_id, uint64_t const roadmap_id, uint64_t const subject_id) const
 {
     auto level{expertise_level::surface};
-    pqxx::result const result{query("select get_user_cognitive_level($1, $2) as level", user_id, subject_id)};
+    pqxx::result const result{query("select get_user_cognitive_level($1, $2, $3) as level", user_id, roadmap_id, subject_id)};
 
     if (result.size() == 1)
     {
@@ -1121,10 +1121,10 @@ practice_mode database::get_practice_mode(uint64_t const user_id, uint64_t const
     return mode;
 }
 
-std::vector<Topic> database::get_practice_topics(uint64_t const user_id, uint64_t const subject_id) const
+std::vector<Topic> database::get_practice_topics(uint64_t const user_id, uint64_t const roadmap_id, uint64_t const subject_id) const
 {
     std::vector<Topic> topics{};
-    for (pqxx::result const result{query("select position, name, level from get_practice_topics($1, $2)", user_id, subject_id)}; pqxx::row const& row: result)
+    for (pqxx::result const result{query("select position, name, level from get_practice_topics($1, $2, $3)", user_id, roadmap_id, subject_id)}; pqxx::row const& row: result)
     {
         Topic topic{};
         topic.set_position(row.at("position").as<uint64_t>());

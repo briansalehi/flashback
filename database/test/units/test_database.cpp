@@ -5090,7 +5090,7 @@ TEST_F(test_database, get_user_cognitive_level)
     ASSERT_NO_THROW(m_database->add_card_to_topic(third_card.id(), subject.id(), third_topic.position(), third_topic.level()));
     ASSERT_NO_THROW(mode = m_database->get_practice_mode(m_user->id(), subject.id(), flashback::expertise_level::depth));
     EXPECT_THAT(mode, Eq(flashback::practice_mode::aggressive)) << "No progress should result in aggressive mode";
-    EXPECT_NO_THROW(cognitive_level = m_database->get_user_cognitive_level(m_user->id(), subject.id()));
+    EXPECT_NO_THROW(cognitive_level = m_database->get_user_cognitive_level(m_user->id(), roadmap.id(), subject.id()));
     EXPECT_THAT(cognitive_level, Eq(flashback::expertise_level::surface)) << "Cognitive level should be surface when none of the existing levels was practice";
     ASSERT_NO_THROW(m_database->make_progress(m_user->id(), first_card.id(), duration.count(), mode));
     ASSERT_NO_THROW(mode = m_database->get_practice_mode(m_user->id(), subject.id(), flashback::expertise_level::surface));
@@ -5099,10 +5099,10 @@ TEST_F(test_database, get_user_cognitive_level)
     EXPECT_THAT(mode, Eq(flashback::practice_mode::aggressive));
     ASSERT_NO_THROW(mode = m_database->get_practice_mode(m_user->id(), subject.id(), flashback::expertise_level::origin));
     EXPECT_THAT(mode, Eq(flashback::practice_mode::aggressive));
-    EXPECT_NO_THROW(cognitive_level = m_database->get_user_cognitive_level(m_user->id(), subject.id()));
+    EXPECT_NO_THROW(cognitive_level = m_database->get_user_cognitive_level(m_user->id(), roadmap.id(), subject.id()));
     EXPECT_THAT(cognitive_level, Eq(flashback::expertise_level::depth)) << "Cognitive level should be depth when surface is practiced";
     ASSERT_NO_THROW(throw_back_progress(m_user->id(), first_card.id(), std::chrono::days{10}));
-    EXPECT_NO_THROW(cognitive_level = m_database->get_user_cognitive_level(m_user->id(), subject.id()));
+    EXPECT_NO_THROW(cognitive_level = m_database->get_user_cognitive_level(m_user->id(), roadmap.id(), subject.id()));
     EXPECT_THAT(cognitive_level, Eq(flashback::expertise_level::surface)) << "Cognitive level should go back to surface when it is not practiced for a long time";
     ASSERT_NO_THROW(m_database->make_progress(m_user->id(), second_card.id(), duration.count(), mode));
     ASSERT_NO_THROW(mode = m_database->get_practice_mode(m_user->id(), subject.id(), flashback::expertise_level::surface));
@@ -5111,7 +5111,7 @@ TEST_F(test_database, get_user_cognitive_level)
     EXPECT_THAT(mode, Eq(flashback::practice_mode::aggressive));
     ASSERT_NO_THROW(mode = m_database->get_practice_mode(m_user->id(), subject.id(), flashback::expertise_level::origin));
     EXPECT_THAT(mode, Eq(flashback::practice_mode::aggressive));
-    EXPECT_NO_THROW(cognitive_level = m_database->get_user_cognitive_level(m_user->id(), subject.id()));
+    EXPECT_NO_THROW(cognitive_level = m_database->get_user_cognitive_level(m_user->id(), roadmap.id(), subject.id()));
     EXPECT_THAT(cognitive_level, Eq(flashback::expertise_level::surface)) << "Cognitive level should get stuck to surface when not practice even if depth is";
     ASSERT_NO_THROW(m_database->make_progress(m_user->id(), first_card.id(), duration.count(), mode));
     ASSERT_NO_THROW(mode = m_database->get_practice_mode(m_user->id(), subject.id(), flashback::expertise_level::surface));
@@ -5120,8 +5120,8 @@ TEST_F(test_database, get_user_cognitive_level)
     EXPECT_THAT(mode, Eq(flashback::practice_mode::progressive));
     ASSERT_NO_THROW(mode = m_database->get_practice_mode(m_user->id(), subject.id(), flashback::expertise_level::origin));
     EXPECT_THAT(mode, Eq(flashback::practice_mode::aggressive));
-    EXPECT_NO_THROW(cognitive_level = m_database->get_user_cognitive_level(m_user->id(), subject.id()));
-    EXPECT_THAT(cognitive_level, Eq(flashback::expertise_level::origin)) << "Cognitive level should raise to origin when surface and depth are practiced";
+    EXPECT_NO_THROW(cognitive_level = m_database->get_user_cognitive_level(m_user->id(), roadmap.id(), subject.id()));
+    EXPECT_THAT(cognitive_level, Eq(flashback::expertise_level::depth)) << "Cognitive level should not raise to origin because the milestone is limited to depth level";
     ASSERT_NO_THROW(m_database->make_progress(m_user->id(), third_card.id(), duration.count(), mode));
     ASSERT_NO_THROW(mode = m_database->get_practice_mode(m_user->id(), subject.id(), flashback::expertise_level::surface));
     EXPECT_THAT(mode, Eq(flashback::practice_mode::progressive));
@@ -5129,8 +5129,8 @@ TEST_F(test_database, get_user_cognitive_level)
     EXPECT_THAT(mode, Eq(flashback::practice_mode::progressive));
     ASSERT_NO_THROW(mode = m_database->get_practice_mode(m_user->id(), subject.id(), flashback::expertise_level::origin));
     EXPECT_THAT(mode, Eq(flashback::practice_mode::progressive));
-    EXPECT_NO_THROW(cognitive_level = m_database->get_user_cognitive_level(m_user->id(), subject.id()));
-    EXPECT_THAT(cognitive_level, Eq(flashback::expertise_level::origin)) << "Cognitive level should remain to origin when even origin is practiced";
+    EXPECT_NO_THROW(cognitive_level = m_database->get_user_cognitive_level(m_user->id(), roadmap.id(), subject.id()));
+    EXPECT_THAT(cognitive_level, Eq(flashback::expertise_level::depth)) << "Cognitive level should remain to depth level even when the origin level is practiced";
 }
 
 TEST_F(test_database, get_practice_topics)
@@ -5197,23 +5197,23 @@ TEST_F(test_database, get_practice_topics)
     ASSERT_NO_THROW(m_database->add_card_to_topic(third_card.id(), subject.id(), third_topic.position(), third_topic.level()));
     ASSERT_NO_THROW(mode = m_database->get_practice_mode(m_user->id(), subject.id(), flashback::expertise_level::surface));
     ASSERT_THAT(mode, Eq(flashback::practice_mode::aggressive));
-    ASSERT_NO_THROW(cognitive_level = m_database->get_user_cognitive_level(m_user->id(), subject.id()));
+    ASSERT_NO_THROW(cognitive_level = m_database->get_user_cognitive_level(m_user->id(), roadmap.id(), subject.id()));
     ASSERT_THAT(cognitive_level, Eq(flashback::expertise_level::surface));
-    EXPECT_NO_THROW(topics = m_database->get_practice_topics(m_user->id(), subject.id()));
+    EXPECT_NO_THROW(topics = m_database->get_practice_topics(m_user->id(), roadmap.id(), subject.id()));
     EXPECT_THAT(topics, SizeIs(1));
     ASSERT_NO_THROW(topics.at(0).position());
     EXPECT_THAT(topics.at(0).position(), Eq(1));
     ASSERT_NO_THROW(m_database->make_progress(m_user->id(), first_card.id(), duration.count(), mode));
     ASSERT_NO_THROW(mode = m_database->get_practice_mode(m_user->id(), subject.id(), flashback::expertise_level::surface));
     ASSERT_THAT(mode, Eq(flashback::practice_mode::progressive));
-    ASSERT_NO_THROW(cognitive_level = m_database->get_user_cognitive_level(m_user->id(), subject.id()));
+    ASSERT_NO_THROW(cognitive_level = m_database->get_user_cognitive_level(m_user->id(), roadmap.id(), subject.id()));
     ASSERT_THAT(cognitive_level, Eq(flashback::expertise_level::depth));
-    EXPECT_NO_THROW(topics = m_database->get_practice_topics(m_user->id(), subject.id()));
+    EXPECT_NO_THROW(topics = m_database->get_practice_topics(m_user->id(), roadmap.id(), subject.id()));
     EXPECT_THAT(topics, SizeIs(2));
     ASSERT_NO_THROW(topics.at(0).position());
     ASSERT_NO_THROW(topics.at(1).position());
-    EXPECT_THAT(topics.at(0).position(), Eq(1)) << "Topic in level surface position 1";
-    EXPECT_THAT(topics.at(1).position(), Eq(1)) << "Topic in level depth position 1";
+    EXPECT_THAT(topics.at(0).position(), Eq(1)) << "Topic in surface level at position 1";
+    EXPECT_THAT(topics.at(1).position(), Eq(1)) << "Topic in depth level at position 1";
     ASSERT_NO_THROW(m_database->make_progress(m_user->id(), second_card.id(), duration.count(), mode));
     ASSERT_NO_THROW(mode = m_database->get_practice_mode(m_user->id(), subject.id(), flashback::expertise_level::surface));
     ASSERT_THAT(mode, Eq(flashback::practice_mode::progressive));
@@ -5221,16 +5221,14 @@ TEST_F(test_database, get_practice_topics)
     ASSERT_THAT(mode, Eq(flashback::practice_mode::progressive));
     ASSERT_NO_THROW(mode = m_database->get_practice_mode(m_user->id(), subject.id(), flashback::expertise_level::origin));
     ASSERT_THAT(mode, Eq(flashback::practice_mode::aggressive));
-    ASSERT_NO_THROW(cognitive_level = m_database->get_user_cognitive_level(m_user->id(), subject.id()));
-    ASSERT_THAT(cognitive_level, Eq(flashback::expertise_level::origin));
-    EXPECT_NO_THROW(topics = m_database->get_practice_topics(m_user->id(), subject.id()));
-    EXPECT_THAT(topics, SizeIs(3));
+    ASSERT_NO_THROW(cognitive_level = m_database->get_user_cognitive_level(m_user->id(), roadmap.id(), subject.id()));
+    ASSERT_THAT(cognitive_level, Eq(flashback::expertise_level::depth)) << "Cognitive level should remain in depth since milestone is in depth level";
+    EXPECT_NO_THROW(topics = m_database->get_practice_topics(m_user->id(), roadmap.id(), subject.id()));
+    EXPECT_THAT(topics, SizeIs(2));
     ASSERT_NO_THROW(topics.at(0).position());
     ASSERT_NO_THROW(topics.at(1).position());
-    ASSERT_NO_THROW(topics.at(2).position());
-    EXPECT_THAT(topics.at(0).position(), Eq(1)) << "Topic in level surface position 1";
-    EXPECT_THAT(topics.at(1).position(), Eq(1)) << "Topic in level depth position 1";
-    EXPECT_THAT(topics.at(2).position(), Eq(1)) << "Topic in level origin position 1";
+    EXPECT_THAT(topics.at(0).position(), Eq(1)) << "Topic in surface level at position 1";
+    EXPECT_THAT(topics.at(1).position(), Eq(1)) << "Topic in depth level at position 1";
 }
 
 TEST_F(test_database, get_practice_cards)
