@@ -1135,9 +1135,18 @@ std::vector<Topic> database::get_practice_topics(uint64_t const user_id, uint64_
     return topics;
 }
 
-std::vector<Card> database::get_practice_cards(uint64_t const user_id, uint64_t const subject_id, uint64_t const topic_position) const
+std::vector<Card> database::get_practice_cards(uint64_t const user_id, uint64_t const roadmap_id, uint64_t const subject_id, expertise_level const level, uint64_t const topic_position) const
 {
-    return {};
+    std::vector<Card> cards{};
+    for (pqxx::result const result{query("select id, state, headline from get_practice_cards($1, $2, $3, $4, $5)", user_id, roadmap_id, subject_id, level_to_string(level), topic_position)}; pqxx::row const& row: result)
+    {
+        Card card{};
+        card.set_id(row.at("id").as<uint64_t>());
+        card.set_state(to_card_state(row.at("state").as<std::string>()));
+        card.set_headline(row.at("headline").as<std::string>());
+        cards.push_back(card);
+    }
+    return cards;
 }
 
 std::vector<Resource> database::get_study_resources(uint64_t const user_id) const

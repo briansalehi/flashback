@@ -133,7 +133,7 @@ public:
     MOCK_METHOD(expertise_level, get_user_cognitive_level, (uint64_t, uint64_t, uint64_t), (const, override));
     MOCK_METHOD(practice_mode, get_practice_mode, (uint64_t, uint64_t, expertise_level), (const, override));
     MOCK_METHOD((std::vector<Topic>), get_practice_topics, (uint64_t, uint64_t, uint64_t), (const, override));
-    MOCK_METHOD(std::vector<Card>, get_practice_cards, (uint64_t, uint64_t, uint64_t), (const, override));
+    MOCK_METHOD(std::vector<Card>, get_practice_cards, (uint64_t, uint64_t, uint64_t, expertise_level, uint64_t), (const, override));
     MOCK_METHOD(std::vector<Resource>, get_study_resources, (uint64_t), (const, override));
     MOCK_METHOD((std::map<uint64_t, Section>), get_study_sections, (uint64_t, uint64_t), (const, override));
     MOCK_METHOD((std::map<uint64_t, Card>), get_study_cards, (uint64_t, uint64_t, uint64_t), (const, override));

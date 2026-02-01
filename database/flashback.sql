@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict fw0HfUMogg06WMe2vMIVT7AeLj9STRyZvhta0iFr7aRDxW1PsJCLuvOiz1M9aIk
+\restrict GIacIrou1vP78LfaHC0ayWjsavh40fEWe7g4n183FSMR9NghQMPlcslnlumMTak
 
 -- Dumped from database version 18.1
 -- Dumped by pg_dump version 18.0
@@ -1192,38 +1192,32 @@ CREATE FUNCTION flashback.get_out_of_shelves() RETURNS TABLE(id integer, name ch
 ALTER FUNCTION flashback.get_out_of_shelves() OWNER TO flashback;
 
 --
--- Name: get_practice_cards(integer, integer, integer); Type: FUNCTION; Schema: flashback; Owner: flashback
+-- Name: get_practice_cards(integer, integer, integer, flashback.expertise_level, integer); Type: FUNCTION; Schema: flashback; Owner: flashback
 --
 
-CREATE FUNCTION flashback.get_practice_cards(user_id integer, subject_id integer, topic_position integer) RETURNS TABLE(id integer, state flashback.card_state, headline flashback.citext)
+CREATE FUNCTION flashback.get_practice_cards(user_id integer, roadmap_id integer, subject_id integer, topic_level flashback.expertise_level, topic_position integer) RETURNS TABLE(id integer, state flashback.card_state, headline flashback.citext)
     LANGUAGE plpgsql
     AS $$
 declare cognitive_level expertise_level;
 declare last_acceptable_read timestamp with time zone = now() - interval '7 days';
 declare long_time_ago timestamp with time zone = now() - interval '100 days';
 begin
-    cognitive_level := get_user_cognitive_level(user_id, subject_id);
+    cognitive_level := get_user_cognitive_level(user_id, roadmap_id, subject_id);
 
-    if get_practice_mode(user_id, subject_id, cognitive_level) = 'aggressive'::practice_mode
-    then
-        return query
-        select c.id, c.state, c.headline
-        from topic_cards tc
-        join cards c on c.id = tc.card
-        left join progress p on p.user = user_id and p.card = tc.card
-        where tc.subject = subject_id and tc.level <= cognitive_level and tc.topic = topic_position and coalesce(p.last_practice, long_time_ago) < last_acceptable_read;
-    else
-        return query
-        select c.id, c.state, c.headline
-        from topic_cards tc
-        join cards c on c.id = tc.card
-        left join progress p on p.user = user_id and p.card = tc.card
-        where tc.subject = subject_id and tc.level <= cognitive_level and tc.topic = topic_position;
-    end if;
+    return query
+    select c.id, c.state, c.headline
+    from topic_cards tc
+    join cards c on c.id = tc.card
+    left join progress p on p.user = user_id and p.card = tc.card
+    where tc.subject = subject_id and tc.level <= cognitive_level and tc.level = topic_level and tc.topic = topic_position
+    and (
+        get_practice_mode(user_id, subject_id, cognitive_level) <> 'aggressive'::practice_mode
+        or coalesce(p.last_practice, long_time_ago) < last_acceptable_read
+    );
 end; $$;
 
 
-ALTER FUNCTION flashback.get_practice_cards(user_id integer, subject_id integer, topic_position integer) OWNER TO flashback;
+ALTER FUNCTION flashback.get_practice_cards(user_id integer, roadmap_id integer, subject_id integer, topic_level flashback.expertise_level, topic_position integer) OWNER TO flashback;
 
 --
 -- Name: get_practice_mode(integer, integer, flashback.expertise_level); Type: FUNCTION; Schema: flashback; Owner: flashback
@@ -32346,5 +32340,5 @@ GRANT ALL ON SCHEMA public TO flashback_client;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict fw0HfUMogg06WMe2vMIVT7AeLj9STRyZvhta0iFr7aRDxW1PsJCLuvOiz1M9aIk
+\unrestrict GIacIrou1vP78LfaHC0ayWjsavh40fEWe7g4n183FSMR9NghQMPlcslnlumMTak
 
