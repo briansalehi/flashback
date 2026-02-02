@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict 1hxSr7JJngXKYoaWszvHEQkyNntjGo1cOPCuKd7yiHwod1Mo5JWWpvqwe3HZ0A2
+\restrict 2EnR6mLeOjXpjDZAetV81yKal4DMnTlpozwGaKyfS4lotNfZmqFfZN3Q8oeVrOd
 
 -- Dumped from database version 18.1
 -- Dumped by pg_dump version 18.0
@@ -1073,10 +1073,10 @@ $$;
 ALTER FUNCTION flashback.get_assessment_coverage(subject_id integer, topic_position integer, max_level flashback.expertise_level) OWNER TO flashback;
 
 --
--- Name: get_assessments(integer, integer, integer); Type: FUNCTION; Schema: flashback; Owner: flashback
+-- Name: get_assessments(integer, integer, flashback.expertise_level, integer); Type: FUNCTION; Schema: flashback; Owner: flashback
 --
 
-CREATE FUNCTION flashback.get_assessments(user_id integer, subject_id integer, topic_position integer) RETURNS TABLE(level flashback.expertise_level, assessment integer, assimilations bigint)
+CREATE FUNCTION flashback.get_assessments(user_id integer, subject_id integer, topic_level flashback.expertise_level, topic_position integer) RETURNS TABLE(id integer, state flashback.card_state, headline flashback.citext, assimilations bigint)
     LANGUAGE plpgsql
     AS $$
 begin 
@@ -1086,14 +1086,14 @@ begin
     -- 4. find the assessment card that has the widest coverage of topics that user has assimilated: returned by this function
 
     return query
-    select ta.level, ta.assessment, count(*) filter (where ac.assimilated) as assimilations
-    from get_topic_assessments(user_id, subject_id, topic_position, 'origin') ta
-    cross join lateral get_assimilation_coverage(user_id, ta.assessment) as ac
-    group by ta.level, ta.assessment;
+    select ta.id, ta.state, ta.headline, count(*) filter (where ac.assimilated) as assimilations
+    from get_topic_assessments(user_id, subject_id, topic_position, topic_level) ta
+    cross join lateral get_assimilation_coverage(user_id, subject_id, ta.id) as ac
+    group by ta.id, ta.state, ta.headline;
 end; $$;
 
 
-ALTER FUNCTION flashback.get_assessments(user_id integer, subject_id integer, topic_position integer) OWNER TO flashback;
+ALTER FUNCTION flashback.get_assessments(user_id integer, subject_id integer, topic_level flashback.expertise_level, topic_position integer) OWNER TO flashback;
 
 --
 -- Name: get_assimilation_coverage(integer, integer, integer); Type: FUNCTION; Schema: flashback; Owner: flashback
@@ -1535,13 +1535,14 @@ ALTER FUNCTION flashback.get_subject_resources(subject character varying) OWNER 
 -- Name: get_topic_assessments(integer, integer, integer, flashback.expertise_level); Type: FUNCTION; Schema: flashback; Owner: flashback
 --
 
-CREATE FUNCTION flashback.get_topic_assessments(user_id integer, subject_id integer, topic_position integer, max_level flashback.expertise_level) RETURNS TABLE(level flashback.expertise_level, assessment integer)
+CREATE FUNCTION flashback.get_topic_assessments(user_id integer, subject_id integer, topic_position integer, max_level flashback.expertise_level) RETURNS TABLE(id integer, state flashback.card_state, headline flashback.citext, level flashback.expertise_level)
     LANGUAGE plpgsql
     AS $$
 begin
     return query
-    select a.level, a.card
+    select c.id, c.state, c.headline, a.level
     from assessments a
+    join cards c on c.id = a.card
     where a.subject = subject_id and a.topic = topic_position and a.level <= max_level;
 end; $$;
 
@@ -32641,5 +32642,5 @@ GRANT ALL ON SCHEMA public TO flashback_client;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict 1hxSr7JJngXKYoaWszvHEQkyNntjGo1cOPCuKd7yiHwod1Mo5JWWpvqwe3HZ0A2
+\unrestrict 2EnR6mLeOjXpjDZAetV81yKal4DMnTlpozwGaKyfS4lotNfZmqFfZN3Q8oeVrOd
 

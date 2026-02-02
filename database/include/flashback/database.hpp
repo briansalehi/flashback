@@ -160,13 +160,13 @@ public:
 
     // assessments
     void create_assessment(uint64_t subject_id, expertise_level level, uint64_t topic_position, uint64_t card_id) const override;
-    [[nodiscard]] std::vector<Topic> get_topic_coverage(uint64_t subject_id, uint64_t assessment_id) const override;
-    [[nodiscard]] std::vector<Coverage> get_assessment_coverage(uint64_t subject_id, uint64_t topic_position, expertise_level max_level) const override;
-    std::map<uint64_t, Assimilation> get_assimilation_coverage(uint64_t user_id, uint64_t subject_id, uint64_t assessment_id) const override;
-    [[nodiscard]] std::vector<Card> get_topic_assessments(uint64_t user_id, uint64_t subject_id, uint64_t topic_position, expertise_level max_level) const override;
-    [[nodiscard]] std::vector<Card> get_assessments(uint64_t user_id, uint64_t subject_id, uint64_t topic_position) const override;
     void expand_assessment(uint64_t assessment_id, uint64_t subject_id, expertise_level level, uint64_t topic_position) const override;
     void diminish_assessment(uint64_t assessment_id, uint64_t subject_id, expertise_level level, uint64_t topic_position) const override;
+    [[nodiscard]] std::vector<Topic> get_topic_coverage(uint64_t subject_id, uint64_t assessment_id) const override;
+    [[nodiscard]] std::vector<Coverage> get_assessment_coverage(uint64_t subject_id, uint64_t topic_position, expertise_level max_level) const override;
+    [[nodiscard]] std::map<uint64_t, Assimilation> get_assimilation_coverage(uint64_t user_id, uint64_t subject_id, uint64_t assessment_id) const override;
+    [[nodiscard]] std::vector<Card> get_topic_assessments(uint64_t user_id, uint64_t subject_id, uint64_t topic_position, expertise_level max_level) const override;
+    [[nodiscard]] std::vector<Assessment> get_assessments(uint64_t user_id, uint64_t subject_id, expertise_level topic_level, uint64_t topic_position) const override;
 
 private:
     template <typename... Args>

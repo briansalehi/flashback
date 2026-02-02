@@ -1299,19 +1299,35 @@ std::map<uint64_t, Assimilation> database::get_assimilation_coverage(uint64_t co
 
 std::vector<Card> database::get_topic_assessments(uint64_t const user_id, uint64_t const subject_id, uint64_t const topic_position, expertise_level const max_level) const
 {
-    return {};
-}
-
-std::vector<Card> database::get_assessments(uint64_t const user_id, uint64_t const subject_id, uint64_t const topic_position) const
-{
-    std::vector<Card> assessments{};
-    for (pqxx::row const& row: query("select id, state, headline from get_assessments($1, $2, $3)", user_id, subject_id, topic_position))
+    std::vector<Card> cards{};
+    for (pqxx::result const result{
+             query("select id, state, headline, level from get_topic_assessments($1, $2, $3, $4)", user_id, subject_id, topic_position, level_to_string(max_level))
+         }; pqxx::row const& row: result)
     {
         Card card{};
+        auto level(to_level(row.at("level").as<std::string>()));
         card.set_id(row.at("id").as<uint64_t>());
         card.set_state(to_card_state(row.at("state").as<std::string>()));
         card.set_headline(row.at("headline").as<std::string>());
-        assessments.push_back(card);
+        cards.push_back(card);
+    }
+    return cards;
+}
+
+std::vector<Assessment> database::get_assessments(uint64_t const user_id, uint64_t const subject_id, expertise_level topic_level, uint64_t const topic_position) const
+{
+    std::vector<Assessment> assessments{};
+    for (pqxx::row const& row: query("select id, state, headline, assimilations from get_assessments($1, $2, $3, $4)", user_id, subject_id, level_to_string(topic_level), topic_position))
+    {
+        Assessment assessment{};
+        auto card{std::make_unique<Card>()};
+        auto const assimilations{row.at("assimilations").as<uint64_t>()};
+        card->set_id(row.at("id").as<uint64_t>());
+        card->set_state(to_card_state(row.at("state").as<std::string>()));
+        card->set_headline(row.at("headline").as<std::string>());
+        assessment.set_allocated_card(card.release());
+        assessment.set_assimilations(assimilations);
+        assessments.push_back(assessment);
     }
     return assessments;
 }

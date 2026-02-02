@@ -124,3 +124,8 @@ message Assimilation {
     Topic topic = 1;
     bool assimilated = 2;
 }
+
+message Assessment {
+    Card card = 1;
+    uint64 assimilations = 2;
+}
