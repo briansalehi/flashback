@@ -1245,18 +1245,56 @@ bool database::is_absolute(uint64_t const card_id) const
 
 void database::create_assessment(uint64_t const subject_id, expertise_level const level, uint64_t const topic_position, uint64_t const card_id) const
 {
+    exec("call create_assessment($1, $2, $3, $4)", subject_id, level_to_string(level), topic_position, card_id);
 }
 
-void database::get_topic_coverage(uint64_t const assessment_id) const
+std::vector<Topic> database::get_topic_coverage(uint64_t subject_id, uint64_t const assessment_id) const
 {
+    std::vector<Topic> topics;
+    for (pqxx::row const& row: query("select position, level, name from get_topic_coverage($1, $2)", subject_id, assessment_id))
+    {
+        Topic topic{};
+        topic.set_position(row.at("position").as<uint64_t>());
+        topic.set_level(to_level(row.at("level").as<std::string>()));
+        topic.set_name(row.at("name").as<std::string>());
+        topics.push_back(topic);
+    }
+    return topics;
 }
 
-void database::get_assessment_coverage(uint64_t const subject_id, uint64_t const topic_position, expertise_level const max_level) const
+std::vector<Coverage> database::get_assessment_coverage(uint64_t const subject_id, uint64_t const topic_position, expertise_level const max_level) const
 {
+    std::vector<Coverage> assessment_coverage{};
+    for (pqxx::row const& row: query("select id, state, headline, coverage from get_assessment_coverage($1, $2, $3)", subject_id, topic_position, level_to_string(max_level)))
+    {
+        Coverage coverage{};
+        auto card{std::make_unique<Card>()};
+        card->set_id(row.at("id").as<uint64_t>());
+        card->set_state(to_card_state(row.at("state").as<std::string>()));
+        card->set_headline(row.at("headline").as<std::string>());
+        coverage.set_allocated_card(card.release());
+        coverage.set_coverage(row.at("coverage").as<uint64_t>());
+        assessment_coverage.push_back(coverage);
+    }
+    return assessment_coverage;
 }
 
-void database::get_assimilation_coverage(uint64_t const user_id, uint64_t const assessment_id) const
+std::map<uint64_t, Assimilation> database::get_assimilation_coverage(uint64_t const user_id, uint64_t subject_id, uint64_t const assessment_id) const
 {
+    std::map<uint64_t, Assimilation> assimilation_coverage{};
+    for (pqxx::row const& row: query("select position, level, name, assimilated from get_assimilation_coverage($1, $2, $3)", user_id, subject_id, assessment_id))
+    {
+        Assimilation assimilation{};
+        auto topic{std::make_unique<Topic>()};
+        auto position{row.at("position").as<uint64_t>()};
+        topic->set_position(position);
+        topic->set_name(row.at("name").as<std::string>());
+        topic->set_level(to_level(row.at("level").as<std::string>()));
+        assimilation.set_assimilated(row.at("assimilated").as<bool>());
+        assimilation.set_allocated_topic(topic.release());
+        assimilation_coverage.insert({position, assimilation});
+    }
+    return assimilation_coverage;
 }
 
 std::vector<Card> database::get_topic_assessments(uint64_t const user_id, uint64_t const subject_id, uint64_t const topic_position, expertise_level const max_level) const
@@ -1266,15 +1304,26 @@ std::vector<Card> database::get_topic_assessments(uint64_t const user_id, uint64
 
 std::vector<Card> database::get_assessments(uint64_t const user_id, uint64_t const subject_id, uint64_t const topic_position) const
 {
-    return {};
+    std::vector<Card> assessments{};
+    for (pqxx::row const& row: query("select id, state, headline from get_assessments($1, $2, $3)", user_id, subject_id, topic_position))
+    {
+        Card card{};
+        card.set_id(row.at("id").as<uint64_t>());
+        card.set_state(to_card_state(row.at("state").as<std::string>()));
+        card.set_headline(row.at("headline").as<std::string>());
+        assessments.push_back(card);
+    }
+    return assessments;
 }
 
 void database::expand_assessment(uint64_t const assessment_id, uint64_t const subject_id, expertise_level const level, uint64_t const topic_position) const
 {
+    exec("call expand_assessment($1, $2, $3, $4)", assessment_id, subject_id, level_to_string(level), topic_position);
 }
 
 void database::diminish_assessment(uint64_t const assessment_id, uint64_t const subject_id, expertise_level const level, uint64_t const topic_position) const
 {
+    exec("call diminish_assessment($1, $2, $3, $4)", assessment_id, subject_id, level_to_string(level), topic_position);
 }
 
 void database::throw_back_progress(uint64_t const user_id, uint64_t const card_id, uint64_t const days) const

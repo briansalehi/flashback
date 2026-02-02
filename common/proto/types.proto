@@ -114,3 +114,13 @@ message Weight {
     Resource resource = 1;
     uint64 percentage = 2;
 }
+
+message Coverage {
+    Card card = 1;
+    uint64 coverage = 2;
+}
+
+message Assimilation {
+    Topic topic = 1;
+    bool assimilated = 2;
+}

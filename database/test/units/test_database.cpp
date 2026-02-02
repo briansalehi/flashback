@@ -5780,8 +5780,6 @@ TEST_F(test_database, get_progress_weight)
     flashback::Card second_card{};
     flashback::Card third_card{};
     flashback::practice_mode mode{};
-    std::vector<flashback::Resource> resources{};
-    std::map<uint64_t, flashback::Resource> studying_resources{};
 
     roadmap.set_name("C++ Software Engineer");
     subject.set_name("C++");
@@ -5857,28 +5855,485 @@ TEST_F(test_database, get_progress_weight)
     EXPECT_THAT(weights.at(2).percentage(), Eq(100));
 }
 
-TEST_F(test_database, get_variations)
-{
-}
-
-TEST_F(test_database, is_absolute)
-{
-}
-
 TEST_F(test_database, create_assessment)
 {
+    flashback::Roadmap roadmap{};
+    flashback::Subject subject{};
+    flashback::Milestone milestone{};
+    flashback::Topic first_topic{};
+    flashback::Topic second_topic{};
+    flashback::Topic third_topic{};
+    flashback::Resource resource{};
+    flashback::Section section{};
+    flashback::Card first_card{};
+    flashback::Card second_card{};
+    flashback::Card third_card{};
+    flashback::practice_mode mode{};
+
+    roadmap.set_name("C++ Software Engineer");
+    subject.set_name("C++");
+    milestone.set_level(flashback::expertise_level::depth);
+    first_topic.set_name("Reflection");
+    first_topic.set_level(flashback::expertise_level::surface);
+    second_topic.set_name("Coroutine");
+    second_topic.set_level(flashback::expertise_level::surface);
+    third_topic.set_name("Modules");
+    third_topic.set_level(flashback::expertise_level::surface);
+    resource.set_name("Personal Knowledge");
+    resource.set_type(flashback::Resource::nerve);
+    resource.set_pattern(flashback::Resource::synapse);
+    section.set_name("First C++ Resource Chapter 1");
+    first_card.set_headline("First Card");
+    second_card.set_headline("Second Card");
+    third_card.set_headline("Third Card");
+
+    ASSERT_NO_THROW(roadmap = m_database->create_roadmap(m_user->id(), roadmap.name()));
+    ASSERT_THAT(roadmap.id(), Gt(0));
+    ASSERT_NO_THROW(subject = m_database->create_subject(subject.name()));
+    ASSERT_THAT(subject.id(), Gt(0));
+    ASSERT_NO_THROW(milestone = m_database->add_milestone(subject.id(), milestone.level(), roadmap.id()));
+    ASSERT_THAT(milestone.position(), Eq(1));
+    ASSERT_NO_THROW(first_topic = m_database->create_topic(subject.id(), first_topic.name(), first_topic.level(), 0));
+    ASSERT_THAT(first_topic.position(), Eq(1));
+    ASSERT_NO_THROW(second_topic = m_database->create_topic(subject.id(), second_topic.name(), second_topic.level(), 0));
+    ASSERT_THAT(second_topic.position(), Eq(2));
+    ASSERT_NO_THROW(third_topic = m_database->create_topic(subject.id(), third_topic.name(), third_topic.level(), 0));
+    ASSERT_THAT(third_topic.position(), Eq(3));
+    ASSERT_NO_THROW(resource = m_database->create_resource(resource));
+    ASSERT_THAT(resource.id(), Gt(0));
+    ASSERT_NO_THROW(m_database->add_resource_to_subject(resource.id(), subject.id()));
+    ASSERT_NO_THROW(section = m_database->create_section(resource.id(), 0, section.name(), section.link()));
+    ASSERT_THAT(section.position(), Eq(1));
+    ASSERT_NO_THROW(first_card = m_database->create_card(first_card));
+    ASSERT_THAT(first_card.id(), Gt(0));
+    ASSERT_NO_THROW(second_card = m_database->create_card(second_card));
+    ASSERT_THAT(second_card.id(), Gt(0));
+    ASSERT_NO_THROW(third_card = m_database->create_card(third_card));
+    ASSERT_THAT(third_card.id(), Gt(0));
+    ASSERT_NO_THROW(m_database->add_card_to_section(first_card.id(), resource.id(), section.position()));
+    ASSERT_NO_THROW(m_database->add_card_to_section(second_card.id(), resource.id(), section.position()));
+    ASSERT_NO_THROW(m_database->add_card_to_section(third_card.id(), resource.id(), section.position()));
+    ASSERT_NO_THROW(m_database->add_card_to_topic(first_card.id(), subject.id(), first_topic.position(), first_topic.level()));
+    ASSERT_NO_THROW(m_database->add_card_to_topic(second_card.id(), subject.id(), second_topic.position(), second_topic.level()));
+    ASSERT_NO_THROW(m_database->add_card_to_topic(third_card.id(), subject.id(), third_topic.position(), third_topic.level()));
+    ASSERT_NO_THROW(mode = m_database->get_practice_mode(m_user->id(), subject.id(), milestone.level()));
+    ASSERT_THAT(mode, Eq(flashback::practice_mode::aggressive));
+    ASSERT_NO_THROW(m_database->make_progress(m_user->id(), first_card.id(), 20, mode));
+    ASSERT_NO_THROW(m_database->make_progress(m_user->id(), second_card.id(), 20, mode));
+    ASSERT_NO_THROW(m_database->make_progress(m_user->id(), third_card.id(), 20, mode));
+    EXPECT_NO_THROW(m_database->create_assessment(subject.id(), first_topic.level(), first_topic.position(), first_card.id()));
+    EXPECT_NO_THROW(m_database->create_assessment(subject.id(), first_topic.level(), first_topic.position(), second_card.id()));
+}
+
+TEST_F(test_database, expand_assessment)
+{
+    flashback::Roadmap roadmap{};
+    flashback::Subject subject{};
+    flashback::Milestone milestone{};
+    flashback::Topic first_topic{};
+    flashback::Topic second_topic{};
+    flashback::Topic third_topic{};
+    flashback::Resource resource{};
+    flashback::Section section{};
+    flashback::Card first_card{};
+    flashback::Card second_card{};
+    flashback::Card third_card{};
+    flashback::practice_mode mode{};
+
+    roadmap.set_name("C++ Software Engineer");
+    subject.set_name("C++");
+    milestone.set_level(flashback::expertise_level::depth);
+    first_topic.set_name("Reflection");
+    first_topic.set_level(flashback::expertise_level::surface);
+    second_topic.set_name("Coroutine");
+    second_topic.set_level(flashback::expertise_level::surface);
+    third_topic.set_name("Modules");
+    third_topic.set_level(flashback::expertise_level::surface);
+    resource.set_name("Personal Knowledge");
+    resource.set_type(flashback::Resource::nerve);
+    resource.set_pattern(flashback::Resource::synapse);
+    section.set_name("First C++ Resource Chapter 1");
+    first_card.set_headline("First Card");
+    second_card.set_headline("Second Card");
+    third_card.set_headline("Third Card");
+
+    ASSERT_NO_THROW(roadmap = m_database->create_roadmap(m_user->id(), roadmap.name()));
+    ASSERT_THAT(roadmap.id(), Gt(0));
+    ASSERT_NO_THROW(subject = m_database->create_subject(subject.name()));
+    ASSERT_THAT(subject.id(), Gt(0));
+    ASSERT_NO_THROW(milestone = m_database->add_milestone(subject.id(), milestone.level(), roadmap.id()));
+    ASSERT_THAT(milestone.position(), Eq(1));
+    ASSERT_NO_THROW(first_topic = m_database->create_topic(subject.id(), first_topic.name(), first_topic.level(), 0));
+    ASSERT_THAT(first_topic.position(), Eq(1));
+    ASSERT_NO_THROW(second_topic = m_database->create_topic(subject.id(), second_topic.name(), second_topic.level(), 0));
+    ASSERT_THAT(second_topic.position(), Eq(2));
+    ASSERT_NO_THROW(third_topic = m_database->create_topic(subject.id(), third_topic.name(), third_topic.level(), 0));
+    ASSERT_THAT(third_topic.position(), Eq(3));
+    ASSERT_NO_THROW(resource = m_database->create_resource(resource));
+    ASSERT_THAT(resource.id(), Gt(0));
+    ASSERT_NO_THROW(m_database->add_resource_to_subject(resource.id(), subject.id()));
+    ASSERT_NO_THROW(section = m_database->create_section(resource.id(), 0, section.name(), section.link()));
+    ASSERT_THAT(section.position(), Eq(1));
+    ASSERT_NO_THROW(first_card = m_database->create_card(first_card));
+    ASSERT_THAT(first_card.id(), Gt(0));
+    ASSERT_NO_THROW(second_card = m_database->create_card(second_card));
+    ASSERT_THAT(second_card.id(), Gt(0));
+    ASSERT_NO_THROW(third_card = m_database->create_card(third_card));
+    ASSERT_THAT(third_card.id(), Gt(0));
+    ASSERT_NO_THROW(m_database->add_card_to_section(first_card.id(), resource.id(), section.position()));
+    ASSERT_NO_THROW(m_database->add_card_to_section(second_card.id(), resource.id(), section.position()));
+    ASSERT_NO_THROW(m_database->add_card_to_section(third_card.id(), resource.id(), section.position()));
+    ASSERT_NO_THROW(m_database->add_card_to_topic(first_card.id(), subject.id(), first_topic.position(), first_topic.level()));
+    ASSERT_NO_THROW(m_database->add_card_to_topic(second_card.id(), subject.id(), second_topic.position(), second_topic.level()));
+    ASSERT_NO_THROW(m_database->add_card_to_topic(third_card.id(), subject.id(), third_topic.position(), third_topic.level()));
+    ASSERT_NO_THROW(mode = m_database->get_practice_mode(m_user->id(), subject.id(), milestone.level()));
+    ASSERT_THAT(mode, Eq(flashback::practice_mode::aggressive));
+    ASSERT_NO_THROW(m_database->make_progress(m_user->id(), first_card.id(), 20, mode));
+    ASSERT_NO_THROW(m_database->make_progress(m_user->id(), second_card.id(), 20, mode));
+    ASSERT_NO_THROW(m_database->make_progress(m_user->id(), third_card.id(), 20, mode));
+    ASSERT_NO_THROW(m_database->create_assessment(subject.id(), first_topic.level(), first_topic.position(), first_card.id()));
+    ASSERT_NO_THROW(m_database->create_assessment(subject.id(), first_topic.level(), first_topic.position(), second_card.id()));
+    EXPECT_NO_THROW(m_database->expand_assessment(second_card.id(), subject.id(), second_topic.level(), second_topic.position()));
+}
+
+TEST_F(test_database, diminish_assessment)
+{
+    flashback::Roadmap roadmap{};
+    flashback::Subject subject{};
+    flashback::Milestone milestone{};
+    flashback::Topic first_topic{};
+    flashback::Topic second_topic{};
+    flashback::Topic third_topic{};
+    flashback::Resource resource{};
+    flashback::Section section{};
+    flashback::Card first_card{};
+    flashback::Card second_card{};
+    flashback::Card third_card{};
+    flashback::practice_mode mode{};
+
+    roadmap.set_name("C++ Software Engineer");
+    subject.set_name("C++");
+    milestone.set_level(flashback::expertise_level::depth);
+    first_topic.set_name("Reflection");
+    first_topic.set_level(flashback::expertise_level::surface);
+    second_topic.set_name("Coroutine");
+    second_topic.set_level(flashback::expertise_level::surface);
+    third_topic.set_name("Modules");
+    third_topic.set_level(flashback::expertise_level::surface);
+    resource.set_name("Personal Knowledge");
+    resource.set_type(flashback::Resource::nerve);
+    resource.set_pattern(flashback::Resource::synapse);
+    section.set_name("First C++ Resource Chapter 1");
+    first_card.set_headline("First Card");
+    second_card.set_headline("Second Card");
+    third_card.set_headline("Third Card");
+
+    ASSERT_NO_THROW(roadmap = m_database->create_roadmap(m_user->id(), roadmap.name()));
+    ASSERT_THAT(roadmap.id(), Gt(0));
+    ASSERT_NO_THROW(subject = m_database->create_subject(subject.name()));
+    ASSERT_THAT(subject.id(), Gt(0));
+    ASSERT_NO_THROW(milestone = m_database->add_milestone(subject.id(), milestone.level(), roadmap.id()));
+    ASSERT_THAT(milestone.position(), Eq(1));
+    ASSERT_NO_THROW(first_topic = m_database->create_topic(subject.id(), first_topic.name(), first_topic.level(), 0));
+    ASSERT_THAT(first_topic.position(), Eq(1));
+    ASSERT_NO_THROW(second_topic = m_database->create_topic(subject.id(), second_topic.name(), second_topic.level(), 0));
+    ASSERT_THAT(second_topic.position(), Eq(2));
+    ASSERT_NO_THROW(third_topic = m_database->create_topic(subject.id(), third_topic.name(), third_topic.level(), 0));
+    ASSERT_THAT(third_topic.position(), Eq(3));
+    ASSERT_NO_THROW(resource = m_database->create_resource(resource));
+    ASSERT_THAT(resource.id(), Gt(0));
+    ASSERT_NO_THROW(m_database->add_resource_to_subject(resource.id(), subject.id()));
+    ASSERT_NO_THROW(section = m_database->create_section(resource.id(), 0, section.name(), section.link()));
+    ASSERT_THAT(section.position(), Eq(1));
+    ASSERT_NO_THROW(first_card = m_database->create_card(first_card));
+    ASSERT_THAT(first_card.id(), Gt(0));
+    ASSERT_NO_THROW(second_card = m_database->create_card(second_card));
+    ASSERT_THAT(second_card.id(), Gt(0));
+    ASSERT_NO_THROW(third_card = m_database->create_card(third_card));
+    ASSERT_THAT(third_card.id(), Gt(0));
+    ASSERT_NO_THROW(m_database->add_card_to_section(first_card.id(), resource.id(), section.position()));
+    ASSERT_NO_THROW(m_database->add_card_to_section(second_card.id(), resource.id(), section.position()));
+    ASSERT_NO_THROW(m_database->add_card_to_section(third_card.id(), resource.id(), section.position()));
+    ASSERT_NO_THROW(m_database->add_card_to_topic(first_card.id(), subject.id(), first_topic.position(), first_topic.level()));
+    ASSERT_NO_THROW(m_database->add_card_to_topic(second_card.id(), subject.id(), second_topic.position(), second_topic.level()));
+    ASSERT_NO_THROW(m_database->add_card_to_topic(third_card.id(), subject.id(), third_topic.position(), third_topic.level()));
+    ASSERT_NO_THROW(mode = m_database->get_practice_mode(m_user->id(), subject.id(), milestone.level()));
+    ASSERT_THAT(mode, Eq(flashback::practice_mode::aggressive));
+    ASSERT_NO_THROW(m_database->make_progress(m_user->id(), first_card.id(), 20, mode));
+    ASSERT_NO_THROW(m_database->make_progress(m_user->id(), second_card.id(), 20, mode));
+    ASSERT_NO_THROW(m_database->make_progress(m_user->id(), third_card.id(), 20, mode));
+    ASSERT_NO_THROW(m_database->create_assessment(subject.id(), first_topic.level(), first_topic.position(), first_card.id()));
+    ASSERT_NO_THROW(m_database->create_assessment(subject.id(), first_topic.level(), first_topic.position(), second_card.id()));
+    EXPECT_NO_THROW(m_database->expand_assessment(second_card.id(), subject.id(), second_topic.level(), second_topic.position()));
+    EXPECT_NO_THROW(m_database->diminish_assessment(second_card.id(), subject.id(), first_topic.level(), first_topic.position()));
 }
 
 TEST_F(test_database, get_topic_coverage)
 {
+    flashback::Roadmap roadmap{};
+    flashback::Subject subject{};
+    flashback::Milestone milestone{};
+    flashback::Topic first_topic{};
+    flashback::Topic second_topic{};
+    flashback::Topic third_topic{};
+    flashback::Resource resource{};
+    flashback::Section section{};
+    flashback::Card first_card{};
+    flashback::Card second_card{};
+    flashback::Card third_card{};
+    flashback::practice_mode mode{};
+
+    roadmap.set_name("C++ Software Engineer");
+    subject.set_name("C++");
+    milestone.set_level(flashback::expertise_level::depth);
+    first_topic.set_name("Reflection");
+    first_topic.set_level(flashback::expertise_level::surface);
+    second_topic.set_name("Coroutine");
+    second_topic.set_level(flashback::expertise_level::surface);
+    third_topic.set_name("Modules");
+    third_topic.set_level(flashback::expertise_level::surface);
+    resource.set_name("Personal Knowledge");
+    resource.set_type(flashback::Resource::nerve);
+    resource.set_pattern(flashback::Resource::synapse);
+    section.set_name("First C++ Resource Chapter 1");
+    first_card.set_headline("First Card");
+    second_card.set_headline("Second Card");
+    third_card.set_headline("Third Card");
+
+    ASSERT_NO_THROW(roadmap = m_database->create_roadmap(m_user->id(), roadmap.name()));
+    ASSERT_THAT(roadmap.id(), Gt(0));
+    ASSERT_NO_THROW(subject = m_database->create_subject(subject.name()));
+    ASSERT_THAT(subject.id(), Gt(0));
+    ASSERT_NO_THROW(milestone = m_database->add_milestone(subject.id(), milestone.level(), roadmap.id()));
+    ASSERT_THAT(milestone.position(), Eq(1));
+    ASSERT_NO_THROW(first_topic = m_database->create_topic(subject.id(), first_topic.name(), first_topic.level(), 0));
+    ASSERT_THAT(first_topic.position(), Eq(1));
+    ASSERT_NO_THROW(second_topic = m_database->create_topic(subject.id(), second_topic.name(), second_topic.level(), 0));
+    ASSERT_THAT(second_topic.position(), Eq(2));
+    ASSERT_NO_THROW(third_topic = m_database->create_topic(subject.id(), third_topic.name(), third_topic.level(), 0));
+    ASSERT_THAT(third_topic.position(), Eq(3));
+    ASSERT_NO_THROW(resource = m_database->create_resource(resource));
+    ASSERT_THAT(resource.id(), Gt(0));
+    ASSERT_NO_THROW(m_database->add_resource_to_subject(resource.id(), subject.id()));
+    ASSERT_NO_THROW(section = m_database->create_section(resource.id(), 0, section.name(), section.link()));
+    ASSERT_THAT(section.position(), Eq(1));
+    ASSERT_NO_THROW(first_card = m_database->create_card(first_card));
+    ASSERT_THAT(first_card.id(), Gt(0));
+    ASSERT_NO_THROW(second_card = m_database->create_card(second_card));
+    ASSERT_THAT(second_card.id(), Gt(0));
+    ASSERT_NO_THROW(third_card = m_database->create_card(third_card));
+    ASSERT_THAT(third_card.id(), Gt(0));
+    ASSERT_NO_THROW(m_database->add_card_to_section(first_card.id(), resource.id(), section.position()));
+    ASSERT_NO_THROW(m_database->add_card_to_section(second_card.id(), resource.id(), section.position()));
+    ASSERT_NO_THROW(m_database->add_card_to_section(third_card.id(), resource.id(), section.position()));
+    ASSERT_NO_THROW(m_database->add_card_to_topic(first_card.id(), subject.id(), first_topic.position(), first_topic.level()));
+    ASSERT_NO_THROW(m_database->add_card_to_topic(second_card.id(), subject.id(), second_topic.position(), second_topic.level()));
+    ASSERT_NO_THROW(m_database->add_card_to_topic(third_card.id(), subject.id(), third_topic.position(), third_topic.level()));
+    ASSERT_NO_THROW(mode = m_database->get_practice_mode(m_user->id(), subject.id(), milestone.level()));
+    ASSERT_THAT(mode, Eq(flashback::practice_mode::aggressive));
+    ASSERT_NO_THROW(m_database->make_progress(m_user->id(), first_card.id(), 20, mode));
+    ASSERT_NO_THROW(m_database->make_progress(m_user->id(), second_card.id(), 20, mode));
+    ASSERT_NO_THROW(m_database->make_progress(m_user->id(), third_card.id(), 20, mode));
+    EXPECT_NO_THROW(m_database->create_assessment(subject.id(), first_topic.level(), first_topic.position(), first_card.id()));
+    EXPECT_NO_THROW(m_database->create_assessment(subject.id(), first_topic.level(), first_topic.position(), second_card.id()));
+    std::vector<flashback::Topic> topics{};
+    EXPECT_NO_THROW(topics = m_database->get_topic_coverage(subject.id(), first_card.id()));
+    EXPECT_THAT(topics, SizeIs(1));
+    EXPECT_NO_THROW(topics = m_database->get_topic_coverage(subject.id(), second_card.id()));
+    EXPECT_THAT(topics, SizeIs(1));
+    EXPECT_NO_THROW(m_database->expand_assessment(second_card.id(), subject.id(), second_topic.level(), second_topic.position()));
+    EXPECT_NO_THROW(topics = m_database->get_topic_coverage(subject.id(), first_card.id()));
+    EXPECT_THAT(topics, SizeIs(1));
+    EXPECT_NO_THROW(topics.at(0).position());
+    EXPECT_NO_THROW(topics = m_database->get_topic_coverage(subject.id(), second_card.id()));
+    EXPECT_THAT(topics, SizeIs(2));
+    EXPECT_NO_THROW(topics.at(0).position());
+    EXPECT_NO_THROW(topics.at(1).position());
+    EXPECT_NO_THROW(m_database->diminish_assessment(second_card.id(), subject.id(), first_topic.level(), first_topic.position()));
+    EXPECT_NO_THROW(topics = m_database->get_topic_coverage(subject.id(), first_card.id()));
+    EXPECT_THAT(topics, SizeIs(1));
+    EXPECT_NO_THROW(topics.at(0).position());
+    EXPECT_NO_THROW(topics = m_database->get_topic_coverage(subject.id(), second_card.id()));
+    EXPECT_THAT(topics, SizeIs(1));
+    EXPECT_NO_THROW(topics.at(0).position());
 }
 
 TEST_F(test_database, get_assessment_coverage)
 {
+    flashback::Roadmap roadmap{};
+    flashback::Subject subject{};
+    flashback::Milestone milestone{};
+    flashback::Topic first_topic{};
+    flashback::Topic second_topic{};
+    flashback::Topic third_topic{};
+    flashback::Resource resource{};
+    flashback::Section section{};
+    flashback::Card first_card{};
+    flashback::Card second_card{};
+    flashback::Card third_card{};
+    flashback::practice_mode mode{};
+
+    roadmap.set_name("C++ Software Engineer");
+    subject.set_name("C++");
+    milestone.set_level(flashback::expertise_level::depth);
+    first_topic.set_name("Reflection");
+    first_topic.set_level(flashback::expertise_level::surface);
+    second_topic.set_name("Coroutine");
+    second_topic.set_level(flashback::expertise_level::surface);
+    third_topic.set_name("Modules");
+    third_topic.set_level(flashback::expertise_level::surface);
+    resource.set_name("Personal Knowledge");
+    resource.set_type(flashback::Resource::nerve);
+    resource.set_pattern(flashback::Resource::synapse);
+    section.set_name("First C++ Resource Chapter 1");
+    first_card.set_headline("First Card");
+    second_card.set_headline("Second Card");
+    third_card.set_headline("Third Card");
+
+    ASSERT_NO_THROW(roadmap = m_database->create_roadmap(m_user->id(), roadmap.name()));
+    ASSERT_THAT(roadmap.id(), Gt(0));
+    ASSERT_NO_THROW(subject = m_database->create_subject(subject.name()));
+    ASSERT_THAT(subject.id(), Gt(0));
+    ASSERT_NO_THROW(milestone = m_database->add_milestone(subject.id(), milestone.level(), roadmap.id()));
+    ASSERT_THAT(milestone.position(), Eq(1));
+    ASSERT_NO_THROW(first_topic = m_database->create_topic(subject.id(), first_topic.name(), first_topic.level(), 0));
+    ASSERT_THAT(first_topic.position(), Eq(1));
+    ASSERT_NO_THROW(second_topic = m_database->create_topic(subject.id(), second_topic.name(), second_topic.level(), 0));
+    ASSERT_THAT(second_topic.position(), Eq(2));
+    ASSERT_NO_THROW(third_topic = m_database->create_topic(subject.id(), third_topic.name(), third_topic.level(), 0));
+    ASSERT_THAT(third_topic.position(), Eq(3));
+    ASSERT_NO_THROW(resource = m_database->create_resource(resource));
+    ASSERT_THAT(resource.id(), Gt(0));
+    ASSERT_NO_THROW(m_database->add_resource_to_subject(resource.id(), subject.id()));
+    ASSERT_NO_THROW(section = m_database->create_section(resource.id(), 0, section.name(), section.link()));
+    ASSERT_THAT(section.position(), Eq(1));
+    ASSERT_NO_THROW(first_card = m_database->create_card(first_card));
+    ASSERT_THAT(first_card.id(), Gt(0));
+    ASSERT_NO_THROW(second_card = m_database->create_card(second_card));
+    ASSERT_THAT(second_card.id(), Gt(0));
+    ASSERT_NO_THROW(third_card = m_database->create_card(third_card));
+    ASSERT_THAT(third_card.id(), Gt(0));
+    ASSERT_NO_THROW(m_database->add_card_to_section(first_card.id(), resource.id(), section.position()));
+    ASSERT_NO_THROW(m_database->add_card_to_section(second_card.id(), resource.id(), section.position()));
+    ASSERT_NO_THROW(m_database->add_card_to_section(third_card.id(), resource.id(), section.position()));
+    ASSERT_NO_THROW(m_database->add_card_to_topic(first_card.id(), subject.id(), first_topic.position(), first_topic.level()));
+    ASSERT_NO_THROW(m_database->add_card_to_topic(second_card.id(), subject.id(), second_topic.position(), second_topic.level()));
+    ASSERT_NO_THROW(m_database->add_card_to_topic(third_card.id(), subject.id(), third_topic.position(), third_topic.level()));
+    ASSERT_NO_THROW(mode = m_database->get_practice_mode(m_user->id(), subject.id(), milestone.level()));
+    ASSERT_THAT(mode, Eq(flashback::practice_mode::aggressive));
+    ASSERT_NO_THROW(m_database->make_progress(m_user->id(), first_card.id(), 20, mode));
+    ASSERT_NO_THROW(m_database->make_progress(m_user->id(), second_card.id(), 20, mode));
+    ASSERT_NO_THROW(m_database->make_progress(m_user->id(), third_card.id(), 20, mode));
+    EXPECT_NO_THROW(m_database->create_assessment(subject.id(), first_topic.level(), first_topic.position(), first_card.id()));
+    EXPECT_NO_THROW(m_database->create_assessment(subject.id(), first_topic.level(), first_topic.position(), second_card.id()));
+    EXPECT_NO_THROW(m_database->create_assessment(subject.id(), third_topic.level(), third_topic.position(), third_card.id()));
+    std::vector<flashback::Coverage> coverage{};
+    EXPECT_NO_THROW(coverage = m_database->get_assessment_coverage(subject.id(), first_topic.position(), first_topic.level()));
+    EXPECT_THAT(coverage, SizeIs(2));
+    EXPECT_NO_THROW(coverage = m_database->get_assessment_coverage(subject.id(), second_topic.position(), second_topic.level()));
+    EXPECT_THAT(coverage, IsEmpty());
+    EXPECT_NO_THROW(coverage = m_database->get_assessment_coverage(subject.id(), third_topic.position(), third_topic.level()));
+    EXPECT_THAT(coverage, SizeIs(1));
 }
 
 TEST_F(test_database, get_assimilation_coverage)
 {
+    flashback::Roadmap roadmap{};
+    flashback::Subject subject{};
+    flashback::Milestone milestone{};
+    flashback::Topic first_topic{};
+    flashback::Topic second_topic{};
+    flashback::Topic third_topic{};
+    flashback::Resource resource{};
+    flashback::Section section{};
+    flashback::Card first_card{};
+    flashback::Card second_card{};
+    flashback::Card third_card{};
+    flashback::practice_mode mode{};
+
+    roadmap.set_name("C++ Software Engineer");
+    subject.set_name("C++");
+    milestone.set_level(flashback::expertise_level::depth);
+    first_topic.set_name("Reflection");
+    first_topic.set_level(flashback::expertise_level::surface);
+    second_topic.set_name("Coroutine");
+    second_topic.set_level(flashback::expertise_level::surface);
+    third_topic.set_name("Modules");
+    third_topic.set_level(flashback::expertise_level::surface);
+    resource.set_name("Personal Knowledge");
+    resource.set_type(flashback::Resource::nerve);
+    resource.set_pattern(flashback::Resource::synapse);
+    section.set_name("First C++ Resource Chapter 1");
+    first_card.set_headline("First Card");
+    second_card.set_headline("Second Card");
+    third_card.set_headline("Third Card");
+
+    ASSERT_NO_THROW(roadmap = m_database->create_roadmap(m_user->id(), roadmap.name()));
+    ASSERT_THAT(roadmap.id(), Gt(0));
+    ASSERT_NO_THROW(subject = m_database->create_subject(subject.name()));
+    ASSERT_THAT(subject.id(), Gt(0));
+    ASSERT_NO_THROW(milestone = m_database->add_milestone(subject.id(), milestone.level(), roadmap.id()));
+    ASSERT_THAT(milestone.position(), Eq(1));
+    ASSERT_NO_THROW(first_topic = m_database->create_topic(subject.id(), first_topic.name(), first_topic.level(), 0));
+    ASSERT_THAT(first_topic.position(), Eq(1));
+    ASSERT_NO_THROW(second_topic = m_database->create_topic(subject.id(), second_topic.name(), second_topic.level(), 0));
+    ASSERT_THAT(second_topic.position(), Eq(2));
+    ASSERT_NO_THROW(third_topic = m_database->create_topic(subject.id(), third_topic.name(), third_topic.level(), 0));
+    ASSERT_THAT(third_topic.position(), Eq(3));
+    ASSERT_NO_THROW(resource = m_database->create_resource(resource));
+    ASSERT_THAT(resource.id(), Gt(0));
+    ASSERT_NO_THROW(m_database->add_resource_to_subject(resource.id(), subject.id()));
+    ASSERT_NO_THROW(section = m_database->create_section(resource.id(), 0, section.name(), section.link()));
+    ASSERT_THAT(section.position(), Eq(1));
+    ASSERT_NO_THROW(first_card = m_database->create_card(first_card));
+    ASSERT_THAT(first_card.id(), Gt(0));
+    ASSERT_NO_THROW(second_card = m_database->create_card(second_card));
+    ASSERT_THAT(second_card.id(), Gt(0));
+    ASSERT_NO_THROW(third_card = m_database->create_card(third_card));
+    ASSERT_THAT(third_card.id(), Gt(0));
+    ASSERT_NO_THROW(m_database->add_card_to_section(first_card.id(), resource.id(), section.position()));
+    ASSERT_NO_THROW(m_database->add_card_to_section(second_card.id(), resource.id(), section.position()));
+    ASSERT_NO_THROW(m_database->add_card_to_section(third_card.id(), resource.id(), section.position()));
+    ASSERT_NO_THROW(m_database->add_card_to_topic(first_card.id(), subject.id(), first_topic.position(), first_topic.level()));
+    ASSERT_NO_THROW(m_database->add_card_to_topic(second_card.id(), subject.id(), second_topic.position(), second_topic.level()));
+    ASSERT_NO_THROW(m_database->add_card_to_topic(third_card.id(), subject.id(), third_topic.position(), third_topic.level()));
+    ASSERT_NO_THROW(mode = m_database->get_practice_mode(m_user->id(), subject.id(), milestone.level()));
+    ASSERT_THAT(mode, Eq(flashback::practice_mode::aggressive));
+    ASSERT_NO_THROW(m_database->make_progress(m_user->id(), first_card.id(), 20, mode));
+    ASSERT_NO_THROW(m_database->make_progress(m_user->id(), second_card.id(), 20, mode));
+    ASSERT_NO_THROW(m_database->make_progress(m_user->id(), third_card.id(), 20, mode));
+    EXPECT_NO_THROW(m_database->create_assessment(subject.id(), first_topic.level(), first_topic.position(), first_card.id()));
+    EXPECT_NO_THROW(m_database->create_assessment(subject.id(), first_topic.level(), first_topic.position(), second_card.id()));
+    EXPECT_NO_THROW(m_database->create_assessment(subject.id(), third_topic.level(), third_topic.position(), third_card.id()));
+    std::vector<flashback::Coverage> coverage{};
+    EXPECT_NO_THROW(coverage = m_database->get_assessment_coverage(subject.id(), first_topic.position(), first_topic.level()));
+    EXPECT_THAT(coverage, SizeIs(2));
+    EXPECT_NO_THROW(coverage = m_database->get_assessment_coverage(subject.id(), second_topic.position(), second_topic.level()));
+    EXPECT_THAT(coverage, IsEmpty());
+    EXPECT_NO_THROW(coverage = m_database->get_assessment_coverage(subject.id(), third_topic.position(), third_topic.level()));
+    EXPECT_THAT(coverage, SizeIs(1));
+    std::map<uint64_t, flashback::Assimilation> assimilation_coverage{};
+    EXPECT_NO_THROW(assimilation_coverage = m_database->get_assimilation_coverage(m_user->id(), subject.id(), first_card.id()));
+    EXPECT_THAT(assimilation_coverage, SizeIs(1));
+    EXPECT_NO_THROW(assimilation_coverage = m_database->get_assimilation_coverage(m_user->id(), subject.id(), second_card.id()));
+    EXPECT_THAT(assimilation_coverage, SizeIs(1));
+    EXPECT_NO_THROW(assimilation_coverage = m_database->get_assimilation_coverage(m_user->id(), subject.id(), third_card.id()));
+    EXPECT_THAT(assimilation_coverage, SizeIs(1));
+    EXPECT_NO_THROW(m_database->expand_assessment(second_card.id(), subject.id(), second_topic.level(), second_topic.position()));
+    EXPECT_NO_THROW(assimilation_coverage = m_database->get_assimilation_coverage(m_user->id(), subject.id(), first_card.id()));
+    EXPECT_THAT(assimilation_coverage, SizeIs(1));
+    EXPECT_NO_THROW(assimilation_coverage = m_database->get_assimilation_coverage(m_user->id(), subject.id(), second_card.id()));
+    EXPECT_THAT(assimilation_coverage, SizeIs(2));
+    EXPECT_NO_THROW(assimilation_coverage = m_database->get_assimilation_coverage(m_user->id(), subject.id(), third_card.id()));
+    EXPECT_THAT(assimilation_coverage, SizeIs(1));
+    EXPECT_NO_THROW(m_database->expand_assessment(third_card.id(), subject.id(), first_topic.level(), first_topic.position()));
+    EXPECT_NO_THROW(m_database->expand_assessment(third_card.id(), subject.id(), second_topic.level(), second_topic.position()));
+    EXPECT_NO_THROW(assimilation_coverage = m_database->get_assimilation_coverage(m_user->id(), subject.id(), first_card.id()));
+    EXPECT_THAT(assimilation_coverage, SizeIs(1));
+    EXPECT_NO_THROW(assimilation_coverage = m_database->get_assimilation_coverage(m_user->id(), subject.id(), second_card.id()));
+    EXPECT_THAT(assimilation_coverage, SizeIs(2));
+    EXPECT_NO_THROW(assimilation_coverage = m_database->get_assimilation_coverage(m_user->id(), subject.id(), third_card.id()));
+    EXPECT_THAT(assimilation_coverage, SizeIs(3));
 }
 
 TEST_F(test_database, get_topic_assessments)
@@ -5887,12 +6342,85 @@ TEST_F(test_database, get_topic_assessments)
 
 TEST_F(test_database, get_assessments)
 {
+    flashback::Roadmap roadmap{};
+    flashback::Subject subject{};
+    flashback::Milestone milestone{};
+    flashback::Topic first_topic{};
+    flashback::Topic second_topic{};
+    flashback::Topic third_topic{};
+    flashback::Resource resource{};
+    flashback::Section section{};
+    flashback::Card first_card{};
+    flashback::Card second_card{};
+    flashback::Card third_card{};
+    flashback::practice_mode mode{};
+
+    roadmap.set_name("C++ Software Engineer");
+    subject.set_name("C++");
+    milestone.set_level(flashback::expertise_level::depth);
+    first_topic.set_name("Reflection");
+    first_topic.set_level(flashback::expertise_level::surface);
+    second_topic.set_name("Coroutine");
+    second_topic.set_level(flashback::expertise_level::surface);
+    third_topic.set_name("Modules");
+    third_topic.set_level(flashback::expertise_level::surface);
+    resource.set_name("Personal Knowledge");
+    resource.set_type(flashback::Resource::nerve);
+    resource.set_pattern(flashback::Resource::synapse);
+    section.set_name("First C++ Resource Chapter 1");
+    first_card.set_headline("First Card");
+    second_card.set_headline("Second Card");
+    third_card.set_headline("Third Card");
+
+    ASSERT_NO_THROW(roadmap = m_database->create_roadmap(m_user->id(), roadmap.name()));
+    ASSERT_THAT(roadmap.id(), Gt(0));
+    ASSERT_NO_THROW(subject = m_database->create_subject(subject.name()));
+    ASSERT_THAT(subject.id(), Gt(0));
+    ASSERT_NO_THROW(milestone = m_database->add_milestone(subject.id(), milestone.level(), roadmap.id()));
+    ASSERT_THAT(milestone.position(), Eq(1));
+    ASSERT_NO_THROW(first_topic = m_database->create_topic(subject.id(), first_topic.name(), first_topic.level(), 0));
+    ASSERT_THAT(first_topic.position(), Eq(1));
+    ASSERT_NO_THROW(second_topic = m_database->create_topic(subject.id(), second_topic.name(), second_topic.level(), 0));
+    ASSERT_THAT(second_topic.position(), Eq(2));
+    ASSERT_NO_THROW(third_topic = m_database->create_topic(subject.id(), third_topic.name(), third_topic.level(), 0));
+    ASSERT_THAT(third_topic.position(), Eq(3));
+    ASSERT_NO_THROW(resource = m_database->create_resource(resource));
+    ASSERT_THAT(resource.id(), Gt(0));
+    ASSERT_NO_THROW(m_database->add_resource_to_subject(resource.id(), subject.id()));
+    ASSERT_NO_THROW(section = m_database->create_section(resource.id(), 0, section.name(), section.link()));
+    ASSERT_THAT(section.position(), Eq(1));
+    ASSERT_NO_THROW(first_card = m_database->create_card(first_card));
+    ASSERT_THAT(first_card.id(), Gt(0));
+    ASSERT_NO_THROW(second_card = m_database->create_card(second_card));
+    ASSERT_THAT(second_card.id(), Gt(0));
+    ASSERT_NO_THROW(third_card = m_database->create_card(third_card));
+    ASSERT_THAT(third_card.id(), Gt(0));
+    ASSERT_NO_THROW(m_database->add_card_to_section(first_card.id(), resource.id(), section.position()));
+    ASSERT_NO_THROW(m_database->add_card_to_section(second_card.id(), resource.id(), section.position()));
+    ASSERT_NO_THROW(m_database->add_card_to_section(third_card.id(), resource.id(), section.position()));
+    ASSERT_NO_THROW(m_database->add_card_to_topic(first_card.id(), subject.id(), first_topic.position(), first_topic.level()));
+    ASSERT_NO_THROW(m_database->add_card_to_topic(second_card.id(), subject.id(), second_topic.position(), second_topic.level()));
+    ASSERT_NO_THROW(m_database->add_card_to_topic(third_card.id(), subject.id(), third_topic.position(), third_topic.level()));
+    ASSERT_NO_THROW(mode = m_database->get_practice_mode(m_user->id(), subject.id(), milestone.level()));
+    ASSERT_THAT(mode, Eq(flashback::practice_mode::aggressive));
+    ASSERT_NO_THROW(m_database->make_progress(m_user->id(), first_card.id(), 20, mode));
+    ASSERT_NO_THROW(m_database->make_progress(m_user->id(), second_card.id(), 20, mode));
+    ASSERT_NO_THROW(m_database->make_progress(m_user->id(), third_card.id(), 20, mode));
+    EXPECT_NO_THROW(m_database->create_assessment(subject.id(), first_topic.level(), first_topic.position(), first_card.id()));
+    EXPECT_NO_THROW(m_database->create_assessment(subject.id(), first_topic.level(), first_topic.position(), second_card.id()));
+    std::vector<flashback::Card> assessments{};
+    EXPECT_NO_THROW(assessments = m_database->get_assessments(m_user->id(), subject.id(), first_topic.position()));
+    EXPECT_THAT(assessments, SizeIs(1));
+    EXPECT_NO_THROW(assessments = m_database->get_assessments(m_user->id(), subject.id(), second_topic.position()));
+    EXPECT_THAT(assessments, SizeIs(1));
+    EXPECT_NO_THROW(assessments = m_database->get_assessments(m_user->id(), subject.id(), third_topic.position()));
+    EXPECT_THAT(assessments, SizeIs(1));
 }
 
-TEST_F(test_database, expand_assessment)
+TEST_F(test_database, get_variations)
 {
 }
 
-TEST_F(test_database, diminish_assessment)
+TEST_F(test_database, is_absolute)
 {
 }

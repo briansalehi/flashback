@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict XqNBYEOwUBHyW0KhYDwGg1T1reZxqMQku4LyB7lqZ78Dk0i2YQVV3uR0JUWVWUt
+\restrict 1hxSr7JJngXKYoaWszvHEQkyNntjGo1cOPCuKd7yiHwod1Mo5JWWpvqwe3HZ0A2
 
 -- Dumped from database version 18.1
 -- Dumped by pg_dump version 18.0
@@ -480,16 +480,16 @@ ALTER FUNCTION flashback.clone_roadmap(user_id integer, roadmap_id integer) OWNE
 -- Name: create_assessment(integer, flashback.expertise_level, integer, integer); Type: PROCEDURE; Schema: flashback; Owner: flashback
 --
 
-CREATE PROCEDURE flashback.create_assessment(IN subject_id integer, IN subject_level flashback.expertise_level, IN topic_position integer, IN card_id integer)
+CREATE PROCEDURE flashback.create_assessment(IN subject_id integer, IN topic_level flashback.expertise_level, IN topic_position integer, IN card_id integer)
     LANGUAGE plpgsql
     AS $$
 begin
-    insert into assessments (subject, level, topic, card) values (subject_id, subject_level, topic_position, card_id);
+    insert into assessments (subject, level, topic, card) values (subject_id, topic_level, topic_position, card_id);
 end;
 $$;
 
 
-ALTER PROCEDURE flashback.create_assessment(IN subject_id integer, IN subject_level flashback.expertise_level, IN topic_position integer, IN card_id integer) OWNER TO flashback;
+ALTER PROCEDURE flashback.create_assessment(IN subject_id integer, IN topic_level flashback.expertise_level, IN topic_position integer, IN card_id integer) OWNER TO flashback;
 
 --
 -- Name: create_block(integer, flashback.content_type, character varying, text, character varying); Type: FUNCTION; Schema: flashback; Owner: flashback
@@ -800,6 +800,21 @@ $$;
 ALTER FUNCTION flashback.create_user(name character varying, email character varying, hash character varying) OWNER TO flashback;
 
 --
+-- Name: diminish_assessment(integer, integer, flashback.expertise_level, integer); Type: PROCEDURE; Schema: flashback; Owner: flashback
+--
+
+CREATE PROCEDURE flashback.diminish_assessment(IN card_id integer, IN subject_id integer, IN topic_level flashback.expertise_level, IN topic_position integer)
+    LANGUAGE plpgsql
+    AS $$
+begin
+    delete from assessments where subject = subject_id and level = topic_level and topic = topic_position and card = card_id;
+end;
+$$;
+
+
+ALTER PROCEDURE flashback.diminish_assessment(IN card_id integer, IN subject_id integer, IN topic_level flashback.expertise_level, IN topic_position integer) OWNER TO flashback;
+
+--
 -- Name: drop_presenter(integer, integer); Type: PROCEDURE; Schema: flashback; Owner: flashback
 --
 
@@ -1018,23 +1033,39 @@ end; $$;
 ALTER FUNCTION flashback.estimate_read_time(card_id integer) OWNER TO flashback;
 
 --
+-- Name: expand_assessment(integer, integer, flashback.expertise_level, integer); Type: PROCEDURE; Schema: flashback; Owner: flashback
+--
+
+CREATE PROCEDURE flashback.expand_assessment(IN card_id integer, IN subject_id integer, IN topic_level flashback.expertise_level, IN topic_position integer)
+    LANGUAGE plpgsql
+    AS $$
+begin
+    insert into assessments (subject, level, topic, card) values (subject_id, topic_level, topic_position, card_id);
+end;
+$$;
+
+
+ALTER PROCEDURE flashback.expand_assessment(IN card_id integer, IN subject_id integer, IN topic_level flashback.expertise_level, IN topic_position integer) OWNER TO flashback;
+
+--
 -- Name: get_assessment_coverage(integer, integer, flashback.expertise_level); Type: FUNCTION; Schema: flashback; Owner: flashback
 --
 
-CREATE FUNCTION flashback.get_assessment_coverage(subject_id integer, topic_position integer, max_level flashback.expertise_level) RETURNS TABLE(card integer, coverage bigint)
+CREATE FUNCTION flashback.get_assessment_coverage(subject_id integer, topic_position integer, max_level flashback.expertise_level) RETURNS TABLE(id integer, state flashback.card_state, headline flashback.citext, coverage bigint)
     LANGUAGE plpgsql
     AS $$
 begin
     return query
-    select a.card, count(a.topic)
+    select c.id, c.state, c.headline, count(a.topic)
     from assessments a
+    join cards c on c.id = a.card
     where a.card in (
         select aa.card
         from assessments aa
         where aa.subject = subject_id
         and aa.topic = topic_position
         and aa.level <= max_level::expertise_level
-    ) group by a.card;
+    ) group by c.id, c.state, c.headline;
 end;
 $$;
 
@@ -1065,23 +1096,25 @@ end; $$;
 ALTER FUNCTION flashback.get_assessments(user_id integer, subject_id integer, topic_position integer) OWNER TO flashback;
 
 --
--- Name: get_assimilation_coverage(integer, integer); Type: FUNCTION; Schema: flashback; Owner: flashback
+-- Name: get_assimilation_coverage(integer, integer, integer); Type: FUNCTION; Schema: flashback; Owner: flashback
 --
 
-CREATE FUNCTION flashback.get_assimilation_coverage(user_id integer, assessment_id integer) RETURNS TABLE(subject integer, topic integer, level flashback.expertise_level, assimilated boolean)
+CREATE FUNCTION flashback.get_assimilation_coverage(user_id integer, subject_id integer, assessment_id integer) RETURNS TABLE("position" integer, level flashback.expertise_level, name flashback.citext, assimilated boolean)
     LANGUAGE plpgsql
     AS $$
+declare longest_acceptable_inactivity timestamp = now() - '10 days'::interval;
 begin
     return query
-    select tc.subject, tc.topic, tc.level, bool_and(coalesce(p.progression, 0) >= 3) as assimilated
-    from get_topic_coverage(assessment_id) tc
-    join topic_cards tc on tc.subject = tc.subject and tc.topic = tc.topic and tc.level = tc.level
-    left join progress p on p.user = user_id and p.card = tc.card and p.last_practice > now() - '10 days'::interval
-    group by tc.subject, tc.topic, tc.level;
+    select i.position, i.level, i.name, bool_and(coalesce(p.progression, 0) >= 3) as assimilated
+    from get_topic_coverage(subject_id, assessment_id) c
+    join topic_cards t on t.subject = subject_id and c.level = t.level and c.position = t.topic
+    join topics i on i.subject = t.subject and i.level = t.level and i.position = t.topic
+    left join progress p on p."user" = user_id and p.card = t.card and p.last_practice > longest_acceptable_inactivity
+    group by t.subject, i.position, i.level, i.name;
 end; $$;
 
 
-ALTER FUNCTION flashback.get_assimilation_coverage(user_id integer, assessment_id integer) OWNER TO flashback;
+ALTER FUNCTION flashback.get_assimilation_coverage(user_id integer, subject_id integer, assessment_id integer) OWNER TO flashback;
 
 --
 -- Name: get_blocks(integer); Type: FUNCTION; Schema: flashback; Owner: flashback
@@ -1531,22 +1564,23 @@ $$;
 ALTER FUNCTION flashback.get_topic_cards(subject_id integer, topic_position integer, topic_level flashback.expertise_level) OWNER TO flashback;
 
 --
--- Name: get_topic_coverage(integer); Type: FUNCTION; Schema: flashback; Owner: flashback
+-- Name: get_topic_coverage(integer, integer); Type: FUNCTION; Schema: flashback; Owner: flashback
 --
 
-CREATE FUNCTION flashback.get_topic_coverage(assessment_id integer) RETURNS TABLE(subject integer, topic integer, level flashback.expertise_level)
+CREATE FUNCTION flashback.get_topic_coverage(subject_id integer, assessment_id integer) RETURNS TABLE("position" integer, level flashback.expertise_level, name flashback.citext)
     LANGUAGE plpgsql
     AS $$
 begin
     return query
-    select a.subject, a.topic, a.level
+    select t.position, t.level, t.name
     from assessments a
-    where a.card = assessment_id;
+    join topics t on t.subject = a.subject and t.level = a.level and t.position = a.topic
+    where a.subject = subject_id and a.card = assessment_id;
 end;
 $$;
 
 
-ALTER FUNCTION flashback.get_topic_coverage(assessment_id integer) OWNER TO flashback;
+ALTER FUNCTION flashback.get_topic_coverage(subject_id integer, assessment_id integer) OWNER TO flashback;
 
 --
 -- Name: get_topics(integer, flashback.expertise_level); Type: FUNCTION; Schema: flashback; Owner: flashback
@@ -32607,5 +32641,5 @@ GRANT ALL ON SCHEMA public TO flashback_client;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict XqNBYEOwUBHyW0KhYDwGg1T1reZxqMQku4LyB7lqZ78Dk0i2YQVV3uR0JUWVWUt
+\unrestrict 1hxSr7JJngXKYoaWszvHEQkyNntjGo1cOPCuKd7yiHwod1Mo5JWWpvqwe3HZ0A2
 

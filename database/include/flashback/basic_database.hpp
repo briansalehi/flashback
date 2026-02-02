@@ -159,16 +159,16 @@ public:
     virtual void mark_card_as_approved(uint64_t card_id) const = 0;
     virtual void mark_card_as_released(uint64_t card_id) const = 0;
     [[nodiscard]] virtual std::vector<Weight> get_progress_weight(uint64_t user_id) const = 0;
-    virtual std::vector<Card> get_variations(uint64_t card_id) const = 0;
-    virtual bool is_absolute(uint64_t card_id) const = 0;
+    [[nodiscard]] virtual std::vector<Card> get_variations(uint64_t card_id) const = 0;
+    [[nodiscard]] virtual bool is_absolute(uint64_t card_id) const = 0;
 
     // assessments
     virtual void create_assessment(uint64_t subject_id, expertise_level level, uint64_t topic_position, uint64_t card_id) const = 0;
-    virtual void get_topic_coverage(uint64_t assessment_id) const = 0;
-    virtual void get_assessment_coverage(uint64_t subject_id, uint64_t topic_position, expertise_level max_level) const = 0;
-    virtual void get_assimilation_coverage(uint64_t user_id, uint64_t assessment_id) const = 0;
-    virtual std::vector<Card> get_topic_assessments(uint64_t user_id, uint64_t subject_id, uint64_t topic_position, expertise_level max_level) const = 0;
-    virtual std::vector<Card> get_assessments(uint64_t user_id, uint64_t subject_id, uint64_t topic_position) const = 0;
+    [[nodiscard]] virtual std::vector<Topic> get_topic_coverage(uint64_t subject_id, uint64_t assessment_id) const = 0;
+    [[nodiscard]] virtual std::vector<Coverage> get_assessment_coverage(uint64_t subject_id, uint64_t topic_position, expertise_level max_level) const = 0;
+    virtual std::map<uint64_t, Assimilation> get_assimilation_coverage(uint64_t user_id, uint64_t subject_id, uint64_t assessment_id) const = 0;
+    [[nodiscard]] virtual std::vector<Card> get_topic_assessments(uint64_t user_id, uint64_t subject_id, uint64_t topic_position, expertise_level max_level) const = 0;
+    [[nodiscard]] virtual std::vector<Card> get_assessments(uint64_t user_id, uint64_t subject_id, uint64_t topic_position) const = 0;
     virtual void expand_assessment(uint64_t assessment_id, uint64_t subject_id, expertise_level level, uint64_t topic_position) const = 0;
     virtual void diminish_assessment(uint64_t assessment_id, uint64_t subject_id, expertise_level level, uint64_t topic_position) const = 0;
 
