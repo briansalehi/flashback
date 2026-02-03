@@ -167,6 +167,7 @@ public:
     [[nodiscard]] std::map<uint64_t, Assimilation> get_assimilation_coverage(uint64_t user_id, uint64_t subject_id, uint64_t assessment_id) const override;
     [[nodiscard]] std::vector<Card> get_topic_assessments(uint64_t user_id, uint64_t subject_id, uint64_t topic_position, expertise_level max_level) const override;
     [[nodiscard]] std::vector<Assessment> get_assessments(uint64_t user_id, uint64_t subject_id, expertise_level topic_level, uint64_t topic_position) const override;
+    [[nodiscard]] bool is_assimilated(uint64_t user_id, uint64_t subject_id, expertise_level topic_level, uint64_t topic_position) const override;
 
 private:
     template <typename... Args>

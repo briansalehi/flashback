@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict fSkeKpVLFAc73n4MqZJS6JxtvaSD7KRvgxGUgWaxRPeDdLvNglHQSmw8HbnrT2a
+\restrict f4Q4LZvfnTtOyDhbtDmZEnVPWpqhL8FpcRcByMzHwytIzQBqSfv4i7RNxfxhjAd
 
 -- Dumped from database version 18.1
 -- Dumped by pg_dump version 18.0
@@ -1723,6 +1723,28 @@ end; $$;
 
 
 ALTER FUNCTION flashback.get_user_cognitive_level(user_id integer, roadmap_id integer, subject_id integer) OWNER TO flashback;
+
+--
+-- Name: is_assimilated(integer, integer, flashback.expertise_level, integer); Type: FUNCTION; Schema: flashback; Owner: flashback
+--
+
+CREATE FUNCTION flashback.is_assimilated(user_id integer, subject_id integer, topic_level flashback.expertise_level, topic_position integer) RETURNS boolean
+    LANGUAGE plpgsql
+    AS $$
+declare longest_acceptable_inactivity timestamp = now() - '10 days'::interval;
+declare assimilated bool;
+begin
+    select bool_and(coalesce(p.progression, 0) >= 3) into assimilated
+    from topic_cards t
+    left join progress p on p."user" = user_id and p.card = t.card and p.last_practice > longest_acceptable_inactivity
+    where t.subject = subject_id and t.level = topic_level and t.topic = topic_position
+    group by t.subject, t.level, t.topic;
+
+    return assimilated;
+end; $$;
+
+
+ALTER FUNCTION flashback.is_assimilated(user_id integer, subject_id integer, topic_level flashback.expertise_level, topic_position integer) OWNER TO flashback;
 
 --
 -- Name: is_subject_relevant(integer, integer); Type: FUNCTION; Schema: flashback; Owner: flashback
@@ -4543,5 +4565,5 @@ GRANT ALL ON SCHEMA public TO flashback_client;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict fSkeKpVLFAc73n4MqZJS6JxtvaSD7KRvgxGUgWaxRPeDdLvNglHQSmw8HbnrT2a
+\unrestrict f4Q4LZvfnTtOyDhbtDmZEnVPWpqhL8FpcRcByMzHwytIzQBqSfv4i7RNxfxhjAd
 

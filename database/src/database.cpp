@@ -1332,6 +1332,17 @@ std::vector<Assessment> database::get_assessments(uint64_t const user_id, uint64
     return assessments;
 }
 
+bool database::is_assimilated(uint64_t user_id, uint64_t subject_id, expertise_level topic_level, uint64_t topic_position) const
+{
+    bool assimilated{};
+    pqxx::result const result{query("select is_assimilated($1, $2, $3, $4) as assimilated", user_id, subject_id, level_to_string(topic_level), topic_position)};
+    if (result.size() == 1)
+    {
+        assimilated = result.at(0).at("assimilated").as<bool>();
+    }
+    return assimilated;
+}
+
 void database::expand_assessment(uint64_t const assessment_id, uint64_t const subject_id, expertise_level const level, uint64_t const topic_position) const
 {
     exec("call expand_assessment($1, $2, $3, $4)", assessment_id, subject_id, level_to_string(level), topic_position);

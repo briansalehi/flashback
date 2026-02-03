@@ -171,6 +171,7 @@ public:
     [[nodiscard]] virtual std::map<uint64_t, Assimilation> get_assimilation_coverage(uint64_t user_id, uint64_t subject_id, uint64_t assessment_id) const = 0;
     [[nodiscard]] virtual std::vector<Card> get_topic_assessments(uint64_t user_id, uint64_t subject_id, uint64_t topic_position, expertise_level max_level) const = 0;
     [[nodiscard]] virtual std::vector<Assessment> get_assessments(uint64_t user_id, uint64_t subject_id, expertise_level topic_level, uint64_t topic_position) const = 0;
+    [[nodiscard]] virtual bool is_assimilated(uint64_t user_id, uint64_t subject_id, expertise_level topic_level, uint64_t topic_position) const = 0;
 
     // nerves
     [[nodiscard]] virtual Resource create_nerve(uint64_t user_id, std::string resource_name, uint64_t subject_id, uint64_t expiration) const = 0;
