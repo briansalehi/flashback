@@ -832,6 +832,51 @@ grpc::Status server::MergeSubjects(grpc::ServerContext* context, MergeSubjectsRe
     return grpc::Status::OK;
 }
 
+grpc::Status server::GetResources(grpc::ServerContext* context, GetResourcesRequest const* request, GetResourcesResponse* response)
+{
+    try
+    {
+        if (!request->has_user() || !session_is_valid(request->user()))
+        {
+            response->set_success(false);
+            response->set_details("invalid user");
+            response->set_code(3);
+        }
+        else if (request->subject().id() == 0)
+        {
+            response->set_success(false);
+            response->set_details("invalid subject");
+            response->set_code(4);
+        }
+        else
+        {
+            for (Resource const& r: m_database->get_resources(request->user().id(), request->subject().id()))
+            {
+                Resource* resource = response->add_resources();
+                *resource = r;
+            }
+            response->set_success(true);
+            response->clear_details();
+            response->set_code(0);
+        }
+    }
+    catch (client_exception const& exp)
+    {
+        response->set_success(false);
+        response->set_details(exp.what());
+        response->set_code(1);
+    }
+    catch (std::exception const& exp)
+    {
+        response->set_success(false);
+        response->set_details("internal error");
+        response->set_code(2);
+        std::cerr << std::format("Server: {}", exp.what());
+    }
+
+    return grpc::Status::OK;
+}
+
 std::string server::calculate_hash(std::string_view password)
 {
     char buffer[crypto_pwhash_STRBYTES];

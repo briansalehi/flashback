@@ -52,7 +52,7 @@ public:
     grpc::Status MergeSubjects(grpc::ServerContext* context, MergeSubjectsRequest const* request, MergeSubjectsResponse* response) override;
 
     // resource page
-    // GetResources
+    grpc::Status GetResources(grpc::ServerContext* context, GetResourcesRequest const* request, GetResourcesResponse* response) override;
     // CreateResource
     // AddResourceToSubject
     // DropResourceFromSubject

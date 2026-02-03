@@ -11,6 +11,16 @@
 #include <flashback/exception.hpp>
 #include <flashback/server.hpp>
 
+using testing::A;
+using testing::An;
+using testing::Return;
+using testing::Eq;
+using testing::Ne;
+using testing::IsEmpty;
+using testing::SizeIs;
+using testing::IsTrue;
+using testing::IsFalse;
+
 class test_server: public testing::Test
 {
 public:
@@ -1075,10 +1085,6 @@ TEST_F(test_server, RemoveSubject)
 
 TEST_F(test_server, MergeSubjects)
 {
-    using testing::A;
-    using testing::An;
-    using testing::Return;
-
     auto user{std::make_unique<flashback::User>(*m_user)};
     auto source_subject{std::make_unique<flashback::Subject>()};
     auto target_subject{std::make_unique<flashback::Subject>()};
@@ -1121,4 +1127,10 @@ TEST_F(test_server, MergeSubjects)
     EXPECT_TRUE(response.success()) << "Request to merge two valid subjects should work";
     EXPECT_TRUE(response.details().empty());
     EXPECT_EQ(response.code(), 0);
+}
+
+TEST_F(test_server, GetResources)
+{
+    EXPECT_CALL(*m_mock_database, get_user(A<std::string_view>(), A<std::string_view>())).Times(1).WillOnce(Return(std::make_unique<flashback::User>(*m_user)));
+    EXPECT_CALL(*m_mock_database, get_resources(A<uint64_t>(), A<uint64_t>())).Times(1);
 }
