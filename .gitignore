@@ -1,12 +1,18 @@
-*build*/
-.idea/
-CMakeUserPresets.txt
 *.user
-*.keystore
 *.zip
 *.rpm
 *.deb
 *.tar
+<<<<<<< Updated upstream
 *.js
 _CPack_Packages/
 node_modules
+=======
+*.lock
+*.keystore
+*build*/
+.idea/
+_CPack_Packages/
+node_modules/
+CMakeUserPresets.txt
+>>>>>>> Stashed changes
