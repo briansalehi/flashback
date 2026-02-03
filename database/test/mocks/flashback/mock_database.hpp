@@ -154,7 +154,7 @@ public:
     MOCK_METHOD((std::vector<Coverage>), get_assessment_coverage, (uint64_t, uint64_t, expertise_level), (const, override));
     MOCK_METHOD((std::map<uint64_t, Assimilation>), get_assimilation_coverage, (uint64_t, uint64_t, uint64_t), (const, override));
     MOCK_METHOD(std::vector<Card>, get_topic_assessments, (uint64_t, uint64_t, uint64_t, expertise_level), (const, override));
-    MOCK_METHOD(std::vector<Card>, get_assessments, (uint64_t, uint64_t, expertise_level, uint64_t), (const, override));
+    MOCK_METHOD(std::vector<Assessment>, get_assessments, (uint64_t, uint64_t, expertise_level, uint64_t), (const, override));
     MOCK_METHOD(void, expand_assessment, (uint64_t, uint64_t, expertise_level, uint64_t), (const, override));
     MOCK_METHOD(void, diminish_assessment, (uint64_t, uint64_t, expertise_level, uint64_t), (const, override));
     MOCK_METHOD(bool, is_assimilated, (uint64_t, uint64_t, expertise_level, uint64_t), (const, override));
