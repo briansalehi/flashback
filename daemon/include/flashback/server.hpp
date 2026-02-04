@@ -53,8 +53,8 @@ public:
 
     // resource page
     grpc::Status GetResources(grpc::ServerContext* context, GetResourcesRequest const* request, GetResourcesResponse* response) override;
-    // CreateResource
-    // AddResourceToSubject
+    grpc::Status CreateResource(grpc::ServerContext* context, CreateResourceRequest const* request, CreateResourceResponse* response) override;
+    grpc::Status AddResourceToSubject(grpc::ServerContext* context, AddResourceToSubjectRequest const* request, AddResourceToSubjectResponse* response) override;
     // DropResourceFromSubject
     // SearchResources
     // MergeResources

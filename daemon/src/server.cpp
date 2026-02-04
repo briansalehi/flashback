@@ -77,8 +77,7 @@ grpc::Status server::SignUp(grpc::ServerContext* context, const SignUpRequest* r
 {
     try
     {
-        if (!request->has_user() || request->user().name().empty() || request->user().email().empty() || request->user().device().empty() || request->user().password().
-            empty())
+        if (!request->has_user() || request->user().name().empty() || request->user().email().empty() || request->user().device().empty() || request->user().password().empty())
         {
             throw client_exception("incomplete credentials");
         }
@@ -135,8 +134,7 @@ grpc::Status server::ResetPassword(grpc::ServerContext* context, ResetPasswordRe
 {
     try
     {
-        if (request->has_user() && (request->user().id() == 0 || request->user().email().empty() || request->user().password().empty() || request->user().device().
-            empty()))
+        if (request->has_user() && (request->user().id() == 0 || request->user().email().empty() || request->user().password().empty() || request->user().device().empty()))
         {
             throw client_exception("incomplete credentials");
         }
@@ -855,6 +853,95 @@ grpc::Status server::GetResources(grpc::ServerContext* context, GetResourcesRequ
                 Resource* resource = response->add_resources();
                 *resource = r;
             }
+            response->set_success(true);
+            response->clear_details();
+            response->set_code(0);
+        }
+    }
+    catch (client_exception const& exp)
+    {
+        response->set_success(false);
+        response->set_details(exp.what());
+        response->set_code(1);
+    }
+    catch (std::exception const& exp)
+    {
+        response->set_success(false);
+        response->set_details("internal error");
+        response->set_code(2);
+        std::cerr << std::format("Server: {}", exp.what());
+    }
+
+    return grpc::Status::OK;
+}
+
+grpc::Status server::CreateResource(grpc::ServerContext* context, CreateResourceRequest const* request, CreateResourceResponse* response)
+{
+    try
+    {
+        if (!request->has_user() || !session_is_valid(request->user()))
+        {
+            response->set_success(false);
+            response->set_details("invalid user");
+            response->set_code(3);
+        }
+        else if (request->resource().id() != 0)
+        {
+            response->set_success(false);
+            response->set_details("resource already has an identifier");
+            response->set_code(4);
+        }
+        else
+        {
+            auto resource{std::make_unique<Resource>(m_database->create_resource(request->resource()))};
+            response->set_success(true);
+            response->clear_details();
+            response->set_code(0);
+            response->set_allocated_resource(resource.release());
+        }
+    }
+    catch (client_exception const& exp)
+    {
+        response->set_success(false);
+        response->set_details(exp.what());
+        response->set_code(1);
+    }
+    catch (std::exception const& exp)
+    {
+        response->set_success(false);
+        response->set_details("internal error");
+        response->set_code(2);
+        std::cerr << std::format("Server: {}", exp.what());
+    }
+
+    return grpc::Status::OK;
+}
+
+grpc::Status server::AddResourceToSubject(grpc::ServerContext* context, AddResourceToSubjectRequest const* request, AddResourceToSubjectResponse* response)
+{
+    try
+    {
+        if (!request->has_user() || !session_is_valid(request->user()))
+        {
+            response->set_success(false);
+            response->set_details("invalid user");
+            response->set_code(3);
+        }
+        else if (request->resource().id() == 0)
+        {
+            response->set_success(false);
+            response->set_details("invalid resource");
+            response->set_code(4);
+        }
+        else if (request->subject().id() == 0)
+        {
+            response->set_success(false);
+            response->set_details("invalid subject");
+            response->set_code(4);
+        }
+        else
+        {
+            m_database->add_resource_to_subject(request->resource().id(), request->subject().id());
             response->set_success(true);
             response->clear_details();
             response->set_code(0);

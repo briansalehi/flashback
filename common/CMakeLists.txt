@@ -78,7 +78,7 @@ add_custom_command(
     COMMENT "Generating grpc sources"
 )
 
-add_library(common STATIC)
+add_library(common STATIC ${source_files})
 target_sources(common PUBLIC ${source_files} ${server_sources})
 target_sources(common PUBLIC
     FILE_SET HEADERS BASE_DIRS ${CMAKE_CURRENT_BINARY_DIR} FILES ${server_headers}

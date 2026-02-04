@@ -43,10 +43,10 @@ service Server {
     //rpc GetSubjectWeight(GetSubjectWeightRequest) returns (GetSubjectWeightResponse);
 
     // subject page resource view
-    //rpc CreateResource(CreateResourceRequest) returns (CreateResourceResponse);
-    //rpc GetResources(GetResourcesRequest) returns (GetResourcesResponse);
+    rpc CreateResource(CreateResourceRequest) returns (CreateResourceResponse);
+    rpc GetResources(GetResourcesRequest) returns (GetResourcesResponse);
     //rpc SearchResources(SearchResourcesRequest) returns (SearchResourcesResposne);
-    //rpc AddResourceToSubject(AddResourceToSubjectRequest) returns (AddResourceToSubjectResponse);
+    rpc AddResourceToSubject(AddResourceToSubjectRequest) returns (AddResourceToSubjectResponse);
     //rpc DropResourceFromSubject(DropResourceFromSubjectRequest) returns (DropResourceFromSubjectResponse);
     //rpc MergeResources(MergeResourcesRequest) returns (MergeResourcesResponse);
 

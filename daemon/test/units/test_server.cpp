@@ -8,7 +8,6 @@
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 #include <flashback/mock_database.hpp>
-#include <flashback/exception.hpp>
 #include <flashback/server.hpp>
 
 using testing::A;
@@ -20,6 +19,7 @@ using testing::IsEmpty;
 using testing::SizeIs;
 using testing::IsTrue;
 using testing::IsFalse;
+using testing::ContainerEq;
 
 class test_server: public testing::Test
 {
@@ -369,8 +369,7 @@ TEST_F(test_server, CreateRoadmap)
     EXPECT_CALL(*m_mock_database, create_roadmap(m_user->id(), roadmap_name)).Times(1).WillOnce(testing::Return(expected_roadmap));
     EXPECT_CALL(*m_mock_database, create_roadmap(m_user->id(), name_with_quotes)).Times(1).WillOnce(testing::Return(quoted_roadmap));
     EXPECT_CALL(*m_mock_database, get_user(m_user->token(), m_user->device())).Times(4).WillOnce(testing::Return(nullptr)).WillOnce(
-        testing::Return(std::make_unique<flashback::User>(*m_user))).WillOnce(testing::Return(nullptr)).WillOnce(
-        testing::Return(std::make_unique<flashback::User>(*m_user)));
+        testing::Return(std::make_unique<flashback::User>(*m_user))).WillOnce(testing::Return(nullptr)).WillOnce(testing::Return(std::make_unique<flashback::User>(*m_user)));
 
     request->set_name(roadmap_name);
     EXPECT_NO_THROW(status = m_server->CreateRoadmap(m_server_context.get(), request.get(), response.get()));
@@ -413,8 +412,7 @@ TEST_F(test_server, GetRoadmaps)
     auto const roadmap{std::make_unique<flashback::Roadmap>()};
 
     EXPECT_CALL(*m_mock_database, get_user(testing::A<std::string_view>(), testing::A<std::string_view>())).Times(2).WillOnce(
-        testing::Return(std::make_unique<flashback::User>(*database_retrieved_user))).WillOnce(
-        testing::Return(std::make_unique<flashback::User>(*database_retrieved_user)));
+        testing::Return(std::make_unique<flashback::User>(*database_retrieved_user))).WillOnce(testing::Return(std::make_unique<flashback::User>(*database_retrieved_user)));
     EXPECT_CALL(*m_mock_database, get_roadmaps(testing::A<uint64_t>())).Times(1).WillOnce(testing::Return(std::vector<flashback::Roadmap>{}));
 
     EXPECT_FALSE(request->has_user());
@@ -606,7 +604,8 @@ TEST_F(test_server, SearchSubjects)
     {
         uint64_t const position{match.position()};
         flashback::Subject const& subject{match.subject()};
-        auto const& iter = std::ranges::find_if(database_subjects, [&match](std::pair<uint64_t, flashback::Subject> const& e) {
+        auto const& iter = std::ranges::find_if(database_subjects, [&match](std::pair<uint64_t, flashback::Subject> const& e)
+        {
             return match.position() == e.first && match.subject().id() == e.second.id() && match.subject().name() == e.second.name();
         });
         EXPECT_NE(iter, database_subjects.cend());
@@ -718,7 +717,8 @@ TEST_F(test_server, GetMilestones)
     for (auto const& m: std::vector<std::tuple<uint64_t, uint64_t, flashback::expertise_level, std::string>>{
              {1, 10, flashback::expertise_level::surface, "eBPF"},
              {2, 20, flashback::expertise_level::depth, "C++"},
-             {3, 30, flashback::expertise_level::surface, "Rust"}})
+             {3, 30, flashback::expertise_level::surface, "Rust"}
+         })
     {
         flashback::Milestone milestone{};
         milestone.set_id(std::get<0>(m));
@@ -742,7 +742,8 @@ TEST_F(test_server, GetMilestones)
 
     for (auto const& milestone: response.milestones())
     {
-        auto const& iter = std::ranges::find_if(database_provided_milestones, [&milestone](flashback::Milestone const& m) {
+        auto const& iter = std::ranges::find_if(database_provided_milestones, [&milestone](flashback::Milestone const& m)
+        {
             return m.id() == milestone.id() && m.position() == milestone.position() && m.level() == milestone.level() && m.name() == milestone.name();
         });
         EXPECT_NE(iter, database_provided_milestones.cend());
@@ -822,10 +823,10 @@ TEST_F(test_server, GetRequirements)
         required_milestones.push_back(required_milestone);
     }
 
-    EXPECT_CALL(*m_mock_database, get_user(A<std::string_view>(), A<std::string_view>())).Times(2).WillOnce(Return(std::move(std::make_unique<flashback::User>(*m_user))))
-.WillOnce(Return(std::move(std::make_unique<flashback::User>(*m_user))));
-    EXPECT_CALL(*m_mock_database, get_requirements(A<uint64_t>(), A<uint64_t>(), An<flashback::expertise_level>())).Times(2).WillOnce(
-        Return(std::vector<flashback::Milestone>{})).WillOnce(Return(required_milestones));
+    EXPECT_CALL(*m_mock_database, get_user(A<std::string_view>(), A<std::string_view>())).Times(2).WillOnce(Return(std::move(std::make_unique<flashback::User>(*m_user)))).WillOnce(
+        Return(std::move(std::make_unique<flashback::User>(*m_user))));
+    EXPECT_CALL(*m_mock_database, get_requirements(A<uint64_t>(), A<uint64_t>(), An<flashback::expertise_level>())).Times(2).WillOnce(Return(std::vector<flashback::Milestone>{})).
+WillOnce(Return(required_milestones));
 
     EXPECT_NO_THROW(status = m_server->GetRequirements(&context, &request, &response));
     EXPECT_TRUE(status.ok());
@@ -1098,7 +1099,8 @@ TEST_F(test_server, MergeSubjects)
     target_subject->set_id(2);
     target_subject->set_name("Graph Theory");
 
-    EXPECT_CALL(*m_mock_database, get_user(A<std::string_view>(), A<std::string_view>())).Times(3).WillOnce(Return(std::make_unique<flashback::User>(*m_user))).WillOnce(Return(std::make_unique<flashback::User>(*m_user))).WillOnce(Return(std::make_unique<flashback::User>(*m_user)));
+    EXPECT_CALL(*m_mock_database, get_user(A<std::string_view>(), A<std::string_view>())).Times(3).WillOnce(Return(std::make_unique<flashback::User>(*m_user))).
+WillOnce(Return(std::make_unique<flashback::User>(*m_user))).WillOnce(Return(std::make_unique<flashback::User>(*m_user)));
     EXPECT_CALL(*m_mock_database, merge_subjects(A<uint64_t>(), A<uint64_t>())).Times(1);
 
     EXPECT_NO_THROW(status = m_server->MergeSubjects(&context, &request, &response));
@@ -1129,8 +1131,106 @@ TEST_F(test_server, MergeSubjects)
     EXPECT_EQ(response.code(), 0);
 }
 
+MATCHER_P(HasResourceId, expected_resource, "") { return arg.id() == expected_resource.id(); }
+
 TEST_F(test_server, GetResources)
 {
+    grpc::Status status{};
+    grpc::ServerContext context{};
+    flashback::GetResourcesRequest request{};
+    flashback::GetResourcesResponse response{};
+    std::vector<flashback::Resource> resources{};
+    auto subject{std::make_unique<flashback::Subject>()};
+    auto user{std::make_unique<flashback::User>(*m_user)};
+
     EXPECT_CALL(*m_mock_database, get_user(A<std::string_view>(), A<std::string_view>())).Times(1).WillOnce(Return(std::make_unique<flashback::User>(*m_user)));
-    EXPECT_CALL(*m_mock_database, get_resources(A<uint64_t>(), A<uint64_t>())).Times(1);
+    EXPECT_CALL(*m_mock_database, get_resources(A<uint64_t>(), A<uint64_t>())).Times(1).WillOnce(Return(resources));
+
+    request.clear_user();
+    request.clear_subject();
+    EXPECT_NO_THROW(status = m_server->GetResources(&context, &request, &response));
+    EXPECT_THAT(status.ok(), IsTrue());
+    EXPECT_THAT(response.success(), IsFalse());
+    EXPECT_THAT(response.code(), Eq(3)) << "Invalid user should have a specific error code";
+    EXPECT_THAT(response.details().empty(), IsFalse());
+    EXPECT_THAT(response.resources(), IsEmpty());
+
+    subject->set_id(1);
+    request.set_allocated_subject(subject.release());
+    subject.reset(nullptr);
+    request.set_allocated_user(user.release());
+    user.reset(nullptr);
+    EXPECT_NO_THROW(status = m_server->GetResources(&context, &request, &response));
+    EXPECT_THAT(status.ok(), IsTrue());
+    EXPECT_THAT(response.success(), IsTrue());
+    EXPECT_THAT(response.code(), Eq(0));
+    EXPECT_THAT(response.details().empty(), IsTrue());
+    EXPECT_THAT(response.resources(), SizeIs(resources.size()));
+}
+
+TEST_F(test_server, CreateResource)
+{
+    grpc::Status status{};
+    grpc::ServerContext context{};
+    flashback::CreateResourceRequest request{};
+    flashback::CreateResourceResponse response{};
+    auto resource{std::make_unique<flashback::Resource>()};
+    auto user{std::make_unique<flashback::User>(*m_user)};
+
+    EXPECT_CALL(*m_mock_database, get_user(A<std::string_view>(), A<std::string_view>())).Times(1).WillOnce(Return(std::make_unique<flashback::User>(*m_user)));
+    EXPECT_CALL(*m_mock_database, create_resource(testing::_)).Times(1).WillOnce(Return(*resource));
+
+    request.clear_user();
+    request.clear_resource();
+    EXPECT_NO_THROW(status = m_server->CreateResource(&context, &request, &response));
+    EXPECT_THAT(status.ok(), IsTrue());
+    EXPECT_THAT(response.success(), IsFalse());
+    EXPECT_THAT(response.code(), Eq(3));
+    EXPECT_THAT(response.details().empty(), IsFalse());
+
+    request.set_allocated_user(user.release());
+    user.reset(nullptr);
+    request.set_allocated_resource(resource.release());
+    resource.reset(nullptr);
+    EXPECT_NO_THROW(status = m_server->CreateResource(&context, &request, &response));
+    EXPECT_THAT(status.ok(), IsTrue());
+    EXPECT_THAT(response.success(), IsTrue());
+    EXPECT_THAT(response.code(), Eq(0));
+    EXPECT_THAT(response.details().empty(), IsTrue());
+}
+
+TEST_F(test_server, AddResourceToSubject)
+{
+    grpc::Status status{};
+    grpc::ServerContext context{};
+    flashback::AddResourceToSubjectRequest request{};
+    flashback::AddResourceToSubjectResponse response{};
+    auto resource{std::make_unique<flashback::Resource>()};
+    auto subject{std::make_unique<flashback::Subject>()};
+    auto user{std::make_unique<flashback::User>(*m_user)};
+
+    EXPECT_CALL(*m_mock_database, get_user(A<std::string_view>(), A<std::string_view>())).Times(1).WillOnce(Return(std::make_unique<flashback::User>(*m_user)));
+    EXPECT_CALL(*m_mock_database, add_resource_to_subject(testing::_, testing::_)).Times(1);
+
+    request.clear_user();
+    request.clear_resource();
+    EXPECT_NO_THROW(status = m_server->AddResourceToSubject(&context, &request, &response));
+    EXPECT_THAT(status.ok(), IsTrue());
+    EXPECT_THAT(response.success(), IsFalse());
+    EXPECT_THAT(response.code(), Eq(3));
+    EXPECT_THAT(response.details().empty(), IsFalse());
+
+    subject->set_id(1);
+    resource->set_id(1);
+    request.set_allocated_user(user.release());
+    user.reset(nullptr);
+    request.set_allocated_resource(resource.release());
+    resource.reset(nullptr);
+    request.set_allocated_subject(subject.release());
+    resource.reset(nullptr);
+    EXPECT_NO_THROW(status = m_server->AddResourceToSubject(&context, &request, &response));
+    EXPECT_THAT(status.ok(), IsTrue());
+    EXPECT_THAT(response.success(), IsTrue());
+    EXPECT_THAT(response.code(), Eq(0));
+    EXPECT_THAT(response.details().empty(), IsTrue());
 }
