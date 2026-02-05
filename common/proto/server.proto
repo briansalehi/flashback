@@ -5,27 +5,19 @@ package flashback;
 import "requests.proto";
 
 service Server {
-    // entry page requests
     rpc SignIn(SignInRequest) returns (SignInResponse);
     rpc SignUp(SignUpRequest) returns (SignUpResponse);
     rpc VerifySession(VerifySessionRequest) returns (VerifySessionResponse);
     //rpc VerifyUser(VerifyUserRequest) returns (VerifyUserResponse);
-
-    // account page requests
     rpc ResetPassword(ResetPasswordRequest) returns (ResetPasswordResponse);
-    //rpc RenameUser(RenameUserRequest) returns (RenameUserResponse);
-    //rpc ChangeUserEmail(ChangeUserEmailRequest) returns (ChangeUserEmailResponse);
-
-    // welcome page requests
+    rpc EditUser(EditUserRequest) returns (EditUserResponse);
     rpc CreateRoadmap(CreateRoadmapRequest) returns (CreateRoadmapResponse);
     rpc GetRoadmaps(GetRoadmapsRequest) returns (GetRoadmapsResponse);
     rpc RemoveRoadmap(RemoveRoadmapRequest) returns (RemoveRoadmapResponse);
     rpc RenameRoadmap(RenameRoadmapRequest) returns (RenameRoadmapResponse);
     rpc SearchRoadmaps(SearchRoadmapsRequest) returns (SearchRoadmapsResponse);
     rpc CloneRoadmap(CloneRoadmapRequest) returns (CloneRoadmapResponse);
-    //rpc GetRoadmapWeight(GetRoadmapWeightRequest) returns (GetRoadmapWeightResponse);
-
-    // roadmap page requests
+    rpc GetProgressWeight(GetProgressWeightRequest) returns (GetProgressWeightResponse);
     rpc GetMilestones(GetMilestonesRequest) returns (GetMilestonesResponse);
     rpc AddMilestone(AddMilestoneRequest) returns (AddMilestoneResponse);
     rpc AddRequirement(AddRequirementRequest) returns (AddRequirementResponse);
@@ -35,105 +27,82 @@ service Server {
     rpc ReorderMilestone(ReorderMilestoneRequest) returns (ReorderMilestoneResponse);
     rpc RemoveMilestone(RemoveMilestoneRequest) returns (RemoveMilestoneResponse);
     rpc ChangeMilestoneLevel(ChangeMilestoneLevelRequest) returns (ChangeMilestoneLevelResponse);
-
-    // subject page
     rpc RenameSubject(RenameSubjectRequest) returns (RenameSubjectResponse);
     rpc RemoveSubject(RemoveSubjectRequest) returns (RemoveSubjectResponse);
     rpc MergeSubjects(MergeSubjectsRequest) returns (MergeSubjectsResponse);
     //rpc GetSubjectWeight(GetSubjectWeightRequest) returns (GetSubjectWeightResponse);
-
-    // subject page resource view
     rpc CreateResource(CreateResourceRequest) returns (CreateResourceResponse);
     rpc GetResources(GetResourcesRequest) returns (GetResourcesResponse);
-    //rpc SearchResources(SearchResourcesRequest) returns (SearchResourcesResposne);
+    rpc SearchResources(SearchResourcesRequest) returns (SearchResourcesResponse);
     rpc AddResourceToSubject(AddResourceToSubjectRequest) returns (AddResourceToSubjectResponse);
-    //rpc DropResourceFromSubject(DropResourceFromSubjectRequest) returns (DropResourceFromSubjectResponse);
-    //rpc MergeResources(MergeResourcesRequest) returns (MergeResourcesResponse);
-
-    // subject page topic view
-    //rpc CreateTopic(CreateTopicRequest) returns (CreateTopicResponse);
-    //rpc GetTopics(GetTopicsRequest) returns (GetTopicsResponse);
-    //rpc ReorderTopic(ReorderTopicRequest) returns (ReorderTopicResponse);
-    //rpc RemoveTopic(RemoveTopicRequest) returns (RemoveTopicResponse);
-    //rpc MergeTopics(MergeTopicsRequest) returns (MergeTopicsResponse);
-    //rpc RenameTopic(RenameTopicRequest) returns (RenameTopicResponse);
-    //rpc MoveTopic(MoveTopicRequest) returns (MoveTopicResponse);
-    //rpc SearchTopics(SearchTopicsRequest) returns (SearchTopicsResponse);
-    //rpc ChangeTopicLevel(ChangeTopicLevelRequest) returns (ChangeTopicLevelResponse);
-    //rpc GetPracticeCards(GetPracticeCardsRequest) returns (GetPracticeCardsResponse);
-    //rpc GetTopicCards(getTopicCardsRequest) returns (GetTopicCardsResponse);
-    //rpc GetTopicWeight(GetTopicWeightRequest) returns (GetTopicWeightResponse);
-
-    // resource page requests
-    //rpc RenameResource(RenameResourceRequest) returns (RenameResourceResponse);
-    //rpc RemoveResource(RemoveResourceRequest) returns (RemoveResourceResponse);
-    //rpc EditResourceProvider(EditResourceProviderRequest) returns (EditResourceProviderResponse);
-    //rpc EditResourcePresenter(EditResourcePresenterRequest) returns (EditResourcePresenterResponse);
-    //rpc EditResourceLink(EditResourceLinkRequest) returns (EditResourceLinkResponse);
-    //rpc EditResourceProduction(EditResourceProductionRequest) returns (EditResourceProductionResponse);
-    //rpc EditResourceExpiration(EditResourceExpirationRequest) returns (EditResourceExpirationResponse);
-    //rpc ChangeResourceType(ChangeResourceTypeRequest) returns (ChangeResourceTypeResponse);
-    //rpc EditSectionPattern(EditSectionPatternRequest) returns (EditSectionPatternResponse);
-    //rpc CreateSection(CreateSectionRequest) returns (CreateSectionResponse);
-    //rpc GetSections(GetSectionsRequest) returns (GetSectionsResponse);
-    //rpc ReorderSection(ReorderSectionRequest) returns (ReorderSectionResponse);
-    //rpc RemoveSection(RemoveSectionRequest) returns (RemoveSectionResponse);
-    //rpc MergeSections(MergeSectionsRequest) returns (MergeSectionsResponse);
-    //rpc RenameSection(RenameSectionRequest) returns (RenameSectionResponse);
-    //rpc MoveSection(MoveSectionRequest) returns (MoveSectionResponse);
-
-    // providers
-    //rpc CreateProvider(CreateProviderRequest) returns (CreateProviderResponse);
-    //rpc SearchProviders(SearchProvidersRequest) returns (SearchProvidersResponse);
-    //rpc AddProvider(AddProviderRequest) returns (AddProviderResponse);
-    //rpc RenameProvider(RenameProviderRequest) returns (RenameProviderResponse);
-    //rpc RemoveProvider(RemoveProviderRequest) returns (RemoveProviderResponse);
-    //rpc MergeProviders(MergeProvidersRequest) returns (MergeProvidersResponse);
-
-    // presenters
-    //rpc CreatePresenter(CreatePresenterRequest) returns (CreatePresenterResponse);
-    //rpc SearchPresenter(SearchPresenterRequest) returns (SearchPresenterResponse);
-    //rpc RenamePresenter(RenamePresenterRequest) returns (RenamePresenterResponse);
-    //rpc RemovePresenter(RemovePresenterRequest) returns (RemovePresenterResponse);
-    //rpc MergePresenters(MergePresentersRequest) returns (MergePresentersResponse);
-
-    // section/topic page
-    //rpc CreateCard(CreateCardRequest) returns (CreateCardResponse);
-    //rpc ReorderCard(ReorderCardRequest) returns (ReorderCardResponse);
-    //rpc RemoveCard(RemoveCardRequest) returns (RemoveCardResponse);
-    //rpc MergeCards(MergeCardsRequest) returns (MergeCardsResponse);
-
-    // section page
-    //rpc GetStudyCards(GetStudyCardsRequest) returns (GetStudyCardsResponse);
-    //rpc GetSectionCards(GetSectionCardsRequest) returns (GetSectionCardsResponse);
-    //rpc SearchCards(SearchCardsRequest) returns (SearchCardsResponse);
-    //rpc RenameSection(RenameSectionRequest) returns (RenameSectionResponse);
-    //rpc RemoveSection(RemoveSectionRequest) returns (RemoveSectionResponse);
-
-    // card page
-    //rpc EditHeadline(EditHeadlineRequest) returns (EditHeadlineResponse);
-    //rpc MakeProgress(MakeProgressRequest) returns (MakeProgressResponse);
-    //rpc MoveCardToSection(MoveCardToSectionRequest) returns (MoveCardToSectionResponse);
-    //rpc MoveCardToTopic(MoveCardToTopicRequest) returns (MoveCardToTopicResponse);
-    //rpc MarkCardAsReviewed(MarkCardAsReviewedRequest) returns (MarkCardAsReviewedResponse);
-    //rpc CreateBlock(CreateBlockRequest) returns (CreateBlockResponse);
-    //rpc GetBlocks(GetBlocksRequest) returns (GetBlocksResponse);
-    //rpc EditBlock(EditBlockRequest) returns (EditBlockResponse);
-    //rpc RemoveBlock(RemoveBlockRequest) returns (RemoveBlockResponse);
-    //rpc ReorderBlock(ReorderBlockRequest) returns (ReorderBlockResponse);
-    //rpc MergeBlocks(MergeBlocksRequest) returns (MergeBlocksResponse);
-    //rpc SplitBlock(SplitBlockRequest) returns (SplitBlockResponse);
-    //rpc MoveBlock(MoveBlockRequest) returns (MoveBlockResponse);
-
-    // assessments
-    //rpc CreateAssessment(CreateAssessmentRequest) returns (CreateAssessmentResponse);
-    //rpc GetAssessment(GetAssessmentRequest) returns (GetAssessmentResponse);
-    //rpc ExpandAssessment(ExpandAssessmentRequest) returns (ExpandAssessmentResponse);
-    //rpc DiminishAssessment(DiminishAssessmentRequest) returns (DiminishAssessmentResponse);
-
-    // nerves
-    //rpc CreateNerve(CreateNerveRequest) returns (CreateNerveResponse);
-
-    // practice reports
+    rpc DropResourceFromSubject(DropResourceFromSubjectRequest) returns (DropResourceFromSubjectResponse);
+    rpc MergeResources(MergeResourcesRequest) returns (MergeResourcesResponse);
+    rpc CreateTopic(CreateTopicRequest) returns (CreateTopicResponse);
+    rpc GetTopics(GetTopicsRequest) returns (GetTopicsResponse);
+    rpc ReorderTopic(ReorderTopicRequest) returns (ReorderTopicResponse);
+    rpc RemoveTopic(RemoveTopicRequest) returns (RemoveTopicResponse);
+    rpc MergeTopics(MergeTopicsRequest) returns (MergeTopicsResponse);
+    rpc EditTopic(EditTopicRequest) returns (EditTopicResponse);
+    rpc MoveTopic(MoveTopicRequest) returns (MoveTopicResponse);
+    rpc SearchTopics(SearchTopicsRequest) returns (SearchTopicsResponse);
+    rpc GetPracticeCards(GetPracticeCardsRequest) returns (GetPracticeCardsResponse);
+    rpc GetTopicCards(GetTopicCardsRequest) returns (GetTopicCardsResponse);
+    rpc GetTopicWeight(GetTopicWeightRequest) returns (GetTopicWeightResponse);
+    rpc RemoveResource(RemoveResourceRequest) returns (RemoveResourceResponse);
+    rpc EditResource(EditResourceRequest) returns (EditResourceResponse);
+    rpc CreateSection(CreateSectionRequest) returns (CreateSectionResponse);
+    rpc GetSections(GetSectionsRequest) returns (GetSectionsResponse);
+    rpc SearchSections(SearchSectionsRequest) returns (SearchSectionsResponse);
+    rpc ReorderSection(ReorderSectionRequest) returns (ReorderSectionResponse);
+    rpc RemoveSection(RemoveSectionRequest) returns (RemoveSectionResponse);
+    rpc MergeSections(MergeSectionsRequest) returns (MergeSectionsResponse);
+    rpc EditSection(EditSectionRequest) returns (EditSectionResponse);
+    rpc MoveSection(MoveSectionRequest) returns (MoveSectionResponse);
+    rpc CreateProvider(CreateProviderRequest) returns (CreateProviderResponse);
+    rpc SearchProviders(SearchProvidersRequest) returns (SearchProvidersResponse);
+    rpc AddProvider(AddProviderRequest) returns (AddProviderResponse);
+    rpc DropProvider(DropProviderRequest) returns (DropProviderResponse);
+    rpc RenameProvider(RenameProviderRequest) returns (RenameProviderResponse);
+    rpc RemoveProvider(RemoveProviderRequest) returns (RemoveProviderResponse);
+    rpc MergeProviders(MergeProvidersRequest) returns (MergeProvidersResponse);
+    rpc AddPresenter(AddPresenterRequest) returns (AddPresenterResponse);
+    rpc DropPresenter(DropPresenterRequest) returns (DropPresenterResponse);
+    rpc CreatePresenter(CreatePresenterRequest) returns (CreatePresenterResponse);
+    rpc SearchPresenters(SearchPresentersRequest) returns (SearchPresentersResponse);
+    rpc RenamePresenter(RenamePresenterRequest) returns (RenamePresenterResponse);
+    rpc RemovePresenter(RemovePresenterRequest) returns (RemovePresenterResponse);
+    rpc MergePresenters(MergePresentersRequest) returns (MergePresentersResponse);
+    rpc CreateCard(CreateCardRequest) returns (CreateCardResponse);
+    rpc AddCardToSection(AddCardToSectionRequest) returns (AddCardToSectionResponse);
+    rpc AddCardToTopic(AddCardToTopicRequest) returns (AddCardToTopicResponse);
+    rpc MarkSectionAsReviewed(MarkSectionAsReviewedRequest) returns (MarkSectionAsReviewedResponse);
+    rpc IsAssimilated(IsAssimilatedRequest) returns (IsAssimilatedResponse);
+    rpc Study(StudyRequest) returns (StudyResponse);
+    rpc ReorderCard(ReorderCardRequest) returns (ReorderCardResponse);
+    rpc RemoveCard(RemoveCardRequest) returns (RemoveCardResponse);
+    rpc MergeCards(MergeCardsRequest) returns (MergeCardsResponse);
+    rpc GetStudyCards(GetStudyCardsRequest) returns (GetStudyCardsResponse);
+    rpc GetStudyResources(GetStudyResourcesRequest) returns (GetStudyResourcesResponse);
+    rpc GetSectionCards(GetSectionCardsRequest) returns (GetSectionCardsResponse);
+    rpc SearchCards(SearchCardsRequest) returns (SearchCardsResponse);
+    rpc EditCard(EditCardRequest) returns (EditCardResponse);
+    rpc MakeProgress(MakeProgressRequest) returns (MakeProgressResponse);
+    rpc MoveCardToSection(MoveCardToSectionRequest) returns (MoveCardToSectionResponse);
+    rpc MoveCardToTopic(MoveCardToTopicRequest) returns (MoveCardToTopicResponse);
+    rpc MarkCardAsReviewed(MarkCardAsReviewedRequest) returns (MarkCardAsReviewedResponse);
+    rpc CreateBlock(CreateBlockRequest) returns (CreateBlockResponse);
+    rpc GetBlocks(GetBlocksRequest) returns (GetBlocksResponse);
+    rpc EditBlock(EditBlockRequest) returns (EditBlockResponse);
+    rpc RemoveBlock(RemoveBlockRequest) returns (RemoveBlockResponse);
+    rpc ReorderBlock(ReorderBlockRequest) returns (ReorderBlockResponse);
+    rpc MergeBlocks(MergeBlocksRequest) returns (MergeBlocksResponse);
+    rpc SplitBlock(SplitBlockRequest) returns (SplitBlockResponse);
+    rpc MoveBlock(MoveBlockRequest) returns (MoveBlockResponse);
+    rpc CreateAssessment(CreateAssessmentRequest) returns (CreateAssessmentResponse);
+    rpc GetAssessment(GetAssessmentRequest) returns (GetAssessmentResponse);
+    rpc ExpandAssessment(ExpandAssessmentRequest) returns (ExpandAssessmentResponse);
+    rpc DiminishAssessment(DiminishAssessmentRequest) returns (DiminishAssessmentResponse);
+    rpc CreateNerve(CreateNerveRequest) returns (CreateNerveResponse);
+    rpc GetNerves(GetNervesRequest) returns (GetNervesResponse);
     //rpc EstimateCardTime(EstimateCardTimeRequest) returns (EstimateCardTimeResponse);
 }

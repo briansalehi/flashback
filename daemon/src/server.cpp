@@ -157,6 +157,12 @@ grpc::Status server::ResetPassword(grpc::ServerContext* context, ResetPasswordRe
     return grpc::Status::OK;
 }
 
+grpc::Status server::EditUser(grpc::ServerContext* context, EditUserRequest const* request, EditUserResponse* response)
+{
+    // name, email
+    return grpc::Status::OK;
+}
+
 grpc::Status server::VerifySession(grpc::ServerContext* context, VerifySessionRequest const* request, VerifySessionResponse* response)
 {
     try
@@ -225,6 +231,11 @@ grpc::Status server::GetRoadmaps(grpc::ServerContext* context, GetRoadmapsReques
         std::cerr << std::format("Server: failed to collect roadmaps for client {} because:\n{}\n", request->user().token(), exp.what());
     }
 
+    return grpc::Status::OK;
+}
+
+grpc::Status server::GetStudyResources(grpc::ServerContext* context, GetStudyResourcesRequest const* request, GetStudyResourcesResponse* response)
+{
     return grpc::Status::OK;
 }
 
@@ -961,6 +972,580 @@ grpc::Status server::AddResourceToSubject(grpc::ServerContext* context, AddResou
         std::cerr << std::format("Server: {}", exp.what());
     }
 
+    return grpc::Status::OK;
+}
+
+grpc::Status server::DropResourceFromSubject(grpc::ServerContext* context, DropResourceFromSubjectRequest const* request, DropResourceFromSubjectResponse* response)
+{
+    try
+    {
+        if (!request->has_user() || !session_is_valid(request->user()))
+        {
+            response->set_success(false);
+            response->set_details("invalid user");
+            response->set_code(3);
+        }
+        else if (request->resource().id() == 0)
+        {
+            response->set_success(false);
+            response->set_details("invalid resource");
+            response->set_code(4);
+        }
+        else if (request->subject().id() == 0)
+        {
+            response->set_success(false);
+            response->set_details("invalid subject");
+            response->set_code(4);
+        }
+        else
+        {
+            m_database->drop_resource_from_subject(request->resource().id(), request->subject().id());
+            response->set_success(true);
+            response->clear_details();
+            response->set_code(0);
+        }
+    }
+    catch (client_exception const& exp)
+    {
+        response->set_success(false);
+        response->set_details(exp.what());
+        response->set_code(1);
+    }
+    catch (std::exception const& exp)
+    {
+        response->set_success(false);
+        response->set_details("internal error");
+        response->set_code(2);
+        std::cerr << std::format("Server: {}", exp.what());
+    }
+
+    return grpc::Status::OK;
+}
+
+grpc::Status server::SearchResources(grpc::ServerContext* context, SearchResourcesRequest const* request, SearchResourcesResponse* response)
+{
+    try
+    {
+        if (!request->has_user() || !session_is_valid(request->user()))
+        {
+            response->set_success(false);
+            response->set_details("invalid user");
+            response->set_code(3);
+        }
+        else if (request->search_token().empty())
+        {
+            response->set_success(false);
+            response->set_details("invalid input");
+            response->set_code(4);
+        }
+        else
+        {
+            for (auto const& [position, resource]: m_database->search_resources(request->search_token()))
+            {
+                ResourceSearchResult* result{response->add_results()};
+                auto* allocated_resource{result->mutable_resource()};
+                *allocated_resource = resource;
+                result->set_position(position);
+            }
+            response->set_success(true);
+            response->clear_details();
+            response->set_code(0);
+        }
+    }
+    catch (client_exception const& exp)
+    {
+        response->set_success(false);
+        response->set_details(exp.what());
+        response->set_code(1);
+    }
+    catch (std::exception const& exp)
+    {
+        response->set_success(false);
+        response->set_details("internal error");
+        response->set_code(2);
+        std::cerr << std::format("Server: {}", exp.what());
+    }
+
+    return grpc::Status::OK;
+}
+
+grpc::Status server::MergeResources(grpc::ServerContext* context, MergeResourcesRequest const* request, MergeResourcesResponse* response)
+{
+    try
+    {
+        if (!request->has_user() || !session_is_valid(request->user()))
+        {
+            response->set_success(false);
+            response->set_details("invalid user");
+            response->set_code(3);
+        }
+        else if (request->source().id() == 0)
+        {
+            response->set_success(false);
+            response->set_details("invalid source");
+            response->set_code(4);
+        }
+        else if (request->target().id() == 0)
+        {
+            response->set_success(false);
+            response->set_details("invalid target");
+            response->set_code(5);
+        }
+        else
+        {
+            m_database->merge_resources(request->source().id(), request->target().id());
+            response->set_success(true);
+            response->clear_details();
+            response->set_code(0);
+        }
+    }
+    catch (client_exception const& exp)
+    {
+        response->set_success(false);
+        response->set_details(exp.what());
+        response->set_code(1);
+    }
+    catch (std::exception const& exp)
+    {
+        response->set_success(false);
+        response->set_details("internal error");
+        response->set_code(2);
+        std::cerr << std::format("Server: {}", exp.what());
+    }
+
+    return grpc::Status::OK;
+}
+
+grpc::Status server::RemoveResource(grpc::ServerContext* context, RemoveResourceRequest const* request, RemoveResourceResponse* response)
+{
+    try
+    {
+        if (!request->has_user() || !session_is_valid(request->user()))
+        {
+            response->set_success(false);
+            response->set_details("invalid user");
+            response->set_code(3);
+        }
+        else if (request->resource().id() == 0)
+        {
+            response->set_success(false);
+            response->set_details("invalid resource");
+            response->set_code(4);
+        }
+        else
+        {
+            m_database->remove_resource(request->resource().id());
+            response->set_success(true);
+            response->clear_details();
+            response->set_code(0);
+        }
+    }
+    catch (client_exception const& exp)
+    {
+        response->set_success(false);
+        response->set_details(exp.what());
+        response->set_code(1);
+    }
+    catch (std::exception const& exp)
+    {
+        response->set_success(false);
+        response->set_details("internal error");
+        response->set_code(2);
+        std::cerr << std::format("Server: {}", exp.what());
+    }
+
+    return grpc::Status::OK;
+}
+
+grpc::Status server::EditResource(grpc::ServerContext* context, EditResourceRequest const* request, EditResourceResponse* response)
+{
+    try
+    {
+        if (!request->has_user() || !session_is_valid(request->user()))
+        {
+            response->set_success(false);
+            response->set_details("invalid user");
+            response->set_code(3);
+        }
+        else if (request->resource().id() == 0)
+        {
+            response->set_success(false);
+            response->set_details("invalid resource");
+            response->set_code(4);
+        }
+        else
+        {
+            bool modified{};
+            Resource resource{m_database->get_resource(request->resource().id())};
+
+            if (resource.name() != request->resource().name())
+            {
+                m_database->rename_resource(request->resource().id(), request->resource().name());
+                modified = true;
+            }
+
+            if (resource.link() != request->resource().link())
+            {
+                m_database->edit_resource_link(request->resource().id(), request->resource().link());
+                modified = true;
+            }
+
+            if (resource.type() != request->resource().type())
+            {
+                m_database->change_resource_type(request->resource().type(), request->resource().type());
+                modified = true;
+            }
+
+            if (resource.pattern() != request->resource().pattern())
+            {
+                m_database->change_section_pattern(request->resource().id(), request->resource().pattern());
+                modified = true;
+            }
+
+            if (resource.production() != request->resource().production())
+            {
+                m_database->edit_resource_production(request->resource().id(), request->resource().production());
+                modified = true;
+            }
+
+            if (resource.expiration() != request->resource().expiration())
+            {
+                m_database->edit_resource_expiration(request->resource().id(), request->resource().expiration());
+                modified = true;
+            }
+
+            response->set_success(modified);
+
+            if (modified)
+            {
+                response->clear_details();
+                response->set_code(0);
+            }
+            else
+            {
+                response->set_details("no modification");
+                response->set_code(5);
+            }
+        }
+    }
+    catch (client_exception const& exp)
+    {
+        response->set_success(false);
+        response->set_details(exp.what());
+        response->set_code(1);
+    }
+    catch (std::exception const& exp)
+    {
+        response->set_success(false);
+        response->set_details("internal error");
+        response->set_code(2);
+        std::cerr << std::format("Server: {}", exp.what());
+    }
+
+    return grpc::Status::OK;
+}
+
+grpc::Status server::CreateNerve(grpc::ServerContext* context, CreateNerveRequest const* request, CreateNerveResponse* response)
+{
+    return grpc::Status::OK;
+}
+
+grpc::Status server::GetNerves(grpc::ServerContext* context, GetNervesRequest const* request, GetNervesResponse* response)
+{
+    return grpc::Status::OK;
+}
+
+grpc::Status server::CreateProvider(grpc::ServerContext* context, CreateProviderRequest const* request, CreateProviderResponse* response)
+{
+    return grpc::Status::OK;
+}
+
+grpc::Status server::AddProvider(grpc::ServerContext* context, AddProviderRequest const* request, AddProviderResponse* response)
+{
+    return grpc::Status::OK;
+}
+
+grpc::Status server::DropProvider(grpc::ServerContext* context, DropProviderRequest const* request, DropProviderResponse* response)
+{
+    return grpc::Status::OK;
+}
+
+grpc::Status server::SearchProviders(grpc::ServerContext* context, SearchProvidersRequest const* request, SearchProvidersResponse* response)
+{
+    return grpc::Status::OK;
+}
+
+grpc::Status server::RenameProvider(grpc::ServerContext* context, RenameProviderRequest const* request, RenameProviderResponse* response)
+{
+    return grpc::Status::OK;
+}
+
+grpc::Status server::RemoveProvider(grpc::ServerContext* context, RemoveProviderRequest const* request, RemoveProviderResponse* response)
+{
+    return grpc::Status::OK;
+}
+
+grpc::Status server::MergeProviders(grpc::ServerContext* context, MergeProvidersRequest const* request, MergeProvidersResponse* response)
+{
+    return grpc::Status::OK;
+}
+
+grpc::Status server::CreatePresenter(grpc::ServerContext* context, CreatePresenterRequest const* request, CreatePresenterResponse* response)
+{
+    return grpc::Status::OK;
+}
+
+grpc::Status server::AddPresenter(grpc::ServerContext* context, AddPresenterRequest const* request, AddPresenterResponse* response)
+{
+    return grpc::Status::OK;
+}
+
+grpc::Status server::DropPresenter(grpc::ServerContext* context, DropPresenterRequest const* request, DropPresenterResponse* response)
+{
+    return grpc::Status::OK;
+}
+
+grpc::Status server::SearchPresenters(grpc::ServerContext* context, SearchPresentersRequest const* request, SearchPresentersResponse* response)
+{
+    return grpc::Status::OK;
+}
+
+grpc::Status server::RenamePresenter(grpc::ServerContext* context, RenamePresenterRequest const* request, RenamePresenterResponse* response)
+{
+    return grpc::Status::OK;
+}
+
+grpc::Status server::RemovePresenter(grpc::ServerContext* context, RemovePresenterRequest const* request, RemovePresenterResponse* response)
+{
+    return grpc::Status::OK;
+}
+
+grpc::Status server::MergePresenters(grpc::ServerContext* context, MergePresentersRequest const* request, MergePresentersResponse* response)
+{
+    return grpc::Status::OK;
+}
+
+grpc::Status server::GetTopics(grpc::ServerContext* context, GetTopicsRequest const* request, GetTopicsResponse* response)
+{
+    return grpc::Status::OK;
+}
+
+grpc::Status server::CreateTopic(grpc::ServerContext* context, CreateTopicRequest const* request, CreateTopicResponse* response)
+{
+    return grpc::Status::OK;
+}
+
+grpc::Status server::ReorderTopic(grpc::ServerContext* context, ReorderTopicRequest const* request, ReorderTopicResponse* response)
+{
+    return grpc::Status::OK;
+}
+
+grpc::Status server::RemoveTopic(grpc::ServerContext* context, RemoveTopicRequest const* request, RemoveTopicResponse* response)
+{
+    return grpc::Status::OK;
+}
+
+grpc::Status server::MergeTopics(grpc::ServerContext* context, MergeTopicsRequest const* request, MergeTopicsResponse* response)
+{
+    return grpc::Status::OK;
+}
+
+grpc::Status server::EditTopic(grpc::ServerContext* context, EditTopicRequest const* request, EditTopicResponse* response)
+{
+    // name, level
+    return grpc::Status::OK;
+}
+
+grpc::Status server::MoveTopic(grpc::ServerContext* context, MoveTopicRequest const* request, MoveTopicResponse* response)
+{
+    return grpc::Status::OK;
+}
+
+grpc::Status server::SearchTopics(grpc::ServerContext* context, SearchTopicsRequest const* request, SearchTopicsResponse* response)
+{
+    return grpc::Status::OK;
+}
+
+grpc::Status server::GetSections(grpc::ServerContext* context, GetSectionsRequest const* request, GetSectionsResponse* response)
+{
+    return grpc::Status::OK;
+}
+
+grpc::Status server::CreateSection(grpc::ServerContext* context, CreateSectionRequest const* request, CreateSectionResponse* response)
+{
+    return grpc::Status::OK;
+}
+
+grpc::Status server::ReorderSection(grpc::ServerContext* context, ReorderSectionRequest const* request, ReorderSectionResponse* response)
+{
+    return grpc::Status::OK;
+}
+
+grpc::Status server::RemoveSection(grpc::ServerContext* context, RemoveSectionRequest const* request, RemoveSectionResponse* response)
+{
+    return grpc::Status::OK;
+}
+
+grpc::Status server::MergeSections(grpc::ServerContext* context, MergeSectionsRequest const* request, MergeSectionsResponse* response)
+{
+    return grpc::Status::OK;
+}
+
+grpc::Status server::EditSection(grpc::ServerContext* context, EditSectionRequest const* request, EditSectionResponse* response)
+{
+    // name, link
+    return grpc::Status::OK;
+}
+
+grpc::Status server::MoveSection(grpc::ServerContext* context, MoveSectionRequest const* request, MoveSectionResponse* response)
+{
+    return grpc::Status::OK;
+}
+
+grpc::Status server::SearchSections(grpc::ServerContext* context, SearchSectionsRequest const* request, SearchSectionsResponse* response)
+{
+    return grpc::Status::OK;
+}
+
+grpc::Status server::CreateCard(grpc::ServerContext* context, CreateCardRequest const* request, CreateCardResponse* response)
+{
+    return grpc::Status::OK;
+}
+
+grpc::Status server::AddCardToSection(grpc::ServerContext* context, AddCardToSectionRequest const* request, AddCardToSectionResponse* response)
+{
+    return grpc::Status::OK;
+}
+
+grpc::Status server::AddCardToTopic(grpc::ServerContext* context, AddCardToTopicRequest const* request, AddCardToTopicResponse* response)
+{
+    return grpc::Status::OK;
+}
+
+grpc::Status server::ReorderCard(grpc::ServerContext* context, ReorderCardRequest const* request, ReorderCardResponse* response)
+{
+    return grpc::Status::OK;
+}
+
+grpc::Status server::RemoveCard(grpc::ServerContext* context, RemoveCardRequest const* request, RemoveCardResponse* response)
+{
+    return grpc::Status::OK;
+}
+
+grpc::Status server::MergeCards(grpc::ServerContext* context, MergeCardsRequest const* request, MergeCardsResponse* response)
+{
+    return grpc::Status::OK;
+}
+
+grpc::Status server::SearchCards(grpc::ServerContext* context, SearchCardsRequest const* request, SearchCardsResponse* response)
+{
+    return grpc::Status::OK;
+}
+
+grpc::Status server::GetStudyCards(grpc::ServerContext* context, GetStudyCardsRequest const* request, GetStudyCardsResponse* response)
+{
+    return grpc::Status::OK;
+}
+
+grpc::Status server::MoveCardToSection(grpc::ServerContext* context, MoveCardToSectionRequest const* request, MoveCardToSectionResponse* response)
+{
+    return grpc::Status::OK;
+}
+
+grpc::Status server::MarkSectionAsReviewed(grpc::ServerContext* context, MarkSectionAsReviewedRequest const* request, MarkSectionAsReviewedResponse* response)
+{
+    return grpc::Status::OK;
+}
+
+grpc::Status server::GetPracticeCards(grpc::ServerContext* context, GetPracticeCardsRequest const* request, GetPracticeCardsResponse* response)
+{
+    return grpc::Status::OK;
+}
+
+grpc::Status server::MoveCardToTopic(grpc::ServerContext* context, MoveCardToTopicRequest const* request, MoveCardToTopicResponse* response)
+{
+    return grpc::Status::OK;
+}
+
+grpc::Status server::CreateAssessment(grpc::ServerContext* context, CreateAssessmentRequest const* request, CreateAssessmentResponse* response)
+{
+    return grpc::Status::OK;
+}
+
+grpc::Status server::ExpandAssessment(grpc::ServerContext* context, ExpandAssessmentRequest const* request, ExpandAssessmentResponse* response)
+{
+    return grpc::Status::OK;
+}
+
+grpc::Status server::DiminishAssessment(grpc::ServerContext* context, DiminishAssessmentRequest const* request, DiminishAssessmentResponse* response)
+{
+    return grpc::Status::OK;
+}
+
+grpc::Status server::IsAssimilated(grpc::ServerContext* context, IsAssimilatedRequest const* request, IsAssimilatedResponse* response)
+{
+    return grpc::Status::OK;
+}
+
+grpc::Status server::EditCard(grpc::ServerContext* context, EditCardRequest const* request, EditCardResponse* response)
+{
+    // headline
+    return grpc::Status::OK;
+}
+
+grpc::Status server::CreateBlock(grpc::ServerContext* context, CreateBlockRequest const* request, CreateBlockResponse* response)
+{
+    return grpc::Status::OK;
+}
+
+grpc::Status server::GetBlocks(grpc::ServerContext* context, GetBlocksRequest const* request, GetBlocksResponse* response)
+{
+    return grpc::Status::OK;
+}
+
+grpc::Status server::RemoveBlock(grpc::ServerContext* context, RemoveBlockRequest const* request, RemoveBlockResponse* response)
+{
+    return grpc::Status::OK;
+}
+
+grpc::Status server::EditBlock(grpc::ServerContext* context, EditBlockRequest const* request, EditBlockResponse* response)
+{
+    // content, extension, type, metadata
+    return grpc::Status::OK;
+}
+
+grpc::Status server::ReorderBlock(grpc::ServerContext* context, ReorderBlockRequest const* request, ReorderBlockResponse* response)
+{
+    return grpc::Status::OK;
+}
+
+grpc::Status server::MergeBlocks(grpc::ServerContext* context, MergeBlocksRequest const* request, MergeBlocksResponse* response)
+{
+    return grpc::Status::OK;
+}
+
+grpc::Status server::SplitBlock(grpc::ServerContext* context, SplitBlockRequest const* request, SplitBlockResponse* response)
+{
+    return grpc::Status::OK;
+}
+
+grpc::Status server::MarkCardAsReviewed(grpc::ServerContext* context, MarkCardAsReviewedRequest const* request, MarkCardAsReviewedResponse* response)
+{
+    return grpc::Status::OK;
+}
+
+grpc::Status server::Study(grpc::ServerContext* context, StudyRequest const* request, StudyResponse* response)
+{
+    return grpc::Status::OK;
+}
+
+grpc::Status server::MakeProgress(grpc::ServerContext* context, MakeProgressRequest const* request, MakeProgressResponse* response)
+{
+    return grpc::Status::OK;
+}
+
+grpc::Status server::GetProgressWeight(grpc::ServerContext* context, GetProgressWeightRequest const* request, GetProgressWeightResponse* response)
+{
     return grpc::Status::OK;
 }
 

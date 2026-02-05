@@ -110,22 +110,12 @@ enum closure_state {
     completed = 2;
 }
 
-message Weight {
-    Resource resource = 1;
-    uint64 percentage = 2;
-}
+message Weight { Resource resource = 1; uint64 percentage = 2; }
 
-message Coverage {
-    Card card = 1;
-    uint64 coverage = 2;
-}
+message Coverage { Card card = 1; uint64 coverage = 2; }
 
-message Assimilation {
-    Topic topic = 1;
-    bool assimilated = 2;
-}
+message Assimilation { Topic topic = 1; bool assimilated = 2; }
 
-message Assessment {
-    Card card = 1;
-    uint64 assimilations = 2;
-}
+message Assessment { Card card = 1; uint64 assimilations = 2; }
+
+message ResourceSearchResult { Resource resource = 1; uint64 position = 2; }

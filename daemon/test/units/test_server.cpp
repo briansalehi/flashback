@@ -20,6 +20,7 @@ using testing::SizeIs;
 using testing::IsTrue;
 using testing::IsFalse;
 using testing::ContainerEq;
+using testing::Invoke;
 
 class test_server: public testing::Test
 {
@@ -1233,4 +1234,468 @@ TEST_F(test_server, AddResourceToSubject)
     EXPECT_THAT(response.success(), IsTrue());
     EXPECT_THAT(response.code(), Eq(0));
     EXPECT_THAT(response.details().empty(), IsTrue());
+}
+
+TEST_F(test_server, DropResourceFromSubject)
+{
+    grpc::Status status{};
+    grpc::ServerContext context{};
+    flashback::DropResourceFromSubjectRequest request{};
+    flashback::DropResourceFromSubjectResponse response{};
+    auto resource{std::make_unique<flashback::Resource>()};
+    auto subject{std::make_unique<flashback::Subject>()};
+    auto user{std::make_unique<flashback::User>(*m_user)};
+
+    EXPECT_CALL(*m_mock_database, get_user(A<std::string_view>(), A<std::string_view>())).Times(1).WillOnce(Return(std::make_unique<flashback::User>(*m_user)));
+    EXPECT_CALL(*m_mock_database, drop_resource_from_subject(testing::_, testing::_)).Times(1);
+
+    request.clear_user();
+    request.clear_resource();
+    EXPECT_NO_THROW(status = m_server->DropResourceFromSubject(&context, &request, &response));
+    EXPECT_THAT(status.ok(), IsTrue());
+    EXPECT_THAT(response.success(), IsFalse());
+    EXPECT_THAT(response.code(), Eq(3));
+    EXPECT_THAT(response.details().empty(), IsFalse());
+
+    subject->set_id(1);
+    resource->set_id(1);
+    request.set_allocated_user(user.release());
+    user.reset(nullptr);
+    request.set_allocated_resource(resource.release());
+    resource.reset(nullptr);
+    request.set_allocated_subject(subject.release());
+    resource.reset(nullptr);
+    EXPECT_NO_THROW(status = m_server->DropResourceFromSubject(&context, &request, &response));
+    EXPECT_THAT(status.ok(), IsTrue());
+    EXPECT_THAT(response.success(), IsTrue());
+    EXPECT_THAT(response.code(), Eq(0));
+    EXPECT_THAT(response.details().empty(), IsTrue());
+}
+
+TEST_F(test_server, SearchRsources)
+{
+    grpc::Status status{};
+    grpc::ServerContext context{};
+    flashback::SearchResourcesRequest request{};
+    flashback::SearchResourcesResponse response{};
+    std::map<uint64_t, flashback::Resource> const search_results{};
+
+    EXPECT_CALL(*m_mock_database, get_user(A<std::string_view>(), A<std::string_view>())).Times(1).WillOnce(Return(std::make_unique<flashback::User>(*m_user)));
+    EXPECT_CALL(*m_mock_database, search_resources(A<std::string_view>())).Times(1).WillOnce(Return(search_results));
+
+    request.clear_user();
+    request.clear_search_token();
+    EXPECT_NO_THROW(status = m_server->SearchResources(&context, &request, &response));
+    EXPECT_THAT(status.ok(), IsTrue());
+    EXPECT_THAT(response.success(), IsFalse());
+    EXPECT_THAT(response.code(), Eq(3));
+    EXPECT_THAT(response.details().empty(), IsFalse());
+    EXPECT_THAT(response.results(), IsEmpty());
+
+    flashback::User* user{request.mutable_user()};
+    *user = *m_user;
+    request.set_search_token("Some Resource");
+    EXPECT_NO_THROW(status = m_server->SearchResources(&context, &request, &response));
+    EXPECT_THAT(status.ok(), IsTrue());
+    EXPECT_THAT(response.success(), IsTrue());
+    EXPECT_THAT(response.code(), Eq(0));
+    EXPECT_THAT(response.details().empty(), IsTrue());
+    EXPECT_THAT(response.results(), SizeIs(search_results.size()));
+}
+
+TEST_F(test_server, MergeResources)
+{
+    grpc::Status status{};
+    grpc::ServerContext context{};
+    flashback::MergeResourcesRequest request{};
+    flashback::MergeResourcesResponse response{};
+    flashback::Resource resource_source{};
+    flashback::Resource resource_target{};
+    resource_source.set_id(1);
+    resource_target.set_id(2);
+
+    EXPECT_CALL(*m_mock_database, get_user(A<std::string_view>(), A<std::string_view>())).Times(1).WillOnce(Return(std::make_unique<flashback::User>(*m_user)));
+    EXPECT_CALL(*m_mock_database, merge_resources(A<uint64_t>(), A<uint64_t>())).Times(1);
+
+    request.clear_user();
+    request.clear_source();
+    request.clear_target();
+    EXPECT_NO_THROW(status = m_server->MergeResources(&context, &request, &response));
+    EXPECT_THAT(status.ok(), IsTrue());
+    EXPECT_THAT(response.success(), IsFalse());
+    EXPECT_THAT(response.code(), Eq(3));
+    EXPECT_THAT(response.details().empty(), IsFalse());
+
+    flashback::User* user{request.mutable_user()};
+    flashback::Resource* source{request.mutable_source()};
+    flashback::Resource* target{request.mutable_target()};
+    *user = *m_user;
+    *source = resource_source;
+    *target = resource_target;
+    EXPECT_NO_THROW(status = m_server->MergeResources(&context, &request, &response));
+    EXPECT_THAT(status.ok(), IsTrue());
+    EXPECT_THAT(response.success(), IsTrue());
+    EXPECT_THAT(response.code(), Eq(0));
+    EXPECT_THAT(response.details().empty(), IsTrue());
+}
+
+TEST_F(test_server, RemoveResource)
+{
+    grpc::Status status{};
+    grpc::ServerContext context{};
+    flashback::RemoveResourceRequest request{};
+    flashback::RemoveResourceResponse response{};
+
+    EXPECT_CALL(*m_mock_database, get_user(A<std::string_view>(), A<std::string_view>())).Times(1).WillOnce(Return(std::make_unique<flashback::User>(*m_user)));
+    EXPECT_CALL(*m_mock_database, remove_resource(A<uint64_t>())).Times(1);
+
+    request.clear_user();
+    request.clear_resource();
+    EXPECT_NO_THROW(status = m_server->RemoveResource(&context, &request, &response));
+    EXPECT_THAT(status.ok(), IsTrue());
+    EXPECT_THAT(response.success(), IsFalse());
+    EXPECT_THAT(response.code(), Eq(3));
+    EXPECT_THAT(response.details().empty(), IsFalse());
+
+    flashback::User* user{request.mutable_user()};
+    flashback::Resource* resource{request.mutable_resource()};
+    *user = *m_user;
+    resource->set_id(1);
+    EXPECT_NO_THROW(status = m_server->RemoveResource(&context, &request, &response));
+    EXPECT_THAT(status.ok(), IsTrue());
+    EXPECT_THAT(response.success(), IsTrue());
+    EXPECT_THAT(response.code(), Eq(0));
+    EXPECT_THAT(response.details().empty(), IsTrue());
+}
+
+TEST_F(test_server, EditResource)
+{
+    grpc::Status status{};
+    grpc::ServerContext context{};
+    flashback::EditResourceRequest request{};
+    flashback::EditResourceResponse response{};
+    flashback::Resource existing_resource{};
+    existing_resource.set_id(1);
+    existing_resource.set_name("C++ Book");
+    existing_resource.set_link("https://flashback.eu.com");
+    existing_resource.set_type(flashback::Resource::book);
+    existing_resource.set_pattern(flashback::Resource::chapter);
+    existing_resource.set_production(std::chrono::system_clock::now().time_since_epoch().count());
+    existing_resource.set_expiration(std::chrono::system_clock::now().time_since_epoch().count() + 10000);
+
+    EXPECT_CALL(*m_mock_database, get_user(A<std::string_view>(), A<std::string_view>())).WillRepeatedly(Invoke([this]() { return std::make_unique<flashback::User>(*m_user); }));
+    EXPECT_CALL(*m_mock_database, get_resource(A<uint64_t>())).WillRepeatedly(Return(existing_resource));
+
+    request.clear_user();
+    request.clear_resource();
+    EXPECT_NO_THROW(status = m_server->EditResource(&context, &request, &response));
+    EXPECT_THAT(status.ok(), IsTrue());
+    EXPECT_THAT(response.success(), IsFalse());
+    EXPECT_THAT(response.code(), Eq(3));
+    EXPECT_THAT(response.details().empty(), IsFalse());
+
+    flashback::User* user{request.mutable_user()};
+    *user = *m_user;
+    flashback::Resource* resource{request.mutable_resource()};
+    *resource = existing_resource;
+
+    EXPECT_NO_THROW(status = m_server->EditResource(&context, &request, &response));
+    EXPECT_THAT(status.ok(), IsTrue());
+    EXPECT_THAT(response.success(), IsFalse());
+    EXPECT_THAT(response.code(), Eq(5));
+    EXPECT_THAT(response.details().empty(), IsFalse());
+
+    resource->set_name("Another C++ Book");
+    EXPECT_CALL(*m_mock_database, rename_resource(A<uint64_t>(), A<std::string>())).Times(1);
+    EXPECT_NO_THROW(status = m_server->EditResource(&context, &request, &response));
+    EXPECT_THAT(status.ok(), IsTrue());
+    EXPECT_THAT(response.success(), IsTrue());
+    EXPECT_THAT(response.code(), Eq(0));
+    EXPECT_THAT(response.details().empty(), IsTrue());
+    resource->set_name(existing_resource.name());
+
+    resource->set_link("https:://example.com");
+    EXPECT_CALL(*m_mock_database, edit_resource_link(A<uint64_t>(), A<std::string>())).Times(1);
+    EXPECT_NO_THROW(status = m_server->EditResource(&context, &request, &response));
+    EXPECT_THAT(status.ok(), IsTrue());
+    EXPECT_THAT(response.success(), IsTrue());
+    EXPECT_THAT(response.code(), Eq(0));
+    EXPECT_THAT(response.details().empty(), IsTrue());
+    resource->set_link(existing_resource.link());
+
+    resource->set_type(flashback::Resource::channel);
+    EXPECT_CALL(*m_mock_database, change_resource_type(A<uint64_t>(), A<flashback::Resource::resource_type>())).Times(1);
+    EXPECT_NO_THROW(status = m_server->EditResource(&context, &request, &response));
+    EXPECT_THAT(status.ok(), IsTrue());
+    EXPECT_THAT(response.success(), IsTrue());
+    EXPECT_THAT(response.code(), Eq(0));
+    EXPECT_THAT(response.details().empty(), IsTrue());
+    resource->set_type(existing_resource.type());
+
+    resource->set_pattern(flashback::Resource::episode);
+    EXPECT_CALL(*m_mock_database, change_section_pattern(A<uint64_t>(), A<flashback::Resource::section_pattern>())).Times(1);
+    EXPECT_NO_THROW(status = m_server->EditResource(&context, &request, &response));
+    EXPECT_THAT(status.ok(), IsTrue());
+    EXPECT_THAT(response.success(), IsTrue());
+    EXPECT_THAT(response.code(), Eq(0));
+    EXPECT_THAT(response.details().empty(), IsTrue());
+    resource->set_pattern(existing_resource.pattern());
+
+    resource->set_production(std::chrono::system_clock::now().time_since_epoch().count() - 1000);
+    EXPECT_CALL(*m_mock_database, edit_resource_production(A<uint64_t>(), A<uint64_t>())).Times(1);
+    EXPECT_NO_THROW(status = m_server->EditResource(&context, &request, &response));
+    EXPECT_THAT(status.ok(), IsTrue());
+    EXPECT_THAT(response.success(), IsTrue());
+    EXPECT_THAT(response.code(), Eq(0));
+    EXPECT_THAT(response.details().empty(), IsTrue());
+    resource->set_production(existing_resource.production());
+
+    resource->set_expiration(std::chrono::system_clock::now().time_since_epoch().count() - 1000);
+    EXPECT_CALL(*m_mock_database, edit_resource_expiration(A<uint64_t>(), A<uint64_t>())).Times(1);
+    EXPECT_NO_THROW(status = m_server->EditResource(&context, &request, &response));
+    EXPECT_THAT(status.ok(), IsTrue());
+    EXPECT_THAT(response.success(), IsTrue());
+    EXPECT_THAT(response.code(), Eq(0));
+    EXPECT_THAT(response.details().empty(), IsTrue());
+    resource->set_expiration(existing_resource.expiration());
+}
+
+TEST_F(test_server, CreateNerve)
+{
+}
+
+TEST_F(test_server, GetNerves)
+{
+}
+
+TEST_F(test_server, CreateProvider)
+{
+}
+
+TEST_F(test_server, AddProvider)
+{
+}
+
+TEST_F(test_server, DropProvider)
+{
+}
+
+TEST_F(test_server, SearchProviders)
+{
+}
+
+TEST_F(test_server, RenameProvider)
+{
+}
+
+TEST_F(test_server, RemoveProvider)
+{
+}
+
+TEST_F(test_server, MergeProviders)
+{
+}
+
+TEST_F(test_server, CreatePresenter)
+{
+}
+
+TEST_F(test_server, AddPresenter)
+{
+}
+
+TEST_F(test_server, DropPresenter)
+{
+}
+
+TEST_F(test_server, SearchPresenters)
+{
+}
+
+TEST_F(test_server, RenamePresenter)
+{
+}
+
+TEST_F(test_server, RemovePresenter)
+{
+}
+
+TEST_F(test_server, MergePresenters)
+{
+}
+
+TEST_F(test_server, GetTopics)
+{
+}
+
+TEST_F(test_server, CreateTopic)
+{
+}
+
+TEST_F(test_server, ReorderTopic)
+{
+}
+
+TEST_F(test_server, RemoveTopic)
+{
+}
+
+TEST_F(test_server, MergeTopics)
+{
+}
+
+TEST_F(test_server, EditTopic)
+{
+}
+
+TEST_F(test_server, MoveTopic)
+{
+}
+
+TEST_F(test_server, SearchTopics)
+{
+}
+
+TEST_F(test_server, GetSections)
+{
+}
+
+TEST_F(test_server, CreateSection)
+{
+}
+
+TEST_F(test_server, ReorderSection)
+{
+}
+
+TEST_F(test_server, RemoveSection)
+{
+}
+
+TEST_F(test_server, MergeSections)
+{
+}
+
+TEST_F(test_server, EditSection)
+{
+}
+
+TEST_F(test_server, MoveSection)
+{
+}
+
+TEST_F(test_server, SearchSections)
+{
+}
+
+TEST_F(test_server, CreateCard)
+{
+}
+
+TEST_F(test_server, AddCardToSection)
+{
+}
+
+TEST_F(test_server, AddCardToTopic)
+{
+}
+
+TEST_F(test_server, ReorderCard)
+{
+}
+
+TEST_F(test_server, RemoveCard)
+{
+}
+
+TEST_F(test_server, MergeCards)
+{
+}
+
+TEST_F(test_server, SearchCards)
+{
+}
+
+TEST_F(test_server, GetStudyCards)
+{
+}
+
+TEST_F(test_server, MoveCardToSection)
+{
+}
+
+TEST_F(test_server, MarkSectionAsReviewed)
+{
+}
+
+TEST_F(test_server, GetPracticeCards)
+{
+}
+
+TEST_F(test_server, MoveCardToTopic)
+{
+}
+
+TEST_F(test_server, CreateAssessment)
+{
+}
+
+TEST_F(test_server, ExpandAssessment)
+{
+}
+
+TEST_F(test_server, DiminishAssessment)
+{
+}
+
+TEST_F(test_server, IsAssimilated)
+{
+}
+
+TEST_F(test_server, EditCard)
+{
+}
+
+TEST_F(test_server, CreateBlock)
+{
+}
+
+TEST_F(test_server, GetBlocks)
+{
+}
+
+TEST_F(test_server, RemoveBlock)
+{
+}
+
+TEST_F(test_server, EditBlock)
+{
+}
+
+TEST_F(test_server, ReorderBlock)
+{
+}
+
+TEST_F(test_server, MergeBlocks)
+{
+}
+
+TEST_F(test_server, SplitBlock)
+{
+}
+
+TEST_F(test_server, MarkCardAsReviewed)
+{
+}
+
+TEST_F(test_server, Study)
+{
+}
+
+TEST_F(test_server, MakeProgress)
+{
+}
+
+TEST_F(test_server, GetProgressWeight)
+{
 }

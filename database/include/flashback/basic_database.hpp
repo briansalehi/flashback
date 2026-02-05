@@ -73,6 +73,7 @@ public:
     [[nodiscard]] virtual Resource create_resource(Resource const& resource) const = 0;
     virtual void add_resource_to_subject(uint64_t resource_id, uint64_t subject_id) const = 0;
     [[nodiscard]] virtual std::vector<Resource> get_resources(uint64_t user_id, uint64_t subject_id) const = 0;
+    [[nodiscard]] virtual Resource get_resource(uint64_t resource_id) const = 0;
     virtual void drop_resource_from_subject(uint64_t resource_id, uint64_t subject_id) const = 0;
     [[nodiscard]] virtual std::map<uint64_t, Resource> search_resources(std::string_view search_pattern) const = 0;
     virtual void edit_resource_link(uint64_t resource_id, std::string link) const = 0;

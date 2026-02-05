@@ -478,6 +478,23 @@ std::vector<Resource> database::get_resources(uint64_t user_id, uint64_t const s
     return resources;
 }
 
+Resource database::get_resource(uint64_t resource_id) const
+{
+    Resource resource{};
+    if (pqxx::result const result{query("select id, name, type, pattern, link, production, expiration from get_resource($1)", resource_id)}; result.size() == 1)
+    {
+        pqxx::row const& row{result.at(0)};
+        resource.set_id(row.at("id").as<uint64_t>());
+        resource.set_name(row.at("name").as<std::string>());
+        resource.set_type(to_resource_type(row.at("type").as<std::string>()));
+        resource.set_pattern(to_section_pattern(row.at("pattern").as<std::string>()));
+        resource.set_link(row.at("link").is_null() ? "" : row.at("link").as<std::string>());
+        resource.set_production(row.at("production").as<uint64_t>());
+        resource.set_expiration(row.at("expiration").as<uint64_t>());
+    }
+    return resource;
+}
+
 void database::drop_resource_from_subject(uint64_t const resource_id, uint64_t const subject_id) const
 {
     exec("call drop_resource_from_subject($1, $2)", resource_id, subject_id);

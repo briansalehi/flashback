@@ -48,6 +48,7 @@ public:
     MOCK_METHOD(Resource, create_resource, (Resource const&), (const, override));
     MOCK_METHOD(void, add_resource_to_subject, (uint64_t, uint64_t), (const, override));
     MOCK_METHOD(std::vector<Resource>, get_resources, (uint64_t, uint64_t), (const, override));
+    MOCK_METHOD(Resource, get_resource, (uint64_t), (const, override));
     MOCK_METHOD(void, drop_resource_from_subject, (uint64_t, uint64_t), (const, override));
     MOCK_METHOD((std::map<uint64_t, Resource>), search_resources, (std::string_view), (const, override));
     MOCK_METHOD(void, edit_resource_link, (uint64_t, std::string), (const, override));

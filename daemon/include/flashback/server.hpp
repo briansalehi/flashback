@@ -21,12 +21,11 @@ public:
 
     // accounts page
     grpc::Status ResetPassword(grpc::ServerContext* context, ResetPasswordRequest const* request, ResetPasswordResponse* response) override;
-    // RenameUser
-    // ChangeUserEmail
+    grpc::Status EditUser(grpc::ServerContext* context, EditUserRequest const* request, EditUserResponse* response) override;
 
     // home page
     grpc::Status GetRoadmaps(grpc::ServerContext* context, GetRoadmapsRequest const* request, GetRoadmapsResponse* response) override;
-    // GetStudyResources
+    grpc::Status GetStudyResources(grpc::ServerContext* context, GetStudyResourcesRequest const* request, GetStudyResourcesResponse* response) override;
 
     // roadmap page
     grpc::Status CreateRoadmap(grpc::ServerContext* context, CreateRoadmapRequest const* request, CreateRoadmapResponse* response) override;
@@ -55,104 +54,93 @@ public:
     grpc::Status GetResources(grpc::ServerContext* context, GetResourcesRequest const* request, GetResourcesResponse* response) override;
     grpc::Status CreateResource(grpc::ServerContext* context, CreateResourceRequest const* request, CreateResourceResponse* response) override;
     grpc::Status AddResourceToSubject(grpc::ServerContext* context, AddResourceToSubjectRequest const* request, AddResourceToSubjectResponse* response) override;
-    // DropResourceFromSubject
-    // SearchResources
-    // MergeResources
-    // RenameResource
-    // RemoveResource
-    // EditResourceProduction
-    // EditResourceExpiration
-    // EditResourceLink
-    // ChangeResourceType
-    // ChangeSectionPattern
+    grpc::Status DropResourceFromSubject(grpc::ServerContext* context, DropResourceFromSubjectRequest const* request, DropResourceFromSubjectResponse* response) override;
+    grpc::Status SearchResources(grpc::ServerContext* context, SearchResourcesRequest const* request, SearchResourcesResponse* response) override;
+    grpc::Status MergeResources(grpc::ServerContext* context, MergeResourcesRequest const* request, MergeResourcesResponse* response) override;
+    grpc::Status RemoveResource(grpc::ServerContext* context, RemoveResourceRequest const* request, RemoveResourceResponse* response) override;
+    grpc::Status EditResource(grpc::ServerContext* context, EditResourceRequest const* request, EditResourceResponse* response) override;
     // GetRelevantSubjects
 
     // nerves
-    // CreateNerve
-    // GetNerves
+    grpc::Status CreateNerve(grpc::ServerContext* context, CreateNerveRequest const* request, CreateNerveResponse* response) override;
+    grpc::Status GetNerves(grpc::ServerContext* context, GetNervesRequest const* request, GetNervesResponse* response) override;
 
     // providers
-    // CreateProvider
-    // AddProvider
-    // DropProvider
-    // SearchProviders
-    // RenameProvider
-    // RemoveProvider
-    // MergeProviders
+    grpc::Status CreateProvider(grpc::ServerContext* context, CreateProviderRequest const* request, CreateProviderResponse* response) override;
+    grpc::Status AddProvider(grpc::ServerContext* context, AddProviderRequest const* request, AddProviderResponse* response) override;
+    grpc::Status DropProvider(grpc::ServerContext* context, DropProviderRequest const* request, DropProviderResponse* response) override;
+    grpc::Status SearchProviders(grpc::ServerContext* context, SearchProvidersRequest const* request, SearchProvidersResponse* response) override;
+    grpc::Status RenameProvider(grpc::ServerContext* context, RenameProviderRequest const* request, RenameProviderResponse* response) override;
+    grpc::Status RemoveProvider(grpc::ServerContext* context, RemoveProviderRequest const* request, RemoveProviderResponse* response) override;
+    grpc::Status MergeProviders(grpc::ServerContext* context, MergeProvidersRequest const* request, MergeProvidersResponse* response) override;
 
     // presenters
-    // CreatePresenter
-    // AddPresenter
-    // DropPresenter
-    // SearchPresenters
-    // RenamePresenters
-    // RemovePresenters
-    // MergePresenters
+    grpc::Status CreatePresenter(grpc::ServerContext* context, CreatePresenterRequest const* request, CreatePresenterResponse* response) override;
+    grpc::Status AddPresenter(grpc::ServerContext* context, AddPresenterRequest const* request, AddPresenterResponse* response) override;
+    grpc::Status DropPresenter(grpc::ServerContext* context, DropPresenterRequest const* request, DropPresenterResponse* response) override;
+    grpc::Status SearchPresenters(grpc::ServerContext* context, SearchPresentersRequest const* request, SearchPresentersResponse* response) override;
+    grpc::Status RenamePresenter(grpc::ServerContext* context, RenamePresenterRequest const* request, RenamePresenterResponse* response) override;
+    grpc::Status RemovePresenter(grpc::ServerContext* context, RemovePresenterRequest const* request, RemovePresenterResponse* response) override;
+    grpc::Status MergePresenters(grpc::ServerContext* context, MergePresentersRequest const* request, MergePresentersResponse* response) override;
 
     // topic page
-    // GetTopics
-    // CreateTopic
-    // ReorderTopic
-    // RemoveTopic
-    // MergeTopics
-    // RenameTopic
-    // MoveTopic
-    // SearchTopics
-    // ChangeTopicLevel
+    grpc::Status GetTopics(grpc::ServerContext* context, GetTopicsRequest const* request, GetTopicsResponse* response) override;
+    grpc::Status CreateTopic(grpc::ServerContext* context, CreateTopicRequest const* request, CreateTopicResponse* response) override;
+    grpc::Status ReorderTopic(grpc::ServerContext* context, ReorderTopicRequest const* request, ReorderTopicResponse* response) override;
+    grpc::Status RemoveTopic(grpc::ServerContext* context, RemoveTopicRequest const* request, RemoveTopicResponse* response) override;
+    grpc::Status MergeTopics(grpc::ServerContext* context, MergeTopicsRequest const* request, MergeTopicsResponse* response) override;
+    grpc::Status EditTopic(grpc::ServerContext* context, EditTopicRequest const* request, EditTopicResponse* response) override;
+    grpc::Status MoveTopic(grpc::ServerContext* context, MoveTopicRequest const* request, MoveTopicResponse* response) override;
+    grpc::Status SearchTopics(grpc::ServerContext* context, SearchTopicsRequest const* request, SearchTopicsResponse* response) override;
 
     // section page
-    // GetSections
-    // CreateSection
-    // ReorderSection
-    // RemoveSection
-    // MergeSections
-    // RenameSection
-    // MoveSection
-    // SearchSections
-    // EditSectionLink
+    grpc::Status GetSections(grpc::ServerContext* context, GetSectionsRequest const* request, GetSectionsResponse* response) override;
+    grpc::Status CreateSection(grpc::ServerContext* context, CreateSectionRequest const* request, CreateSectionResponse* response) override;
+    grpc::Status ReorderSection(grpc::ServerContext* context, ReorderSectionRequest const* request, ReorderSectionResponse* response) override;
+    grpc::Status RemoveSection(grpc::ServerContext* context, RemoveSectionRequest const* request, RemoveSectionResponse* response) override;
+    grpc::Status MergeSections(grpc::ServerContext* context, MergeSectionsRequest const* request, MergeSectionsResponse* response) override;
+    grpc::Status EditSection(grpc::ServerContext* context, EditSectionRequest const* request, EditSectionResponse* response) override;
+    grpc::Status MoveSection(grpc::ServerContext* context, MoveSectionRequest const* request, MoveSectionResponse* response) override;
+    grpc::Status SearchSections(grpc::ServerContext* context, SearchSectionsRequest const* request, SearchSectionsResponse* response) override;
 
     // shared functions in section and topic pages
-    // CreateCard
-    // AddCardToSection
-    // AddCardToTopic
-    // ReorderCard
-    // RemoveCard
-    // MergeCards
-    // SearchCards
+    grpc::Status CreateCard(grpc::ServerContext* context, CreateCardRequest const* request, CreateCardResponse* response) override;
+    grpc::Status AddCardToSection(grpc::ServerContext* context, AddCardToSectionRequest const* request, AddCardToSectionResponse* response) override;
+    grpc::Status AddCardToTopic(grpc::ServerContext* context, AddCardToTopicRequest const* request, AddCardToTopicResponse* response) override;
+    grpc::Status ReorderCard(grpc::ServerContext* context, ReorderCardRequest const* request, ReorderCardResponse* response) override;
+    grpc::Status RemoveCard(grpc::ServerContext* context, RemoveCardRequest const* request, RemoveCardResponse* response) override;
+    grpc::Status MergeCards(grpc::ServerContext* context, MergeCardsRequest const* request, MergeCardsResponse* response) override;
+    grpc::Status SearchCards(grpc::ServerContext* context, SearchCardsRequest const* request, SearchCardsResponse* response) override;
 
     // section page
-    // GetStudyCards
-    // MoveCardToSection
-    // MarkSectionAsReviewed
+    grpc::Status GetStudyCards(grpc::ServerContext* context, GetStudyCardsRequest const* request, GetStudyCardsResponse* response) override;
+    grpc::Status MoveCardToSection(grpc::ServerContext* context, MoveCardToSectionRequest const* request, MoveCardToSectionResponse* response) override;
+    grpc::Status MarkSectionAsReviewed(grpc::ServerContext* context, MarkSectionAsReviewedRequest const* request, MarkSectionAsReviewedResponse* response) override;
 
     // topic page
-    // GetPracticeCards
-    // MoveCardToTopic
-    // CreateAssessment
-    // ExpandAssessment
-    // DiminishAssessment
-    // GetAssimilationCoverage
-    // IsAssimilated
+    grpc::Status GetPracticeCards(grpc::ServerContext* context, GetPracticeCardsRequest const* request, GetPracticeCardsResponse* response) override;
+    grpc::Status MoveCardToTopic(grpc::ServerContext* context, MoveCardToTopicRequest const* request, MoveCardToTopicResponse* response) override;
+    grpc::Status CreateAssessment(grpc::ServerContext* context, CreateAssessmentRequest const* request, CreateAssessmentResponse* response) override;
+    grpc::Status ExpandAssessment(grpc::ServerContext* context, ExpandAssessmentRequest const* request, ExpandAssessmentResponse* response) override;
+    grpc::Status DiminishAssessment(grpc::ServerContext* context, DiminishAssessmentRequest const* request, DiminishAssessmentResponse* response) override;
+    grpc::Status IsAssimilated(grpc::ServerContext* context, IsAssimilatedRequest const* request, IsAssimilatedResponse* response) override;
 
     // card page
-    // EditHeadline
-    // CreateBlock
-    // GetBlocks
-    // EditBlockContent
-    // RemoveBlock
-    // EditBlockExtension
-    // ChangeBlockType
-    // EditBlockMetaData
-    // ReorderBlock
-    // MergeBlocks
-    // SplitBlock
-    // MarkCardAsReviewed
+    grpc::Status EditCard(grpc::ServerContext* context, EditCardRequest const* request, EditCardResponse* response) override;
+    grpc::Status CreateBlock(grpc::ServerContext* context, CreateBlockRequest const* request, CreateBlockResponse* response) override;
+    grpc::Status GetBlocks(grpc::ServerContext* context, GetBlocksRequest const* request, GetBlocksResponse* response) override;
+    grpc::Status RemoveBlock(grpc::ServerContext* context, RemoveBlockRequest const* request, RemoveBlockResponse* response) override;
+    grpc::Status EditBlock(grpc::ServerContext* context, EditBlockRequest const* request, EditBlockResponse* response) override;
+    grpc::Status ReorderBlock(grpc::ServerContext* context, ReorderBlockRequest const* request, ReorderBlockResponse* response) override;
+    grpc::Status MergeBlocks(grpc::ServerContext* context, MergeBlocksRequest const* request, MergeBlocksResponse* response) override;
+    grpc::Status SplitBlock(grpc::ServerContext* context, SplitBlockRequest const* request, SplitBlockResponse* response) override;
+    grpc::Status MarkCardAsReviewed(grpc::ServerContext* context, MarkCardAsReviewedRequest const* request, MarkCardAsReviewedResponse* response) override;
     // GetVariations
 
     // progress
-    // Study
-    // MakeProgress
-    // GetProgressWeight
+    grpc::Status Study(grpc::ServerContext* context, StudyRequest const* request, StudyResponse* response) override;
+    grpc::Status MakeProgress(grpc::ServerContext* context, MakeProgressRequest const* request, MakeProgressResponse* response) override;
+    grpc::Status GetProgressWeight(grpc::ServerContext* context, GetProgressWeightRequest const* request, GetProgressWeightResponse* response) override;
 
 protected:
     [[nodiscard]] static std::string calculate_hash(std::string_view password);
