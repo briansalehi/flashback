@@ -7,20 +7,24 @@ on:
     branches: release
   workflow_dispatch:
 jobs:
-  checkout:
+  common:
     runs-on: ubuntu-latest
     steps:
+      - name: update
+        run: sudo apt update
       - name: checkout
         uses: actions/checkout@v4
+      - name: build-common
+        run: cmake --workflow --preset common
   server:
     runs-on: ubuntu-latest
-    needs: checkout
+    needs: common
     steps:
       - name: build server
         run: cmake --workflow --preset server
   client:
     runs-on: ubuntu-latest
-    needs: checkout
+    needs: common
     steps:
       - name: build client
         run: cmake --workflow --preset client

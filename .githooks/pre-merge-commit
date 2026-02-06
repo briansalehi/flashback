@@ -1,0 +1,28 @@
+#!/usr/bin/sh
+
+exec 1>&2
+
+current_version="$(sed -nE '/^project/s/.* VERSION ([0-9.]+) .*/\1/p' CMakeLists.txt)"
+current_major="$(awk -F'.' '{print $1}' <<< "$current_version")"
+current_minor="$(awk -F'.' '{print $2}' <<< "$current_version")"
+tagged_version="$(git describe --tags --abbrev=0 | grep -oE '[0-9.]+')"
+tagged_major="$(awk -F'.' '{print $1}' <<< "$tagged_version")"
+tagged_minor="$(awk -F'.' '{print $2}' <<< "$tagged_version")"
+
+if [ -z "${current_version}" ]
+then
+    echo -e "\e[1;31mVersion is not specified in CMakeLists.txt\e[0m"
+    exit 2
+elif [ "${current_major}" -lt "${tagged_major}" ]
+then
+    echo -e "\e[1;31mMajor version in CMakeLists.txt is behind the latest tagged version\e[0m"
+    exit 3
+elif [ "${current_major}" -eq "${tagged_major}" ] && [ "${current_minor}" -lt "${tagged_minor}" ]
+then
+    echo -e "\e[1;31mMinor version in CMakeLists.txt is behind the latest tagged version\e[0m"
+    exit 4
+elif [ "${current_major}" -eq "${tagged_major}" ] && [ "${current_minor}" -eq "${tagged_minor}" ] 
+then
+    echo -e "\e[1;33mVersion ${current_version} is not increased in CMakeLists.txt\e[0m"
+    exit 5
+fi
