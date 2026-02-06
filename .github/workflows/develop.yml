@@ -7,6 +7,8 @@ jobs:
   release:
     runs-on: ubuntu-24.04
     steps:
+      - name: update repository
+        run: sudo apt update
       - name: prepare
         run:  sudo apt install --yes --no-install-recommends cmake postgresql libreadline-dev npm make curl patch tar gzip bzip2 sed libboost-system-dev libboost-program-options-dev libgtest-dev libprotobuf-dev libprotoc-dev libgrpc++-dev protobuf-compiler-grpc libsodium-dev libgmock-dev
       - name: checkout
