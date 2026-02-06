@@ -5,6 +5,8 @@ package flashback;
 import "google/protobuf/timestamp.proto";
 
 enum expertise_level { surface = 0; depth = 1; origin = 2; }
+enum practice_mode { aggressive = 0; progressive = 1; selective = 2; }
+enum closure_state { draft = 0; reviewed = 1; completed = 2; }
 
 message Roadmap { uint64 id = 1; string name = 2; }
 message Subject { uint64 id = 1; string name = 2; }
@@ -16,27 +18,8 @@ message Topic { uint64 position = 1; string name = 2; expertise_level level = 3;
 message Section { uint64 position = 1; closure_state state = 2; string name = 3; string link =4; }
 
 message Resource {
-    enum resource_type {
-        book = 0;
-        website = 1;
-        course = 2;
-        video = 3;
-        channel = 4;
-        mailing_list = 5;
-        manual = 6;
-        slides = 7;
-        nerve = 8;
-    }
-
-    enum section_pattern {
-        chapter = 0;
-        page = 1;
-        session = 2;
-        episode = 3;
-        playlist = 4;
-        post = 5;
-        synapse = 6;
-    }
+    enum resource_type { book = 0; website = 1; course = 2; video = 3; channel = 4; mailing_list = 5; manual = 6; slides = 7; nerve = 8; }
+    enum section_pattern { chapter = 0; page = 1; session = 2; episode = 3; playlist = 4; post = 5; synapse = 6; }
 
     uint64 id = 1;
     resource_type type = 2;
@@ -50,14 +33,7 @@ message Resource {
 }
 
 message Card {
-    enum card_state {
-        draft = 0;
-        reviewed = 1;
-        completed = 2;
-        approved = 3;
-        released = 4;
-        rejected = 5;
-    }
+    enum card_state { draft = 0; reviewed = 1; completed = 2; approved = 3; released = 4; rejected = 5; }
 
     uint64 id = 1;
     card_state state = 2;
@@ -65,11 +41,7 @@ message Card {
 }
 
 message Block {
-    enum content_type {
-        text = 0;
-        code = 1;
-        image = 2;
-    }
+    enum content_type { text = 0; code = 1; image = 2; }
 
     uint64 position = 1;
     content_type type = 2;
@@ -79,12 +51,7 @@ message Block {
 }
 
 message User {
-    enum State {
-        active = 0;
-        inactive = 1;
-        suspended = 2;
-        banned = 3;
-    }
+    enum State { active = 0; inactive = 1; suspended = 2; banned = 3; }
 
     uint64 id = 1;
     string name = 2;
@@ -98,24 +65,10 @@ message User {
     string hash = 10;
 }
 
-enum practice_mode {
-    aggressive = 0;
-    progressive = 1;
-    selective = 2;
-}
-
-enum closure_state {
-    draft = 0;
-    reviewed = 1;
-    completed = 2;
-}
-
 message Weight { Resource resource = 1; uint64 percentage = 2; }
-
 message Coverage { Card card = 1; uint64 coverage = 2; }
-
 message Assimilation { Topic topic = 1; bool assimilated = 2; }
-
 message Assessment { Card card = 1; uint64 assimilations = 2; }
-
 message ResourceSearchResult { Resource resource = 1; uint64 position = 2; }
+message ProviderSearchResult { Provider provider = 1; uint64 position = 2; }
+message PresenterSearchResult { Presenter presenter = 1; uint64 position = 2; }

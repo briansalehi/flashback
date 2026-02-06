@@ -1462,66 +1462,485 @@ TEST_F(test_server, EditResource)
 
 TEST_F(test_server, CreateNerve)
 {
+    grpc::Status status{};
+    grpc::ServerContext context{};
+    flashback::CreateNerveRequest request{};
+    flashback::CreateNerveResponse response{};
+    flashback::Subject subject{};
+    flashback::Resource resource{};
+    resource.set_id(1);
+    resource.set_name("C++");
+    resource.clear_link();
+    resource.set_type(flashback::Resource::nerve);
+    resource.set_pattern(flashback::Resource::synapse);
+    resource.set_production(std::chrono::system_clock::now().time_since_epoch().count());
+    resource.clear_expiration();
+    subject.set_name("C++");
+
+    EXPECT_CALL(*m_mock_database, get_user(A<std::string_view>(), A<std::string_view>())).WillRepeatedly(Invoke([this]() { return std::make_unique<flashback::User>(*m_user); }));
+    EXPECT_CALL(*m_mock_database, create_nerve(A<uint64_t>(), A<std::string>(), A<uint64_t>(), A<uint64_t>())).WillRepeatedly(Return(resource));
+
+    request.clear_user();
+    EXPECT_NO_THROW(status = m_server->CreateNerve(&context, &request, &response));
+    EXPECT_THAT(status.ok(), IsFalse());
+    EXPECT_THAT(status.error_message().empty(), IsFalse());
+    EXPECT_THAT(status.error_code(), Eq(grpc::StatusCode::UNAUTHENTICATED));
+
+    *request.mutable_user() = *m_user;
+    *request.mutable_resource() = resource;
+    *request.mutable_subject() = subject;
+
+    EXPECT_NO_THROW(status = m_server->CreateNerve(&context, &request, &response));
+    EXPECT_THAT(status.ok(), IsTrue());
+    EXPECT_THAT(status.error_message(), IsEmpty());
 }
 
 TEST_F(test_server, GetNerves)
 {
+    grpc::Status status{};
+    grpc::ServerContext context{};
+    flashback::GetNervesRequest request{};
+    flashback::GetNervesResponse response{};
+    std::vector<flashback::Resource> expected_nerves{};
+    flashback::Resource nerve{};
+
+    nerve.set_id(1);
+    nerve.set_name("C++");
+    nerve.clear_link();
+    nerve.set_type(flashback::Resource::nerve);
+    nerve.set_pattern(flashback::Resource::synapse);
+    nerve.set_production(std::chrono::system_clock::now().time_since_epoch().count());
+    nerve.clear_expiration();
+    expected_nerves.push_back(nerve);
+
+    EXPECT_CALL(*m_mock_database, get_user(A<std::string_view>(), A<std::string_view>())).WillRepeatedly(Invoke([this]() { return std::make_unique<flashback::User>(*m_user); }));
+    EXPECT_CALL(*m_mock_database, get_nerves(A<uint64_t>())).WillRepeatedly(Return(expected_nerves));
+
+    request.clear_user();
+    EXPECT_NO_THROW(status = m_server->GetNerves(&context, &request, &response));
+    EXPECT_THAT(status.ok(), IsFalse());
+    EXPECT_THAT(status.error_message().empty(), IsFalse());
+    EXPECT_THAT(status.error_code(), Eq(grpc::StatusCode::UNAUTHENTICATED));
+
+    flashback::User* user{request.mutable_user()};
+    *user = *m_user;
+
+    EXPECT_NO_THROW(status = m_server->GetNerves(&context, &request, &response));
+    EXPECT_THAT(status.ok(), IsTrue());
+    EXPECT_THAT(status.error_message(), IsEmpty());
 }
 
 TEST_F(test_server, CreateProvider)
 {
+    grpc::Status status{};
+    grpc::ServerContext context{};
+    flashback::CreateProviderRequest request{};
+    flashback::CreateProviderResponse response{};
+    flashback::Provider provider{};
+
+    provider.set_name("Brian Salehi");
+
+    EXPECT_CALL(*m_mock_database, get_user(A<std::string_view>(), A<std::string_view>())).WillRepeatedly(Invoke([this]() { return std::make_unique<flashback::User>(*m_user); }));
+    EXPECT_CALL(*m_mock_database, create_provider(A<std::string>())).WillOnce(Return(provider));
+
+    request.clear_user();
+    EXPECT_NO_THROW(status = m_server->CreateProvider(&context, &request, &response));
+    EXPECT_THAT(status.ok(), IsFalse());
+    EXPECT_THAT(status.error_message().empty(), IsFalse());
+    EXPECT_THAT(status.error_code(), Eq(grpc::StatusCode::UNAUTHENTICATED));
+
+    *request.mutable_user() = *m_user;
+    *request.mutable_provider() = provider;
+
+    EXPECT_NO_THROW(status = m_server->CreateProvider(&context, &request, &response));
+    EXPECT_THAT(status.ok(), IsTrue());
+    EXPECT_THAT(status.error_message(), IsEmpty());
 }
 
 TEST_F(test_server, AddProvider)
 {
+    grpc::Status status{};
+    grpc::ServerContext context{};
+    flashback::AddProviderRequest request{};
+    flashback::AddProviderResponse response{};
+    flashback::Resource resource{};
+    flashback::Provider provider{};
+
+    provider.set_name("Brian Salehi");
+    provider.set_id(1);
+    resource.set_id(1);
+
+    EXPECT_CALL(*m_mock_database, get_user(A<std::string_view>(), A<std::string_view>())).WillRepeatedly(Invoke([this]() { return std::make_unique<flashback::User>(*m_user); }));
+    EXPECT_CALL(*m_mock_database, add_provider(A<uint64_t>(), A<uint64_t>()));
+
+    request.clear_user();
+    EXPECT_NO_THROW(status = m_server->AddProvider(&context, &request, &response));
+    EXPECT_THAT(status.ok(), IsFalse());
+    EXPECT_THAT(status.error_message().empty(), IsFalse());
+    EXPECT_THAT(status.error_code(), Eq(grpc::StatusCode::UNAUTHENTICATED));
+
+    *request.mutable_user() = *m_user;
+    *request.mutable_provider() = provider;
+    *request.mutable_resource() = resource;
+
+    EXPECT_NO_THROW(status = m_server->AddProvider(&context, &request, &response));
+    EXPECT_THAT(status.ok(), IsTrue());
+    EXPECT_THAT(status.error_message(), IsEmpty());
 }
 
 TEST_F(test_server, DropProvider)
 {
+    grpc::Status status{};
+    grpc::ServerContext context{};
+    flashback::DropProviderRequest request{};
+    flashback::DropProviderResponse response{};
+    flashback::Resource resource{};
+    flashback::Provider provider{};
+
+    provider.set_name("Brian Salehi");
+    provider.set_id(1);
+    resource.set_id(1);
+
+    EXPECT_CALL(*m_mock_database, get_user(A<std::string_view>(), A<std::string_view>())).WillRepeatedly(Invoke([this]() { return std::make_unique<flashback::User>(*m_user); }));
+    EXPECT_CALL(*m_mock_database, drop_provider(A<uint64_t>(), A<uint64_t>()));
+
+    request.clear_user();
+    EXPECT_NO_THROW(status = m_server->DropProvider(&context, &request, &response));
+    EXPECT_THAT(status.ok(), IsFalse());
+    EXPECT_THAT(status.error_message().empty(), IsFalse());
+    EXPECT_THAT(status.error_code(), Eq(grpc::StatusCode::UNAUTHENTICATED));
+
+    *request.mutable_user() = *m_user;
+    *request.mutable_provider() = provider;
+    *request.mutable_resource() = resource;
+
+    EXPECT_NO_THROW(status = m_server->DropProvider(&context, &request, &response));
+    EXPECT_THAT(status.ok(), IsTrue());
+    EXPECT_THAT(status.error_message(), IsEmpty());
 }
 
 TEST_F(test_server, SearchProviders)
 {
+    grpc::Status status{};
+    grpc::ServerContext context{};
+    flashback::SearchProvidersRequest request{};
+    flashback::SearchProvidersResponse response{};
+    std::map<uint64_t, flashback::Provider> providers{};
+    flashback::Provider provider{};
+
+    provider.set_name("Brian Salehi");
+    provider.set_id(1);
+    providers.insert({provider.id(), provider});
+
+    EXPECT_CALL(*m_mock_database, get_user(A<std::string_view>(), A<std::string_view>())).WillRepeatedly(Invoke([this]() { return std::make_unique<flashback::User>(*m_user); }));
+    EXPECT_CALL(*m_mock_database, search_providers(A<std::string_view>())).WillOnce(Return(providers));
+
+    request.clear_user();
+    EXPECT_NO_THROW(status = m_server->SearchProviders(&context, &request, &response));
+    EXPECT_THAT(status.ok(), IsFalse());
+    EXPECT_THAT(status.error_message().empty(), IsFalse());
+    EXPECT_THAT(status.error_code(), Eq(grpc::StatusCode::UNAUTHENTICATED));
+
+    *request.mutable_user() = *m_user;
+    request.set_search_token("Brian Salehi");
+
+    EXPECT_NO_THROW(status = m_server->SearchProviders(&context, &request, &response));
+    EXPECT_THAT(status.ok(), IsTrue());
+    EXPECT_THAT(status.error_message(), IsEmpty());
 }
 
 TEST_F(test_server, RenameProvider)
 {
+    grpc::Status status{};
+    grpc::ServerContext context{};
+    flashback::RenameProviderRequest request{};
+    flashback::RenameProviderResponse response{};
+    flashback::Provider provider{};
+
+    provider.set_name("Brian Salehi");
+    provider.set_id(1);
+
+    EXPECT_CALL(*m_mock_database, get_user(A<std::string_view>(), A<std::string_view>())).WillRepeatedly(Invoke([this]() { return std::make_unique<flashback::User>(*m_user); }));
+    EXPECT_CALL(*m_mock_database, rename_provider(A<uint64_t>(), A<std::string>()));
+
+    request.clear_user();
+    EXPECT_NO_THROW(status = m_server->RenameProvider(&context, &request, &response));
+    EXPECT_THAT(status.ok(), IsFalse());
+    EXPECT_THAT(status.error_message().empty(), IsFalse());
+    EXPECT_THAT(status.error_code(), Eq(grpc::StatusCode::UNAUTHENTICATED));
+
+    *request.mutable_user() = *m_user;
+    *request.mutable_provider() = provider;
+
+    EXPECT_NO_THROW(status = m_server->RenameProvider(&context, &request, &response));
+    EXPECT_THAT(status.ok(), IsTrue());
+    EXPECT_THAT(status.error_message(), IsEmpty());
 }
 
 TEST_F(test_server, RemoveProvider)
 {
+    grpc::Status status{};
+    grpc::ServerContext context{};
+    flashback::RemoveProviderRequest request{};
+    flashback::RemoveProviderResponse response{};
+    flashback::Provider provider{};
+
+    provider.set_name("Brian Salehi");
+    provider.set_id(1);
+
+    EXPECT_CALL(*m_mock_database, get_user(A<std::string_view>(), A<std::string_view>())).WillRepeatedly(Invoke([this]() { return std::make_unique<flashback::User>(*m_user); }));
+    EXPECT_CALL(*m_mock_database, remove_provider(A<uint64_t>()));
+
+    request.clear_user();
+    EXPECT_NO_THROW(status = m_server->RemoveProvider(&context, &request, &response));
+    EXPECT_THAT(status.ok(), IsFalse());
+    EXPECT_THAT(status.error_message().empty(), IsFalse());
+    EXPECT_THAT(status.error_code(), Eq(grpc::StatusCode::UNAUTHENTICATED));
+
+    *request.mutable_user() = *m_user;
+    *request.mutable_provider() = provider;
+
+    EXPECT_NO_THROW(status = m_server->RemoveProvider(&context, &request, &response));
+    EXPECT_THAT(status.ok(), IsTrue());
+    EXPECT_THAT(status.error_message(), IsEmpty());
 }
 
 TEST_F(test_server, MergeProviders)
 {
+    grpc::Status status{};
+    grpc::ServerContext context{};
+    flashback::MergeProvidersRequest request{};
+    flashback::MergeProvidersResponse response{};
+    flashback::Provider provider{};
+
+    provider.set_name("Brian Salehi");
+    provider.set_id(1);
+
+    EXPECT_CALL(*m_mock_database, get_user(A<std::string_view>(), A<std::string_view>())).WillRepeatedly(Invoke([this]() { return std::make_unique<flashback::User>(*m_user); }));
+    EXPECT_CALL(*m_mock_database, merge_providers(A<uint64_t>(), A<uint64_t>()));
+
+    request.clear_user();
+    EXPECT_NO_THROW(status = m_server->MergeProviders(&context, &request, &response));
+    EXPECT_THAT(status.ok(), IsFalse());
+    EXPECT_THAT(status.error_message().empty(), IsFalse());
+    EXPECT_THAT(status.error_code(), Eq(grpc::StatusCode::UNAUTHENTICATED));
+
+    *request.mutable_user() = *m_user;
+    *request.mutable_source() = provider;
+    *request.mutable_target() = provider;
+
+    EXPECT_NO_THROW(status = m_server->MergeProviders(&context, &request, &response));
+    EXPECT_THAT(status.ok(), IsTrue());
+    EXPECT_THAT(status.error_message(), IsEmpty());
 }
 
 TEST_F(test_server, CreatePresenter)
 {
+    grpc::Status status{};
+    grpc::ServerContext context{};
+    flashback::CreatePresenterRequest request{};
+    flashback::CreatePresenterResponse response{};
+    flashback::Presenter presenter{};
+
+    presenter.set_name("Brian Salehi");
+    presenter.set_id(1);
+
+    EXPECT_CALL(*m_mock_database, get_user(A<std::string_view>(), A<std::string_view>())).WillRepeatedly(Invoke([this]() { return std::make_unique<flashback::User>(*m_user); }));
+    EXPECT_CALL(*m_mock_database, create_presenter(A<std::string>())).WillOnce(Return(presenter));
+
+    request.clear_user();
+    EXPECT_NO_THROW(status = m_server->CreatePresenter(&context, &request, &response));
+    EXPECT_THAT(status.ok(), IsFalse());
+    EXPECT_THAT(status.error_message().empty(), IsFalse());
+    EXPECT_THAT(status.error_code(), Eq(grpc::StatusCode::UNAUTHENTICATED));
+
+    *request.mutable_user() = *m_user;
+    *request.mutable_presenter() = presenter;
+
+    EXPECT_NO_THROW(status = m_server->CreatePresenter(&context, &request, &response));
+    EXPECT_THAT(status.ok(), IsTrue());
+    EXPECT_THAT(status.error_message(), IsEmpty());
 }
 
 TEST_F(test_server, AddPresenter)
 {
+    grpc::Status status{};
+    grpc::ServerContext context{};
+    flashback::AddPresenterRequest request{};
+    flashback::AddPresenterResponse response{};
+    flashback::Presenter presenter{};
+    flashback::Resource resource{};
+
+    presenter.set_name("Brian Salehi");
+    presenter.set_id(1);
+    resource.set_id(1);
+
+    EXPECT_CALL(*m_mock_database, get_user(A<std::string_view>(), A<std::string_view>())).WillRepeatedly(Invoke([this]() { return std::make_unique<flashback::User>(*m_user); }));
+    EXPECT_CALL(*m_mock_database, add_presenter(A<uint64_t>(), A<uint64_t>()));
+
+    request.clear_user();
+    EXPECT_NO_THROW(status = m_server->AddPresenter(&context, &request, &response));
+    EXPECT_THAT(status.ok(), IsFalse());
+    EXPECT_THAT(status.error_message().empty(), IsFalse());
+    EXPECT_THAT(status.error_code(), Eq(grpc::StatusCode::UNAUTHENTICATED));
+
+    *request.mutable_user() = *m_user;
+    *request.mutable_presenter() = presenter;
+    *request.mutable_resource() = resource;
+
+    EXPECT_NO_THROW(status = m_server->AddPresenter(&context, &request, &response));
+    EXPECT_THAT(status.ok(), IsTrue());
+    EXPECT_THAT(status.error_message(), IsEmpty());
 }
 
 TEST_F(test_server, DropPresenter)
 {
+    grpc::Status status{};
+    grpc::ServerContext context{};
+    flashback::DropPresenterRequest request{};
+    flashback::DropPresenterResponse response{};
+    flashback::Presenter presenter{};
+    flashback::Resource resource{};
+
+    presenter.set_name("Brian Salehi");
+    presenter.set_id(1);
+    resource.set_id(1);
+
+    EXPECT_CALL(*m_mock_database, get_user(A<std::string_view>(), A<std::string_view>())).WillRepeatedly(Invoke([this]() { return std::make_unique<flashback::User>(*m_user); }));
+    EXPECT_CALL(*m_mock_database, drop_presenter(A<uint64_t>(), A<uint64_t>()));
+
+    request.clear_user();
+    EXPECT_NO_THROW(status = m_server->DropPresenter(&context, &request, &response));
+    EXPECT_THAT(status.ok(), IsFalse());
+    EXPECT_THAT(status.error_message().empty(), IsFalse());
+    EXPECT_THAT(status.error_code(), Eq(grpc::StatusCode::UNAUTHENTICATED));
+
+    *request.mutable_user() = *m_user;
+    *request.mutable_presenter() = presenter;
+    *request.mutable_resource() = resource;
+
+    EXPECT_NO_THROW(status = m_server->DropPresenter(&context, &request, &response));
+    EXPECT_THAT(status.ok(), IsTrue());
+    EXPECT_THAT(status.error_message(), IsEmpty());
 }
 
 TEST_F(test_server, SearchPresenters)
 {
+    grpc::Status status{};
+    grpc::ServerContext context{};
+    flashback::SearchPresentersRequest request{};
+    flashback::SearchPresentersResponse response{};
+    std::map<uint64_t, flashback::Presenter> presenters{};
+    flashback::Presenter presenter{};
+    flashback::Resource resource{};
+
+    presenter.set_name("Brian Salehi");
+    presenter.set_id(1);
+    resource.set_id(1);
+
+    EXPECT_CALL(*m_mock_database, get_user(A<std::string_view>(), A<std::string_view>())).WillRepeatedly(Invoke([this]() { return std::make_unique<flashback::User>(*m_user); }));
+    EXPECT_CALL(*m_mock_database, search_presenters(A<std::string_view>())).WillOnce(Return(presenters));
+
+    request.clear_user();
+    EXPECT_NO_THROW(status = m_server->SearchPresenters(&context, &request, &response));
+    EXPECT_THAT(status.ok(), IsFalse());
+    EXPECT_THAT(status.error_message().empty(), IsFalse());
+    EXPECT_THAT(status.error_code(), Eq(grpc::StatusCode::UNAUTHENTICATED));
+
+    *request.mutable_user() = *m_user;
+    request.set_search_token("Brian Salehi");
+
+    EXPECT_NO_THROW(status = m_server->SearchPresenters(&context, &request, &response));
+    EXPECT_THAT(status.ok(), IsTrue());
+    EXPECT_THAT(status.error_message(), IsEmpty());
 }
 
 TEST_F(test_server, RenamePresenter)
 {
+    grpc::Status status{};
+    grpc::ServerContext context{};
+    flashback::RenamePresenterRequest request{};
+    flashback::RenamePresenterResponse response{};
+    flashback::Presenter presenter{};
+
+    presenter.set_name("Brian Salehi");
+    presenter.set_id(1);
+
+    EXPECT_CALL(*m_mock_database, get_user(A<std::string_view>(), A<std::string_view>())).WillRepeatedly(Invoke([this]() { return std::make_unique<flashback::User>(*m_user); }));
+    EXPECT_CALL(*m_mock_database, rename_presenter(A<uint64_t>(), A<std::string>()));
+
+    request.clear_user();
+    EXPECT_NO_THROW(status = m_server->RenamePresenter(&context, &request, &response));
+    EXPECT_THAT(status.ok(), IsFalse());
+    EXPECT_THAT(status.error_message().empty(), IsFalse());
+    EXPECT_THAT(status.error_code(), Eq(grpc::StatusCode::UNAUTHENTICATED));
+
+    *request.mutable_user() = *m_user;
+    *request.mutable_presenter() = presenter;
+
+    EXPECT_NO_THROW(status = m_server->RenamePresenter(&context, &request, &response));
+    EXPECT_THAT(status.ok(), IsTrue());
+    EXPECT_THAT(status.error_message(), IsEmpty());
 }
 
 TEST_F(test_server, RemovePresenter)
 {
+    grpc::Status status{};
+    grpc::ServerContext context{};
+    flashback::RemovePresenterRequest request{};
+    flashback::RemovePresenterResponse response{};
+    flashback::Presenter presenter{};
+
+    presenter.set_name("Brian Salehi");
+    presenter.set_id(1);
+
+    EXPECT_CALL(*m_mock_database, get_user(A<std::string_view>(), A<std::string_view>())).WillRepeatedly(Invoke([this]() { return std::make_unique<flashback::User>(*m_user); }));
+    EXPECT_CALL(*m_mock_database, remove_presenter(A<uint64_t>()));
+
+    request.clear_user();
+    EXPECT_NO_THROW(status = m_server->RemovePresenter(&context, &request, &response));
+    EXPECT_THAT(status.ok(), IsFalse());
+    EXPECT_THAT(status.error_message().empty(), IsFalse());
+    EXPECT_THAT(status.error_code(), Eq(grpc::StatusCode::UNAUTHENTICATED));
+
+    *request.mutable_user() = *m_user;
+    *request.mutable_presenter() = presenter;
+
+    EXPECT_NO_THROW(status = m_server->RemovePresenter(&context, &request, &response));
+    EXPECT_THAT(status.ok(), IsTrue());
+    EXPECT_THAT(status.error_message(), IsEmpty());
 }
 
 TEST_F(test_server, MergePresenters)
 {
+    grpc::Status status{};
+    grpc::ServerContext context{};
+    flashback::MergePresentersRequest request{};
+    flashback::MergePresentersResponse response{};
+    flashback::Presenter source{};
+    flashback::Presenter target{};
+
+    source.set_name("Brian Salehi");
+    source.set_id(1);
+    target.set_name("John Doe");
+    target.set_id(1);
+
+    EXPECT_CALL(*m_mock_database, get_user(A<std::string_view>(), A<std::string_view>())).WillRepeatedly(Invoke([this]() { return std::make_unique<flashback::User>(*m_user); }));
+    EXPECT_CALL(*m_mock_database, merge_presenters(A<uint64_t>(), A<uint64_t>()));
+
+    request.clear_user();
+    EXPECT_NO_THROW(status = m_server->MergePresenters(&context, &request, &response));
+    EXPECT_THAT(status.ok(), IsFalse());
+    EXPECT_THAT(status.error_message().empty(), IsFalse());
+    EXPECT_THAT(status.error_code(), Eq(grpc::StatusCode::UNAUTHENTICATED));
+
+    *request.mutable_user() = *m_user;
+    *request.mutable_source() = source;
+    *request.mutable_target() = target;
+
+    EXPECT_NO_THROW(status = m_server->MergePresenters(&context, &request, &response));
+    EXPECT_THAT(status.ok(), IsTrue());
+    EXPECT_THAT(status.error_message(), IsEmpty());
 }
 
 TEST_F(test_server, GetTopics)

@@ -113,35 +113,35 @@ message MoveSectionRequest { User user = 1; }
 message MoveSectionResponse { }
 
 // providers
-message CreateProviderRequest { User user = 1; }
-message CreateProviderResponse { }
-message SearchProvidersRequest { User user = 1; }
-message SearchProvidersResponse { }
-message AddProviderRequest { User user = 1; }
+message CreateProviderRequest { User user = 1; Provider provider = 2; }
+message CreateProviderResponse { Provider provider = 1; }
+message SearchProvidersRequest { User user = 1; string search_token = 2; }
+message SearchProvidersResponse { ProviderSearchResult result = 1; }
+message AddProviderRequest { User user = 1; Resource resource = 2; Provider provider = 3; }
 message AddProviderResponse { }
-message DropProviderRequest { User user = 1; }
+message DropProviderRequest { User user = 1; Resource resource = 2; Provider provider = 3; }
 message DropProviderResponse { }
-message RenameProviderRequest { User user = 1; }
+message RenameProviderRequest { User user = 1; Provider provider = 2; }
 message RenameProviderResponse { }
-message RemoveProviderRequest { User user = 1; }
+message RemoveProviderRequest { User user = 1; Provider provider = 2; }
 message RemoveProviderResponse { }
-message MergeProvidersRequest { User user = 1; }
+message MergeProvidersRequest { User user = 1; Provider source = 2; Provider target = 3; }
 message MergeProvidersResponse { }
 
 // presenters
-message CreatePresenterRequest { User user = 1; }
-message CreatePresenterResponse { }
-message SearchPresentersRequest { User user = 1; }
-message SearchPresentersResponse { }
-message AddPresenterRequest { User user = 1; }
+message CreatePresenterRequest { User user = 1; Presenter presenter = 2; }
+message CreatePresenterResponse { Presenter presenter = 1; }
+message SearchPresentersRequest { User user = 1; string search_token = 2; }
+message SearchPresentersResponse { PresenterSearchResult result = 1; }
+message AddPresenterRequest { User user = 1; Resource resource = 2; Presenter presenter = 3; }
 message AddPresenterResponse { }
-message DropPresenterRequest { User user = 1; }
+message DropPresenterRequest { User user = 1; Resource resource = 2; Presenter presenter = 3; }
 message DropPresenterResponse { }
-message RenamePresenterRequest { User user = 1; }
+message RenamePresenterRequest { User user = 1; Resource resource = 2; Presenter presenter = 3; }
 message RenamePresenterResponse { }
-message RemovePresenterRequest { User user = 1; }
+message RemovePresenterRequest { User user = 1; Resource resource = 2; Presenter presenter = 3; }
 message RemovePresenterResponse { }
-message MergePresentersRequest { User user = 1; }
+message MergePresentersRequest { User user = 1; Presenter source = 2; Presenter target = 3; }
 message MergePresentersResponse { }
 
 // section/topic page
@@ -223,10 +223,10 @@ message GetProgressWeightRequest { }
 message GetProgressWeightResponse { }
 
 // nerves
-message CreateNerveRequest { User user = 1; }
-message CreateNerveResponse { }
+message CreateNerveRequest { User user = 1; Subject subject = 2; Resource resource = 3; }
+message CreateNerveResponse { Resource resource = 1; }
 message GetNervesRequest { User user = 1; }
-message GetNervesResponse { }
+message GetNervesResponse { repeated Resource resources = 1; }
 
 // practice reports
 message EstimateCardTimeRequest { User user = 1; }

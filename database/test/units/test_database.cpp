@@ -1686,7 +1686,7 @@ TEST_F(test_database, get_nerves)
     flashback::Resource resource{};
     resource.set_name("C++");
     std::vector<flashback::Resource> resources{};
-    std::string const expected_name{std::format("{}'s Knowledge in {}", m_user->name(), resource.name())};
+    std::string const expected_name{resource.name()};
     auto const expiration{std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch() + std::chrono::years{4})};
 
     ASSERT_NO_THROW(subject = m_database->create_subject(subject.name()));
@@ -2309,10 +2309,8 @@ TEST_F(test_database, move_topic)
     EXPECT_NO_THROW(topics = m_database->get_topics(subject.id(), level));
     EXPECT_THAT(topics, SizeIs(3));
     ASSERT_NO_THROW(topics.at(1).position());
-    uint64_t const source_position{topics.at(1).position()};
     EXPECT_NO_THROW(topics = m_database->get_topics(target_subject.id(), level));
     EXPECT_THAT(topics, SizeIs(3));
-    uint64_t const target_position{topics.size() + 1};
     EXPECT_NO_THROW(m_database->move_topic(subject.id(), level, 1, target_subject.id(), 4));
     EXPECT_NO_THROW(topics = m_database->get_topics(subject.id(), level));
     EXPECT_THAT(topics, SizeIs(2));

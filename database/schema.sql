@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict f4Q4LZvfnTtOyDhbtDmZEnVPWpqhL8FpcRcByMzHwytIzQBqSfv4i7RNxfxhjAd
+\restrict 8M8TEeWEskUJ4ARsIP8wFWASXdZbdYUNMs9fzOUzo27AggF7iehSikPrUcGKpuh
 
 -- Dumped from database version 18.1
 -- Dumped by pg_dump version 18.0
@@ -555,7 +555,7 @@ declare resource_id integer;
 begin
     select name into user_name from users where id = user_id;
 
-    resource_id := create_resource(user_name || '''s Knowledge in ' || resource_name, 'nerve'::resource_type, 'synapse'::section_pattern, null::character varying, cast(extract(epoch from now()) as integer), expiration);
+    resource_id := create_resource(resource_name, 'nerve'::resource_type, 'synapse'::section_pattern, null::character varying, cast(extract(epoch from now()) as integer), expiration);
 
     insert into shelves (resource, subject) values (resource_id, subject_id);
 
@@ -4565,5 +4565,5 @@ GRANT ALL ON SCHEMA public TO flashback_client;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict f4Q4LZvfnTtOyDhbtDmZEnVPWpqhL8FpcRcByMzHwytIzQBqSfv4i7RNxfxhjAd
+\unrestrict 8M8TEeWEskUJ4ARsIP8wFWASXdZbdYUNMs9fzOUzo27AggF7iehSikPrUcGKpuh
 

@@ -1247,82 +1247,558 @@ grpc::Status server::EditResource(grpc::ServerContext* context, EditResourceRequ
 
 grpc::Status server::CreateNerve(grpc::ServerContext* context, CreateNerveRequest const* request, CreateNerveResponse* response)
 {
-    return grpc::Status::OK;
+    grpc::Status status{grpc::StatusCode::INTERNAL, {}};
+
+    try
+    {
+        if (!request->has_user() || !session_is_valid(request->user()))
+        {
+            status = grpc::Status{grpc::StatusCode::UNAUTHENTICATED, "invalid user"};
+        }
+        else if (request->resource().id() == 0)
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid resource"};
+        }
+        else
+        {
+            auto nerve = response->mutable_resource();
+            *nerve = m_database->create_nerve(request->user().id(), request->resource().name(), request->subject().id(), request->resource().expiration());
+
+            if (nerve->id() == 0)
+            {
+                status = grpc::Status{grpc::StatusCode::NOT_FOUND, "nerve not found"};
+            }
+            else
+            {
+                status = grpc::Status{grpc::StatusCode::OK, {}};
+            }
+        }
+    }
+    catch (client_exception const& exp)
+    {
+        status = grpc::Status{grpc::StatusCode::UNAVAILABLE, exp.what()};
+    }
+    catch (std::exception const& exp)
+    {
+        std::cerr << std::format("Server: {}", exp.what());
+    }
+
+    return status;
 }
 
 grpc::Status server::GetNerves(grpc::ServerContext* context, GetNervesRequest const* request, GetNervesResponse* response)
 {
-    return grpc::Status::OK;
+    grpc::Status status{grpc::StatusCode::INTERNAL, {}};
+
+    try
+    {
+        if (!request->has_user() || !session_is_valid(request->user()))
+        {
+            status = grpc::Status{grpc::StatusCode::UNAUTHENTICATED, "invalid user"};
+        }
+        else
+        {
+            for (auto const& nerve: m_database->get_nerves(request->user().id()))
+            {
+                *response->add_resources() = nerve;
+            }
+            status = grpc::Status{grpc::StatusCode::OK, {}};
+        }
+    }
+    catch (client_exception const& exp)
+    {
+        status = grpc::Status{grpc::StatusCode::UNAVAILABLE, exp.what()};
+    }
+    catch (std::exception const& exp)
+    {
+        std::cerr << std::format("Server: {}", exp.what());
+    }
+
+    return status;
 }
 
 grpc::Status server::CreateProvider(grpc::ServerContext* context, CreateProviderRequest const* request, CreateProviderResponse* response)
 {
-    return grpc::Status::OK;
+    grpc::Status status{grpc::StatusCode::INTERNAL, {}};
+
+    try
+    {
+        if (!request->has_user() || !session_is_valid(request->user()))
+        {
+            status = grpc::Status{grpc::StatusCode::UNAUTHENTICATED, "invalid user"};
+        }
+        else if (request->provider().name().empty())
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid provider name"};
+        }
+        else
+        {
+            Provider provider{m_database->create_provider(request->provider().name())};
+            *response->mutable_provider() = provider;
+            status = grpc::Status{grpc::StatusCode::OK, {}};
+        }
+    }
+    catch (client_exception const& exp)
+    {
+        status = grpc::Status{grpc::StatusCode::UNAVAILABLE, exp.what()};
+    }
+    catch (std::exception const& exp)
+    {
+        std::cerr << std::format("Server: {}", exp.what());
+    }
+
+    return status;
 }
 
 grpc::Status server::AddProvider(grpc::ServerContext* context, AddProviderRequest const* request, AddProviderResponse* response)
 {
-    return grpc::Status::OK;
+    grpc::Status status{grpc::StatusCode::INTERNAL, {}};
+
+    try
+    {
+        if (!request->has_user() || !session_is_valid(request->user()))
+        {
+            status = grpc::Status{grpc::StatusCode::UNAUTHENTICATED, "invalid user"};
+        }
+        else if (request->resource().id() == 0)
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid resource"};
+        }
+        else if (request->provider().id() == 0)
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid provider"};
+        }
+        else
+        {
+            m_database->add_provider(request->resource().id(), request->provider().id());
+            status = grpc::Status{grpc::StatusCode::OK, {}};
+        }
+    }
+    catch (client_exception const& exp)
+    {
+        status = grpc::Status{grpc::StatusCode::UNAVAILABLE, exp.what()};
+    }
+    catch (std::exception const& exp)
+    {
+        std::cerr << std::format("Server: {}", exp.what());
+    }
+
+    return status;
 }
 
 grpc::Status server::DropProvider(grpc::ServerContext* context, DropProviderRequest const* request, DropProviderResponse* response)
 {
-    return grpc::Status::OK;
+    grpc::Status status{grpc::StatusCode::INTERNAL, {}};
+
+    try
+    {
+        if (!request->has_user() || !session_is_valid(request->user()))
+        {
+            status = grpc::Status{grpc::StatusCode::UNAUTHENTICATED, "invalid user"};
+        }
+        else if (request->resource().id() == 0)
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid resource"};
+        }
+        else if (request->provider().id() == 0)
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid provider"};
+        }
+        else
+        {
+            m_database->drop_provider(request->resource().id(), request->provider().id());
+            status = grpc::Status{grpc::StatusCode::OK, {}};
+        }
+    }
+    catch (client_exception const& exp)
+    {
+        status = grpc::Status{grpc::StatusCode::UNAVAILABLE, exp.what()};
+    }
+    catch (std::exception const& exp)
+    {
+        std::cerr << std::format("Server: {}", exp.what());
+    }
+
+    return status;
 }
 
 grpc::Status server::SearchProviders(grpc::ServerContext* context, SearchProvidersRequest const* request, SearchProvidersResponse* response)
 {
-    return grpc::Status::OK;
+    grpc::Status status{grpc::StatusCode::INTERNAL, {}};
+
+    try
+    {
+        if (!request->has_user() || !session_is_valid(request->user()))
+        {
+            status = grpc::Status{grpc::StatusCode::UNAUTHENTICATED, "invalid user"};
+        }
+        else if (request->search_token().empty())
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "empty search not possible"};
+        }
+        else
+        {
+            for (auto const& [position, provider]: m_database->search_providers(request->search_token()))
+            {
+                auto* result{response->mutable_result()};
+                *result->mutable_provider() = provider;
+                result->set_position(position);
+            }
+            status = grpc::Status{grpc::StatusCode::OK, {}};
+        }
+    }
+    catch (client_exception const& exp)
+    {
+        status = grpc::Status{grpc::StatusCode::UNAVAILABLE, exp.what()};
+    }
+    catch (std::exception const& exp)
+    {
+        std::cerr << std::format("Server: {}", exp.what());
+    }
+
+    return status;
 }
 
 grpc::Status server::RenameProvider(grpc::ServerContext* context, RenameProviderRequest const* request, RenameProviderResponse* response)
 {
-    return grpc::Status::OK;
+    grpc::Status status{grpc::StatusCode::INTERNAL, {}};
+
+    try
+    {
+        if (!request->has_user() || !session_is_valid(request->user()))
+        {
+            status = grpc::Status{grpc::StatusCode::UNAUTHENTICATED, "invalid user"};
+        }
+        else if (request->provider().id() == 0)
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid provider"};
+        }
+        else
+        {
+            m_database->rename_provider(request->provider().id(), request->provider().name());
+            status = grpc::Status{grpc::StatusCode::OK, {}};
+        }
+    }
+    catch (client_exception const& exp)
+    {
+        status = grpc::Status{grpc::StatusCode::UNAVAILABLE, exp.what()};
+    }
+    catch (std::exception const& exp)
+    {
+        std::cerr << std::format("Server: {}", exp.what());
+    }
+
+    return status;
 }
 
 grpc::Status server::RemoveProvider(grpc::ServerContext* context, RemoveProviderRequest const* request, RemoveProviderResponse* response)
 {
-    return grpc::Status::OK;
+    grpc::Status status{grpc::StatusCode::INTERNAL, {}};
+
+    try
+    {
+        if (!request->has_user() || !session_is_valid(request->user()))
+        {
+            status = grpc::Status{grpc::StatusCode::UNAUTHENTICATED, "invalid user"};
+        }
+        else if (request->provider().id() == 0)
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid provider"};
+        }
+        else
+        {
+            m_database->remove_provider(request->provider().id());
+            status = grpc::Status{grpc::StatusCode::OK, {}};
+        }
+    }
+    catch (client_exception const& exp)
+    {
+        status = grpc::Status{grpc::StatusCode::UNAVAILABLE, exp.what()};
+    }
+    catch (std::exception const& exp)
+    {
+        std::cerr << std::format("Server: {}", exp.what());
+    }
+
+    return status;
 }
 
 grpc::Status server::MergeProviders(grpc::ServerContext* context, MergeProvidersRequest const* request, MergeProvidersResponse* response)
 {
-    return grpc::Status::OK;
+    grpc::Status status{grpc::StatusCode::INTERNAL, {}};
+
+    try
+    {
+        if (!request->has_user() || !session_is_valid(request->user()))
+        {
+            status = grpc::Status{grpc::StatusCode::UNAUTHENTICATED, "invalid user"};
+        }
+        else if (request->source().id() == 0)
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid source provider"};
+        }
+        else if (request->target().id() == 0)
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid target provider"};
+        }
+        else
+        {
+            m_database->merge_providers(request->source().id(), request->target().id());
+            status = grpc::Status{grpc::StatusCode::OK, {}};
+        }
+    }
+    catch (client_exception const& exp)
+    {
+        status = grpc::Status{grpc::StatusCode::UNAVAILABLE, exp.what()};
+    }
+    catch (std::exception const& exp)
+    {
+        std::cerr << std::format("Server: {}", exp.what());
+    }
+
+    return status;
 }
 
 grpc::Status server::CreatePresenter(grpc::ServerContext* context, CreatePresenterRequest const* request, CreatePresenterResponse* response)
 {
-    return grpc::Status::OK;
+    grpc::Status status{grpc::StatusCode::INTERNAL, {}};
+
+    try
+    {
+        if (!request->has_user() || !session_is_valid(request->user()))
+        {
+            status = grpc::Status{grpc::StatusCode::UNAUTHENTICATED, "invalid user"};
+        }
+        else if (request->presenter().id() == 0)
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid presenter"};
+        }
+        else
+        {
+            auto presenter{m_database->create_presenter(request->presenter().name())};
+            *response->mutable_presenter() = presenter;
+            status = grpc::Status{grpc::StatusCode::OK, {}};
+        }
+    }
+    catch (client_exception const& exp)
+    {
+        status = grpc::Status{grpc::StatusCode::UNAVAILABLE, exp.what()};
+    }
+    catch (std::exception const& exp)
+    {
+        std::cerr << std::format("Server: {}", exp.what());
+    }
+
+    return status;
 }
 
 grpc::Status server::AddPresenter(grpc::ServerContext* context, AddPresenterRequest const* request, AddPresenterResponse* response)
 {
-    return grpc::Status::OK;
+    grpc::Status status{grpc::StatusCode::INTERNAL, {}};
+
+    try
+    {
+        if (!request->has_user() || !session_is_valid(request->user()))
+        {
+            status = grpc::Status{grpc::StatusCode::UNAUTHENTICATED, "invalid user"};
+        }
+        else if (request->resource().id() == 0)
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid resource"};
+        }
+        else if (request->presenter().id() == 0)
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid presenter"};
+        }
+        else
+        {
+            m_database->add_presenter(request->resource().id(), request->presenter().id());
+            status = grpc::Status{grpc::StatusCode::OK, {}};
+        }
+    }
+    catch (client_exception const& exp)
+    {
+        status = grpc::Status{grpc::StatusCode::UNAVAILABLE, exp.what()};
+    }
+    catch (std::exception const& exp)
+    {
+        std::cerr << std::format("Server: {}", exp.what());
+    }
+
+    return status;
 }
 
 grpc::Status server::DropPresenter(grpc::ServerContext* context, DropPresenterRequest const* request, DropPresenterResponse* response)
 {
-    return grpc::Status::OK;
+    grpc::Status status{grpc::StatusCode::INTERNAL, {}};
+
+    try
+    {
+        if (!request->has_user() || !session_is_valid(request->user()))
+        {
+            status = grpc::Status{grpc::StatusCode::UNAUTHENTICATED, "invalid user"};
+        }
+        else if (request->resource().id() == 0)
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid resource"};
+        }
+        else if (request->presenter().id() == 0)
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid presenter"};
+        }
+        else
+        {
+            m_database->drop_presenter(request->resource().id(), request->presenter().id());
+            status = grpc::Status{grpc::StatusCode::OK, {}};
+        }
+    }
+    catch (client_exception const& exp)
+    {
+        status = grpc::Status{grpc::StatusCode::UNAVAILABLE, exp.what()};
+    }
+    catch (std::exception const& exp)
+    {
+        std::cerr << std::format("Server: {}", exp.what());
+    }
+
+    return status;
 }
 
 grpc::Status server::SearchPresenters(grpc::ServerContext* context, SearchPresentersRequest const* request, SearchPresentersResponse* response)
 {
-    return grpc::Status::OK;
+    grpc::Status status{grpc::StatusCode::INTERNAL, {}};
+
+    try
+    {
+        if (!request->has_user() || !session_is_valid(request->user()))
+        {
+            status = grpc::Status{grpc::StatusCode::UNAUTHENTICATED, "invalid user"};
+        }
+        else if (request->search_token().empty())
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "empty search is not allowed"};
+        }
+        else
+        {
+            for (auto const& [position, presenter]: m_database->search_presenters(request->search_token()))
+            {
+                auto* result{response->mutable_result()};
+                *result->mutable_presenter() = presenter;
+                result->set_position(position);
+            }
+            status = grpc::Status{grpc::StatusCode::OK, {}};
+        }
+    }
+    catch (client_exception const& exp)
+    {
+        status = grpc::Status{grpc::StatusCode::UNAVAILABLE, exp.what()};
+    }
+    catch (std::exception const& exp)
+    {
+        std::cerr << std::format("Server: {}", exp.what());
+    }
+
+    return status;
 }
 
 grpc::Status server::RenamePresenter(grpc::ServerContext* context, RenamePresenterRequest const* request, RenamePresenterResponse* response)
 {
-    return grpc::Status::OK;
+    grpc::Status status{grpc::StatusCode::INTERNAL, {}};
+
+    try
+    {
+        if (!request->has_user() || !session_is_valid(request->user()))
+        {
+            status = grpc::Status{grpc::StatusCode::UNAUTHENTICATED, "invalid user"};
+        }
+        else if (request->presenter().id() == 0)
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid presenter"};
+        }
+        else
+        {
+            m_database->rename_presenter(request->resource().id(), request->presenter().name());
+            status = grpc::Status{grpc::StatusCode::OK, {}};
+        }
+    }
+    catch (client_exception const& exp)
+    {
+        status = grpc::Status{grpc::StatusCode::UNAVAILABLE, exp.what()};
+    }
+    catch (std::exception const& exp)
+    {
+        std::cerr << std::format("Server: {}", exp.what());
+    }
+
+    return status;
 }
 
 grpc::Status server::RemovePresenter(grpc::ServerContext* context, RemovePresenterRequest const* request, RemovePresenterResponse* response)
 {
-    return grpc::Status::OK;
+    grpc::Status status{grpc::StatusCode::INTERNAL, {}};
+
+    try
+    {
+        if (!request->has_user() || !session_is_valid(request->user()))
+        {
+            status = grpc::Status{grpc::StatusCode::UNAUTHENTICATED, "invalid user"};
+        }
+        else if (request->presenter().id() == 0)
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid presenter"};
+        }
+        else
+        {
+            m_database->remove_presenter(request->resource().id());
+            status = grpc::Status{grpc::StatusCode::OK, {}};
+        }
+    }
+    catch (client_exception const& exp)
+    {
+        status = grpc::Status{grpc::StatusCode::UNAVAILABLE, exp.what()};
+    }
+    catch (std::exception const& exp)
+    {
+        std::cerr << std::format("Server: {}", exp.what());
+    }
+
+    return status;
 }
 
 grpc::Status server::MergePresenters(grpc::ServerContext* context, MergePresentersRequest const* request, MergePresentersResponse* response)
 {
-    return grpc::Status::OK;
+    grpc::Status status{grpc::StatusCode::INTERNAL, {}};
+
+    try
+    {
+        if (!request->has_user() || !session_is_valid(request->user()))
+        {
+            status = grpc::Status{grpc::StatusCode::UNAUTHENTICATED, "invalid user"};
+        }
+        else if (request->source().id() == 0)
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid source presenter"};
+        }
+        else if (request->target().id() == 0)
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid target presenter"};
+        }
+        else
+        {
+            m_database->merge_presenters(request->source().id(), request->target().id());
+            status = grpc::Status{grpc::StatusCode::OK, {}};
+        }
+    }
+    catch (client_exception const& exp)
+    {
+        status = grpc::Status{grpc::StatusCode::UNAVAILABLE, exp.what()};
+    }
+    catch (std::exception const& exp)
+    {
+        std::cerr << std::format("Server: {}", exp.what());
+    }
+
+    return status;
 }
 
 grpc::Status server::GetTopics(grpc::ServerContext* context, GetTopicsRequest const* request, GetTopicsResponse* response)
