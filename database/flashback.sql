@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict EN5Le79aGibWSP4t3htienJc0rQh6gQcd03zH9kshvKr0k1OYSRtjxGkRv8QuPd
+\restrict ebbOuaA240sD1iiVWvoMtSgGwqah7eUQ0u3au90KlCN9oSHiN9wX2bjXa7QlaJz
 
 -- Dumped from database version 18.1
 -- Dumped by pg_dump version 18.0
@@ -1117,6 +1117,20 @@ end; $$;
 ALTER FUNCTION flashback.get_assimilation_coverage(user_id integer, subject_id integer, assessment_id integer) OWNER TO flashback;
 
 --
+-- Name: get_block(integer, integer); Type: FUNCTION; Schema: flashback; Owner: flashback
+--
+
+CREATE FUNCTION flashback.get_block(card_id integer, block_position integer) RETURNS TABLE("position" integer, type flashback.content_type, extension character varying, metadata character varying, content text)
+    LANGUAGE plpgsql
+    AS $$
+begin
+    return query select b.position, b.type, b.extension, b.metadata, b.content from blocks b where b.card = card_id and b.position = block_position;
+end; $$;
+
+
+ALTER FUNCTION flashback.get_block(card_id integer, block_position integer) OWNER TO flashback;
+
+--
 -- Name: get_blocks(integer); Type: FUNCTION; Schema: flashback; Owner: flashback
 --
 
@@ -1130,6 +1144,20 @@ $$;
 
 
 ALTER FUNCTION flashback.get_blocks(card_id integer) OWNER TO flashback;
+
+--
+-- Name: get_card(integer); Type: FUNCTION; Schema: flashback; Owner: flashback
+--
+
+CREATE FUNCTION flashback.get_card(card_id integer) RETURNS TABLE(id integer, state flashback.card_state, headline flashback.citext)
+    LANGUAGE plpgsql
+    AS $$
+begin
+    return query select c.id, c.state, c.headline from cards c where c.id = card_id;
+end; $$;
+
+
+ALTER FUNCTION flashback.get_card(card_id integer) OWNER TO flashback;
 
 --
 -- Name: get_duplicate_card(integer); Type: FUNCTION; Schema: flashback; Owner: flashback
@@ -1405,6 +1433,20 @@ end; $$;
 
 
 ALTER FUNCTION flashback.get_roadmaps("user" integer) OWNER TO flashback;
+
+--
+-- Name: get_section(integer, integer); Type: FUNCTION; Schema: flashback; Owner: flashback
+--
+
+CREATE FUNCTION flashback.get_section(resource_id integer, section_position integer) RETURNS TABLE("position" integer, state flashback.closure_state, name flashback.citext, link character varying)
+    LANGUAGE plpgsql
+    AS $$
+begin
+    return query select s.position, s.state, s.name, s.link from sections s where s.resource = resource_id and s.position = section_position;
+end; $$;
+
+
+ALTER FUNCTION flashback.get_section(resource_id integer, section_position integer) OWNER TO flashback;
 
 --
 -- Name: get_section_cards(integer, integer); Type: FUNCTION; Schema: flashback; Owner: flashback
@@ -32664,5 +32706,5 @@ GRANT ALL ON SCHEMA public TO flashback_client;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict EN5Le79aGibWSP4t3htienJc0rQh6gQcd03zH9kshvKr0k1OYSRtjxGkRv8QuPd
+\unrestrict ebbOuaA240sD1iiVWvoMtSgGwqah7eUQ0u3au90KlCN9oSHiN9wX2bjXa7QlaJz
 

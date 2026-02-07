@@ -77,39 +77,39 @@ message SearchResourcesRequest { User user = 1; string search_token = 2; }
 message SearchResourcesResponse { bool success = 1; string details = 2; uint32 code = 3; repeated ResourceSearchResult results = 4; }
 
 // subject page topic view
-message CreateTopicRequest { User user = 1; }
-message CreateTopicResponse { }
-message GetTopicsRequest { User user = 1; }
-message GetTopicsResponse { }
-message ReorderTopicRequest { User user = 1; }
+message CreateTopicRequest { User user = 1; Subject subject = 2; Topic topic = 3; }
+message CreateTopicResponse { Topic topic = 1; }
+message GetTopicsRequest { User user = 1; Subject subject = 2; expertise_level level = 3; }
+message GetTopicsResponse { repeated Topic topic = 1; }
+message ReorderTopicRequest { User user = 1; Subject subject = 2; Topic topic = 3; Topic target = 4; }
 message ReorderTopicResponse { }
-message RemoveTopicRequest { User user = 1; }
+message RemoveTopicRequest { User user = 1; Subject subject = 2; Topic topic = 3; }
 message RemoveTopicResponse { }
-message MergeTopicsRequest { User user = 1; }
+message MergeTopicsRequest { User user = 1; Subject subject = 2; Topic source = 3; Topic target = 4; }
 message MergeTopicsResponse { }
-message MoveTopicRequest { User user = 1; }
+message MoveTopicRequest { User user = 1; Subject source_subject = 2; Topic source_topic = 3; Subject target_subject = 4; Topic target_topic = 5; }
 message MoveTopicResponse { }
-message SearchTopicsRequest { User user = 1; }
-message SearchTopicsResponse { }
+message SearchTopicsRequest { User user = 1; Subject subject = 2; string search_token = 3; }
+message SearchTopicsResponse { repeated TopicSearchResult results = 1; }
 
 // resource page requests
-message GetSectionsRequest { User user = 1; }
-message GetSectionsResponse { }
+message GetSectionsRequest { User user = 1; Resource resource = 2; }
+message GetSectionsResponse { repeated Section section = 1; }
 message GetSectionCardsRequest { User user = 1; Resource resource = 2; Section section = 3; }
 message GetSectionCardsResponse { repeated Card cards = 1; }
 message RemoveResourceRequest { User user = 1; Resource resource = 2; }
 message RemoveResourceResponse { bool success = 1; string details = 2; uint32 code = 3; }
-message EditResourceRequest { User user = 1; ; Resource resource = 2; }
+message EditResourceRequest { User user = 1; Resource resource = 2; }
 message EditResourceResponse { bool success = 1; string details = 2; uint32 code = 3; }
-message CreateSectionRequest { User user = 1; }
-message CreateSectionResponse { }
-message ReorderSectionRequest { User user = 1; }
+message CreateSectionRequest { User user = 1; Resource resource = 2; Section section = 3; }
+message CreateSectionResponse { Section section = 1; }
+message ReorderSectionRequest { User user = 1; Resource resource = 2; Section source = 3; Section target = 4; }
 message ReorderSectionResponse { }
-message RemoveSectionRequest { User user = 1; }
+message RemoveSectionRequest { User user = 1; Resource resource = 2; Section section = 3; }
 message RemoveSectionResponse { }
-message MergeSectionsRequest { User user = 1; }
+message MergeSectionsRequest { User user = 1; Resource resource = 2; Section source = 3; Section target = 4; }
 message MergeSectionsResponse { }
-message MoveSectionRequest { User user = 1; }
+message MoveSectionRequest { User user = 1; Resource source_resource = 2; Section source_section = 3; Resource target_resource = 4; Section target_section = 5;   }
 message MoveSectionResponse { }
 
 // providers
@@ -155,23 +155,23 @@ message MergeCardsRequest { User user = 1; }
 message MergeCardsResponse { }
 
 // section page
-message GetStudyResourcesRequest { User user = 1; }
-message GetStudyResourcesResponse { }
-message GetStudyCardsRequest { User user = 1; }
-message GetStudyCardsResponse { }
-message EditSectionRequest { User user = 1; Section section = 2; }
+message GetStudyResourcesRequest { User user = 1; Subject subject = 2; }
+message GetStudyResourcesResponse { repeated Resource resources = 1; }
+message GetStudyCardsRequest { User user = 1; Resource resource = 2; }
+message GetStudyCardsResponse { repeated Card cards = 1; }
+message EditSectionRequest { User user = 1; Resource resource = 2; Section section = 3; }
 message EditSectionResponse { }
-message MoveCardToSectionRequest { User user = 1; Resource resource = 2; Section section = 3; }
+message MoveCardToSectionRequest { User user = 1; Resource resource = 2; Section section = 3; Card card = 4; }
 message MoveCardToSectionResponse { }
-message SearchSectionsRequest { User user = 1; string search_token = 2; }
-message SearchSectionsResponse { }
-message MarkSectionAsReviewedRequest { User user = 1; Section section = 2; }
+message SearchSectionsRequest { User user = 1; Resource resource = 2; string search_token = 3; }
+message SearchSectionsResponse { repeated SectionSearchResult result = 1; }
+message MarkSectionAsReviewedRequest { User user = 1; Resource resource = 2; Section section = 3; }
 message MarkSectionAsReviewedResponse { }
 
 // topic page
 message GetPracticeCardsRequest { User user = 1; }
 message GetPracticeCardsResponse { }
-message EditTopicRequest { User user = 1; Topic topic = 2; }
+message EditTopicRequest { User user = 1; Subject subject = 2; Topic topic = 3; }
 message EditTopicResponse { }
 message MoveCardToTopicRequest { User user = 1; Subject subject = 2; Topic topic = 3; } // X
 message MoveCardToTopicResponse { }

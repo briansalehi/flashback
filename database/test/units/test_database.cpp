@@ -6722,3 +6722,78 @@ TEST_F(test_database, get_variations)
 TEST_F(test_database, is_absolute)
 {
 }
+
+TEST_F(test_database, get_section)
+{
+    auto constexpr section_name{"Chapter 1"};
+    auto constexpr section_link{"https://example.com"};
+    flashback::Resource resource{};
+    flashback::Section section{};
+
+    resource.set_name("C++ Resource");
+    resource.set_type(flashback::Resource::book);
+    resource.set_pattern(flashback::Resource::chapter);
+    resource.clear_link();
+    resource.set_production(std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count());
+    resource.set_expiration(std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count() + 1000);
+
+    ASSERT_NO_THROW(resource = m_database->create_resource(resource));
+    ASSERT_THAT(resource.id(), Gt(0));
+    ASSERT_NO_THROW(section = m_database->create_section(resource.id(), 0, section_name, section_link));
+    ASSERT_THAT(section.position(), Eq(1));
+    ASSERT_THAT(section.name(), Eq(section_name));
+    ASSERT_THAT(section.link(), Eq(section_link));
+    EXPECT_NO_THROW(section = m_database->get_section(resource.id(), section.position()));
+    EXPECT_THAT(section.position(), Eq(1));
+    EXPECT_THAT(section.name(), Eq(section_name));
+    EXPECT_THAT(section.link(), Eq(section_link));
+}
+
+TEST_F(test_database, get_card)
+{
+    auto constexpr headline{"Is it worth asking it?"};
+    flashback::Card card{};
+    card.set_headline(headline);
+
+    ASSERT_NO_THROW(card = m_database->create_card(card));
+    ASSERT_THAT(card.id(), Gt(0));
+    ASSERT_THAT(card.state(), Eq(flashback::Card::draft));
+    ASSERT_THAT(card.headline(), Eq(headline));
+    EXPECT_NO_THROW(card = m_database->get_card(card.id()));
+    EXPECT_THAT(card.id(), Gt(0));
+    EXPECT_THAT(card.state(), Eq(flashback::Card::draft));
+    EXPECT_THAT(card.headline(), Eq(headline));
+}
+
+TEST_F(test_database, get_block)
+{
+    auto constexpr headline{"Is it worth asking it?"};
+    auto constexpr type{flashback::Block::text};
+    auto constexpr extension{"cpp"};
+    auto constexpr metadata{"tip"};
+    auto constexpr content{"Some things aren't worth it."};
+    flashback::Card card{};
+    card.set_headline(headline);
+    flashback::Block block{};
+    block.set_type(type);
+    block.set_extension(extension);
+    block.set_metadata(metadata);
+    block.set_content(content);
+
+    ASSERT_NO_THROW(card = m_database->create_card(card));
+    ASSERT_THAT(card.id(), Gt(0));
+    ASSERT_THAT(card.state(), Eq(flashback::Card::draft));
+    ASSERT_THAT(card.headline(), Eq(headline));
+    ASSERT_NO_THROW(block = m_database->create_block(card.id(), block));
+    ASSERT_THAT(block.position(), Eq(1));
+    ASSERT_THAT(block.type(), Eq(type));
+    ASSERT_THAT(block.extension(), Eq(extension));
+    ASSERT_THAT(block.metadata(), Eq(metadata));
+    ASSERT_THAT(block.content(), Eq(content));
+    EXPECT_NO_THROW(block = m_database->get_block(card.id(), block.position()));
+    EXPECT_THAT(block.position(), Eq(1));
+    EXPECT_THAT(block.type(), Eq(type));
+    EXPECT_THAT(block.extension(), Eq(extension));
+    EXPECT_THAT(block.metadata(), Eq(metadata));
+    EXPECT_THAT(block.content(), Eq(content));
+}

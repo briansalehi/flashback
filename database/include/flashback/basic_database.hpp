@@ -59,7 +59,7 @@ public:
     //remove_alias
 
     // topics
-    [[nodiscard]] virtual Topic create_topic(uint64_t subject_id, std::string name, flashback::expertise_level level, uint64_t position) const = 0;
+    [[nodiscard]] virtual Topic create_topic(uint64_t subject_id, std::string name, expertise_level level, uint64_t position) const = 0;
     [[nodiscard]] virtual std::map<uint64_t, Topic> get_topics(uint64_t subject_id, expertise_level level) const = 0;
     virtual void reorder_topic(uint64_t subject_id, expertise_level level, uint64_t source_position, uint64_t target_position) const = 0;
     virtual void remove_topic(uint64_t subject_id, expertise_level level, uint64_t position) const = 0;
@@ -67,13 +67,12 @@ public:
     virtual void rename_topic(uint64_t subject_id, expertise_level level, uint64_t position, std::string name) const = 0;
     virtual void move_topic(uint64_t subject_id, expertise_level level, uint64_t position, uint64_t target_subject_id, uint64_t target_position) const = 0;
     [[nodiscard]] virtual std::map<uint64_t, Topic> search_topics(uint64_t subject_id, expertise_level level, std::string_view search_pattern) const = 0;
-    virtual void change_topic_level(uint64_t subject_id, uint64_t position, flashback::expertise_level level, flashback::expertise_level target) const = 0;
+    virtual void change_topic_level(uint64_t subject_id, uint64_t position, expertise_level level, expertise_level target) const = 0;
 
     // resources
     [[nodiscard]] virtual Resource create_resource(Resource const& resource) const = 0;
     virtual void add_resource_to_subject(uint64_t resource_id, uint64_t subject_id) const = 0;
     [[nodiscard]] virtual std::vector<Resource> get_resources(uint64_t user_id, uint64_t subject_id) const = 0;
-    [[nodiscard]] virtual Resource get_resource(uint64_t resource_id) const = 0;
     virtual void drop_resource_from_subject(uint64_t resource_id, uint64_t subject_id) const = 0;
     [[nodiscard]] virtual std::map<uint64_t, Resource> search_resources(std::string_view search_pattern) const = 0;
     virtual void edit_resource_link(uint64_t resource_id, std::string link) const = 0;
@@ -84,6 +83,7 @@ public:
     virtual void rename_resource(uint64_t resource_id, std::string name) const = 0;
     virtual void remove_resource(uint64_t resource_id) const = 0;
     virtual void merge_resources(uint64_t source_id, uint64_t target_id) const = 0;
+    [[nodiscard]] virtual Resource get_resource(uint64_t resource_id) const = 0;
     //get_relevant_subjects
 
     // providers
@@ -114,6 +114,7 @@ public:
     virtual void move_section(uint64_t resource_id, uint64_t position, uint64_t target_resource_id, uint64_t target_position) const = 0;
     [[nodiscard]] virtual std::map<uint64_t, Section> search_sections(uint64_t resource_id, std::string_view search_pattern) const = 0;
     virtual void edit_section_link(uint64_t resource_id, uint64_t position, std::string link) const = 0;
+    [[nodiscard]] virtual Section get_section(uint64_t resource_id, uint64_t position) const = 0;
     //remove_section_with_cards
 
     // cards
@@ -129,6 +130,7 @@ public:
                                     expertise_level targe_level) const = 0;
     [[nodiscard]] virtual std::vector<Card> get_section_cards(uint64_t resource_id, uint64_t sections_position) const = 0;
     [[nodiscard]] virtual std::vector<Card> get_topic_cards(uint64_t subject_id, uint64_t topic_position, expertise_level topic_level) const = 0;
+    [[nodiscard]] virtual Card get_card(uint64_t card_id) const = 0;
 
     // blocks
     [[nodiscard]] virtual Block create_block(uint64_t card_id, Block block) const = 0;
@@ -142,6 +144,7 @@ public:
     virtual void merge_blocks(uint64_t card_id, uint64_t source_position, uint64_t target_position) const = 0;
     [[nodiscard]] virtual std::map<uint64_t, Block> split_block(uint64_t card_id, uint64_t block_position) const = 0;
     virtual void move_block(uint64_t card_id, uint64_t block_position, uint64_t target_card_id, uint64_t target_position) const = 0;
+    [[nodiscard]] virtual Block get_block(uint64_t card_id, uint64_t position) const = 0;
 
     // progress
     virtual void make_progress(uint64_t user_id, uint64_t card_id, uint64_t duration, practice_mode mode) const = 0;

@@ -6,9 +6,13 @@
 
 namespace flashback
 {
-class mock_database final: public flashback::basic_database
+class mock_database final: public basic_database
 {
 public:
+    MOCK_METHOD(Section, get_section, (uint64_t, uint64_t), (const, override));
+    MOCK_METHOD(Card, get_card, (uint64_t), (const, override));
+    MOCK_METHOD(Block, get_block, (uint64_t, uint64_t), (const, override));
+
     // users
     MOCK_METHOD(bool, create_session, (uint64_t, std::string_view, std::string_view), (const, override));
     MOCK_METHOD(uint64_t, create_user, (std::string_view, std::string_view, std::string_view), (const, override));

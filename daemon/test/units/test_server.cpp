@@ -1478,7 +1478,7 @@ TEST_F(test_server, CreateNerve)
     subject.set_name("C++");
 
     EXPECT_CALL(*m_mock_database, get_user(A<std::string_view>(), A<std::string_view>())).WillRepeatedly(Invoke([this]() { return std::make_unique<flashback::User>(*m_user); }));
-    EXPECT_CALL(*m_mock_database, create_nerve(A<uint64_t>(), A<std::string>(), A<uint64_t>(), A<uint64_t>())).WillRepeatedly(Return(resource));
+    EXPECT_CALL(*m_mock_database, create_nerve(A<uint64_t>(), A<std::string>(), A<uint64_t>(), A<uint64_t>())).Times(1).WillRepeatedly(Return(resource));
 
     request.clear_user();
     EXPECT_NO_THROW(status = m_server->CreateNerve(&context, &request, &response));
@@ -1514,7 +1514,7 @@ TEST_F(test_server, GetNerves)
     expected_nerves.push_back(nerve);
 
     EXPECT_CALL(*m_mock_database, get_user(A<std::string_view>(), A<std::string_view>())).WillRepeatedly(Invoke([this]() { return std::make_unique<flashback::User>(*m_user); }));
-    EXPECT_CALL(*m_mock_database, get_nerves(A<uint64_t>())).WillRepeatedly(Return(expected_nerves));
+    EXPECT_CALL(*m_mock_database, get_nerves(A<uint64_t>())).Times(1).WillRepeatedly(Return(expected_nerves));
 
     request.clear_user();
     EXPECT_NO_THROW(status = m_server->GetNerves(&context, &request, &response));
@@ -1541,7 +1541,7 @@ TEST_F(test_server, CreateProvider)
     provider.set_name("Brian Salehi");
 
     EXPECT_CALL(*m_mock_database, get_user(A<std::string_view>(), A<std::string_view>())).WillRepeatedly(Invoke([this]() { return std::make_unique<flashback::User>(*m_user); }));
-    EXPECT_CALL(*m_mock_database, create_provider(A<std::string>())).WillOnce(Return(provider));
+    EXPECT_CALL(*m_mock_database, create_provider(A<std::string>())).Times(1).WillOnce(Return(provider));
 
     request.clear_user();
     EXPECT_NO_THROW(status = m_server->CreateProvider(&context, &request, &response));
@@ -1571,7 +1571,7 @@ TEST_F(test_server, AddProvider)
     resource.set_id(1);
 
     EXPECT_CALL(*m_mock_database, get_user(A<std::string_view>(), A<std::string_view>())).WillRepeatedly(Invoke([this]() { return std::make_unique<flashback::User>(*m_user); }));
-    EXPECT_CALL(*m_mock_database, add_provider(A<uint64_t>(), A<uint64_t>()));
+    EXPECT_CALL(*m_mock_database, add_provider(A<uint64_t>(), A<uint64_t>())).Times(1);
 
     request.clear_user();
     EXPECT_NO_THROW(status = m_server->AddProvider(&context, &request, &response));
@@ -1602,7 +1602,7 @@ TEST_F(test_server, DropProvider)
     resource.set_id(1);
 
     EXPECT_CALL(*m_mock_database, get_user(A<std::string_view>(), A<std::string_view>())).WillRepeatedly(Invoke([this]() { return std::make_unique<flashback::User>(*m_user); }));
-    EXPECT_CALL(*m_mock_database, drop_provider(A<uint64_t>(), A<uint64_t>()));
+    EXPECT_CALL(*m_mock_database, drop_provider(A<uint64_t>(), A<uint64_t>())).Times(1);
 
     request.clear_user();
     EXPECT_NO_THROW(status = m_server->DropProvider(&context, &request, &response));
@@ -1633,7 +1633,7 @@ TEST_F(test_server, SearchProviders)
     providers.insert({provider.id(), provider});
 
     EXPECT_CALL(*m_mock_database, get_user(A<std::string_view>(), A<std::string_view>())).WillRepeatedly(Invoke([this]() { return std::make_unique<flashback::User>(*m_user); }));
-    EXPECT_CALL(*m_mock_database, search_providers(A<std::string_view>())).WillOnce(Return(providers));
+    EXPECT_CALL(*m_mock_database, search_providers(A<std::string_view>())).Times(1).WillOnce(Return(providers));
 
     request.clear_user();
     EXPECT_NO_THROW(status = m_server->SearchProviders(&context, &request, &response));
@@ -1661,7 +1661,7 @@ TEST_F(test_server, RenameProvider)
     provider.set_id(1);
 
     EXPECT_CALL(*m_mock_database, get_user(A<std::string_view>(), A<std::string_view>())).WillRepeatedly(Invoke([this]() { return std::make_unique<flashback::User>(*m_user); }));
-    EXPECT_CALL(*m_mock_database, rename_provider(A<uint64_t>(), A<std::string>()));
+    EXPECT_CALL(*m_mock_database, rename_provider(A<uint64_t>(), A<std::string>())).Times(1);
 
     request.clear_user();
     EXPECT_NO_THROW(status = m_server->RenameProvider(&context, &request, &response));
@@ -1689,7 +1689,7 @@ TEST_F(test_server, RemoveProvider)
     provider.set_id(1);
 
     EXPECT_CALL(*m_mock_database, get_user(A<std::string_view>(), A<std::string_view>())).WillRepeatedly(Invoke([this]() { return std::make_unique<flashback::User>(*m_user); }));
-    EXPECT_CALL(*m_mock_database, remove_provider(A<uint64_t>()));
+    EXPECT_CALL(*m_mock_database, remove_provider(A<uint64_t>())).Times(1);
 
     request.clear_user();
     EXPECT_NO_THROW(status = m_server->RemoveProvider(&context, &request, &response));
@@ -1717,7 +1717,7 @@ TEST_F(test_server, MergeProviders)
     provider.set_id(1);
 
     EXPECT_CALL(*m_mock_database, get_user(A<std::string_view>(), A<std::string_view>())).WillRepeatedly(Invoke([this]() { return std::make_unique<flashback::User>(*m_user); }));
-    EXPECT_CALL(*m_mock_database, merge_providers(A<uint64_t>(), A<uint64_t>()));
+    EXPECT_CALL(*m_mock_database, merge_providers(A<uint64_t>(), A<uint64_t>())).Times(1);
 
     request.clear_user();
     EXPECT_NO_THROW(status = m_server->MergeProviders(&context, &request, &response));
@@ -1746,7 +1746,7 @@ TEST_F(test_server, CreatePresenter)
     presenter.set_id(1);
 
     EXPECT_CALL(*m_mock_database, get_user(A<std::string_view>(), A<std::string_view>())).WillRepeatedly(Invoke([this]() { return std::make_unique<flashback::User>(*m_user); }));
-    EXPECT_CALL(*m_mock_database, create_presenter(A<std::string>())).WillOnce(Return(presenter));
+    EXPECT_CALL(*m_mock_database, create_presenter(A<std::string>())).Times(1).WillOnce(Return(presenter));
 
     request.clear_user();
     EXPECT_NO_THROW(status = m_server->CreatePresenter(&context, &request, &response));
@@ -1776,7 +1776,7 @@ TEST_F(test_server, AddPresenter)
     resource.set_id(1);
 
     EXPECT_CALL(*m_mock_database, get_user(A<std::string_view>(), A<std::string_view>())).WillRepeatedly(Invoke([this]() { return std::make_unique<flashback::User>(*m_user); }));
-    EXPECT_CALL(*m_mock_database, add_presenter(A<uint64_t>(), A<uint64_t>()));
+    EXPECT_CALL(*m_mock_database, add_presenter(A<uint64_t>(), A<uint64_t>())).Times(1);
 
     request.clear_user();
     EXPECT_NO_THROW(status = m_server->AddPresenter(&context, &request, &response));
@@ -1807,7 +1807,7 @@ TEST_F(test_server, DropPresenter)
     resource.set_id(1);
 
     EXPECT_CALL(*m_mock_database, get_user(A<std::string_view>(), A<std::string_view>())).WillRepeatedly(Invoke([this]() { return std::make_unique<flashback::User>(*m_user); }));
-    EXPECT_CALL(*m_mock_database, drop_presenter(A<uint64_t>(), A<uint64_t>()));
+    EXPECT_CALL(*m_mock_database, drop_presenter(A<uint64_t>(), A<uint64_t>())).Times(1);
 
     request.clear_user();
     EXPECT_NO_THROW(status = m_server->DropPresenter(&context, &request, &response));
@@ -1839,7 +1839,7 @@ TEST_F(test_server, SearchPresenters)
     resource.set_id(1);
 
     EXPECT_CALL(*m_mock_database, get_user(A<std::string_view>(), A<std::string_view>())).WillRepeatedly(Invoke([this]() { return std::make_unique<flashback::User>(*m_user); }));
-    EXPECT_CALL(*m_mock_database, search_presenters(A<std::string_view>())).WillOnce(Return(presenters));
+    EXPECT_CALL(*m_mock_database, search_presenters(A<std::string_view>())).Times(1).WillOnce(Return(presenters));
 
     request.clear_user();
     EXPECT_NO_THROW(status = m_server->SearchPresenters(&context, &request, &response));
@@ -1867,7 +1867,7 @@ TEST_F(test_server, RenamePresenter)
     presenter.set_id(1);
 
     EXPECT_CALL(*m_mock_database, get_user(A<std::string_view>(), A<std::string_view>())).WillRepeatedly(Invoke([this]() { return std::make_unique<flashback::User>(*m_user); }));
-    EXPECT_CALL(*m_mock_database, rename_presenter(A<uint64_t>(), A<std::string>()));
+    EXPECT_CALL(*m_mock_database, rename_presenter(A<uint64_t>(), A<std::string>())).Times(1);
 
     request.clear_user();
     EXPECT_NO_THROW(status = m_server->RenamePresenter(&context, &request, &response));
@@ -1895,7 +1895,7 @@ TEST_F(test_server, RemovePresenter)
     presenter.set_id(1);
 
     EXPECT_CALL(*m_mock_database, get_user(A<std::string_view>(), A<std::string_view>())).WillRepeatedly(Invoke([this]() { return std::make_unique<flashback::User>(*m_user); }));
-    EXPECT_CALL(*m_mock_database, remove_presenter(A<uint64_t>()));
+    EXPECT_CALL(*m_mock_database, remove_presenter(A<uint64_t>())).Times(1);
 
     request.clear_user();
     EXPECT_NO_THROW(status = m_server->RemovePresenter(&context, &request, &response));
@@ -1926,7 +1926,7 @@ TEST_F(test_server, MergePresenters)
     target.set_id(1);
 
     EXPECT_CALL(*m_mock_database, get_user(A<std::string_view>(), A<std::string_view>())).WillRepeatedly(Invoke([this]() { return std::make_unique<flashback::User>(*m_user); }));
-    EXPECT_CALL(*m_mock_database, merge_presenters(A<uint64_t>(), A<uint64_t>()));
+    EXPECT_CALL(*m_mock_database, merge_presenters(A<uint64_t>(), A<uint64_t>())).Times(1);
 
     request.clear_user();
     EXPECT_NO_THROW(status = m_server->MergePresenters(&context, &request, &response));
@@ -1945,66 +1945,563 @@ TEST_F(test_server, MergePresenters)
 
 TEST_F(test_server, GetTopics)
 {
+    grpc::Status status{};
+    grpc::ServerContext context{};
+    flashback::GetTopicsRequest request{};
+    flashback::GetTopicsResponse response{};
+    flashback::Subject subject{};
+    flashback::Topic topic{};
+    std::map<uint64_t, flashback::Topic> topics{};
+
+    subject.set_name("C++");
+    subject.set_id(1);
+    topic.set_name("Coroutines");
+    topic.set_position(1);
+    topic.set_level(flashback::expertise_level::depth);
+    topics.insert({topic.position(), topic});
+
+    EXPECT_CALL(*m_mock_database, get_user(A<std::string_view>(), A<std::string_view>())).WillRepeatedly(Invoke([this]() { return std::make_unique<flashback::User>(*m_user); }));
+    EXPECT_CALL(*m_mock_database, get_topics(A<uint64_t>(), A<flashback::expertise_level>())).Times(1).WillOnce(Return(topics));
+
+    request.clear_user();
+    EXPECT_NO_THROW(status = m_server->GetTopics(&context, &request, &response));
+    EXPECT_THAT(status.ok(), IsFalse());
+    EXPECT_THAT(status.error_message().empty(), IsFalse());
+    EXPECT_THAT(status.error_code(), Eq(grpc::StatusCode::UNAUTHENTICATED));
+
+    *request.mutable_user() = *m_user;
+    *request.mutable_subject() = subject;
+    request.set_level(topic.level());
+
+    EXPECT_NO_THROW(status = m_server->GetTopics(&context, &request, &response));
+    EXPECT_THAT(status.ok(), IsTrue());
+    EXPECT_THAT(status.error_message(), IsEmpty());
 }
 
 TEST_F(test_server, CreateTopic)
 {
+    grpc::Status status{};
+    grpc::ServerContext context{};
+    flashback::CreateTopicRequest request{};
+    flashback::CreateTopicResponse response{};
+    flashback::Subject subject{};
+    flashback::Topic topic{};
+
+    subject.set_name("C++");
+    subject.set_id(1);
+    topic.set_name("Coroutines");
+    topic.set_position(1);
+    topic.set_level(flashback::expertise_level::depth);
+
+    EXPECT_CALL(*m_mock_database, get_user(A<std::string_view>(), A<std::string_view>())).WillRepeatedly(Invoke([this]() { return std::make_unique<flashback::User>(*m_user); }));
+    EXPECT_CALL(*m_mock_database, create_topic(A<uint64_t>(), A<std::string>(), A<flashback::expertise_level>(), A<uint64_t>())).Times(1).WillOnce(Return(topic));
+
+    request.clear_user();
+    EXPECT_NO_THROW(status = m_server->CreateTopic(&context, &request, &response));
+    EXPECT_THAT(status.ok(), IsFalse());
+    EXPECT_THAT(status.error_message().empty(), IsFalse());
+    EXPECT_THAT(status.error_code(), Eq(grpc::StatusCode::UNAUTHENTICATED));
+
+    *request.mutable_user() = *m_user;
+    *request.mutable_subject() = subject;
+    *request.mutable_topic() = topic;
+
+    EXPECT_NO_THROW(status = m_server->CreateTopic(&context, &request, &response));
+    EXPECT_THAT(status.ok(), IsTrue());
+    EXPECT_THAT(status.error_message(), IsEmpty());
 }
 
 TEST_F(test_server, ReorderTopic)
 {
+    grpc::Status status{};
+    grpc::ServerContext context{};
+    flashback::ReorderTopicRequest request{};
+    flashback::ReorderTopicResponse response{};
+    flashback::Subject subject{};
+    flashback::Topic topic{};
+    flashback::Topic target{};
+
+    subject.set_name("C++");
+    subject.set_id(1);
+    topic.set_name("Coroutines");
+    topic.set_position(1);
+    topic.set_level(flashback::expertise_level::depth);
+    target.set_name("Reflection");
+    target.set_position(1);
+    target.set_level(flashback::expertise_level::origin);
+
+    EXPECT_CALL(*m_mock_database, get_user(A<std::string_view>(), A<std::string_view>())).WillRepeatedly(Invoke([this]() { return std::make_unique<flashback::User>(*m_user); }));
+    EXPECT_CALL(*m_mock_database, reorder_topic(A<uint64_t>(), A<flashback::expertise_level>(), A<uint64_t>(), A<uint64_t>())).Times(1);
+
+    request.clear_user();
+    EXPECT_NO_THROW(status = m_server->ReorderTopic(&context, &request, &response));
+    EXPECT_THAT(status.ok(), IsFalse());
+    EXPECT_THAT(status.error_message().empty(), IsFalse());
+    EXPECT_THAT(status.error_code(), Eq(grpc::StatusCode::UNAUTHENTICATED));
+
+    *request.mutable_user() = *m_user;
+    *request.mutable_subject() = subject;
+    *request.mutable_topic() = topic;
+    *request.mutable_target() = target;
+
+    EXPECT_NO_THROW(status = m_server->ReorderTopic(&context, &request, &response));
+    EXPECT_THAT(status.ok(), IsTrue());
+    EXPECT_THAT(status.error_message(), IsEmpty());
 }
 
 TEST_F(test_server, RemoveTopic)
 {
+    grpc::Status status{};
+    grpc::ServerContext context{};
+    flashback::RemoveTopicRequest request{};
+    flashback::RemoveTopicResponse response{};
+    flashback::Subject subject{};
+    flashback::Topic topic{};
+
+    subject.set_name("C++");
+    subject.set_id(1);
+    topic.set_name("Coroutines");
+    topic.set_position(1);
+    topic.set_level(flashback::expertise_level::depth);
+
+    EXPECT_CALL(*m_mock_database, get_user(A<std::string_view>(), A<std::string_view>())).WillRepeatedly(Invoke([this]() { return std::make_unique<flashback::User>(*m_user); }));
+    EXPECT_CALL(*m_mock_database, remove_topic(A<uint64_t>(), A<flashback::expertise_level>(), A<uint64_t>())).Times(1);
+
+    request.clear_user();
+    EXPECT_NO_THROW(status = m_server->RemoveTopic(&context, &request, &response));
+    EXPECT_THAT(status.ok(), IsFalse());
+    EXPECT_THAT(status.error_message().empty(), IsFalse());
+    EXPECT_THAT(status.error_code(), Eq(grpc::StatusCode::UNAUTHENTICATED));
+
+    *request.mutable_user() = *m_user;
+    *request.mutable_subject() = subject;
+    *request.mutable_topic() = topic;
+
+    EXPECT_NO_THROW(status = m_server->RemoveTopic(&context, &request, &response));
+    EXPECT_THAT(status.ok(), IsTrue());
+    EXPECT_THAT(status.error_message(), IsEmpty());
 }
 
 TEST_F(test_server, MergeTopics)
 {
+    grpc::Status status{};
+    grpc::ServerContext context{};
+    flashback::MergeTopicsRequest request{};
+    flashback::MergeTopicsResponse response{};
+    flashback::Subject subject{};
+    flashback::Topic source{};
+    flashback::Topic target{};
+
+    subject.set_name("C++");
+    subject.set_id(1);
+    source.set_name("Coroutines");
+    source.set_position(1);
+    source.set_level(flashback::expertise_level::depth);
+    target.set_name("Reflections");
+    target.set_position(1);
+    target.set_level(flashback::expertise_level::origin);
+
+    EXPECT_CALL(*m_mock_database, get_user(A<std::string_view>(), A<std::string_view>())).WillRepeatedly(Invoke([this]() { return std::make_unique<flashback::User>(*m_user); }));
+    EXPECT_CALL(*m_mock_database, merge_topics(A<uint64_t>(), A<flashback::expertise_level>(), A<uint64_t>(), A<uint64_t>())).Times(1);
+
+    request.clear_user();
+    EXPECT_NO_THROW(status = m_server->MergeTopics(&context, &request, &response));
+    EXPECT_THAT(status.ok(), IsFalse());
+    EXPECT_THAT(status.error_message().empty(), IsFalse());
+    EXPECT_THAT(status.error_code(), Eq(grpc::StatusCode::UNAUTHENTICATED));
+
+    *request.mutable_user() = *m_user;
+    *request.mutable_subject() = subject;
+    *request.mutable_source() = source;
+    *request.mutable_target() = target;
+
+    EXPECT_NO_THROW(status = m_server->MergeTopics(&context, &request, &response));
+    EXPECT_THAT(status.ok(), IsTrue());
+    EXPECT_THAT(status.error_message(), IsEmpty());
 }
 
 TEST_F(test_server, EditTopic)
 {
+    grpc::Status status{};
+    grpc::ServerContext context{};
+    flashback::EditTopicRequest request{};
+    flashback::EditTopicResponse response{};
+    flashback::Subject subject{};
+    flashback::Topic topic{};
+    flashback::Topic modified_topic{};
+
+    subject.set_name("C++");
+    subject.set_id(1);
+    topic.set_name("Coroutines");
+    topic.set_position(1);
+    topic.set_level(flashback::expertise_level::depth);
+    modified_topic.set_name("Reflection");
+    modified_topic.set_position(1);
+    modified_topic.set_level(flashback::expertise_level::origin);
+
+    EXPECT_CALL(*m_mock_database, get_user(A<std::string_view>(), A<std::string_view>())).WillRepeatedly(Invoke([this]() { return std::make_unique<flashback::User>(*m_user); }));
+    EXPECT_CALL(*m_mock_database, rename_topic(A<uint64_t>(), A<flashback::expertise_level>(), A<uint64_t>(), A<std::string>())).Times(1);
+    EXPECT_CALL(*m_mock_database, change_topic_level(A<uint64_t>(), A<uint64_t>(), A<flashback::expertise_level>(), A<flashback::expertise_level>())).Times(1);
+
+    request.clear_user();
+    EXPECT_NO_THROW(status = m_server->EditTopic(&context, &request, &response));
+    EXPECT_THAT(status.ok(), IsFalse());
+    EXPECT_THAT(status.error_message().empty(), IsFalse());
+    EXPECT_THAT(status.error_code(), Eq(grpc::StatusCode::UNAUTHENTICATED));
+
+    *request.mutable_user() = *m_user;
+    *request.mutable_subject() = subject;
+    *request.mutable_topic() = topic;
+
+    EXPECT_NO_THROW(status = m_server->EditTopic(&context, &request, &response));
+    EXPECT_THAT(status.ok(), IsTrue());
+    EXPECT_THAT(status.error_message(), IsEmpty());
 }
 
 TEST_F(test_server, MoveTopic)
 {
+    grpc::Status status{};
+    grpc::ServerContext context{};
+    flashback::MoveTopicRequest request{};
+    flashback::MoveTopicResponse response{};
+    flashback::Subject source_subject{};
+    flashback::Topic source_topic{};
+    flashback::Subject target_subject{};
+    flashback::Topic target_topic{};
+
+    source_subject.set_name("C");
+    source_subject.set_id(1);
+    target_subject.set_name("C");
+    target_subject.set_id(1);
+    source_topic.set_name("Function");
+    source_topic.set_position(1);
+    source_topic.set_level(flashback::expertise_level::surface);
+    target_topic.set_name("Function");
+    target_topic.set_position(1);
+    target_topic.set_level(flashback::expertise_level::surface);
+
+    EXPECT_CALL(*m_mock_database, get_user(A<std::string_view>(), A<std::string_view>())).WillRepeatedly(Invoke([this]() { return std::make_unique<flashback::User>(*m_user); }));
+    EXPECT_CALL(*m_mock_database, move_topic(A<uint64_t>(), A<flashback::expertise_level>(), A<uint64_t>(), A<uint64_t>(), A<uint64_t>())).Times(1);
+
+    request.clear_user();
+    EXPECT_NO_THROW(status = m_server->MoveTopic(&context, &request, &response));
+    EXPECT_THAT(status.ok(), IsFalse());
+    EXPECT_THAT(status.error_message().empty(), IsFalse());
+    EXPECT_THAT(status.error_code(), Eq(grpc::StatusCode::UNAUTHENTICATED));
+
+    *request.mutable_user() = *m_user;
+    *request.mutable_source_subject() = source_subject;
+    *request.mutable_source_topic() = source_topic;
+    *request.mutable_target_subject() = target_subject;
+    *request.mutable_target_topic() = target_topic;
+
+    EXPECT_NO_THROW(status = m_server->MoveTopic(&context, &request, &response));
+    EXPECT_THAT(status.ok(), IsTrue());
+    EXPECT_THAT(status.error_message(), IsEmpty());
 }
 
 TEST_F(test_server, SearchTopics)
 {
+    grpc::Status status{};
+    grpc::ServerContext context{};
+    flashback::SearchTopicsRequest request{};
+    flashback::SearchTopicsResponse response{};
+    flashback::Subject subject{};
+    flashback::Topic topic{};
+    std::map<uint64_t, flashback::Topic> results{};
+
+    subject.set_name("C++");
+    subject.set_id(1);
+    topic.set_name("Reflections");
+    topic.set_position(1);
+    topic.set_level(flashback::expertise_level::origin);
+
+    EXPECT_CALL(*m_mock_database, get_user(A<std::string_view>(), A<std::string_view>())).WillRepeatedly(Invoke([this]() { return std::make_unique<flashback::User>(*m_user); }));
+    EXPECT_CALL(*m_mock_database, search_topics(A<uint64_t>(), A<flashback::expertise_level>(), A<std::string_view>())).Times(1).WillOnce(Return(results));
+
+    request.clear_user();
+    EXPECT_NO_THROW(status = m_server->SearchTopics(&context, &request, &response));
+    EXPECT_THAT(status.ok(), IsFalse());
+    EXPECT_THAT(status.error_message().empty(), IsFalse());
+    EXPECT_THAT(status.error_code(), Eq(grpc::StatusCode::UNAUTHENTICATED));
+
+    *request.mutable_user() = *m_user;
+    *request.mutable_subject() = subject;
+    request.set_search_token(topic.name());
+
+    EXPECT_NO_THROW(status = m_server->SearchTopics(&context, &request, &response));
+    EXPECT_THAT(status.ok(), IsTrue());
+    EXPECT_THAT(status.error_message(), IsEmpty());
 }
 
 TEST_F(test_server, GetSections)
 {
+    grpc::Status status{};
+    grpc::ServerContext context{};
+    flashback::GetSectionsRequest request{};
+    flashback::GetSectionsResponse response{};
+    flashback::Resource resource{};
+    flashback::Section section{};
+    std::map<uint64_t, flashback::Section> sections{};
+
+    resource.set_name("C++ Resource");
+    resource.set_id(1);
+    section.set_name("Reflections");
+    section.set_position(1);
+    sections.insert({section.position(), section});
+
+    EXPECT_CALL(*m_mock_database, get_user(A<std::string_view>(), A<std::string_view>())).WillRepeatedly(Invoke([this]() { return std::make_unique<flashback::User>(*m_user); }));
+    EXPECT_CALL(*m_mock_database, get_sections(A<uint64_t>())).Times(1).WillOnce(Return(sections));
+
+    request.clear_user();
+    EXPECT_NO_THROW(status = m_server->GetSections(&context, &request, &response));
+    EXPECT_THAT(status.ok(), IsFalse());
+    EXPECT_THAT(status.error_message().empty(), IsFalse());
+    EXPECT_THAT(status.error_code(), Eq(grpc::StatusCode::UNAUTHENTICATED));
+
+    *request.mutable_user() = *m_user;
+    *request.mutable_resource() = resource;
+
+    EXPECT_NO_THROW(status = m_server->GetSections(&context, &request, &response));
+    EXPECT_THAT(status.ok(), IsTrue());
+    EXPECT_THAT(status.error_message(), IsEmpty());
 }
 
 TEST_F(test_server, CreateSection)
 {
+    grpc::Status status{};
+    grpc::ServerContext context{};
+    flashback::CreateSectionRequest request{};
+    flashback::CreateSectionResponse response{};
+    flashback::Resource resource{};
+    flashback::Section section{};
+
+    resource.set_name("C++ Resource");
+    resource.set_id(1);
+    section.set_name("Reflections");
+    section.set_position(1);
+
+    EXPECT_CALL(*m_mock_database, get_user(A<std::string_view>(), A<std::string_view>())).WillRepeatedly(Invoke([this]() { return std::make_unique<flashback::User>(*m_user); }));
+    EXPECT_CALL(*m_mock_database, create_section(A<uint64_t>(), A<uint64_t>(), A<std::string>(), A<std::string>())).Times(1).WillOnce(Return(section));
+
+    request.clear_user();
+    EXPECT_NO_THROW(status = m_server->CreateSection(&context, &request, &response));
+    EXPECT_THAT(status.ok(), IsFalse());
+    EXPECT_THAT(status.error_message().empty(), IsFalse());
+    EXPECT_THAT(status.error_code(), Eq(grpc::StatusCode::UNAUTHENTICATED));
+
+    *request.mutable_user() = *m_user;
+    *request.mutable_resource() = resource;
+    *request.mutable_section() = section;
+
+    EXPECT_NO_THROW(status = m_server->CreateSection(&context, &request, &response));
+    EXPECT_THAT(status.ok(), IsTrue());
+    EXPECT_THAT(status.error_message(), IsEmpty());
 }
 
 TEST_F(test_server, ReorderSection)
 {
+    grpc::Status status{};
+    grpc::ServerContext context{};
+    flashback::ReorderSectionRequest request{};
+    flashback::ReorderSectionResponse response{};
+    flashback::Resource resource{};
+    flashback::Section source{};
+    flashback::Section target{};
+
+    resource.set_name("C++ Resource");
+    resource.set_id(1);
+    source.set_name("Reflections");
+    source.set_position(4);
+    target.set_name("Contracts");
+    target.set_position(2);
+
+    EXPECT_CALL(*m_mock_database, get_user(A<std::string_view>(), A<std::string_view>())).WillRepeatedly(Invoke([this]() { return std::make_unique<flashback::User>(*m_user); }));
+    EXPECT_CALL(*m_mock_database, reorder_section(A<uint64_t>(), A<uint64_t>(), A<uint64_t>())).Times(1);
+
+    request.clear_user();
+    EXPECT_NO_THROW(status = m_server->ReorderSection(&context, &request, &response));
+    EXPECT_THAT(status.ok(), IsFalse());
+    EXPECT_THAT(status.error_message().empty(), IsFalse());
+    EXPECT_THAT(status.error_code(), Eq(grpc::StatusCode::UNAUTHENTICATED));
+
+    *request.mutable_user() = *m_user;
+    *request.mutable_resource() = resource;
+    *request.mutable_source() = source;
+    *request.mutable_target() = target;
+
+    EXPECT_NO_THROW(status = m_server->ReorderSection(&context, &request, &response));
+    EXPECT_THAT(status.ok(), IsTrue());
+    EXPECT_THAT(status.error_message(), IsEmpty());
 }
 
 TEST_F(test_server, RemoveSection)
 {
+    grpc::Status status{};
+    grpc::ServerContext context{};
+    flashback::RemoveSectionRequest request{};
+    flashback::RemoveSectionResponse response{};
+    flashback::Resource resource{};
+    flashback::Section section{};
+
+    resource.set_name("C++ Resource");
+    resource.set_id(1);
+    section.set_name("Reflections");
+    section.set_position(1);
+
+    EXPECT_CALL(*m_mock_database, get_user(A<std::string_view>(), A<std::string_view>())).WillRepeatedly(Invoke([this]() { return std::make_unique<flashback::User>(*m_user); }));
+    EXPECT_CALL(*m_mock_database, remove_section(A<uint64_t>(), A<uint64_t>())).Times(1);
+
+    request.clear_user();
+    EXPECT_NO_THROW(status = m_server->RemoveSection(&context, &request, &response));
+    EXPECT_THAT(status.ok(), IsFalse());
+    EXPECT_THAT(status.error_message().empty(), IsFalse());
+    EXPECT_THAT(status.error_code(), Eq(grpc::StatusCode::UNAUTHENTICATED));
+
+    *request.mutable_user() = *m_user;
+    *request.mutable_resource() = resource;
+    *request.mutable_section() = section;
+
+    EXPECT_NO_THROW(status = m_server->RemoveSection(&context, &request, &response));
+    EXPECT_THAT(status.ok(), IsTrue());
+    EXPECT_THAT(status.error_message(), IsEmpty());
 }
 
 TEST_F(test_server, MergeSections)
 {
+    grpc::Status status{};
+    grpc::ServerContext context{};
+    flashback::MergeSectionsRequest request{};
+    flashback::MergeSectionsResponse response{};
+    flashback::Resource resource{};
+    flashback::Section source{};
+    flashback::Section target{};
+
+    resource.set_name("C++ Resource");
+    resource.set_id(1);
+    source.set_name("Reflections");
+    source.set_position(1);
+    target.set_name("Contracts");
+    target.set_position(2);
+
+    EXPECT_CALL(*m_mock_database, get_user(A<std::string_view>(), A<std::string_view>())).WillRepeatedly(Invoke([this]() { return std::make_unique<flashback::User>(*m_user); }));
+    EXPECT_CALL(*m_mock_database, merge_sections(A<uint64_t>(), A<uint64_t>(), A<uint64_t>())).Times(1);
+
+    request.clear_user();
+    EXPECT_NO_THROW(status = m_server->MergeSections(&context, &request, &response));
+    EXPECT_THAT(status.ok(), IsFalse());
+    EXPECT_THAT(status.error_message().empty(), IsFalse());
+    EXPECT_THAT(status.error_code(), Eq(grpc::StatusCode::UNAUTHENTICATED));
+
+    *request.mutable_user() = *m_user;
+    *request.mutable_resource() = resource;
+    *request.mutable_source() = source;
+    *request.mutable_target() = target;
+
+    EXPECT_NO_THROW(status = m_server->MergeSections(&context, &request, &response));
+    EXPECT_THAT(status.ok(), IsTrue());
+    EXPECT_THAT(status.error_message(), IsEmpty());
 }
 
 TEST_F(test_server, EditSection)
 {
+    grpc::Status status{};
+    grpc::ServerContext context{};
+    flashback::EditSectionRequest request{};
+    flashback::EditSectionResponse response{};
+    flashback::Resource resource{};
+    flashback::Section section{};
+    flashback::Section existing_section{};
+
+    resource.set_name("C++ Resource");
+    resource.set_id(1);
+    section.set_name("Reflections");
+    section.set_position(1);
+    section.set_link("https://correct.url");
+    existing_section.set_name("Reflections");
+    existing_section.set_position(3);
+    existing_section.set_link("https://incorrect.url");
+
+    EXPECT_CALL(*m_mock_database, get_user(A<std::string_view>(), A<std::string_view>())).WillRepeatedly(Invoke([this]() { return std::make_unique<flashback::User>(*m_user); }));
+    EXPECT_CALL(*m_mock_database, get_section(A<uint64_t>(), A<uint64_t>())).Times(1).WillOnce(Return(existing_section));
+    EXPECT_CALL(*m_mock_database, rename_section(A<uint64_t>(), A<uint64_t>(), A<std::string>())).Times(1);
+    EXPECT_CALL(*m_mock_database, edit_section_link(A<uint64_t>(), A<uint64_t>(), A<std::string>())).Times(1);
+
+    request.clear_user();
+    EXPECT_NO_THROW(status = m_server->EditSection(&context, &request, &response));
+    EXPECT_THAT(status.ok(), IsFalse());
+    EXPECT_THAT(status.error_message().empty(), IsFalse());
+    EXPECT_THAT(status.error_code(), Eq(grpc::StatusCode::UNAUTHENTICATED));
+
+    *request.mutable_user() = *m_user;
+    *request.mutable_resource() = resource;
+    *request.mutable_section() = section;
+
+    EXPECT_NO_THROW(status = m_server->EditSection(&context, &request, &response));
+    EXPECT_THAT(status.ok(), IsTrue());
+    EXPECT_THAT(status.error_message(), IsEmpty());
 }
 
 TEST_F(test_server, MoveSection)
 {
+    grpc::Status status{};
+    grpc::ServerContext context{};
+    flashback::MoveSectionRequest request{};
+    flashback::MoveSectionResponse response{};
+    flashback::Resource resource{};
+    flashback::Section section{};
+
+    resource.set_name("C++ Resource");
+    resource.set_id(1);
+    section.set_name("Reflections");
+    section.set_position(1);
+
+    EXPECT_CALL(*m_mock_database, get_user(A<std::string_view>(), A<std::string_view>())).WillRepeatedly(Invoke([this]() { return std::make_unique<flashback::User>(*m_user); }));
+    EXPECT_CALL(*m_mock_database, move_section(A<uint64_t>())).Times(1);
+
+    request.clear_user();
+    EXPECT_NO_THROW(status = m_server->GetSections(&context, &request, &response));
+    EXPECT_THAT(status.ok(), IsFalse());
+    EXPECT_THAT(status.error_message().empty(), IsFalse());
+    EXPECT_THAT(status.error_code(), Eq(grpc::StatusCode::UNAUTHENTICATED));
+
+    *request.mutable_user() = *m_user;
+    *request.mutable_resource() = resource;
+
+    EXPECT_NO_THROW(status = m_server->GetSections(&context, &request, &response));
+    EXPECT_THAT(status.ok(), IsTrue());
+    EXPECT_THAT(status.error_message(), IsEmpty());
 }
 
 TEST_F(test_server, SearchSections)
 {
+    grpc::Status status{};
+    grpc::ServerContext context{};
+    flashback::SearchSectionsRequest request{};
+    flashback::SearchSectionsResponse response{};
+    flashback::Resource resource{};
+    flashback::Section section{};
+
+    resource.set_name("C++ Resource");
+    resource.set_id(1);
+    section.set_name("Reflections");
+    section.set_position(1);
+
+    EXPECT_CALL(*m_mock_database, get_user(A<std::string_view>(), A<std::string_view>())).WillRepeatedly(Invoke([this]() { return std::make_unique<flashback::User>(*m_user); }));
+    EXPECT_CALL(*m_mock_database, search_sections(A<uint64_t>())).Times(1);
+
+    request.clear_user();
+    EXPECT_NO_THROW(status = m_server->GetSections(&context, &request, &response));
+    EXPECT_THAT(status.ok(), IsFalse());
+    EXPECT_THAT(status.error_message().empty(), IsFalse());
+    EXPECT_THAT(status.error_code(), Eq(grpc::StatusCode::UNAUTHENTICATED));
+
+    *request.mutable_user() = *m_user;
+    *request.mutable_resource() = resource;
+
+    EXPECT_NO_THROW(status = m_server->GetSections(&context, &request, &response));
+    EXPECT_THAT(status.ok(), IsTrue());
+    EXPECT_THAT(status.error_message(), IsEmpty());
 }
 
 TEST_F(test_server, CreateCard)

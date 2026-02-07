@@ -72,3 +72,5 @@ message Assessment { Card card = 1; uint64 assimilations = 2; }
 message ResourceSearchResult { Resource resource = 1; uint64 position = 2; }
 message ProviderSearchResult { Provider provider = 1; uint64 position = 2; }
 message PresenterSearchResult { Presenter presenter = 1; uint64 position = 2; }
+message TopicSearchResult { Topic topic = 1; uint64 position = 2; }
+message SectionSearchResult { Section section = 1; uint64 position = 2; }

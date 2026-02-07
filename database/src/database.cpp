@@ -1334,7 +1334,8 @@ std::vector<Card> database::get_topic_assessments(uint64_t const user_id, uint64
 std::vector<Assessment> database::get_assessments(uint64_t const user_id, uint64_t const subject_id, expertise_level topic_level, uint64_t const topic_position) const
 {
     std::vector<Assessment> assessments{};
-    for (pqxx::row const& row: query("select id, state, headline, assimilations from get_assessments($1, $2, $3, $4)", user_id, subject_id, level_to_string(topic_level), topic_position))
+    for (pqxx::row const& row: query("select id, state, headline, assimilations from get_assessments($1, $2, $3, $4)", user_id, subject_id, level_to_string(topic_level),
+                                     topic_position))
     {
         Assessment assessment{};
         auto card{std::make_unique<Card>()};
@@ -1358,6 +1359,48 @@ bool database::is_assimilated(uint64_t user_id, uint64_t subject_id, expertise_l
         assimilated = result.at(0).at("assimilated").as<bool>();
     }
     return assimilated;
+}
+
+Section database::get_section(uint64_t resource_id, uint64_t position) const
+{
+    Section section{};
+    if (pqxx::result const result{query("select position, state, name, link from get_section($1, $2)", resource_id, position)}; result.size() == 1)
+    {
+        pqxx::row const& row{result.at(0)};
+        section.set_position(row.at("position").as<uint64_t>());
+        section.set_state(to_closure_state(row.at("state").as<std::string>()));
+        section.set_name(row.at("name").as<std::string>());
+        section.set_link(row.at("link").is_null() ? "" : row.at("link").as<std::string>());
+    }
+    return section;
+}
+
+Card database::get_card(uint64_t card_id) const
+{
+    Card card{};
+    if (pqxx::result const result{query("select id, state, headline from get_card($1)", card_id)}; result.size() == 1)
+    {
+        pqxx::row const& row{result.at(0)};
+        card.set_id(row.at("id").as<uint64_t>());
+        card.set_state(to_card_state(row.at("state").as<std::string>()));
+        card.set_headline(row.at("headline").as<std::string>());
+    }
+    return card;
+}
+
+Block database::get_block(uint64_t card_id, uint64_t position) const
+{
+    Block block{};
+    if (pqxx::result const result{query("select position, type, extension, metadata, content from get_block($1, $2)", card_id, position)}; result.size() == 1)
+    {
+        pqxx::row const& row{result.at(0)};
+        block.set_position(row.at("position").as<uint64_t>());
+        block.set_type(to_content_type(row.at("type").as<std::string>()));
+        block.set_extension(row.at("extension").as<std::string>());
+        block.set_metadata(row.at("metadata").is_null() ? "" : row.at("metadata").as<std::string>());
+        block.set_content(row.at("content").as<std::string>());
+    }
+    return block;
 }
 
 void database::expand_assessment(uint64_t const assessment_id, uint64_t const subject_id, expertise_level const level, uint64_t const topic_position) const

@@ -170,6 +170,10 @@ public:
     [[nodiscard]] std::vector<Assessment> get_assessments(uint64_t user_id, uint64_t subject_id, expertise_level topic_level, uint64_t topic_position) const override;
     [[nodiscard]] bool is_assimilated(uint64_t user_id, uint64_t subject_id, expertise_level topic_level, uint64_t topic_position) const override;
 
+    [[nodiscard]] Section get_section(uint64_t resource_id, uint64_t position) const override;
+    [[nodiscard]] Card get_card(uint64_t card_id) const override;
+    [[nodiscard]] Block get_block(uint64_t card_id, uint64_t position) const override;
+
 private:
     template <typename... Args>
     [[nodiscard]] pqxx::result query(std::string_view const format, Args&&... args) const
@@ -205,6 +209,7 @@ private:
     static practice_mode to_practice_mode(std::string_view const mode_string);
     static std::string practice_mode_to_string(practice_mode const mode);
 
+private:
     std::unique_ptr<pqxx::connection> m_connection;
     friend class ::test_database;
 };
