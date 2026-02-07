@@ -170,6 +170,7 @@ public:
     [[nodiscard]] std::vector<Assessment> get_assessments(uint64_t user_id, uint64_t subject_id, expertise_level topic_level, uint64_t topic_position) const override;
     [[nodiscard]] bool is_assimilated(uint64_t user_id, uint64_t subject_id, expertise_level topic_level, uint64_t topic_position) const override;
 
+    [[nodiscard]] Topic get_topic(uint64_t subject_id, expertise_level level, uint64_t position) const override;
     [[nodiscard]] Section get_section(uint64_t resource_id, uint64_t position) const override;
     [[nodiscard]] Card get_card(uint64_t card_id) const override;
     [[nodiscard]] Block get_block(uint64_t card_id, uint64_t position) const override;

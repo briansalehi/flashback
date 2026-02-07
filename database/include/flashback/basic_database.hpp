@@ -68,6 +68,7 @@ public:
     virtual void move_topic(uint64_t subject_id, expertise_level level, uint64_t position, uint64_t target_subject_id, uint64_t target_position) const = 0;
     [[nodiscard]] virtual std::map<uint64_t, Topic> search_topics(uint64_t subject_id, expertise_level level, std::string_view search_pattern) const = 0;
     virtual void change_topic_level(uint64_t subject_id, uint64_t position, expertise_level level, expertise_level target) const = 0;
+    [[nodiscard]] virtual Topic get_topic(uint64_t subject_id, expertise_level level, uint64_t position) const = 0;
 
     // resources
     [[nodiscard]] virtual Resource create_resource(Resource const& resource) const = 0;

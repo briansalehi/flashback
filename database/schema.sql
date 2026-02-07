@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict Nw4gjfp7a7aIW9AGZk787nQ2HG5gIX4IJ7TEgtNrhdvx2Iwwkcy0Yl5XJgwEnvl
+\restrict KbI0SG5gyMRnCu2gyuYufVgmAgfrxvp07O0R4l8xBsJPEUiT0lweoSHpDOZymKU
 
 -- Dumped from database version 18.1
 -- Dumped by pg_dump version 18.0
@@ -1572,6 +1572,20 @@ end; $$;
 
 
 ALTER FUNCTION flashback.get_subject_resources(subject character varying) OWNER TO flashback;
+
+--
+-- Name: get_topic(integer, flashback.expertise_level, integer); Type: FUNCTION; Schema: flashback; Owner: flashback
+--
+
+CREATE FUNCTION flashback.get_topic(subject_id integer, topic_level flashback.expertise_level, topic_position integer) RETURNS TABLE("position" integer, name flashback.citext, level flashback.expertise_level)
+    LANGUAGE plpgsql
+    AS $$
+begin
+    return query select t.position, t.name, t.level from topics t where t.subject = subject_id and t.level = topic_level and t.position = topic_position;
+end; $$;
+
+
+ALTER FUNCTION flashback.get_topic(subject_id integer, topic_level flashback.expertise_level, topic_position integer) OWNER TO flashback;
 
 --
 -- Name: get_topic_assessments(integer, integer, integer, flashback.expertise_level); Type: FUNCTION; Schema: flashback; Owner: flashback
@@ -4607,5 +4621,5 @@ GRANT ALL ON SCHEMA public TO flashback_client;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict Nw4gjfp7a7aIW9AGZk787nQ2HG5gIX4IJ7TEgtNrhdvx2Iwwkcy0Yl5XJgwEnvl
+\unrestrict KbI0SG5gyMRnCu2gyuYufVgmAgfrxvp07O0R4l8xBsJPEUiT0lweoSHpDOZymKU
 

@@ -6723,6 +6723,28 @@ TEST_F(test_database, is_absolute)
 {
 }
 
+TEST_F(test_database, get_topic)
+{
+    auto constexpr name{"Reflection"};
+    auto constexpr level{flashback::expertise_level::depth};
+    flashback::Subject subject{};
+    flashback::Topic topic{};
+    subject.clear_id();
+    subject.set_name("C++");
+    topic.clear_position();
+    topic.set_level(level);
+    topic.set_name(name);
+
+    ASSERT_NO_THROW(subject = m_database->create_subject(subject.name()));
+    ASSERT_THAT(subject.id(), Gt(0));
+    ASSERT_NO_THROW(topic = m_database->create_topic(subject.id(), topic.name(), topic.level(), topic.position()));
+    ASSERT_THAT(topic.position(), Eq(1));
+    EXPECT_NO_THROW(topic = m_database->get_topic(subject.id(), topic.level(), topic.position()));
+    EXPECT_THAT(topic.position(), Eq(1));
+    EXPECT_THAT(topic.name(), Eq(name));
+    EXPECT_THAT(topic.level(), Eq(level));
+}
+
 TEST_F(test_database, get_section)
 {
     auto constexpr section_name{"Chapter 1"};

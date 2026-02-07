@@ -1361,6 +1361,19 @@ bool database::is_assimilated(uint64_t user_id, uint64_t subject_id, expertise_l
     return assimilated;
 }
 
+Topic database::get_topic(uint64_t subject_id, expertise_level level, uint64_t position) const
+{
+    Topic topic{};
+    if (pqxx::result const result{query("select position, name, level from get_topic($1, $2, $3)", subject_id, level_to_string(level), position)}; result.size() == 1)
+    {
+        pqxx::row const& row{result.at(0)};
+        topic.set_position(row.at("position").as<uint64_t>());
+        topic.set_name(row.at("name").as<std::string>());
+        topic.set_level(to_level(row.at("level").as<std::string>()));
+    }
+    return topic;
+}
+
 Section database::get_section(uint64_t resource_id, uint64_t position) const
 {
     Section section{};

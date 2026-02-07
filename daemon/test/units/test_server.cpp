@@ -2140,6 +2140,7 @@ TEST_F(test_server, EditTopic)
     modified_topic.set_level(flashback::expertise_level::origin);
 
     EXPECT_CALL(*m_mock_database, get_user(A<std::string_view>(), A<std::string_view>())).WillRepeatedly(Invoke([this]() { return std::make_unique<flashback::User>(*m_user); }));
+    EXPECT_CALL(*m_mock_database, get_topic(A<uint64_t>(), A<flashback::expertise_level>(), A<uint64_t>())).Times(1);
     EXPECT_CALL(*m_mock_database, rename_topic(A<uint64_t>(), A<flashback::expertise_level>(), A<uint64_t>(), A<std::string>())).Times(1);
     EXPECT_CALL(*m_mock_database, change_topic_level(A<uint64_t>(), A<uint64_t>(), A<flashback::expertise_level>(), A<flashback::expertise_level>())).Times(1);
 
