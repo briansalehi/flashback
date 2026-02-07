@@ -107,13 +107,11 @@ public:
     grpc::Status CreateCard(grpc::ServerContext* context, CreateCardRequest const* request, CreateCardResponse* response) override;
     grpc::Status AddCardToSection(grpc::ServerContext* context, AddCardToSectionRequest const* request, AddCardToSectionResponse* response) override;
     grpc::Status AddCardToTopic(grpc::ServerContext* context, AddCardToTopicRequest const* request, AddCardToTopicResponse* response) override;
-    grpc::Status ReorderCard(grpc::ServerContext* context, ReorderCardRequest const* request, ReorderCardResponse* response) override;
     grpc::Status RemoveCard(grpc::ServerContext* context, RemoveCardRequest const* request, RemoveCardResponse* response) override;
     grpc::Status MergeCards(grpc::ServerContext* context, MergeCardsRequest const* request, MergeCardsResponse* response) override;
     grpc::Status SearchCards(grpc::ServerContext* context, SearchCardsRequest const* request, SearchCardsResponse* response) override;
 
     // section page
-    grpc::Status GetStudyCards(grpc::ServerContext* context, GetStudyCardsRequest const* request, GetStudyCardsResponse* response) override;
     grpc::Status MoveCardToSection(grpc::ServerContext* context, MoveCardToSectionRequest const* request, MoveCardToSectionResponse* response) override;
     grpc::Status MarkSectionAsReviewed(grpc::ServerContext* context, MarkSectionAsReviewedRequest const* request, MarkSectionAsReviewedResponse* response) override;
 

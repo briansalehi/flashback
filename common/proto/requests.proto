@@ -145,23 +145,19 @@ message MergePresentersRequest { User user = 1; Presenter source = 2; Presenter 
 message MergePresentersResponse { }
 
 // section/topic page
-message CreateCardRequest { User user = 1; }
-message CreateCardResponse { }
-message ReorderCardRequest { User user = 1; }
-message ReorderCardResponse { }
-message RemoveCardRequest { User user = 1; }
+message CreateCardRequest { User user = 1; Card card = 2; }
+message CreateCardResponse { Card card = 1; }
+message RemoveCardRequest { User user = 1; Card card = 2; }
 message RemoveCardResponse { }
-message MergeCardsRequest { User user = 1; }
+message MergeCardsRequest { User user = 1; Card source = 2; Card target = 3; }
 message MergeCardsResponse { }
 
 // section page
-message GetStudyResourcesRequest { User user = 1; Subject subject = 2; }
-message GetStudyResourcesResponse { repeated Resource resources = 1; }
-message GetStudyCardsRequest { User user = 1; Resource resource = 2; }
-message GetStudyCardsResponse { repeated Card cards = 1; }
+message GetStudyResourcesRequest { User user = 1; }
+message GetStudyResourcesResponse { repeated StudyResource resources = 1; }
 message EditSectionRequest { User user = 1; Resource resource = 2; Section section = 3; }
 message EditSectionResponse { }
-message MoveCardToSectionRequest { User user = 1; Resource resource = 2; Section section = 3; Card card = 4; }
+message MoveCardToSectionRequest { User user = 1; Card card = 2;; Resource resource = 3; Section source = 4; Section target = 5; }
 message MoveCardToSectionResponse { }
 message SearchSectionsRequest { User user = 1; Resource resource = 2; string search_token = 3; }
 message SearchSectionsResponse { repeated SectionSearchResult result = 1; }
@@ -169,11 +165,11 @@ message MarkSectionAsReviewedRequest { User user = 1; Resource resource = 2; Sec
 message MarkSectionAsReviewedResponse { }
 
 // topic page
-message GetPracticeCardsRequest { User user = 1; }
-message GetPracticeCardsResponse { }
+message GetPracticeCardsRequest { User user = 1; Roadmap roadmap = 2; Subject subject = 3; Topic topic = 4; }
+message GetPracticeCardsResponse { repeated Card cards = 1; }
 message EditTopicRequest { User user = 1; Subject subject = 2; Topic topic = 3; }
 message EditTopicResponse { }
-message MoveCardToTopicRequest { User user = 1; Subject subject = 2; Topic topic = 3; } // X
+message MoveCardToTopicRequest { User user = 1; Card card = 2; Subject subject = 3; Topic topic = 4; Subject target_subject = 5; Topic target_topic = 6; }
 message MoveCardToTopicResponse { }
 
 // card page
@@ -181,46 +177,46 @@ message AddCardToSectionRequest { User user = 1; Card card = 2; Resource resourc
 message AddCardToSectionResponse { }
 message AddCardToTopicRequest { User user = 1; Card card = 2; Subject subject = 3; Topic topic = 4; }
 message AddCardToTopicResponse { }
-message SearchCardsRequest { User user = 1; string search_token = 2; }
-message SearchCardsResponse { }
+message SearchCardsRequest { User user = 1; Subject subject = 2; expertise_level level = 3; string search_token = 4; }
+message SearchCardsResponse { repeated CardSearchResult result = 1; }
 message EditCardRequest { User user = 1; Card card = 2; }
 message EditCardResponse { }
 message MarkCardAsReviewedRequest { User user = 1; Card card = 2; }
 message MarkCardAsReviewedResponse { }
-message CreateBlockRequest { User user = 1; }
-message CreateBlockResponse { }
-message GetBlocksRequest { User user = 1; }
-message GetBlocksResponse { }
+message CreateBlockRequest { User user = 1; Card card = 2; Block block = 3; }
+message CreateBlockResponse { Block block = 1; }
+message GetBlocksRequest { User user = 1; Card card = 2; }
+message GetBlocksResponse { repeated Block block = 1;}
 message EditBlockRequest { User user = 1; Card card = 2; Block block = 3; }
-message EditBlockResponse { bool success = 1; string details = 2; }
-message RemoveBlockRequest { User user = 1; }
+message EditBlockResponse { }
+message RemoveBlockRequest { User user = 1; Card card = 2; Block block = 3; }
 message RemoveBlockResponse { }
-message ReorderBlockRequest { User user = 1; }
+message ReorderBlockRequest { User user = 1; Card card = 2; Block block = 3; Block target = 4; }
 message ReorderBlockResponse { }
-message MergeBlocksRequest { User user = 1; }
+message MergeBlocksRequest { User user = 1; Card card = 2; Block block = 3; Block target = 5; }
 message MergeBlocksResponse { }
-message SplitBlockRequest { User user = 1; }
+message SplitBlockRequest { User user = 1; Card card = 2; Block block = 3; }
 message SplitBlockResponse { }
-message MoveBlockRequest { User user = 1; }
+message MoveBlockRequest { User user = 1; Card card = 2; Block block = 3; Card target_card = 4; Block target_block = 5; }
 message MoveBlockResponse { }
 
 // assessments
-message CreateAssessmentRequest { User user = 1; Card card = 2; }
-message CreateAssessmentResponse { }
+message CreateAssessmentRequest { User user = 1; Card card = 2; Subject subject = 3; Topic topic = 4; }
+message CreateAssessmentResponse { Card card = 1; }
 message GetAssessmentRequest { User user = 1; }
 message GetAssessmentResponse { }
-message ExpandAssessmentRequest { User user = 1; }
+message ExpandAssessmentRequest { User user = 1; Card card = 2; Subject subject = 3; Topic topic = 4; }
 message ExpandAssessmentResponse { }
-message DiminishAssessmentRequest { User user = 1; }
+message DiminishAssessmentRequest { User user = 1; Card card = 2; Subject subject = 3; Topic topic = 4; }
 message DiminishAssessmentResponse { }
-message IsAssimilatedRequest { User user = 1; }
+message IsAssimilatedRequest { User user = 1; Subject subject = 2; Topic topic = 3; }
 message IsAssimilatedResponse { }
-message StudyRequest { User user = 1; }
+message StudyRequest { User user = 1; Card card = 2; uint64 duration = 3; }
 message StudyResponse { }
-message MakeProgressRequest { }
+message MakeProgressRequest { User user = 1; Card card = 2; uint64 duration = 3; practice_mode mode = 4; }
 message MakeProgressResponse { }
-message GetProgressWeightRequest { }
-message GetProgressWeightResponse { }
+message GetProgressWeightRequest { User user = 1; }
+message GetProgressWeightResponse { repeated Weight weight = 1; }
 
 // nerves
 message CreateNerveRequest { User user = 1; Subject subject = 2; Resource resource = 3; }

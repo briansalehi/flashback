@@ -9,7 +9,7 @@ namespace flashback
 class mock_database final: public basic_database
 {
 public:
-    MOCK_METHOD(Topic, get_topic, (uint64_t, uint64_t, expertise_level), (const, override));
+    MOCK_METHOD(Topic, get_topic, (uint64_t, expertise_level, uint64_t), (const, override));
     MOCK_METHOD(Section, get_section, (uint64_t, uint64_t), (const, override));
     MOCK_METHOD(Card, get_card, (uint64_t), (const, override));
     MOCK_METHOD(Block, get_block, (uint64_t, uint64_t), (const, override));

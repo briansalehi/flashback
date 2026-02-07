@@ -78,10 +78,8 @@ service Server {
     rpc MarkSectionAsReviewed(MarkSectionAsReviewedRequest) returns (MarkSectionAsReviewedResponse);
     rpc IsAssimilated(IsAssimilatedRequest) returns (IsAssimilatedResponse);
     rpc Study(StudyRequest) returns (StudyResponse);
-    rpc ReorderCard(ReorderCardRequest) returns (ReorderCardResponse);
     rpc RemoveCard(RemoveCardRequest) returns (RemoveCardResponse);
     rpc MergeCards(MergeCardsRequest) returns (MergeCardsResponse);
-    rpc GetStudyCards(GetStudyCardsRequest) returns (GetStudyCardsResponse);
     rpc GetStudyResources(GetStudyResourcesRequest) returns (GetStudyResourcesResponse);
     rpc GetSectionCards(GetSectionCardsRequest) returns (GetSectionCardsResponse);
     rpc SearchCards(SearchCardsRequest) returns (SearchCardsResponse);

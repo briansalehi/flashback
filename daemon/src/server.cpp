@@ -1898,11 +1898,6 @@ grpc::Status server::AddCardToTopic(grpc::ServerContext* context, AddCardToTopic
     return grpc::Status::OK;
 }
 
-grpc::Status server::ReorderCard(grpc::ServerContext* context, ReorderCardRequest const* request, ReorderCardResponse* response)
-{
-    return grpc::Status::OK;
-}
-
 grpc::Status server::RemoveCard(grpc::ServerContext* context, RemoveCardRequest const* request, RemoveCardResponse* response)
 {
     return grpc::Status::OK;
@@ -1914,11 +1909,6 @@ grpc::Status server::MergeCards(grpc::ServerContext* context, MergeCardsRequest 
 }
 
 grpc::Status server::SearchCards(grpc::ServerContext* context, SearchCardsRequest const* request, SearchCardsResponse* response)
-{
-    return grpc::Status::OK;
-}
-
-grpc::Status server::GetStudyCards(grpc::ServerContext* context, GetStudyCardsRequest const* request, GetStudyCardsResponse* response)
 {
     return grpc::Status::OK;
 }
