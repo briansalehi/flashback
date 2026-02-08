@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.31.0)
+cmake_minimum_required(VERSION 4.1)
 project(database LANGUAGES CXX DESCRIPTION "Flashback Database" HOMEPAGE_URL "https://flashback.eu.com")
 
 set(CMAKE_MESSAGE_CONTEXT "database")

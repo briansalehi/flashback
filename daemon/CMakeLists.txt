@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.31.0)
+cmake_minimum_required(VERSION 4.1)
 project(flashbackd LANGUAGES CXX DESCRIPTION "Flashback Daemon" HOMEPAGE_URL "https://flashback.eu.com")
 
 set(CMAKE_MESSAGE_CONTEXT "flashbackd")

@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.31.0)
+cmake_minimum_required(VERSION 4.1)
 project(common LANGUAGES CXX DESCRIPTION "Flashback Base Library" HOMEPAGE_URL "https://flashback.eu.com")
 
 set(CMAKE_MESSAGE_CONTEXT "common")
@@ -91,3 +91,5 @@ target_compile_definitions(common PUBLIC PROGRAM_VERSION="${CMAKE_PROJECT_VERSIO
 set_target_properties(common PROPERTIES CXX_EXTENSIONS OFF)
 define_tests(TARGET common FILES ${test_files} MOCK_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/test/mocks)
 set(tests ${tests};common-tests PARENT_SCOPE)
+
+install(FILES ${client_files} COMPONENT web DESTINATION /var/www/html/proto/)

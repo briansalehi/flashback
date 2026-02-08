@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.31)
+cmake_minimum_required(VERSION 4.1)
 project(Flashback VERSION 0.3 LANGUAGES CXX DESCRIPTION "A program to transform complex technical subjects into muscle memory" HOMEPAGE_URL "https://flashback.eu.com")
 
 include(cmake/test_utils.cmake)

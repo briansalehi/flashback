@@ -325,6 +325,7 @@
         }
       }
     </style>
+    <script src="https://cdn.jsdelivr.net/npm/grpc-web@1.4.2/index.js"></script>
   </head>
   <body>
     <div class="background-pattern"></div>
@@ -342,7 +343,7 @@
       </div>
       <p class="tagline">Turn Expertise into Instinct</p>
       <div class="coming-soon-section">
-        <p class="coming-soon-title">Coming soon to all major platforms</p>
+        <p onclick="test_connection()" class="coming-soon-title">Coming soon to all major platforms</p>
         <div class="divider"></div>
         <div class="download-section">
           <div class="download-badge disabled">
@@ -409,5 +410,21 @@
         </div>
       </div>
     </div>
+    <script>
+        function test_connection() {
+            fetch('https://api.flashback.eu.com', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/grpc-web+proto'
+                }
+            })
+            .then(response => {
+                console.log('Status', response.status, ': Connection successful!');
+            })
+            .catch(error => {
+                console.log('Error:', error);
+            });
+        }
+    </script>
   </body>
 </html>
