@@ -1492,6 +1492,7 @@ TEST_F(test_server, CreateNerve)
 
     EXPECT_NO_THROW(status = m_server->CreateNerve(&context, &request, &response));
     EXPECT_THAT(status.ok(), IsTrue());
+    EXPECT_THAT(status.error_code(), Eq(grpc::StatusCode::OK));
     EXPECT_THAT(status.error_message(), IsEmpty());
 }
 
@@ -1743,7 +1744,7 @@ TEST_F(test_server, CreatePresenter)
     flashback::Presenter presenter{};
 
     presenter.set_name("Brian Salehi");
-    presenter.set_id(1);
+    presenter.clear_id();
 
     EXPECT_CALL(*m_mock_database, get_user(A<std::string_view>(), A<std::string_view>())).WillRepeatedly(Invoke([this]() { return std::make_unique<flashback::User>(*m_user); }));
     EXPECT_CALL(*m_mock_database, create_presenter(A<std::string>())).Times(1).WillOnce(Return(presenter));
@@ -2547,7 +2548,7 @@ TEST_F(test_server, CreateCard)
     auto constexpr state{flashback::Card::draft};
     auto constexpr headline{"Is it worth asking?"};
 
-    card.set_id(1);
+    card.clear_id();
     card.set_state(state);
     card.set_headline(headline);
 
@@ -2680,9 +2681,9 @@ TEST_F(test_server, MergeCards)
     source.set_id(1);
     source.set_state(state);
     source.set_headline(headline);
-    source.set_id(2);
-    source.set_state(state);
-    source.set_headline(headline);
+    target.set_id(2);
+    target.set_state(state);
+    target.set_headline(headline);
 
     EXPECT_CALL(*m_mock_database, get_user(A<std::string_view>(), A<std::string_view>())).WillRepeatedly(Invoke([this]() { return std::make_unique<flashback::User>(*m_user); }));
     EXPECT_CALL(*m_mock_database, merge_cards(A<uint64_t>(), A<uint64_t>(), A<std::string>())).Times(1);
@@ -3105,12 +3106,12 @@ TEST_F(test_server, EditCard)
     EXPECT_THAT(status.ok(), IsFalse());
     EXPECT_THAT(status.error_code(), Eq(grpc::StatusCode::ALREADY_EXISTS));
 
-    modified_card->set_state(flashback::Card::reviewed);
+    modified_card->set_headline("Is this different?");
     EXPECT_CALL(*m_mock_database, edit_card_headline(A<uint64_t>(), A<std::string>()));
     EXPECT_NO_THROW(status = m_server->EditCard(&context, &request, &response));
     EXPECT_THAT(status.ok(), IsTrue());
     EXPECT_THAT(status.error_message(), IsEmpty());
-    modified_card->set_state(state);
+    modified_card->set_headline(headline);
 }
 
 TEST_F(test_server, CreateBlock)
@@ -3262,7 +3263,7 @@ TEST_F(test_server, EditBlock)
     block.set_metadata(metadata);
 
     EXPECT_CALL(*m_mock_database, get_user(A<std::string_view>(), A<std::string_view>())).WillRepeatedly(Invoke([this]() { return std::make_unique<flashback::User>(*m_user); }));
-    EXPECT_CALL(*m_mock_database, get_block(A<uint64_t>(), A<uint64_t>())).Times(5).WillOnce(Return(block));
+    EXPECT_CALL(*m_mock_database, get_block(A<uint64_t>(), A<uint64_t>())).Times(5).WillRepeatedly(Return(block));
 
     request.clear_user();
     EXPECT_NO_THROW(status = m_server->EditBlock(&context, &request, &response));

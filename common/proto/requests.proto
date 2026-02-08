@@ -194,7 +194,7 @@ message MergeCardsRequest { User user = 1; Card source = 2; Card target = 3; }
 message MergeCardsResponse { }
 
 message GetStudyResourcesRequest { User user = 1; }
-message GetStudyResourcesResponse { repeated StudyResource resources = 1; }
+message GetStudyResourcesResponse { repeated StudyResource study = 1; }
 
 message EditSectionRequest { User user = 1; Resource resource = 2; Section section = 3; }
 message EditSectionResponse { }

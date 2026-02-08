@@ -236,7 +236,35 @@ grpc::Status server::GetRoadmaps(grpc::ServerContext* context, GetRoadmapsReques
 
 grpc::Status server::GetStudyResources(grpc::ServerContext* context, GetStudyResourcesRequest const* request, GetStudyResourcesResponse* response)
 {
-    return grpc::Status::OK;
+    grpc::Status status{grpc::StatusCode::INTERNAL, "internal error"};
+
+    try
+    {
+        if (!request->has_user() || !session_is_valid(request->user()))
+        {
+            status = grpc::Status{grpc::StatusCode::UNAUTHENTICATED, "invalid user"};
+        }
+        else
+        {
+            for (auto const& [position, resource]: m_database->get_study_resources(request->user().id()))
+            {
+                StudyResource* study{response->add_study()};
+                *study->mutable_resource() = resource;
+                study->set_order(position);
+            }
+            status = grpc::Status{grpc::StatusCode::OK, {}};
+        }
+    }
+    catch (client_exception const& exp)
+    {
+        status = grpc::Status{grpc::StatusCode::UNAVAILABLE, exp.what()};
+    }
+    catch (std::exception const& exp)
+    {
+        std::cerr << std::format("Server: {}", exp.what());
+    }
+
+    return status;
 }
 
 grpc::Status server::RenameRoadmap(grpc::ServerContext* context, RenameRoadmapRequest const* request, RenameRoadmapResponse* response)
@@ -1255,13 +1283,13 @@ grpc::Status server::CreateNerve(grpc::ServerContext* context, CreateNerveReques
         {
             status = grpc::Status{grpc::StatusCode::UNAUTHENTICATED, "invalid user"};
         }
-        else if (request->resource().id() != 0)
+        else if (request->resource().id() == 0)
         {
-            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid resource", "resource id must be zero before creation"};
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid resource"};
         }
         else
         {
-            auto nerve = response->mutable_resource();
+            Resource* nerve = response->mutable_resource();
             *nerve = m_database->create_nerve(request->user().id(), request->resource().name(), request->subject().id(), request->resource().expiration());
 
             if (nerve->id() == 0)
@@ -2034,7 +2062,7 @@ grpc::Status server::EditTopic(grpc::ServerContext* context, EditTopicRequest co
                 m_database->rename_topic(request->subject().id(), request->topic().level(), request->topic().position(), request->topic().name());
             }
 
-            if (request->target().name() != topic.name())
+            if (request->target().level() != topic.level())
             {
                 modified = true;
                 m_database->change_topic_level(request->subject().id(), request->topic().position(), request->topic().level(), request->target().level());
@@ -3079,6 +3107,7 @@ grpc::Status server::IsAssimilated(grpc::ServerContext* context, IsAssimilatedRe
 grpc::Status server::EditCard(grpc::ServerContext* context, EditCardRequest const* request, EditCardResponse* response)
 {
     grpc::Status status{grpc::StatusCode::INTERNAL, {}};
+    bool modified{};
 
     try
     {
@@ -3096,9 +3125,18 @@ grpc::Status server::EditCard(grpc::ServerContext* context, EditCardRequest cons
 
             if (request->card().headline() != card.headline())
             {
+                modified = true;
                 m_database->edit_card_headline(request->card().id(), request->card().headline());
             }
-            status = grpc::Status{grpc::StatusCode::OK, {}};
+
+            if (modified)
+            {
+                status = grpc::Status{grpc::StatusCode::OK, {}};
+            }
+            else
+            {
+                status = grpc::Status{grpc::StatusCode::ALREADY_EXISTS, {}};
+            }
         }
     }
     catch (client_exception const& exp)
