@@ -2146,7 +2146,8 @@ TEST_F(test_server, EditTopic)
 
     *request.mutable_user() = *m_user;
     *request.mutable_subject() = subject;
-    flashback::Topic* modified_topic = request.mutable_topic();
+    *request.mutable_topic() = topic;
+    flashback::Topic* modified_topic = request.mutable_target();
     *modified_topic = topic;
 
     EXPECT_NO_THROW(status = m_server->EditTopic(&context, &request, &response));
@@ -2236,6 +2237,7 @@ TEST_F(test_server, SearchTopics)
 
     *request.mutable_user() = *m_user;
     *request.mutable_subject() = subject;
+    request.set_level(topic.level());
     request.set_search_token(topic.name());
 
     EXPECT_NO_THROW(status = m_server->SearchTopics(&context, &request, &response));
@@ -2936,6 +2938,43 @@ TEST_F(test_server, CreateAssessment)
     *request.mutable_card() = card;
 
     EXPECT_NO_THROW(status = m_server->CreateAssessment(&context, &request, &response));
+    EXPECT_THAT(status.ok(), IsTrue());
+    EXPECT_THAT(status.error_message(), IsEmpty());
+}
+
+TEST_F(test_server, GetAssessments)
+{
+    grpc::Status status{};
+    grpc::ServerContext context{};
+    flashback::GetAssessmentsRequest request{};
+    flashback::GetAssessmentsResponse response{};
+    flashback::Subject subject{};
+    flashback::Topic topic{};
+    flashback::Card card{};
+    flashback::Assessment assessment{};
+    std::vector<flashback::Assessment> assessments{};
+    subject.set_id(1);
+    topic.set_position(1);
+    topic.set_level(flashback::expertise_level::depth);
+    card.set_id(1);
+    *assessment.mutable_card() = card;
+    assessment.set_assimilations(2);
+    assessments.push_back(assessment);
+
+    EXPECT_CALL(*m_mock_database, get_user(A<std::string_view>(), A<std::string_view>())).WillRepeatedly(Invoke([this]() { return std::make_unique<flashback::User>(*m_user); }));
+    EXPECT_CALL(*m_mock_database, get_assessments(A<uint64_t>(), A<uint64_t>(), A<flashback::expertise_level>(), A<uint64_t>())).Times(1).WillOnce(Return(assessments));
+
+    request.clear_user();
+    EXPECT_NO_THROW(status = m_server->GetAssessments(&context, &request, &response));
+    EXPECT_THAT(status.ok(), IsFalse());
+    EXPECT_THAT(status.error_message().empty(), IsFalse());
+    EXPECT_THAT(status.error_code(), Eq(grpc::StatusCode::UNAUTHENTICATED));
+
+    *request.mutable_user() = *m_user;
+    *request.mutable_subject() = subject;
+    *request.mutable_topic() = topic;
+
+    EXPECT_NO_THROW(status = m_server->GetAssessments(&context, &request, &response));
     EXPECT_THAT(status.ok(), IsTrue());
     EXPECT_THAT(status.error_message(), IsEmpty());
 }

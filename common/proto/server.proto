@@ -30,7 +30,6 @@ service Server {
     rpc RenameSubject(RenameSubjectRequest) returns (RenameSubjectResponse);
     rpc RemoveSubject(RemoveSubjectRequest) returns (RemoveSubjectResponse);
     rpc MergeSubjects(MergeSubjectsRequest) returns (MergeSubjectsResponse);
-    //rpc GetSubjectWeight(GetSubjectWeightRequest) returns (GetSubjectWeightResponse);
     rpc CreateResource(CreateResourceRequest) returns (CreateResourceResponse);
     rpc GetResources(GetResourcesRequest) returns (GetResourcesResponse);
     rpc SearchResources(SearchResourcesRequest) returns (SearchResourcesResponse);
@@ -47,7 +46,6 @@ service Server {
     rpc SearchTopics(SearchTopicsRequest) returns (SearchTopicsResponse);
     rpc GetPracticeCards(GetPracticeCardsRequest) returns (GetPracticeCardsResponse);
     rpc GetTopicCards(GetTopicCardsRequest) returns (GetTopicCardsResponse);
-    rpc GetTopicWeight(GetTopicWeightRequest) returns (GetTopicWeightResponse);
     rpc RemoveResource(RemoveResourceRequest) returns (RemoveResourceResponse);
     rpc EditResource(EditResourceRequest) returns (EditResourceResponse);
     rpc CreateSection(CreateSectionRequest) returns (CreateSectionResponse);
@@ -97,7 +95,7 @@ service Server {
     rpc SplitBlock(SplitBlockRequest) returns (SplitBlockResponse);
     rpc MoveBlock(MoveBlockRequest) returns (MoveBlockResponse);
     rpc CreateAssessment(CreateAssessmentRequest) returns (CreateAssessmentResponse);
-    rpc GetAssessment(GetAssessmentRequest) returns (GetAssessmentResponse);
+    rpc GetAssessments(GetAssessmentsRequest) returns (GetAssessmentsResponse);
     rpc ExpandAssessment(ExpandAssessmentRequest) returns (ExpandAssessmentResponse);
     rpc DiminishAssessment(DiminishAssessmentRequest) returns (DiminishAssessmentResponse);
     rpc CreateNerve(CreateNerveRequest) returns (CreateNerveResponse);

@@ -4,234 +4,290 @@ import "types.proto";
 
 package flashback;
 
-// entry page requests
 message SignInRequest { User user = 1; }
 message SignInResponse { bool success = 1; string details = 2; User user = 3; }
+
 message SignUpRequest { User user = 1; }
 message SignUpResponse { bool success = 1; string details = 2; User user = 3; }
+
 message VerifySessionRequest { User user = 1; }
 message VerifySessionResponse { bool valid = 1; }
 
-// account page requests
 message ResetPasswordRequest { User user = 1; }
 message ResetPasswordResponse { bool success = 1; string details = 2; User user = 3; }
+
 message EditUserRequest { User user = 1; }
 message EditUserResponse { }
+
 message VerifyUserRequest { User user = 1; }
 message VerifyUserResponse { }
 
-// welcome page requests
 message CreateRoadmapRequest { User user = 1; string name = 2; }
 message CreateRoadmapResponse { Roadmap roadmap = 1; }
+
 message GetRoadmapsRequest { User user = 1; }
 message GetRoadmapsResponse { repeated Roadmap roadmap = 1; }
+
 message RenameRoadmapRequest { User user = 1; Roadmap roadmap = 2; }
 message RenameRoadmapResponse { }
+
 message RemoveRoadmapRequest { User user = 1; Roadmap roadmap = 2; }
 message RemoveRoadmapResponse { }
+
 message SearchRoadmapsRequest { User user = 1; string token = 2; }
 message SearchRoadmapsResponse { repeated Roadmap roadmap = 1; }
+
 message CloneRoadmapRequest { User user = 1; Roadmap roadmap = 2; }
 message CloneRoadmapResponse { Roadmap roadmap = 1; bool success = 2; string details = 3; uint32 code = 4; }
 
-// roadmap page requests
 message GetMilestonesRequest { User user = 1; uint64 roadmap_id = 2; }
 message GetMilestonesResponse { repeated Milestone milestones = 1; bool success = 2; string details = 3; uint32 code = 4; }
+
 message AddMilestoneRequest { User user = 1; uint64 subject_id = 2; expertise_level subject_level = 3; uint64 roadmap_id = 4; uint64 position = 5; }
 message AddMilestoneResponse { Milestone milestone = 1; bool success = 2; string details = 3; uint32 code = 4; }
+
 message AddRequirementRequest { User user = 1; Roadmap roadmap = 2; Milestone milestone = 3; Milestone required_milestone = 4; }
 message AddRequirementResponse { bool success = 1; string details = 2; uint32 code = 3; }
+
 message GetRequirementsRequest { User user = 1; Roadmap roadmap = 2; Milestone milestone = 3; }
 message GetRequirementsResponse { repeated Milestone milestones = 1; bool success = 2; string details = 3; uint32 code = 4; }
+
 message SearchSubjectsRequest { User user = 1; string token = 2; }
 message SearchSubjectsResponse { repeated MatchingSubject subjects = 1; }
+
 message CreateSubjectRequest { User user = 1; string name = 2; }
 message CreateSubjectResponse { bool success = 1; string details = 2; uint32 code = 3; }
+
 message ReorderMilestoneRequest { User user = 1; Roadmap roadmap = 2; uint64 current_position = 3; uint64 target_position = 4; }
 message ReorderMilestoneResponse { bool success = 1; string details = 2; uint32 code = 3; }
+
 message RemoveMilestoneRequest { User user = 1; Roadmap roadmap = 2; Milestone milestone = 3; }
 message RemoveMilestoneResponse { bool success = 1; string details = 2; uint32 code = 3; }
+
 message ChangeMilestoneLevelRequest { User user = 1; Roadmap roadmap = 2; Milestone milestone = 3; }
 message ChangeMilestoneLevelResponse { bool success = 1; string details = 2; uint32 code = 3; }
 
-// subject page
-message RenameSubjectRequest { User user = 1; uint64 id = 2; string name = 3; } // X
+message RenameSubjectRequest { User user = 1; uint64 id = 2; string name = 3; }
 message RenameSubjectResponse { bool success = 1; string details = 2; uint32 code = 3; }
+
 message RemoveSubjectRequest { User user = 1; Subject subject = 2; }
 message RemoveSubjectResponse { bool success = 1; string details = 2; uint32 code = 3; }
+
 message MergeSubjectsRequest { User user = 1; Subject source_subject = 2; Subject target_subject = 3; }
 message MergeSubjectsResponse { bool success = 1; string details = 2; uint32 code = 3; }
 
-// subject page resource view
 message GetResourcesRequest { User user = 1; Subject subject = 2; }
 message GetResourcesResponse { bool success = 1; string details = 2; uint32 code = 3;  repeated Resource resources = 4; }
+
 message CreateResourceRequest { User user = 1; Resource resource = 2; }
 message CreateResourceResponse { bool success = 1; string details = 2; uint32 code = 3; Resource resource = 4; }
+
 message AddResourceToSubjectRequest { User user = 1; Resource resource = 2; Subject subject = 3; }
 message AddResourceToSubjectResponse { bool success = 1; string details = 2; uint32 code = 3; }
+
 message DropResourceFromSubjectRequest { User user = 1; Resource resource = 2; Subject subject = 3; }
 message DropResourceFromSubjectResponse { bool success = 1; string details = 2; uint32 code = 3; }
+
 message MergeResourcesRequest { User user = 1; Resource source = 2; Resource target = 3; }
 message MergeResourcesResponse { bool success = 1; string details = 2; uint32 code = 3; }
+
 message SearchResourcesRequest { User user = 1; string search_token = 2; }
 message SearchResourcesResponse { bool success = 1; string details = 2; uint32 code = 3; repeated ResourceSearchResult results = 4; }
 
-// subject page topic view
 message CreateTopicRequest { User user = 1; Subject subject = 2; Topic topic = 3; }
 message CreateTopicResponse { Topic topic = 1; }
+
 message GetTopicsRequest { User user = 1; Subject subject = 2; expertise_level level = 3; }
 message GetTopicsResponse { repeated Topic topic = 1; }
+
 message ReorderTopicRequest { User user = 1; Subject subject = 2; Topic topic = 3; Topic target = 4; }
 message ReorderTopicResponse { }
+
 message RemoveTopicRequest { User user = 1; Subject subject = 2; Topic topic = 3; }
 message RemoveTopicResponse { }
+
 message MergeTopicsRequest { User user = 1; Subject subject = 2; Topic source = 3; Topic target = 4; }
 message MergeTopicsResponse { }
+
 message MoveTopicRequest { User user = 1; Subject source_subject = 2; Topic source_topic = 3; Subject target_subject = 4; Topic target_topic = 5; }
 message MoveTopicResponse { }
-message SearchTopicsRequest { User user = 1; Subject subject = 2; string search_token = 3; }
+
+message SearchTopicsRequest { User user = 1; Subject subject = 2; expertise_level level = 3; string search_token = 4; }
 message SearchTopicsResponse { repeated TopicSearchResult results = 1; }
 
-// resource page requests
 message GetSectionsRequest { User user = 1; Resource resource = 2; }
 message GetSectionsResponse { repeated Section section = 1; }
+
 message GetSectionCardsRequest { User user = 1; Resource resource = 2; Section section = 3; }
 message GetSectionCardsResponse { repeated Card cards = 1; }
+
 message RemoveResourceRequest { User user = 1; Resource resource = 2; }
 message RemoveResourceResponse { bool success = 1; string details = 2; uint32 code = 3; }
+
 message EditResourceRequest { User user = 1; Resource resource = 2; }
 message EditResourceResponse { bool success = 1; string details = 2; uint32 code = 3; }
+
 message CreateSectionRequest { User user = 1; Resource resource = 2; Section section = 3; }
 message CreateSectionResponse { Section section = 1; }
+
 message ReorderSectionRequest { User user = 1; Resource resource = 2; Section source = 3; Section target = 4; }
 message ReorderSectionResponse { }
+
 message RemoveSectionRequest { User user = 1; Resource resource = 2; Section section = 3; }
 message RemoveSectionResponse { }
+
 message MergeSectionsRequest { User user = 1; Resource resource = 2; Section source = 3; Section target = 4; }
 message MergeSectionsResponse { }
+
 message MoveSectionRequest { User user = 1; Resource source_resource = 2; Section source_section = 3; Resource target_resource = 4; Section target_section = 5;   }
 message MoveSectionResponse { }
 
-// providers
 message CreateProviderRequest { User user = 1; Provider provider = 2; }
 message CreateProviderResponse { Provider provider = 1; }
+
 message SearchProvidersRequest { User user = 1; string search_token = 2; }
 message SearchProvidersResponse { ProviderSearchResult result = 1; }
+
 message AddProviderRequest { User user = 1; Resource resource = 2; Provider provider = 3; }
 message AddProviderResponse { }
+
 message DropProviderRequest { User user = 1; Resource resource = 2; Provider provider = 3; }
 message DropProviderResponse { }
+
 message RenameProviderRequest { User user = 1; Provider provider = 2; }
 message RenameProviderResponse { }
+
 message RemoveProviderRequest { User user = 1; Provider provider = 2; }
 message RemoveProviderResponse { }
+
 message MergeProvidersRequest { User user = 1; Provider source = 2; Provider target = 3; }
 message MergeProvidersResponse { }
 
-// presenters
 message CreatePresenterRequest { User user = 1; Presenter presenter = 2; }
 message CreatePresenterResponse { Presenter presenter = 1; }
+
 message SearchPresentersRequest { User user = 1; string search_token = 2; }
 message SearchPresentersResponse { PresenterSearchResult result = 1; }
+
 message AddPresenterRequest { User user = 1; Resource resource = 2; Presenter presenter = 3; }
 message AddPresenterResponse { }
+
 message DropPresenterRequest { User user = 1; Resource resource = 2; Presenter presenter = 3; }
 message DropPresenterResponse { }
+
 message RenamePresenterRequest { User user = 1; Resource resource = 2; Presenter presenter = 3; }
 message RenamePresenterResponse { }
+
 message RemovePresenterRequest { User user = 1; Resource resource = 2; Presenter presenter = 3; }
 message RemovePresenterResponse { }
+
 message MergePresentersRequest { User user = 1; Presenter source = 2; Presenter target = 3; }
 message MergePresentersResponse { }
 
-// section/topic page
 message CreateCardRequest { User user = 1; Card card = 2; }
 message CreateCardResponse { Card card = 1; }
+
 message RemoveCardRequest { User user = 1; Card card = 2; }
 message RemoveCardResponse { }
+
 message MergeCardsRequest { User user = 1; Card source = 2; Card target = 3; }
 message MergeCardsResponse { }
 
-// section page
 message GetStudyResourcesRequest { User user = 1; }
 message GetStudyResourcesResponse { repeated StudyResource resources = 1; }
+
 message EditSectionRequest { User user = 1; Resource resource = 2; Section section = 3; }
 message EditSectionResponse { }
+
 message MoveCardToSectionRequest { User user = 1; Card card = 2;; Resource resource = 3; Section source = 4; Section target = 5; }
 message MoveCardToSectionResponse { }
+
 message SearchSectionsRequest { User user = 1; Resource resource = 2; string search_token = 3; }
 message SearchSectionsResponse { repeated SectionSearchResult result = 1; }
+
 message MarkSectionAsReviewedRequest { User user = 1; Resource resource = 2; Section section = 3; }
 message MarkSectionAsReviewedResponse { }
 
-// topic page
 message GetPracticeCardsRequest { User user = 1; Roadmap roadmap = 2; Subject subject = 3; Topic topic = 4; }
-message GetPracticeCardsResponse { repeated Card cards = 1; }
-message EditTopicRequest { User user = 1; Subject subject = 2; Topic topic = 3; }
+message GetPracticeCardsResponse { repeated Card card = 1; }
+
+message EditTopicRequest { User user = 1; Subject subject = 2; Topic topic = 3; Topic target = 4; }
 message EditTopicResponse { }
+
 message MoveCardToTopicRequest { User user = 1; Card card = 2; Subject subject = 3; Topic topic = 4; Subject target_subject = 5; Topic target_topic = 6; }
 message MoveCardToTopicResponse { }
 
-// card page
 message AddCardToSectionRequest { User user = 1; Card card = 2; Resource resource = 3; Section section = 4; }
 message AddCardToSectionResponse { }
+
 message AddCardToTopicRequest { User user = 1; Card card = 2; Subject subject = 3; Topic topic = 4; }
 message AddCardToTopicResponse { }
+
 message SearchCardsRequest { User user = 1; Subject subject = 2; expertise_level level = 3; string search_token = 4; }
 message SearchCardsResponse { repeated CardSearchResult result = 1; }
+
 message EditCardRequest { User user = 1; Card card = 2; }
 message EditCardResponse { }
+
 message MarkCardAsReviewedRequest { User user = 1; Card card = 2; }
 message MarkCardAsReviewedResponse { }
+
 message CreateBlockRequest { User user = 1; Card card = 2; Block block = 3; }
 message CreateBlockResponse { Block block = 1; }
+
 message GetBlocksRequest { User user = 1; Card card = 2; }
 message GetBlocksResponse { repeated Block block = 1;}
+
 message EditBlockRequest { User user = 1; Card card = 2; Block block = 3; }
 message EditBlockResponse { }
+
 message RemoveBlockRequest { User user = 1; Card card = 2; Block block = 3; }
 message RemoveBlockResponse { }
+
 message ReorderBlockRequest { User user = 1; Card card = 2; Block block = 3; Block target = 4; }
 message ReorderBlockResponse { }
+
 message MergeBlocksRequest { User user = 1; Card card = 2; Block block = 3; Block target = 5; }
 message MergeBlocksResponse { }
+
 message SplitBlockRequest { User user = 1; Card card = 2; Block block = 3; }
-message SplitBlockResponse { }
+message SplitBlockResponse { repeated Block block = 1; }
+
 message MoveBlockRequest { User user = 1; Card card = 2; Block block = 3; Card target_card = 4; Block target_block = 5; }
 message MoveBlockResponse { }
 
-// assessments
 message CreateAssessmentRequest { User user = 1; Card card = 2; Subject subject = 3; Topic topic = 4; }
 message CreateAssessmentResponse { Card card = 1; }
-message GetAssessmentRequest { User user = 1; }
-message GetAssessmentResponse { }
+
+message GetAssessmentsRequest { User user = 1; Subject subject = 2; Topic topic = 3; }
+message GetAssessmentsResponse { repeated Assessment assessment = 1; }
+
 message ExpandAssessmentRequest { User user = 1; Card card = 2; Subject subject = 3; Topic topic = 4; }
 message ExpandAssessmentResponse { }
+
 message DiminishAssessmentRequest { User user = 1; Card card = 2; Subject subject = 3; Topic topic = 4; }
 message DiminishAssessmentResponse { }
+
 message IsAssimilatedRequest { User user = 1; Subject subject = 2; Topic topic = 3; }
-message IsAssimilatedResponse { }
+message IsAssimilatedResponse { bool is_assimilated = 1; }
+
 message StudyRequest { User user = 1; Card card = 2; uint64 duration = 3; }
 message StudyResponse { }
+
 message MakeProgressRequest { User user = 1; Card card = 2; uint64 duration = 3; practice_mode mode = 4; }
 message MakeProgressResponse { }
+
 message GetProgressWeightRequest { User user = 1; }
 message GetProgressWeightResponse { repeated Weight weight = 1; }
 
-// nerves
 message CreateNerveRequest { User user = 1; Subject subject = 2; Resource resource = 3; }
 message CreateNerveResponse { Resource resource = 1; }
+
 message GetNervesRequest { User user = 1; }
 message GetNervesResponse { repeated Resource resources = 1; }
 
-// practice reports
 message EstimateCardTimeRequest { User user = 1; }
 message EstimateCardTimeResponse { }
+
 message GetTopicCardsRequest { User user = 1; Topic topic = 2; }
 message GetTopicCardsResponse { repeated Card cards = 1; }
-message GetTopicWeightRequest { User user = 1; }
-message GetTopicWeightResponse { }
-message GetSubjectWeightRequest { User user = 1; }
-message GetSubjectWeightResponse { }
-message GetRoadmapWeightRequest { User user = 1; }
-message GetRoadmapWeightResponse { }

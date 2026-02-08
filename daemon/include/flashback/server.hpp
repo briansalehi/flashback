@@ -119,6 +119,7 @@ public:
     grpc::Status GetPracticeCards(grpc::ServerContext* context, GetPracticeCardsRequest const* request, GetPracticeCardsResponse* response) override;
     grpc::Status MoveCardToTopic(grpc::ServerContext* context, MoveCardToTopicRequest const* request, MoveCardToTopicResponse* response) override;
     grpc::Status CreateAssessment(grpc::ServerContext* context, CreateAssessmentRequest const* request, CreateAssessmentResponse* response) override;
+    grpc::Status GetAssessments(grpc::ServerContext* context, GetAssessmentsRequest const* request, GetAssessmentsResponse* response) override;
     grpc::Status ExpandAssessment(grpc::ServerContext* context, ExpandAssessmentRequest const* request, ExpandAssessmentResponse* response) override;
     grpc::Status DiminishAssessment(grpc::ServerContext* context, DiminishAssessmentRequest const* request, DiminishAssessmentResponse* response) override;
     grpc::Status IsAssimilated(grpc::ServerContext* context, IsAssimilatedRequest const* request, IsAssimilatedResponse* response) override;

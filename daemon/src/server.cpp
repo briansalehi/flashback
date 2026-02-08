@@ -1255,9 +1255,9 @@ grpc::Status server::CreateNerve(grpc::ServerContext* context, CreateNerveReques
         {
             status = grpc::Status{grpc::StatusCode::UNAUTHENTICATED, "invalid user"};
         }
-        else if (request->resource().id() == 0)
+        else if (request->resource().id() != 0)
         {
-            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid resource"};
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid resource", "resource id must be zero before creation"};
         }
         else
         {
@@ -1330,6 +1330,10 @@ grpc::Status server::CreateProvider(grpc::ServerContext* context, CreateProvider
         else if (request->provider().name().empty())
         {
             status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid provider name"};
+        }
+        else if (request->provider().id() != 0)
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid provider", "provider id must be zero before creation"};
         }
         else
         {
@@ -1569,9 +1573,13 @@ grpc::Status server::CreatePresenter(grpc::ServerContext* context, CreatePresent
         {
             status = grpc::Status{grpc::StatusCode::UNAUTHENTICATED, "invalid user"};
         }
-        else if (request->presenter().id() == 0)
+        else if (request->presenter().name().empty())
         {
-            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid presenter"};
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid presenter name"};
+        }
+        else if (request->presenter().id() != 0)
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid presenter", "presenter id must be zero before creation"};
         }
         else
         {
@@ -1803,216 +1811,1749 @@ grpc::Status server::MergePresenters(grpc::ServerContext* context, MergePresente
 
 grpc::Status server::GetTopics(grpc::ServerContext* context, GetTopicsRequest const* request, GetTopicsResponse* response)
 {
-    return grpc::Status::OK;
+    grpc::Status status{grpc::StatusCode::INTERNAL, {}};
+
+    try
+    {
+        if (!request->has_user() || !session_is_valid(request->user()))
+        {
+            status = grpc::Status{grpc::StatusCode::UNAUTHENTICATED, "invalid user"};
+        }
+        else if (request->subject().id() == 0)
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid subject"};
+        }
+        else
+        {
+            for (auto const& [position, topic]: m_database->get_topics(request->subject().id(), request->level()))
+            {
+                *response->add_topic() = topic;
+            }
+            status = grpc::Status{grpc::StatusCode::OK, {}};
+        }
+    }
+    catch (client_exception const& exp)
+    {
+        status = grpc::Status{grpc::StatusCode::UNAVAILABLE, exp.what()};
+    }
+    catch (std::exception const& exp)
+    {
+        std::cerr << std::format("Server: {}", exp.what());
+    }
+
+    return status;
 }
 
 grpc::Status server::CreateTopic(grpc::ServerContext* context, CreateTopicRequest const* request, CreateTopicResponse* response)
 {
-    return grpc::Status::OK;
+    grpc::Status status{grpc::StatusCode::INTERNAL, {}};
+
+    try
+    {
+        if (!request->has_user() || !session_is_valid(request->user()))
+        {
+            status = grpc::Status{grpc::StatusCode::UNAUTHENTICATED, "invalid user"};
+        }
+        else if (request->subject().id() == 0)
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid subject"};
+        }
+        else if (request->topic().name().empty())
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid topic name"};
+        }
+        else
+        {
+            Topic* topic{response->mutable_topic()};
+            *topic = m_database->create_topic(request->subject().id(), request->topic().name(), request->topic().level(), request->topic().position());
+            status = grpc::Status{grpc::StatusCode::OK, {}};
+        }
+    }
+    catch (client_exception const& exp)
+    {
+        status = grpc::Status{grpc::StatusCode::UNAVAILABLE, exp.what()};
+    }
+    catch (std::exception const& exp)
+    {
+        std::cerr << std::format("Server: {}", exp.what());
+    }
+
+    return status;
 }
 
 grpc::Status server::ReorderTopic(grpc::ServerContext* context, ReorderTopicRequest const* request, ReorderTopicResponse* response)
 {
-    return grpc::Status::OK;
+    grpc::Status status{grpc::StatusCode::INTERNAL, {}};
+
+    try
+    {
+        if (!request->has_user() || !session_is_valid(request->user()))
+        {
+            status = grpc::Status{grpc::StatusCode::UNAUTHENTICATED, "invalid user"};
+        }
+        else if (request->subject().id() == 0)
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid subject"};
+        }
+        else if (request->topic().position() == 0)
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid source topic"};
+        }
+        else if (request->target().position() == 0)
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid target topic"};
+        }
+        else
+        {
+            m_database->reorder_topic(request->subject().id(), request->topic().level(), request->topic().position(), request->target().position());
+            status = grpc::Status{grpc::StatusCode::OK, {}};
+        }
+    }
+    catch (client_exception const& exp)
+    {
+        status = grpc::Status{grpc::StatusCode::UNAVAILABLE, exp.what()};
+    }
+    catch (std::exception const& exp)
+    {
+        std::cerr << std::format("Server: {}", exp.what());
+    }
+
+    return status;
 }
 
 grpc::Status server::RemoveTopic(grpc::ServerContext* context, RemoveTopicRequest const* request, RemoveTopicResponse* response)
 {
-    return grpc::Status::OK;
+    grpc::Status status{grpc::StatusCode::INTERNAL, {}};
+
+    try
+    {
+        if (!request->has_user() || !session_is_valid(request->user()))
+        {
+            status = grpc::Status{grpc::StatusCode::UNAUTHENTICATED, "invalid user"};
+        }
+        else if (request->subject().id() == 0)
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid subject"};
+        }
+        else if (request->topic().position() == 0)
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid topic"};
+        }
+        else
+        {
+            m_database->remove_topic(request->subject().id(), request->topic().level(), request->topic().position());
+            status = grpc::Status{grpc::StatusCode::OK, {}};
+        }
+    }
+    catch (client_exception const& exp)
+    {
+        status = grpc::Status{grpc::StatusCode::UNAVAILABLE, exp.what()};
+    }
+    catch (std::exception const& exp)
+    {
+        std::cerr << std::format("Server: {}", exp.what());
+    }
+
+    return status;
 }
 
 grpc::Status server::MergeTopics(grpc::ServerContext* context, MergeTopicsRequest const* request, MergeTopicsResponse* response)
 {
-    return grpc::Status::OK;
+    grpc::Status status{grpc::StatusCode::INTERNAL, {}};
+
+    try
+    {
+        if (!request->has_user() || !session_is_valid(request->user()))
+        {
+            status = grpc::Status{grpc::StatusCode::UNAUTHENTICATED, "invalid user"};
+        }
+        else if (request->subject().id() == 0)
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid subject"};
+        }
+        else if (request->source().position() == 0)
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid target topic"};
+        }
+        else if (request->target().position() == 0)
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid source topic"};
+        }
+        else
+        {
+            m_database->merge_topics(request->subject().id(), request->source().level(), request->source().position(), request->target().position());
+            status = grpc::Status{grpc::StatusCode::OK, {}};
+        }
+    }
+    catch (client_exception const& exp)
+    {
+        status = grpc::Status{grpc::StatusCode::UNAVAILABLE, exp.what()};
+    }
+    catch (std::exception const& exp)
+    {
+        std::cerr << std::format("Server: {}", exp.what());
+    }
+
+    return status;
 }
 
 grpc::Status server::EditTopic(grpc::ServerContext* context, EditTopicRequest const* request, EditTopicResponse* response)
 {
-    // name, level
-    return grpc::Status::OK;
+    grpc::Status status{grpc::StatusCode::INTERNAL, {}};
+    bool modified{};
+
+    try
+    {
+        if (!request->has_user() || !session_is_valid(request->user()))
+        {
+            status = grpc::Status{grpc::StatusCode::UNAUTHENTICATED, "invalid user"};
+        }
+        else if (request->subject().id() == 0)
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid subject"};
+        }
+        else if (request->topic().position() == 0)
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid source topic"};
+        }
+        else if (request->target().position() == 0)
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid target topic"};
+        }
+        else if (request->target().name().empty())
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid target topic name"};
+        }
+        else
+        {
+            Topic topic{m_database->get_topic(request->subject().id(), request->topic().level(), request->topic().position())};
+
+            if (request->target().name() != topic.name())
+            {
+                modified = true;
+                m_database->rename_topic(request->subject().id(), request->topic().level(), request->topic().position(), request->topic().name());
+            }
+
+            if (request->target().name() != topic.name())
+            {
+                modified = true;
+                m_database->change_topic_level(request->subject().id(), request->topic().position(), request->topic().level(), request->target().level());
+            }
+
+            if (modified)
+            {
+                status = grpc::Status{grpc::StatusCode::OK, {}};
+            }
+            else
+            {
+                status = grpc::Status{grpc::StatusCode::ALREADY_EXISTS, {}};
+            }
+        }
+    }
+    catch (client_exception const& exp)
+    {
+        status = grpc::Status{grpc::StatusCode::UNAVAILABLE, exp.what()};
+    }
+    catch (std::exception const& exp)
+    {
+        std::cerr << std::format("Server: {}", exp.what());
+    }
+
+    return status;
 }
 
 grpc::Status server::MoveTopic(grpc::ServerContext* context, MoveTopicRequest const* request, MoveTopicResponse* response)
 {
-    return grpc::Status::OK;
+    grpc::Status status{grpc::StatusCode::INTERNAL, {}};
+
+    try
+    {
+        if (!request->has_user() || !session_is_valid(request->user()))
+        {
+            status = grpc::Status{grpc::StatusCode::UNAUTHENTICATED, "invalid user"};
+        }
+        else if (request->source_subject().id() == 0)
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid source subject"};
+        }
+        else if (request->target_subject().id() == 0)
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid target subject"};
+        }
+        else if (request->source_topic().position() == 0)
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid source topic"};
+        }
+        else if (request->target_topic().position() == 0)
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid target topic"};
+        }
+        else
+        {
+            m_database->move_topic(request->source_subject().id(), request->source_topic().level(), request->source_topic().position(), request->target_subject().id(),
+                                   request->target_topic().position());
+            status = grpc::Status{grpc::StatusCode::OK, {}};
+        }
+    }
+    catch (client_exception const& exp)
+    {
+        status = grpc::Status{grpc::StatusCode::UNAVAILABLE, exp.what()};
+    }
+    catch (std::exception const& exp)
+    {
+        std::cerr << std::format("Server: {}", exp.what());
+    }
+
+    return status;
 }
 
 grpc::Status server::SearchTopics(grpc::ServerContext* context, SearchTopicsRequest const* request, SearchTopicsResponse* response)
 {
-    return grpc::Status::OK;
+    grpc::Status status{grpc::StatusCode::INTERNAL, {}};
+
+    try
+    {
+        if (!request->has_user() || !session_is_valid(request->user()))
+        {
+            status = grpc::Status{grpc::StatusCode::UNAUTHENTICATED, "invalid user"};
+        }
+        else if (request->subject().id() == 0)
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid subject"};
+        }
+        else if (request->search_token().empty())
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "empty search not allowed"};
+        }
+        else
+        {
+            for (auto const& [position, topic]: m_database->search_topics(request->subject().id(), request->level(), request->search_token()))
+            {
+                TopicSearchResult result{};
+                *result.mutable_topic() = topic;
+                result.set_position(position);
+            }
+            status = grpc::Status{grpc::StatusCode::OK, {}};
+        }
+    }
+    catch (client_exception const& exp)
+    {
+        status = grpc::Status{grpc::StatusCode::UNAVAILABLE, exp.what()};
+    }
+    catch (std::exception const& exp)
+    {
+        std::cerr << std::format("Server: {}", exp.what());
+    }
+
+    return status;
 }
 
 grpc::Status server::GetSections(grpc::ServerContext* context, GetSectionsRequest const* request, GetSectionsResponse* response)
 {
-    return grpc::Status::OK;
+    grpc::Status status{grpc::StatusCode::INTERNAL, {}};
+
+    try
+    {
+        if (!request->has_user() || !session_is_valid(request->user()))
+        {
+            status = grpc::Status{grpc::StatusCode::UNAUTHENTICATED, "invalid user"};
+        }
+        else if (request->resource().id() == 0)
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid resource"};
+        }
+        else
+        {
+            for (auto const& [position, section]: m_database->get_sections(request->resource().id()))
+            {
+                *response->add_section() = section;
+            }
+            status = grpc::Status{grpc::StatusCode::OK, {}};
+        }
+    }
+    catch (client_exception const& exp)
+    {
+        status = grpc::Status{grpc::StatusCode::UNAVAILABLE, exp.what()};
+    }
+    catch (std::exception const& exp)
+    {
+        std::cerr << std::format("Server: {}", exp.what());
+    }
+
+    return status;
 }
 
 grpc::Status server::CreateSection(grpc::ServerContext* context, CreateSectionRequest const* request, CreateSectionResponse* response)
 {
-    return grpc::Status::OK;
+    grpc::Status status{grpc::StatusCode::INTERNAL, {}};
+
+    try
+    {
+        if (!request->has_user() || !session_is_valid(request->user()))
+        {
+            status = grpc::Status{grpc::StatusCode::UNAUTHENTICATED, "invalid user"};
+        }
+        else if (request->resource().id() == 0)
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid resource"};
+        }
+        else if (request->section().name().empty())
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid section name"};
+        }
+        else
+        {
+            Section* section{response->mutable_section()};
+            *section = m_database->create_section(request->resource().id(), request->section().position(), request->section().name(), request->section().link());
+            status = grpc::Status{grpc::StatusCode::OK, {}};
+        }
+    }
+    catch (client_exception const& exp)
+    {
+        status = grpc::Status{grpc::StatusCode::UNAVAILABLE, exp.what()};
+    }
+    catch (std::exception const& exp)
+    {
+        std::cerr << std::format("Server: {}", exp.what());
+    }
+
+    return status;
 }
 
 grpc::Status server::ReorderSection(grpc::ServerContext* context, ReorderSectionRequest const* request, ReorderSectionResponse* response)
 {
-    return grpc::Status::OK;
+    grpc::Status status{grpc::StatusCode::INTERNAL, {}};
+
+    try
+    {
+        if (!request->has_user() || !session_is_valid(request->user()))
+        {
+            status = grpc::Status{grpc::StatusCode::UNAUTHENTICATED, "invalid user"};
+        }
+        else if (request->resource().id() == 0)
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid resource"};
+        }
+        else if (request->source().position() == 0)
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid source section"};
+        }
+        else if (request->target().position() == 0)
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid target section"};
+        }
+        else
+        {
+            m_database->reorder_section(request->resource().id(), request->source().position(), request->target().position());
+            status = grpc::Status{grpc::StatusCode::OK, {}};
+        }
+    }
+    catch (client_exception const& exp)
+    {
+        status = grpc::Status{grpc::StatusCode::UNAVAILABLE, exp.what()};
+    }
+    catch (std::exception const& exp)
+    {
+        std::cerr << std::format("Server: {}", exp.what());
+    }
+
+    return status;
 }
 
 grpc::Status server::RemoveSection(grpc::ServerContext* context, RemoveSectionRequest const* request, RemoveSectionResponse* response)
 {
-    return grpc::Status::OK;
+    grpc::Status status{grpc::StatusCode::INTERNAL, {}};
+
+    try
+    {
+        if (!request->has_user() || !session_is_valid(request->user()))
+        {
+            status = grpc::Status{grpc::StatusCode::UNAUTHENTICATED, "invalid user"};
+        }
+        else if (request->resource().id() == 0)
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid resource"};
+        }
+        else if (request->section().position() == 0)
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid section"};
+        }
+        else
+        {
+            m_database->remove_section(request->resource().id(), request->section().position());
+            status = grpc::Status{grpc::StatusCode::OK, {}};
+        }
+    }
+    catch (client_exception const& exp)
+    {
+        status = grpc::Status{grpc::StatusCode::UNAVAILABLE, exp.what()};
+    }
+    catch (std::exception const& exp)
+    {
+        std::cerr << std::format("Server: {}", exp.what());
+    }
+
+    return status;
 }
 
 grpc::Status server::MergeSections(grpc::ServerContext* context, MergeSectionsRequest const* request, MergeSectionsResponse* response)
 {
-    return grpc::Status::OK;
+    grpc::Status status{grpc::StatusCode::INTERNAL, {}};
+
+    try
+    {
+        if (!request->has_user() || !session_is_valid(request->user()))
+        {
+            status = grpc::Status{grpc::StatusCode::UNAUTHENTICATED, "invalid user"};
+        }
+        else if (request->resource().id() == 0)
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid resource"};
+        }
+        else if (request->source().position() == 0)
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid source section"};
+        }
+        else if (request->target().position() == 0)
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid target section"};
+        }
+        else
+        {
+            m_database->merge_sections(request->resource().id(), request->source().position(), request->target().position());
+            status = grpc::Status{grpc::StatusCode::OK, {}};
+        }
+    }
+    catch (client_exception const& exp)
+    {
+        status = grpc::Status{grpc::StatusCode::UNAVAILABLE, exp.what()};
+    }
+    catch (std::exception const& exp)
+    {
+        std::cerr << std::format("Server: {}", exp.what());
+    }
+
+    return status;
 }
 
 grpc::Status server::EditSection(grpc::ServerContext* context, EditSectionRequest const* request, EditSectionResponse* response)
 {
-    // name, link
-    return grpc::Status::OK;
+    grpc::Status status{grpc::StatusCode::INTERNAL, {}};
+    bool modified{};
+
+    try
+    {
+        if (!request->has_user() || !session_is_valid(request->user()))
+        {
+            status = grpc::Status{grpc::StatusCode::UNAUTHENTICATED, "invalid user"};
+        }
+        else if (request->resource().id() == 0)
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid resource"};
+        }
+        else if (request->section().position() == 0)
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid section"};
+        }
+        else
+        {
+            Section section{m_database->get_section(request->resource().id(), request->section().position())};
+
+            if (request->section().name() != section.name())
+            {
+                modified = true;
+                m_database->rename_section(request->resource().id(), request->section().position(), request->section().name());
+            }
+
+            if (request->section().link() != section.link())
+            {
+                modified = true;
+                m_database->edit_section_link(request->resource().id(), request->section().position(), request->section().link());
+            }
+
+            if (modified)
+            {
+                status = grpc::Status{grpc::StatusCode::OK, {}};
+            }
+            else
+            {
+                status = grpc::Status{grpc::StatusCode::ALREADY_EXISTS, {}};
+            }
+        }
+    }
+    catch (client_exception const& exp)
+    {
+        status = grpc::Status{grpc::StatusCode::UNAVAILABLE, exp.what()};
+    }
+    catch (std::exception const& exp)
+    {
+        std::cerr << std::format("Server: {}", exp.what());
+    }
+
+    return status;
 }
 
 grpc::Status server::MoveSection(grpc::ServerContext* context, MoveSectionRequest const* request, MoveSectionResponse* response)
 {
-    return grpc::Status::OK;
+    grpc::Status status{grpc::StatusCode::INTERNAL, {}};
+
+    try
+    {
+        if (!request->has_user() || !session_is_valid(request->user()))
+        {
+            status = grpc::Status{grpc::StatusCode::UNAUTHENTICATED, "invalid user"};
+        }
+        else if (request->source_resource().id() == 0)
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid source resource"};
+        }
+        else if (request->target_resource().id() == 0)
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid target resource"};
+        }
+        else if (request->source_section().position() == 0)
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid source section"};
+        }
+        else if (request->target_section().position() == 0)
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid target section"};
+        }
+        else
+        {
+            m_database->move_section(request->source_resource().id(), request->source_section().position(), request->target_resource().id(), request->target_section().position());
+            status = grpc::Status{grpc::StatusCode::OK, {}};
+        }
+    }
+    catch (client_exception const& exp)
+    {
+        status = grpc::Status{grpc::StatusCode::UNAVAILABLE, exp.what()};
+    }
+    catch (std::exception const& exp)
+    {
+        std::cerr << std::format("Server: {}", exp.what());
+    }
+
+    return status;
 }
 
 grpc::Status server::SearchSections(grpc::ServerContext* context, SearchSectionsRequest const* request, SearchSectionsResponse* response)
 {
-    return grpc::Status::OK;
+    grpc::Status status{grpc::StatusCode::INTERNAL, {}};
+
+    try
+    {
+        if (!request->has_user() || !session_is_valid(request->user()))
+        {
+            status = grpc::Status{grpc::StatusCode::UNAUTHENTICATED, "invalid user"};
+        }
+        else if (request->resource().id() == 0)
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid resource"};
+        }
+        else if (request->search_token().empty())
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "empty search token not allowed"};
+        }
+        else
+        {
+            for (auto const& [position, section]: m_database->search_sections(request->resource().id(), request->search_token()))
+            {
+                SectionSearchResult* result{response->add_result()};
+                *result->mutable_section() = section;
+                result->set_position(position);
+            }
+            status = grpc::Status{grpc::StatusCode::OK, {}};
+        }
+    }
+    catch (client_exception const& exp)
+    {
+        status = grpc::Status{grpc::StatusCode::UNAVAILABLE, exp.what()};
+    }
+    catch (std::exception const& exp)
+    {
+        std::cerr << std::format("Server: {}", exp.what());
+    }
+
+    return status;
 }
 
 grpc::Status server::CreateCard(grpc::ServerContext* context, CreateCardRequest const* request, CreateCardResponse* response)
 {
-    return grpc::Status::OK;
+    grpc::Status status{grpc::StatusCode::INTERNAL, {}};
+
+    try
+    {
+        if (!request->has_user() || !session_is_valid(request->user()))
+        {
+            status = grpc::Status{grpc::StatusCode::UNAUTHENTICATED, "invalid user"};
+        }
+        else if (request->card().id() != 0)
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid card", "card id must be zero before creation"};
+        }
+        else if (request->card().headline().empty())
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "empty headline not allowed"};
+        }
+        else
+        {
+            Card* card{response->mutable_card()};
+            *card = m_database->create_card(request->card());
+            status = grpc::Status{grpc::StatusCode::OK, {}};
+        }
+    }
+    catch (client_exception const& exp)
+    {
+        status = grpc::Status{grpc::StatusCode::UNAVAILABLE, exp.what()};
+    }
+    catch (std::exception const& exp)
+    {
+        std::cerr << std::format("Server: {}", exp.what());
+    }
+
+    return status;
 }
 
 grpc::Status server::AddCardToSection(grpc::ServerContext* context, AddCardToSectionRequest const* request, AddCardToSectionResponse* response)
 {
-    return grpc::Status::OK;
+    grpc::Status status{grpc::StatusCode::INTERNAL, {}};
+
+    try
+    {
+        if (!request->has_user() || !session_is_valid(request->user()))
+        {
+            status = grpc::Status{grpc::StatusCode::UNAUTHENTICATED, "invalid user"};
+        }
+        else if (request->card().id() == 0)
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid card"};
+        }
+        else if (request->resource().id() == 0)
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid resource"};
+        }
+        else if (request->section().position() == 0)
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid section"};
+        }
+        else
+        {
+            m_database->add_card_to_section(request->card().id(), request->resource().id(), request->section().position());
+            status = grpc::Status{grpc::StatusCode::OK, {}};
+        }
+    }
+    catch (client_exception const& exp)
+    {
+        status = grpc::Status{grpc::StatusCode::UNAVAILABLE, exp.what()};
+    }
+    catch (std::exception const& exp)
+    {
+        std::cerr << std::format("Server: {}", exp.what());
+    }
+
+    return status;
 }
 
 grpc::Status server::AddCardToTopic(grpc::ServerContext* context, AddCardToTopicRequest const* request, AddCardToTopicResponse* response)
 {
-    return grpc::Status::OK;
+    grpc::Status status{grpc::StatusCode::INTERNAL, {}};
+
+    try
+    {
+        if (!request->has_user() || !session_is_valid(request->user()))
+        {
+            status = grpc::Status{grpc::StatusCode::UNAUTHENTICATED, "invalid user"};
+        }
+        else if (request->card().id() == 0)
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid card"};
+        }
+        else if (request->subject().id() == 0)
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid subject"};
+        }
+        else if (request->topic().position() == 0)
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid topic"};
+        }
+        else
+        {
+            m_database->add_card_to_topic(request->card().id(), request->subject().id(), request->topic().position(), request->topic().level());
+            status = grpc::Status{grpc::StatusCode::OK, {}};
+        }
+    }
+    catch (client_exception const& exp)
+    {
+        status = grpc::Status{grpc::StatusCode::UNAVAILABLE, exp.what()};
+    }
+    catch (std::exception const& exp)
+    {
+        std::cerr << std::format("Server: {}", exp.what());
+    }
+
+    return status;
 }
 
 grpc::Status server::RemoveCard(grpc::ServerContext* context, RemoveCardRequest const* request, RemoveCardResponse* response)
 {
-    return grpc::Status::OK;
+    grpc::Status status{grpc::StatusCode::INTERNAL, {}};
+
+    try
+    {
+        if (!request->has_user() || !session_is_valid(request->user()))
+        {
+            status = grpc::Status{grpc::StatusCode::UNAUTHENTICATED, "invalid user"};
+        }
+        else if (request->card().id() == 0)
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid card"};
+        }
+        else
+        {
+            m_database->remove_card(request->card().id());
+            status = grpc::Status{grpc::StatusCode::OK, {}};
+        }
+    }
+    catch (client_exception const& exp)
+    {
+        status = grpc::Status{grpc::StatusCode::UNAVAILABLE, exp.what()};
+    }
+    catch (std::exception const& exp)
+    {
+        std::cerr << std::format("Server: {}", exp.what());
+    }
+
+    return status;
 }
 
 grpc::Status server::MergeCards(grpc::ServerContext* context, MergeCardsRequest const* request, MergeCardsResponse* response)
 {
-    return grpc::Status::OK;
+    grpc::Status status{grpc::StatusCode::INTERNAL, {}};
+
+    try
+    {
+        if (!request->has_user() || !session_is_valid(request->user()))
+        {
+            status = grpc::Status{grpc::StatusCode::UNAUTHENTICATED, "invalid user"};
+        }
+        else if (request->source().id() == 0)
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid source card"};
+        }
+        else if (request->target().id() == 0)
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid target card"};
+        }
+        else if (request->target().headline().empty())
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "empty headline not allowed"};
+        }
+        else
+        {
+            m_database->merge_cards(request->source().id(), request->target().id(), request->target().headline());
+            status = grpc::Status{grpc::StatusCode::OK, {}};
+        }
+    }
+    catch (client_exception const& exp)
+    {
+        status = grpc::Status{grpc::StatusCode::UNAVAILABLE, exp.what()};
+    }
+    catch (std::exception const& exp)
+    {
+        std::cerr << std::format("Server: {}", exp.what());
+    }
+
+    return status;
 }
 
 grpc::Status server::SearchCards(grpc::ServerContext* context, SearchCardsRequest const* request, SearchCardsResponse* response)
 {
-    return grpc::Status::OK;
+    grpc::Status status{grpc::StatusCode::INTERNAL, {}};
+
+    try
+    {
+        if (!request->has_user() || !session_is_valid(request->user()))
+        {
+            status = grpc::Status{grpc::StatusCode::UNAUTHENTICATED, "invalid user"};
+        }
+        else if (request->subject().id() == 0)
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid subject"};
+        }
+        else if (request->search_token().empty())
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "empty search token not allowed"};
+        }
+        else
+        {
+            for (auto const& [position, card]: m_database->search_cards(request->subject().id(), request->level(), request->search_token()))
+            {
+                CardSearchResult* result{response->add_result()};
+                *result->mutable_card() = card;
+                result->set_position(position);
+            }
+            status = grpc::Status{grpc::StatusCode::OK, {}};
+        }
+    }
+    catch (client_exception const& exp)
+    {
+        status = grpc::Status{grpc::StatusCode::UNAVAILABLE, exp.what()};
+    }
+    catch (std::exception const& exp)
+    {
+        std::cerr << std::format("Server: {}", exp.what());
+    }
+
+    return status;
 }
 
 grpc::Status server::MoveCardToSection(grpc::ServerContext* context, MoveCardToSectionRequest const* request, MoveCardToSectionResponse* response)
 {
-    return grpc::Status::OK;
+    grpc::Status status{grpc::StatusCode::INTERNAL, {}};
+
+    try
+    {
+        if (!request->has_user() || !session_is_valid(request->user()))
+        {
+            status = grpc::Status{grpc::StatusCode::UNAUTHENTICATED, "invalid user"};
+        }
+        else if (request->card().id() == 0)
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid card"};
+        }
+        else if (request->resource().id() == 0)
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid resource"};
+        }
+        else if (request->source().position() == 0)
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid source section"};
+        }
+        else if (request->target().position() == 0)
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid target section"};
+        }
+        else
+        {
+            m_database->move_card_to_section(request->card().id(), request->resource().id(), request->source().position(), request->target().position());
+            status = grpc::Status{grpc::StatusCode::OK, {}};
+        }
+    }
+    catch (client_exception const& exp)
+    {
+        status = grpc::Status{grpc::StatusCode::UNAVAILABLE, exp.what()};
+    }
+    catch (std::exception const& exp)
+    {
+        std::cerr << std::format("Server: {}", exp.what());
+    }
+
+    return status;
 }
 
 grpc::Status server::MarkSectionAsReviewed(grpc::ServerContext* context, MarkSectionAsReviewedRequest const* request, MarkSectionAsReviewedResponse* response)
 {
-    return grpc::Status::OK;
+    grpc::Status status{grpc::StatusCode::INTERNAL, {}};
+
+    try
+    {
+        if (!request->has_user() || !session_is_valid(request->user()))
+        {
+            status = grpc::Status{grpc::StatusCode::UNAUTHENTICATED, "invalid user"};
+        }
+        else if (request->resource().id() == 0)
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid resource"};
+        }
+        else if (request->section().position() == 0)
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid section"};
+        }
+        else
+        {
+            m_database->mark_section_as_reviewed(request->resource().id(), request->section().position());
+            status = grpc::Status{grpc::StatusCode::OK, {}};
+        }
+    }
+    catch (client_exception const& exp)
+    {
+        status = grpc::Status{grpc::StatusCode::UNAVAILABLE, exp.what()};
+    }
+    catch (std::exception const& exp)
+    {
+        std::cerr << std::format("Server: {}", exp.what());
+    }
+
+    return status;
 }
 
 grpc::Status server::GetPracticeCards(grpc::ServerContext* context, GetPracticeCardsRequest const* request, GetPracticeCardsResponse* response)
 {
-    return grpc::Status::OK;
+    grpc::Status status{grpc::StatusCode::INTERNAL, {}};
+
+    try
+    {
+        if (!request->has_user() || !session_is_valid(request->user()))
+        {
+            status = grpc::Status{grpc::StatusCode::UNAUTHENTICATED, "invalid user"};
+        }
+        else if (request->roadmap().id() == 0)
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid roadmap"};
+        }
+        else if (request->subject().id() == 0)
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid subject"};
+        }
+        else if (request->topic().position() == 0)
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid topic"};
+        }
+        else
+        {
+            for (Card const& card: m_database->get_practice_cards(request->user().id(), request->roadmap().id(), request->subject().id(), request->topic().level(),
+                                                                  request->topic().position()))
+            {
+                *response->add_card() = card;
+            }
+            status = grpc::Status{grpc::StatusCode::OK, {}};
+        }
+    }
+    catch (client_exception const& exp)
+    {
+        status = grpc::Status{grpc::StatusCode::UNAVAILABLE, exp.what()};
+    }
+    catch (std::exception const& exp)
+    {
+        std::cerr << std::format("Server: {}", exp.what());
+    }
+
+    return status;
 }
 
 grpc::Status server::MoveCardToTopic(grpc::ServerContext* context, MoveCardToTopicRequest const* request, MoveCardToTopicResponse* response)
 {
-    return grpc::Status::OK;
+    grpc::Status status{grpc::StatusCode::INTERNAL, {}};
+
+    try
+    {
+        if (!request->has_user() || !session_is_valid(request->user()))
+        {
+            status = grpc::Status{grpc::StatusCode::UNAUTHENTICATED, "invalid user"};
+        }
+        else if (request->card().id() == 0)
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid card"};
+        }
+        else if (request->subject().id() == 0)
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid subject"};
+        }
+        else if (request->topic().position() == 0)
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid topic"};
+        }
+        else if (request->target_subject().id() == 0)
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid target subject"};
+        }
+        else if (request->target_topic().position() == 0)
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid target topic"};
+        }
+        else
+        {
+            m_database->move_card_to_topic(request->card().id(), request->subject().id(), request->topic().position(), request->topic().level(), request->target_subject().id(),
+                                           request->target_topic().position(), request->target_topic().level());
+            status = grpc::Status{grpc::StatusCode::OK, {}};
+        }
+    }
+    catch (client_exception const& exp)
+    {
+        status = grpc::Status{grpc::StatusCode::UNAVAILABLE, exp.what()};
+    }
+    catch (std::exception const& exp)
+    {
+        std::cerr << std::format("Server: {}", exp.what());
+    }
+
+    return status;
 }
 
 grpc::Status server::CreateAssessment(grpc::ServerContext* context, CreateAssessmentRequest const* request, CreateAssessmentResponse* response)
 {
-    return grpc::Status::OK;
+    grpc::Status status{grpc::StatusCode::INTERNAL, {}};
+
+    try
+    {
+        if (!request->has_user() || !session_is_valid(request->user()))
+        {
+            status = grpc::Status{grpc::StatusCode::UNAUTHENTICATED, "invalid user"};
+        }
+        else if (request->card().id() == 0)
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid card", "card must already be created as an assessment is only a reference to it"};
+        }
+        else if (request->subject().id() == 0)
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid subject"};
+        }
+        else if (request->topic().position() == 0)
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid topic"};
+        }
+        else
+        {
+            m_database->create_assessment(request->subject().id(), request->topic().level(), request->topic().position(), request->card().id());
+            status = grpc::Status{grpc::StatusCode::OK, {}};
+        }
+    }
+    catch (client_exception const& exp)
+    {
+        status = grpc::Status{grpc::StatusCode::UNAVAILABLE, exp.what()};
+    }
+    catch (std::exception const& exp)
+    {
+        std::cerr << std::format("Server: {}", exp.what());
+    }
+
+    return status;
+}
+
+grpc::Status server::GetAssessments(grpc::ServerContext* context, GetAssessmentsRequest const* request, GetAssessmentsResponse* response)
+{
+    grpc::Status status{grpc::StatusCode::INTERNAL, {}};
+
+    try
+    {
+        if (!request->has_user() || !session_is_valid(request->user()))
+        {
+            status = grpc::Status{grpc::StatusCode::UNAUTHENTICATED, "invalid user"};
+        }
+        else if (request->subject().id() == 0)
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid subject"};
+        }
+        else if (request->topic().position() == 0)
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid topic"};
+        }
+        else
+        {
+            for (Assessment assessment: m_database->get_assessments(request->user().id(), request->subject().id(), request->topic().level(), request->topic().position()))
+            {
+                *response->add_assessment() = assessment;
+            }
+            status = grpc::Status{grpc::StatusCode::OK, {}};
+        }
+    }
+    catch (client_exception const& exp)
+    {
+        status = grpc::Status{grpc::StatusCode::UNAVAILABLE, exp.what()};
+    }
+    catch (std::exception const& exp)
+    {
+        std::cerr << std::format("Server: {}", exp.what());
+    }
+
+    return status;
 }
 
 grpc::Status server::ExpandAssessment(grpc::ServerContext* context, ExpandAssessmentRequest const* request, ExpandAssessmentResponse* response)
 {
-    return grpc::Status::OK;
+    grpc::Status status{grpc::StatusCode::INTERNAL, {}};
+
+    try
+    {
+        if (!request->has_user() || !session_is_valid(request->user()))
+        {
+            status = grpc::Status{grpc::StatusCode::UNAUTHENTICATED, "invalid user"};
+        }
+        else if (request->card().id() == 0)
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid card"};
+        }
+        else if (request->subject().id() == 0)
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid subject"};
+        }
+        else if (request->topic().position() == 0)
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid topic"};
+        }
+        else
+        {
+            m_database->expand_assessment(request->card().id(), request->subject().id(), request->topic().level(), request->topic().position());
+            status = grpc::Status{grpc::StatusCode::OK, {}};
+        }
+    }
+    catch (client_exception const& exp)
+    {
+        status = grpc::Status{grpc::StatusCode::UNAVAILABLE, exp.what()};
+    }
+    catch (std::exception const& exp)
+    {
+        std::cerr << std::format("Server: {}", exp.what());
+    }
+
+    return status;
 }
 
 grpc::Status server::DiminishAssessment(grpc::ServerContext* context, DiminishAssessmentRequest const* request, DiminishAssessmentResponse* response)
 {
-    return grpc::Status::OK;
+    grpc::Status status{grpc::StatusCode::INTERNAL, {}};
+
+    try
+    {
+        if (!request->has_user() || !session_is_valid(request->user()))
+        {
+            status = grpc::Status{grpc::StatusCode::UNAUTHENTICATED, "invalid user"};
+        }
+        else if (request->card().id() == 0)
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid card"};
+        }
+        else if (request->subject().id() == 0)
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid subject"};
+        }
+        else if (request->topic().position() == 0)
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid topic"};
+        }
+        else
+        {
+            m_database->diminish_assessment(request->card().id(), request->subject().id(), request->topic().level(), request->topic().position());
+            status = grpc::Status{grpc::StatusCode::OK, {}};
+        }
+    }
+    catch (client_exception const& exp)
+    {
+        status = grpc::Status{grpc::StatusCode::UNAVAILABLE, exp.what()};
+    }
+    catch (std::exception const& exp)
+    {
+        std::cerr << std::format("Server: {}", exp.what());
+    }
+
+    return status;
 }
 
 grpc::Status server::IsAssimilated(grpc::ServerContext* context, IsAssimilatedRequest const* request, IsAssimilatedResponse* response)
 {
-    return grpc::Status::OK;
+    grpc::Status status{grpc::StatusCode::INTERNAL, {}};
+
+    try
+    {
+        if (!request->has_user() || !session_is_valid(request->user()))
+        {
+            status = grpc::Status{grpc::StatusCode::UNAUTHENTICATED, "invalid user"};
+        }
+        else if (request->subject().id() == 0)
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid subject"};
+        }
+        else if (request->topic().position() == 0)
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid topic"};
+        }
+        else
+        {
+            response->set_is_assimilated(m_database->is_assimilated(request->user().id(), request->subject().id(), request->topic().level(), request->topic().position()));
+            status = grpc::Status{grpc::StatusCode::OK, {}};
+        }
+    }
+    catch (client_exception const& exp)
+    {
+        status = grpc::Status{grpc::StatusCode::UNAVAILABLE, exp.what()};
+    }
+    catch (std::exception const& exp)
+    {
+        std::cerr << std::format("Server: {}", exp.what());
+    }
+
+    return status;
 }
 
 grpc::Status server::EditCard(grpc::ServerContext* context, EditCardRequest const* request, EditCardResponse* response)
 {
-    // headline
-    return grpc::Status::OK;
+    grpc::Status status{grpc::StatusCode::INTERNAL, {}};
+
+    try
+    {
+        if (!request->has_user() || !session_is_valid(request->user()))
+        {
+            status = grpc::Status{grpc::StatusCode::UNAUTHENTICATED, "invalid user"};
+        }
+        else if (request->card().id() == 0)
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid card"};
+        }
+        else
+        {
+            Card card{m_database->get_card(request->card().id())};
+
+            if (request->card().headline() != card.headline())
+            {
+                m_database->edit_card_headline(request->card().id(), request->card().headline());
+            }
+            status = grpc::Status{grpc::StatusCode::OK, {}};
+        }
+    }
+    catch (client_exception const& exp)
+    {
+        status = grpc::Status{grpc::StatusCode::UNAVAILABLE, exp.what()};
+    }
+    catch (std::exception const& exp)
+    {
+        std::cerr << std::format("Server: {}", exp.what());
+    }
+
+    return status;
 }
 
 grpc::Status server::CreateBlock(grpc::ServerContext* context, CreateBlockRequest const* request, CreateBlockResponse* response)
 {
-    return grpc::Status::OK;
+    grpc::Status status{grpc::StatusCode::INTERNAL, {}};
+
+    try
+    {
+        if (!request->has_user() || !session_is_valid(request->user()))
+        {
+            status = grpc::Status{grpc::StatusCode::UNAUTHENTICATED, "invalid user"};
+        }
+        else if (request->card().id() == 0)
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid card"};
+        }
+        else if (request->block().content().empty())
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid content", "block content cannot be empty"};
+        }
+        else if (request->block().extension().empty())
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid extension", "block extension cannot be empty"};
+        }
+        else
+        {
+            Block* block{response->mutable_block()};
+            *block = m_database->create_block(request->card().id(), request->block());
+            status = grpc::Status{grpc::StatusCode::OK, {}};
+        }
+    }
+    catch (client_exception const& exp)
+    {
+        status = grpc::Status{grpc::StatusCode::UNAVAILABLE, exp.what()};
+    }
+    catch (std::exception const& exp)
+    {
+        std::cerr << std::format("Server: {}", exp.what());
+    }
+
+    return status;
 }
 
 grpc::Status server::GetBlocks(grpc::ServerContext* context, GetBlocksRequest const* request, GetBlocksResponse* response)
 {
-    return grpc::Status::OK;
+    grpc::Status status{grpc::StatusCode::INTERNAL, {}};
+
+    try
+    {
+        if (!request->has_user() || !session_is_valid(request->user()))
+        {
+            status = grpc::Status{grpc::StatusCode::UNAUTHENTICATED, "invalid user"};
+        }
+        else if (request->card().id() == 0)
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid card"};
+        }
+        else
+        {
+            for (auto const& [position, block]: m_database->get_blocks(request->card().id()))
+            {
+                *response->add_block() = block;
+            }
+            status = grpc::Status{grpc::StatusCode::OK, {}};
+        }
+    }
+    catch (client_exception const& exp)
+    {
+        status = grpc::Status{grpc::StatusCode::UNAVAILABLE, exp.what()};
+    }
+    catch (std::exception const& exp)
+    {
+        std::cerr << std::format("Server: {}", exp.what());
+    }
+
+    return status;
 }
 
 grpc::Status server::RemoveBlock(grpc::ServerContext* context, RemoveBlockRequest const* request, RemoveBlockResponse* response)
 {
-    return grpc::Status::OK;
+    grpc::Status status{grpc::StatusCode::INTERNAL, {}};
+
+    try
+    {
+        if (!request->has_user() || !session_is_valid(request->user()))
+        {
+            status = grpc::Status{grpc::StatusCode::UNAUTHENTICATED, "invalid user"};
+        }
+        else if (request->card().id() == 0)
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid card"};
+        }
+        else if (request->block().position() == 0)
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid block"};
+        }
+        else
+        {
+            m_database->remove_block(request->card().id(), request->block().position());
+            status = grpc::Status{grpc::StatusCode::OK, {}};
+        }
+    }
+    catch (client_exception const& exp)
+    {
+        status = grpc::Status{grpc::StatusCode::UNAVAILABLE, exp.what()};
+    }
+    catch (std::exception const& exp)
+    {
+        std::cerr << std::format("Server: {}", exp.what());
+    }
+
+    return status;
 }
 
 grpc::Status server::EditBlock(grpc::ServerContext* context, EditBlockRequest const* request, EditBlockResponse* response)
 {
-    // content, extension, type, metadata
-    return grpc::Status::OK;
+    grpc::Status status{grpc::StatusCode::INTERNAL, {}};
+    bool modified{};
+
+    try
+    {
+        if (!request->has_user() || !session_is_valid(request->user()))
+        {
+            status = grpc::Status{grpc::StatusCode::UNAUTHENTICATED, "invalid user"};
+        }
+        else if (request->card().id() == 0)
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid card"};
+        }
+        else if (request->block().position() == 0)
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid block"};
+        }
+        else if (request->block().content().empty())
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid content", "block content cannot be empty"};
+        }
+        else if (request->block().extension().empty())
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid extension", "block extension cannot be empty"};
+        }
+        else
+        {
+            Block block{m_database->get_block(request->card().id(), request->block().position())};
+
+            if (request->block().type() != block.type())
+            {
+                modified = true;
+                m_database->change_block_type(request->card().id(), request->block().position(), request->block().type());
+            }
+
+            if (request->block().extension() != block.extension())
+            {
+                modified = true;
+                m_database->edit_block_extension(request->card().id(), request->block().position(), request->block().extension());
+            }
+
+            if (request->block().content() != block.content())
+            {
+                modified = true;
+                m_database->edit_block_content(request->card().id(), request->block().position(), request->block().content());
+            }
+
+            if (request->block().metadata() != block.metadata())
+            {
+                modified = true;
+                m_database->edit_block_metadata(request->card().id(), request->block().position(), request->block().metadata());
+            }
+
+            if (modified)
+            {
+                status = grpc::Status{grpc::StatusCode::OK, {}};
+            }
+            else
+            {
+                status = grpc::Status{grpc::StatusCode::ALREADY_EXISTS, {}};
+            }
+        }
+    }
+    catch (client_exception const& exp)
+    {
+        status = grpc::Status{grpc::StatusCode::UNAVAILABLE, exp.what()};
+    }
+    catch (std::exception const& exp)
+    {
+        std::cerr << std::format("Server: {}", exp.what());
+    }
+
+    return status;
 }
 
 grpc::Status server::ReorderBlock(grpc::ServerContext* context, ReorderBlockRequest const* request, ReorderBlockResponse* response)
 {
-    return grpc::Status::OK;
+    grpc::Status status{grpc::StatusCode::INTERNAL, {}};
+
+    try
+    {
+        if (!request->has_user() || !session_is_valid(request->user()))
+        {
+            status = grpc::Status{grpc::StatusCode::UNAUTHENTICATED, "invalid user"};
+        }
+        else if (request->card().id() == 0)
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid card"};
+        }
+        else if (request->block().position() == 0)
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid source block"};
+        }
+        else if (request->target().position() == 0)
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid target block"};
+        }
+        else
+        {
+            m_database->reorder_block(request->card().id(), request->block().position(), request->target().position());
+            status = grpc::Status{grpc::StatusCode::OK, {}};
+        }
+    }
+    catch (client_exception const& exp)
+    {
+        status = grpc::Status{grpc::StatusCode::UNAVAILABLE, exp.what()};
+    }
+    catch (std::exception const& exp)
+    {
+        std::cerr << std::format("Server: {}", exp.what());
+    }
+
+    return status;
 }
 
 grpc::Status server::MergeBlocks(grpc::ServerContext* context, MergeBlocksRequest const* request, MergeBlocksResponse* response)
 {
-    return grpc::Status::OK;
+    grpc::Status status{grpc::StatusCode::INTERNAL, {}};
+
+    try
+    {
+        if (!request->has_user() || !session_is_valid(request->user()))
+        {
+            status = grpc::Status{grpc::StatusCode::UNAUTHENTICATED, "invalid user"};
+        }
+        else if (request->card().id() == 0)
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid card"};
+        }
+        else if (request->block().position() == 0)
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid source block"};
+        }
+        else if (request->target().position() == 0)
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid target block"};
+        }
+        else
+        {
+            m_database->merge_blocks(request->card().id(), request->block().position(), request->target().position());
+            status = grpc::Status{grpc::StatusCode::OK, {}};
+        }
+    }
+    catch (client_exception const& exp)
+    {
+        status = grpc::Status{grpc::StatusCode::UNAVAILABLE, exp.what()};
+    }
+    catch (std::exception const& exp)
+    {
+        std::cerr << std::format("Server: {}", exp.what());
+    }
+
+    return status;
 }
 
 grpc::Status server::SplitBlock(grpc::ServerContext* context, SplitBlockRequest const* request, SplitBlockResponse* response)
 {
-    return grpc::Status::OK;
+    grpc::Status status{grpc::StatusCode::INTERNAL, {}};
+
+    try
+    {
+        if (!request->has_user() || !session_is_valid(request->user()))
+        {
+            status = grpc::Status{grpc::StatusCode::UNAUTHENTICATED, "invalid user"};
+        }
+        else if (request->card().id() == 0)
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid card"};
+        }
+        else if (request->block().position() == 0)
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid block"};
+        }
+        else
+        {
+            for (auto const& [position, block]: m_database->split_block(request->card().id(), request->block().position()))
+            {
+                *response->add_block() = block;
+            }
+            status = grpc::Status{grpc::StatusCode::OK, {}};
+        }
+    }
+    catch (client_exception const& exp)
+    {
+        status = grpc::Status{grpc::StatusCode::UNAVAILABLE, exp.what()};
+    }
+    catch (std::exception const& exp)
+    {
+        std::cerr << std::format("Server: {}", exp.what());
+    }
+
+    return status;
 }
 
 grpc::Status server::MarkCardAsReviewed(grpc::ServerContext* context, MarkCardAsReviewedRequest const* request, MarkCardAsReviewedResponse* response)
 {
-    return grpc::Status::OK;
+    grpc::Status status{grpc::StatusCode::INTERNAL, {}};
+
+    try
+    {
+        if (!request->has_user() || !session_is_valid(request->user()))
+        {
+            status = grpc::Status{grpc::StatusCode::UNAUTHENTICATED, "invalid user"};
+        }
+        else if (request->card().id() == 0)
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid card"};
+        }
+        else
+        {
+            m_database->mark_card_as_reviewed(request->card().id());
+            status = grpc::Status{grpc::StatusCode::OK, {}};
+        }
+    }
+    catch (client_exception const& exp)
+    {
+        status = grpc::Status{grpc::StatusCode::UNAVAILABLE, exp.what()};
+    }
+    catch (std::exception const& exp)
+    {
+        std::cerr << std::format("Server: {}", exp.what());
+    }
+
+    return status;
 }
 
 grpc::Status server::Study(grpc::ServerContext* context, StudyRequest const* request, StudyResponse* response)
 {
-    return grpc::Status::OK;
+    grpc::Status status{grpc::StatusCode::INTERNAL, {}};
+
+    try
+    {
+        if (!request->has_user() || !session_is_valid(request->user()))
+        {
+            status = grpc::Status{grpc::StatusCode::UNAUTHENTICATED, "invalid user"};
+        }
+        else if (request->card().id() == 0)
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid card"};
+        }
+        else if (request->duration() < 3)
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid duration", "reading a card less than 3 seconds is not acceptable"};
+        }
+        else
+        {
+            m_database->study(request->user().id(), request->card().id(), std::chrono::seconds{request->duration()});
+            status = grpc::Status{grpc::StatusCode::OK, {}};
+        }
+    }
+    catch (client_exception const& exp)
+    {
+        status = grpc::Status{grpc::StatusCode::UNAVAILABLE, exp.what()};
+    }
+    catch (std::exception const& exp)
+    {
+        std::cerr << std::format("Server: {}", exp.what());
+    }
+
+    return status;
 }
 
 grpc::Status server::MakeProgress(grpc::ServerContext* context, MakeProgressRequest const* request, MakeProgressResponse* response)
 {
-    return grpc::Status::OK;
+    grpc::Status status{grpc::StatusCode::INTERNAL, {}};
+
+    try
+    {
+        if (!request->has_user() || !session_is_valid(request->user()))
+        {
+            status = grpc::Status{grpc::StatusCode::UNAUTHENTICATED, "invalid user"};
+        }
+        else if (request->card().id() == 0)
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid card"};
+        }
+        else if (request->duration() < 3)
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid duration", "reading a card less than 3 seconds is not acceptable"};
+        }
+        else
+        {
+            m_database->make_progress(request->user().id(), request->card().id(), request->duration(), request->mode());
+            status = grpc::Status{grpc::StatusCode::OK, {}};
+        }
+    }
+    catch (client_exception const& exp)
+    {
+        status = grpc::Status{grpc::StatusCode::UNAVAILABLE, exp.what()};
+    }
+    catch (std::exception const& exp)
+    {
+        std::cerr << std::format("Server: {}", exp.what());
+    }
+
+    return status;
 }
 
 grpc::Status server::GetProgressWeight(grpc::ServerContext* context, GetProgressWeightRequest const* request, GetProgressWeightResponse* response)
 {
-    return grpc::Status::OK;
+    grpc::Status status{grpc::StatusCode::INTERNAL, {}};
+
+    try
+    {
+        if (!request->has_user() || !session_is_valid(request->user()))
+        {
+            status = grpc::Status{grpc::StatusCode::UNAUTHENTICATED, "invalid user"};
+        }
+        else
+        {
+            for (Weight weight: m_database->get_progress_weight(request->user().id()))
+            {
+                *response->add_weight() = weight;
+            }
+            status = grpc::Status{grpc::StatusCode::OK, {}};
+        }
+    }
+    catch (client_exception const& exp)
+    {
+        status = grpc::Status{grpc::StatusCode::UNAVAILABLE, exp.what()};
+    }
+    catch (std::exception const& exp)
+    {
+        std::cerr << std::format("Server: {}", exp.what());
+    }
+
+    return status;
 }
 
 std::string server::calculate_hash(std::string_view password)
