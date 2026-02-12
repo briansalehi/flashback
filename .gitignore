@@ -3,11 +3,6 @@
 *.rpm
 *.deb
 *.tar
-<<<<<<< Updated upstream
-*.js
-_CPack_Packages/
-node_modules
-=======
 *.lock
 *.keystore
 *build*/
@@ -15,4 +10,3 @@ node_modules
 _CPack_Packages/
 node_modules/
 CMakeUserPresets.txt
->>>>>>> Stashed changes

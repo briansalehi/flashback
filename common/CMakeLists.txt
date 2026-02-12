@@ -51,11 +51,6 @@ set(client_sources
 
 set(bundle ${CMAKE_CURRENT_BINARY_DIR}/flashback.js)
 
-foreach(file IN LISTS client_sources)
-    list(APPEND client_requirements "--require")
-    list(APPEND client_requirements "${file}")
-endforeach()
-
 add_custom_command(
     OUTPUT ${server_sources} ${server_headers}
     COMMAND ${Protobuf_PROTOC_EXECUTABLE}
@@ -73,6 +68,8 @@ add_custom_command(
     OUTPUT ${PROTOC_GEN_GRPC_WEB_EXECUTABLE} ${PROTOC_GEN_JS_EXECUTABLE}
     COMMAND cp
     ARGS ${CMAKE_CURRENT_SOURCE_DIR}/package.json ${CMAKE_CURRENT_BINARY_DIR}/
+    COMMAND cp
+    ARGS ${CMAKE_CURRENT_SOURCE_DIR}/webpack.config.js ${CMAKE_CURRENT_BINARY_DIR}/
     COMMAND ${NPM_EXECUTABLE}
     ARGS install --loglevel silent --no-package-lock --save-dev
     COMMENT "Installing protoc-gen-grpc-web and protoc-gen-js for client"
@@ -83,7 +80,7 @@ add_custom_command(
     COMMAND ${Protobuf_PROTOC_EXECUTABLE}
     ARGS
         -I ${CMAKE_CURRENT_SOURCE_DIR}/proto
-        --js_out=import_style=commonjs,binary:${CMAKE_CURRENT_BINARY_DIR}
+        --js_out=import_style=commonjs:${CMAKE_CURRENT_BINARY_DIR}
         --grpc-web_out=import_style=commonjs,mode=grpcwebtext:${CMAKE_CURRENT_BINARY_DIR}
         --plugin=protoc-gen-grpc-web=${PROTOC_GEN_GRPC_WEB_EXECUTABLE}
         --plugin=protoc-gen-js=${PROTOC_GEN_JS_EXECUTABLE}
@@ -95,8 +92,8 @@ add_custom_command(
 add_custom_command(
     OUTPUT ${bundle}
     COMMAND ${NPX_EXECUTABLE}
-    ARGS browserify ${client_requirements} --outfile ${bundle}
-    DEPENDS ${client_sources} ${PROTOC_GEN_GRPC_WEB_EXECUTABLE} ${PROTOC_GEN_JS_EXECUTABLE}
+    ARGS webpack --no-stats
+    DEPENDS ${client_sources}
     COMMENT "Generating client bundle"
 )
 
