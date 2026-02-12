@@ -13,12 +13,16 @@ find_package(gRPC 1.48.0 REQUIRED)
 find_package(GTest 1.15.0)
 find_program(GRPC_CPP_PLUGIN_EXECUTABLE NAMES grpc_cpp_plugin REQUIRED)
 find_program(NPM_EXECUTABLE NAMES npm REQUIRED)
+find_program(NPX_EXECUTABLE NAMES npx REQUIRED)
 
 file(GLOB source_files RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} src/*.cpp)
 file(GLOB header_files RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} include/flashback/*.hpp)
 file(GLOB proto_files ${CMAKE_CURRENT_SOURCE_DIR}/proto/*.proto)
 file(GLOB test_files RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} test/units/*.cpp)
 file(GLOB mock_files RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} test/mocks/flashback/*.hpp)
+
+set(PROTOC_GEN_GRPC_WEB_EXECUTABLE ${CMAKE_CURRENT_BINARY_DIR}/node_modules/protoc-gen-grpc-web/bin/protoc-gen-grpc-web)
+set(PROTOC_GEN_JS_EXECUTABLE ${CMAKE_CURRENT_BINARY_DIR}/node_modules/protoc-gen-js/bin/protoc-gen-js)
 
 set(server_headers
     ${CMAKE_CURRENT_BINARY_DIR}/types.pb.h
@@ -45,19 +49,15 @@ set(client_sources
     ${CMAKE_CURRENT_BINARY_DIR}/server_grpc_web_pb.js
 )
 
-set(PROTOC_GEN_GRPC_WEB_EXECUTABLE ${CMAKE_CURRENT_SOURCE_DIR}/deps/node_modules/protoc-gen-grpc-web/bin/protoc-gen-grpc-web)
-set(PROTOC_GEN_JS_EXECUTABLE ${CMAKE_CURRENT_SOURCE_DIR}/deps/node_modules/protoc-gen-js/bin/protoc-gen-js)
+set(bundle ${CMAKE_CURRENT_BINARY_DIR}/flashback.js)
+
+foreach(file IN LISTS client_sources)
+    list(APPEND client_requirements "--require")
+    list(APPEND client_requirements "${file}")
+endforeach()
 
 add_custom_command(
-    OUTPUT ${PROTOC_GEN_GRPC_WEB_EXECUTABLE} ${PROTOC_GEN_JS_EXECUTABLE}
-    COMMAND ${NPM_EXECUTABLE}
-    ARGS install --loglevel silent --no-package-lock --save-dev
-    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/deps
-    COMMENT "Installing protoc-gen-grpc-web and protoc-gen-js for client"
-)
-
-add_custom_command(
-    OUTPUT ${server_sources} ${server_headers} ${client_source}
+    OUTPUT ${server_sources} ${server_headers}
     COMMAND ${Protobuf_PROTOC_EXECUTABLE}
     ARGS
         -I ${CMAKE_CURRENT_SOURCE_DIR}/proto
@@ -65,21 +65,43 @@ add_custom_command(
         --grpc_out=${CMAKE_CURRENT_BINARY_DIR}
         --plugin=protoc-gen-grpc=${GRPC_CPP_PLUGIN_EXECUTABLE}
         ${proto_files}
+    DEPENDS ${proto_files}
+    COMMENT "Generating grpc sources"
+)
+
+add_custom_command(
+    OUTPUT ${PROTOC_GEN_GRPC_WEB_EXECUTABLE} ${PROTOC_GEN_JS_EXECUTABLE}
+    COMMAND cp
+    ARGS ${CMAKE_CURRENT_SOURCE_DIR}/package.json ${CMAKE_CURRENT_BINARY_DIR}/
+    COMMAND ${NPM_EXECUTABLE}
+    ARGS install --loglevel silent --no-package-lock --save-dev
+    COMMENT "Installing protoc-gen-grpc-web and protoc-gen-js for client"
+)
+
+add_custom_command(
+    OUTPUT ${client_sources}
     COMMAND ${Protobuf_PROTOC_EXECUTABLE}
     ARGS
         -I ${CMAKE_CURRENT_SOURCE_DIR}/proto
-        --js_out=import_style=commonjs:${CMAKE_CURRENT_BINARY_DIR}
+        --js_out=import_style=commonjs,binary:${CMAKE_CURRENT_BINARY_DIR}
         --grpc-web_out=import_style=commonjs,mode=grpcwebtext:${CMAKE_CURRENT_BINARY_DIR}
         --plugin=protoc-gen-grpc-web=${PROTOC_GEN_GRPC_WEB_EXECUTABLE}
         --plugin=protoc-gen-js=${PROTOC_GEN_JS_EXECUTABLE}
         ${proto_files}
-    DEPENDS
-        ${proto_files} ${PROTOC_GEN_GRPC_WEB_EXECUTABLE} ${PROTOC_GEN_JS_EXECUTABLE}
-    COMMENT "Generating grpc sources"
+    DEPENDS ${proto_files} ${PROTOC_GEN_GRPC_WEB_EXECUTABLE} ${PROTOC_GEN_JS_EXECUTABLE}
+    COMMENT "Generating client stub"
+)
+
+add_custom_command(
+    OUTPUT ${bundle}
+    COMMAND ${NPX_EXECUTABLE}
+    ARGS browserify ${client_requirements} --outfile ${bundle}
+    DEPENDS ${client_sources} ${PROTOC_GEN_GRPC_WEB_EXECUTABLE} ${PROTOC_GEN_JS_EXECUTABLE}
+    COMMENT "Generating client bundle"
 )
 
 add_library(common STATIC ${source_files})
-target_sources(common PUBLIC ${source_files} ${server_sources})
+target_sources(common PUBLIC ${source_files} ${server_sources} ${client_sources} ${bundle})
 target_sources(common PUBLIC
     FILE_SET HEADERS BASE_DIRS ${CMAKE_CURRENT_BINARY_DIR} FILES ${server_headers}
     FILE_SET HEADERS BASE_DIRS ${CMAKE_CURRENT_SOURCE_DIR} FILES ${header_files}

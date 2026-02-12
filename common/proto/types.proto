@@ -2,8 +2,6 @@ syntax = "proto3";
 
 package flashback;
 
-import "google/protobuf/timestamp.proto";
-
 enum expertise_level { surface = 0; depth = 1; origin = 2; }
 enum practice_mode { aggressive = 0; progressive = 1; selective = 2; }
 enum closure_state { draft = 0; reviewed = 1; completed = 2; }
@@ -60,7 +58,7 @@ message User {
     bool verified = 5;
     string password = 6;
     string token = 7;
-    google.protobuf.Timestamp joined = 8;
+    uint64 joined = 8;
     string device = 9;
     string hash = 10;
 }

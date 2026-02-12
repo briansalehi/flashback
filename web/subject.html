@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Subjects - Flashback</title>
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="stylesheet" href="/css/styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;600;700&family=Source+Sans+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <header class="header">
+        <div class="container header-content">
+            <a href="/home.html" class="logo">Flashback</a>
+            <nav class="nav">
+                <a href="/home.html">My Roadmaps</a>
+                <a href="#" id="signout-btn">Sign Out</a>
+            </nav>
+        </div>
+    </header>
+    
+    <main class="dashboard">
+        <div class="container">
+            <div class="dashboard-header">
+                <a href="javascript:history.back()" style="color: var(--text-muted); text-decoration: none;">← Back</a>
+                <h1>Subjects & Resources</h1>
+            </div>
+            
+            <div id="error-message" style="display: none;"></div>
+            
+            <button id="create-subject-btn" class="btn btn-accent mb-lg">
+                + Add Subject
+            </button>
+            
+            <!-- Create Subject Form -->
+            <div id="create-subject-form" class="card" style="display: none; max-width: 600px; margin-bottom: 2rem;">
+                <div class="card-header">
+                    <h3 class="card-title">Add New Subject</h3>
+                </div>
+                <form id="subject-form">
+                    <div class="form-group">
+                        <label class="form-label" for="subject-name">Subject Name</label>
+                        <input 
+                            type="text" 
+                            id="subject-name" 
+                            class="form-input" 
+                            placeholder="e.g., Arrow Functions"
+                            required
+                        >
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label" for="subject-description">Description</label>
+                        <textarea 
+                            id="subject-description" 
+                            class="form-textarea" 
+                            placeholder="What is this subject about?"
+                        ></textarea>
+                    </div>
+                    
+                    <div style="display: flex; gap: 1rem;">
+                        <button type="submit" id="save-subject-btn" class="btn btn-primary">
+                            Add Subject
+                        </button>
+                        <button type="button" id="cancel-subject-btn" class="btn btn-secondary">
+                            Cancel
+                        </button>
+                    </div>
+                </form>
+            </div>
+            
+            <!-- Loading State -->
+            <div id="loading" style="display: none; text-align: center; padding: 3rem;">
+                <div class="loading" style="width: 40px; height: 40px; border-width: 4px;"></div>
+                <p class="text-muted mt-md">Loading subjects...</p>
+            </div>
+            
+            <!-- Subjects Grid -->
+            <div id="subjects-container" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 1.5rem;">
+                <!-- Subjects will be inserted here -->
+            </div>
+            
+            <!-- Empty State -->
+            <div id="empty-state" style="display: none; text-align: center; padding: 4rem 2rem;">
+                <h3 style="color: var(--text-muted);">No subjects yet</h3>
+                <p class="text-muted">Add subjects to organize your learning materials!</p>
+            </div>
+        </div>
+    </main>
+    
+    <!-- Add Resource Modal (shown when clicking on a subject) -->
+    <div id="resource-modal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; padding: 2rem;">
+        <div class="card" style="max-width: 600px; margin: 2rem auto; max-height: 80vh; overflow-y: auto;">
+            <div class="card-header">
+                <h3 class="card-title" id="resource-modal-title">Add Resource</h3>
+            </div>
+            <form id="resource-form">
+                <div class="form-group">
+                    <label class="form-label" for="resource-name">Resource Name</label>
+                    <input 
+                        type="text" 
+                        id="resource-name" 
+                        class="form-input" 
+                        placeholder="e.g., MDN Arrow Functions Guide"
+                        required
+                    >
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label" for="resource-type">Type</label>
+                    <select id="resource-type" class="form-select" required>
+                        <option value="">Select type...</option>
+                        <option value="article">Article</option>
+                        <option value="video">Video</option>
+                        <option value="book">Book</option>
+                        <option value="course">Course</option>
+                        <option value="documentation">Documentation</option>
+                        <option value="tutorial">Tutorial</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label" for="resource-url">URL</label>
+                    <input 
+                        type="url" 
+                        id="resource-url" 
+                        class="form-input" 
+                        placeholder="https://..."
+                        required
+                    >
+                </div>
+                
+                <div style="display: flex; gap: 1rem;">
+                    <button type="submit" id="save-resource-btn" class="btn btn-primary">
+                        Add Resource
+                    </button>
+                    <button type="button" id="close-resource-modal-btn" class="btn btn-secondary">
+                        Close
+                    </button>
+                </div>
+            </form>
+            
+            <!-- Resources List -->
+            <div id="resources-list" class="mt-lg" style="border-top: 2px solid var(--border); padding-top: 1.5rem;">
+                <h4>Resources</h4>
+                <div id="resources-container"></div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="/js/google-protobuf.js"></script>
+    <script src="/js/grpc-web.js"></script>
+    <script src="/proto/types_pb.js"></script>
+    <script src="/proto/requests_pb.js"></script>
+    <script src="/proto/server_pb.js"></script>
+    <script src="/proto/server_grpc_web_pb.js"></script>
+    <script src="/js/client.js"></script>
+    <script src="/js/auth.js"></script>
+    <script src="/js/ui.js"></script>
+    
+    <script>
+        // Require authentication
+        if (!Auth.requireAuth()) {
+            // Will redirect to login
+        }
+        
+        // Get milestone ID from URL
+        const milestoneId = UI.getUrlParam('milestone');
+        if (!milestoneId) {
+            window.location.href = '/home.html';
+        }
+        
+        let currentSubjectId = null;
+        
+        // Sign out handler
+        document.getElementById('signout-btn').addEventListener('click', async (e) => {
+            e.preventDefault();
+            await Auth.signOut();
+        });
+        
+        // Show/hide create subject form
+        document.getElementById('create-subject-btn').addEventListener('click', () => {
+            UI.toggleElement('create-subject-form', true);
+            document.getElementById('subject-name').focus();
+        });
+        
+        document.getElementById('cancel-subject-btn').addEventListener('click', () => {
+            UI.toggleElement('create-subject-form', false);
+            UI.clearForm('subject-form');
+        });
+        
+        // Handle subject creation
+        document.getElementById('subject-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const name = document.getElementById('subject-name').value;
+            const description = document.getElementById('subject-description').value;
+            
+            UI.hideMessage('error-message');
+            UI.setButtonLoading('save-subject-btn', true);
+            
+            try {
+                const subject = await flashbackClient.createSubject(milestoneId, name, description);
+                console.log('Subject created:', subject);
+                
+                UI.toggleElement('create-subject-form', false);
+                UI.clearForm('subject-form');
+                UI.setButtonLoading('save-subject-btn', false);
+                
+                loadSubjects();
+            } catch (err) {
+                console.error('Create subject failed:', err);
+                UI.showError(err.message || 'Failed to create subject');
+                UI.setButtonLoading('save-subject-btn', false);
+            }
+        });
+        
+        // Handle resource modal
+        document.getElementById('close-resource-modal-btn').addEventListener('click', () => {
+            UI.toggleElement('resource-modal', false);
+            currentSubjectId = null;
+        });
+        
+        document.getElementById('resource-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            if (!currentSubjectId) return;
+            
+            const name = document.getElementById('resource-name').value;
+            const type = document.getElementById('resource-type').value;
+            const url = document.getElementById('resource-url').value;
+            
+            UI.setButtonLoading('save-resource-btn', true);
+            
+            try {
+                const resource = await flashbackClient.addResource(currentSubjectId, name, type, url);
+                console.log('Resource added:', resource);
+                
+                UI.clearForm('resource-form');
+                UI.setButtonLoading('save-resource-btn', false);
+                
+                // Reload resources
+                loadResources(currentSubjectId);
+            } catch (err) {
+                console.error('Add resource failed:', err);
+                alert('Failed to add resource: ' + (err.message || 'Unknown error'));
+                UI.setButtonLoading('save-resource-btn', false);
+            }
+        });
+        
+        // Load subjects
+        async function loadSubjects() {
+            UI.toggleElement('loading', true);
+            UI.toggleElement('subjects-container', false);
+            UI.toggleElement('empty-state', false);
+            
+            try {
+                const subjects = await flashbackClient.getSubjects(milestoneId);
+                console.log('Loaded subjects:', subjects);
+                
+                UI.toggleElement('loading', false);
+                
+                if (subjects.length === 0) {
+                    UI.toggleElement('empty-state', true);
+                } else {
+                    UI.toggleElement('subjects-container', true);
+                    renderSubjects(subjects);
+                }
+            } catch (err) {
+                console.error('Load subjects failed:', err);
+                UI.toggleElement('loading', false);
+                UI.showError('Failed to load subjects: ' + (err.message || 'Unknown error'));
+            }
+        }
+        
+        // Render subjects
+        function renderSubjects(subjects) {
+            const container = document.getElementById('subjects-container');
+            container.innerHTML = '';
+            
+            subjects.forEach(subject => {
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.style.cursor = 'pointer';
+                card.innerHTML = `
+                    <h3>${UI.escapeHtml(subject.name)}</h3>
+                    <p class="text-muted">${UI.escapeHtml(subject.description || 'No description')}</p>
+                    <button class="btn btn-secondary mt-md" onclick="openResourceModal('${subject.id}', '${UI.escapeHtml(subject.name)}')">
+                        Manage Resources
+                    </button>
+                `;
+                container.appendChild(card);
+            });
+        }
+        
+        // Open resource modal
+        window.openResourceModal = async function(subjectId, subjectName) {
+            currentSubjectId = subjectId;
+            document.getElementById('resource-modal-title').textContent = subjectName + ' - Resources';
+            UI.toggleElement('resource-modal', true);
+            loadResources(subjectId);
+        };
+        
+        // Load resources for a subject
+        async function loadResources(subjectId) {
+            const container = document.getElementById('resources-container');
+            container.innerHTML = '<p class="text-muted">Loading...</p>';
+            
+            try {
+                const resources = await flashbackClient.getResources(subjectId);
+                console.log('Loaded resources:', resources);
+                
+                if (resources.length === 0) {
+                    container.innerHTML = '<p class="text-muted">No resources yet. Add one above!</p>';
+                } else {
+                    container.innerHTML = resources.map(res => `
+                        <div style="padding: 1rem; border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 1rem;">
+                            <strong>${UI.escapeHtml(res.name)}</strong>
+                            <span style="background: var(--accent); color: white; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem; margin-left: 0.5rem;">
+                                ${UI.escapeHtml(res.type)}
+                            </span>
+                            <br>
+                            <a href="${UI.escapeHtml(res.url)}" target="_blank" style="color: var(--primary); text-decoration: none;">
+                                ${UI.escapeHtml(res.url)}
+                            </a>
+                        </div>
+                    `).join('');
+                }
+            } catch (err) {
+                console.error('Load resources failed:', err);
+                container.innerHTML = '<p class="alert alert-error">Failed to load resources</p>';
+            }
+        }
+        
+        // Load on page load
+        window.addEventListener('load', () => {
+            loadSubjects();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Roadmap - Flashback</title>
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="stylesheet" href="/css/styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;600;700&family=Source+Sans+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <header class="header">
+        <div class="container header-content">
+            <a href="/home.html" class="logo">Flashback</a>
+            <nav class="nav">
+                <a href="/home.html">My Roadmaps</a>
+                <a href="#" id="signout-btn">Sign Out</a>
+            </nav>
+        </div>
+    </header>
+    
+    <main class="dashboard">
+        <div class="container">
+            <div class="dashboard-header">
+                <a href="/home.html" style="color: var(--text-muted); text-decoration: none;">← Back to Roadmaps</a>
+                <h1 id="roadmap-title">Loading...</h1>
+                <p id="roadmap-description" class="dashboard-welcome"></p>
+            </div>
+            
+            <div id="error-message" style="display: none;"></div>
+            
+            <button id="create-milestone-btn" class="btn btn-accent mb-lg">
+                + Add Milestone
+            </button>
+            
+            <!-- Create Milestone Form -->
+            <div id="create-form" class="card" style="display: none; max-width: 600px; margin-bottom: 2rem;">
+                <div class="card-header">
+                    <h3 class="card-title">Add New Milestone</h3>
+                </div>
+                <form id="milestone-form">
+                    <div class="form-group">
+                        <label class="form-label" for="milestone-name">Milestone Name</label>
+                        <input 
+                            type="text" 
+                            id="milestone-name" 
+                            class="form-input" 
+                            placeholder="e.g., Learn ES6 Features"
+                            required
+                        >
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label" for="milestone-description">Description</label>
+                        <textarea 
+                            id="milestone-description" 
+                            class="form-textarea" 
+                            placeholder="What will you accomplish?"
+                        ></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label" for="milestone-date">Target Date (Optional)</label>
+                        <input 
+                            type="date" 
+                            id="milestone-date" 
+                            class="form-input"
+                        >
+                    </div>
+                    
+                    <div style="display: flex; gap: 1rem;">
+                        <button type="submit" id="save-milestone-btn" class="btn btn-primary">
+                            Add Milestone
+                        </button>
+                        <button type="button" id="cancel-milestone-btn" class="btn btn-secondary">
+                            Cancel
+                        </button>
+                    </div>
+                </form>
+            </div>
+            
+            <!-- Loading State -->
+            <div id="loading" style="display: none; text-align: center; padding: 3rem;">
+                <div class="loading" style="width: 40px; height: 40px; border-width: 4px;"></div>
+                <p class="text-muted mt-md">Loading milestones...</p>
+            </div>
+            
+            <!-- Milestones Timeline -->
+            <div id="milestones-container" class="timeline">
+                <!-- Milestones will be inserted here -->
+            </div>
+            
+            <!-- Empty State -->
+            <div id="empty-state" style="display: none; text-align: center; padding: 4rem 2rem;">
+                <h3 style="color: var(--text-muted);">No milestones yet</h3>
+                <p class="text-muted">Add your first milestone to start tracking progress!</p>
+            </div>
+        </div>
+    </main>
+    
+    <script src="/js/google-protobuf.js"></script>
+    <script src="/js/grpc-web.js"></script>
+    <script src="/proto/types_pb.js"></script>
+    <script src="/proto/requests_pb.js"></script>
+    <script src="/proto/server_pb.js"></script>
+    <script src="/proto/server_grpc_web_pb.js"></script>
+    <script src="/js/client.js"></script>
+    <script src="/js/auth.js"></script>
+    <script src="/js/ui.js"></script>
+    
+    <script>
+        // Require authentication
+        if (!Auth.requireAuth()) {
+            // Will redirect to login
+        }
+        
+        // Get roadmap ID from URL
+        const roadmapId = UI.getUrlParam('id');
+        if (!roadmapId) {
+            window.location.href = '/home.html';
+        }
+        
+        // Sign out handler
+        document.getElementById('signout-btn').addEventListener('click', async (e) => {
+            e.preventDefault();
+            await Auth.signOut();
+        });
+        
+        // Show/hide create form
+        document.getElementById('create-milestone-btn').addEventListener('click', () => {
+            UI.toggleElement('create-form', true);
+            document.getElementById('milestone-name').focus();
+        });
+        
+        document.getElementById('cancel-milestone-btn').addEventListener('click', () => {
+            UI.toggleElement('create-form', false);
+            UI.clearForm('milestone-form');
+        });
+        
+        // Handle milestone creation
+        document.getElementById('milestone-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const name = document.getElementById('milestone-name').value;
+            const description = document.getElementById('milestone-description').value;
+            const dateStr = document.getElementById('milestone-date').value;
+            const targetDate = dateStr ? new Date(dateStr) : null;
+            
+            UI.hideMessage('error-message');
+            UI.setButtonLoading('save-milestone-btn', true);
+            
+            try {
+                const milestone = await flashbackClient.createMilestone(
+                    roadmapId, 
+                    name, 
+                    description, 
+                    targetDate
+                );
+                console.log('Milestone created:', milestone);
+                
+                // Hide form and reload milestones
+                UI.toggleElement('create-form', false);
+                UI.clearForm('milestone-form');
+                UI.setButtonLoading('save-milestone-btn', false);
+                
+                // Reload
+                loadRoadmap();
+            } catch (err) {
+                console.error('Create milestone failed:', err);
+                UI.showError(err.message || 'Failed to create milestone');
+                UI.setButtonLoading('save-milestone-btn', false);
+            }
+        });
+        
+        // Load roadmap details
+        async function loadRoadmap() {
+            UI.toggleElement('loading', true);
+            UI.toggleElement('milestones-container', false);
+            UI.toggleElement('empty-state', false);
+            
+            try {
+                const roadmap = await flashbackClient.getRoadmap(roadmapId);
+                console.log('Loaded roadmap:', roadmap);
+                
+                // Update page title and description
+                document.getElementById('roadmap-title').textContent = roadmap.name;
+                document.getElementById('roadmap-description').textContent = roadmap.description || '';
+                document.title = roadmap.name + ' - Flashback';
+                
+                UI.toggleElement('loading', false);
+                
+                if (roadmap.milestones.length === 0) {
+                    UI.toggleElement('empty-state', true);
+                } else {
+                    UI.toggleElement('milestones-container', true);
+                    renderMilestones(roadmap.milestones);
+                }
+            } catch (err) {
+                console.error('Load roadmap failed:', err);
+                UI.toggleElement('loading', false);
+                UI.showError('Failed to load roadmap: ' + (err.message || 'Unknown error'));
+            }
+        }
+        
+        // Render milestones
+        function renderMilestones(milestones) {
+            const container = document.getElementById('milestones-container');
+            container.innerHTML = '';
+            
+            milestones.forEach(milestone => {
+                const html = UI.renderMilestone(milestone);
+                container.innerHTML += html;
+            });
+        }
+        
+        // Load on page load
+        window.addEventListener('load', () => {
+            loadRoadmap();
+        });
+    </script>
+</body>
+</html>

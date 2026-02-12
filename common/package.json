@@ -1,0 +1,9 @@
+{
+    "devDependencies": {
+        "node": "^25.6.0",
+        "protoc-gen-grpc-web": "^1.5.0",
+        "protoc-gen-js": "^3.21.4",
+        "browserify": "^17.0.1",
+        "aliasify": "^2.1.0"
+    }
+}

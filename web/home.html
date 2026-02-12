@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Roadmaps - Flashback</title>
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="stylesheet" href="/css/styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;600;700&family=Source+Sans+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <header class="header">
+        <div class="container header-content">
+            <a href="/home.html" class="logo">Flashback</a>
+            <nav class="nav">
+                <a href="/home.html">My Roadmaps</a>
+                <a href="#" id="signout-btn">Sign Out</a>
+            </nav>
+        </div>
+    </header>
+    
+    <main class="dashboard">
+        <div class="container">
+            <div class="dashboard-header">
+                <h1>My Learning Roadmaps</h1>
+                <p class="dashboard-welcome">Track your progress and stay on course.</p>
+            </div>
+            
+            <div id="error-message" style="display: none;"></div>
+            
+            <button id="create-roadmap-btn" class="btn btn-accent mb-lg">
+                + Create New Roadmap
+            </button>
+            
+            <!-- Create Roadmap Modal/Form -->
+            <div id="create-form" class="card" style="display: none; max-width: 600px; margin-bottom: 2rem;">
+                <div class="card-header">
+                    <h3 class="card-title">Create New Roadmap</h3>
+                </div>
+                <form id="roadmap-form">
+                    <div class="form-group">
+                        <label class="form-label" for="roadmap-name">Roadmap Name</label>
+                        <input 
+                            type="text" 
+                            id="roadmap-name" 
+                            class="form-input" 
+                            placeholder="e.g., Master JavaScript"
+                            required
+                        >
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label" for="roadmap-description">Description</label>
+                        <textarea 
+                            id="roadmap-description" 
+                            class="form-textarea" 
+                            placeholder="What will you learn?"
+                        ></textarea>
+                    </div>
+                    
+                    <div style="display: flex; gap: 1rem;">
+                        <button type="submit" id="save-roadmap-btn" class="btn btn-primary">
+                            Create Roadmap
+                        </button>
+                        <button type="button" id="cancel-roadmap-btn" class="btn btn-secondary">
+                            Cancel
+                        </button>
+                    </div>
+                </form>
+            </div>
+            
+            <!-- Loading State -->
+            <div id="loading" style="display: none; text-align: center; padding: 3rem;">
+                <div class="loading" style="width: 40px; height: 40px; border-width: 4px;"></div>
+                <p class="text-muted mt-md">Loading your roadmaps...</p>
+            </div>
+            
+            <!-- Roadmaps Grid -->
+            <div id="roadmaps-container" class="roadmaps-grid">
+                <!-- Roadmaps will be inserted here -->
+            </div>
+            
+            <!-- Empty State -->
+            <div id="empty-state" style="display: none; text-align: center; padding: 4rem 2rem;">
+                <h3 style="color: var(--text-muted);">No roadmaps yet</h3>
+                <p class="text-muted">Create your first learning roadmap to get started!</p>
+            </div>
+        </div>
+    </main>
+    
+    <script src="/js/google-protobuf.js"></script>
+    <script src="/js/grpc-web.js"></script>
+    <script src="/proto/types_pb.js"></script>
+    <script src="/proto/requests_pb.js"></script>
+    <script src="/proto/server_pb.js"></script>
+    <script src="/proto/server_grpc_web_pb.js"></script>
+    <script src="/js/client.js"></script>
+    <script src="/js/auth.js"></script>
+    <script src="/js/ui.js"></script>
+    
+    <script>
+        // Require authentication
+        if (!Auth.requireAuth()) {
+            // Will redirect to login
+        }
+        
+        // Sign out handler
+        document.getElementById('signout-btn').addEventListener('click', async (e) => {
+            e.preventDefault();
+            await Auth.signOut();
+        });
+        
+        // Show/hide create form
+        document.getElementById('create-roadmap-btn').addEventListener('click', () => {
+            UI.toggleElement('create-form', true);
+            document.getElementById('roadmap-name').focus();
+        });
+        
+        document.getElementById('cancel-roadmap-btn').addEventListener('click', () => {
+            UI.toggleElement('create-form', false);
+            UI.clearForm('roadmap-form');
+        });
+        
+        // Handle roadmap creation
+        document.getElementById('roadmap-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const name = document.getElementById('roadmap-name').value;
+            const description = document.getElementById('roadmap-description').value;
+            
+            UI.hideMessage('error-message');
+            UI.setButtonLoading('save-roadmap-btn', true);
+            
+            try {
+                const roadmap = await flashbackClient.createRoadmap(name, description);
+                console.log('Roadmap created:', roadmap);
+                
+                // Hide form and reload roadmaps
+                UI.toggleElement('create-form', false);
+                UI.clearForm('roadmap-form');
+                UI.setButtonLoading('save-roadmap-btn', false);
+                
+                // Reload the page to show new roadmap
+                loadRoadmaps();
+            } catch (err) {
+                console.error('Create roadmap failed:', err);
+                UI.showError(err.message || 'Failed to create roadmap');
+                UI.setButtonLoading('save-roadmap-btn', false);
+            }
+        });
+        
+        // Load roadmaps
+        async function loadRoadmaps() {
+            UI.toggleElement('loading', true);
+            UI.toggleElement('roadmaps-container', false);
+            UI.toggleElement('empty-state', false);
+            
+            try {
+                const roadmaps = await flashbackClient.getRoadmaps();
+                console.log('Loaded roadmaps:', roadmaps);
+                
+                UI.toggleElement('loading', false);
+                
+                if (roadmaps.length === 0) {
+                    UI.toggleElement('empty-state', true);
+                } else {
+                    UI.toggleElement('roadmaps-container', true);
+                    renderRoadmaps(roadmaps);
+                }
+            } catch (err) {
+                console.error('Load roadmaps failed:', err);
+                UI.toggleElement('loading', false);
+                UI.showError('Failed to load roadmaps: ' + (err.message || 'Unknown error'));
+            }
+        }
+        
+        // Render roadmaps
+        function renderRoadmaps(roadmaps) {
+            const container = document.getElementById('roadmaps-container');
+            container.innerHTML = '';
+            
+            roadmaps.forEach(roadmap => {
+                // For now, we don't have milestone counts - we'd need to fetch each roadmap
+                // to get that info. For simplicity, just show 0/0 for now
+                const card = UI.renderRoadmapCard(roadmap, 0, 0);
+                container.innerHTML += card;
+            });
+        }
+        
+        // Load on page load
+        window.addEventListener('load', () => {
+            loadRoadmaps();
+        });
+    </script>
+</body>
+</html>
