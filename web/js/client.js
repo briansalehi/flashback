@@ -1,18 +1,9 @@
-/**
- * Flashback gRPC-Web Client
- * Wrapper for gRPC API calls
- */
-
 class FlashbackClient {
     constructor() {
-        // API endpoint - uses api.flashback.eu.com
         this.apiUrl = 'https://api.flashback.eu.com';
-        
-        // Initialize gRPC client when proto files are loaded
         this.client = null;
         this.ready = false;
         
-        // Wait for DOM and scripts to load
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', () => this.initClient());
         } else {
@@ -21,29 +12,15 @@ class FlashbackClient {
     }
     
     initClient() {
-        // Wait for proto files to load
         try {
-            // Access via window to avoid TDZ (Temporal Dead Zone) issues
-            const protoObj = window.proto;
-            if (!protoObj || !protoObj.flashback || !protoObj.flashback.ServerClient) {
-                console.log('Waiting for proto files to load...');
-                setTimeout(() => this.initClient(), 100);
-                return;
-            }
-            
-            // Create the gRPC client
-            this.client = new protoObj.flashback.ServerClient(this.apiUrl, null, null);
+            this.client = new window.server_grpc_web_pb.ServerClient(this.apiUrl, null, null);
             this.ready = true;
-            console.log('gRPC client initialized successfully');
+            console.log('gRPC client initialized');
         } catch (e) {
-            console.log('Waiting for proto files to load...', e.message);
-            setTimeout(() => this.initClient(), 100);
+            console.error('Error initializing client:', e);
         }
     }
     
-    /**
-     * Wait for client to be ready
-     */
     async waitForReady() {
         if (this.ready) return;
         
@@ -86,9 +63,11 @@ class FlashbackClient {
         await this.waitForReady();
         
         return new Promise((resolve, reject) => {
+            const user = new proto.flashback.User();
             const request = new proto.flashback.SignInRequest();
-            request.setEmail(email);
-            request.setPassword(password);
+            user.setEmail(email);
+            user.setPassword(password);
+            request.setUser(user);
             
             this.client.signIn(request, {}, (err, response) => {
                 if (err) {
@@ -397,5 +376,4 @@ class FlashbackClient {
     }
 }
 
-// Create global client instance
 const flashbackClient = new FlashbackClient();
