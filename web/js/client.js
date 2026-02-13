@@ -3,6 +3,8 @@ class FlashbackClient {
         this.apiUrl = 'https://api.flashback.eu.com';
         this.client = null;
         this.ready = false;
+        this.device = this.getDevice();
+        this.token = this.getToken();
         
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', () => this.initClient());
@@ -36,94 +38,90 @@ class FlashbackClient {
         });
     }
     
-    /**
-     * Get authentication token from session
-     */
-    getAuthToken() {
-        return sessionStorage.getItem('authToken') || '';
+    getToken() {
+        return localStorage.getItem('token') || '';
     }
     
-    /**
-     * Get metadata with auth token
-     */
     getMetadata() {
-        const token = this.getAuthToken();
+        const token = this.getToken();
+        const device = this.getDevice();
         return {
-            'authorization': `Bearer ${token}`
+            'token': `${token}`,
+            'device': `${device}`
         };
     }
-    
-    /**
-     * Sign in user
-     * @param {string} email 
-     * @param {string} password 
-     * @returns {Promise<Object>}
-     */
+
+    getDevice() {
+        let device = localStorage.getItem('device');
+
+        if (!device) {
+            // UUID v4
+            device = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                const r = Math.random() * 16 | 0;
+                const v = c === 'x' ? r : (r & 0x3 | 0x8);
+                return v.toString(16);
+            });
+
+            localStorage.setItem('device', device);
+        }
+
+        return device;
+    }
+
     async signIn(email, password) {
         await this.waitForReady();
-        
+
         return new Promise((resolve, reject) => {
             const user = new proto.flashback.User();
             const request = new proto.flashback.SignInRequest();
             user.setEmail(email);
             user.setPassword(password);
+            user.setDevice(this.device);
             request.setUser(user);
-            
+
             this.client.signIn(request, {}, (err, response) => {
                 if (err) {
                     console.error('SignIn error:', err);
                     reject(err);
                 } else {
-                    // Store auth token
-                    const token = response.getToken();
-                    sessionStorage.setItem('authToken', token);
-                    
+                    const user = response.getUser();
+                    this.token = user.getToken();
+                    localStorage.setItem('token', this.token);
+                    console.error('SignIn successful', this.device, this.token);
+
                     resolve({
-                        token: token,
-                        userId: response.getUserid()
+                        token: user.getToken(),
+                        device: user.getDevice()
                     });
                 }
             });
         });
     }
     
-    /**
-     * Sign up new user
-     * @param {string} email 
-     * @param {string} password 
-     * @param {string} displayName 
-     * @returns {Promise<Object>}
-     */
     async signUp(email, password, displayName) {
         await this.waitForReady();
         
         return new Promise((resolve, reject) => {
+            const user = new proto.flashback.User();
             const request = new proto.flashback.SignUpRequest();
-            request.setEmail(email);
-            request.setPassword(password);
-            request.setDisplayname(displayName);
-            
+            user.setName(name);
+            user.setEmail(email);
+            user.setPassword(password);
+            user.setDevice(this.getDevice());
+            request.setUser(user);
+
             this.client.signUp(request, {}, (err, response) => {
                 if (err) {
                     console.error('SignUp error:', err);
                     reject(err);
                 } else {
-                    // Store auth token
-                    const token = response.getToken();
-                    sessionStorage.setItem('authToken', token);
-                    
-                    resolve({
-                        token: token,
-                        userId: response.getUserid()
-                    });
+                    console.error('SignUp successful');
+                    resolve();
                 }
             });
         });
     }
     
-    /**
-     * Sign out user
-     */
     async signOut() {
         return new Promise((resolve, reject) => {
             const request = new proto.flashback.SignOutRequest();
@@ -132,20 +130,16 @@ class FlashbackClient {
                 if (err) {
                     console.error('SignOut error:', err);
                     // Clear token anyway
-                    sessionStorage.removeItem('authToken');
+                    sessionStorage.removeItem('token');
                     reject(err);
                 } else {
-                    sessionStorage.removeItem('authToken');
+                    sessionStorage.removeItem('token');
                     resolve();
                 }
             });
         });
     }
     
-    /**
-     * Get all roadmaps for current user
-     * @returns {Promise<Array>}
-     */
     async getRoadmaps() {
         return new Promise((resolve, reject) => {
             const request = new proto.flashback.GetRoadmapsRequest();
@@ -167,12 +161,6 @@ class FlashbackClient {
         });
     }
     
-    /**
-     * Create a new roadmap
-     * @param {string} name 
-     * @param {string} description 
-     * @returns {Promise<Object>}
-     */
     async createRoadmap(name, description) {
         return new Promise((resolve, reject) => {
             const request = new proto.flashback.CreateRoadmapRequest();
@@ -194,11 +182,6 @@ class FlashbackClient {
         });
     }
     
-    /**
-     * Get roadmap details with milestones
-     * @param {string} roadmapId 
-     * @returns {Promise<Object>}
-     */
     async getRoadmap(roadmapId) {
         return new Promise((resolve, reject) => {
             const request = new proto.flashback.GetRoadmapRequest();
@@ -228,14 +211,6 @@ class FlashbackClient {
         });
     }
     
-    /**
-     * Create a milestone in a roadmap
-     * @param {string} roadmapId 
-     * @param {string} name 
-     * @param {string} description 
-     * @param {Date} targetDate 
-     * @returns {Promise<Object>}
-     */
     async createMilestone(roadmapId, name, description, targetDate) {
         return new Promise((resolve, reject) => {
             const request = new proto.flashback.CreateMilestoneRequest();
@@ -261,11 +236,6 @@ class FlashbackClient {
         });
     }
     
-    /**
-     * Get subjects for a milestone
-     * @param {string} milestoneId 
-     * @returns {Promise<Array>}
-     */
     async getSubjects(milestoneId) {
         return new Promise((resolve, reject) => {
             const request = new proto.flashback.GetSubjectsRequest();
@@ -287,13 +257,6 @@ class FlashbackClient {
         });
     }
     
-    /**
-     * Create a subject in a milestone
-     * @param {string} milestoneId 
-     * @param {string} name 
-     * @param {string} description 
-     * @returns {Promise<Object>}
-     */
     async createSubject(milestoneId, name, description) {
         return new Promise((resolve, reject) => {
             const request = new proto.flashback.CreateSubjectRequest();
@@ -316,11 +279,6 @@ class FlashbackClient {
         });
     }
     
-    /**
-     * Get resources for a subject
-     * @param {string} subjectId 
-     * @returns {Promise<Array>}
-     */
     async getResources(subjectId) {
         return new Promise((resolve, reject) => {
             const request = new proto.flashback.GetResourcesRequest();
@@ -343,14 +301,6 @@ class FlashbackClient {
         });
     }
     
-    /**
-     * Add a resource to a subject
-     * @param {string} subjectId 
-     * @param {string} name 
-     * @param {string} type 
-     * @param {string} url 
-     * @returns {Promise<Object>}
-     */
     async addResource(subjectId, name, type, url) {
         return new Promise((resolve, reject) => {
             const request = new proto.flashback.AddResourceRequest();

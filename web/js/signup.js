@@ -1,7 +1,3 @@
-/**
- * Signup page script
- */
-
 window.addEventListener('DOMContentLoaded', () => {
     // Redirect if already authenticated
     Auth.redirectIfAuthenticated();

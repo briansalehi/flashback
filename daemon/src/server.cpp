@@ -87,11 +87,10 @@ grpc::Status server::SignUp(grpc::ServerContext* context, const SignUpRequest* r
         if (m_database->user_exists(request->user().email()))
         {
             throw client_exception(std::format("user {} is already registered", request->user().email()));
-            // auto existing_user{m_database->get_user(request->user().email())};
         }
 
         user->set_hash(calculate_hash(user->password()));
-        uint64_t user_id{m_database->create_user(user->name(), user->email(), user->hash())};
+        uint64_t const user_id{m_database->create_user(user->name(), user->email(), user->hash())};
         user->clear_password();
         user->clear_hash();
         user->clear_id();
