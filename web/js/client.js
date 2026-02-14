@@ -153,7 +153,7 @@ class FlashbackClient {
                     console.error('GetRoadmaps error:', err);
                     reject(err);
                 } else {
-                    const roadmaps = response.roadmap().map(rm => ({
+                    const roadmaps = response.getRoadmaps().map(rm => ({
                         id: rm.id(),
                         name: rm.name(),
                     }));

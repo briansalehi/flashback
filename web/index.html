@@ -1,431 +1,64 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta
-      name="google-site-verification"
-      content="7zG1tHYhsnKfE5-n0Hlo8ggombXCVy5Xj0zITYX_Eko"
-    />
-    <title>
-      FLASHBACK - Transform Complex Technical Subjects Into Muscle Memory
-    </title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
-      rel="stylesheet"
-    />
-    <style>
-      * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-      }
-
-      body {
-        font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI",
-          Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-        background: linear-gradient(
-          135deg,
-          #0f0f0f 0%,
-          #1a1a1a 35%,
-          #252525 70%,
-          #1a1a1a 100%
-        );
-        color: #ffffff;
-        min-height: 100vh;
-        margin: 0;
-        padding: 0;
-        overflow-x: hidden;
-        padding-top: 5rem;
-        padding-bottom: 2rem;
-      }
-
-      @keyframes rotate-gradient {
-        0% {
-          background-position: 0% 50%;
-        }
-        100% {
-          background-position: 100% 50%;
-        }
-      }
-
-      @keyframes rotate-shadow {
-        0% {
-          box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3),
-            0 2px 8px rgba(118, 75, 162, 0.2),
-            0 0 15px rgba(102, 126, 234, 0.15);
-        }
-        25% {
-          box-shadow: 0 4px 15px rgba(118, 75, 162, 0.3),
-            0 2px 8px rgba(102, 126, 234, 0.2),
-            0 0 15px rgba(118, 75, 162, 0.15);
-        }
-        50% {
-          box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3),
-            0 2px 8px rgba(118, 75, 162, 0.2),
-            0 0 15px rgba(102, 126, 234, 0.15);
-        }
-        75% {
-          box-shadow: 0 4px 15px rgba(118, 75, 162, 0.3),
-            0 2px 8px rgba(102, 126, 234, 0.2),
-            0 0 15px rgba(118, 75, 162, 0.15);
-        }
-        100% {
-          box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3),
-            0 2px 8px rgba(118, 75, 162, 0.2),
-            0 0 15px rgba(102, 126, 234, 0.15);
-        }
-      }
-
-      .background-pattern {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        opacity: 0.05;
-        background-image: radial-gradient(
-            circle at 25% 25%,
-            #667eea 1px,
-            transparent 1px
-          ),
-          radial-gradient(circle at 75% 75%, #764ba2 1px, transparent 1px);
-        background-size: 60px 60px;
-        background-position: 0 0, 30px 30px;
-        z-index: -1;
-      }
-
-      .container {
-        position: relative;
-        z-index: 2;
-        text-align: center;
-        max-width: 1200px;
-        width: 100%;
-        padding: 0 2rem;
-        animation: fadeInUp 1s ease-out;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        margin: 0 auto;
-      }
-
-      .logo-container {
-        margin-bottom: 3rem;
-        animation: fadeInUp 1s ease-out;
-      }
-
-      .logo-container img {
-        width: 140px;
-        height: auto;
-        filter: drop-shadow(0 10px 30px rgba(255, 255, 255, 0.1));
-        transition: transform 0.3s ease;
-      }
-
-      .logo-container img:hover {
-        transform: scale(1.05);
-      }
-
-      .tagline {
-        font-size: 3.5rem;
-        font-weight: 800;
-        margin-bottom: 1.5rem;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-        letter-spacing: -0.05em;
-        line-height: 1.1;
-        text-align: center;
-        font-family: "Inter", sans-serif;
-        text-transform: none;
-      }
-
-      .github-cta {
-        margin: 3rem 0;
-      }
-
-      .github-button {
-        display: inline-flex;
-        align-items: center;
-        gap: 12px;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: #ffffff;
-        padding: 16px 32px;
-        border-radius: 8px;
-        font-size: 1.1rem;
-        font-weight: 500;
-        text-decoration: none;
-        transition: all 0.2s ease;
-        box-shadow: 0 4px 16px rgba(102, 126, 234, 0.3);
-        font-family: "JetBrains Mono", monospace;
-        font-weight: 500;
-        letter-spacing: 0.5px;
-      }
-
-      .github-button:hover {
-        background: linear-gradient(135deg, #7c8ff0 0%, #8a5bb8 100%);
-        transform: translateY(-1px);
-        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
-      }
-
-      .github-button:active {
-        transform: translateY(0);
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-      }
-
-      .github-button svg {
-        width: 24px;
-        height: 24px;
-        fill: currentColor;
-      }
-
-      .coming-soon-section {
-        margin-top: 2rem;
-        padding-top: 3rem;
-        /* border-top: 1px solid rgba(255, 255, 255, 0.1); */
-      }
-
-      .coming-soon-title {
-        font-size: 1rem;
-        font-weight: 500;
-        color: #8a8a8a;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-      }
-
-      .github-standalone {
-        text-align: center;
-        margin-top: 2rem;
-      }
-
-      .github-standalone .download-badge {
-        display: inline-flex;
-        width: 180px;
-      }
-
-      .download-section {
-        display: grid;
-        grid-template-columns: 1fr;
-        gap: 12px;
-        justify-items: center;
-        margin: 0 auto;
-        width: 100%;
-        max-width: 600px;
-      }
-
-      .download-badge {
-        width: 180px;
-        height: auto;
-        transition: all 0.3s ease;
-        opacity: 0.5;
-        border-radius: 8px;
-        overflow: hidden;
-      }
-
-      .download-badge:not(.disabled) {
-        opacity: 1;
-        cursor: pointer;
-        animation: rotate-shadow 3s ease-in-out infinite;
-      }
-
-      .download-badge:not(.disabled):hover {
-        transform: translateY(-3px);
-        /* animation: none; */
-        filter: brightness(1.1);
-      }
-
-      .download-badge.disabled {
-        filter: grayscale(90%);
-        cursor: not-allowed;
-      }
-
-      .download-badge img {
-        width: 100%;
-        height: auto;
-        display: block;
-      }
-
-      .linux-section {
-        display: grid;
-        grid-template-columns: 1fr;
-        gap: 12px;
-        justify-items: center;
-        margin: 0 auto;
-        width: 100%;
-      }
-
-      @media (min-width: 768px) {
-        .download-section {
-          grid-template-columns: repeat(3, 1fr);
-          gap: 12px;
-          max-width: 600px;
-        }
-
-        .linux-section {
-          grid-column: 1 / -1;
-          display: grid;
-          grid-template-columns: repeat(3, 1fr);
-          gap: 12px;
-          margin-top: 12px;
-          /* max-width: 380px; */
-          justify-items: center;
-          justify-self: center;
-        }
-      }
-      .divider {
-        margin: 1.5rem 0;
-        width: 100%;
-        max-width: 600px;
-        height: 2px;
-        background-color: rgba(255, 255, 255, 0.1);
-      }
-
-      .header {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        padding: 1.5rem 2rem;
-        display: flex;
-        justify-content: flex-end;
-        align-items: center;
-        z-index: 3;
-      }
-
-      .logo {
-        display: none;
-      }
-
-      .github-link img {
-        width: 40px;
-        height: 40px;
-        border-radius: 50%;
-      }
-
-      @keyframes fadeInUp {
-        from {
-          opacity: 0;
-          transform: translateY(30px);
-        }
-        to {
-          opacity: 1;
-          transform: translateY(0);
-        }
-      }
-
-      @keyframes float {
-        0%,
-        100% {
-          transform: translateY(0px);
-        }
-        50% {
-          transform: translateY(-10px);
-        }
-      }
-    </style>
-    <script src="/js/google-protobuf.js"></script>
-    <script src="/js/grpc-web.js"></script>
-  </head>
-  <body>
-    <div class="background-pattern"></div>
-    <header class="header">
-      <div class="logo">
-        <img src="https://i.ibb.co/20F287kq/flashback-logo.png" alt="Logo" />
-      </div>
-    </header>
-    <div class="container">
-      <div class="logo-container">
-        <img
-          src="https://i.ibb.co/20F287kq/flashback-logo.png"
-          alt="FLASHBACK"
-        />
-      </div>
-      <p class="tagline">Turn Expertise into Instinct</p>
-      <div class="coming-soon-section">
-        <p onclick="test_connection()" class="coming-soon-title">Coming soon to all major platforms</p>
-        <div class="divider"></div>
-        <div class="download-section">
-          <div class="download-badge disabled">
-            <a href="#" class="download-badge disabled">
-              <img
-                src="https://i.ibb.co/PGVjSL0Q/playstore.png"
-                alt="Google Play"
-              />
-            </a>
-          </div>
-          <div class="download-badge disabled">
-            <a href="#" class="download-badge disabled">
-              <img
-                src="https://i.ibb.co/KzFQmFNB/applestore.png"
-                alt="App Store"
-              />
-            </a>
-          </div>
-          <div class="download-badge disabled">
-            <a href="#" class="download-badge disabled">
-              <img
-                src="https://i.ibb.co/KxqP7Qhv/msstore.png"
-                alt="Microsoft Store"
-              />
-            </a>
-          </div>
-          <div class="linux-section">
-            <div class="download-badge">
-              <a href="https://github.com/briansalehi/flashback">
-                <img
-                  src="https://i.ibb.co/JRBN8CK9/linux-shell.png"
-                  alt="Linux Shell"
-                />
-              </a>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign In - Flashback</title>
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="stylesheet" href="/css/styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;600;700&family=Source+Sans+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="auth-page">
+        <div class="auth-container">
+            <div class="auth-logo">
+                <h1>Flashback</h1>
             </div>
-            <div class="download-badge disabled">
-              <a href="#" class="download-badge disabled">
-                <img
-                  src="https://i.ibb.co/wrMPJMFs/download-debian.png"
-                  alt="Debian"
-                />
-              </a>
+            <div id="error-message" style="display: none;"></div>
+            
+            <form id="signin-form">
+                <div class="form-group">
+                    <label class="form-label" for="email">Email</label>
+                    <input 
+                        type="email" 
+                        id="email" 
+                        class="form-input" 
+                        placeholder="you@example.com"
+                        required
+                        autocomplete="email"
+                    >
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label" for="password">Password</label>
+                    <input 
+                        type="password" 
+                        id="password" 
+                        class="form-input" 
+                        placeholder="Enter your password"
+                        required
+                        autocomplete="current-password"
+                    >
+                </div>
+                
+                <button type="submit" id="signin-btn" class="btn btn-primary btn-full">
+                    Sign In
+                </button>
+            </form>
+            
+            <div class="auth-footer">
+                Don't have an account? <a href="/signup.html">Sign up</a>
             </div>
-            <div class="download-badge disabled">
-              <a href="#" class="download-badge disabled">
-                <img
-                  src="https://i.ibb.co/XrxQLyR4/download-fedora.png"
-                  alt="Fedora"
-                />
-              </a>
-            </div>
-          </div>
         </div>
-        <div class="github-standalone">
-          <a
-            href="https://github.com/briansalehi/flashback"
-            class="download-badge"
-          >
-            <img
-              src="https://i.ibb.co/tMbqGh0f/flashback-github.png"
-              alt="Github"
-            />
-          </a>
-        </div>
-      </div>
     </div>
-    <script>
-        function test_connection() {
-            fetch('https://api.flashback.eu.com', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/grpc-web+proto'
-                }
-            })
-            .then(response => {
-                console.log('Status', response.status, ': Connection successful!');
-            })
-            .catch(error => {
-                console.log('Error:', error);
-            });
-        }
-    </script>
-  </body>
+    
+    <!--script src="https://cdn.jsdelivr.net/npm/google-protobuf@3.21.2/google-protobuf.js"></--script-->
+    <script defer src="proto/flashback.js"></script> <!-- grpc-web will generate this file -->
+    <script defer src="js/client.js"></script>
+    <script defer src="js/auth.js"></script>
+    <script defer src="js/ui.js"></script>
+    <script defer src="js/index.js"></script>
+</body>
 </html>

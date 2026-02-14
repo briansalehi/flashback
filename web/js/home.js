@@ -4,7 +4,6 @@ window.addEventListener('DOMContentLoaded', () => {
         return;
     }
     
-    // Sign out handler
     document.getElementById('signout-btn').addEventListener('click', async (e) => {
         e.preventDefault();
         await Auth.signOut();
@@ -81,9 +80,6 @@ function renderRoadmaps(roadmaps) {
     container.innerHTML = '';
     
     roadmaps.forEach(roadmap => {
-        // For now, we don't have milestone counts - we'd need to fetch each roadmap
-        // to get that info. For simplicity, just show 0/0 for now
-        const card = UI.renderRoadmapCard(roadmap, 0, 0);
-        container.innerHTML += card;
+        container.innerHTML += UI.renderRoadmap(roadmap, 0, 0);
     });
 }
