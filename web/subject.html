@@ -151,20 +151,14 @@
         </div>
     </div>
     
-    <script src="/js/google-protobuf.js"></script>
-    <script src="/js/grpc-web.js"></script>
-    <script src="/proto/types_pb.js"></script>
-    <script src="/proto/requests_pb.js"></script>
-    <script src="/proto/server_pb.js"></script>
-    <script src="/proto/server_grpc_web_pb.js"></script>
-    <script src="/js/client.js"></script>
-    <script src="/js/auth.js"></script>
-    <script src="/js/ui.js"></script>
+    <script src="proto/flashback.js"></script>
+    <script src="js/client.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/ui.js"></script>
     
     <script>
-        // Require authentication
-        if (!Auth.requireAuth()) {
-            // Will redirect to login
+        if (!Auth.isAuthenticated()) {
+            window.location.href = '/index.html';
         }
         
         // Get milestone ID from URL

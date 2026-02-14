@@ -1,7 +1,7 @@
 window.addEventListener('DOMContentLoaded', () => {
-    // Require authentication
-    if (!Auth.requireAuth()) {
-        return; // Will redirect to login
+    if (!Auth.isAuthenticated()) {
+        window.location.href = '/index.html';
+        return;
     }
     
     // Sign out handler

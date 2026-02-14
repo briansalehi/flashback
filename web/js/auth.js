@@ -7,14 +7,9 @@ const Auth = {
         return localStorage.getItem('token');
     },
     
-    requireAuth() {
-        if (!this.isAuthenticated()) {
-            window.location.href = '/index.html';
-            return false;
-        }
-        return true;
+    requiresAuthentication() {
     },
-    
+
     redirectIfAuthenticated() {
         if (this.isAuthenticated()) {
             window.location.href = '/home.html';

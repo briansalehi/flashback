@@ -82,12 +82,10 @@
     <script defer src="js/client.js"></script>
     <script defer src="js/auth.js"></script>
     <script defer src="js/ui.js"></script>
-    <script defer src="js/index.js"></script>
 
     <script>
-        // Require authentication
-        if (!Auth.requireAuth()) {
-            // Will redirect to login
+        if (!Auth.isAuthenticated()) {
+            window.location.href = '/index.html';
         }
         
         // Sign out handler
