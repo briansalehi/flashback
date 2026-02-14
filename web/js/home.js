@@ -58,8 +58,7 @@ async function loadRoadmaps() {
     
     try {
         const roadmaps = await flashbackClient.getRoadmaps();
-        console.log('Loaded roadmaps:', roadmaps);
-        
+
         UI.toggleElement('loading', false);
         
         if (roadmaps.length === 0) {

@@ -150,12 +150,12 @@ class FlashbackClient {
             
             this.client.getRoadmaps(request, this.getMetadata(), (err, response) => {
                 if (err) {
-                    console.error('GetRoadmaps error:', err);
+                    console.error('getRoadmaps error:', err);
                     reject(err);
                 } else {
-                    const roadmaps = response.getRoadmaps().map(rm => ({
-                        id: rm.id(),
-                        name: rm.name(),
+                    const roadmaps = response.getRoadmapList().map(roadmap => ({
+                        id: roadmap.getId(),
+                        name: roadmap.getName()
                     }));
                     resolve(roadmaps);
                 }
