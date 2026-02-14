@@ -1,13 +1,6 @@
-/**
- * Login page script
- */
-
-// Wait for everything to load
 window.addEventListener('DOMContentLoaded', () => {
-    // Redirect if already authenticated
     Auth.redirectIfAuthenticated();
     
-    // Handle form submission
     document.getElementById('signin-form').addEventListener('submit', async (e) => {
         e.preventDefault();
         
@@ -20,8 +13,6 @@ window.addEventListener('DOMContentLoaded', () => {
         try {
             const result = await flashbackClient.signIn(email, password);
             console.log('Sign in successful:', result);
-            
-            // Redirect to home
             window.location.href = '/home.html';
         } catch (err) {
             console.error('Sign in failed:', err);

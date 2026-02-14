@@ -1,11 +1,4 @@
-/**
- * UI Helper Functions
- */
-
 const UI = {
-    /**
-     * Show error message
-     */
     showError(message, elementId = 'error-message') {
         const errorEl = document.getElementById(elementId);
         if (errorEl) {
@@ -17,9 +10,6 @@ const UI = {
         }
     },
     
-    /**
-     * Show success message
-     */
     showSuccess(message, elementId = 'success-message') {
         const successEl = document.getElementById(elementId);
         if (successEl) {
@@ -29,9 +19,6 @@ const UI = {
         }
     },
     
-    /**
-     * Hide message
-     */
     hideMessage(elementId) {
         const el = document.getElementById(elementId);
         if (el) {
@@ -39,9 +26,6 @@ const UI = {
         }
     },
     
-    /**
-     * Show loading state on button
-     */
     setButtonLoading(buttonId, loading = true) {
         const btn = document.getElementById(buttonId);
         if (!btn) return;
@@ -56,9 +40,6 @@ const UI = {
         }
     },
     
-    /**
-     * Format date
-     */
     formatDate(date) {
         if (!date) return '';
         const d = date instanceof Date ? date : new Date(date);
@@ -69,38 +50,21 @@ const UI = {
         });
     },
     
-    /**
-     * Calculate progress percentage
-     */
     calculateProgress(completed, total) {
         if (total === 0) return 0;
         return Math.round((completed / total) * 100);
     },
     
-    /**
-     * Render roadmap card
-     */
-    renderRoadmapCard(roadmap, completedCount = 0, totalCount = 0) {
+    renderRoadmap(roadmap, completedCount = 0, totalCount = 0) {
         const progress = this.calculateProgress(completedCount, totalCount);
-        
+
         return `
             <a href="roadmap.html?id=${roadmap.id}" class="roadmap-card">
                 <h3 class="roadmap-title">${this.escapeHtml(roadmap.name)}</h3>
-                <p class="roadmap-description">${this.escapeHtml(roadmap.description || 'No description')}</p>
-                <div class="roadmap-meta">
-                    <span>${completedCount} of ${totalCount} milestones</span>
-                    <span>${progress}%</span>
-                </div>
-                <div class="roadmap-progress">
-                    <div class="roadmap-progress-bar" style="width: ${progress}%"></div>
-                </div>
             </a>
         `;
     },
     
-    /**
-     * Render milestone item
-     */
     renderMilestone(milestone) {
         const completedClass = milestone.completed ? 'completed' : '';
         const targetDate = milestone.targetDate ? 
@@ -127,17 +91,11 @@ const UI = {
         return div.innerHTML;
     },
     
-    /**
-     * Get URL parameter
-     */
     getUrlParam(param) {
         const urlParams = new URLSearchParams(window.location.search);
         return urlParams.get(param);
     },
     
-    /**
-     * Show/hide element
-     */
     toggleElement(elementId, show) {
         const el = document.getElementById(elementId);
         if (el) {
@@ -145,9 +103,6 @@ const UI = {
         }
     },
     
-    /**
-     * Clear form
-     */
     clearForm(formId) {
         const form = document.getElementById(formId);
         if (form) {

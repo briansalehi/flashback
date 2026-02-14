@@ -216,7 +216,7 @@ grpc::Status server::GetRoadmaps(grpc::ServerContext* context, GetRoadmapsReques
 
         for (Roadmap const& roadmap: roadmaps)
         {
-            auto allocated_roadmap = response->add_roadmap();
+            auto* const allocated_roadmap = response->add_roadmap();
             allocated_roadmap->set_id(roadmap.id());
             allocated_roadmap->set_name(roadmap.name());
         }

@@ -1,6 +1,6 @@
 class FlashbackClient {
     constructor() {
-        this.apiUrl = 'https://api.flashback.eu.com';
+        this.apiUrl = window.location.hostname === 'localhost' ? 'http://localhost:8080' : 'https://api.flashback.eu.com';
         this.client = null;
         this.ready = false;
         this.device = this.getDevice();
@@ -17,7 +17,6 @@ class FlashbackClient {
         try {
             this.client = new window.server_grpc_web_pb.ServerClient(this.apiUrl, null, null);
             this.ready = true;
-            console.log('gRPC client initialized');
         } catch (e) {
             console.error('Error initializing client:', e);
         }
@@ -87,7 +86,6 @@ class FlashbackClient {
                     const user = response.getUser();
                     this.token = user.getToken();
                     localStorage.setItem('token', this.token);
-                    console.error('SignIn successful', this.device, this.token);
 
                     resolve({
                         token: user.getToken(),
@@ -124,16 +122,18 @@ class FlashbackClient {
     
     async signOut() {
         return new Promise((resolve, reject) => {
+            const user = new proto.flashback.User();
             const request = new proto.flashback.SignOutRequest();
-            
+            user.setDevice(this.device);
+            user.setToken(this.token);
+            request.setUser(user);
+
             this.client.signOut(request, this.getMetadata(), (err, response) => {
+                localStorage.removeItem('token');
                 if (err) {
                     console.error('SignOut error:', err);
-                    // Clear token anyway
-                    sessionStorage.removeItem('token');
                     reject(err);
                 } else {
-                    sessionStorage.removeItem('token');
                     resolve();
                 }
             });
@@ -142,18 +142,20 @@ class FlashbackClient {
     
     async getRoadmaps() {
         return new Promise((resolve, reject) => {
+            const user = new proto.flashback.User();
             const request = new proto.flashback.GetRoadmapsRequest();
+            user.setDevice(this.device);
+            user.setToken(this.token);
+            request.setUser(user);
             
             this.client.getRoadmaps(request, this.getMetadata(), (err, response) => {
                 if (err) {
                     console.error('GetRoadmaps error:', err);
                     reject(err);
                 } else {
-                    const roadmaps = response.getRoadmapsList().map(rm => ({
-                        id: rm.getId(),
-                        name: rm.getName(),
-                        description: rm.getDescription(),
-                        createdAt: new Date(rm.getCreatedat() * 1000)
+                    const roadmaps = response.roadmap().map(rm => ({
+                        id: rm.id(),
+                        name: rm.name(),
                     }));
                     resolve(roadmaps);
                 }

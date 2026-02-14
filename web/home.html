@@ -24,16 +24,15 @@
     <main class="dashboard">
         <div class="container">
             <div class="dashboard-header">
-                <h1>My Learning Roadmaps</h1>
-                <p class="dashboard-welcome">Track your progress and stay on course.</p>
+                <h1>Roadmaps</h1>
             </div>
             
             <div id="error-message" style="display: none;"></div>
-            
+
             <button id="create-roadmap-btn" class="btn btn-accent mb-lg">
                 + Create New Roadmap
             </button>
-            
+
             <!-- Create Roadmap Modal/Form -->
             <div id="create-form" class="card" style="display: none; max-width: 600px; margin-bottom: 2rem;">
                 <div class="card-header">
@@ -51,15 +50,6 @@
                         >
                     </div>
                     
-                    <div class="form-group">
-                        <label class="form-label" for="roadmap-description">Description</label>
-                        <textarea 
-                            id="roadmap-description" 
-                            class="form-textarea" 
-                            placeholder="What will you learn?"
-                        ></textarea>
-                    </div>
-                    
                     <div style="display: flex; gap: 1rem;">
                         <button type="submit" id="save-roadmap-btn" class="btn btn-primary">
                             Create Roadmap
@@ -71,13 +61,11 @@
                 </form>
             </div>
             
-            <!-- Loading State -->
             <div id="loading" style="display: none; text-align: center; padding: 3rem;">
                 <div class="loading" style="width: 40px; height: 40px; border-width: 4px;"></div>
                 <p class="text-muted mt-md">Loading your roadmaps...</p>
             </div>
             
-            <!-- Roadmaps Grid -->
             <div id="roadmaps-container" class="roadmaps-grid">
                 <!-- Roadmaps will be inserted here -->
             </div>
@@ -90,16 +78,12 @@
         </div>
     </main>
     
-    <script src="/js/google-protobuf.js"></script>
-    <script src="/js/grpc-web.js"></script>
-    <script src="/proto/types_pb.js"></script>
-    <script src="/proto/requests_pb.js"></script>
-    <script src="/proto/server_pb.js"></script>
-    <script src="/proto/server_grpc_web_pb.js"></script>
-    <script src="/js/client.js"></script>
-    <script src="/js/auth.js"></script>
-    <script src="/js/ui.js"></script>
-    
+    <script defer src="proto/flashback.js"></script> <!-- grpc-web will generate this file -->
+    <script defer src="js/client.js"></script>
+    <script defer src="js/auth.js"></script>
+    <script defer src="js/ui.js"></script>
+    <script defer src="js/index.js"></script>
+
     <script>
         // Require authentication
         if (!Auth.requireAuth()) {
@@ -128,8 +112,7 @@
             e.preventDefault();
             
             const name = document.getElementById('roadmap-name').value;
-            const description = document.getElementById('roadmap-description').value;
-            
+
             UI.hideMessage('error-message');
             UI.setButtonLoading('save-roadmap-btn', true);
             
@@ -151,18 +134,17 @@
             }
         });
         
-        // Load roadmaps
         async function loadRoadmaps() {
             UI.toggleElement('loading', true);
             UI.toggleElement('roadmaps-container', false);
             UI.toggleElement('empty-state', false);
-            
+
             try {
                 const roadmaps = await flashbackClient.getRoadmaps();
                 console.log('Loaded roadmaps:', roadmaps);
-                
+
                 UI.toggleElement('loading', false);
-                
+
                 if (roadmaps.length === 0) {
                     UI.toggleElement('empty-state', true);
                 } else {
@@ -175,21 +157,16 @@
                 UI.showError('Failed to load roadmaps: ' + (err.message || 'Unknown error'));
             }
         }
-        
-        // Render roadmaps
+
         function renderRoadmaps(roadmaps) {
             const container = document.getElementById('roadmaps-container');
             container.innerHTML = '';
             
             roadmaps.forEach(roadmap => {
-                // For now, we don't have milestone counts - we'd need to fetch each roadmap
-                // to get that info. For simplicity, just show 0/0 for now
-                const card = UI.renderRoadmapCard(roadmap, 0, 0);
-                container.innerHTML += card;
+                container.innerHTML += UI.renderRoadmap(roadmap, 0, 0);
             });
         }
         
-        // Load on page load
         window.addEventListener('load', () => {
             loadRoadmaps();
         });

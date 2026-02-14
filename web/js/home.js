@@ -1,7 +1,3 @@
-/**
- * Home/Dashboard page script
- */
-
 window.addEventListener('DOMContentLoaded', () => {
     // Require authentication
     if (!Auth.requireAuth()) {
@@ -53,11 +49,9 @@ window.addEventListener('DOMContentLoaded', () => {
         }
     });
     
-    // Load roadmaps on page load
     loadRoadmaps();
 });
 
-// Load roadmaps
 async function loadRoadmaps() {
     UI.toggleElement('loading', true);
     UI.toggleElement('roadmaps-container', false);
@@ -82,7 +76,6 @@ async function loadRoadmaps() {
     }
 }
 
-// Render roadmaps
 function renderRoadmaps(roadmaps) {
     const container = document.getElementById('roadmaps-container');
     container.innerHTML = '';

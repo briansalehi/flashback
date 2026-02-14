@@ -147,10 +147,10 @@ std::unique_ptr<User> database::get_user(std::string_view email) const
         std::istringstream stream{result.at("joined").as<std::string>()};
 
         stream >> std::get_time(&tm, "%Y-%m-%d");
-        time_t epoch{std::mktime(&tm)};
+        time_t const epoch{std::mktime(&tm)};
 
-        auto timestamp{std::make_unique<google::protobuf::Timestamp>(google::protobuf::util::TimeUtil::SecondsToTimestamp(epoch))};
-        user->set_allocated_joined(timestamp.release());
+        auto timestamp{std::chrono::system_clock::from_time_t(epoch).time_since_epoch().count()};
+        user->set_joined(timestamp);
 
         if (std::string const state_str{result.at("state").as<std::string>()}; state_str == "active") user->set_state(User::active);
         else if (state_str == "inactive") user->set_state(User::inactive);
@@ -186,10 +186,10 @@ std::unique_ptr<User> database::get_user(std::string_view token, std::string_vie
         std::istringstream stream{result.at("joined").as<std::string>()};
 
         stream >> std::get_time(&tm, "%Y-%m-%d");
-        time_t epoch{std::mktime(&tm)};
+        time_t const epoch{std::mktime(&tm)};
 
-        auto timestamp{std::make_unique<google::protobuf::Timestamp>(google::protobuf::util::TimeUtil::SecondsToTimestamp(epoch))};
-        user->set_allocated_joined(timestamp.release());
+        auto timestamp{std::chrono::system_clock::from_time_t(epoch).time_since_epoch().count()};
+        user->set_joined(timestamp);
 
         if (std::string const state_str{result.at("state").as<std::string>()}; state_str == "active") user->set_state(User::active);
         else if (state_str == "inactive") user->set_state(User::inactive);

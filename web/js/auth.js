@@ -1,25 +1,12 @@
-/**
- * Authentication utilities
- */
-
 const Auth = {
-    /**
-     * Check if user is authenticated
-     */
     isAuthenticated() {
-        return !!sessionStorage.getItem('authToken');
+        return !!localStorage.getItem('token');
     },
     
-    /**
-     * Get current auth token
-     */
     getToken() {
-        return sessionStorage.getItem('authToken');
+        return localStorage.getItem('token');
     },
     
-    /**
-     * Redirect to login if not authenticated
-     */
     requireAuth() {
         if (!this.isAuthenticated()) {
             window.location.href = '/index.html';
@@ -28,25 +15,19 @@ const Auth = {
         return true;
     },
     
-    /**
-     * Redirect to home if already authenticated
-     */
     redirectIfAuthenticated() {
         if (this.isAuthenticated()) {
             window.location.href = '/home.html';
         }
     },
     
-    /**
-     * Sign out and redirect to login
-     */
     async signOut() {
         try {
             await flashbackClient.signOut();
         } catch (err) {
             console.error('Sign out error:', err);
         }
-        sessionStorage.removeItem('authToken');
+        localStorage.removeItem('token');
         window.location.href = '/index.html';
     }
 };
