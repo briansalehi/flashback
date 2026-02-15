@@ -55,7 +55,7 @@ add_custom_command(
 add_custom_command(
     OUTPUT ${bundle}
     COMMAND ${NPX_EXECUTABLE}
-    ARGS webpack --no-dev
+    ARGS webpack --no-stats
     DEPENDS ${client_sources} ${configs}
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
     COMMENT "Generating client bundle"
