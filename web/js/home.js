@@ -36,7 +36,6 @@ window.addEventListener('DOMContentLoaded', () => {
         
         try {
             const roadmap = await client.createRoadmap(name);
-            console.log(roadmap);
 
             UI.toggleElement('create-form', false);
             UI.clearForm('roadmap-form');
