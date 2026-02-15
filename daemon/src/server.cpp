@@ -133,14 +133,14 @@ grpc::Status server::ResetPassword(grpc::ServerContext* context, ResetPasswordRe
 {
     try
     {
-        if (request->has_user() && (request->user().id() == 0 || request->user().email().empty() || request->user().password().empty() || request->user().device().empty()))
+        if (!request->has_user() || !session_is_valid(request->user()) || request->user().password().empty())
         {
             throw client_exception("incomplete credentials");
         }
 
-        std::string hash{calculate_hash(request->user().password())};
-
-        auto user{std::make_unique<User>(request->user())};
+        std::string const hash{calculate_hash(request->user().password())};
+        std::shared_ptr<User> const shared_user{m_database->get_user(request->user().token(), request->user().device())};
+        std::unique_ptr<User> user{std::make_unique<User>(*shared_user)};
         user->clear_password();
         user->clear_device();
 
@@ -178,47 +178,56 @@ grpc::Status server::VerifySession(grpc::ServerContext* context, VerifySessionRe
 
 grpc::Status server::CreateRoadmap(grpc::ServerContext* context, CreateRoadmapRequest const* request, CreateRoadmapResponse* response)
 {
+    grpc::Status status{grpc::StatusCode::INTERNAL, {}};
     response->clear_roadmap();
 
     try
     {
-        if (request->has_user() && session_is_valid(request->user()))
+        if (!request->has_user() || !session_is_valid(request->user()))
         {
-            auto roadmap{std::make_unique<Roadmap>(m_database->create_roadmap(request->user().id(), request->name()))};
+            status = grpc::Status{grpc::StatusCode::UNAUTHENTICATED, "invalid user"};
+        }
+        else if (request->name().empty())
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "empty name not allowed"};
+        }
+        else
+        {
+            std::shared_ptr<User> const user{m_database->get_user(request->user().token(), request->user().device())};
+            auto roadmap{std::make_unique<Roadmap>(m_database->create_roadmap(user->id(), request->name()))};
             response->set_allocated_roadmap(roadmap.release());
+            status = grpc::Status{grpc::StatusCode::OK, {}};
         }
     }
     catch (client_exception const& exp)
     {
         std::cerr << std::format("Client: {}", exp.what());
+        status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, exp.what()};
     }
     catch (pqxx::unique_violation const& exp)
     {
         std::cerr << std::format("Server: {}", exp.what());
     }
 
-    return grpc::Status::OK;
+    return status;
 }
 
 grpc::Status server::GetRoadmaps(grpc::ServerContext* context, GetRoadmapsRequest const* request, GetRoadmapsResponse* response)
 {
     try
     {
-        std::shared_ptr<User> const user{m_database->get_user(request->user().token(), request->user().device())};
-
-        if (!request->has_user() || user == nullptr)
+        if (request->has_user() && session_is_valid(request->user()))
         {
-            throw client_exception("unauthorized request for roadmaps");
-        }
+            std::shared_ptr<User> const user{m_database->get_user(request->user().token(), request->user().device())};
+            std::vector<Roadmap> const roadmaps{m_database->get_roadmaps(user->id())};
+            std::clog << std::format("Client {}: collected {} roadmaps\n", user->id(), roadmaps.size());
 
-        std::vector<Roadmap> const roadmaps{m_database->get_roadmaps(user->id())};
-        std::clog << std::format("Client {}: collected {} roadmaps\n", user->id(), roadmaps.size());
-
-        for (Roadmap const& roadmap: roadmaps)
-        {
-            auto* const allocated_roadmap = response->add_roadmap();
-            allocated_roadmap->set_id(roadmap.id());
-            allocated_roadmap->set_name(roadmap.name());
+            for (Roadmap const& roadmap: roadmaps)
+            {
+                auto* const allocated_roadmap = response->add_roadmap();
+                allocated_roadmap->set_id(roadmap.id());
+                allocated_roadmap->set_name(roadmap.name());
+            }
         }
     }
     catch (client_exception const& exp)
@@ -245,7 +254,8 @@ grpc::Status server::GetStudyResources(grpc::ServerContext* context, GetStudyRes
         }
         else
         {
-            for (auto const& [position, resource]: m_database->get_study_resources(request->user().id()))
+            std::shared_ptr<User> const user{m_database->get_user(request->user().token(), request->user().device())};
+            for (auto const& [position, resource]: m_database->get_study_resources(user->id()))
             {
                 StudyResource* study{response->add_study()};
                 *study->mutable_resource() = resource;
@@ -293,7 +303,8 @@ grpc::Status server::RemoveRoadmap(grpc::ServerContext* context, RemoveRoadmapRe
     {
         if (request->has_user() && request->has_roadmap() && session_is_valid(request->user()))
         {
-            m_database->remove_roadmap(request->user().id());
+            std::shared_ptr<User> const user{m_database->get_user(request->user().token(), request->user().device())};
+            m_database->remove_roadmap(user->id());
         }
     }
     catch (flashback::client_exception const& exp)
@@ -310,28 +321,36 @@ grpc::Status server::RemoveRoadmap(grpc::ServerContext* context, RemoveRoadmapRe
 
 grpc::Status server::SearchRoadmaps(grpc::ServerContext* context, SearchRoadmapsRequest const* request, SearchRoadmapsResponse* response)
 {
+    grpc::Status status{grpc::StatusCode::INTERNAL, {}};
+
     try
     {
-        if (request->has_user() && session_is_valid(request->user()))
+        if (!request->has_user() || !session_is_valid(request->user()))
+        {
+            status = grpc::Status{grpc::StatusCode::UNAUTHENTICATED, "invalid user"};
+        }
+        else
         {
             for (auto const& [similarity, matched]: m_database->search_roadmaps(request->token()))
             {
-                flashback::Roadmap* roadmap = response->add_roadmap();
+                Roadmap* roadmap = response->add_roadmap();
                 roadmap->set_id(matched.id());
                 roadmap->set_name(matched.name());
             }
+            status = grpc::Status{grpc::StatusCode::OK, {}};
         }
     }
-    catch (flashback::client_exception const& exp)
+    catch (client_exception const& exp)
     {
         std::cerr << std::format("Client: {}", exp.what());
+        status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, exp.what()};
     }
     catch (std::exception const& exp)
     {
         std::cerr << std::format("Server: {}", exp.what());
     }
 
-    return grpc::Status::OK;
+    return status;
 }
 
 grpc::Status server::CloneRoadmap(grpc::ServerContext* context, CloneRoadmapRequest const* request, CloneRoadmapResponse* response)
@@ -346,7 +365,8 @@ grpc::Status server::CloneRoadmap(grpc::ServerContext* context, CloneRoadmapRequ
         {
             if (request->has_roadmap())
             {
-                Roadmap roadmap{m_database->clone_roadmap(request->user().id(), request->roadmap().id())};
+                std::shared_ptr<User> const user{m_database->get_user(request->user().token(), request->user().device())};
+                Roadmap roadmap{m_database->clone_roadmap(user->id(), request->roadmap().id())};
                 response->set_allocated_roadmap(std::make_unique<Roadmap>(roadmap).release());
                 response->set_success(true);
             }
@@ -886,7 +906,8 @@ grpc::Status server::GetResources(grpc::ServerContext* context, GetResourcesRequ
         }
         else
         {
-            for (Resource const& r: m_database->get_resources(request->user().id(), request->subject().id()))
+            std::shared_ptr<User> const user{m_database->get_user(request->user().token(), request->user().device())};
+            for (Resource const& r: m_database->get_resources(user->id(), request->subject().id()))
             {
                 Resource* resource = response->add_resources();
                 *resource = r;
@@ -1288,8 +1309,9 @@ grpc::Status server::CreateNerve(grpc::ServerContext* context, CreateNerveReques
         }
         else
         {
+            std::shared_ptr<User> const user{m_database->get_user(request->user().token(), request->user().device())};
             Resource* nerve = response->mutable_resource();
-            *nerve = m_database->create_nerve(request->user().id(), request->resource().name(), request->subject().id(), request->resource().expiration());
+            *nerve = m_database->create_nerve(user->id(), request->resource().name(), request->subject().id(), request->resource().expiration());
 
             if (nerve->id() == 0)
             {
@@ -1325,7 +1347,8 @@ grpc::Status server::GetNerves(grpc::ServerContext* context, GetNervesRequest co
         }
         else
         {
-            for (auto const& nerve: m_database->get_nerves(request->user().id()))
+            std::shared_ptr<User> const user{m_database->get_user(request->user().token(), request->user().device())};
+            for (auto const& nerve: m_database->get_nerves(user->id()))
             {
                 *response->add_resources() = nerve;
             }
@@ -2839,7 +2862,8 @@ grpc::Status server::GetPracticeCards(grpc::ServerContext* context, GetPracticeC
         }
         else
         {
-            for (Card const& card: m_database->get_practice_cards(request->user().id(), request->roadmap().id(), request->subject().id(), request->topic().level(),
+            std::shared_ptr<User> const user{m_database->get_user(request->user().token(), request->user().device())};
+            for (Card const& card: m_database->get_practice_cards(user->id(), request->roadmap().id(), request->subject().id(), request->topic().level(),
                                                                   request->topic().position()))
             {
                 *response->add_card() = card;
@@ -2968,7 +2992,8 @@ grpc::Status server::GetAssessments(grpc::ServerContext* context, GetAssessments
         }
         else
         {
-            for (Assessment assessment: m_database->get_assessments(request->user().id(), request->subject().id(), request->topic().level(), request->topic().position()))
+            std::shared_ptr<User> const user{m_database->get_user(request->user().token(), request->user().device())};
+            for (Assessment assessment: m_database->get_assessments(user->id(), request->subject().id(), request->topic().level(), request->topic().position()))
             {
                 *response->add_assessment() = assessment;
             }
@@ -3087,7 +3112,8 @@ grpc::Status server::IsAssimilated(grpc::ServerContext* context, IsAssimilatedRe
         }
         else
         {
-            response->set_is_assimilated(m_database->is_assimilated(request->user().id(), request->subject().id(), request->topic().level(), request->topic().position()));
+            std::shared_ptr<User> const user{m_database->get_user(request->user().token(), request->user().device())};
+            response->set_is_assimilated(m_database->is_assimilated(user->id(), request->subject().id(), request->topic().level(), request->topic().position()));
             status = grpc::Status{grpc::StatusCode::OK, {}};
         }
     }
@@ -3510,7 +3536,8 @@ grpc::Status server::Study(grpc::ServerContext* context, StudyRequest const* req
         }
         else
         {
-            m_database->study(request->user().id(), request->card().id(), std::chrono::seconds{request->duration()});
+            std::shared_ptr<User> const user{m_database->get_user(request->user().token(), request->user().device())};
+            m_database->study(user->id(), request->card().id(), std::chrono::seconds{request->duration()});
             status = grpc::Status{grpc::StatusCode::OK, {}};
         }
     }
@@ -3546,7 +3573,8 @@ grpc::Status server::MakeProgress(grpc::ServerContext* context, MakeProgressRequ
         }
         else
         {
-            m_database->make_progress(request->user().id(), request->card().id(), request->duration(), request->mode());
+            std::shared_ptr<User> const user{m_database->get_user(request->user().token(), request->user().device())};
+            m_database->make_progress(user->id(), request->card().id(), request->duration(), request->mode());
             status = grpc::Status{grpc::StatusCode::OK, {}};
         }
     }
@@ -3574,7 +3602,8 @@ grpc::Status server::GetProgressWeight(grpc::ServerContext* context, GetProgress
         }
         else
         {
-            for (Weight weight: m_database->get_progress_weight(request->user().id()))
+            std::shared_ptr<User> const user{m_database->get_user(request->user().token(), request->user().device())};
+            for (Weight weight: m_database->get_progress_weight(user->id()))
             {
                 *response->add_weight() = weight;
             }

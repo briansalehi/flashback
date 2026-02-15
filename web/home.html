@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Roadmaps - Flashback</title>
-    <link rel="icon" type="image/x-icon" href="/favicon.ico">
-    <link rel="stylesheet" href="/css/styles.css">
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <link rel="stylesheet" href="css/styles.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;600;700&family=Source+Sans+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -13,9 +13,9 @@
 <body>
     <header class="header">
         <div class="container header-content">
-            <a href="/home.html" class="logo">Flashback</a>
+            <a href="home.html" class="logo">Flashback</a>
             <nav class="nav">
-                <a href="/home.html">My Roadmaps</a>
+                <a href="home.html">My Roadmaps</a>
                 <a href="#" id="signout-btn">Sign Out</a>
             </nav>
         </div>
@@ -29,27 +29,37 @@
             
             <div id="error-message" style="display: none;"></div>
 
-            <button id="create-roadmap-btn" class="btn btn-accent mb-lg">
+            <div id="loading" style="display: none; text-align: center; padding: 3rem;">
+                <div class="loading" style="width: 40px; height: 40px; border-width: 4px;"></div>
+                <p class="text-muted mt-md">Loading your roadmaps...</p>
+            </div>
+
+            <div id="roadmaps-container" class="roadmaps-grid">
+                <!-- roadmaps will be inserted here -->
+            </div>
+            
+            <div id="empty-state" style="display: none; text-align: center; padding: 4rem 2rem;">
+                <h3 style="color: var(--text-muted);">No roadmaps yet</h3>
+                <p class="text-muted">Create your first roadmap to get started!</p>
+            </div>
+
+            <button id="create-roadmap-btn" class="btn btn-accent mb-lg" style="margin-top: 2rem;">
                 + Create New Roadmap
             </button>
 
-            <!-- Create Roadmap Modal/Form -->
-            <div id="create-form" class="card" style="display: none; max-width: 600px; margin-bottom: 2rem;">
-                <div class="card-header">
-                    <h3 class="card-title">Create New Roadmap</h3>
-                </div>
+            <div id="create-form" class="card" style="display: none; max-width: 600px; margin-bottom: 1rem;">
                 <form id="roadmap-form">
                     <div class="form-group">
-                        <label class="form-label" for="roadmap-name">Roadmap Name</label>
-                        <input 
-                            type="text" 
-                            id="roadmap-name" 
-                            class="form-input" 
-                            placeholder="e.g., Master JavaScript"
+                        <label class="form-label" for="roadmap-name">What is your current or desired career?</label>
+                        <input
+                            type="text"
+                            id="roadmap-name"
+                            class="form-input"
+                            placeholder="Full Stack Developer"
                             required
                         >
                     </div>
-                    
+
                     <div style="display: flex; gap: 1rem;">
                         <button type="submit" id="save-roadmap-btn" class="btn btn-primary">
                             Create Roadmap
@@ -60,26 +70,10 @@
                     </div>
                 </form>
             </div>
-            
-            <div id="loading" style="display: none; text-align: center; padding: 3rem;">
-                <div class="loading" style="width: 40px; height: 40px; border-width: 4px;"></div>
-                <p class="text-muted mt-md">Loading your roadmaps...</p>
-            </div>
-            
-            <div id="roadmaps-container" class="roadmaps-grid">
-                <!-- Roadmaps will be inserted here -->
-            </div>
-            
-            <!-- Empty State -->
-            <div id="empty-state" style="display: none; text-align: center; padding: 4rem 2rem;">
-                <h3 style="color: var(--text-muted);">No roadmaps yet</h3>
-                <p class="text-muted">Create your first learning roadmap to get started!</p>
-            </div>
         </div>
     </main>
     
     <script src="proto/flashback.js"></script> <!-- grpc-web will generate this file -->
-    <script src="js/auth.js"></script>
     <script src="js/ui.js"></script>
     <script src="js/client.js"></script>
     <script src="js/home.js"></script>

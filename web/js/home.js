@@ -1,12 +1,18 @@
 window.addEventListener('DOMContentLoaded', () => {
-    if (!Auth.isAuthenticated()) {
+    if (!client.isAuthenticated()) {
         window.location.href = '/index.html';
         return;
     }
     
     document.getElementById('signout-btn').addEventListener('click', async (e) => {
         e.preventDefault();
-        await Auth.signOut();
+        try {
+            await client.signOut();
+        } catch (err) {
+            console.error('Sign out error:', err);
+        }
+        localStorage.removeItem('token');
+        window.location.href = '/index.html';
     });
     
     // Show/hide create form
@@ -20,21 +26,18 @@ window.addEventListener('DOMContentLoaded', () => {
         UI.clearForm('roadmap-form');
     });
     
-    // Handle roadmap creation
     document.getElementById('roadmap-form').addEventListener('submit', async (e) => {
         e.preventDefault();
         
         const name = document.getElementById('roadmap-name').value;
-        const description = document.getElementById('roadmap-description').value;
-        
+
         UI.hideMessage('error-message');
         UI.setButtonLoading('save-roadmap-btn', true);
         
         try {
-            const roadmap = await client.createRoadmap(name, description);
-            console.log('Roadmap created:', roadmap);
-            
-            // Hide form and reload roadmaps
+            const roadmap = await client.createRoadmap(name);
+            console.log(roadmap);
+
             UI.toggleElement('create-form', false);
             UI.clearForm('roadmap-form');
             UI.setButtonLoading('save-roadmap-btn', false);

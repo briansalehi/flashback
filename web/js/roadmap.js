@@ -1,5 +1,5 @@
 window.addEventListener('DOMContentLoaded', () => {
-    if (!Auth.isAuthenticated()) {
+    if (!client.isAuthenticated()) {
         window.location.href = '/index.html';
     }
 
@@ -11,7 +11,9 @@ window.addEventListener('DOMContentLoaded', () => {
 
     document.getElementById('signout-btn').addEventListener('click', async (e) => {
         e.preventDefault();
-        await Auth.signOut();
+        await client.signOut();
+        localStorage.removeItem('token');
+        window.location.href = '/index.html';
     });
 
     document.getElementById('create-milestone-btn').addEventListener('click', () => {
@@ -28,21 +30,12 @@ window.addEventListener('DOMContentLoaded', () => {
         e.preventDefault();
 
         const name = document.getElementById('milestone-name').value;
-        const description = document.getElementById('milestone-description').value;
-        const dateStr = document.getElementById('milestone-date').value;
-        const targetDate = dateStr ? new Date(dateStr) : null;
 
         UI.hideMessage('error-message');
         UI.setButtonLoading('save-milestone-btn', true);
 
         try {
-            const milestone = await client.createMilestone(
-                roadmapId,
-                name,
-                description,
-                targetDate
-            );
-            console.log('Milestone created:', milestone);
+            await client.addMilestone(roadmapId, name);
 
             UI.toggleElement('create-form', false);
             UI.clearForm('milestone-form');

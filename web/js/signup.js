@@ -21,7 +21,7 @@ document.getElementById('signup-form').addEventListener('submit', async (e) => {
     UI.setButtonLoading('signup-btn', true);
 
     try {
-        await client.signUp(email, password, name);
+        await client.signUp(name, email, password);
         window.location.href = '/home.html';
     } catch (err) {
         console.error('Sign up failed:', err);

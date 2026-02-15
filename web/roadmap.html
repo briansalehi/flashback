@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Roadmap - Flashback</title>
-    <link rel="icon" type="image/x-icon" href="/favicon.ico">
-    <link rel="stylesheet" href="/css/styles.css">
+    <title>Roadmap</title>
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <link rel="stylesheet" href="css/styles.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;600;700&family=Source+Sans+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -13,9 +13,9 @@
 <body>
     <header class="header">
         <div class="container header-content">
-            <a href="/home.html" class="logo">Flashback</a>
+            <a href="home.html" class="logo">Flashback</a>
             <nav class="nav">
-                <a href="/home.html">My Roadmaps</a>
+                <a href="home.html">My Roadmaps</a>
                 <a href="#" id="signout-btn">Sign Out</a>
             </nav>
         </div>
@@ -24,54 +24,49 @@
     <main class="dashboard">
         <div class="container">
             <div class="dashboard-header">
-                <a href="/home.html" style="color: var(--text-muted); text-decoration: none;">← Back to Roadmaps</a>
+                <a href="home.html" style="color: var(--text-muted); text-decoration: none;">← Back to Roadmaps</a>
                 <h1 id="roadmap-name">Loading...</h1>
             </div>
             
             <div id="error-message" style="display: none;"></div>
             
-            <button id="create-milestone-btn" class="btn btn-accent mb-lg">
-                + Add Milestone
+            <div id="loading" style="display: none; text-align: center; padding: 3rem;">
+                <div class="loading" style="width: 40px; height: 40px; border-width: 4px;"></div>
+                <p class="text-muted mt-md">Loading subjects...</p>
+            </div>
+
+            <div id="milestones-container" class="timeline">
+                <!-- milestones will be inserted here -->
+            </div>
+
+            <div id="empty-state" style="display: none; text-align: center; padding: 4rem 2rem;">
+                <h3 style="color: var(--text-muted);">No subjects yet</h3>
+                <p class="text-muted">Add your first subject!</p>
+            </div>
+
+            <button id="create-milestone-btn" class="btn btn-accent mb-lg" style="margin-top: 2rem;">
+                + Add Subject
             </button>
-            
-            <!-- Create Milestone Form -->
-            <div id="create-form" class="card" style="display: none; max-width: 600px; margin-bottom: 2rem;">
+
+            <div id="create-form" class="card" style="display: none; max-width: 600px;">
                 <div class="card-header">
-                    <h3 class="card-title">Add New Milestone</h3>
+                    <h3 class="card-title">Add New Subject</h3>
                 </div>
                 <form id="milestone-form">
                     <div class="form-group">
-                        <label class="form-label" for="milestone-name">Milestone Name</label>
+                        <label class="form-label" for="milestone-name">Name</label>
                         <input 
                             type="text" 
                             id="milestone-name" 
                             class="form-input" 
-                            placeholder="e.g., Learn ES6 Features"
+                            placeholder="Matrix Algebra"
                             required
-                        >
-                    </div>
-                    
-                    <div class="form-group">
-                        <label class="form-label" for="milestone-description">Description</label>
-                        <textarea 
-                            id="milestone-description" 
-                            class="form-textarea" 
-                            placeholder="What will you accomplish?"
-                        ></textarea>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label class="form-label" for="milestone-date">Target Date (Optional)</label>
-                        <input 
-                            type="date" 
-                            id="milestone-date" 
-                            class="form-input"
                         >
                     </div>
                     
                     <div style="display: flex; gap: 1rem;">
                         <button type="submit" id="save-milestone-btn" class="btn btn-primary">
-                            Add Milestone
+                            Add Subject
                         </button>
                         <button type="button" id="cancel-milestone-btn" class="btn btn-secondary">
                             Cancel
@@ -79,25 +74,11 @@
                     </div>
                 </form>
             </div>
-            
-            <div id="loading" style="display: none; text-align: center; padding: 3rem;">
-                <div class="loading" style="width: 40px; height: 40px; border-width: 4px;"></div>
-                <p class="text-muted mt-md">Loading milestones...</p>
-            </div>
-            
-            <div id="milestones-container" class="timeline">
-            </div>
-            
-            <div id="empty-state" style="display: none; text-align: center; padding: 4rem 2rem;">
-                <h3 style="color: var(--text-muted);">No milestones yet</h3>
-                <p class="text-muted">Add your first milestone!</p>
-            </div>
         </div>
     </main>
     
     <script src="proto/flashback.js"></script> <!-- grpc-web will generate this file -->
     <script src="js/client.js"></script>
-    <script src="js/auth.js"></script>
     <script src="js/ui.js"></script>
     <script src="js/roadmap.js"></script>
 </body>

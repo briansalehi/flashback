@@ -1,5 +1,7 @@
 window.addEventListener('DOMContentLoaded', () => {
-    Auth.redirectIfAuthenticated();
+    if (client.isAuthenticated()) {
+        window.location.href = '/home.html';
+    }
 
     document.getElementById('signin-form').addEventListener('submit', async (e) => {
         e.preventDefault();
