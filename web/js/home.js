@@ -31,7 +31,7 @@ window.addEventListener('DOMContentLoaded', () => {
         UI.setButtonLoading('save-roadmap-btn', true);
         
         try {
-            const roadmap = await flashbackClient.createRoadmap(name, description);
+            const roadmap = await client.createRoadmap(name, description);
             console.log('Roadmap created:', roadmap);
             
             // Hide form and reload roadmaps
@@ -56,7 +56,7 @@ async function loadRoadmaps() {
     UI.toggleElement('empty-state', false);
     
     try {
-        const roadmaps = await flashbackClient.getRoadmaps();
+        const roadmaps = await client.getRoadmaps();
 
         UI.toggleElement('loading', false);
         

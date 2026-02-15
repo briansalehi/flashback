@@ -36,7 +36,7 @@ window.addEventListener('DOMContentLoaded', () => {
         UI.setButtonLoading('save-milestone-btn', true);
 
         try {
-            const milestone = await flashbackClient.createMilestone(
+            const milestone = await client.createMilestone(
                 roadmapId,
                 name,
                 description,
@@ -67,7 +67,7 @@ async function loadMilestones() {
     try {
         const roadmapId = UI.getUrlParam('id');
         const roadmapName = UI.getUrlParam('name');
-        const response = await flashbackClient.getMilestones(roadmapId);
+        const response = await client.getMilestones(roadmapId);
 
         document.getElementById('roadmap-name').textContent = roadmapName;
         document.title = roadmapName;

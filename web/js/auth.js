@@ -7,9 +7,6 @@ const Auth = {
         return localStorage.getItem('token');
     },
     
-    requiresAuthentication() {
-    },
-
     redirectIfAuthenticated() {
         if (this.isAuthenticated()) {
             window.location.href = '/home.html';
@@ -18,7 +15,7 @@ const Auth = {
     
     async signOut() {
         try {
-            await flashbackClient.signOut();
+            await client.signOut();
         } catch (err) {
             console.error('Sign out error:', err);
         }

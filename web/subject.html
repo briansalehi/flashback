@@ -197,7 +197,7 @@
             UI.setButtonLoading('save-subject-btn', true);
             
             try {
-                const subject = await flashbackClient.createSubject(milestoneId, name, description);
+                const subject = await client.createSubject(milestoneId, name, description);
                 console.log('Subject created:', subject);
                 
                 UI.toggleElement('create-subject-form', false);
@@ -230,7 +230,7 @@
             UI.setButtonLoading('save-resource-btn', true);
             
             try {
-                const resource = await flashbackClient.addResource(currentSubjectId, name, type, url);
+                const resource = await client.addResource(currentSubjectId, name, type, url);
                 console.log('Resource added:', resource);
                 
                 UI.clearForm('resource-form');
@@ -252,7 +252,7 @@
             UI.toggleElement('empty-state', false);
             
             try {
-                const subjects = await flashbackClient.getSubjects(milestoneId);
+                const subjects = await client.getSubjects(milestoneId);
                 console.log('Loaded subjects:', subjects);
                 
                 UI.toggleElement('loading', false);
@@ -304,7 +304,7 @@
             container.innerHTML = '<p class="text-muted">Loading...</p>';
             
             try {
-                const resources = await flashbackClient.getResources(subjectId);
+                const resources = await client.getResources(subjectId);
                 console.log('Loaded resources:', resources);
                 
                 if (resources.length === 0) {

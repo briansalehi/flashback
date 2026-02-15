@@ -5,14 +5,14 @@ class FlashbackClient {
         this.ready = false;
         this.device = this.getDevice();
         this.token = this.getToken();
-        
+
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', () => this.initClient());
         } else {
             this.initClient();
         }
     }
-    
+
     initClient() {
         try {
             this.client = new window.server_grpc_web_pb.ServerClient(this.apiUrl, null, null);
@@ -21,10 +21,10 @@ class FlashbackClient {
             console.error('Error initializing client:', e);
         }
     }
-    
+
     async waitForReady() {
         if (this.ready) return;
-        
+
         return new Promise((resolve) => {
             const checkReady = () => {
                 if (this.ready) {
@@ -36,18 +36,9 @@ class FlashbackClient {
             checkReady();
         });
     }
-    
+
     getToken() {
         return localStorage.getItem('token') || '';
-    }
-    
-    getMetadata() {
-        const token = this.getToken();
-        const device = this.getDevice();
-        return {
-            'token': `${token}`,
-            'device': `${device}`
-        };
     }
 
     getDevice() {
@@ -65,6 +56,13 @@ class FlashbackClient {
         }
 
         return device;
+    }
+
+    getMetadata() {
+        return {
+            'token': `${this.getToken()}`,
+            'device': `${this.getDevice()}`
+        };
     }
 
     async signIn(email, password) {
@@ -85,20 +83,16 @@ class FlashbackClient {
                 } else {
                     const user = response.getUser();
                     this.token = user.getToken();
-                    localStorage.setItem('token', this.token);
-
-                    resolve({
-                        token: user.getToken(),
-                        device: user.getDevice()
-                    });
+                    localStorage.setItem('token', user.getToken());
+                    resolve();
                 }
             });
         });
     }
-    
-    async signUp(email, password, displayName) {
+
+    async signUp(email, password, name) {
         await this.waitForReady();
-        
+
         return new Promise((resolve, reject) => {
             const user = new proto.flashback.User();
             const request = new proto.flashback.SignUpRequest();
@@ -108,18 +102,17 @@ class FlashbackClient {
             user.setDevice(this.getDevice());
             request.setUser(user);
 
-            this.client.signUp(request, {}, (err, response) => {
+            this.client.signUp(request, {}, (err) => {
                 if (err) {
                     console.error('SignUp error:', err);
                     reject(err);
                 } else {
-                    console.error('SignUp successful');
                     resolve();
                 }
             });
         });
     }
-    
+
     async signOut() {
         return new Promise((resolve, reject) => {
             const user = new proto.flashback.User();
@@ -128,7 +121,7 @@ class FlashbackClient {
             user.setToken(this.token);
             request.setUser(user);
 
-            this.client.signOut(request, this.getMetadata(), (err, response) => {
+            this.client.signOut(request, this.getMetadata(), (err) => {
                 localStorage.removeItem('token');
                 if (err) {
                     console.error('SignOut error:', err);
@@ -139,7 +132,7 @@ class FlashbackClient {
             });
         });
     }
-    
+
     async getRoadmaps() {
         return new Promise((resolve, reject) => {
             const user = new proto.flashback.User();
@@ -147,7 +140,7 @@ class FlashbackClient {
             user.setDevice(this.device);
             user.setToken(this.token);
             request.setUser(user);
-            
+
             this.client.getRoadmaps(request, this.getMetadata(), (err, response) => {
                 if (err) {
                     console.error('getRoadmaps error:', err);
@@ -162,13 +155,13 @@ class FlashbackClient {
             });
         });
     }
-    
+
     async createRoadmap(name, description) {
         return new Promise((resolve, reject) => {
             const request = new proto.flashback.CreateRoadmapRequest();
             request.setName(name);
             request.setDescription(description);
-            
+
             this.client.createRoadmap(request, this.getMetadata(), (err, response) => {
                 if (err) {
                     console.error('CreateRoadmap error:', err);
@@ -183,7 +176,7 @@ class FlashbackClient {
             });
         });
     }
-    
+
     async getMilestones(roadmapId) {
         return new Promise((resolve, reject) => {
             const user = new proto.flashback.User();
@@ -204,7 +197,7 @@ class FlashbackClient {
                         name: ms.getName(),
                         level: ms.getLevel(),
                     }));
-                    
+
                     resolve({
                         milestones: milestones
                     });
@@ -212,7 +205,7 @@ class FlashbackClient {
             });
         });
     }
-    
+
     async createMilestone(roadmapId, name, description, targetDate) {
         return new Promise((resolve, reject) => {
             const request = new proto.flashback.CreateMilestoneRequest();
@@ -222,7 +215,7 @@ class FlashbackClient {
             if (targetDate) {
                 request.setTargetdate(Math.floor(targetDate.getTime() / 1000));
             }
-            
+
             this.client.createMilestone(request, this.getMetadata(), (err, response) => {
                 if (err) {
                     console.error('CreateMilestone error:', err);
@@ -237,12 +230,12 @@ class FlashbackClient {
             });
         });
     }
-    
+
     async getSubjects(milestoneId) {
         return new Promise((resolve, reject) => {
             const request = new proto.flashback.GetSubjectsRequest();
             request.setMilestoneid(milestoneId);
-            
+
             this.client.getSubjects(request, this.getMetadata(), (err, response) => {
                 if (err) {
                     console.error('GetSubjects error:', err);
@@ -258,14 +251,14 @@ class FlashbackClient {
             });
         });
     }
-    
+
     async createSubject(milestoneId, name, description) {
         return new Promise((resolve, reject) => {
             const request = new proto.flashback.CreateSubjectRequest();
             request.setMilestoneid(milestoneId);
             request.setName(name);
             request.setDescription(description);
-            
+
             this.client.createSubject(request, this.getMetadata(), (err, response) => {
                 if (err) {
                     console.error('CreateSubject error:', err);
@@ -280,12 +273,12 @@ class FlashbackClient {
             });
         });
     }
-    
+
     async getResources(subjectId) {
         return new Promise((resolve, reject) => {
             const request = new proto.flashback.GetResourcesRequest();
             request.setSubjectid(subjectId);
-            
+
             this.client.getResources(request, this.getMetadata(), (err, response) => {
                 if (err) {
                     console.error('GetResources error:', err);
@@ -302,7 +295,7 @@ class FlashbackClient {
             });
         });
     }
-    
+
     async addResource(subjectId, name, type, url) {
         return new Promise((resolve, reject) => {
             const request = new proto.flashback.AddResourceRequest();
@@ -310,7 +303,7 @@ class FlashbackClient {
             request.setName(name);
             request.setType(type);
             request.setUrl(url);
-            
+
             this.client.addResource(request, this.getMetadata(), (err, response) => {
                 if (err) {
                     console.error('AddResource error:', err);
@@ -328,4 +321,4 @@ class FlashbackClient {
     }
 }
 
-const flashbackClient = new FlashbackClient();
+const client = new FlashbackClient();
