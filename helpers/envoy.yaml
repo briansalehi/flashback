@@ -3,7 +3,6 @@ admin:
     socket_address:
       address: 0.0.0.0
       port_value: 9901
-
 static_resources:
   listeners:
     - name: listener_0
@@ -33,7 +32,8 @@ static_resources:
                               grpc_timeout_header_max: 60s
                       cors:
                         allow_origin_string_match:
-                          - prefix: "*"
+                          - exact: "https://flashback.eu.com"
+                          - exact: "https://www.flashback.eu.com"
                         allow_methods: GET, PUT, DELETE, POST, OPTIONS
                         allow_headers: keep-alive,user-agent,cache-control,content-type,content-transfer-encoding,custom-header-1,x-accept-content-transfer-encoding,x-accept-response-streaming,x-user-agent,x-grpc-web,grpc-timeout
                         max_age: "1728000"
