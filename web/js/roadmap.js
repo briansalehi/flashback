@@ -4,6 +4,7 @@ window.addEventListener('DOMContentLoaded', () => {
     }
 
     const roadmapId = UI.getUrlParam('id');
+    const roadmapName = UI.getUrlParam('name');
     if (!roadmapId) {
         window.location.href = '/home.html';
     }
@@ -43,19 +44,19 @@ window.addEventListener('DOMContentLoaded', () => {
             );
             console.log('Milestone created:', milestone);
 
-            // Hide form and reload milestones
             UI.toggleElement('create-form', false);
             UI.clearForm('milestone-form');
             UI.setButtonLoading('save-milestone-btn', false);
 
-            // Reload
-            loadRoadmap();
+            loadMilestones();
         } catch (err) {
             console.error('Create milestone failed:', err);
             UI.showError(err.message || 'Failed to create milestone');
             UI.setButtonLoading('save-milestone-btn', false);
         }
     });
+
+    loadMilestones(roadmapId, roadmapName);
 });
 
 async function loadMilestones() {
@@ -64,25 +65,25 @@ async function loadMilestones() {
     UI.toggleElement('empty-state', false);
 
     try {
-        const roadmap = await flashbackClient.getMilestones(roadmapId);
-        console.log('Loaded roadmap:', roadmap);
+        const roadmapId = UI.getUrlParam('id');
+        const roadmapName = UI.getUrlParam('name');
+        const response = await flashbackClient.getMilestones(roadmapId);
 
-        // Update page title and description
-        document.getElementById('roadmap-name').textContent = roadmap.name;
-        document.title = roadmap.name + ' - Flashback';
+        document.getElementById('roadmap-name').textContent = roadmapName;
+        document.title = roadmapName;
 
         UI.toggleElement('loading', false);
 
-        if (roadmap.milestones.length === 0) {
+        if (response.milestones.length === 0) {
             UI.toggleElement('empty-state', true);
         } else {
             UI.toggleElement('milestones-container', true);
-            renderMilestones(roadmap.milestones);
+            renderMilestones(response.milestones);
         }
     } catch (err) {
-        console.error('Load roadmap failed:', err);
+        console.error('Loading milestones failed:', err);
         UI.toggleElement('loading', false);
-        UI.showError('Failed to load roadmap: ' + (err.message || 'Unknown error'));
+        UI.showError('Failed to load milestones: ' + (err.message || 'Unknown error'));
     }
 }
 
@@ -92,16 +93,9 @@ function renderMilestones(milestones) {
 
     milestones.forEach(milestone => {
         container.innerHTML += `
-            <div class="card">
-                <h4>${UI.escapeHtml(milestone.name)}</h4>
-                <p class="text-muted">${UI.escapeHtml(milestone.level)}</p>
-                <a href="subject.html?id=${milestone.id}" class="btn btn-secondary mt-md">View Subjects</a>
+            <div class="card-title">
+                <a href="subject.html?id=${milestone.id}" class="btn btn-secondary mt-md">${UI.escapeHtml(milestone.name)} (${UI.escapeHtml(milestone.level)})</a>
             </div>
         `;
     });
 }
-
-window.addEventListener('load', () => {
-    const roadmapId = UI.getUrlParam('id');
-    loadMilestones(roadmapId);
-});

@@ -186,26 +186,26 @@ class FlashbackClient {
     
     async getMilestones(roadmapId) {
         return new Promise((resolve, reject) => {
-            const request = new proto.flashback.GetRoadmapRequest();
-            request.setId(roadmapId);
-            
-            this.client.getRoadmap(request, this.getMetadata(), (err, response) => {
+            const user = new proto.flashback.User();
+            const request = new proto.flashback.GetMilestonesRequest();
+            user.setToken(this.token);
+            user.setDevice(this.device);
+            request.setUser(user);
+            request.setRoadmapId(roadmapId);
+
+            this.client.getMilestones(request, this.getMetadata(), (err, response) => {
                 if (err) {
                     console.error('GetRoadmap error:', err);
                     reject(err);
                 } else {
                     const milestones = response.getMilestonesList().map(ms => ({
                         id: ms.getId(),
+                        position: ms.getPosition(),
                         name: ms.getName(),
-                        description: ms.getDescription(),
-                        targetDate: ms.getTargetdate() ? new Date(ms.getTargetdate() * 1000) : null,
-                        completed: ms.getCompleted()
+                        level: ms.getLevel(),
                     }));
                     
                     resolve({
-                        id: response.getId(),
-                        name: response.getName(),
-                        description: response.getDescription(),
                         milestones: milestones
                     });
                 }

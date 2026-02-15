@@ -56,21 +56,6 @@ const UI = {
     },
     
     renderRoadmap(roadmap) {
-        return `
-            <a href="roadmap.html?id=${roadmap.id}" class="roadmap-card">
-                <h3 class="roadmap-title">${this.escapeHtml(roadmap.name)}</h3>
-            </a>
-        `;
-    },
-    
-    renderMilestone(milestone) {
-        return `
-            <div class="card">
-                <h4>${this.escapeHtml(milestone.name)}</h4>
-                <p class="text-muted">${this.escapeHtml(milestone.level)}</p>
-                <a href="subject.html?id=${milestone.id}" class="btn btn-secondary mt-md">View Subjects</a>
-            </div>
-        `;
     },
     
     /**

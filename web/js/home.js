@@ -39,7 +39,6 @@ window.addEventListener('DOMContentLoaded', () => {
             UI.clearForm('roadmap-form');
             UI.setButtonLoading('save-roadmap-btn', false);
             
-            // Reload the page to show new roadmap
             loadRoadmaps();
         } catch (err) {
             console.error('Create roadmap failed:', err);
@@ -79,6 +78,10 @@ function renderRoadmaps(roadmaps) {
     container.innerHTML = '';
     
     roadmaps.forEach(roadmap => {
-        container.innerHTML += UI.renderRoadmap(roadmap);
+        container.innerHTML += `
+            <a href="roadmap.html?id=${roadmap.id}&name=${UI.escapeHtml(roadmap.name)}" class="roadmap-card">
+                <h3 class="roadmap-title">${UI.escapeHtml(roadmap.name)}</h3>
+            </a>
+        `;
     });
 }
