@@ -55,9 +55,7 @@ const UI = {
         return Math.round((completed / total) * 100);
     },
     
-    renderRoadmap(roadmap, completedCount = 0, totalCount = 0) {
-        const progress = this.calculateProgress(completedCount, totalCount);
-
+    renderRoadmap(roadmap) {
         return `
             <a href="roadmap.html?id=${roadmap.id}" class="roadmap-card">
                 <h3 class="roadmap-title">${this.escapeHtml(roadmap.name)}</h3>
@@ -66,18 +64,11 @@ const UI = {
     },
     
     renderMilestone(milestone) {
-        const completedClass = milestone.completed ? 'completed' : '';
-        const targetDate = milestone.targetDate ? 
-            `<span class="text-muted">Due: ${this.formatDate(milestone.targetDate)}</span>` : '';
-        
         return `
-            <div class="timeline-item ${completedClass}">
-                <div class="card">
-                    <h4>${this.escapeHtml(milestone.name)}</h4>
-                    <p class="text-muted">${this.escapeHtml(milestone.description || '')}</p>
-                    ${targetDate}
-                    <a href="subject.html?milestone=${milestone.id}" class="btn btn-secondary mt-md">View Subjects</a>
-                </div>
+            <div class="card">
+                <h4>${this.escapeHtml(milestone.name)}</h4>
+                <p class="text-muted">${this.escapeHtml(milestone.level)}</p>
+                <a href="subject.html?id=${milestone.id}" class="btn btn-secondary mt-md">View Subjects</a>
             </div>
         `;
     },

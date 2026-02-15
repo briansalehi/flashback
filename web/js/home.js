@@ -79,6 +79,6 @@ function renderRoadmaps(roadmaps) {
     container.innerHTML = '';
     
     roadmaps.forEach(roadmap => {
-        container.innerHTML += UI.renderRoadmap(roadmap, 0, 0);
+        container.innerHTML += UI.renderRoadmap(roadmap);
     });
 }

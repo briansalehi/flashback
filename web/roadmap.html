@@ -25,8 +25,7 @@
         <div class="container">
             <div class="dashboard-header">
                 <a href="/home.html" style="color: var(--text-muted); text-decoration: none;">← Back to Roadmaps</a>
-                <h1 id="roadmap-title">Loading...</h1>
-                <p id="roadmap-description" class="dashboard-welcome"></p>
+                <h1 id="roadmap-name">Loading...</h1>
             </div>
             
             <div id="error-message" style="display: none;"></div>
@@ -81,21 +80,17 @@
                 </form>
             </div>
             
-            <!-- Loading State -->
             <div id="loading" style="display: none; text-align: center; padding: 3rem;">
                 <div class="loading" style="width: 40px; height: 40px; border-width: 4px;"></div>
                 <p class="text-muted mt-md">Loading milestones...</p>
             </div>
             
-            <!-- Milestones Timeline -->
             <div id="milestones-container" class="timeline">
-                <!-- Milestones will be inserted here -->
             </div>
             
-            <!-- Empty State -->
             <div id="empty-state" style="display: none; text-align: center; padding: 4rem 2rem;">
                 <h3 style="color: var(--text-muted);">No milestones yet</h3>
-                <p class="text-muted">Add your first milestone to start tracking progress!</p>
+                <p class="text-muted">Add your first milestone!</p>
             </div>
         </div>
     </main>
@@ -104,115 +99,6 @@
     <script src="js/client.js"></script>
     <script src="js/auth.js"></script>
     <script src="js/ui.js"></script>
-    
-    <script>
-        if (!Auth.isAuthenticated()) {
-            window.location.href = '/index.html';
-        }
-        
-        // Get roadmap ID from URL
-        const roadmapId = UI.getUrlParam('id');
-        if (!roadmapId) {
-            window.location.href = '/home.html';
-        }
-        
-        // Sign out handler
-        document.getElementById('signout-btn').addEventListener('click', async (e) => {
-            e.preventDefault();
-            await Auth.signOut();
-        });
-        
-        // Show/hide create form
-        document.getElementById('create-milestone-btn').addEventListener('click', () => {
-            UI.toggleElement('create-form', true);
-            document.getElementById('milestone-name').focus();
-        });
-        
-        document.getElementById('cancel-milestone-btn').addEventListener('click', () => {
-            UI.toggleElement('create-form', false);
-            UI.clearForm('milestone-form');
-        });
-        
-        // Handle milestone creation
-        document.getElementById('milestone-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const name = document.getElementById('milestone-name').value;
-            const description = document.getElementById('milestone-description').value;
-            const dateStr = document.getElementById('milestone-date').value;
-            const targetDate = dateStr ? new Date(dateStr) : null;
-            
-            UI.hideMessage('error-message');
-            UI.setButtonLoading('save-milestone-btn', true);
-            
-            try {
-                const milestone = await flashbackClient.createMilestone(
-                    roadmapId, 
-                    name, 
-                    description, 
-                    targetDate
-                );
-                console.log('Milestone created:', milestone);
-                
-                // Hide form and reload milestones
-                UI.toggleElement('create-form', false);
-                UI.clearForm('milestone-form');
-                UI.setButtonLoading('save-milestone-btn', false);
-                
-                // Reload
-                loadRoadmap();
-            } catch (err) {
-                console.error('Create milestone failed:', err);
-                UI.showError(err.message || 'Failed to create milestone');
-                UI.setButtonLoading('save-milestone-btn', false);
-            }
-        });
-        
-        // Load roadmap details
-        async function loadRoadmap() {
-            UI.toggleElement('loading', true);
-            UI.toggleElement('milestones-container', false);
-            UI.toggleElement('empty-state', false);
-            
-            try {
-                const roadmap = await flashbackClient.getRoadmap(roadmapId);
-                console.log('Loaded roadmap:', roadmap);
-                
-                // Update page title and description
-                document.getElementById('roadmap-title').textContent = roadmap.name;
-                document.getElementById('roadmap-description').textContent = roadmap.description || '';
-                document.title = roadmap.name + ' - Flashback';
-                
-                UI.toggleElement('loading', false);
-                
-                if (roadmap.milestones.length === 0) {
-                    UI.toggleElement('empty-state', true);
-                } else {
-                    UI.toggleElement('milestones-container', true);
-                    renderMilestones(roadmap.milestones);
-                }
-            } catch (err) {
-                console.error('Load roadmap failed:', err);
-                UI.toggleElement('loading', false);
-                UI.showError('Failed to load roadmap: ' + (err.message || 'Unknown error'));
-            }
-        }
-        
-        // Render milestones
-        function renderMilestones(milestones) {
-            const container = document.getElementById('milestones-container');
-            container.innerHTML = '';
-            
-            milestones.forEach(milestone => {
-                const html = UI.renderMilestone(milestone);
-                container.innerHTML += html;
-            });
-        }
-        
-        // Load on page load
-        window.addEventListener('load', () => {
-            loadRoadmap();
-        });
-    </script>
+    <script src="js/roadmap.js"></script>
 </body>
 </html>

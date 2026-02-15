@@ -184,7 +184,7 @@ class FlashbackClient {
         });
     }
     
-    async getRoadmap(roadmapId) {
+    async getMilestones(roadmapId) {
         return new Promise((resolve, reject) => {
             const request = new proto.flashback.GetRoadmapRequest();
             request.setId(roadmapId);
