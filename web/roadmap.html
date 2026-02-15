@@ -9,6 +9,93 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;600;700&family=Source+Sans+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        .search-result-item {
+            padding: 0.75rem;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            margin-bottom: 0.5rem;
+            transition: background-color 0.2s;
+        }
+
+        .search-result-item:hover {
+            background-color: var(--bg-secondary);
+        }
+
+        .search-result-label {
+            display: flex;
+            align-items: flex-start;
+            cursor: pointer;
+            gap: 0.75rem;
+        }
+
+        .search-result-label input[type="radio"] {
+            margin-top: 0.25rem;
+            cursor: pointer;
+        }
+
+        .search-result-name {
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        .search-section {
+            margin-bottom: 1.5rem;
+        }
+
+        .create-subject-section {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-color);
+        }
+
+        #search-results {
+            max-height: 300px;
+            overflow-y: auto;
+            margin-top: 1rem;
+        }
+
+        .level-selector {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        .level-option {
+            flex: 1;
+        }
+
+        .level-option input[type="radio"] {
+            display: none;
+        }
+
+        .level-option label {
+            display: block;
+            padding: 0.75rem;
+            text-align: center;
+            border: 2px solid var(--border-color);
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 500;
+        }
+
+        .level-option input[type="radio"]:checked + label {
+            border-color: var(--accent-color);
+            background-color: var(--accent-light);
+            color: var(--accent-color);
+        }
+
+        .level-option label:hover {
+            border-color: var(--accent-color);
+        }
+
+        .level-description {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            margin-top: 0.25rem;
+        }
+    </style>
 </head>
 <body>
     <header class="header">
@@ -41,32 +128,106 @@
 
             <div id="empty-state" style="display: none; text-align: center; padding: 4rem 2rem;">
                 <h3 style="color: var(--text-muted);">No subjects yet</h3>
-                <p class="text-muted">Add your first subject!</p>
+                <p class="text-muted">Add your first subject to this roadmap!</p>
             </div>
 
             <button id="create-milestone-btn" class="btn btn-accent mb-lg" style="margin-top: 2rem;">
-                + Add Subject
+                + Add Subject to Roadmap
             </button>
 
-            <div id="create-form" class="card" style="display: none; max-width: 600px;">
+            <div id="add-milestone-form" class="card" style="display: none; max-width: 700px;">
                 <div class="card-header">
-                    <h3 class="card-title">Add New Subject</h3>
+                    <h3 class="card-title">Add Subject to Roadmap</h3>
                 </div>
+                
                 <form id="milestone-form">
-                    <div class="form-group">
-                        <label class="form-label" for="milestone-name">Name</label>
-                        <input 
-                            type="text" 
-                            id="milestone-name" 
-                            class="form-input" 
-                            placeholder="Matrix Algebra"
-                            required
-                        >
+                    <!-- Search existing subjects section -->
+                    <div id="search-subject-section" class="search-section">
+                        <div class="form-group">
+                            <label class="form-label" for="subject-search-input">Search for a subject</label>
+                            <input 
+                                type="text" 
+                                id="subject-search-input" 
+                                class="form-input" 
+                                placeholder="Start typing to search..."
+                            >
+                        </div>
+
+                        <div id="search-results-loading" style="display: none; text-align: center; padding: 1rem;">
+                            <div class="loading" style="width: 30px; height: 30px; border-width: 3px; margin: 0 auto;"></div>
+                        </div>
+
+                        <div id="search-results" style="display: none;">
+                            <!-- Search results will be inserted here -->
+                        </div>
+
+                        <div id="no-search-results" style="display: none; text-align: center; padding: 1rem; color: var(--text-muted);">
+                            No subjects found
+                        </div>
+
+                        <div style="margin-top: 1rem; text-align: center;">
+                            <button type="button" id="create-new-subject-btn" class="btn btn-secondary">
+                                + Create New Subject
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Create new subject section -->
+                    <div id="create-subject-section" class="create-subject-section" style="display: none;">
+                        <button type="button" id="back-to-search-btn" class="btn btn-link" style="padding: 0; margin-bottom: 1rem;">
+                            ← Back to search
+                        </button>
+                        
+                        <form id="create-subject-form">
+                            <div class="form-group">
+                                <label class="form-label" for="new-subject-name">New Subject Name</label>
+                                <input 
+                                    type="text" 
+                                    id="new-subject-name" 
+                                    class="form-input" 
+                                    placeholder="e.g., Linear Algebra"
+                                    required
+                                >
+                            </div>
+                            
+                            <button type="submit" id="save-new-subject-btn" class="btn btn-primary">
+                                Create Subject
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Expertise level selection -->
+                    <div class="form-group" style="margin-top: 2rem;">
+                        <label class="form-label">Select expertise level for this roadmap</label>
+                        <div class="level-selector">
+                            <div class="level-option">
+                                <input type="radio" id="level-surface" name="expertise-level" value="0" checked>
+                                <label for="level-surface">
+                                    Surface
+                                    <div class="level-description">Basic understanding</div>
+                                </label>
+                            </div>
+                            <div class="level-option">
+                                <input type="radio" id="level-depth" name="expertise-level" value="1">
+                                <label for="level-depth">
+                                    Depth
+                                    <div class="level-description">Intermediate mastery</div>
+                                </label>
+                            </div>
+                            <div class="level-option">
+                                <input type="radio" id="level-origin" name="expertise-level" value="2">
+                                <label for="level-origin">
+                                    Origin
+                                    <div class="level-description">Expert level</div>
+                                </label>
+                            </div>
+                        </div>
+                        <input type="hidden" id="expertise-level" value="0">
                     </div>
                     
-                    <div style="display: flex; gap: 1rem;">
+                    <div style="display: flex; gap: 1rem; margin-top: 2rem;">
                         <button type="submit" id="save-milestone-btn" class="btn btn-primary">
-                            Add Subject
+                            Add to Roadmap
                         </button>
                         <button type="button" id="cancel-milestone-btn" class="btn btn-secondary">
                             Cancel
@@ -77,9 +238,17 @@
         </div>
     </main>
     
-    <script src="proto/flashback.js"></script> <!-- grpc-web will generate this file -->
+    <script src="proto/flashback.js"></script>
     <script src="js/client.js"></script>
     <script src="js/ui.js"></script>
     <script src="js/roadmap.js"></script>
+    <script>
+        // Update hidden input when radio button changes
+        document.querySelectorAll('input[name="expertise-level"]').forEach(radio => {
+            radio.addEventListener('change', (e) => {
+                document.getElementById('expertise-level').value = e.target.value;
+            });
+        });
+    </script>
 </body>
 </html>

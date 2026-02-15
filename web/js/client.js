@@ -210,10 +210,8 @@ class FlashbackClient {
 
     async getMilestones(roadmapId) {
         return new Promise((resolve, reject) => {
-            const user = new proto.flashback.User();
             const request = new proto.flashback.GetMilestonesRequest();
-            user.setToken(this.token);
-            user.setDevice(this.device);
+            const user = this.getAuthenticatedUser();
             request.setUser(user);
             request.setRoadmapId(roadmapId);
 
@@ -237,42 +235,21 @@ class FlashbackClient {
         });
     }
 
-    async addMilestone(roadmapId, subjectId) {
+    async searchSubjects(searchToken) {
         return new Promise((resolve, reject) => {
-            const request = new proto.flashback.AddMilestoneRequest();
-            const roadmap = new proto.flashback.Roadmap();
-            roadmap.setId(roadmapId);
-            request.setRoadmap(roadmap);
+            const request = new proto.flashback.SearchSubjectsRequest();
+            const user = this.getAuthenticatedUser();
+            request.setUser(user);
+            request.setToken(searchToken);
 
-            this.client.createMilestone(request, this.getMetadata(), (err, response) => {
+            this.client.searchSubjects(request, this.getMetadata(), (err, response) => {
                 if (err) {
-                    console.error('CreateMilestone error:', err);
+                    console.error('SearchSubjects error:', err);
                     reject(err);
                 } else {
-                    resolve({
-                        id: response.getId(),
-                        name: response.getName(),
-                        description: response.getDescription()
-                    });
-                }
-            });
-        });
-    }
-
-    async getSubjects(milestoneId) {
-        return new Promise((resolve, reject) => {
-            const request = new proto.flashback.GetSubjectsRequest();
-            request.setMilestoneid(milestoneId);
-
-            this.client.getSubjects(request, this.getMetadata(), (err, response) => {
-                if (err) {
-                    console.error('GetSubjects error:', err);
-                    reject(err);
-                } else {
-                    const subjects = response.getSubjectsList().map(subj => ({
-                        id: subj.getId(),
-                        name: subj.getName(),
-                        description: subj.getDescription()
+                    const subjects = response.getSubjectsList().map(match => ({
+                        id: match.getSubject().getId(),
+                        name: match.getSubject().getName()
                     }));
                     resolve(subjects);
                 }
@@ -280,22 +257,48 @@ class FlashbackClient {
         });
     }
 
-    async createSubject(milestoneId, name, description) {
+    async createSubject(name) {
         return new Promise((resolve, reject) => {
             const request = new proto.flashback.CreateSubjectRequest();
-            request.setMilestoneid(milestoneId);
+            const user = this.getAuthenticatedUser();
+            request.setUser(user);
             request.setName(name);
-            request.setDescription(description);
 
             this.client.createSubject(request, this.getMetadata(), (err, response) => {
                 if (err) {
                     console.error('CreateSubject error:', err);
                     reject(err);
                 } else {
+                    resolve();
+                }
+            });
+        });
+    }
+
+    async addMilestone(roadmapId, subjectId, level) {
+        return new Promise((resolve, reject) => {
+            const request = new proto.flashback.AddMilestoneRequest();
+            const user = this.getAuthenticatedUser();
+
+            request.setUser(user);
+            request.setSubjectId(subjectId);
+            request.setSubjectLevel(level);
+            request.setRoadmapId(roadmapId);
+            request.setPosition(0);
+
+            this.client.addMilestone(request, this.getMetadata(), (err, response) => {
+                if (err) {
+                    console.error('AddMilestone error:', err);
+                    reject(err);
+                } else {
+                    const milestone = response.getMilestone();
                     resolve({
-                        id: response.getId(),
-                        name: response.getName(),
-                        description: response.getDescription()
+                        milestone: milestone ? {
+                            id: milestone.getId(),
+                            name: milestone.getName(),
+                            level: this.getLevel(milestone.getLevel()),
+                            position: milestone.getPosition()
+                        } : null
                     });
                 }
             });
