@@ -5,12 +5,12 @@ services:
     environment:
       POSTGRES_HOST_AUTH_METHOD: trust
     volumes:
-      - ./database/restore-database.sh:/docker-entrypoint-initdb.d/restore-database.sh
-      - ./database/flashback.sql:/opt/flashback.sql
+      - ./database/restore-database.sh:/docker-entrypoint-initdb.d/restore-database.sh:Z
+      - ./database/flashback.sql:/opt/flashback.sql:Z
     expose:
       - 5432
     networks:
-      - backend
+      - flashback
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U postgres" ]
       interval: 5s
@@ -24,10 +24,8 @@ services:
       DATABASE_HOST: postgres
     expose:
       - 9821
-    ports:
-      - 9821:9821
     networks:
-      - backend
+      - flashback
     depends_on:
       postgres:
         condition: service_healthy
@@ -35,17 +33,15 @@ services:
   envoy:
     image: envoyproxy/envoy:v1.37-latest
     container_name: envoy
+    user: root
+    privileged: true
     volumes:
       - ./helpers/envoy.yaml:/etc/envoy/envoy.yaml
     expose:
       - 9901
       - 8080
-    ports:
-      - 9901:9901
-      - 8080:8080
     networks:
-      - backend
-      - frontend
+      - flashback
     depends_on:
       - flashbackd
 
@@ -55,17 +51,14 @@ services:
     ports:
       - 80:80
     volumes:
-      - /var/www/html:/var/www/html
-      - ./helpers/httpd.conf:/usr/local/apache2/conf/httpd.conf
-      - ./helpers/api.conf:/usr/local/apache2/conf/extra/api.conf
-      - ./helpers/www.conf:/usr/local/apache2/conf/extra/www.conf
+      - /var/www/html:/var/www/html:Z
+      - ./helpers/httpd.conf:/usr/local/apache2/conf/httpd.conf:Z
+      - ./helpers/local.conf:/usr/local/apache2/conf/extra/local.conf:Z
     networks:
-      - frontend
+      - flashback
     depends_on:
       - envoy
 
 networks:
-  backend:
-    driver: bridge
-  frontend:
+  flashback:
     driver: bridge

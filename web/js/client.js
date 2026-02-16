@@ -1,6 +1,6 @@
 class FlashbackClient {
     constructor() {
-        this.apiUrl = window.location.hostname === 'localhost' ? 'http://localhost:8080' : 'https://api.flashback.eu.com';
+        this.apiUrl = window.location.hostname === 'localhost' ? 'http://localhost/api' : 'https://api.flashback.eu.com';
         this.client = null;
         this.ready = false;
         this.device = this.getDevice();

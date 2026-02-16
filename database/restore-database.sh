@@ -4,8 +4,7 @@ base_dir=""
 
 if [ "$USER" != "postgres" ]
 then
-    echo "run again as postgres user!" >&2
-    exit 1
+    echo -e "\e[1;2;33mrun again as postgres user!\e[0m" >&2
 fi
 
 if [ $# -eq 1 ] && [ -d "$1" ] && [ -f "$1/flashback.sql" ]
@@ -14,11 +13,14 @@ then
 elif [ -f $(dirname "$0")/flashback.sql ]
 then
     base_dir="$(dirname "$0")"
+elif [ -f /opt/flashback.sql ]
+then
+    base_dir=/opt
 elif [ -f flashback.sql ]
 then
     base_dir="."
 else
-    echo "specify the directory containing flashback.sql"
+    echo -e "\e[1;2;31mspecify the directory containing flashback.sql\e[0m"
     exit 2
 fi
 
