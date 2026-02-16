@@ -26,12 +26,14 @@ static_resources:
                         - match:
                             prefix: "/"
                           route:
-                            cluster: grpc_service
+                            cluster: flashbackd
                             timeout: 60s
                             max_stream_duration:
                               grpc_timeout_header_max: 60s
                       cors:
                         allow_origin_string_match:
+                          - exact: "http://localhost"
+                          - exact: "http://localhost:80"
                           - exact: "https://flashback.eu.com"
                           - exact: "https://www.flashback.eu.com"
                         allow_methods: GET, PUT, DELETE, POST, OPTIONS
@@ -50,7 +52,7 @@ static_resources:
                       "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
 
   clusters:
-    - name: grpc_service
+    - name: flashbackd
       type: LOGICAL_DNS
       lb_policy: ROUND_ROBIN
       dns_lookup_family: V4_ONLY
@@ -60,11 +62,11 @@ static_resources:
           explicit_http_config:
             http2_protocol_options: {}
       load_assignment:
-        cluster_name: grpc_service
+        cluster_name: flashbackd
         endpoints:
           - lb_endpoints:
               - endpoint:
                   address:
                     socket_address:
-                      address: localhost
+                      address: flashbackd
                       port_value: 9821

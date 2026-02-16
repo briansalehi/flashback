@@ -10,11 +10,12 @@
 constexpr uint16_t server_port{9821};
 constexpr std::string listen_address{"[::]"};
 
-int main()
+int main(int const argc, char** argv)
 {
     try
     {
-        auto database{std::make_shared<flashback::database>("flashback_client", "flashback", "localhost", "5432")};
+        std::string database_host{std::getenv("DATABASE_HOST") ? std::getenv("DATABASE_HOST") : "localhost"};
+        auto database{std::make_shared<flashback::database>("flashback_client", "flashback", database_host, "5432")};
         auto const server{std::make_shared<flashback::server>(database)};
         auto const builder{std::make_unique<grpc::ServerBuilder>()};
 
