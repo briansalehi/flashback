@@ -46,7 +46,7 @@ grpc::Status server::SignIn(grpc::ServerContext* context, const SignInRequest* r
             throw client_exception(std::format("cannot create session for user {}", user->id()));
         }
 
-        std::cerr << std::format("Client {}: signed in with device {}\n", user->id(), user->device());
+        std::cerr << std::format("client {} signed in with device {}\n", user->token(), user->device());
 
         user->clear_id();
         user->clear_hash();
@@ -81,6 +81,7 @@ grpc::Status server::SignOut(grpc::ServerContext* context, const SignOutRequest*
     {
         if (request->has_user() && session_is_valid(request->user()))
         {
+            std::cerr << std::format("client {} signed out\n", request->user().token());
             std::shared_ptr<User> const user{m_database->get_user(request->user().token(), request->user().device())};
             m_database->revoke_session(user->id(), request->user().token());
             status = grpc::Status{grpc::StatusCode::OK, {}};
@@ -127,6 +128,7 @@ grpc::Status server::SignUp(grpc::ServerContext* context, const SignUpRequest* r
 
         if (user_id > 0)
         {
+            std::cerr << std::format("client {} created new account\n", request->user().email());
             response->set_success(true);
             response->set_details("signup successful");
             response->set_allocated_user(user.release());
@@ -174,6 +176,7 @@ grpc::Status server::ResetPassword(grpc::ServerContext* context, ResetPasswordRe
         user->clear_password();
         user->clear_device();
 
+        std::cerr << std::format("client {} resetted password on device {}\n", request->user().token(), request->user().device());
         m_database->reset_password(user->id(), hash);
 
         response->set_allocated_user(user.release());
@@ -189,6 +192,8 @@ grpc::Status server::ResetPassword(grpc::ServerContext* context, ResetPasswordRe
 grpc::Status server::EditUser(grpc::ServerContext* context, EditUserRequest const* request, EditUserResponse* response)
 {
     // name, email
+    std::cerr << std::format("client {} edited their email\n", request->user().token());
+    std::cerr << std::format("client {} edited their name\n", request->user().token());
     return grpc::Status::OK;
 }
 
@@ -196,6 +201,7 @@ grpc::Status server::VerifySession(grpc::ServerContext* context, VerifySessionRe
 {
     try
     {
+        std::cerr << std::format("client {} validated their account\n", request->user().token());
         response->set_valid(request->has_user() && session_is_valid(request->user()));
     }
     catch (std::exception const& exp)
@@ -225,6 +231,7 @@ grpc::Status server::CreateRoadmap(grpc::ServerContext* context, CreateRoadmapRe
         {
             std::shared_ptr<User> const user{m_database->get_user(request->user().token(), request->user().device())};
             auto roadmap{std::make_unique<Roadmap>(m_database->create_roadmap(user->id(), request->name()))};
+            std::cerr << std::format("client {} created roadmap {}\n", request->user().token(), roadmap->id());
             response->set_allocated_roadmap(roadmap.release());
             status = grpc::Status{grpc::StatusCode::OK, {}};
         }
@@ -250,7 +257,7 @@ grpc::Status server::GetRoadmaps(grpc::ServerContext* context, GetRoadmapsReques
         {
             std::shared_ptr<User> const user{m_database->get_user(request->user().token(), request->user().device())};
             std::vector<Roadmap> const roadmaps{m_database->get_roadmaps(user->id())};
-            std::clog << std::format("Client {}: collected {} roadmaps\n", user->id(), roadmaps.size());
+            std::clog << std::format("client {} collected {} roadmaps\n", user->token(), roadmaps.size());
 
             for (Roadmap const& roadmap: roadmaps)
             {
@@ -291,6 +298,7 @@ grpc::Status server::GetStudyResources(grpc::ServerContext* context, GetStudyRes
                 *study->mutable_resource() = resource;
                 study->set_order(position);
             }
+            std::clog << std::format("client {} collected {} study resources\n", user->token(), response->study_size());
             status = grpc::Status{grpc::StatusCode::OK, {}};
         }
     }
@@ -312,6 +320,7 @@ grpc::Status server::RenameRoadmap(grpc::ServerContext* context, RenameRoadmapRe
     {
         if (request->has_user() && request->has_roadmap() && session_is_valid(request->user()))
         {
+            std::clog << std::format("client {} renamed roadmap {}\n", request->user().token(), request->roadmap().id());
             m_database->rename_roadmap(request->roadmap().id(), request->roadmap().name());
         }
     }
@@ -333,6 +342,7 @@ grpc::Status server::RemoveRoadmap(grpc::ServerContext* context, RemoveRoadmapRe
     {
         if (request->has_user() && request->has_roadmap() && session_is_valid(request->user()))
         {
+            std::clog << std::format("client {} removed roadmap {}\n", request->user().token(), request->roadmap().id());
             std::shared_ptr<User> const user{m_database->get_user(request->user().token(), request->user().device())};
             m_database->remove_roadmap(user->id());
         }
@@ -367,6 +377,7 @@ grpc::Status server::SearchRoadmaps(grpc::ServerContext* context, SearchRoadmaps
                 roadmap->set_id(matched.id());
                 roadmap->set_name(matched.name());
             }
+            std::clog << std::format("client {} collected {} roadmaps by searching {}\n", request->user().token(), response->roadmap_size(), request->token());
             status = grpc::Status{grpc::StatusCode::OK, {}};
         }
     }
@@ -397,6 +408,7 @@ grpc::Status server::CloneRoadmap(grpc::ServerContext* context, CloneRoadmapRequ
             {
                 std::shared_ptr<User> const user{m_database->get_user(request->user().token(), request->user().device())};
                 Roadmap roadmap{m_database->clone_roadmap(user->id(), request->roadmap().id())};
+                std::clog << std::format("client {} cloned roadmap {} as {}\n", request->user().token(), request->roadmap().id(), roadmap.id());
                 response->set_allocated_roadmap(std::make_unique<Roadmap>(roadmap).release());
                 response->set_success(true);
             }
@@ -449,6 +461,7 @@ grpc::Status server::GetMilestones(grpc::ServerContext* context, GetMilestonesRe
                 milestone->set_name(m.name());
                 milestone->set_level(m.level());
             }
+            std::clog << std::format("client {} collected {} milestones from roadmap {}\n", request->user().token(), response->milestones_size(), request->roadmap_id());
             response->set_success(true);
         }
     }
@@ -492,6 +505,7 @@ grpc::Status server::AddMilestone(grpc::ServerContext* context, AddMilestoneRequ
                 if (request->position() > 0)
                 {
                     Milestone milestone = m_database->add_milestone(request->subject_id(), request->subject_level(), request->roadmap_id(), request->position());
+                    std::clog << std::format("client {} added milestone {} to roadmap {} in position {}\n", request->user().token(), request->subject_id(), request->roadmap_id(), request->position());
                     response->set_allocated_milestone(std::make_unique<flashback::Milestone>(milestone).release());
                     response->set_success(true);
                 }
@@ -531,6 +545,7 @@ grpc::Status server::AddRequirement(grpc::ServerContext* context, AddRequirement
 
         if (request->has_user() && session_is_valid(request->user()))
         {
+            std::clog << std::format("client {} added milestone {} as a requirement for milestone {} in roadmap {}\n", request->user().token(), request->milestone().position(), request->required_milestone().position(), request->roadmap().id());
             m_database->add_requirement(request->roadmap().id(), request->milestone(), request->required_milestone());
             response->set_success(true);
         }
@@ -568,6 +583,7 @@ grpc::Status server::GetRequirements(grpc::ServerContext* context, GetRequiremen
                 *milestone = requirement;
                 response->set_success(true);
             }
+            std::clog << std::format("client {} collected {} requirements from milestone {}:{}\n", request->user().token(), response->milestones_size(), request->roadmap().id(), request->milestone().position());
         }
     }
     catch (client_exception const& exp)
@@ -592,7 +608,8 @@ grpc::Status server::CreateSubject(grpc::ServerContext* context, CreateSubjectRe
     {
         if (request->has_user() && session_is_valid(request->user()))
         {
-            m_database->create_subject(request->name());
+            Subject subject{m_database->create_subject(request->name())};
+            std::clog << std::format("client {} created subject {}\n", request->user().token(), subject.id());
             response->set_success(true);
             response->clear_details();
             response->set_code(0);
@@ -633,6 +650,7 @@ grpc::Status server::SearchSubjects(grpc::ServerContext* context, SearchSubjects
                 matching_subject->set_position(position);
                 matching_subject->set_allocated_subject(std::make_unique<Subject>(subject).release());
             }
+            std::clog << std::format("client {} collected {} subjects by searching {}\n", request->user().token(), response->subjects_size(), request->token());
         }
     }
     catch (client_exception const& exp)
@@ -672,6 +690,7 @@ grpc::Status server::ReorderMilestone(grpc::ServerContext* context, ReorderMiles
             }
             else
             {
+                std::clog << std::format("client {} reordered milestone {} to {} in roadmap {}\n", request->user().token(), request->roadmap().id(), request->current_position(), request->target_position(), request->roadmap().id());
                 m_database->reorder_milestone(request->roadmap().id(), request->current_position(), request->target_position());
                 response->set_success(true);
                 response->clear_details();
@@ -732,6 +751,7 @@ grpc::Status server::RemoveMilestone(grpc::ServerContext* context, RemoveMilesto
         }
         else
         {
+            std::clog << std::format("client {} removed milestone {} in roadmap {}\n", request->user().token(), request->roadmap().id(), request->milestone().position(), request->roadmap().id());
             m_database->remove_milestone(request->roadmap().id(), request->milestone().id());
             response->set_success(true);
             response->clear_details();
@@ -778,6 +798,7 @@ grpc::Status server::ChangeMilestoneLevel(grpc::ServerContext* context, ChangeMi
         }
         else
         {
+            std::clog << std::format("client {} changed the level of milestone {}:{}\n", request->user().token(), request->roadmap().id(), request->milestone().position());
             m_database->change_milestone_level(request->roadmap().id(), request->milestone().id(), request->milestone().level());
             response->set_success(true);
             response->clear_details();
@@ -818,6 +839,7 @@ grpc::Status server::RenameSubject(grpc::ServerContext* context, RenameSubjectRe
             }
             else
             {
+                std::clog << std::format("client {} renamed subject {} to {}\n", request->user().token(), request->id(), request->name());
                 m_database->rename_subject(request->id(), request->name());
                 response->set_success(true);
                 response->set_code(0);
@@ -856,6 +878,7 @@ grpc::Status server::RemoveSubject(grpc::ServerContext* context, RemoveSubjectRe
         }
         else
         {
+            std::clog << std::format("client {} removed subject {}\n", request->user().token(), request->subject().id());
             m_database->remove_subject(request->subject().id());
             response->set_success(true);
             response->clear_details();
@@ -896,6 +919,7 @@ grpc::Status server::MergeSubjects(grpc::ServerContext* context, MergeSubjectsRe
         }
         else
         {
+            std::clog << std::format("client {} merged subject {} to {}\n", request->user().token(), request->source_subject().id(), request->target_subject().id());
             m_database->merge_subjects(request->source_subject().id(), request->target_subject().id());
             response->set_success(true);
             response->clear_details();
@@ -942,6 +966,7 @@ grpc::Status server::GetResources(grpc::ServerContext* context, GetResourcesRequ
                 Resource* resource = response->add_resources();
                 *resource = r;
             }
+            std::clog << std::format("client {} collected {} resources\n", request->user().token(), response->resources_size());
             response->set_success(true);
             response->clear_details();
             response->set_code(0);
@@ -983,6 +1008,7 @@ grpc::Status server::CreateResource(grpc::ServerContext* context, CreateResource
         else
         {
             auto resource{std::make_unique<Resource>(m_database->create_resource(request->resource()))};
+            std::clog << std::format("client {} created resource {}\n", request->user().token(), resource->id());
             response->set_success(true);
             response->clear_details();
             response->set_code(0);
@@ -1030,6 +1056,7 @@ grpc::Status server::AddResourceToSubject(grpc::ServerContext* context, AddResou
         }
         else
         {
+            std::clog << std::format("client {} added resource {} to subject\n", request->user().token(), request->resource().id(), request->subject().id());
             m_database->add_resource_to_subject(request->resource().id(), request->subject().id());
             response->set_success(true);
             response->clear_details();
@@ -1077,6 +1104,7 @@ grpc::Status server::DropResourceFromSubject(grpc::ServerContext* context, DropR
         }
         else
         {
+            std::clog << std::format("client {} dropped resource {} to subject\n", request->user().token(), request->resource().id(), request->subject().id());
             m_database->drop_resource_from_subject(request->resource().id(), request->subject().id());
             response->set_success(true);
             response->clear_details();
@@ -1125,6 +1153,7 @@ grpc::Status server::SearchResources(grpc::ServerContext* context, SearchResourc
                 *allocated_resource = resource;
                 result->set_position(position);
             }
+            std::clog << std::format("client {} collected {} resources by searching\n", request->user().token(), response->results_size(), request->search_token());
             response->set_success(true);
             response->clear_details();
             response->set_code(0);
@@ -1171,6 +1200,7 @@ grpc::Status server::MergeResources(grpc::ServerContext* context, MergeResources
         }
         else
         {
+            std::clog << std::format("client {} merged resource {} to {}\n", request->user().token(), request->source().id(), request->target().id());
             m_database->merge_resources(request->source().id(), request->target().id());
             response->set_success(true);
             response->clear_details();
@@ -1212,6 +1242,7 @@ grpc::Status server::RemoveResource(grpc::ServerContext* context, RemoveResource
         }
         else
         {
+            std::clog << std::format("client {} removed resource {}\n", request->user().token(), request->resource().id());
             m_database->remove_resource(request->resource().id());
             response->set_success(true);
             response->clear_details();
@@ -1258,36 +1289,42 @@ grpc::Status server::EditResource(grpc::ServerContext* context, EditResourceRequ
 
             if (resource.name() != request->resource().name())
             {
+                std::clog << std::format("client {} renamed resource {} to {}\n", request->user().token(), request->resource().id(), request->resource().name());
                 m_database->rename_resource(request->resource().id(), request->resource().name());
                 modified = true;
             }
 
             if (resource.link() != request->resource().link())
             {
+                std::clog << std::format("client {} edited link of resource {}\n", request->user().token(), request->resource().id());
                 m_database->edit_resource_link(request->resource().id(), request->resource().link());
                 modified = true;
             }
 
             if (resource.type() != request->resource().type())
             {
+                std::clog << std::format("client {} changed type of resource {}\n", request->user().token(), request->resource().id());
                 m_database->change_resource_type(request->resource().type(), request->resource().type());
                 modified = true;
             }
 
             if (resource.pattern() != request->resource().pattern())
             {
+                std::clog << std::format("client {} changed pattern of resource {}\n", request->user().token(), request->resource().id());
                 m_database->change_section_pattern(request->resource().id(), request->resource().pattern());
                 modified = true;
             }
 
             if (resource.production() != request->resource().production())
             {
+                std::clog << std::format("client {} changed production of resource {}\n", request->user().token(), request->resource().id());
                 m_database->edit_resource_production(request->resource().id(), request->resource().production());
                 modified = true;
             }
 
             if (resource.expiration() != request->resource().expiration())
             {
+                std::clog << std::format("client {} changed expiration of resource {}\n", request->user().token(), request->resource().id());
                 m_database->edit_resource_expiration(request->resource().id(), request->resource().expiration());
                 modified = true;
             }
@@ -1341,6 +1378,7 @@ grpc::Status server::CreateNerve(grpc::ServerContext* context, CreateNerveReques
         {
             std::shared_ptr<User> const user{m_database->get_user(request->user().token(), request->user().device())};
             Resource* nerve = response->mutable_resource();
+            std::clog << std::format("client {} created nerve {} in subject {}\n", request->user().token(), nerve->id(), request->subject().id());
             *nerve = m_database->create_nerve(user->id(), request->resource().name(), request->subject().id(), request->resource().expiration());
 
             if (nerve->id() == 0)
@@ -1382,6 +1420,7 @@ grpc::Status server::GetNerves(grpc::ServerContext* context, GetNervesRequest co
             {
                 *response->add_resources() = nerve;
             }
+            std::clog << std::format("client {} collected {} nerves\n", request->user().token(), response->resources_size());
             status = grpc::Status{grpc::StatusCode::OK, {}};
         }
     }
@@ -1418,6 +1457,7 @@ grpc::Status server::CreateProvider(grpc::ServerContext* context, CreateProvider
         else
         {
             Provider provider{m_database->create_provider(request->provider().name())};
+            std::clog << std::format("client {} created provider {}\n", request->user().token(), request->provider().id());
             *response->mutable_provider() = provider;
             status = grpc::Status{grpc::StatusCode::OK, {}};
         }
@@ -1454,6 +1494,7 @@ grpc::Status server::AddProvider(grpc::ServerContext* context, AddProviderReques
         }
         else
         {
+            std::clog << std::format("client {} added provider {} to resource {}\n", request->user().token(), request->provider().id(), request->resource().id());
             m_database->add_provider(request->resource().id(), request->provider().id());
             status = grpc::Status{grpc::StatusCode::OK, {}};
         }
@@ -1490,6 +1531,7 @@ grpc::Status server::DropProvider(grpc::ServerContext* context, DropProviderRequ
         }
         else
         {
+            std::clog << std::format("client {} dropped provider {} to resource {}\n", request->user().token(), request->provider().id(), request->resource().id());
             m_database->drop_provider(request->resource().id(), request->provider().id());
             status = grpc::Status{grpc::StatusCode::OK, {}};
         }
@@ -1528,6 +1570,7 @@ grpc::Status server::SearchProviders(grpc::ServerContext* context, SearchProvide
                 *result->mutable_provider() = provider;
                 result->set_position(position);
             }
+            std::clog << std::format("client {} collected {} providers by searching\n", request->user().token(), 0, request->search_token());
             status = grpc::Status{grpc::StatusCode::OK, {}};
         }
     }
@@ -1559,6 +1602,7 @@ grpc::Status server::RenameProvider(grpc::ServerContext* context, RenameProvider
         }
         else
         {
+            std::clog << std::format("client {} renamed provider {}\n", request->user().token(), 0, request->provider().id());
             m_database->rename_provider(request->provider().id(), request->provider().name());
             status = grpc::Status{grpc::StatusCode::OK, {}};
         }
@@ -1591,6 +1635,7 @@ grpc::Status server::RemoveProvider(grpc::ServerContext* context, RemoveProvider
         }
         else
         {
+            std::clog << std::format("client {} removed provider {}\n", request->user().token(), 0, request->provider().id());
             m_database->remove_provider(request->provider().id());
             status = grpc::Status{grpc::StatusCode::OK, {}};
         }
@@ -1627,6 +1672,7 @@ grpc::Status server::MergeProviders(grpc::ServerContext* context, MergeProviders
         }
         else
         {
+            std::clog << std::format("client {} merged provider {} to {}\n", request->user().token(), 0, request->source().id(), request->target().id());
             m_database->merge_providers(request->source().id(), request->target().id());
             status = grpc::Status{grpc::StatusCode::OK, {}};
         }
@@ -1663,6 +1709,7 @@ grpc::Status server::CreatePresenter(grpc::ServerContext* context, CreatePresent
         }
         else
         {
+            std::clog << std::format("client {} created presenter {}\n", request->user().token(), 0, request->presenter().id());
             auto presenter{m_database->create_presenter(request->presenter().name())};
             *response->mutable_presenter() = presenter;
             status = grpc::Status{grpc::StatusCode::OK, {}};
@@ -1700,6 +1747,7 @@ grpc::Status server::AddPresenter(grpc::ServerContext* context, AddPresenterRequ
         }
         else
         {
+            std::clog << std::format("client {} created presenter {} to resource {}\n", request->user().token(), 0, request->presenter().id(), request->resource().id());
             m_database->add_presenter(request->resource().id(), request->presenter().id());
             status = grpc::Status{grpc::StatusCode::OK, {}};
         }
@@ -1736,6 +1784,7 @@ grpc::Status server::DropPresenter(grpc::ServerContext* context, DropPresenterRe
         }
         else
         {
+            std::clog << std::format("client {} dropped presenter {} from resource {}\n", request->user().token(), 0, request->presenter().id(), request->resource().id());
             m_database->drop_presenter(request->resource().id(), request->presenter().id());
             status = grpc::Status{grpc::StatusCode::OK, {}};
         }
@@ -1774,6 +1823,7 @@ grpc::Status server::SearchPresenters(grpc::ServerContext* context, SearchPresen
                 *result->mutable_presenter() = presenter;
                 result->set_position(position);
             }
+            std::clog << std::format("client {} collected {} presenters by searching {}\n", request->user().token(), 0, request->search_token());
             status = grpc::Status{grpc::StatusCode::OK, {}};
         }
     }
@@ -1805,6 +1855,7 @@ grpc::Status server::RenamePresenter(grpc::ServerContext* context, RenamePresent
         }
         else
         {
+            std::clog << std::format("client {} renamed presenter {}\n", request->user().token(), request->presenter().id());
             m_database->rename_presenter(request->resource().id(), request->presenter().name());
             status = grpc::Status{grpc::StatusCode::OK, {}};
         }
@@ -1837,6 +1888,7 @@ grpc::Status server::RemovePresenter(grpc::ServerContext* context, RemovePresent
         }
         else
         {
+            std::clog << std::format("client {} removed presenter {}\n", request->user().token(), request->presenter().id());
             m_database->remove_presenter(request->resource().id());
             status = grpc::Status{grpc::StatusCode::OK, {}};
         }
@@ -1873,6 +1925,7 @@ grpc::Status server::MergePresenters(grpc::ServerContext* context, MergePresente
         }
         else
         {
+            std::clog << std::format("client {} merged presenter {} to {}\n", request->user().token(), request->source().id(), request->target().id());
             m_database->merge_presenters(request->source().id(), request->target().id());
             status = grpc::Status{grpc::StatusCode::OK, {}};
         }
@@ -1909,6 +1962,7 @@ grpc::Status server::GetTopics(grpc::ServerContext* context, GetTopicsRequest co
             {
                 *response->add_topic() = topic;
             }
+            std::clog << std::format("client {} collected {} topics from subject {}\n", request->user().token(), response->topic().size(), request->subject().id());
             status = grpc::Status{grpc::StatusCode::OK, {}};
         }
     }
@@ -1946,6 +2000,7 @@ grpc::Status server::CreateTopic(grpc::ServerContext* context, CreateTopicReques
         {
             Topic* topic{response->mutable_topic()};
             *topic = m_database->create_topic(request->subject().id(), request->topic().name(), request->topic().level(), request->topic().position());
+            std::clog << std::format("client {} created topic {} topics from subject {}\n", request->user().token(), response->topic().size(), request->subject().id());
             status = grpc::Status{grpc::StatusCode::OK, {}};
         }
     }
