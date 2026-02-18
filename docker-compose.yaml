@@ -22,6 +22,9 @@ services:
     container_name: flashbackd
     environment:
       DATABASE_HOST: postgres
+    volumes:
+      - .:/src:Z
+      - web-content:/var/www/html:Z
     expose:
       - 9821
     networks:
@@ -29,6 +32,15 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+    command:
+      - bash
+      - -c
+      - |
+        cmake --install /build --component web
+        /usr/local/bin/flashbackd &
+        while inotifywait -r -e modify,create,delete /src/web; do
+          cmake --install /build --component web
+        done
 
   envoy:
     image: envoyproxy/envoy:v1.37-latest
@@ -51,7 +63,7 @@ services:
     ports:
       - 80:80
     volumes:
-      - /var/www/html:/var/www/html:Z
+      - web-content:/var/www/html:Z
       - ./helpers/httpd.conf:/usr/local/apache2/conf/httpd.conf:Z
       - ./helpers/local.conf:/usr/local/apache2/conf/extra/local.conf:Z
     networks:
@@ -62,3 +74,6 @@ services:
 networks:
   flashback:
     driver: bridge
+
+volumes:
+  web-content:

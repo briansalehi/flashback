@@ -247,7 +247,6 @@ class FlashbackClient {
                     console.error('SearchSubjects error:', err);
                     reject(err);
                 } else {
-                    console.log(response.getSubjectsList());
                     const subjects = response.getSubjectsList().map(match => ({
                         id: match.getSubject().getId(),
                         name: match.getSubject().getName()

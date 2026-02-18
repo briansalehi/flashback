@@ -23,11 +23,9 @@ window.addEventListener('DOMContentLoaded', () => {
 
     const createMilestoneBtn = document.getElementById('create-milestone-btn');
     if (createMilestoneBtn) {
-        console.log('Create milestone button found, attaching event listener');
         createMilestoneBtn.addEventListener('click', (e) => {
             e.preventDefault();
-            console.log('Create milestone button clicked');
-            
+
             // Show the form
             UI.toggleElement('add-milestone-form', true);
             
@@ -41,7 +39,6 @@ window.addEventListener('DOMContentLoaded', () => {
                 if (searchInput) {
                     searchInput.disabled = false;
                     searchInput.focus();
-                    console.log('Search input focused');
                 }
             }, 100);
         });
