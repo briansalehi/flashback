@@ -48,6 +48,46 @@ window.addEventListener('DOMContentLoaded', () => {
         });
     });
 
+    // Pattern options per resource type
+    const patternsByType = {
+        0: [{value: 0, label: 'Chapter'}, {value: 1, label: 'Page'}, {value: 7, label: 'Section'}], // Book
+        1: [{value: 1, label: 'Page'}], // Website
+        2: [{value: 2, label: 'Session'}, {value: 3, label: 'Episode'}], // Course
+        3: [{value: 3, label: 'Episode'}], // Video
+        4: [{value: 4, label: 'Playlist'}, {value: 5, label: 'Post'}], // Channel
+        5: [{value: 5, label: 'Post'}], // Mailing List
+        6: [{value: 1, label: 'Page'}], // Manual
+        7: [{value: 0, label: 'Chapter'}, {value: 1, label: 'Page'}], // Slides
+        8: [{value: 6, label: 'Memory'}], // Nerves
+    };
+
+    const typeSelect = document.getElementById('resource-type');
+    const patternSelect = document.getElementById('resource-pattern');
+
+    typeSelect.addEventListener('change', () => {
+        const typeValue = typeSelect.value;
+        patternSelect.innerHTML = '';
+
+        if (!typeValue) {
+            patternSelect.disabled = true;
+            patternSelect.appendChild(new Option('Select type first...', ''));
+            return;
+        }
+
+        patternSelect.disabled = false;
+        const patterns = patternsByType[parseInt(typeValue)] || [];
+
+        if (patterns.length === 1) {
+            patternSelect.appendChild(new Option(patterns[0].label, patterns[0].value));
+            patternSelect.value = patterns[0].value;
+        } else {
+            patternSelect.appendChild(new Option('Select pattern...', ''));
+            patterns.forEach(p => {
+                patternSelect.appendChild(new Option(p.label, p.value));
+            });
+        }
+    });
+
     // Resources functionality
     const addResourceBtn = document.getElementById('add-resource-btn');
     if (addResourceBtn) {
@@ -63,11 +103,17 @@ window.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    function resetPatternSelect() {
+        patternSelect.disabled = true;
+        patternSelect.innerHTML = '<option value="">Select type first...</option>';
+    }
+
     const cancelResourceBtn = document.getElementById('cancel-resource-btn');
     if (cancelResourceBtn) {
         cancelResourceBtn.addEventListener('click', () => {
             UI.toggleElement('add-resource-form', false);
             UI.clearForm('resource-form');
+            resetPatternSelect();
         });
     }
 
@@ -83,8 +129,8 @@ window.addEventListener('DOMContentLoaded', () => {
             const productionDate = document.getElementById('resource-production').value;
             const expirationDate = document.getElementById('resource-expiration').value;
 
-            if (!name || !type || !pattern || !url || !productionDate || !expirationDate) {
-                UI.showError('Please fill in all fields');
+            if (!name || !type || !pattern || !productionDate || !expirationDate) {
+                UI.showError('Please fill required fields');
                 return;
             }
 
@@ -101,6 +147,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
                 UI.toggleElement('add-resource-form', false);
                 UI.clearForm('resource-form');
+                resetPatternSelect();
                 UI.setButtonLoading('save-resource-btn', false);
 
                 loadResources();

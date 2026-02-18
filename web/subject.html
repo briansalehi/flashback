@@ -205,26 +205,18 @@
 
                         <div class="form-group">
                             <label class="form-label" for="resource-pattern">Section Pattern</label>
-                            <select id="resource-pattern" class="form-input" required>
-                                <option value="">Select pattern...</option>
-                                <option value="0">Chapter</option>
-                                <option value="1">Page</option>
-                                <option value="2">Session</option>
-                                <option value="3">Episode</option>
-                                <option value="4">Playlist</option>
-                                <option value="5">Post</option>
-                                <option value="6">Memory</option>
+                            <select id="resource-pattern" class="form-input" required disabled>
+                                <option value="">Select type first...</option>
                             </select>
                         </div>
 
                         <div class="form-group">
-                            <label class="form-label" for="resource-url">URL</label>
+                            <label class="form-label" for="resource-url">URL (optional)</label>
                             <input
                                 type="url"
                                 id="resource-url"
                                 class="form-input"
                                 placeholder="https://example.com/resource"
-                                required
                             >
                         </div>
 
