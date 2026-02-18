@@ -76,6 +76,15 @@ class FlashbackClient {
         return user;
     }
 
+    handleError(err) {
+        if (err.code === 16) { // grpc::StatusCode::UNAUTHENTICATED
+            localStorage.removeItem('token');
+            this.token = '';
+            window.location.href = '/home.html';
+        }
+        return err;
+    }
+
     getLevel(level) {
         let name;
         switch (level) {
@@ -172,7 +181,7 @@ class FlashbackClient {
             this.client.getRoadmaps(request, this.getMetadata(), (err, response) => {
                 if (err) {
                     console.error('getRoadmaps error:', err);
-                    reject(err);
+                    reject(this.handleError(err));
                 } else {
                     const roadmaps = response.getRoadmapList().map(roadmap => ({
                         id: roadmap.getId(),
@@ -200,7 +209,7 @@ class FlashbackClient {
             this.client.createRoadmap(request, this.getMetadata(), (err, response) => {
                 if (err) {
                     console.error('createRoadmap error:', err);
-                    reject(err);
+                    reject(this.handleError(err));
                 } else {
                     const roadmap = response.getRoadmap();
                     resolve({
@@ -222,7 +231,7 @@ class FlashbackClient {
             this.client.getMilestones(request, this.getMetadata(), (err, response) => {
                 if (err) {
                     console.error('GetRoadmap error:', err);
-                    reject(err);
+                    reject(this.handleError(err));
                 } else {
                     const milestones = response.getMilestonesList().map(ms => ({
                         id: ms.getId(),
@@ -249,7 +258,7 @@ class FlashbackClient {
             this.client.searchSubjects(request, this.getMetadata(), (err, response) => {
                 if (err) {
                     console.error('SearchSubjects error:', err);
-                    reject(err);
+                    reject(this.handleError(err));
                 } else {
                     const subjects = response.getSubjectsList().map(match => ({
                         id: match.getSubject().getId(),
@@ -271,7 +280,7 @@ class FlashbackClient {
             this.client.createSubject(request, this.getMetadata(), (err, response) => {
                 if (err) {
                     console.error('CreateSubject error:', err);
-                    reject(err);
+                    reject(this.handleError(err));
                 } else {
                     resolve();
                 }
@@ -293,7 +302,7 @@ class FlashbackClient {
             this.client.addMilestone(request, this.getMetadata(), (err, response) => {
                 if (err) {
                     console.error('AddMilestone error:', err);
-                    reject(err);
+                    reject(this.handleError(err));
                 } else {
                     const milestone = response.getMilestone();
                     resolve({
@@ -321,7 +330,7 @@ class FlashbackClient {
             this.client.getResources(request, this.getMetadata(), (err, response) => {
                 if (err) {
                     console.error('GetResources error:', err);
-                    reject(err);
+                    reject(this.handleError(err));
                 } else {
                     const resources = response.getResourcesList().map(res => ({
                         id: res.getId(),
@@ -355,7 +364,7 @@ class FlashbackClient {
             this.client.createResource(request, this.getMetadata(), (err, response) => {
                 if (err) {
                     console.error('CreateResource:', err);
-                    reject(err);
+                    reject(this.handleError(err));
                 } else {
                     const resource = response.getResource();
                     resolve({
@@ -387,7 +396,7 @@ class FlashbackClient {
             this.client.addResourceToSubject(request, this.getMetadata(), (err, response) => {
                 if (err) {
                     console.error('AddResource error:', err);
-                    reject(err);
+                    reject(this.handleError(err));
                 } else {
                     resolve();
                 }
@@ -413,7 +422,7 @@ class FlashbackClient {
             this.client.createTopic(request, this.getMetadata(), (err, response) => {
                 if (err) {
                     console.error('CreateTopic error:', err);
-                    reject(err);
+                    reject(this.handleError(err));
                 } else {
                     const topic = response.getTopic();
                     resolve({
@@ -439,7 +448,7 @@ class FlashbackClient {
             this.client.getTopics(request, this.getMetadata(), (err, response) => {
                 if (err) {
                     console.error("GetTopics error:", err);
-                    reject(err);
+                    reject(this.handleError(err));
                 } else {
                     resolve(response.getTopicList().map(topic => ({
                         name: topic.getName(),
@@ -469,7 +478,7 @@ class FlashbackClient {
             this.client.createSection(request, this.getMetadata(), (err, response) => {
                 if (err) {
                     console.error("CreateSection error:", err);
-                    reject(err);
+                    reject(this.handleError(err));
                 } else {
                     const section = response.getSection();
                     resolve({
@@ -494,7 +503,7 @@ class FlashbackClient {
             this.client.getSections(request, this.getMetadata(), (err, response) => {
                 if (err) {
                     console.error("GetSections error:", err);
-                    reject(err);
+                    reject(this.handleError(err));
                 } else {
                     resolve(response.getSectionList().map(section => ({
                         name: section.getName(),
@@ -516,7 +525,7 @@ class FlashbackClient {
             this.client.getStudyResources(request, this.getMetadata(), (err, response) => {
                 if (err) {
                     console.error("GetStudyResources error:", err);
-                    reject(err);
+                    reject(this.handleError(err));
                 } else {
                     resolve(response.getStudyList().map(study => ({
                         name: study.getResource().getName(),
@@ -540,7 +549,7 @@ class FlashbackClient {
             this.client.createCard(request, this.getMetadata(), (err, response) => {
                 if (err) {
                     console.error("CreateCard error:", err);
-                    reject(err);
+                    reject(this.handleError(err));
                 } else {
                     const card = response.getCard();
                     resolve({
@@ -571,7 +580,7 @@ class FlashbackClient {
             this.client.addCardToSection(request, this.getMetadata(), (err) => {
                 if (err) {
                     console.error("AddCardToSection error:", err);
-                    reject(err);
+                    reject(this.handleError(err));
                 } else {
                     resolve();
                 }
@@ -598,7 +607,7 @@ class FlashbackClient {
             this.client.addCardToTopic(request, this.getMetadata(), (err) => {
                 if (err) {
                     console.error("AddCardToTopic error:", err);
-                    reject(err);
+                    reject(this.handleError(err));
                 } else {
                     resolve();
                 }
@@ -621,7 +630,7 @@ class FlashbackClient {
             this.client.getSectionCards(request, this.getMetadata(), (err, response) => {
                 if (err) {
                     console.error("GetSectionCards error:", err);
-                    reject(err);
+                    reject(this.handleError(err));
                 } else {
                     resolve(response.getCardList().map(card => ({
                         id: card.getId(),
@@ -649,7 +658,7 @@ class FlashbackClient {
             this.client.getTopicCards(request, this.getMetadata(), (err, response) => {
                 if (err) {
                     console.error("GetTopicCards error:", err);
-                    reject(err);
+                    reject(this.handleError(err));
                 } else {
                     resolve(response.getCardList().map(card => ({
                         id: card.getId(),
@@ -680,7 +689,7 @@ class FlashbackClient {
             this.client.createBlock(request, this.getMetadata(), (err, response) => {
                 if (err) {
                     console.error("CreateBlock error:", err);
-                    reject(err);
+                    reject(this.handleError(err));
                 } else {
                     const block = response.getBlock();
                     resolve({
@@ -707,7 +716,7 @@ class FlashbackClient {
             this.client.getBlocks(request, this.getMetadata(), (err, response) => {
                 if (err) {
                     console.error("GetBlocks error:", err);
-                    reject(err);
+                    reject(this.handleError(err));
                 } else {
                     resolve(response.getBlockList().map(block => ({
                         position: block.getPosition(),
