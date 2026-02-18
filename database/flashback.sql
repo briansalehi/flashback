@@ -1494,11 +1494,12 @@ begin
     from roadmaps a
     join milestones m on m.roadmap = a.id
     join shelves h on h.subject = m.subject
-    join resources r on r.id = h.resource and case r.type when 'nerve'::resource_type then r.id in (select n.resource from nerves n where n."user" = user_id) else true end
+    join resources r on r.id = h.resource
+    left join nerves n on n.resource = r.id and n."user" = user_id
     join sections s on s.resource = r.id and s.state < 'completed'
     join section_cards c on c.resource = r.id and c.section = s.position
     join studies i on i.card = c.card
-    where a."user" = user_id
+    where a."user" = user_id and (r.type != 'nerve'::resource_type or n.resource is not null)
     group by r.id, r.name, r.type, r.pattern, r.link, r.production, r.expiration;
 end; $$;
 
