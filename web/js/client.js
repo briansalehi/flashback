@@ -559,10 +559,8 @@ class FlashbackClient {
             const card = new proto.flashback.Card();
             const resource = new proto.flashback.Resource();
             const section = new proto.flashback.Section();
-            card.setId(cardId);
             resource.setId(resourceId);
             section.setId(sectionId);
-            request.setCard(card);
             request.setResource(resource);
             request.setSection(section);
             request.setUser(user);
@@ -578,7 +576,7 @@ class FlashbackClient {
         });
     }
 
-    async addCardToTopic(cardId, subjectId, topicId) {
+    async addCardToTopic(cardId, subjectId, topicPosition, topicLevel) {
         return new Promise((resolve, reject) => {
             const request = new proto.flashback.AddCardToTopicRequest();
             const user = this.getAuthenticatedUser();
@@ -587,7 +585,8 @@ class FlashbackClient {
             const topic = new proto.flashback.Topic();
             card.setId(cardId);
             subject.setId(subjectId);
-            topic.setId(topicId);
+            topic.setPosition(topicPosition);
+            topic.setLevel(topicLevel);
             request.setCard(card);
             request.setResource(subject);
             request.setSection(topic);
@@ -604,22 +603,19 @@ class FlashbackClient {
         });
     }
 
-    async getSectionCards(cardId, resourceId, sectionId) {
+    async getSectionCards(resourceId, sectionPosition) {
         return new Promise((resolve, reject) => {
             const request = new proto.flashback.GetSectionCardsRequest();
             const user = this.getAuthenticatedUser();
-            const card = new proto.flashback.Card();
             const resource = new proto.flashback.Resource();
             const section = new proto.flashback.Section();
-            card.setId(cardId);
             resource.setId(resourceId);
-            section.setId(sectionId);
-            request.setCard(card);
+            section.setPosition(sectionPosition);
             request.setResource(resource);
             request.setSection(section);
             request.setUser(user);
 
-            this.client.getSectionCards(request, this.getMetadata(), (err) => {
+            this.client.getSectionCards(request, this.getMetadata(), (err, response) => {
                 if (err) {
                     console.error("GetSectionCards error:", err);
                     reject(err);
@@ -634,22 +630,21 @@ class FlashbackClient {
         });
     }
 
-    async getTopicCards(cardId, subjectId, topicId) {
+    async getTopicCards(subjectId, topicPosition, topicLevel) {
         return new Promise((resolve, reject) => {
             const request = new proto.flashback.GetTopicCardsRequest();
             const user = this.getAuthenticatedUser();
-            const card = new proto.flashback.Card();
             const subject = new proto.flashback.Subject();
             const topic = new proto.flashback.Topic();
-            card.setId(cardId);
             subject.setId(subjectId);
-            topic.setId(topicId);
-            request.setCard(card);
-            request.setResource(subject);
-            request.setSection(topic);
+            topic.setPosition(topicPosition);
+            topic.setLevel(topicLevel);
             request.setUser(user);
+            request.setSubject(subject);
+            request.setTopic(topic);
 
-            this.client.getTopicCards(request, this.getMetadata(), (err) => {
+            console.log(`Fetching topic cards for subject ${subjectId}, topic position ${topicPosition}, level ${topicLevel}`);
+            this.client.getTopicCards(request, this.getMetadata(), (err, response) => {
                 if (err) {
                     console.error("GetTopicCards error:", err);
                     reject(err);
@@ -664,8 +659,65 @@ class FlashbackClient {
         });
     }
 
-    // createBlock { User user = 1; Card card = 2; Block block = 3; }  { Block block = 1; }
-    // getBlocks { User user = 1; Card card = 2; }  { repeated Block block = 1;}
+    // position can be set to 0 so that block takes the last position
+    async createBlock(cardId, blockType, blockExtension, blockContent, blockMetadata) {
+        return new Promise((resolve, reject) => {
+            const request = new proto.flashback.CreateBlockRequest();
+            const user = this.getAuthenticatedUser();
+            const card = new proto.flashback.Card();
+            const block = new proto.flashback.Block();
+            card.setId(cardId);
+            block.setType(blockType);
+            block.setMetadata(blockMetadata);
+            block.setExtension(blockExtension);
+            block.setContent(blockContent);
+            request.setCard(card);
+            request.setBlock(block);
+            request.setUser(user);
+
+            this.client.createBlock(request, this.getMetadata(), (err, response) => {
+                if (err) {
+                    console.error("CreateBlock error:", err);
+                    reject(err);
+                } else {
+                    const block = response.getBlock();
+                    resolve({
+                        position: block.getPosition(),
+                        type: block.getType(),
+                        extension: block.getExtension(),
+                        content: block.getContent(),
+                        metadata: block.getMetadata()
+                    });
+                }
+            });
+        });
+    }
+
+    async getBlocks(cardId) {
+        return new Promise((resolve, reject) => {
+            const request = new proto.flashback.GetBlocksRequest();
+            const user = this.getAuthenticatedUser();
+            const card = new proto.flashback.Card();
+            card.setId(cardId);
+            request.setCard(card);
+            request.setUser(user);
+
+            this.client.getBlocks(request, this.getMetadata(), (err, response) => {
+                if (err) {
+                    console.error("GetBlocks error:", err);
+                    reject(err);
+                } else {
+                    resolve(response.getBlockList().map(block => ({
+                        position: block.getPosition(),
+                        type: block.getType(),
+                        extension: block.getExtension(),
+                        content: block.getContent(),
+                        metadata: block.getMetadata()
+                    })));
+                }
+            });
+        });
+    }
 
     // editCard { User user = 1; Card card = 2; }  { }
     // getPracticeCards { User user = 1; Roadmap roadmap = 2; Subject subject = 3; Topic topic = 4; }  { repeated Card card = 1; }

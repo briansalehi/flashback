@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Section Cards</title>
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;600;700&family=Source+Sans+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        .card-item {
+            padding: 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            margin-bottom: 1rem;
+            transition: all 0.2s;
+            background-color: var(--bg-primary);
+        }
+
+        .card-item:hover {
+            border-color: var(--accent-color);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .card-headline {
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: 1.1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .card-state {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            background-color: var(--accent-light);
+            color: var(--accent-color);
+            border-radius: 12px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            text-transform: capitalize;
+        }
+
+        .card-state.draft {
+            background-color: #f0f0f0;
+            color: #666;
+        }
+
+        .card-state.reviewed {
+            background-color: #e3f2fd;
+            color: #1976d2;
+        }
+
+        .card-state.completed {
+            background-color: #e8f5e9;
+            color: #388e3c;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="container header-content">
+            <a href="home.html" class="logo">Flashback</a>
+            <nav class="nav">
+                <a href="home.html">My Roadmaps</a>
+                <a href="#" id="signout-btn">Sign Out</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="dashboard">
+        <div class="container">
+            <div class="dashboard-header">
+                <a href="javascript:history.back()" style="color: var(--text-muted); text-decoration: none;">← Back to Resource</a>
+                <h1 id="section-name">Loading...</h1>
+            </div>
+
+            <div id="error-message" style="display: none;"></div>
+
+            <div id="loading" style="display: none; text-align: center; padding: 3rem;">
+                <div class="loading" style="width: 40px; height: 40px; border-width: 4px;"></div>
+                <p class="text-muted mt-md">Loading cards...</p>
+            </div>
+
+            <div id="cards-list">
+                <!-- cards will be inserted here -->
+            </div>
+
+            <div id="empty-state" style="display: none; text-align: center; padding: 4rem 2rem;">
+                <h3 style="color: var(--text-muted);">No cards yet</h3>
+                <p class="text-muted">Add your first card to this section!</p>
+            </div>
+
+            <button id="add-card-btn" class="btn btn-accent mb-lg" style="margin-top: 2rem;">
+                + Add Card
+            </button>
+
+            <div id="add-card-form" class="card" style="display: none; max-width: 700px;">
+                <div class="card-header">
+                    <h3 class="card-title">Add Card</h3>
+                </div>
+
+                <form id="card-form">
+                    <div class="form-group">
+                        <label class="form-label" for="card-headline">Headline (in question form)</label>
+                        <input
+                            type="text"
+                            id="card-headline"
+                            class="form-input"
+                            placeholder="e.g., What is gradient descent?"
+                            required
+                        >
+                    </div>
+
+                    <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                        <button type="submit" id="save-card-btn" class="btn btn-primary">
+                            Save Card
+                        </button>
+                        <button type="button" id="cancel-card-btn" class="btn btn-secondary">
+                            Cancel
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </main>
+
+    <script src="proto/flashback.js"></script>
+    <script src="js/client.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/section-cards.js"></script>
+</body>
+</html>

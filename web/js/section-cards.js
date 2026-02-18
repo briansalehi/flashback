@@ -1,0 +1,130 @@
+window.addEventListener('DOMContentLoaded', () => {
+    if (!client.isAuthenticated()) {
+        window.location.href = '/index.html';
+        return;
+    }
+
+    const resourceId = parseInt(UI.getUrlParam('resourceId'));
+    const sectionPosition = parseInt(UI.getUrlParam('sectionPosition'));
+    const sectionName = UI.getUrlParam('name');
+
+    if (isNaN(resourceId) || isNaN(sectionPosition)) {
+        window.location.href = '/home.html';
+        return;
+    }
+
+    document.getElementById('section-name').textContent = sectionName || 'Section';
+    document.title = `${sectionName || 'Section'} - Flashback`;
+
+    const signoutBtn = document.getElementById('signout-btn');
+    if (signoutBtn) {
+        signoutBtn.addEventListener('click', async (e) => {
+            e.preventDefault();
+            await client.signOut();
+            window.location.href = '/index.html';
+        });
+    }
+
+    const addCardBtn = document.getElementById('add-card-btn');
+    if (addCardBtn) {
+        addCardBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            UI.toggleElement('add-card-form', true);
+            setTimeout(() => {
+                const headlineInput = document.getElementById('card-headline');
+                if (headlineInput) {
+                    headlineInput.focus();
+                }
+            }, 100);
+        });
+    }
+
+    const cancelCardBtn = document.getElementById('cancel-card-btn');
+    if (cancelCardBtn) {
+        cancelCardBtn.addEventListener('click', () => {
+            UI.toggleElement('add-card-form', false);
+            UI.clearForm('card-form');
+        });
+    }
+
+    const cardForm = document.getElementById('card-form');
+    if (cardForm) {
+        cardForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const headline = document.getElementById('card-headline').value.trim();
+
+            if (!headline) {
+                UI.showError('Please enter a card headline');
+                return;
+            }
+
+            UI.hideMessage('error-message');
+            UI.setButtonLoading('save-card-btn', true);
+
+            try {
+                const card = await client.createCard(headline);
+                await client.addCardToSection(card.id, resourceId, sectionPosition);
+
+                UI.toggleElement('add-card-form', false);
+                UI.clearForm('card-form');
+                UI.setButtonLoading('save-card-btn', false);
+
+                loadCards();
+            } catch (err) {
+                console.error('Add card failed:', err);
+                UI.showError(err.message || 'Failed to add card');
+                UI.setButtonLoading('save-card-btn', false);
+            }
+        });
+    }
+
+    loadCards();
+});
+
+async function loadCards() {
+    UI.toggleElement('loading', true);
+    UI.toggleElement('cards-list', false);
+    UI.toggleElement('empty-state', false);
+
+    try {
+        const resourceId = UI.getUrlParam('resourceId');
+        const sectionPosition = UI.getUrlParam('sectionPosition');
+
+        const cards = await client.getSectionCards(resourceId, sectionPosition);
+
+        UI.toggleElement('loading', false);
+
+        if (cards.length === 0) {
+            UI.toggleElement('empty-state', true);
+        } else {
+            UI.toggleElement('cards-list', true);
+            renderCards(cards);
+        }
+    } catch (err) {
+        console.error('Loading cards failed:', err);
+        UI.toggleElement('loading', false);
+        UI.showError('Failed to load cards: ' + (err.message || 'Unknown error'));
+    }
+}
+
+function renderCards(cards) {
+    const container = document.getElementById('cards-list');
+    container.innerHTML = '';
+
+    const stateNames = ['draft', 'reviewed', 'completed', 'approved', 'released', 'rejected'];
+
+    cards.forEach(card => {
+        const cardItem = document.createElement('div');
+        cardItem.className = 'card-item';
+
+        const stateName = stateNames[card.state] || 'draft';
+
+        cardItem.innerHTML = `
+            <div class="card-headline">${UI.escapeHtml(card.headline)}</div>
+            <span class="card-state ${stateName}">${UI.escapeHtml(stateName)}</span>
+        `;
+
+        container.appendChild(cardItem);
+    });
+}

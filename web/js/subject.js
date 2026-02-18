@@ -302,9 +302,16 @@ function renderTopics(topics, maxLevel) {
             sortedTopics.forEach(topic => {
                 const topicItem = document.createElement('div');
                 topicItem.className = 'topic-item';
+                topicItem.style.cursor = 'pointer';
                 topicItem.innerHTML = `
                     <div class="topic-name">${UI.escapeHtml(topic.name)}</div>
                 `;
+
+                topicItem.addEventListener('click', () => {
+                    const subjectId = UI.getUrlParam('id');
+                    window.location.href = `topic-cards.html?subjectId=${subjectId}&topicPosition=${topic.position}&topicLevel=${topic.level}&name=${encodeURIComponent(topic.name)}`;
+                });
+
                 levelSection.appendChild(topicItem);
             });
 

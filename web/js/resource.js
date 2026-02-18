@@ -115,13 +115,14 @@ function renderSections(sections) {
     sortedSections.forEach(section => {
         const sectionItem = document.createElement('div');
         sectionItem.className = 'section-item';
+        sectionItem.style.cursor = 'pointer';
 
         let html = `<div class="section-name">${UI.escapeHtml(section.name)}</div>`;
 
         if (section.link) {
             html += `
                 <div class="section-link">
-                    <a href="${UI.escapeHtml(section.link)}" target="_blank" rel="noopener noreferrer">
+                    <a href="${UI.escapeHtml(section.link)}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">
                         ${UI.escapeHtml(section.link)}
                     </a>
                 </div>
@@ -129,6 +130,12 @@ function renderSections(sections) {
         }
 
         sectionItem.innerHTML = html;
+
+        sectionItem.addEventListener('click', () => {
+            const resourceId = UI.getUrlParam('id');
+            window.location.href = `section-cards.html?resourceId=${resourceId}&sectionPosition=${section.position}&name=${encodeURIComponent(section.name)}`;
+        });
+
         container.appendChild(sectionItem);
     });
 }
