@@ -230,7 +230,7 @@ async function loadMilestones() {
         const response = await client.getMilestones(roadmapId);
 
         document.getElementById('roadmap-name').textContent = roadmapName;
-        document.title = roadmapName;
+        document.title = `${roadmapName || 'Roadmap'} - Flashback`;
 
         UI.toggleElement('loading', false);
 
@@ -254,7 +254,7 @@ function renderMilestones(milestones) {
     milestones.forEach(milestone => {
         container.innerHTML += `
             <div class="card-title">
-                <a href="subject.html?id=${milestone.id}" class="btn btn-secondary mt-md">${UI.escapeHtml(milestone.name)} (${UI.escapeHtml(milestone.level)})</a>
+                <a href="subject.html?id=${milestone.id}&name=${encodeURIComponent(milestone.name)}" class="btn btn-secondary mt-md">${UI.escapeHtml(milestone.name)} (${UI.escapeHtml(milestone.level)})</a>
             </div>
         `;
     });

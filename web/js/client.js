@@ -296,7 +296,11 @@ class FlashbackClient {
     async getResources(subjectId) {
         return new Promise((resolve, reject) => {
             const request = new proto.flashback.GetResourcesRequest();
-            request.setSubjectid(subjectId);
+            const user = this.getAuthenticatedUser();
+            const subject = new proto.flashback.Subject();
+            subject.setId(subjectId);
+            request.setSubject(subject);
+            request.setUser(user);
 
             this.client.getResources(request, this.getMetadata(), (err, response) => {
                 if (err) {
@@ -305,9 +309,12 @@ class FlashbackClient {
                 } else {
                     const resources = response.getResourcesList().map(res => ({
                         id: res.getId(),
-                        name: res.getName(),
                         type: res.getType(),
-                        url: res.getUrl()
+                        pattern: res.getPattern(),
+                        name: res.getName(),
+                        link: res.getLink(),
+                        production: res.getProduction(),
+                        expiration: res.getExpiration()
                     }));
                     resolve(resources);
                 }
@@ -315,25 +322,58 @@ class FlashbackClient {
         });
     }
 
-    async addResource(subjectId, name, type, url) {
+    async createResource(name, type, pattern, link, production, expiration) {
         return new Promise((resolve, reject) => {
-            const request = new proto.flashback.AddResourceRequest();
-            request.setSubjectid(subjectId);
-            request.setName(name);
-            request.setType(type);
-            request.setUrl(url);
+            const request = new proto.flashback.CreateResourceRequest();
+            const user = this.getAuthenticatedUser();
+            const resource = new proto.flashback.Resource();
+            resource.setName(name);
+            resource.setType(type);
+            resource.setPattern(pattern);
+            resource.setLink(link);
+            resource.setProduction(production);
+            resource.setExpiration(expiration);
+            request.setResource(resource);
+            request.setUser(user);
 
-            this.client.addResource(request, this.getMetadata(), (err, response) => {
+            this.client.createResource(request, this.getMetadata(), (err, response) => {
+                if (err) {
+                    console.error('CreateResource:', err);
+                    reject(err);
+                } else {
+                    const resource = response.getResource();
+                    resolve({
+                        id: resource.getId(),
+                        type: resource.getType(),
+                        pattern: resource.getPattern(),
+                        name: resource.getName(),
+                        link: resource.getLink(),
+                        production: resource.getProduction(),
+                        expiration: resource.getExpiration()
+                    });
+                }
+            });
+        });
+    }
+
+    async addResourceToSubject(subjectId, resourceId) {
+        return new Promise((resolve, reject) => {
+            const request = new proto.flashback.AddResourceToSubjectRequest();
+            const user = this.getAuthenticatedUser();
+            const subject = new proto.flashback.Subject();
+            const resource = new proto.flashback.Resource();
+            subject.setId(subjectId);
+            resource.setId(resourceId);
+            request.setSubject(subject);
+            request.setResource(resource);
+            request.setUser(user);
+
+            this.client.addResourceToSubject(request, this.getMetadata(), (err, response) => {
                 if (err) {
                     console.error('AddResource error:', err);
                     reject(err);
                 } else {
-                    resolve({
-                        id: response.getId(),
-                        name: response.getName(),
-                        type: response.getType(),
-                        url: response.getUrl()
-                    });
+                    resolve();
                 }
             });
         });
