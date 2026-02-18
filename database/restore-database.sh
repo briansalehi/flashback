@@ -32,7 +32,7 @@ fi
 psql -c 'drop database if exists flashback'
 psql -c 'create role flashback with nologin'
 psql -c 'create role brian with login connection limit 1'
-psql -c 'create role flashback_client with login connection limit 3'
+psql -c 'create role flashback_client with login connection limit 10'
 psql -c 'create database flashback with owner flashback connection limit 3'
 psql -d flashback -c 'create schema if not exists flashback authorization flashback'
 psql -d flashback -c 'create extension if not exists citext with schema flashback'
