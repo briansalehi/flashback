@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict 3ddA6B8hlMpN51yDLM0Oq7jLyrIh9pU2cx2BTYcmAyh2QJeXAZ38jV4rjOvtr6s
+\restrict BBMCnLKLiecVFg73qMKnnAtwZreADUzfSL8H77peIV6H3IbqCi3acPMQOMh2EDB
 
 -- Dumped from database version 18.1
 -- Dumped by pg_dump version 18.0
@@ -32715,11 +32715,12 @@ ALTER TABLE ONLY flashback.topics_activities
 
 REVOKE USAGE ON SCHEMA public FROM PUBLIC;
 GRANT ALL ON SCHEMA public TO flashback_client;
+GRANT ALL ON SCHEMA public TO brian;
 
 
 --
 -- PostgreSQL database dump complete
 --
 
-\unrestrict 3ddA6B8hlMpN51yDLM0Oq7jLyrIh9pU2cx2BTYcmAyh2QJeXAZ38jV4rjOvtr6s
+\unrestrict BBMCnLKLiecVFg73qMKnnAtwZreADUzfSL8H77peIV6H3IbqCi3acPMQOMh2EDB
 
