@@ -3,6 +3,7 @@
 #include <pqxx/pqxx>
 #include <server.grpc.pb.h>
 #include <flashback/basic_database.hpp>
+#include <flashback/connection_pool.hpp>
 
 class test_database;
 
@@ -179,7 +180,8 @@ private:
     template <typename... Args>
     [[nodiscard]] pqxx::result query(std::string_view const format, Args&&... args) const
     {
-        pqxx::work work{*m_connection};
+        auto conn_guard = m_pool->acquire();
+        pqxx::work work{*conn_guard};
         pqxx::result result{work.exec(format, pqxx::params{std::forward<Args>(args)...})};
         work.commit();
         return result;
@@ -188,30 +190,31 @@ private:
     template <typename... Args>
     void exec(std::string_view const format, Args&&... args) const
     {
-        pqxx::work work{*m_connection};
+        auto conn_guard = m_pool->acquire();
+        pqxx::work work{*conn_guard};
         work.exec(format, pqxx::params{std::forward<Args>(args)...});
         work.commit();
     }
 
     void throw_back_progress(uint64_t user_id, uint64_t card_id, uint64_t days) const;
 
-    static expertise_level to_level(std::string_view const level);
-    static std::string level_to_string(expertise_level const level);
-    static std::string resource_type_to_string(Resource::resource_type const type);
-    static Resource::resource_type to_resource_type(std::string_view const type_string);
-    static std::string section_pattern_to_string(Resource::section_pattern const pattern);
-    static Resource::section_pattern to_section_pattern(std::string_view const pattern_string);
-    static Card::card_state to_card_state(std::string_view const state_string);
-    static std::string card_state_to_string(Card::card_state const state);
-    static Block::content_type to_content_type(std::string_view const type_string);
-    static std::string content_type_to_string(Block::content_type const type);
-    static closure_state to_closure_state(std::string_view const state_string);
-    static std::string closure_state_to_string(closure_state const state);
-    static practice_mode to_practice_mode(std::string_view const mode_string);
-    static std::string practice_mode_to_string(practice_mode const mode);
+    static expertise_level to_level(std::string_view level);
+    static std::string level_to_string(expertise_level level);
+    static std::string resource_type_to_string(Resource::resource_type type);
+    static Resource::resource_type to_resource_type(std::string_view type_string);
+    static std::string section_pattern_to_string(Resource::section_pattern pattern);
+    static Resource::section_pattern to_section_pattern(std::string_view pattern_string);
+    static Card::card_state to_card_state(std::string_view state_string);
+    static std::string card_state_to_string(Card::card_state state);
+    static Block::content_type to_content_type(std::string_view type_string);
+    static std::string content_type_to_string(Block::content_type type);
+    static closure_state to_closure_state(std::string_view state_string);
+    static std::string closure_state_to_string(closure_state state);
+    static practice_mode to_practice_mode(std::string_view mode_string);
+    static std::string practice_mode_to_string(practice_mode mode);
 
 private:
-    std::unique_ptr<pqxx::connection> m_connection;
+    std::shared_ptr<connection_pool> m_pool;
     friend class ::test_database;
 };
 } // flashback

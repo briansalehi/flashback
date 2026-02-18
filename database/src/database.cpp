@@ -7,11 +7,12 @@
 
 using namespace flashback;
 
-database::database(std::string client, std::string name, std::string address, std::string port): m_connection{nullptr}
+database::database(std::string client, std::string name, std::string address, std::string port)
 {
     try
     {
-        m_connection = std::make_unique<pqxx::connection>(std::format("postgres://{}@{}:{}/{}", client, address, port, name));
+        std::string connection_string = std::format("postgres://{}@{}:{}/{}", client, address, port, name);
+        m_pool = std::make_shared<connection_pool>(connection_string, 10);
     }
     catch (pqxx::broken_connection const& exp)
     {
@@ -36,32 +37,24 @@ database::database(std::string client, std::string name, std::string address, st
 }
 
 database::database(database const& copy)
+    : m_pool{copy.m_pool}
 {
-    std::string client{copy.m_connection->username()};
-    std::string address{copy.m_connection->hostname()};
-    std::string port{copy.m_connection->port()};
-    std::string name{copy.m_connection->dbname()};
-    m_connection = std::make_unique<pqxx::connection>(std::format("postgres://{}@{}:{}/{}", client, address, port, name));
 }
 
 database& database::operator=(database const& copy)
 {
-    std::string client{copy.m_connection->username()};
-    std::string address{copy.m_connection->hostname()};
-    std::string port{copy.m_connection->port()};
-    std::string name{copy.m_connection->dbname()};
-    m_connection = std::make_unique<pqxx::connection>(std::format("postgres://{}@{}:{}/{}", client, address, port, name));
+    m_pool = copy.m_pool;
     return *this;
 }
 
 database::database(database&& copy) noexcept
-    : m_connection{std::move(copy.m_connection)}
+    : m_pool{std::move(copy.m_pool)}
 {
 }
 
 database& database::operator=(database&& copy) noexcept
 {
-    m_connection = std::move(copy.m_connection);
+    m_pool = std::move(copy.m_pool);
     return *this;
 }
 
