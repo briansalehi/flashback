@@ -24,7 +24,7 @@ services:
       DATABASE_HOST: postgres
     volumes:
       - .:/src:Z
-      - web-content:/var/www/html:Z
+      - web-content:/var/www/html:z
     expose:
       - 9821
     networks:
@@ -36,12 +36,12 @@ services:
       - bash
       - -c
       - |
+        trap 'kill $(jobs -p) 2>/dev/null; exit 0' SIGTERM SIGINT
         cmake --build /build --target rebuild_cache
         cmake --install /build --component web
         /usr/local/bin/flashbackd &
-        while inotifywait -r -e modify,create,delete /src/web; do
-          cmake --install /build --component web
-        done
+        while inotifywait -r -e modify,create,delete /src/web; do cmake --install /build --component web; done &
+        wait
 
   envoy:
     image: envoyproxy/envoy:v1.37-latest
@@ -64,7 +64,7 @@ services:
     ports:
       - 80:80
     volumes:
-      - web-content:/var/www/html:Z
+      - web-content:/var/www/html:z
       - ./helpers/httpd.conf:/usr/local/apache2/conf/httpd.conf:Z
       - ./helpers/local.conf:/usr/local/apache2/conf/extra/local.conf:Z
     networks:
