@@ -146,18 +146,33 @@ function renderResources(resources) {
     const container = document.getElementById('resources-list');
     container.innerHTML = '';
 
+    const typeNames = ['Book', 'Website', 'Course', 'Video', 'Channel', 'Mailing List', 'Manual', 'Slides', 'Your Knowledge'];
+    const patternNames = ['Chapters', 'Pages', 'Sessions', 'Episodes', 'Playlist', 'Posts', 'Memories'];
+
     resources.forEach(resource => {
         const resourceItem = document.createElement('div');
         resourceItem.className = 'resource-item';
+
+        // Convert epoch seconds to readable dates
+        const productionDate = resource.production ? new Date(resource.production * 1000).toLocaleDateString() : 'N/A';
+        const expirationDate = resource.expiration ? new Date(resource.expiration * 1000).toLocaleDateString() : 'N/A';
+
+        const typeName = typeNames[resource.type] || 'Unknown';
+        const patternName = patternNames[resource.pattern] || 'Unknown';
+
         resourceItem.innerHTML = `
             <div class="resource-header">
                 <div class="resource-name">${UI.escapeHtml(resource.name)}</div>
-                <span class="resource-type">${UI.escapeHtml(resource.type)}</span>
+                <span class="resource-type">${UI.escapeHtml(typeName)} ${UI.escapeHtml(patternName)}</span>
             </div>
             <div class="resource-url">
-                <a href="${UI.escapeHtml(resource.url)}" target="_blank" rel="noopener noreferrer">
-                    ${UI.escapeHtml(resource.url)}
+                <a href="${UI.escapeHtml(resource.link)}" target="_blank" rel="noopener noreferrer">
+                    ${UI.escapeHtml(resource.link)}
                 </a>
+            </div>
+            <div style="margin-top: 0.75rem; color: var(--text-muted); font-size: 0.9rem;">
+                <div><strong>Produced:</strong> ${UI.escapeHtml(productionDate)}</div>
+                <div><strong>Relevant Until:</strong> ${UI.escapeHtml(expirationDate)}</div>
             </div>
         `;
         container.appendChild(resourceItem);
