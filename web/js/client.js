@@ -451,6 +451,77 @@ class FlashbackClient {
         });
     }
 
+    // section position can be 0 so that it takes the last position automatically
+    async createSection(resourceId, sectionName, sectionLink, sectionPosition) {
+        return new Promise((resolve, reject) => {
+            const request = new proto.flashback.CreateSectionRequest();
+            const user = this.getAuthenticatedUser();
+            const resource = new proto.flashback.Resource();
+            const section = new proto.flashback.Section();
+            resource.setId(resourceId);
+            section.setName(sectionName);
+            section.setLink(sectionLink);
+            section.setPosition(sectionPosition);
+            resource.setSection(section);
+            request.setResource(resource);
+            request.setUser(user);
+
+            this.client.createSection(request, this.getMetadata(), (err, response) => {
+                if (err) {
+                    console.error("CreateSection error:", err);
+                    reject(err);
+                } else {
+                    resolve(response.getSection().map(section => ({
+                        name: section.getName(),
+                        link: section.getLink(),
+                        position: section.getPosition()
+                    })));
+                }
+            });
+        });
+    }
+
+    async getSections(resourceId) {
+        return new Promise((resolve, reject) => {
+            const request = new proto.flashback.GetSectionsRequest();
+            const user = this.getAuthenticatedUser();
+            const resource = new proto.flashback.Resource();
+            resource.setId(resourceId);
+            request.setResource(resource);
+            request.setUser(user);
+
+            this.client.getSections(request, this.getMetadata(), (err, response) => {
+                if (err) {
+                    console.error("GetSections error:", err);
+                    reject(err);
+                } else {
+                    resolve(response.getSection().map(section => ({
+                        name: section.getName(),
+                        link: section.getLink(),
+                        position: section.getPosition()
+                    })));
+                }
+            });
+        });
+    }
+
+    // getSectionCards { User user = 1; Resource resource = 2; Section section = 3; }  { repeated Card cards = 1; }
+    // createCard { User user = 1; Card card = 2; }  { Card card = 1; }
+    // addCardToSection { User user = 1; Card card = 2; Resource resource = 3; Section section = 4; }  { }
+    // addCardToTopic { User user = 1; Card card = 2; Subject subject = 3; Topic topic = 4; }  { }
+    // editCard { User user = 1; Card card = 2; }  { }
+    // getStudyResources { User user = 1; }  { repeated StudyResource study = 1; }
+    // getPracticeCards { User user = 1; Roadmap roadmap = 2; Subject subject = 3; Topic topic = 4; }  { repeated Card card = 1; }
+    // getTopicCards { User user = 1; Topic topic = 2; }  { repeated Card cards = 1; }
+    // makeProgress { User user = 1; Card card = 2; uint64 duration = 3; practice_mode mode = 4; }  { }
+    // markCardAsReviewed { User user = 1; Card card = 2; }  { }
+    // createBlock { User user = 1; Card card = 2; Block block = 3; }  { Block block = 1; }
+    // getBlocks { User user = 1; Card card = 2; }  { repeated Block block = 1;}
+    // editBlock { User user = 1; Card card = 2; Block block = 3; }  { }
+    // study { User user = 1; Card card = 2; uint64 duration = 3; }  { }
+    // createNerve { User user = 1; Subject subject = 2; Resource resource = 3; }  { Resource resource = 1; }
+    // getNerves { User user = 1; }  { repeated Resource resources = 1; }
+
     // verifySession { User user = 1; }  { bool valid = 1; }
     // resetPassword { User user = 1; }  { }
     // editUser { User user = 1; }  { }
@@ -475,11 +546,8 @@ class FlashbackClient {
     // mergeTopics { User user = 1; Subject subject = 2; Topic source = 3; Topic target = 4; }  { }
     // moveTopic { User user = 1; Subject source_subject = 2; Topic source_topic = 3; Subject target_subject = 4; Topic target_topic = 5; }  { }
     // searchTopics { User user = 1; Subject subject = 2; expertise_level level = 3; string search_token = 4; }  { repeated TopicSearchResult results = 1; }
-    // getSections { User user = 1; Resource resource = 2; }  { repeated Section section = 1; }
-    // getSectionCards { User user = 1; Resource resource = 2; Section section = 3; }  { repeated Card cards = 1; }
     // removeResource { User user = 1; Resource resource = 2; }  { }
     // editResource { User user = 1; Resource resource = 2; }  { }
-    // createSection { User user = 1; Resource resource = 2; Section section = 3; }  { Section section = 1; }
     // reorderSection { User user = 1; Resource resource = 2; Section source = 3; Section target = 4; }  { }
     // removeSection { User user = 1; Resource resource = 2; Section section = 3; }  { }
     // mergeSections { User user = 1; Resource resource = 2; Section source = 3; Section target = 4; }  { }
@@ -498,25 +566,15 @@ class FlashbackClient {
     // renamePresenter { User user = 1; Resource resource = 2; Presenter presenter = 3; }  { }
     // removePresenter { User user = 1; Resource resource = 2; Presenter presenter = 3; }  { }
     // mergePresenters { User user = 1; Presenter source = 2; Presenter target = 3; }  { }
-    // createCard { User user = 1; Card card = 2; }  { Card card = 1; }
     // removeCard { User user = 1; Card card = 2; }  { }
     // mergeCards { User user = 1; Card source = 2; Card target = 3; }  { }
-    // getStudyResources { User user = 1; }  { repeated StudyResource study = 1; }
     // editSection { User user = 1; Resource resource = 2; Section section = 3; }  { }
     // moveCardToSection { User user = 1; Card card = 2;; Resource resource = 3; Section source = 4; Section target = 5; }  { }
     // searchSections { User user = 1; Resource resource = 2; string search_token = 3; }  { repeated SectionSearchResult result = 1; }
     // markSectionAsReviewed { User user = 1; Resource resource = 2; Section section = 3; }  { }
-    // getPracticeCards { User user = 1; Roadmap roadmap = 2; Subject subject = 3; Topic topic = 4; }  { repeated Card card = 1; }
     // editTopic { User user = 1; Subject subject = 2; Topic topic = 3; Topic target = 4; }  { }
     // moveCardToTopic { User user = 1; Card card = 2; Subject subject = 3; Topic topic = 4; Subject target_subject = 5; Topic target_topic = 6; }  { }
-    // addCardToSection { User user = 1; Card card = 2; Resource resource = 3; Section section = 4; }  { }
-    // addCardToTopic { User user = 1; Card card = 2; Subject subject = 3; Topic topic = 4; }  { }
     // searchCards { User user = 1; Subject subject = 2; expertise_level level = 3; string search_token = 4; }  { repeated CardSearchResult result = 1; }
-    // editCard { User user = 1; Card card = 2; }  { }
-    // markCardAsReviewed { User user = 1; Card card = 2; }  { }
-    // createBlock { User user = 1; Card card = 2; Block block = 3; }  { Block block = 1; }
-    // getBlocks { User user = 1; Card card = 2; }  { repeated Block block = 1;}
-    // editBlock { User user = 1; Card card = 2; Block block = 3; }  { }
     // removeBlock { User user = 1; Card card = 2; Block block = 3; }  { }
     // reorderBlock { User user = 1; Card card = 2; Block block = 3; Block target = 4; }  { }
     // mergeBlocks { User user = 1; Card card = 2; Block block = 3; Block target = 5; }  { }
@@ -527,13 +585,8 @@ class FlashbackClient {
     // expandAssessment { User user = 1; Card card = 2; Subject subject = 3; Topic topic = 4; }  { }
     // diminishAssessment { User user = 1; Card card = 2; Subject subject = 3; Topic topic = 4; }  { }
     // isAssimilated { User user = 1; Subject subject = 2; Topic topic = 3; }  { bool is_assimilated = 1; }
-    // study { User user = 1; Card card = 2; uint64 duration = 3; }  { }
-    // makeProgress { User user = 1; Card card = 2; uint64 duration = 3; practice_mode mode = 4; }  { }
     // getProgressWeight { User user = 1; }  { repeated Weight weight = 1; }
-    // createNerve { User user = 1; Subject subject = 2; Resource resource = 3; }  { Resource resource = 1; }
-    // getNerves { User user = 1; }  { repeated Resource resources = 1; }
     // estimateCardTime { User user = 1; }  { }
-    // getTopicCards { User user = 1; Topic topic = 2; }  { repeated Card cards = 1; }
 }
 
 const client = new FlashbackClient();
