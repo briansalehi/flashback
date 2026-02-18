@@ -228,7 +228,7 @@ class FlashbackClient {
                         id: ms.getId(),
                         position: ms.getPosition(),
                         name: ms.getName(),
-                        level: this.getLevel(ms.getLevel()),
+                        level: ms.getLevel(),
                     }));
 
                     resolve({

@@ -106,6 +106,36 @@
         .resource-url a:hover {
             text-decoration: underline;
         }
+
+        .topic-item {
+            padding: 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            margin-bottom: 0.75rem;
+            transition: all 0.2s;
+            background-color: var(--bg-primary);
+        }
+
+        .topic-item:hover {
+            border-color: var(--accent-color);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .topic-name {
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: 1.1rem;
+        }
+
+        .topic-level {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            background-color: var(--accent-light);
+            color: var(--accent-color);
+            border-radius: 12px;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
     </style>
 </head>
 <body>
@@ -133,7 +163,7 @@
 
             <div id="error-message" style="display: none;"></div>
 
-            <!-- Topics Tab -->
+            <!-- topics tab -->
             <div id="topics-content" class="tab-content active">
                 <div id="topics-loading" style="display: none; text-align: center; padding: 3rem;">
                     <div class="loading" style="width: 40px; height: 40px; border-width: 4px;"></div>
@@ -144,13 +174,68 @@
                     <!-- topics will be inserted here -->
                 </div>
 
-                <div id="topics-empty-state" style="text-align: center; padding: 4rem 2rem;">
+                <div id="topics-empty-state" style="display: none; text-align: center; padding: 4rem 2rem;">
                     <h3 style="color: var(--text-muted);">No topics yet</h3>
-                    <p class="text-muted">Topics feature coming soon!</p>
+                    <p class="text-muted">Add your first topic to this subject!</p>
+                </div>
+
+                <button id="add-topic-btn" class="btn btn-accent mb-lg" style="margin-top: 2rem;">
+                    + Add Topic
+                </button>
+
+                <div id="add-topic-form" class="card" style="display: none; max-width: 700px;">
+                    <div class="card-header">
+                        <h3 class="card-title">Add Topic</h3>
+                    </div>
+
+                    <form id="topic-form">
+                        <div class="form-group">
+                            <label class="form-label" for="topic-name">Topic Name</label>
+                            <input
+                                type="text"
+                                id="topic-name"
+                                class="form-input"
+                                placeholder="e.g., Gradient Descent"
+                                required
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Expertise Level</label>
+                            <div style="display: flex; gap: 1rem; margin-top: 0.5rem;">
+                                <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                                    <input type="radio" name="topic-level" value="0" checked>
+                                    <span>Surface</span>
+                                </label>
+                                <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                                    <input type="radio" name="topic-level" value="1">
+                                    <span>Depth</span>
+                                </label>
+                                <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                                    <input type="radio" name="topic-level" value="2">
+                                    <span>Origin</span>
+                                </label>
+                            </div>
+                            <p style="font-size: 0.875rem; color: var(--text-muted); margin-top: 0.5rem;">
+                                <strong>Surface:</strong> Complete understanding •
+                                <strong>Depth:</strong> In-depth details •
+                                <strong>Origin:</strong> Creator level
+                            </p>
+                        </div>
+
+                        <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                            <button type="submit" id="save-topic-btn" class="btn btn-primary">
+                                Save Topic
+                            </button>
+                            <button type="button" id="cancel-topic-btn" class="btn btn-secondary">
+                                Cancel
+                            </button>
+                        </div>
+                    </form>
                 </div>
             </div>
 
-            <!-- Resources Tab -->
+            <!-- resources tab -->
             <div id="resources-content" class="tab-content">
                 <div id="resources-loading" style="display: none; text-align: center; padding: 3rem;">
                     <div class="loading" style="width: 40px; height: 40px; border-width: 4px;"></div>

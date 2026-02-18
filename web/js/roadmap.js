@@ -251,10 +251,13 @@ function renderMilestones(milestones) {
     const container = document.getElementById('milestones-container');
     container.innerHTML = '';
 
+    const levelNames = ['Surface', 'Depth', 'Origin'];
+
     milestones.forEach(milestone => {
+        const levelName = levelNames[milestone.level] || 'Unknown';
         container.innerHTML += `
             <div class="card-title">
-                <a href="subject.html?id=${milestone.id}&name=${encodeURIComponent(milestone.name)}" class="btn btn-secondary mt-md">${UI.escapeHtml(milestone.name)} (${UI.escapeHtml(milestone.level)})</a>
+                <a href="subject.html?id=${milestone.id}&name=${encodeURIComponent(milestone.name)}&level=${milestone.level}" class="btn btn-secondary mt-md">${UI.escapeHtml(milestone.name)} (${UI.escapeHtml(levelName)})</a>
             </div>
         `;
     });

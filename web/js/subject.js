@@ -6,6 +6,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
     const subjectId = UI.getUrlParam('id');
     const subjectName = UI.getUrlParam('name');
+
     if (!subjectId) {
         window.location.href = '/home.html';
         return;
@@ -41,12 +42,71 @@ window.addEventListener('DOMContentLoaded', () => {
             });
             document.getElementById(`${targetTab}-content`).classList.add('active');
 
-            // Load resources when switching to resources tab
-            if (targetTab === 'resources' && !resourcesLoaded) {
+            // Load data when switching tabs
+            if (targetTab === 'topics' && !topicsLoaded) {
+                loadTopics();
+            } else if (targetTab === 'resources' && !resourcesLoaded) {
                 loadResources();
             }
         });
     });
+
+    // Topics functionality
+    const addTopicBtn = document.getElementById('add-topic-btn');
+    if (addTopicBtn) {
+        addTopicBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            UI.toggleElement('add-topic-form', true);
+            setTimeout(() => {
+                const nameInput = document.getElementById('topic-name');
+                if (nameInput) {
+                    nameInput.focus();
+                }
+            }, 100);
+        });
+    }
+
+    const cancelTopicBtn = document.getElementById('cancel-topic-btn');
+    if (cancelTopicBtn) {
+        cancelTopicBtn.addEventListener('click', () => {
+            UI.toggleElement('add-topic-form', false);
+            UI.clearForm('topic-form');
+        });
+    }
+
+    const topicForm = document.getElementById('topic-form');
+    if (topicForm) {
+        topicForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const name = document.getElementById('topic-name').value.trim();
+            const levelRadio = document.querySelector('input[name="topic-level"]:checked');
+            const level = levelRadio ? parseInt(levelRadio.value) : 0;
+
+            if (!name) {
+                UI.showError('Please enter a topic name');
+                return;
+            }
+
+            UI.hideMessage('error-message');
+            UI.setButtonLoading('save-topic-btn', true);
+
+            try {
+                // Position 0 means add to end
+                await client.createTopic(subjectId, name, level, 0);
+
+                UI.toggleElement('add-topic-form', false);
+                UI.clearForm('topic-form');
+                UI.setButtonLoading('save-topic-btn', false);
+
+                loadTopics();
+            } catch (err) {
+                console.error('Add topic failed:', err);
+                UI.showError(err.message || 'Failed to add topic');
+                UI.setButtonLoading('save-topic-btn', false);
+            }
+        });
+    }
 
     // Pattern options per resource type
     const patternsByType = {
@@ -159,10 +219,99 @@ window.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Load resources initially if on resources tab
+    // Load topics initially (since topics tab is active by default)
+    let topicsLoaded = false;
     let resourcesLoaded = false;
-    loadResources();
+    loadTopics();
 });
+
+async function loadTopics() {
+    UI.toggleElement('topics-loading', true);
+    UI.toggleElement('topics-list', false);
+    UI.toggleElement('topics-empty-state', false);
+
+    try {
+        const subjectId = UI.getUrlParam('id');
+        const milestoneLevel = parseInt(UI.getUrlParam('level')) || 0;
+
+        // Fetch topics for all levels from 0 up to and including the milestone level
+        const allTopics = [];
+        for (let level = 0; level <= milestoneLevel; level++) {
+            const topics = await client.getTopics(subjectId, level);
+            allTopics.push(...topics);
+        }
+
+        UI.toggleElement('topics-loading', false);
+        topicsLoaded = true;
+
+        if (allTopics.length === 0) {
+            UI.toggleElement('topics-empty-state', true);
+        } else {
+            UI.toggleElement('topics-list', true);
+            renderTopics(allTopics, milestoneLevel);
+        }
+    } catch (err) {
+        console.error('Loading topics failed:', err);
+        UI.toggleElement('topics-loading', false);
+        UI.showError('Failed to load topics: ' + (err.message || 'Unknown error'));
+    }
+}
+
+function renderTopics(topics, maxLevel) {
+    const container = document.getElementById('topics-list');
+    container.innerHTML = '';
+
+    const levelInfo = [
+        { name: 'Surface', description: 'Complete understanding' },
+        { name: 'Depth', description: 'In-depth details' },
+        { name: 'Origin', description: 'Creator level' }
+    ];
+
+    // Group topics by level
+    const topicsByLevel = { 0: [], 1: [], 2: [] };
+    topics.forEach(topic => {
+        if (topicsByLevel[topic.level] !== undefined) {
+            topicsByLevel[topic.level].push(topic);
+        }
+    });
+
+    // Render levels from 0 (Surface) up to maxLevel, displaying from bottom to top visually
+    // We reverse the order so higher levels appear at top
+    const levelsToShow = [];
+    for (let i = 0; i <= maxLevel; i++) {
+        levelsToShow.push(i);
+    }
+    levelsToShow.reverse(); // Show Origin -> Depth -> Surface
+
+    levelsToShow.forEach(level => {
+        if (topicsByLevel[level] && topicsByLevel[level].length > 0) {
+            const levelSection = document.createElement('div');
+            levelSection.style.marginBottom = '2rem';
+
+            const levelHeader = document.createElement('div');
+            levelHeader.style.cssText = 'display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 2px solid var(--border-color);';
+            levelHeader.innerHTML = `
+                <span class="topic-level">${UI.escapeHtml(levelInfo[level].name)}</span>
+                <span style="color: var(--text-muted); font-size: 0.9rem;">${UI.escapeHtml(levelInfo[level].description)}</span>
+            `;
+            levelSection.appendChild(levelHeader);
+
+            // Sort topics by position within each level
+            const sortedTopics = topicsByLevel[level].sort((a, b) => a.position - b.position);
+
+            sortedTopics.forEach(topic => {
+                const topicItem = document.createElement('div');
+                topicItem.className = 'topic-item';
+                topicItem.innerHTML = `
+                    <div class="topic-name">${UI.escapeHtml(topic.name)}</div>
+                `;
+                levelSection.appendChild(topicItem);
+            });
+
+            container.appendChild(levelSection);
+        }
+    });
+}
 
 async function loadResources() {
     UI.toggleElement('resources-loading', true);
