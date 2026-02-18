@@ -527,9 +527,83 @@ class FlashbackClient {
         });
     }
 
-    // createCard { User user = 1; Card card = 2; }  { Card card = 1; }
-    // addCardToSection { User user = 1; Card card = 2; Resource resource = 3; Section section = 4; }  { }
-    // addCardToTopic { User user = 1; Card card = 2; Subject subject = 3; Topic topic = 4; }  { }
+    async createCard(headline) {
+        return new Promise((resolve, reject) => {
+            const request = new proto.flashback.CreateCardRequest();
+            const user = this.getAuthenticatedUser();
+            const card = new proto.flashback.Card();
+            card.setHeadline(headline);
+            request.setCard(card);
+            request.setUser(user);
+
+            this.client.createCard(request, this.getMetadata(), (err, response) => {
+                if (err) {
+                    console.error("CreateCard error:", err);
+                    reject(err);
+                } else {
+                    const card = response.getCard();
+                    resolve({
+                        id: card.getId(),
+                        headline: card.getHeadline(),
+                        state: card.getState()
+                    });
+                }
+            });
+        });
+    }
+
+    async addCardToSection(cardId, resourceId, sectionId) {
+        return new Promise((resolve, reject) => {
+            const request = new proto.flashback.AddCardToSectionRequest();
+            const user = this.getAuthenticatedUser();
+            const card = new proto.flashback.Card();
+            const resource = new proto.flashback.Resource();
+            const section = new proto.flashback.Section();
+            card.setId(cardId);
+            resource.setId(resourceId);
+            section.setId(sectionId);
+            request.setCard(card);
+            request.setResource(resource);
+            request.setSection(section);
+            request.setUser(user);
+
+            this.client.addCardToSection(request, this.getMetadata(), (err) => {
+                if (err) {
+                    console.error("AddCardToSection error:", err);
+                    reject(err);
+                } else {
+                    resolve();
+                }
+            });
+        });
+    }
+
+    async addCardToTopic(cardId, subjectId, topicId) {
+        return new Promise((resolve, reject) => {
+            const request = new proto.flashback.AddCardToTopicRequest();
+            const user = this.getAuthenticatedUser();
+            const card = new proto.flashback.Card();
+            const subject = new proto.flashback.Subject();
+            const topic = new proto.flashback.Topic();
+            card.setId(cardId);
+            subject.setId(subjectId);
+            topic.setId(topicId);
+            request.setCard(card);
+            request.setResource(subject);
+            request.setSection(topic);
+            request.setUser(user);
+
+            this.client.addCardToTopic(request, this.getMetadata(), (err) => {
+                if (err) {
+                    console.error("AddCardToTopic error:", err);
+                    reject(err);
+                } else {
+                    resolve();
+                }
+            });
+        });
+    }
+
     // editCard { User user = 1; Card card = 2; }  { }
     // getSectionCards { User user = 1; Resource resource = 2; Section section = 3; }  { repeated Card cards = 1; }
     // getTopicCards { User user = 1; Topic topic = 2; }  { repeated Card cards = 1; }
