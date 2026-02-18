@@ -96,12 +96,16 @@ window.addEventListener('DOMContentLoaded', () => {
         console.error('Search input not found!');
     }
 
-    const createSubjectForm = document.getElementById('create-subject-form');
-    if (createSubjectForm) {
-        createSubjectForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
+    const saveNewSubjectBtn = document.getElementById('save-new-subject-btn');
+    if (saveNewSubjectBtn) {
+        saveNewSubjectBtn.addEventListener('click', async () => {
+            const nameInput = document.getElementById('new-subject-name');
+            const name = nameInput.value.trim();
 
-            const name = document.getElementById('new-subject-name').value;
+            if (!name) {
+                UI.showError('Please enter a subject name');
+                return;
+            }
 
             UI.hideMessage('error-message');
             UI.setButtonLoading('save-new-subject-btn', true);
@@ -114,10 +118,10 @@ window.addEventListener('DOMContentLoaded', () => {
 
                 UI.toggleElement('create-subject-section', false);
                 UI.toggleElement('search-subject-section', true);
-                UI.clearForm('create-subject-form');
+                nameInput.value = '';
                 UI.setButtonLoading('save-new-subject-btn', false);
 
-                UI.showMessage('Subject created! Select it below to add to your roadmap.', 'success');
+                UI.showSuccess('Subject created! Select it below to add to your roadmap.');
             } catch (err) {
                 console.error('Create subject failed:', err);
                 UI.showError(err.message || 'Failed to create subject');
@@ -160,7 +164,7 @@ window.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    loadMilestones(roadmapId, roadmapName);
+    loadMilestones();
 });
 
 async function searchSubjects(searchToken) {
