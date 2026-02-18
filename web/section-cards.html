@@ -56,6 +56,32 @@
             background-color: #e8f5e9;
             color: #388e3c;
         }
+
+        .section-state {
+            display: inline-block;
+            padding: 0.35rem 1rem;
+            background-color: var(--accent-light);
+            color: var(--accent-color);
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 500;
+            text-transform: capitalize;
+        }
+
+        .section-state.draft {
+            background-color: #f0f0f0;
+            color: #666;
+        }
+
+        .section-state.reviewed {
+            background-color: #e3f2fd;
+            color: #1976d2;
+        }
+
+        .section-state.completed {
+            background-color: #e8f5e9;
+            color: #388e3c;
+        }
     </style>
 </head>
 <body>
@@ -73,7 +99,10 @@
         <div class="container">
             <div class="dashboard-header">
                 <a href="javascript:history.back()" style="color: var(--text-muted); text-decoration: none;">← Back to Resource</a>
-                <h1 id="section-name">Loading...</h1>
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                    <h1 id="section-name">Loading...</h1>
+                    <span id="section-state-badge"></span>
+                </div>
             </div>
 
             <div id="error-message" style="display: none;"></div>

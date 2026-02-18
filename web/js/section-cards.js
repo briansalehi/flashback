@@ -6,6 +6,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
     const resourceId = parseInt(UI.getUrlParam('resourceId'));
     const sectionPosition = parseInt(UI.getUrlParam('sectionPosition'));
+    const sectionState = parseInt(UI.getUrlParam('sectionState')) || 0;
     const sectionName = UI.getUrlParam('name');
 
     if (isNaN(resourceId) || isNaN(sectionPosition)) {
@@ -15,6 +16,15 @@ window.addEventListener('DOMContentLoaded', () => {
 
     document.getElementById('section-name').textContent = sectionName || 'Section';
     document.title = `${sectionName || 'Section'} - Flashback`;
+
+    // Display section state badge
+    const stateNames = ['draft', 'reviewed', 'completed'];
+    const stateName = stateNames[sectionState] || 'draft';
+    const stateBadge = document.getElementById('section-state-badge');
+    if (stateBadge) {
+        stateBadge.textContent = stateName;
+        stateBadge.className = `section-state ${stateName}`;
+    }
 
     const signoutBtn = document.getElementById('signout-btn');
     if (signoutBtn) {

@@ -499,7 +499,8 @@ class FlashbackClient {
                     resolve(response.getSectionList().map(section => ({
                         name: section.getName(),
                         link: section.getLink(),
-                        position: section.getPosition()
+                        position: section.getPosition(),
+                        state: section.getState()
                     })));
                 }
             });
@@ -552,7 +553,7 @@ class FlashbackClient {
         });
     }
 
-    async addCardToSection(cardId, resourceId, sectionId) {
+    async addCardToSection(cardId, resourceId, sectionPosition) {
         return new Promise((resolve, reject) => {
             const request = new proto.flashback.AddCardToSectionRequest();
             const user = this.getAuthenticatedUser();
@@ -560,10 +561,12 @@ class FlashbackClient {
             const resource = new proto.flashback.Resource();
             const section = new proto.flashback.Section();
             resource.setId(resourceId);
-            section.setId(sectionId);
+            card.setId(cardId);
+            section.setPosition(sectionPosition);
             request.setResource(resource);
             request.setSection(section);
             request.setUser(user);
+            request.setCard(card);
 
             this.client.addCardToSection(request, this.getMetadata(), (err) => {
                 if (err) {
@@ -588,8 +591,8 @@ class FlashbackClient {
             topic.setPosition(topicPosition);
             topic.setLevel(topicLevel);
             request.setCard(card);
-            request.setResource(subject);
-            request.setSection(topic);
+            request.setSubject(subject);
+            request.setTopic(topic);
             request.setUser(user);
 
             this.client.addCardToTopic(request, this.getMetadata(), (err) => {
@@ -643,7 +646,6 @@ class FlashbackClient {
             request.setSubject(subject);
             request.setTopic(topic);
 
-            console.log(`Fetching topic cards for subject ${subjectId}, topic position ${topicPosition}, level ${topicLevel}`);
             this.client.getTopicCards(request, this.getMetadata(), (err, response) => {
                 if (err) {
                     console.error("GetTopicCards error:", err);

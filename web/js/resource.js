@@ -112,12 +112,21 @@ function renderSections(sections) {
     // Sort sections by position
     const sortedSections = sections.sort((a, b) => a.position - b.position);
 
+    const stateNames = ['draft', 'reviewed', 'completed'];
+
     sortedSections.forEach(section => {
         const sectionItem = document.createElement('div');
         sectionItem.className = 'section-item';
         sectionItem.style.cursor = 'pointer';
 
-        let html = `<div class="section-name">${UI.escapeHtml(section.name)}</div>`;
+        const stateName = stateNames[section.state] || 'draft';
+
+        let html = `
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                <div class="section-name">${UI.escapeHtml(section.name)}</div>
+                <span class="section-state ${stateName}">${UI.escapeHtml(stateName)}</span>
+            </div>
+        `;
 
         if (section.link) {
             html += `
@@ -133,7 +142,7 @@ function renderSections(sections) {
 
         sectionItem.addEventListener('click', () => {
             const resourceId = UI.getUrlParam('id');
-            window.location.href = `section-cards.html?resourceId=${resourceId}&sectionPosition=${section.position}&name=${encodeURIComponent(section.name)}`;
+            window.location.href = `section-cards.html?resourceId=${resourceId}&sectionPosition=${section.position}&sectionState=${section.state}&name=${encodeURIComponent(section.name)}`;
         });
 
         container.appendChild(sectionItem);
