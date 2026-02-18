@@ -506,14 +506,34 @@ class FlashbackClient {
         });
     }
 
-    // getSectionCards { User user = 1; Resource resource = 2; Section section = 3; }  { repeated Card cards = 1; }
+    async getStudyResources(resourceId) {
+        return new Promise((resolve, reject) => {
+            const request = new proto.flashback.GetStudyResourcesRequest();
+            const user = this.getAuthenticatedUser();
+            request.setUser(user);
+
+            this.client.getStudyResources(request, this.getMetadata(), (err, response) => {
+                if (err) {
+                    console.error("GetStudyResources error:", err);
+                    reject(err);
+                } else {
+                    resolve(response.getStudyList().map(study => ({
+                        name: study.getResource().getName(),
+                        link: study.getResource().getLink(),
+                        position: study.getResource().getPosition()
+                    })));
+                }
+            });
+        });
+    }
+
     // createCard { User user = 1; Card card = 2; }  { Card card = 1; }
     // addCardToSection { User user = 1; Card card = 2; Resource resource = 3; Section section = 4; }  { }
     // addCardToTopic { User user = 1; Card card = 2; Subject subject = 3; Topic topic = 4; }  { }
     // editCard { User user = 1; Card card = 2; }  { }
-    // getStudyResources { User user = 1; }  { repeated StudyResource study = 1; }
-    // getPracticeCards { User user = 1; Roadmap roadmap = 2; Subject subject = 3; Topic topic = 4; }  { repeated Card card = 1; }
+    // getSectionCards { User user = 1; Resource resource = 2; Section section = 3; }  { repeated Card cards = 1; }
     // getTopicCards { User user = 1; Topic topic = 2; }  { repeated Card cards = 1; }
+    // getPracticeCards { User user = 1; Roadmap roadmap = 2; Subject subject = 3; Topic topic = 4; }  { repeated Card card = 1; }
     // makeProgress { User user = 1; Card card = 2; uint64 duration = 3; practice_mode mode = 4; }  { }
     // markCardAsReviewed { User user = 1; Card card = 2; }  { }
     // createBlock { User user = 1; Card card = 2; Block block = 3; }  { Block block = 1; }
