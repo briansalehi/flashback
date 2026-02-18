@@ -604,14 +604,73 @@ class FlashbackClient {
         });
     }
 
+    async getSectionCards(cardId, resourceId, sectionId) {
+        return new Promise((resolve, reject) => {
+            const request = new proto.flashback.GetSectionCardsRequest();
+            const user = this.getAuthenticatedUser();
+            const card = new proto.flashback.Card();
+            const resource = new proto.flashback.Resource();
+            const section = new proto.flashback.Section();
+            card.setId(cardId);
+            resource.setId(resourceId);
+            section.setId(sectionId);
+            request.setCard(card);
+            request.setResource(resource);
+            request.setSection(section);
+            request.setUser(user);
+
+            this.client.getSectionCards(request, this.getMetadata(), (err) => {
+                if (err) {
+                    console.error("GetSectionCards error:", err);
+                    reject(err);
+                } else {
+                    resolve(response.getCardList().map(card => ({
+                        id: card.getId(),
+                        headline: card.getHeadline(),
+                        state: card.getState()
+                    })));
+                }
+            });
+        });
+    }
+
+    async getTopicCards(cardId, subjectId, topicId) {
+        return new Promise((resolve, reject) => {
+            const request = new proto.flashback.GetTopicCardsRequest();
+            const user = this.getAuthenticatedUser();
+            const card = new proto.flashback.Card();
+            const subject = new proto.flashback.Subject();
+            const topic = new proto.flashback.Topic();
+            card.setId(cardId);
+            subject.setId(subjectId);
+            topic.setId(topicId);
+            request.setCard(card);
+            request.setResource(subject);
+            request.setSection(topic);
+            request.setUser(user);
+
+            this.client.getTopicCards(request, this.getMetadata(), (err) => {
+                if (err) {
+                    console.error("GetTopicCards error:", err);
+                    reject(err);
+                } else {
+                    resolve(response.getCardList().map(card => ({
+                        id: card.getId(),
+                        headline: card.getHeadline(),
+                        state: card.getState()
+                    })));
+                }
+            });
+        });
+    }
+
+    // createBlock { User user = 1; Card card = 2; Block block = 3; }  { Block block = 1; }
+    // getBlocks { User user = 1; Card card = 2; }  { repeated Block block = 1;}
+
     // editCard { User user = 1; Card card = 2; }  { }
-    // getSectionCards { User user = 1; Resource resource = 2; Section section = 3; }  { repeated Card cards = 1; }
-    // getTopicCards { User user = 1; Topic topic = 2; }  { repeated Card cards = 1; }
     // getPracticeCards { User user = 1; Roadmap roadmap = 2; Subject subject = 3; Topic topic = 4; }  { repeated Card card = 1; }
     // makeProgress { User user = 1; Card card = 2; uint64 duration = 3; practice_mode mode = 4; }  { }
     // markCardAsReviewed { User user = 1; Card card = 2; }  { }
-    // createBlock { User user = 1; Card card = 2; Block block = 3; }  { Block block = 1; }
-    // getBlocks { User user = 1; Card card = 2; }  { repeated Block block = 1;}
     // editBlock { User user = 1; Card card = 2; Block block = 3; }  { }
     // study { User user = 1; Card card = 2; uint64 duration = 3; }  { }
     // createNerve { User user = 1; Subject subject = 2; Resource resource = 3; }  { Resource resource = 1; }

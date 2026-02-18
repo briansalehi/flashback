@@ -121,9 +121,6 @@ message SearchTopicsResponse { repeated TopicSearchResult results = 1; }
 message GetSectionsRequest { User user = 1; Resource resource = 2; }
 message GetSectionsResponse { repeated Section section = 1; }
 
-message GetSectionCardsRequest { User user = 1; Resource resource = 2; Section section = 3; }
-message GetSectionCardsResponse { repeated Card cards = 1; }
-
 message RemoveResourceRequest { User user = 1; Resource resource = 2; }
 message RemoveResourceResponse { bool success = 1; string details = 2; uint32 code = 3; }
 
@@ -292,5 +289,8 @@ message GetNervesResponse { repeated Resource resources = 1; }
 message EstimateCardTimeRequest { User user = 1; }
 message EstimateCardTimeResponse { }
 
-message GetTopicCardsRequest { User user = 1; Topic topic = 2; }
-message GetTopicCardsResponse { repeated Card cards = 1; }
+message GetSectionCardsRequest { User user = 1; Resource resource = 2; Section section = 3; }
+message GetSectionCardsResponse { repeated Card card = 1; }
+
+message GetTopicCardsRequest { User user = 1; Subject subject = 2; Topic topic = 3; }
+message GetTopicCardsResponse { repeated Card card = 1; }

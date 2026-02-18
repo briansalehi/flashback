@@ -46,7 +46,6 @@ service Server {
     rpc MoveTopic(MoveTopicRequest) returns (MoveTopicResponse);
     rpc SearchTopics(SearchTopicsRequest) returns (SearchTopicsResponse);
     rpc GetPracticeCards(GetPracticeCardsRequest) returns (GetPracticeCardsResponse);
-    rpc GetTopicCards(GetTopicCardsRequest) returns (GetTopicCardsResponse);
     rpc RemoveResource(RemoveResourceRequest) returns (RemoveResourceResponse);
     rpc EditResource(EditResourceRequest) returns (EditResourceResponse);
     rpc CreateSection(CreateSectionRequest) returns (CreateSectionResponse);
@@ -81,6 +80,7 @@ service Server {
     rpc MergeCards(MergeCardsRequest) returns (MergeCardsResponse);
     rpc GetStudyResources(GetStudyResourcesRequest) returns (GetStudyResourcesResponse);
     rpc GetSectionCards(GetSectionCardsRequest) returns (GetSectionCardsResponse);
+    rpc GetTopicCards(GetTopicCardsRequest) returns (GetTopicCardsResponse);
     rpc SearchCards(SearchCardsRequest) returns (SearchCardsResponse);
     rpc EditCard(EditCardRequest) returns (EditCardResponse);
     rpc MakeProgress(MakeProgressRequest) returns (MakeProgressResponse);

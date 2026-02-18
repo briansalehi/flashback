@@ -3683,3 +3683,11 @@ TEST_F(test_server, GetProgressWeight)
     EXPECT_THAT(status.ok(), IsTrue());
     EXPECT_THAT(status.error_message(), IsEmpty());
 }
+
+TEST_F(test_server, GetSectionCards)
+{
+}
+
+TEST_F(test_server, GetTopicCards)
+{
+}
