@@ -253,12 +253,23 @@ function renderMilestones(milestones) {
 
     const levelNames = ['Surface', 'Depth', 'Origin'];
 
-    milestones.forEach(milestone => {
+    milestones.forEach((milestone, index) => {
         const levelName = levelNames[milestone.level] || 'Unknown';
-        container.innerHTML += `
-            <div class="card-title">
-                <a href="subject.html?id=${milestone.id}&name=${encodeURIComponent(milestone.name)}&level=${milestone.level}" class="btn btn-secondary mt-md">${UI.escapeHtml(milestone.name)} (${UI.escapeHtml(levelName)})</a>
+
+        const milestoneCard = document.createElement('div');
+        milestoneCard.className = 'milestone-card';
+        milestoneCard.innerHTML = `
+            <div class="milestone-position">${index + 1}</div>
+            <div class="milestone-header" style="margin-left: 3rem;">
+                <h3 class="milestone-name">${UI.escapeHtml(milestone.name)}</h3>
+                <span class="milestone-level">${UI.escapeHtml(levelName)}</span>
             </div>
         `;
+
+        milestoneCard.addEventListener('click', () => {
+            window.location.href = `subject.html?id=${milestone.id}&name=${encodeURIComponent(milestone.name)}&level=${milestone.level}`;
+        });
+
+        container.appendChild(milestoneCard);
     });
 }
