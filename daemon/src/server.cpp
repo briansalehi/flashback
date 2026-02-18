@@ -2000,7 +2000,7 @@ grpc::Status server::CreateTopic(grpc::ServerContext* context, CreateTopicReques
         {
             Topic* topic{response->mutable_topic()};
             *topic = m_database->create_topic(request->subject().id(), request->topic().name(), request->topic().level(), request->topic().position());
-            std::clog << std::format("client {} created topic {} topics from subject {}\n", request->user().token(), response->topic().size(), request->subject().id());
+            std::clog << std::format("client {} created topic {} topics from subject {}\n", request->user().token(), response->topic().position(), request->subject().id());
             status = grpc::Status{grpc::StatusCode::OK, {}};
         }
     }
