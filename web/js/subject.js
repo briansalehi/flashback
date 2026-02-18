@@ -348,6 +348,7 @@ function renderResources(resources) {
     resources.forEach(resource => {
         const resourceItem = document.createElement('div');
         resourceItem.className = 'resource-item';
+        resourceItem.style.cursor = 'pointer';
 
         // Convert epoch seconds to readable dates
         const productionDate = resource.production ? new Date(resource.production * 1000).toLocaleDateString() : 'N/A';
@@ -362,7 +363,7 @@ function renderResources(resources) {
                 <span class="resource-type">${UI.escapeHtml(typeName)} ${UI.escapeHtml(patternName)}</span>
             </div>
             <div class="resource-url">
-                <a href="${UI.escapeHtml(resource.link)}" target="_blank" rel="noopener noreferrer">
+                <a href="${UI.escapeHtml(resource.link)}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">
                     ${UI.escapeHtml(resource.link)}
                 </a>
             </div>
@@ -371,6 +372,12 @@ function renderResources(resources) {
                 <div><strong>Relevant Until:</strong> ${UI.escapeHtml(expirationDate)}</div>
             </div>
         `;
+
+        // Make the whole resource item clickable to go to resource page
+        resourceItem.addEventListener('click', () => {
+            window.location.href = `resource.html?id=${resource.id}&name=${encodeURIComponent(resource.name)}`;
+        });
+
         container.appendChild(resourceItem);
     });
 }

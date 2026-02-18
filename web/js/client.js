@@ -462,8 +462,8 @@ class FlashbackClient {
             section.setName(sectionName);
             section.setLink(sectionLink);
             section.setPosition(sectionPosition);
-            resource.setSection(section);
             request.setResource(resource);
+            request.setSection(section);
             request.setUser(user);
 
             this.client.createSection(request, this.getMetadata(), (err, response) => {
@@ -471,11 +471,12 @@ class FlashbackClient {
                     console.error("CreateSection error:", err);
                     reject(err);
                 } else {
-                    resolve(response.getSection().map(section => ({
+                    const section = response.getSection();
+                    resolve({
                         name: section.getName(),
                         link: section.getLink(),
                         position: section.getPosition()
-                    })));
+                    });
                 }
             });
         });
@@ -495,7 +496,7 @@ class FlashbackClient {
                     console.error("GetSections error:", err);
                     reject(err);
                 } else {
-                    resolve(response.getSection().map(section => ({
+                    resolve(response.getSectionList().map(section => ({
                         name: section.getName(),
                         link: section.getLink(),
                         position: section.getPosition()

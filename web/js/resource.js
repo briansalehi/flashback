@@ -4,12 +4,15 @@ window.addEventListener('DOMContentLoaded', () => {
         return;
     }
 
-    const subjectId = UI.getUrlParam('id');
-    const subjectName = UI.getUrlParam('name');
-    if (!subjectId) {
+    const resourceId = UI.getUrlParam('id');
+    const resourceName = UI.getUrlParam('name');
+    if (!resourceId) {
         window.location.href = '/home.html';
         return;
     }
+
+    document.getElementById('resource-name').textContent = resourceName || 'Resource';
+    document.title = `${resourceName || 'Resource'} - Flashback`;
 
     const signoutBtn = document.getElementById('signout-btn');
     if (signoutBtn) {
@@ -20,13 +23,13 @@ window.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    const addResourceBtn = document.getElementById('add-resource-btn');
-    if (addResourceBtn) {
-        addResourceBtn.addEventListener('click', (e) => {
+    const addSectionBtn = document.getElementById('add-section-btn');
+    if (addSectionBtn) {
+        addSectionBtn.addEventListener('click', (e) => {
             e.preventDefault();
-            UI.toggleElement('add-resource-form', true);
+            UI.toggleElement('add-section-form', true);
             setTimeout(() => {
-                const nameInput = document.getElementById('resource-name');
+                const nameInput = document.getElementById('section-name');
                 if (nameInput) {
                     nameInput.focus();
                 }
@@ -34,96 +37,98 @@ window.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    const cancelResourceBtn = document.getElementById('cancel-resource-btn');
-    if (cancelResourceBtn) {
-        cancelResourceBtn.addEventListener('click', () => {
-            UI.toggleElement('add-resource-form', false);
-            UI.clearForm('resource-form');
+    const cancelSectionBtn = document.getElementById('cancel-section-btn');
+    if (cancelSectionBtn) {
+        cancelSectionBtn.addEventListener('click', () => {
+            UI.toggleElement('add-section-form', false);
+            UI.clearForm('section-form');
         });
     }
 
-    const resourceForm = document.getElementById('resource-form');
-    if (resourceForm) {
-        resourceForm.addEventListener('submit', async (e) => {
+    const sectionForm = document.getElementById('section-form');
+    if (sectionForm) {
+        sectionForm.addEventListener('submit', async (e) => {
             e.preventDefault();
 
-            const name = document.getElementById('resource-name').value.trim();
-            const type = document.getElementById('resource-type').value;
-            const url = document.getElementById('resource-url').value.trim();
+            const name = document.getElementById('section-name').value.trim();
+            const link = document.getElementById('section-link').value.trim();
 
-            if (!name || !type || !url) {
-                UI.showError('Please fill in all fields');
+            if (!name) {
+                UI.showError('Please enter a section name');
                 return;
             }
 
             UI.hideMessage('error-message');
-            UI.setButtonLoading('save-resource-btn', true);
+            UI.setButtonLoading('save-section-btn', true);
 
             try {
-                await client.addResource(subjectId, name, type, url);
+                // Position 0 means add to end
+                await client.createSection(resourceId, name, link, 0);
 
-                UI.toggleElement('add-resource-form', false);
-                UI.clearForm('resource-form');
-                UI.setButtonLoading('save-resource-btn', false);
+                UI.toggleElement('add-section-form', false);
+                UI.clearForm('section-form');
+                UI.setButtonLoading('save-section-btn', false);
 
-                loadResources();
+                loadSections();
             } catch (err) {
-                console.error('Add resource failed:', err);
-                UI.showError(err.message || 'Failed to add resource');
-                UI.setButtonLoading('save-resource-btn', false);
+                console.error('Add section failed:', err);
+                UI.showError(err.message || 'Failed to add section');
+                UI.setButtonLoading('save-section-btn', false);
             }
         });
     }
 
-    loadResources();
+    loadSections();
 });
 
-async function loadResources() {
+async function loadSections() {
     UI.toggleElement('loading', true);
-    UI.toggleElement('resources-list', false);
+    UI.toggleElement('sections-list', false);
     UI.toggleElement('empty-state', false);
 
     try {
-        const subjectId = UI.getUrlParam('id');
-        const subjectName = UI.getUrlParam('name');
-        const resources = await client.getResources(subjectId);
-
-        document.getElementById('subject-name').textContent = subjectName || 'Subject Resources';
-        document.title = `${subjectName || 'Resources'} - Flashback`;
+        const resourceId = UI.getUrlParam('id');
+        const sections = await client.getSections(resourceId);
 
         UI.toggleElement('loading', false);
 
-        if (resources.length === 0) {
+        if (sections.length === 0) {
             UI.toggleElement('empty-state', true);
         } else {
-            UI.toggleElement('resources-list', true);
-            renderResources(resources);
+            UI.toggleElement('sections-list', true);
+            renderSections(sections);
         }
     } catch (err) {
-        console.error('Loading resources failed:', err);
+        console.error('Loading sections failed:', err);
         UI.toggleElement('loading', false);
-        UI.showError('Failed to load resources: ' + (err.message || 'Unknown error'));
+        UI.showError('Failed to load sections: ' + (err.message || 'Unknown error'));
     }
 }
 
-function renderResources(resources) {
-    const container = document.getElementById('resources-list');
+function renderSections(sections) {
+    const container = document.getElementById('sections-list');
     container.innerHTML = '';
 
-    resources.forEach(resource => {
-        const resourceItem = document.createElement('div');
-        resourceItem.className = 'resource-item';
-        resourceItem.innerHTML = `
-            <div class="resource-header">
-                <div class="resource-name">${UI.escapeHtml(resource.name)}</div>
-                <span class="resource-type">${UI.escapeHtml(resource.type)}</span>
-            </div>
-            <div class="resource-url">
-                <a href="${UI.escapeHtml(resource.url)}" target="_blank" rel="noopener noreferrer">
-                    ${UI.escapeHtml(resource.url)}
-                </a>
-            </div>
-        `;
-        container.appendChild(resourceItem);
+    // Sort sections by position
+    const sortedSections = sections.sort((a, b) => a.position - b.position);
+
+    sortedSections.forEach(section => {
+        const sectionItem = document.createElement('div');
+        sectionItem.className = 'section-item';
+
+        let html = `<div class="section-name">${UI.escapeHtml(section.name)}</div>`;
+
+        if (section.link) {
+            html += `
+                <div class="section-link">
+                    <a href="${UI.escapeHtml(section.link)}" target="_blank" rel="noopener noreferrer">
+                        ${UI.escapeHtml(section.link)}
+                    </a>
+                </div>
+            `;
+        }
+
+        sectionItem.innerHTML = html;
+        container.appendChild(sectionItem);
     });
 }
