@@ -233,6 +233,22 @@ TEST_F(test_server, SignIn)
     EXPECT_TRUE(response->user().hash().empty()) << "Hash should never be leaked to client side";
 }
 
+TEST_F(test_server, SignOut)
+{
+    grpc::Status status{};
+    auto request{std::make_unique<flashback::SignOutRequest>()};
+    auto response{std::make_unique<flashback::SignOutResponse>()};
+    auto user{std::make_unique<flashback::User>()};
+    user->set_token(m_user->token());
+    user->set_device(m_user->device());
+    request->set_allocated_user(user.release());
+
+    EXPECT_CALL(*m_mock_database, get_user(m_user->token(), m_user->device())).Times(2).WillRepeatedly(Invoke([this] { return std::make_unique<flashback::User>(*m_user); }));
+    EXPECT_CALL(*m_mock_database, revoke_session(m_user->id(), m_user->token())).Times(1);
+    EXPECT_NO_THROW(status = m_server->SignOut(m_server_context.get(), request.get(), response.get()));
+    EXPECT_THAT(status.ok(), IsTrue());
+}
+
 TEST_F(test_server, SignInWithInvalidCredentials)
 {
     auto request{std::make_unique<flashback::SignInRequest>()};

@@ -16,6 +16,7 @@ public:
     // entry page
     grpc::Status SignUp(grpc::ServerContext* context, SignUpRequest const* request, SignUpResponse* response) override;
     grpc::Status SignIn(grpc::ServerContext* context, SignInRequest const* request, SignInResponse* response) override;
+    grpc::Status SignOut(grpc::ServerContext* context, SignOutRequest const* request, SignOutResponse* response) override;
     grpc::Status VerifySession(grpc::ServerContext* context, VerifySessionRequest const* request, VerifySessionResponse* response) override;
     // VerifyUser
 

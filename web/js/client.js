@@ -86,6 +86,27 @@ class FlashbackClient {
         return name;
     };
 
+    async signOut() {
+        await this.waitForReady();
+
+        return new Promise((resolve, reject) => {
+            const request = new proto.flashback.SignOutRequest();
+            const user = this.getAuthenticatedUser();
+            request.setUser(user);
+
+            this.client.signOut(request, {}, (err) => {
+                if (err) {
+                    console.error('SignOut error:', err);
+                    reject(err);
+                } else {
+                    localStorage.removeItem('token');
+                    this.token = '';
+                    resolve();
+                }
+            });
+        });
+    }
+
     async signIn(email, password) {
         await this.waitForReady();
 
@@ -132,11 +153,6 @@ class FlashbackClient {
                 }
             });
         });
-    }
-
-    async signOut() {
-        localStorage.removeItem('token');
-        this.token = '';
     }
 
     async getRoadmaps() {

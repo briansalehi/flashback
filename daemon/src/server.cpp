@@ -73,6 +73,36 @@ grpc::Status server::SignIn(grpc::ServerContext* context, const SignInRequest* r
     return grpc::Status::OK;
 }
 
+grpc::Status server::SignOut(grpc::ServerContext* context, const SignOutRequest* request, SignOutResponse* response)
+{
+    grpc::Status status{grpc::Status{grpc::StatusCode::INTERNAL, {}}};
+
+    try
+    {
+        if (request->has_user() && session_is_valid(request->user()))
+        {
+            std::shared_ptr<User> const user{m_database->get_user(request->user().token(), request->user().device())};
+            m_database->revoke_session(user->id(), request->user().token());
+            status = grpc::Status{grpc::StatusCode::OK, {}};
+        }
+        else
+        {
+            status = grpc::Status{grpc::StatusCode::UNAUTHENTICATED, "invalid user"};
+        }
+    }
+    catch (client_exception const& exp)
+    {
+        status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, exp.what()};
+        std::cerr << std::format("Client: {}\n", exp.what());
+    }
+    catch (std::exception const& exp)
+    {
+        std::cerr << std::format("Server: {}\n", exp.what());
+    }
+
+    return status;
+}
+
 grpc::Status server::SignUp(grpc::ServerContext* context, const SignUpRequest* request, SignUpResponse* response)
 {
     try

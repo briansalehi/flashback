@@ -6,6 +6,7 @@ import "requests.proto";
 
 service Server {
     rpc SignIn(SignInRequest) returns (SignInResponse);
+    rpc SignOut(SignOutRequest) returns (SignOutResponse);
     rpc SignUp(SignUpRequest) returns (SignUpResponse);
     rpc VerifySession(VerifySessionRequest) returns (VerifySessionResponse);
     //rpc VerifyUser(VerifyUserRequest) returns (VerifyUserResponse);

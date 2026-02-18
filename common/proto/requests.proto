@@ -7,6 +7,9 @@ package flashback;
 message SignInRequest { User user = 1; }
 message SignInResponse { bool success = 1; string details = 2; User user = 3; }
 
+message SignOutRequest { User user = 1; }
+message SignOutResponse { }
+
 message SignUpRequest { User user = 1; }
 message SignUpResponse { bool success = 1; string details = 2; User user = 3; }
 
