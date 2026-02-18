@@ -18,7 +18,7 @@ public:
     grpc::Status SignIn(grpc::ServerContext* context, SignInRequest const* request, SignInResponse* response) override;
     grpc::Status SignOut(grpc::ServerContext* context, SignOutRequest const* request, SignOutResponse* response) override;
     grpc::Status VerifySession(grpc::ServerContext* context, VerifySessionRequest const* request, VerifySessionResponse* response) override;
-    // VerifyUser
+    // grpc::Status VerifyUser(grpc::ServerContext* context, VerifyUserRequest const* request, VerifyUserResponse* response) override;
 
     // accounts page
     grpc::Status ResetPassword(grpc::ServerContext* context, ResetPasswordRequest const* request, ResetPasswordResponse* response) override;
@@ -60,7 +60,7 @@ public:
     grpc::Status MergeResources(grpc::ServerContext* context, MergeResourcesRequest const* request, MergeResourcesResponse* response) override;
     grpc::Status RemoveResource(grpc::ServerContext* context, RemoveResourceRequest const* request, RemoveResourceResponse* response) override;
     grpc::Status EditResource(grpc::ServerContext* context, EditResourceRequest const* request, EditResourceResponse* response) override;
-    // GetRelevantSubjects
+    // grpc::Status GetRelevantSubjects(grpc::ServerContext* context, GetRelevantSubjectsRequest const* request, GetRelevantSubjectsResponse* response) override;
 
     // nerves
     grpc::Status CreateNerve(grpc::ServerContext* context, CreateNerveRequest const* request, CreateNerveResponse* response) override;
@@ -135,7 +135,7 @@ public:
     grpc::Status MergeBlocks(grpc::ServerContext* context, MergeBlocksRequest const* request, MergeBlocksResponse* response) override;
     grpc::Status SplitBlock(grpc::ServerContext* context, SplitBlockRequest const* request, SplitBlockResponse* response) override;
     grpc::Status MarkCardAsReviewed(grpc::ServerContext* context, MarkCardAsReviewedRequest const* request, MarkCardAsReviewedResponse* response) override;
-    // GetVariations
+    // grpc::Status GetVariations(grpc::ServerContext* context, GetVariationsRequest const* request, GetVariationsResponse* response) override;
 
     // progress
     grpc::Status Study(grpc::ServerContext* context, StudyRequest const* request, StudyResponse* response) override;
