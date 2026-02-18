@@ -135,20 +135,8 @@ class FlashbackClient {
     }
 
     async signOut() {
-        return new Promise((resolve, reject) => {
-            const request = new proto.flashback.SignOutRequest();
-            const user = this.getAuthenticatedUser();
-            request.setUser(user);
-
-            this.client.signOut(request, this.getMetadata(), (err) => {
-                localStorage.removeItem('token');
-                if (err) {
-                    reject(err);
-                } else {
-                    resolve();
-                }
-            });
-        });
+        localStorage.removeItem('token');
+        this.token = '';
     }
 
     async getRoadmaps() {
