@@ -119,6 +119,7 @@ function renderCards(cards) {
     cards.forEach(card => {
         const cardItem = document.createElement('div');
         cardItem.className = 'card-item';
+        cardItem.style.cursor = 'pointer';
 
         const stateName = stateNames[card.state] || 'draft';
 
@@ -126,6 +127,10 @@ function renderCards(cards) {
             <div class="card-headline">${UI.escapeHtml(card.headline)}</div>
             <span class="card-state ${stateName}">${UI.escapeHtml(stateName)}</span>
         `;
+
+        cardItem.addEventListener('click', () => {
+            window.location.href = `card.html?cardId=${card.id}&headline=${encodeURIComponent(card.headline)}&state=${card.state}`;
+        });
 
         container.appendChild(cardItem);
     });

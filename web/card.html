@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Card</title>
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;600;700&family=Source+Sans+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        .card-headline-display {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+            line-height: 1.3;
+        }
+
+        .card-state-display {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            background-color: var(--accent-light);
+            color: var(--accent-color);
+            border-radius: 12px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            text-transform: capitalize;
+            margin-bottom: 1.5rem;
+        }
+
+        .card-state-display.draft {
+            background-color: #f0f0f0;
+            color: #666;
+        }
+
+        .card-state-display.reviewed {
+            background-color: #e3f2fd;
+            color: #1976d2;
+        }
+
+        .card-state-display.completed {
+            background-color: #e8f5e9;
+            color: #388e3c;
+        }
+
+        .card-state-display.approved {
+            background-color: #fff3e0;
+            color: #f57c00;
+        }
+
+        .card-state-display.released {
+            background-color: #e1f5fe;
+            color: #0277bd;
+        }
+
+        .card-state-display.rejected {
+            background-color: #ffebee;
+            color: #c62828;
+        }
+
+        .block-item {
+            margin-bottom: 2rem;
+            padding: 1.5rem;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background-color: var(--bg-primary);
+        }
+
+        .block-content {
+            font-size: 1rem;
+            line-height: 1.7;
+            color: var(--text-primary);
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .block-code {
+            background-color: #f5f5f5;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            padding: 1rem;
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        .block-image {
+            max-width: 100%;
+            height: auto;
+            border-radius: 4px;
+        }
+
+        .block-metadata {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            background-color: var(--accent-light);
+            color: var(--accent-color);
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            margin-bottom: 1rem;
+        }
+
+        .block-type {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            background-color: #f0f0f0;
+            color: #666;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            margin-bottom: 1rem;
+            margin-left: 0.5rem;
+        }
+
+        .blocks-container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="container header-content">
+            <a href="home.html" class="logo">Flashback</a>
+            <nav class="nav">
+                <a href="home.html">My Roadmaps</a>
+                <a href="#" id="signout-btn">Sign Out</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="dashboard">
+        <div class="container">
+            <div class="dashboard-header">
+                <a href="javascript:history.back()" style="color: var(--text-muted); text-decoration: none;">← Back</a>
+            </div>
+
+            <div id="error-message" style="display: none;"></div>
+
+            <div id="loading" style="display: none; text-align: center; padding: 3rem;">
+                <div class="loading" style="width: 40px; height: 40px; border-width: 4px;"></div>
+                <p class="text-muted mt-md">Loading card...</p>
+            </div>
+
+            <div id="card-content" class="blocks-container" style="display: none;">
+                <h1 id="card-headline" class="card-headline-display"></h1>
+                <span id="card-state" class="card-state-display"></span>
+                <div id="blocks-list">
+                    <!-- blocks will be inserted here -->
+                </div>
+            </div>
+
+            <div id="empty-state" style="display: none; text-align: center; padding: 4rem 2rem;">
+                <h3 style="color: var(--text-muted);">No content yet</h3>
+                <p class="text-muted">This card doesn't have any blocks yet.</p>
+            </div>
+        </div>
+    </main>
+
+    <script src="proto/flashback.js"></script>
+    <script src="js/client.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/card.js"></script>
+</body>
+</html>
