@@ -506,7 +506,7 @@ class FlashbackClient {
         });
     }
 
-    async getStudyResources(resourceId) {
+    async getStudyResources() {
         return new Promise((resolve, reject) => {
             const request = new proto.flashback.GetStudyResourcesRequest();
             const user = this.getAuthenticatedUser();

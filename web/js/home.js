@@ -50,18 +50,19 @@ window.addEventListener('DOMContentLoaded', () => {
     });
     
     loadRoadmaps();
+    loadStudyingResources();
 });
 
 async function loadRoadmaps() {
     UI.toggleElement('loading', true);
     UI.toggleElement('roadmaps-container', false);
     UI.toggleElement('empty-state', false);
-    
+
     try {
         const roadmaps = await client.getRoadmaps();
 
         UI.toggleElement('loading', false);
-        
+
         if (roadmaps.length === 0) {
             UI.toggleElement('empty-state', true);
         } else {
@@ -75,15 +76,69 @@ async function loadRoadmaps() {
     }
 }
 
+async function loadStudyingResources() {
+    UI.toggleElement('studying-loading', true);
+    UI.toggleElement('studying-resources', false);
+    UI.toggleElement('studying-empty-state', false);
+
+    try {
+        const studyResources = await client.getStudyResources();
+
+        UI.toggleElement('studying-loading', false);
+
+        if (studyResources.length === 0) {
+            UI.toggleElement('studying-empty-state', true);
+        } else {
+            UI.toggleElement('studying-section', true);
+            UI.toggleElement('studying-resources', true);
+            renderStudyingResources(studyResources);
+        }
+    } catch (err) {
+        console.error('Load studying resources failed:', err);
+        UI.toggleElement('studying-loading', false);
+        // Don't show error for studying resources, just hide the section
+    }
+}
+
 function renderRoadmaps(roadmaps) {
     const container = document.getElementById('roadmaps-container');
     container.innerHTML = '';
-    
+
     roadmaps.forEach(roadmap => {
         container.innerHTML += `
             <a href="roadmap.html?id=${roadmap.id}&name=${UI.escapeHtml(roadmap.name)}" class="roadmap-card">
                 <h3 class="roadmap-title">${UI.escapeHtml(roadmap.name)}</h3>
             </a>
         `;
+    });
+}
+
+function renderStudyingResources(resources) {
+    const container = document.getElementById('studying-resources');
+    container.innerHTML = '';
+
+    // Sort by position (order)
+    const sortedResources = resources.sort((a, b) => (a.position || 0) - (b.position || 0));
+
+    sortedResources.forEach(resource => {
+        const card = document.createElement('a');
+        card.className = 'roadmap-card';
+        card.style.cursor = 'pointer';
+
+        if (resource.link) {
+            card.href = resource.link;
+            card.target = '_blank';
+            card.rel = 'noopener noreferrer';
+        } else {
+            card.addEventListener('click', (e) => {
+                e.preventDefault();
+            });
+        }
+
+        card.innerHTML = `
+            <h3 class="roadmap-title">${UI.escapeHtml(resource.name)}</h3>
+        `;
+
+        container.appendChild(card);
     });
 }

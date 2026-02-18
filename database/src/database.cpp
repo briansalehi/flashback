@@ -12,7 +12,8 @@ database::database(std::string client, std::string name, std::string address, st
     try
     {
         std::string connection_string = std::format("postgres://{}@{}:{}/{}", client, address, port, name);
-        m_pool = std::make_shared<connection_pool>(connection_string, 10);
+        // Use 3 connections in the pool to avoid exhausting PostgreSQL role connection limits
+        m_pool = std::make_shared<connection_pool>(connection_string, 3);
     }
     catch (pqxx::broken_connection const& exp)
     {
