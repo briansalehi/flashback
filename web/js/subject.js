@@ -326,7 +326,7 @@ async function loadResources() {
     UI.toggleElement('resources-empty-state', false);
 
     try {
-        const subjectId = UI.getUrlParam('id');
+        const subjectId = parseInt(UI.getUrlParam('id'));
         const resources = await client.getResources(subjectId);
 
         UI.toggleElement('resources-loading', false);

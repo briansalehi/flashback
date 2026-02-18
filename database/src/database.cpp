@@ -1471,7 +1471,7 @@ std::string database::resource_type_to_string(Resource::resource_type const type
         break;
     case Resource::channel: type_string = "channel";
         break;
-    case Resource::mailing_list: type_string = "mailing_list";
+    case Resource::mailing_list: type_string = "mailing list";
         break;
     case Resource::manual: type_string = "manual";
         break;
@@ -1494,11 +1494,11 @@ Resource::resource_type database::to_resource_type(std::string_view const type_s
     else if (type_string == "course") { type = Resource::course; }
     else if (type_string == "video") { type = Resource::video; }
     else if (type_string == "channel") { type = Resource::channel; }
-    else if (type_string == "mailing_list") { type = Resource::mailing_list; }
+    else if (type_string == "mailing list") { type = Resource::mailing_list; }
     else if (type_string == "manual") { type = Resource::manual; }
     else if (type_string == "slides") { type = Resource::slides; }
     else if (type_string == "nerve") { type = Resource::nerve; }
-    else { throw std::runtime_error("invalid resource type"); }
+    else { throw std::runtime_error(std::format("invalid resource type {}", type_string)); }
 
     return type;
 }
