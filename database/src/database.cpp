@@ -12,7 +12,7 @@ database::database(std::string client, std::string name, std::string address, st
     try
     {
         std::string connection_string = std::format("postgres://{}@{}:{}/{}", client, address, port, name);
-        m_pool = std::make_shared<connection_pool>(connection_string, 10);
+        m_pool = std::make_shared<connection_pool>(connection_string, 9);
     }
     catch (pqxx::broken_connection const& exp)
     {

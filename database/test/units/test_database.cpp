@@ -383,18 +383,21 @@ TEST_F(test_database, SearchRoadmaps)
         "Brand Strategy",
         "Growth Strategy"
     };
+    uint64_t user_id{};
+    EXPECT_NO_THROW(user_id = m_database->create_user(m_user->name(), "sample@flashback.eu.com", m_user->hash()));
     std::map<uint64_t, flashback::Roadmap> search_results;
 
     for (std::string const& roadmap_name: names)
     {
         flashback::Roadmap roadmap{};
         ASSERT_NO_THROW(roadmap = m_database->create_roadmap(m_user->id(), roadmap_name));
+        ASSERT_NO_THROW(roadmap = m_database->create_roadmap(user_id, roadmap_name));
     }
 
-    EXPECT_NO_THROW(search_results = m_database->search_roadmaps("Management"));
+    EXPECT_NO_THROW(search_results = m_database->search_roadmaps(m_user->id(), "Management"));
     EXPECT_THAT(search_results, testing::SizeIs(testing::Ge(3)));
 
-    EXPECT_NO_THROW(search_results = m_database->search_roadmaps("Prompt Engineering"));
+    EXPECT_NO_THROW(search_results = m_database->search_roadmaps(m_user->id(), "Prompt Engineering"));
     EXPECT_THAT(search_results, testing::IsEmpty()) << "Should not exist!";
 }
 
