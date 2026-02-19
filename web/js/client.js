@@ -730,14 +730,226 @@ class FlashbackClient {
         });
     }
 
-    // editCard { User user = 1; Card card = 2; }  { }
-    // getPracticeCards { User user = 1; Roadmap roadmap = 2; Subject subject = 3; Topic topic = 4; }  { repeated Card card = 1; }
-    // makeProgress { User user = 1; Card card = 2; uint64 duration = 3; practice_mode mode = 4; }  { }
-    // markCardAsReviewed { User user = 1; Card card = 2; }  { }
-    // editBlock { User user = 1; Card card = 2; Block block = 3; }  { }
-    // study { User user = 1; Card card = 2; uint64 duration = 3; }  { }
-    // createNerve { User user = 1; Subject subject = 2; Resource resource = 3; }  { Resource resource = 1; }
-    // getNerves { User user = 1; }  { repeated Resource resources = 1; }
+    async getPracticeCards(roadmapId, subjectId, topicLevel, topicPosition) {
+        return new Promise((resolve, reject) => {
+            const request = new proto.flashback.GetPracticeCardsRequest();
+            const user = this.getAuthenticatedUser();
+            request.setUser(user);
+            const roadmap = new proto.flashback.Roadmap();
+            roadmap.setId(roadmapId);
+            request.setRoadmap(roadmap);
+            const subject = new proto.flashback.Subject();
+            subject.setId(subjectId);
+            request.setSubject(subject);
+            const topic = new proto.flashback.Topic();
+            topic.setLevel(topicLevel);
+            topic.setPosition(topicPosition);
+            request.setTopic(topic);
+
+            this.client.getPracticeCards(request, this.getMetadata(), (err, response) => {
+                if (err) {
+                    console.error("GetPracticeCards error:", err);
+                    reject(this.handleError(err));
+                } else {
+                    resolve(response.getCardList().map(card => ({
+                        id: card.getId(),
+                        headline: card.getHeadline(),
+                        state: card.getState()
+                    })));
+                }
+            });
+        });
+    }
+
+    async makeProgress(cardId, duration, practiceMode) {
+        return new Promise((resolve, reject) => {
+            const request = new proto.flashback.MakeProgressRequest();
+            const user = this.getAuthenticatedUser();
+            request.setUser(user);
+            const card = new proto.flashback.Card();
+            card.setId(cardId);
+            request.setCard(card);
+            request.setDuration(duration);
+            request.setMode(practiceMode);
+
+            this.client.makeProgress(request, this.getMetadata(), (err) => {
+                if (err) {
+                    console.error("MakeProgress error:", err);
+                    reject(this.handleError(err));
+                } else {
+                    resolve();
+                }
+            });
+        });
+    }
+
+    async markCardAsReviewed(cardId) {
+        return new Promise((resolve, reject) => {
+            const request = new proto.flashback.MarkCardAsReviewedRequest();
+            const user = this.getAuthenticatedUser();
+            request.setUser(user);
+            const card = new proto.flashback.Card();
+            card.setId(cardId);
+            request.setCard(card);
+
+            this.client.markCardAsReviewed(request, this.getMetadata(), (err, response) => {
+                if (err) {
+                    console.error("MarkCardAsReviewed error:", err);
+                    reject(this.handleError(err));
+                } else {
+                    resolve();
+                }
+            });
+        });
+    }
+
+    async markSectionAsReviewed(resourceId, sectionPosition) {
+        return new Promise((resolve, reject) => {
+            const request = new proto.flashback.MarkSectionAsReviewedRequest();
+            const user = this.getAuthenticatedUser();
+            request.setUser(user);
+            const resource = new proto.flashback.Resource();
+            resource.setId(resourceId);
+            request.setResource(resource);
+            const section = new proto.flashback.Section();
+            section.setPosition(sectionPosition);
+            request.setSection(section);
+
+            this.client.markSectionAsReviewed(request, this.getMetadata(), (err) => {
+                if (err) {
+                    console.error("MarkSectionAsReviewed error:", err);
+                    reject(this.handleError(err));
+                } else {
+                    resolve();
+                }
+            });
+        });
+    }
+
+    async study(cardId, duration) {
+        return new Promise((resolve, reject) => {
+            const request = new proto.flashback.StudyRequest();
+            const user = this.getAuthenticatedUser();
+            request.setUser(user);
+            const card = new proto.flashback.Card();
+            card.setId(cardId);
+            request.setCard(card);
+            request.setDuration(duration);
+
+            this.client.study(request, this.getMetadata(), (err) => {
+                if (err) {
+                    console.error("Study error:", err);
+                    reject(this.handleError(err));
+                } else {
+                    resolve();
+                }
+            });
+        });
+    }
+
+    async createNerve(subjectId, resourceId) {
+        return new Promise((resolve, reject) => {
+            const request = new proto.flashback.CreateNerveRequest();
+            const user = this.getAuthenticatedUser();
+            request.setUser(user);
+            const subject = new proto.flashback.Subject();
+            subject.setId(subjectId);
+            request.setSubject(subject);
+            const resource = new proto.flashback.Resource();
+            resource.setId(resourceId);
+            request.setResource(resource);
+
+            this.client.createNerve(request, this.getMetadata(), (err, response) => {
+                if (err) {
+                    console.error("CreateNerve error:", err);
+                    reject(this.handleError(err));
+                } else {
+                    const resource = response.getResource();
+                    resolve({
+                        id: resource.getId(),
+                        name: resource.getName(),
+                        type: resource.getType(),
+                        pattern: resource.getPattern(),
+                        production: resource.getProduction(),
+                        expiration: resource.getExpiration(),
+                        link: resource.getLink()
+                    });
+                }
+            });
+        });
+    }
+
+    async getNerves() {
+        return new Promise((resolve, reject) => {
+            const request = new proto.flashback.GetNervesRequest();
+            const user = this.getAuthenticatedUser();
+            request.setUser(user);
+
+            this.client.getNerves(request, this.getMetadata(), (err, response) => {
+                if (err) {
+                    console.error("GetNerves error:", err);
+                    reject(this.handleError(err));
+                } else {
+                    resolve(response.getResourcesList().map(resource => ({
+                        id: resource.getId(),
+                        name: resource.getName(),
+                        type: resource.getType(),
+                        pattern: resource.getPattern(),
+                        production: resource.getProduction(),
+                        expiration: resource.getExpiration(),
+                        link: resource.getLink()
+                    })));
+                }
+            });
+        });
+    }
+
+    async editCard(cardId, cardHeadline) {
+        return new Promise((resolve, reject) => {
+            const request = new proto.flashback.EditCardRequest();
+            const user = this.getAuthenticatedUser();
+            request.setUser(user);
+            const card = new proto.flashback.Card();
+            card.setId(cardId);
+            card.setHeadline(cardHeadline);
+            request.setCard(card);
+
+            this.client.editCard(request, this.getMetadata(), (err) => {
+                if (err) {
+                    console.error("EditCard error:", err);
+                    reject(this.handleError(err));
+                } else {
+                    resolve();
+                }
+            });
+        });
+    }
+
+    async editBlock(cardId, blockType, blockExtension, blockMetadata, blockContent) {
+        return new Promise((resolve, reject) => {
+            const request = new proto.flashback.EditBlockRequest();
+            const user = this.getAuthenticatedUser();
+            request.setUser(user);
+            const card = new proto.flashback.Card();
+            card.setId(cardId);
+            request.setCard(card);
+            const block = new proto.flashback.Block();
+            block.setType(blockType);
+            block.setExtension(blockExtension);
+            block.setMetadata(blockMetadata);
+            block.setContent(blockContent);
+            request.setBlock(block);
+
+            this.client.editBlock(request, this.getMetadata(), (err) => {
+                if (err) {
+                    console.error("EditBlock error:", err);
+                    reject(this.handleError(err));
+                } else {
+                    resolve();
+                }
+            });
+        });
+    }
 
     // verifySession { User user = 1; }  { bool valid = 1; }
     // resetPassword { User user = 1; }  { }
@@ -788,7 +1000,6 @@ class FlashbackClient {
     // editSection { User user = 1; Resource resource = 2; Section section = 3; }  { }
     // moveCardToSection { User user = 1; Card card = 2;; Resource resource = 3; Section source = 4; Section target = 5; }  { }
     // searchSections { User user = 1; Resource resource = 2; string search_token = 3; }  { repeated SectionSearchResult result = 1; }
-    // markSectionAsReviewed { User user = 1; Resource resource = 2; Section section = 3; }  { }
     // editTopic { User user = 1; Subject subject = 2; Topic topic = 3; Topic target = 4; }  { }
     // moveCardToTopic { User user = 1; Card card = 2; Subject subject = 3; Topic topic = 4; Subject target_subject = 5; Topic target_topic = 6; }  { }
     // searchCards { User user = 1; Subject subject = 2; expertise_level level = 3; string search_token = 4; }  { repeated CardSearchResult result = 1; }
