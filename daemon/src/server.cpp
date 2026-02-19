@@ -2396,7 +2396,7 @@ grpc::Status server::CreateSection(grpc::ServerContext* context, CreateSectionRe
         {
             Section* section{response->mutable_section()};
             *section = m_database->create_section(request->resource().id(), request->section().position(), request->section().name(), request->section().link());
-            std::clog << std::format("client {} created section {} in resource {}\n", request->user().token(), section().position(), request->resource().id());
+            std::clog << std::format("client {} created section {} in resource {}\n", request->user().token(), section->position(), request->resource().id());
             status = grpc::Status{grpc::StatusCode::OK, {}};
         }
     }
@@ -3632,6 +3632,7 @@ grpc::Status server::ReorderBlock(grpc::ServerContext* context, ReorderBlockRequ
         }
         else
         {
+            std::clog << std::format("client {} reordered block {} to {} in card {}\n", request->user().token(), request->block().position(), request->target().position(), request->card().id());
             m_database->reorder_block(request->card().id(), request->block().position(), request->target().position());
             status = grpc::Status{grpc::StatusCode::OK, {}};
         }
@@ -3673,6 +3674,7 @@ grpc::Status server::MergeBlocks(grpc::ServerContext* context, MergeBlocksReques
         }
         else
         {
+            std::clog << std::format("client {} merged blocks {} and {} in card {}\n", request->user().token(), request->block().position(), request->target().position(), request->card().id());
             m_database->merge_blocks(request->card().id(), request->block().position(), request->target().position());
             status = grpc::Status{grpc::StatusCode::OK, {}};
         }
@@ -3714,6 +3716,7 @@ grpc::Status server::SplitBlock(grpc::ServerContext* context, SplitBlockRequest 
             {
                 *response->add_block() = block;
             }
+            std::clog << std::format("client {} split block {} in card {} in {} parts\n", request->user().token(), request->block().position(), request->card().id(), response->block_size());
             status = grpc::Status{grpc::StatusCode::OK, {}};
         }
     }
