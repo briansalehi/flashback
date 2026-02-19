@@ -36,7 +36,7 @@ public:
     [[nodiscard]] virtual std::vector<Roadmap> get_roadmaps(uint64_t user_id) const = 0;
     virtual void rename_roadmap(uint64_t roadmap_id, std::string_view modified_name) const = 0;
     virtual void remove_roadmap(uint64_t roadmap_id) const = 0;
-    [[nodiscard]] virtual std::map<uint64_t, Roadmap> search_roadmaps(std::string_view search_pattern) const = 0;
+    [[nodiscard]] virtual std::map<uint64_t, Roadmap> search_roadmaps(std::uint64_t user_id, std::string_view search_pattern) const = 0;
     [[nodiscard]] virtual Roadmap clone_roadmap(uint64_t user_id, uint64_t roadmap_id) const = 0;
 
     // milestones

@@ -34,7 +34,7 @@ public:
     [[nodiscard]] std::vector<Roadmap> get_roadmaps(uint64_t user_id) const override;
     void rename_roadmap(uint64_t roadmap_id, std::string_view modified_name) const override;
     void remove_roadmap(uint64_t roadmap_id) const override;
-    [[nodiscard]] std::map<uint64_t, Roadmap> search_roadmaps(std::string_view search_pattern) const override;
+    [[nodiscard]] std::map<uint64_t, Roadmap> search_roadmaps(std::uint64_t user_id, std::string_view search_pattern) const override;
 
     // subjects
     [[nodiscard]] Subject create_subject(std::string name) const override;

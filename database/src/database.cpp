@@ -250,13 +250,13 @@ void database::remove_roadmap(uint64_t const roadmap_id) const
     exec("call remove_roadmap($1)", roadmap_id);
 }
 
-std::map<uint64_t, Roadmap> database::search_roadmaps(std::string_view search_pattern) const
+std::map<uint64_t, Roadmap> database::search_roadmaps(std::uint64_t user_id, std::string_view search_pattern) const
 {
     std::map<uint64_t, Roadmap> roadmaps;
 
     if (!search_pattern.empty())
     {
-        for (auto const result = query("select similarity, roadmap, name from search_roadmaps($1) order by similarity", search_pattern); pqxx::row const& row: result)
+        for (auto const result = query("select similarity, roadmap, name from search_roadmaps($1, $2) order by similarity", user_id, search_pattern); pqxx::row const& row: result)
         {
             uint64_t const similarity{row.at("similarity").as<uint64_t>()};
             Roadmap roadmap{};
@@ -413,10 +413,6 @@ Roadmap database::clone_roadmap(uint64_t const user_id, uint64_t const roadmap_i
         pqxx::row const& row{result.at(0)};
         roadmap.set_id(row.at("id").as<uint64_t>());
         roadmap.set_name(row.at("name").as<std::string>());
-    }
-    else
-    {
-        throw std::runtime_error("failed to clone roadmap");
     }
 
     return roadmap;

@@ -372,7 +372,7 @@ grpc::Status server::SearchRoadmaps(grpc::ServerContext* context, SearchRoadmaps
         }
         else
         {
-            for (auto const& [similarity, matched]: m_database->search_roadmaps(request->token()))
+            for (auto const& [similarity, matched]: m_database->search_roadmaps(request->user().id(), request->token()))
             {
                 Roadmap* roadmap = response->add_roadmap();
                 roadmap->set_id(matched.id());
@@ -397,6 +397,8 @@ grpc::Status server::SearchRoadmaps(grpc::ServerContext* context, SearchRoadmaps
 
 grpc::Status server::CloneRoadmap(grpc::ServerContext* context, CloneRoadmapRequest const* request, CloneRoadmapResponse* response)
 {
+    grpc::Status status{grpc::StatusCode::INTERNAL, {}};
+
     try
     {
         response->set_success(false);
@@ -408,19 +410,31 @@ grpc::Status server::CloneRoadmap(grpc::ServerContext* context, CloneRoadmapRequ
             if (request->has_roadmap())
             {
                 std::shared_ptr<User> const user{m_database->get_user(request->user().token(), request->user().device())};
-                Roadmap roadmap{m_database->clone_roadmap(user->id(), request->roadmap().id())};
-                std::clog << std::format("client {} cloned roadmap {} as {}\n", request->user().token(), request->roadmap().id(), roadmap.id());
-                response->set_allocated_roadmap(std::make_unique<Roadmap>(roadmap).release());
-                response->set_success(true);
+                Roadmap const roadmap{m_database->clone_roadmap(user->id(), request->roadmap().id())};
+
+                if (roadmap.id() == 0)
+                {
+                    std::clog << std::format("client {} tried to cloned roadmap {} that belongs to themselves\n", request->user().token(), request->roadmap().id());
+                    status = grpc::Status{grpc::StatusCode::ALREADY_EXISTS, "roadmap belongs to user"};
+                }
+                else
+                {
+                    status = grpc::Status{grpc::StatusCode::OK, {}};
+                    std::clog << std::format("client {} cloned roadmap {} as {}\n", request->user().token(), request->roadmap().id(), roadmap.id());
+                    response->set_allocated_roadmap(std::make_unique<Roadmap>(roadmap).release());
+                    response->set_success(true);
+                }
             }
             else
             {
+                status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid roadmap"};
                 response->set_code(4);
                 response->set_details("invalid roadmap");
             }
         }
         else
         {
+            status = grpc::Status{grpc::StatusCode::UNAUTHENTICATED, "invalid user"};
             response->set_code(3);
             response->set_details("invalid user");
         }
@@ -431,6 +445,7 @@ grpc::Status server::CloneRoadmap(grpc::ServerContext* context, CloneRoadmapRequ
         response->set_details(exp.what());
         response->set_success(false);
         std::cerr << std::format("client {}: {}\n", request->user().token(), exp.what());
+        status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, exp.what()};
     }
     catch (std::exception const& exp)
     {

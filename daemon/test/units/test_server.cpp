@@ -586,7 +586,7 @@ TEST_F(test_server, SearchRoadmapsWithInvalidUser)
     auto search_request{std::make_unique<flashback::SearchRoadmapsRequest>()};
     auto search_response{std::make_unique<flashback::SearchRoadmapsResponse>()};
     EXPECT_CALL(*m_mock_database, get_user(testing::A<std::string_view>(), testing::A<std::string_view>())).Times(0);
-    EXPECT_CALL(*m_mock_database, search_roadmaps(testing::A<std::string_view>())).Times(0);
+    EXPECT_CALL(*m_mock_database, search_roadmaps(m_user->id(), testing::A<std::string_view>())).Times(0);
     EXPECT_FALSE(search_request->has_user());
     EXPECT_NO_THROW(status = m_server->SearchRoadmaps(m_server_context.get(), search_request.get(), search_response.get()));
     EXPECT_THAT(status.ok(), IsFalse());
@@ -612,7 +612,7 @@ TEST_F(test_server, SearchRoadmapsWithUnauthenticatedUser)
     database_retrieved_user->clear_token();
     database_retrieved_user->clear_device();
     EXPECT_CALL(*m_mock_database, get_user(testing::A<std::string_view>(), testing::A<std::string_view>())).Times(1).WillOnce(Return(nullptr));
-    EXPECT_CALL(*m_mock_database, search_roadmaps(testing::A<std::string_view>())).Times(0);
+    EXPECT_CALL(*m_mock_database, search_roadmaps(m_user->id(), testing::A<std::string_view>())).Times(0);
     EXPECT_THAT(search_request->has_user(), IsTrue());
     EXPECT_THAT(search_request->user().token(), IsEmpty());
     EXPECT_THAT(search_request->user().device(), IsEmpty());
@@ -634,7 +634,7 @@ TEST_F(test_server, SearchRoadmapsWithAuthenticatedUser)
     search_request->set_allocated_user(std::make_unique<flashback::User>(*m_user).release());
     search_request->set_token("work");
     EXPECT_CALL(*m_mock_database, get_user(m_user->token(), m_user->device())).Times(1).WillRepeatedly(Invoke([&database_retrieved_user] { return std::make_unique<flashback::User>(*database_retrieved_user); }));
-    EXPECT_CALL(*m_mock_database, search_roadmaps(testing::A<std::string_view>())).Times(1).WillOnce(Return(std::map<uint64_t, flashback::Roadmap>{}));
+    EXPECT_CALL(*m_mock_database, search_roadmaps(m_user->id(), testing::A<std::string_view>())).Times(1).WillOnce(Return(std::map<uint64_t, flashback::Roadmap>{}));
     EXPECT_THAT(search_request->has_user(), IsTrue());
     EXPECT_THAT(search_request->user().token(), Not(IsEmpty()));
     EXPECT_THAT(search_request->user().device(), Not(IsEmpty()));
@@ -656,7 +656,7 @@ TEST_F(test_server, SearchRoadmapsWithEmptyToken)
     search_request->set_allocated_user(std::make_unique<flashback::User>(*m_user).release());
     search_request->clear_token();
     EXPECT_CALL(*m_mock_database, get_user(m_user->token(), m_user->device())).Times(1).WillRepeatedly(Invoke([&database_retrieved_user] { return std::make_unique<flashback::User>(*database_retrieved_user); }));
-    EXPECT_CALL(*m_mock_database, search_roadmaps(testing::A<std::string_view>())).Times(1).WillOnce(Return(std::map<uint64_t, flashback::Roadmap>{}));
+    EXPECT_CALL(*m_mock_database, search_roadmaps(m_user->id(), testing::A<std::string_view>())).Times(1).WillOnce(Return(std::map<uint64_t, flashback::Roadmap>{}));
     EXPECT_THAT(search_request->has_user(), IsTrue());
     EXPECT_THAT(search_request->user().token(), Not(IsEmpty()));
     EXPECT_THAT(search_request->user().device(), Not(IsEmpty()));

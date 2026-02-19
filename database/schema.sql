@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict aBsdd6lxMtq83xiF2RxtAaVIc0iGi1UjMU4zCGJgdt3MOc7Er1DCAqtCIFcHHwv
+\restrict GS83HFjtgdznBe7fKWuMbCS8iNKiZaZ8a8hg8EqJ7Y5v29dhK5j8huK8Z8cvQsj
 
 -- Dumped from database version 18.1
 -- Dumped by pg_dump version 18.0
@@ -2952,10 +2952,10 @@ $$;
 ALTER FUNCTION flashback.search_resources(search_pattern character varying) OWNER TO flashback;
 
 --
--- Name: search_roadmaps(character varying); Type: FUNCTION; Schema: flashback; Owner: flashback
+-- Name: search_roadmaps(integer, character varying); Type: FUNCTION; Schema: flashback; Owner: flashback
 --
 
-CREATE FUNCTION flashback.search_roadmaps(token character varying) RETURNS TABLE(similarity bigint, roadmap integer, name flashback.citext)
+CREATE FUNCTION flashback.search_roadmaps(user_id integer, token character varying) RETURNS TABLE(similarity bigint, roadmap integer, name flashback.citext)
     LANGUAGE plpgsql
     AS $$
 begin
@@ -2964,12 +2964,12 @@ begin
     return query
     select row_number() over (order by r.name <-> token), r.id, r.name
     from roadmaps r
-    where r.name % token
+    where r.name % token and r.user <> user_id
     limit 5;
 end; $$;
 
 
-ALTER FUNCTION flashback.search_roadmaps(token character varying) OWNER TO flashback;
+ALTER FUNCTION flashback.search_roadmaps(user_id integer, token character varying) OWNER TO flashback;
 
 --
 -- Name: search_sections(integer, character varying); Type: FUNCTION; Schema: flashback; Owner: flashback
@@ -4625,5 +4625,5 @@ GRANT ALL ON SCHEMA public TO brian;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict aBsdd6lxMtq83xiF2RxtAaVIc0iGi1UjMU4zCGJgdt3MOc7Er1DCAqtCIFcHHwv
+\unrestrict GS83HFjtgdznBe7fKWuMbCS8iNKiZaZ8a8hg8EqJ7Y5v29dhK5j8huK8Z8cvQsj
 
