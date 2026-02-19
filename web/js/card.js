@@ -1,6 +1,40 @@
 // Timer to track card reading duration
 let cardStartTime = null;
 
+async function markCardAsReviewed() {
+    const cardId = parseInt(UI.getUrlParam('cardId'));
+    const markReviewedBtn = document.getElementById('mark-reviewed-btn');
+
+    if (!cardId) {
+        UI.showError('Invalid card ID');
+        return;
+    }
+
+    UI.setButtonLoading('mark-reviewed-btn', true);
+
+    try {
+        await client.markCardAsReviewed(cardId);
+
+        // Update state display
+        const stateElement = document.getElementById('card-state');
+        if (stateElement) {
+            stateElement.textContent = 'reviewed';
+            stateElement.className = 'card-state-display reviewed';
+        }
+
+        // Hide the button
+        if (markReviewedBtn) {
+            markReviewedBtn.style.display = 'none';
+        }
+
+        UI.setButtonLoading('mark-reviewed-btn', false);
+    } catch (err) {
+        console.error('Failed to mark card as reviewed:', err);
+        UI.showError('Failed to mark card as reviewed: ' + (err.message || 'Unknown error'));
+        UI.setButtonLoading('mark-reviewed-btn', false);
+    }
+}
+
 window.addEventListener('DOMContentLoaded', () => {
     if (!client.isAuthenticated()) {
         window.location.href = '/index.html';
@@ -61,6 +95,16 @@ window.addEventListener('DOMContentLoaded', () => {
             handleCardExit();
         }
     });
+
+    // Setup mark as reviewed button
+    const markReviewedBtn = document.getElementById('mark-reviewed-btn');
+    if (markReviewedBtn && state !== 1) { // Show only if not already reviewed (state 1)
+        markReviewedBtn.style.display = 'inline-block';
+        markReviewedBtn.addEventListener('click', async (e) => {
+            e.preventDefault();
+            await markCardAsReviewed();
+        });
+    }
 
     loadBlocks();
 });

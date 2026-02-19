@@ -150,7 +150,12 @@
 
             <div id="card-content" class="blocks-container" style="display: none;">
                 <h1 id="card-headline" class="card-headline-display"></h1>
-                <span id="card-state" class="card-state-display"></span>
+                <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem;">
+                    <span id="card-state" class="card-state-display"></span>
+                    <button id="mark-reviewed-btn" class="btn btn-secondary" style="display: none;">
+                        Mark as Reviewed
+                    </button>
+                </div>
                 <div id="blocks-list">
                     <!-- blocks will be inserted here -->
                 </div>

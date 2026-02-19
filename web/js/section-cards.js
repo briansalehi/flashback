@@ -1,3 +1,38 @@
+async function markSectionAsReviewed() {
+    const resourceId = parseInt(UI.getUrlParam('resourceId'));
+    const sectionPosition = parseInt(UI.getUrlParam('sectionPosition'));
+    const markSectionReviewedBtn = document.getElementById('mark-section-reviewed-btn');
+
+    if (!resourceId || isNaN(sectionPosition)) {
+        UI.showError('Invalid resource ID or section position');
+        return;
+    }
+
+    UI.setButtonLoading('mark-section-reviewed-btn', true);
+
+    try {
+        await client.markSectionAsReviewed(resourceId, sectionPosition);
+
+        // Update state display
+        const stateBadge = document.getElementById('section-state-badge');
+        if (stateBadge) {
+            stateBadge.textContent = 'reviewed';
+            stateBadge.className = 'section-state reviewed';
+        }
+
+        // Hide the button
+        if (markSectionReviewedBtn) {
+            markSectionReviewedBtn.style.display = 'none';
+        }
+
+        UI.setButtonLoading('mark-section-reviewed-btn', false);
+    } catch (err) {
+        console.error('Failed to mark section as reviewed:', err);
+        UI.showError('Failed to mark section as reviewed: ' + (err.message || 'Unknown error'));
+        UI.setButtonLoading('mark-section-reviewed-btn', false);
+    }
+}
+
 window.addEventListener('DOMContentLoaded', () => {
     if (!client.isAuthenticated()) {
         window.location.href = '/index.html';
@@ -90,6 +125,16 @@ window.addEventListener('DOMContentLoaded', () => {
                 UI.showError(err.message || 'Failed to add card');
                 UI.setButtonLoading('save-card-btn', false);
             }
+        });
+    }
+
+    // Setup mark section as reviewed button
+    const markSectionReviewedBtn = document.getElementById('mark-section-reviewed-btn');
+    if (markSectionReviewedBtn && sectionState !== 1) { // Show only if not already reviewed (state 1)
+        markSectionReviewedBtn.style.display = 'inline-block';
+        markSectionReviewedBtn.addEventListener('click', async (e) => {
+            e.preventDefault();
+            await markSectionAsReviewed();
         });
     }
 
