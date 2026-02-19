@@ -611,7 +611,7 @@ TEST_F(test_server, SearchRoadmapsWithUnauthenticatedUser)
     database_retrieved_user = std::make_unique<flashback::User>(*m_user);
     database_retrieved_user->clear_token();
     database_retrieved_user->clear_device();
-    EXPECT_CALL(*m_mock_database, get_user(testing::A<std::string_view>(), testing::A<std::string_view>())).Times(1).WillOnce(Return(nullptr));
+    EXPECT_CALL(*m_mock_database, get_user(testing::A<std::string_view>(), testing::A<std::string_view>())).Times(1).WillRepeatedly(Invoke([] { return nullptr; }));
     EXPECT_CALL(*m_mock_database, search_roadmaps(m_user->id(), testing::A<std::string_view>())).Times(0);
     EXPECT_THAT(search_request->has_user(), IsTrue());
     EXPECT_THAT(search_request->user().token(), IsEmpty());
@@ -633,7 +633,7 @@ TEST_F(test_server, SearchRoadmapsWithAuthenticatedUser)
     database_retrieved_user = std::make_unique<flashback::User>(*m_user);
     search_request->set_allocated_user(std::make_unique<flashback::User>(*m_user).release());
     search_request->set_token("work");
-    EXPECT_CALL(*m_mock_database, get_user(m_user->token(), m_user->device())).Times(1).WillRepeatedly(Invoke([&database_retrieved_user] { return std::make_unique<flashback::User>(*database_retrieved_user); }));
+    EXPECT_CALL(*m_mock_database, get_user(m_user->token(), m_user->device())).Times(2).WillRepeatedly(Invoke([&database_retrieved_user] { return std::make_unique<flashback::User>(*database_retrieved_user); }));
     EXPECT_CALL(*m_mock_database, search_roadmaps(m_user->id(), testing::A<std::string_view>())).Times(1).WillOnce(Return(std::map<uint64_t, flashback::Roadmap>{}));
     EXPECT_THAT(search_request->has_user(), IsTrue());
     EXPECT_THAT(search_request->user().token(), Not(IsEmpty()));
@@ -655,7 +655,7 @@ TEST_F(test_server, SearchRoadmapsWithEmptyToken)
     database_retrieved_user = std::make_unique<flashback::User>(*m_user);
     search_request->set_allocated_user(std::make_unique<flashback::User>(*m_user).release());
     search_request->clear_token();
-    EXPECT_CALL(*m_mock_database, get_user(m_user->token(), m_user->device())).Times(1).WillRepeatedly(Invoke([&database_retrieved_user] { return std::make_unique<flashback::User>(*database_retrieved_user); }));
+    EXPECT_CALL(*m_mock_database, get_user(m_user->token(), m_user->device())).Times(2).WillRepeatedly(Invoke([&database_retrieved_user] { return std::make_unique<flashback::User>(*database_retrieved_user); }));
     EXPECT_CALL(*m_mock_database, search_roadmaps(m_user->id(), testing::A<std::string_view>())).Times(1).WillOnce(Return(std::map<uint64_t, flashback::Roadmap>{}));
     EXPECT_THAT(search_request->has_user(), IsTrue());
     EXPECT_THAT(search_request->user().token(), Not(IsEmpty()));
@@ -1589,8 +1589,8 @@ TEST_F(test_server, CreateNerve)
     resource.clear_link();
     resource.set_type(flashback::Resource::nerve);
     resource.set_pattern(flashback::Resource::synapse);
-    resource.set_production(std::chrono::system_clock::now().time_since_epoch().count());
-    resource.clear_expiration();
+    resource.set_expiration(std::chrono::system_clock::now().time_since_epoch().count());
+    resource.clear_production();
     subject.set_name("C++");
 
     EXPECT_CALL(*m_mock_database, get_user(A<std::string_view>(), A<std::string_view>())).WillRepeatedly(Invoke([this]() { return std::make_unique<flashback::User>(*m_user); }));

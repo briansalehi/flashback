@@ -372,7 +372,8 @@ grpc::Status server::SearchRoadmaps(grpc::ServerContext* context, SearchRoadmaps
         }
         else
         {
-            for (auto const& [similarity, matched]: m_database->search_roadmaps(request->user().id(), request->token()))
+            std::shared_ptr<User> const user{m_database->get_user(request->user().token(), request->user().device())};
+            for (auto const& [similarity, matched]: m_database->search_roadmaps(user->id(), request->token()))
             {
                 Roadmap* roadmap = response->add_roadmap();
                 roadmap->set_id(matched.id());
