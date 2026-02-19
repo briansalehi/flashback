@@ -535,7 +535,7 @@ class FlashbackClient {
                         production: study.getResource().getProduction(),
                         expiration: study.getResource().getExpiration(),
                         link: study.getResource().getLink(),
-                        position: study.getPosition()
+                        order: study.getOrder()
                     })));
                 }
             });

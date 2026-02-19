@@ -282,9 +282,9 @@ function renderTopics(topics, maxLevel) {
     container.innerHTML = '';
 
     const levelInfo = [
-        { name: 'Surface', description: 'Complete understanding' },
-        { name: 'Depth', description: 'In-depth details' },
-        { name: 'Origin', description: 'Creator level' }
+        { name: 'Surface', description: 'What you need for a complete understanding' },
+        { name: 'Depth', description: 'This is where you dig into very details' },
+        { name: 'Origin', description: 'Here you will have enough to be a creator' }
     ];
 
     // Group topics by level
@@ -296,12 +296,10 @@ function renderTopics(topics, maxLevel) {
     });
 
     // Render levels from 0 (Surface) up to maxLevel, displaying from bottom to top visually
-    // We reverse the order so higher levels appear at top
     const levelsToShow = [];
     for (let i = 0; i <= maxLevel; i++) {
         levelsToShow.push(i);
     }
-    levelsToShow.reverse(); // Show Origin -> Depth -> Surface
 
     levelsToShow.forEach(level => {
         if (topicsByLevel[level] && topicsByLevel[level].length > 0) {

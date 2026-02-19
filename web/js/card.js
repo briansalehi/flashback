@@ -121,36 +121,77 @@ function displayContextBreadcrumb(practiceMode, subjectName, topicName, resource
     if (!breadcrumb) return;
 
     let contextHtml = '';
+    const roadmapId = UI.getUrlParam('roadmapId') || '';
+    const roadmapName = UI.getUrlParam('roadmapName') || '';
+    const subjectId = UI.getUrlParam('subjectId') || '';
+    const localSubjectName = UI.getUrlParam('subjectName') || subjectName || '';
 
     if (practiceMode === 'aggressive' && subjectName && topicName) {
         // Get subject and roadmap info from practice state or URL
         const practiceState = JSON.parse(sessionStorage.getItem('practiceState') || '{}');
-        const subjectId = practiceState.subjectId || UI.getUrlParam('subjectId') || '';
-        const roadmapId = practiceState.roadmapId || UI.getUrlParam('roadmapId') || '';
 
         // Get topic info
         const currentTopic = practiceState.topics ? practiceState.topics[practiceState.currentTopicIndex] : null;
         const topicLevel = currentTopic ? currentTopic.level : '';
         const topicPosition = currentTopic ? currentTopic.position : '';
 
-        const roadmapName = UI.getUrlParam('roadmapName') || '';
+        let breadcrumbParts = [];
 
-        const subjectLink = subjectId && roadmapId ?
-            `subject.html?id=${subjectId}&name=${encodeURIComponent(subjectName)}&roadmapId=${roadmapId}&roadmapName=${encodeURIComponent(roadmapName)}` : '#';
-        const topicLink = subjectId && topicLevel !== '' && topicPosition !== '' ?
-            `topic-cards.html?subjectId=${subjectId}&topicPosition=${topicPosition}&topicLevel=${topicLevel}&name=${encodeURIComponent(topicName)}&subjectName=${encodeURIComponent(subjectName)}&roadmapId=${roadmapId}&roadmapName=${encodeURIComponent(roadmapName)}` : '#';
+        if (roadmapId && roadmapName) {
+            breadcrumbParts.push(`<a href="roadmap.html?id=${roadmapId}&name=${encodeURIComponent(roadmapName)}" style="color: var(--text-primary); text-decoration: none;">${UI.escapeHtml(roadmapName)}</a>`);
+        }
 
-        contextHtml = `<a href="${subjectLink}" style="color: var(--text-primary); text-decoration: none;">${UI.escapeHtml(subjectName)}</a> → <a href="${topicLink}" style="color: var(--text-primary); text-decoration: none;">${UI.escapeHtml(topicName)}</a>`;
-    } else if (practiceMode === 'selective' && resourceName && sectionName) {
-        const resourceId = UI.getUrlParam('resourceId') || '';
-        const sectionPosition = UI.getUrlParam('sectionPosition') || '';
+        if (subjectId && subjectName) {
+            const subjectLink = `subject.html?id=${subjectId}&name=${encodeURIComponent(subjectName)}&roadmapId=${roadmapId}&roadmapName=${encodeURIComponent(roadmapName)}`;
+            breadcrumbParts.push(`<a href="${subjectLink}" style="color: var(--text-primary); text-decoration: none;">${UI.escapeHtml(subjectName)}</a>`);
+        }
 
-        const resourceLink = resourceId ?
-            `resource.html?id=${resourceId}&name=${encodeURIComponent(resourceName)}` : '#';
-        const sectionLink = resourceId && sectionPosition !== '' ?
-            `section-cards.html?resourceId=${resourceId}&sectionPosition=${sectionPosition}&name=${encodeURIComponent(sectionName)}&resourceName=${encodeURIComponent(resourceName)}` : '#';
+        if (subjectId && topicLevel !== '' && topicPosition !== '' && topicName) {
+            const topicLink = `topic-cards.html?subjectId=${subjectId}&topicPosition=${topicPosition}&topicLevel=${topicLevel}&name=${encodeURIComponent(topicName)}&subjectName=${encodeURIComponent(subjectName)}&roadmapId=${roadmapId}&roadmapName=${encodeURIComponent(roadmapName)}`;
+            breadcrumbParts.push(`<a href="${topicLink}" style="color: var(--text-primary); text-decoration: none;">${UI.escapeHtml(topicName)}</a>`);
+        }
 
-        contextHtml = `<a href="${resourceLink}" style="color: var(--text-primary); text-decoration: none;">${UI.escapeHtml(resourceName)}</a> → <a href="${sectionLink}" style="color: var(--text-primary); text-decoration: none;">${UI.escapeHtml(sectionName)}</a>`;
+        contextHtml = breadcrumbParts.join(' → ');
+    } else if (practiceMode === 'selective') {
+        let breadcrumbParts = [];
+
+        // Always add roadmap if available
+        if (roadmapId && roadmapName) {
+            breadcrumbParts.push(`<a href="roadmap.html?id=${roadmapId}&name=${encodeURIComponent(roadmapName)}" style="color: var(--text-primary); text-decoration: none;">${UI.escapeHtml(roadmapName)}</a>`);
+        }
+
+        // Always add subject if available
+        if (subjectId && localSubjectName) {
+            const subjectLink = `subject.html?id=${subjectId}&name=${encodeURIComponent(localSubjectName)}&roadmapId=${roadmapId}&roadmapName=${encodeURIComponent(roadmapName)}`;
+            breadcrumbParts.push(`<a href="${subjectLink}" style="color: var(--text-primary); text-decoration: none;">${UI.escapeHtml(localSubjectName)}</a>`);
+        }
+
+        // Check if coming from topic or resource/section
+        const topicPosition = UI.getUrlParam('topicPosition');
+        const topicLevel = UI.getUrlParam('topicLevel');
+        const localTopicName = UI.getUrlParam('topicName') || topicName || '';
+
+        if (topicPosition !== '' && topicLevel !== '' && localTopicName) {
+            // Coming from topic-cards
+            const topicLink = `topic-cards.html?subjectId=${subjectId}&topicPosition=${topicPosition}&topicLevel=${topicLevel}&name=${encodeURIComponent(localTopicName)}&subjectName=${encodeURIComponent(localSubjectName)}&roadmapId=${roadmapId}&roadmapName=${encodeURIComponent(roadmapName)}`;
+            breadcrumbParts.push(`<a href="${topicLink}" style="color: var(--text-primary); text-decoration: none;">${UI.escapeHtml(localTopicName)}</a>`);
+        } else if (resourceName && sectionName) {
+            // Coming from section-cards
+            const resourceId = UI.getUrlParam('resourceId') || '';
+            const sectionPosition = UI.getUrlParam('sectionPosition') || '';
+
+            if (resourceId && resourceName) {
+                const resourceLink = `resource.html?id=${resourceId}&name=${encodeURIComponent(resourceName)}&subjectId=${subjectId}&subjectName=${encodeURIComponent(localSubjectName)}&roadmapId=${roadmapId}&roadmapName=${encodeURIComponent(roadmapName)}`;
+                breadcrumbParts.push(`<a href="${resourceLink}" style="color: var(--text-primary); text-decoration: none;">${UI.escapeHtml(resourceName)}</a>`);
+            }
+
+            if (resourceId && sectionPosition !== '' && sectionName) {
+                const sectionLink = `section-cards.html?resourceId=${resourceId}&sectionPosition=${sectionPosition}&name=${encodeURIComponent(sectionName)}&resourceName=${encodeURIComponent(resourceName)}&subjectId=${subjectId}&subjectName=${encodeURIComponent(localSubjectName)}&roadmapId=${roadmapId}&roadmapName=${encodeURIComponent(roadmapName)}`;
+                breadcrumbParts.push(`<a href="${sectionLink}" style="color: var(--text-primary); text-decoration: none;">${UI.escapeHtml(sectionName)}</a>`);
+            }
+        }
+
+        contextHtml = breadcrumbParts.join(' → ');
     }
 
     if (contextHtml) {

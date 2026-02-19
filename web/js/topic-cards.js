@@ -151,6 +151,13 @@ function renderCards(cards) {
     container.innerHTML = '';
 
     const stateNames = ['draft', 'reviewed', 'completed', 'approved', 'released', 'rejected'];
+    const roadmapId = UI.getUrlParam('roadmapId') || '';
+    const roadmapName = UI.getUrlParam('roadmapName') || '';
+    const subjectId = UI.getUrlParam('subjectId') || '';
+    const subjectName = UI.getUrlParam('subjectName') || '';
+    const topicPosition = UI.getUrlParam('topicPosition') || '';
+    const topicLevel = UI.getUrlParam('topicLevel') || '';
+    const topicName = UI.getUrlParam('name') || '';
 
     cards.forEach(card => {
         const cardItem = document.createElement('div');
@@ -165,7 +172,7 @@ function renderCards(cards) {
         `;
 
         cardItem.addEventListener('click', () => {
-            window.location.href = `card.html?cardId=${card.id}&headline=${encodeURIComponent(card.headline)}&state=${card.state}`;
+            window.location.href = `card.html?cardId=${card.id}&headline=${encodeURIComponent(card.headline)}&state=${card.state}&practiceMode=selective&roadmapId=${roadmapId}&roadmapName=${encodeURIComponent(roadmapName)}&subjectId=${subjectId}&subjectName=${encodeURIComponent(subjectName)}&topicPosition=${topicPosition}&topicLevel=${topicLevel}&topicName=${encodeURIComponent(topicName)}`;
         });
 
         container.appendChild(cardItem);
