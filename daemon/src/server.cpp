@@ -46,7 +46,7 @@ grpc::Status server::SignIn(grpc::ServerContext* context, const SignInRequest* r
             throw client_exception(std::format("cannot create session for user {}", user->id()));
         }
 
-        std::cerr << std::format("client {} signed in with device {}\n", user->token(), user->device());
+        std::clog << std::format("client {} signed in with device {}\n", user->token(), user->device());
 
         user->clear_id();
         user->clear_hash();
@@ -81,7 +81,7 @@ grpc::Status server::SignOut(grpc::ServerContext* context, const SignOutRequest*
     {
         if (request->has_user() && session_is_valid(request->user()))
         {
-            std::cerr << std::format("client {} signed out\n", request->user().token());
+            std::clog << std::format("client {} signed out\n", request->user().token());
             std::shared_ptr<User> const user{m_database->get_user(request->user().token(), request->user().device())};
             m_database->revoke_session(user->id(), request->user().token());
             status = grpc::Status{grpc::StatusCode::OK, {}};
@@ -128,7 +128,7 @@ grpc::Status server::SignUp(grpc::ServerContext* context, const SignUpRequest* r
 
         if (user_id > 0)
         {
-            std::cerr << std::format("client {} created new account\n", request->user().email());
+            std::clog << std::format("client {} created new account\n", request->user().email());
             response->set_success(true);
             response->set_details("signup successful");
             response->set_allocated_user(user.release());
@@ -176,7 +176,7 @@ grpc::Status server::ResetPassword(grpc::ServerContext* context, ResetPasswordRe
         user->clear_password();
         user->clear_device();
 
-        std::cerr << std::format("client {} resetted password on device {}\n", request->user().token(), request->user().device());
+        std::clog << std::format("client {} resetted password on device {}\n", request->user().token(), request->user().device());
         m_database->reset_password(user->id(), hash);
 
         response->set_allocated_user(user.release());
@@ -192,8 +192,8 @@ grpc::Status server::ResetPassword(grpc::ServerContext* context, ResetPasswordRe
 grpc::Status server::EditUser(grpc::ServerContext* context, EditUserRequest const* request, EditUserResponse* response)
 {
     // name, email
-    std::cerr << std::format("client {} edited their email\n", request->user().token());
-    std::cerr << std::format("client {} edited their name\n", request->user().token());
+    std::clog << std::format("client {} edited their email\n", request->user().token());
+    std::clog << std::format("client {} edited their name\n", request->user().token());
     return grpc::Status::OK;
 }
 
@@ -201,7 +201,7 @@ grpc::Status server::VerifySession(grpc::ServerContext* context, VerifySessionRe
 {
     try
     {
-        std::cerr << std::format("client {} validated their account\n", request->user().token());
+        std::clog << std::format("client {} validated their account\n", request->user().token());
         response->set_valid(request->has_user() && session_is_valid(request->user()));
     }
     catch (std::exception const& exp)
@@ -231,7 +231,7 @@ grpc::Status server::CreateRoadmap(grpc::ServerContext* context, CreateRoadmapRe
         {
             std::shared_ptr<User> const user{m_database->get_user(request->user().token(), request->user().device())};
             auto roadmap{std::make_unique<Roadmap>(m_database->create_roadmap(user->id(), request->name()))};
-            std::cerr << std::format("client {} created roadmap {}\n", request->user().token(), roadmap->id());
+            std::clog << std::format("client {} created roadmap {}\n", request->user().token(), roadmap->id());
             response->set_allocated_roadmap(roadmap.release());
             status = grpc::Status{grpc::StatusCode::OK, {}};
         }
@@ -3012,6 +3012,7 @@ grpc::Status server::GetPracticeCards(grpc::ServerContext* context, GetPracticeC
             {
                 *response->add_card() = card;
             }
+            std::clog << std::format("client {} collected {} practice cards\n", request->user().token(), response->card_size());
             status = grpc::Status{grpc::StatusCode::OK, {}};
         }
     }
@@ -3053,6 +3054,7 @@ grpc::Status server::GetPracticeTopics(grpc::ServerContext* context, GetPractice
             {
                 *response->add_topic() = topic;
             }
+            std::clog << std::format("client {} collected {} practice topics\n", request->user().token(), response->topic_size());
             status = grpc::Status{grpc::StatusCode::OK, {}};
         }
     }
@@ -3060,7 +3062,6 @@ grpc::Status server::GetPracticeTopics(grpc::ServerContext* context, GetPractice
     {
         std::cerr << std::format("client {}: {}\n", request->user().token(), exp.what());
         status = grpc::Status{grpc::StatusCode::UNAVAILABLE, exp.what()};
-        std::cerr << std::format("client {}: {}\n", request->user().token(), exp.what());
     }
     catch (std::exception const& exp)
     {
@@ -3742,7 +3743,7 @@ grpc::Status server::GetSectionCards(grpc::ServerContext* context, flashback::Ge
             {
                 *response->add_card() = card;
             }
-            std::cerr << std::format("client {} collected {} cards from section {}:{}\n", request->user().token(), response->card_size(), request->resource().id(), request->section().position());
+            std::clog << std::format("client {} collected {} cards from section {}:{}\n", request->user().token(), response->card_size(), request->resource().id(), request->section().position());
             status = grpc::Status{grpc::StatusCode::OK, {}};
         }
     }
@@ -3783,7 +3784,7 @@ grpc::Status server::GetTopicCards(grpc::ServerContext* context, flashback::GetT
             {
                 *response->add_card() = card;
             }
-            std::cerr << std::format("client {} collected {} cards from topic {}:{}\n", request->user().token(), response->card_size(), request->subject().id(), request->topic().position());
+            std::clog << std::format("client {} collected {} cards from topic {}:{}\n", request->user().token(), response->card_size(), request->subject().id(), request->topic().position());
             status = grpc::Status{grpc::StatusCode::OK, {}};
         }
     }
@@ -3820,6 +3821,7 @@ grpc::Status server::Study(grpc::ServerContext* context, StudyRequest const* req
         }
         else
         {
+            std::clog << std::format("client {} studied card {} in {} seconds\n", request->user().token(), request->card().id(), request->duration());
             std::shared_ptr<User> const user{m_database->get_user(request->user().token(), request->user().device())};
             m_database->study(user->id(), request->card().id(), std::chrono::seconds{request->duration()});
             status = grpc::Status{grpc::StatusCode::OK, {}};
@@ -3858,6 +3860,7 @@ grpc::Status server::MakeProgress(grpc::ServerContext* context, MakeProgressRequ
         }
         else
         {
+            std::clog << std::format("client {} make progress on card {} in {} seconds\n", request->user().token(), request->card().id(), request->duration());
             std::shared_ptr<User> const user{m_database->get_user(request->user().token(), request->user().device())};
             m_database->make_progress(user->id(), request->card().id(), request->duration(), request->mode());
             status = grpc::Status{grpc::StatusCode::OK, {}};
