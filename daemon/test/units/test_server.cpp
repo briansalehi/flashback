@@ -987,20 +987,17 @@ TEST_F(test_server, CloneRoadmap)
     EXPECT_CALL(*m_mock_database, clone_roadmap(A<uint64_t>(), A<uint64_t>())).Times(1).WillOnce(Return(database_provided_roadmap));
 
     EXPECT_NO_THROW(status = m_server->CloneRoadmap(&context, &request, &response));
-    EXPECT_TRUE(status.ok());
-    EXPECT_FALSE(response.success()) << "Requesting to clone a roadmap from invalid user should be declined";
-    EXPECT_EQ(response.code(), 3) << "Invalid user error code should be a constant number";
+    EXPECT_THAT(status.ok(), IsFalse());
+    EXPECT_THAT(status.error_code(), Eq(grpc::StatusCode::UNAUTHENTICATED)) << "Requesting to clone a roadmap from invalid user should be declined";
 
     request.set_allocated_user(requesting_user.release());
     EXPECT_NO_THROW(status = m_server->CloneRoadmap(&context, &request, &response));
-    EXPECT_TRUE(status.ok());
-    EXPECT_FALSE(response.success()) << "Requesting to clone an invalid roadmap from a user should be declined";
-    EXPECT_EQ(response.code(), 4);
+    EXPECT_THAT(status.ok(), IsFalse());
+    EXPECT_THAT(status.error_code(), grpc::StatusCode::INVALID_ARGUMENT) << "Requesting to clone an invalid roadmap from a user should be declined";
 
     request.set_allocated_roadmap(original_roadmap.release());
     EXPECT_NO_THROW(status = m_server->CloneRoadmap(&context, &request, &response));
-    EXPECT_TRUE(status.ok());
-    EXPECT_TRUE(response.has_roadmap());
+    EXPECT_THAT(status.ok(), IsTrue());
     EXPECT_EQ(response.roadmap().id(), database_provided_roadmap.id());
     EXPECT_EQ(response.roadmap().name(), database_provided_roadmap.name());
 }

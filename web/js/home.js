@@ -66,11 +66,7 @@ window.addEventListener('DOMContentLoaded', () => {
         UI.setButtonLoading('confirm-clone-btn', true);
 
         try {
-            const clonedRoadmapProto = await client.cloneRoadmap(selectedRoadmapForClone.id);
-
-            // Extract id and name from the protobuf object
-            const clonedRoadmapId = clonedRoadmapProto.getId();
-            const clonedRoadmapName = clonedRoadmapProto.getName();
+            const clonedRoadmap = await client.cloneRoadmap(selectedRoadmapForClone.id);
 
             UI.toggleElement('clone-roadmap-modal', false);
             UI.toggleElement('create-form', false);
@@ -80,7 +76,7 @@ window.addEventListener('DOMContentLoaded', () => {
             selectedRoadmapForClone = null;
 
             // Navigate to the cloned roadmap
-            window.location.href = `roadmap.html?id=${clonedRoadmapId}&name=${encodeURIComponent(clonedRoadmapName)}`;
+            window.location.href = `roadmap.html?id=${clonedRoadmap.id}&name=${encodeURIComponent(clonedRoadmap.name)}`;
         } catch (err) {
             console.error('Clone roadmap failed:', err);
             UI.showError(err.message || 'Failed to clone roadmap');

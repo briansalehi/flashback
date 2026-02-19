@@ -402,10 +402,6 @@ grpc::Status server::CloneRoadmap(grpc::ServerContext* context, CloneRoadmapRequ
 
     try
     {
-        response->set_success(false);
-        response->clear_code();
-        response->clear_details();
-
         if (request->has_user() && session_is_valid(request->user()))
         {
             if (request->has_roadmap())
@@ -420,43 +416,37 @@ grpc::Status server::CloneRoadmap(grpc::ServerContext* context, CloneRoadmapRequ
                 }
                 else
                 {
-                    status = grpc::Status{grpc::StatusCode::OK, {}};
                     std::clog << std::format("client {} cloned roadmap {} as {}\n", request->user().token(), request->roadmap().id(), roadmap.id());
+                    status = grpc::Status{grpc::StatusCode::OK, {}};
                     response->set_allocated_roadmap(std::make_unique<Roadmap>(roadmap).release());
-                    response->set_success(true);
                 }
             }
             else
             {
                 status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid roadmap"};
-                response->set_code(4);
-                response->set_details("invalid roadmap");
             }
         }
         else
         {
             status = grpc::Status{grpc::StatusCode::UNAUTHENTICATED, "invalid user"};
-            response->set_code(3);
-            response->set_details("invalid user");
         }
+    }
+    catch (pqxx::unique_violation const& exp)
+    {
+        std::clog << std::format("client {} tried to cloned roadmap {} with a name that already exists\n", request->user().token(), request->roadmap().id());
+        status = grpc::Status{grpc::StatusCode::ALREADY_EXISTS, "duplicate roadmap name is not allowed"};
     }
     catch (flashback::client_exception const& exp)
     {
-        response->set_code(2);
-        response->set_details(exp.what());
-        response->set_success(false);
         std::cerr << std::format("client {}: {}\n", request->user().token(), exp.what());
         status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, exp.what()};
     }
     catch (std::exception const& exp)
     {
-        response->set_code(1);
-        response->set_details("internal error");
-        response->set_success(false);
         std::cerr << std::format("server: {}\n", exp.what());
     }
 
-    return grpc::Status::OK;
+    return status;
 }
 
 grpc::Status server::GetMilestones(grpc::ServerContext* context, GetMilestonesRequest const* request, GetMilestonesResponse* response)

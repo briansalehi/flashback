@@ -41,7 +41,7 @@ message SearchRoadmapsRequest { User user = 1; string token = 2; }
 message SearchRoadmapsResponse { repeated Roadmap roadmap = 1; }
 
 message CloneRoadmapRequest { User user = 1; Roadmap roadmap = 2; }
-message CloneRoadmapResponse { Roadmap roadmap = 1; bool success = 2; string details = 3; uint32 code = 4; }
+message CloneRoadmapResponse { Roadmap roadmap = 1; }
 
 message GetMilestonesRequest { User user = 1; uint64 roadmap_id = 2; }
 message GetMilestonesResponse { repeated Milestone milestones = 1; bool success = 2; string details = 3; uint32 code = 4; }
