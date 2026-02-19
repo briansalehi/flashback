@@ -361,6 +361,8 @@ function renderMilestones(milestones) {
 
         const milestoneCard = document.createElement('div');
         milestoneCard.className = 'milestone-card';
+        milestoneCard.draggable = true;
+        milestoneCard.dataset.position = milestone.position;
         milestoneCard.innerHTML = `
             <div class="milestone-position">${index + 1}</div>
             <div class="milestone-header" style="margin-left: 3rem;">
@@ -369,12 +371,69 @@ function renderMilestones(milestones) {
             </div>
         `;
 
+        // Click to navigate (but not when dragging)
+        let isDragging = false;
         milestoneCard.addEventListener('click', () => {
-            const roadmapId = UI.getUrlParam('id');
-            const roadmapName = UI.getUrlParam('name');
-            window.location.href = `subject.html?id=${milestone.id}&name=${encodeURIComponent(milestone.name)}&level=${milestone.level}&roadmapId=${roadmapId}&roadmapName=${encodeURIComponent(roadmapName || '')}`;
+            if (!isDragging) {
+                const roadmapId = UI.getUrlParam('id');
+                const roadmapName = UI.getUrlParam('name');
+                window.location.href = `subject.html?id=${milestone.id}&name=${encodeURIComponent(milestone.name)}&level=${milestone.level}&roadmapId=${roadmapId}&roadmapName=${encodeURIComponent(roadmapName || '')}`;
+            }
+        });
+
+        // Drag and drop handlers
+        milestoneCard.addEventListener('dragstart', (e) => {
+            isDragging = true;
+            milestoneCard.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/plain', milestone.position);
+        });
+
+        milestoneCard.addEventListener('dragend', () => {
+            milestoneCard.classList.remove('dragging');
+            setTimeout(() => {
+                isDragging = false;
+            }, 100);
+        });
+
+        milestoneCard.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+
+            const draggingCard = document.querySelector('.dragging');
+            if (draggingCard && draggingCard !== milestoneCard) {
+                milestoneCard.classList.add('drag-over');
+            }
+        });
+
+        milestoneCard.addEventListener('dragleave', () => {
+            milestoneCard.classList.remove('drag-over');
+        });
+
+        milestoneCard.addEventListener('drop', async (e) => {
+            e.preventDefault();
+            milestoneCard.classList.remove('drag-over');
+
+            const currentPosition = parseInt(e.dataTransfer.getData('text/plain'));
+            const targetPosition = parseInt(milestone.position);
+
+            if (currentPosition !== targetPosition) {
+                await reorderMilestone(currentPosition, targetPosition);
+            }
         });
 
         container.appendChild(milestoneCard);
     });
+}
+
+async function reorderMilestone(currentPosition, targetPosition) {
+    const roadmapId = UI.getUrlParam('id');
+
+    try {
+        await client.reorderMilestone(roadmapId, currentPosition, targetPosition);
+        await loadMilestones();
+    } catch (err) {
+        console.error('Reorder milestone failed:', err);
+        UI.showError('Failed to reorder milestone: ' + (err.message || 'Unknown error'));
+    }
 }

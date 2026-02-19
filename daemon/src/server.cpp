@@ -702,7 +702,7 @@ grpc::Status server::ReorderMilestone(grpc::ServerContext* context, ReorderMiles
             }
             else
             {
-                std::clog << std::format("client {} reordered milestone {} to {} in roadmap {}\n", request->user().token(), request->roadmap().id(), request->current_position(), request->target_position(), request->roadmap().id());
+                std::clog << std::format("client {} reordered milestone {} to {} in roadmap {}\n", request->user().token(), request->current_position(), request->target_position(), request->roadmap().id());
                 m_database->reorder_milestone(request->roadmap().id(), request->current_position(), request->target_position());
                 response->set_success(true);
                 response->clear_details();
