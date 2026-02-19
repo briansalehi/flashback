@@ -730,6 +730,33 @@ class FlashbackClient {
         });
     }
 
+    async getPracticeTopics(roadmapId, subjectId) {
+        return new Promise((resolve, reject) => {
+            const request = new proto.flashback.GetPracticeTopicsRequest();
+            const user = this.getAuthenticatedUser();
+            request.setUser(user);
+            const roadmap = new proto.flashback.Roadmap();
+            roadmap.setId(roadmapId);
+            request.setRoadmap(roadmap);
+            const subject = new proto.flashback.Subject();
+            subject.setId(subjectId);
+            request.setSubject(subject);
+
+            this.client.getPracticeTopics(request, this.getMetadata(), (err, response) => {
+                if (err) {
+                    console.error("GetPracticeTopics error:", err);
+                    reject(this.handleError(err));
+                } else {
+                    resolve(response.getTopicList().map(topic => ({
+                        position: topic.getPosition(),
+                        name: topic.getName(),
+                        level: topic.getLevel()
+                    })));
+                }
+            });
+        });
+    }
+
     async getPracticeCards(roadmapId, subjectId, topicLevel, topicPosition) {
         return new Promise((resolve, reject) => {
             const request = new proto.flashback.GetPracticeCardsRequest();
