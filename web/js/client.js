@@ -985,14 +985,123 @@ class FlashbackClient {
         });
     }
 
-    // verifySession { User user = 1; }  { bool valid = 1; }
-    // resetPassword { User user = 1; }  { }
-    // editUser { User user = 1; }  { }
-    // verifyUser { User user = 1; }  { }
-    // renameRoadmap { User user = 1; Roadmap roadmap = 2; }  { }
-    // removeRoadmap { User user = 1; Roadmap roadmap = 2; }  { }
-    // searchRoadmaps { User user = 1; string token = 2; }  { repeated Roadmap roadmap = 1; }
-    // cloneRoadmap { User user = 1; Roadmap roadmap = 2; }  { Roadmap roadmap = 1; bool success = 2; string details = 3; uint32 code = 4; }
+    async resetPassword() {
+        return new Promise((resolve, reject) => {
+            const request = new proto.flashback.ResetPasswordRequest();
+            const user = this.getAuthenticatedUser();
+            request.setUser(user);
+
+            this.client.resetPassword(request, this.getMetadata(), (err) => {
+                if (err) {
+                    console.error("ResetPassword error:", err);
+                    reject(this.handleError(err));
+                } else {
+                    resolve();
+                }
+            });
+        });
+    }
+
+    async editUser() {
+        return new Promise((resolve, reject) => {
+            const request = new proto.flashback.EditUserRequest();
+            const user = this.getAuthenticatedUser();
+            request.setUser(user);
+
+            this.client.editUser(request, this.getMetadata(), (err) => {
+                if (err) {
+                    console.error("EditUser error:", err);
+                    reject(this.handleError(err));
+                } else {
+                    resolve();
+                }
+            });
+        });
+    }
+
+    async renameRoadmap(roadmapId, roadmapName) {
+        return new Promise((resolve, reject) => {
+            const request = new proto.flashback.RenameRoadmapRequest();
+            const user = this.getAuthenticatedUser();
+            request.setUser(user);
+            const roadmap = new proto.flashback.Roadmap();
+            roadmap.setId(roadmapId);
+            roadmap.setName(roadmapName);
+            request.setRoadmap(roadmap);
+
+            this.client.renameRoadmap(request, this.getMetadata(), (err) => {
+                if (err) {
+                    console.error("RenameRoadmap error:", err);
+                    reject(this.handleError(err));
+                } else {
+                    resolve();
+                }
+            });
+        });
+    }
+
+    async removeRoadmap(roadmapId) {
+        return new Promise((resolve, reject) => {
+            const request = new proto.flashback.RemoveRoadmapRequest();
+            const user = this.getAuthenticatedUser();
+            request.setUser(user);
+            const roadmap = new proto.flashback.Roadmap();
+            roadmap.setId(roadmapId);
+            request.setRoadmap(roadmap);
+
+            this.client.removeRoadmap(request, this.getMetadata(), (err) => {
+                if (err) {
+                    console.error("RemoveRoadmap error:", err);
+                    reject(this.handleError(err));
+                } else {
+                    resolve();
+                }
+            });
+        });
+    }
+
+    async searchRoadmaps(token) {
+        return new Promise((resolve, reject) => {
+            const request = new proto.flashback.SearchRoadmapRequest();
+            const user = this.getAuthenticatedUser();
+            request.setUser(user);
+            request.setToken(token);
+
+            this.client.searchRoadmaps(request, this.getMetadata(), (err, response) => {
+                if (err) {
+                    console.error("SearchRoadmaps error:", err);
+                    reject(this.handleError(err));
+                } else {
+                    resolve(response.getRoadmapList().map(roadmap => ({
+                        id: roadmap.getId(),
+                        name: roadmap.getName()
+                    })));
+                }
+            });
+        });
+    }
+
+    async cloneRoadmap(roadmapId) {
+        return new Promise((resolve, reject) => {
+            const request = new proto.flashback.CloneRoadmapRequest();
+            const user = this.getAuthenticatedUser();
+            request.setUser(user);
+            const roadmap = new proto.flashback.Roadmap();
+            roadmap.setId(roadmapId);
+            request.setRoadmap(roadmap);
+
+            this.client.cloneRoadmap(request, this.getMetadata(), (err, response) => {
+                if (err) {
+                    console.error("CloneRoadmap error:", err);
+                    reject(this.handleError(err));
+                } else {
+                    const roadmap = response.getRoadmap();
+                    resolve(roadmap);
+                }
+            });
+        });
+    }
+
     // addRequirement { User user = 1; Roadmap roadmap = 2; Milestone milestone = 3; Milestone required_milestone = 4; }  { }
     // getRequirements { User user = 1; Roadmap roadmap = 2; Milestone milestone = 3; }  { repeated Milestone milestones = 1; bool success = 2; string details = 3; uint32 code = 4; }
     // reorderMilestone { User user = 1; Roadmap roadmap = 2; uint64 current_position = 3; uint64 target_position = 4; }  { }
@@ -1049,6 +1158,8 @@ class FlashbackClient {
     // isAssimilated { User user = 1; Subject subject = 2; Topic topic = 3; }  { bool is_assimilated = 1; }
     // getProgressWeight { User user = 1; }  { repeated Weight weight = 1; }
     // estimateCardTime { User user = 1; }  { }
+    // verifySession { User user = 1; }  { bool valid = 1; }
+    // verifyUser { User user = 1; }  { }
 }
 
 const client = new FlashbackClient();
