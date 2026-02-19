@@ -388,14 +388,14 @@ function renderResources(resources) {
         resourceItem.innerHTML = `
             <div class="resource-header">
                 <div class="resource-name">${UI.escapeHtml(resource.name)}</div>
-                <span class="resource-type">${UI.escapeHtml(typeName)} ${UI.escapeHtml(patternName)}</span>
+                <span class="resource-type">${UI.escapeHtml(typeName)} • ${UI.escapeHtml(patternName)}</span>
             </div>
             <div class="resource-url">
                 <a href="${UI.escapeHtml(resource.link)}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">
                     ${UI.escapeHtml(resource.link)}
                 </a>
             </div>
-            <div style="margin-top: 0.75rem; color: var(--text-muted); font-size: 0.9rem;">
+            <div class="resource-dates">
                 <div><strong>Produced:</strong> ${UI.escapeHtml(productionDate)}</div>
                 <div><strong>Relevant Until:</strong> ${UI.escapeHtml(expirationDate)}</div>
             </div>

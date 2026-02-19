@@ -117,28 +117,45 @@ function renderStudyingResources(resources) {
     const container = document.getElementById('studying-resources');
     container.innerHTML = '';
 
-    // Sort by position (order)
-    const sortedResources = resources.sort((a, b) => (a.position || 0) - (b.position || 0));
+    const typeNames = ['Book', 'Website', 'Course', 'Video', 'Channel', 'Mailing List', 'Manual', 'Slides', 'Your Knowledge'];
+    const patternNames = ['Chapters', 'Pages', 'Sessions', 'Episodes', 'Playlist', 'Posts', 'Memories'];
+
+    // Sort by order
+    const sortedResources = resources.sort((a, b) => (a.order || 0) - (b.order || 0));
 
     sortedResources.forEach(resource => {
-        const card = document.createElement('a');
-        card.className = 'roadmap-card';
-        card.style.cursor = 'pointer';
+        const resourceItem = document.createElement('div');
+        resourceItem.className = 'resource-item';
+        resourceItem.style.cursor = 'pointer';
 
-        if (resource.link) {
-            card.href = resource.link;
-            card.target = '_blank';
-            card.rel = 'noopener noreferrer';
-        } else {
-            card.addEventListener('click', (e) => {
-                e.preventDefault();
-            });
-        }
+        // Convert epoch seconds to readable dates
+        const productionDate = resource.production ? new Date(resource.production * 1000).toLocaleDateString() : 'N/A';
+        const expirationDate = resource.expiration ? new Date(resource.expiration * 1000).toLocaleDateString() : 'N/A';
 
-        card.innerHTML = `
-            <h3 class="roadmap-title">${UI.escapeHtml(resource.name)}</h3>
+        const typeName = typeNames[resource.type] || 'Unknown';
+        const patternName = patternNames[resource.pattern] || 'Unknown';
+
+        resourceItem.innerHTML = `
+            <div class="resource-header">
+                <div class="resource-name">${UI.escapeHtml(resource.name)}</div>
+                <span class="resource-type">${UI.escapeHtml(typeName)} • ${UI.escapeHtml(patternName)}</span>
+            </div>
+            <div class="resource-url">
+                <a href="${UI.escapeHtml(resource.link)}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">
+                    ${UI.escapeHtml(resource.link)}
+                </a>
+            </div>
+            <div class="resource-dates">
+                <div><strong>Produced:</strong> ${UI.escapeHtml(productionDate)}</div>
+                <div><strong>Relevant Until:</strong> ${UI.escapeHtml(expirationDate)}</div>
+            </div>
         `;
 
-        container.appendChild(card);
+        // Make the whole resource item clickable to go to resource page (sections)
+        resourceItem.addEventListener('click', () => {
+            window.location.href = `resource.html?id=${resource.id}&name=${encodeURIComponent(resource.name)}`;
+        });
+
+        container.appendChild(resourceItem);
     });
 }
