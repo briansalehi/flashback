@@ -408,10 +408,15 @@ Roadmap database::clone_roadmap(uint64_t const user_id, uint64_t const roadmap_i
     roadmap.clear_id();
     roadmap.clear_name();
 
-    for (pqxx::row const& row: query("select id, name from clone_roadmap($1, $2)", user_id, roadmap_id))
+    if (pqxx::result const& result{query("select id, name from clone_roadmap($1, $2)", user_id, roadmap_id)}; result.size() == 1)
     {
+        pqxx::row const& row{result.at(0)};
         roadmap.set_id(row.at("id").as<uint64_t>());
         roadmap.set_name(row.at("name").as<std::string>());
+    }
+    else
+    {
+        throw std::runtime_error("failed to clone roadmap");
     }
 
     return roadmap;

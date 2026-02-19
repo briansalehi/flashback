@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict BBMCnLKLiecVFg73qMKnnAtwZreADUzfSL8H77peIV6H3IbqCi3acPMQOMh2EDB
+\restrict HHV2N7ucq8CW72snupeMwjmC4lGBsIVGlzvTotDv4ZoZZXzofCosmAdEMarHdwi
 
 -- Dumped from database version 18.1
 -- Dumped by pg_dump version 18.0
@@ -471,6 +471,8 @@ begin
         cloned_roadmap_id := create_roadmap(user_id, roadmap_name);
         insert into milestones (roadmap, subject, level, position) select m.roadmap, m.subject, m.level, m.position from milestones m where m.roadmap = roadmap_id;
     end if;
+
+    return query select r.id, r.name from roadmaps r where r.id = cloned_roadmap_id;
 end; $$;
 
 
@@ -32722,5 +32724,5 @@ GRANT ALL ON SCHEMA public TO brian;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict BBMCnLKLiecVFg73qMKnnAtwZreADUzfSL8H77peIV6H3IbqCi3acPMQOMh2EDB
+\unrestrict HHV2N7ucq8CW72snupeMwjmC4lGBsIVGlzvTotDv4ZoZZXzofCosmAdEMarHdwi
 
