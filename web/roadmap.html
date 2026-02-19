@@ -194,10 +194,63 @@
         <div class="container">
             <div class="dashboard-header">
                 <h1 id="roadmap-name">Loading...</h1>
+                <div style="display: flex; gap: 0.5rem;">
+                    <button id="rename-roadmap-btn" class="btn btn-secondary" style="display: none;">
+                        Rename
+                    </button>
+                    <button id="remove-roadmap-btn" class="btn btn-danger" style="display: none;">
+                        Remove Roadmap
+                    </button>
+                </div>
             </div>
             
             <div id="error-message" style="display: none;"></div>
-            
+
+            <!-- Rename Roadmap Modal -->
+            <div id="rename-roadmap-modal" class="card" style="display: none; max-width: 500px; margin-bottom: 2rem;">
+                <div class="card-header">
+                    <h3 class="card-title">Rename Roadmap</h3>
+                </div>
+                <form id="rename-roadmap-form">
+                    <div class="form-group">
+                        <label class="form-label" for="rename-roadmap-name">New Roadmap Name</label>
+                        <input
+                            type="text"
+                            id="rename-roadmap-name"
+                            class="form-input"
+                            placeholder="Enter new name..."
+                            required
+                        >
+                    </div>
+                    <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+                        <button type="submit" id="save-rename-btn" class="btn btn-primary">
+                            Save
+                        </button>
+                        <button type="button" id="cancel-rename-btn" class="btn btn-secondary">
+                            Cancel
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Remove Roadmap Confirmation -->
+            <div id="remove-roadmap-modal" class="card" style="display: none; max-width: 500px; margin-bottom: 2rem;">
+                <div class="card-header">
+                    <h3 class="card-title" style="color: var(--danger-color);">Remove Roadmap</h3>
+                </div>
+                <div style="padding: 1rem 0;">
+                    <p>Are you sure you want to remove this roadmap? This action cannot be undone.</p>
+                </div>
+                <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+                    <button id="confirm-remove-btn" class="btn btn-danger">
+                        Yes, Remove
+                    </button>
+                    <button id="cancel-remove-btn" class="btn btn-secondary">
+                        Cancel
+                    </button>
+                </div>
+            </div>
+
             <div id="loading" style="display: none; text-align: center; padding: 3rem;">
                 <div class="loading" style="width: 40px; height: 40px; border-width: 4px;"></div>
                 <p class="text-muted mt-md">Loading subjects...</p>
@@ -220,16 +273,16 @@
                 <div class="card-header">
                     <h3 class="card-title">Add Subject to Roadmap</h3>
                 </div>
-                
+
                 <form id="milestone-form">
                     <!-- Search existing subjects section -->
                     <div id="search-subject-section" class="search-section">
                         <div class="form-group">
                             <label class="form-label" for="subject-search-input">Search for a subject</label>
-                            <input 
-                                type="text" 
-                                id="subject-search-input" 
-                                class="form-input" 
+                            <input
+                                type="text"
+                                id="subject-search-input"
+                                class="form-input"
                                 placeholder="Start typing to search..."
                                 autocomplete="off"
                             >
@@ -305,7 +358,7 @@
                         </div>
                         <input type="hidden" id="expertise-level" value="0">
                     </div>
-                    
+
                     <div style="display: flex; gap: 1rem; margin-top: 2rem;">
                         <button type="submit" id="save-milestone-btn" class="btn btn-primary">
                             Add to Roadmap

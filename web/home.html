@@ -58,18 +58,55 @@
                             class="form-input"
                             placeholder="Full Stack Developer"
                             required
+                            autocomplete="off"
                         >
+                    </div>
+
+                    <!-- Search results for suggested roadmaps -->
+                    <div id="roadmap-search-results" style="display: none; margin-bottom: 1.5rem;">
+                        <div style="padding: 0.75rem; background: var(--bg-secondary); border-radius: 4px; border: 1px solid var(--border-color);">
+                            <p style="font-weight: 600; margin-bottom: 0.75rem; color: var(--text-primary);">
+                                Similar roadmaps found:
+                            </p>
+                            <div id="suggested-roadmaps-list">
+                                <!-- Suggested roadmaps will be inserted here -->
+                            </div>
+                            <p style="font-size: 0.875rem; color: var(--text-muted); margin-top: 0.75rem; margin-bottom: 0;">
+                                Select a roadmap above to clone it, or continue creating a new one.
+                            </p>
+                        </div>
                     </div>
 
                     <div style="display: flex; gap: 1rem;">
                         <button type="submit" id="save-roadmap-btn" class="btn btn-primary">
-                            Create Roadmap
+                            Create New Roadmap
                         </button>
                         <button type="button" id="cancel-roadmap-btn" class="btn btn-secondary">
                             Cancel
                         </button>
                     </div>
                 </form>
+            </div>
+
+            <!-- Clone Roadmap Confirmation -->
+            <div id="clone-roadmap-modal" class="card" style="display: none; max-width: 600px; margin-bottom: 1rem;">
+                <div class="card-header">
+                    <h3 class="card-title">Clone Roadmap</h3>
+                </div>
+                <div style="padding: 1rem 0;">
+                    <p>You are about to clone the roadmap: <strong id="clone-roadmap-name"></strong></p>
+                    <p style="margin-top: 0.75rem; font-size: 0.875rem; color: var(--text-muted);">
+                        Note: Review the milestones after cloning to ensure they match your goals.
+                    </p>
+                </div>
+                <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+                    <button id="confirm-clone-btn" class="btn btn-primary">
+                        Clone Roadmap
+                    </button>
+                    <button id="cancel-clone-btn" class="btn btn-secondary">
+                        Back
+                    </button>
+                </div>
             </div>
 
             <!-- Currently Studying Section -->

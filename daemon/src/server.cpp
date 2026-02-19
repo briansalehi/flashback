@@ -345,7 +345,7 @@ grpc::Status server::RemoveRoadmap(grpc::ServerContext* context, RemoveRoadmapRe
         {
             std::clog << std::format("client {} removed roadmap {}\n", request->user().token(), request->roadmap().id());
             std::shared_ptr<User> const user{m_database->get_user(request->user().token(), request->user().device())};
-            m_database->remove_roadmap(user->id());
+            m_database->remove_roadmap(request->roadmap().id());
         }
     }
     catch (flashback::client_exception const& exp)

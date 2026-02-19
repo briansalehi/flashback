@@ -1,9 +1,12 @@
+// Clone roadmap modal state (needs to be global for displaySuggestedRoadmaps)
+let selectedRoadmapForClone = null;
+
 window.addEventListener('DOMContentLoaded', () => {
     if (!client.isAuthenticated()) {
         window.location.href = '/index.html';
         return;
     }
-    
+
     document.getElementById('signout-btn').addEventListener('click', async (e) => {
         e.preventDefault();
         try {
@@ -14,16 +17,75 @@ window.addEventListener('DOMContentLoaded', () => {
         localStorage.removeItem('token');
         window.location.href = '/index.html';
     });
-    
+
     // Show/hide create form
     document.getElementById('create-roadmap-btn').addEventListener('click', () => {
         UI.toggleElement('create-form', true);
         document.getElementById('roadmap-name').focus();
     });
-    
+
     document.getElementById('cancel-roadmap-btn').addEventListener('click', () => {
         UI.toggleElement('create-form', false);
         UI.clearForm('roadmap-form');
+        UI.toggleElement('roadmap-search-results', false);
+        document.getElementById('suggested-roadmaps-list').innerHTML = '';
+    });
+
+    // Search roadmaps as user types
+    let roadmapSearchTimeout;
+    document.getElementById('roadmap-name').addEventListener('input', async (e) => {
+        const searchToken = e.target.value.trim();
+
+        clearTimeout(roadmapSearchTimeout);
+
+        if (searchToken.length < 3) {
+            UI.toggleElement('roadmap-search-results', false);
+            return;
+        }
+
+        roadmapSearchTimeout = setTimeout(async () => {
+            try {
+                const roadmaps = await client.searchRoadmaps(searchToken);
+                displaySuggestedRoadmaps(roadmaps);
+            } catch (err) {
+                console.error('Roadmap search error:', err);
+            }
+        }, 300);
+    });
+
+    // Clone roadmap modal handlers
+
+    document.getElementById('cancel-clone-btn').addEventListener('click', () => {
+        UI.toggleElement('clone-roadmap-modal', false);
+        selectedRoadmapForClone = null;
+    });
+
+    document.getElementById('confirm-clone-btn').addEventListener('click', async () => {
+        if (!selectedRoadmapForClone) return;
+
+        UI.setButtonLoading('confirm-clone-btn', true);
+
+        try {
+            const clonedRoadmapProto = await client.cloneRoadmap(selectedRoadmapForClone.id);
+
+            // Extract id and name from the protobuf object
+            const clonedRoadmapId = clonedRoadmapProto.getId();
+            const clonedRoadmapName = clonedRoadmapProto.getName();
+
+            UI.toggleElement('clone-roadmap-modal', false);
+            UI.toggleElement('create-form', false);
+            UI.clearForm('roadmap-form');
+            UI.toggleElement('roadmap-search-results', false);
+            UI.setButtonLoading('confirm-clone-btn', false);
+            selectedRoadmapForClone = null;
+
+            // Navigate to the cloned roadmap
+            window.location.href = `roadmap.html?id=${clonedRoadmapId}&name=${encodeURIComponent(clonedRoadmapName)}`;
+        } catch (err) {
+            console.error('Clone roadmap failed:', err);
+            UI.showError(err.message || 'Failed to clone roadmap');
+            UI.setButtonLoading('confirm-clone-btn', false);
+        }
     });
 
     // Nerve form handlers
@@ -328,4 +390,47 @@ function displayNerveSubjectResults(subjects) {
     });
 
     UI.toggleElement('nerve-subject-results', true);
+}
+
+function displaySuggestedRoadmaps(roadmaps) {
+    const listContainer = document.getElementById('suggested-roadmaps-list');
+
+    if (!roadmaps || roadmaps.length === 0) {
+        UI.toggleElement('roadmap-search-results', false);
+        return;
+    }
+
+    listContainer.innerHTML = '';
+    roadmaps.forEach(roadmap => {
+        const roadmapItem = document.createElement('div');
+        roadmapItem.style.cssText = 'padding: 0.75rem; margin-bottom: 0.5rem; background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 4px; cursor: pointer; transition: all 0.2s;';
+
+        roadmapItem.innerHTML = `
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-weight: 500; color: var(--text-primary);">${UI.escapeHtml(roadmap.name)}</span>
+                <span style="font-size: 0.875rem; color: var(--accent-color); font-weight: 600;">Clone</span>
+            </div>
+        `;
+
+        roadmapItem.addEventListener('click', () => {
+            selectedRoadmapForClone = roadmap;
+            document.getElementById('clone-roadmap-name').textContent = roadmap.name;
+            UI.toggleElement('create-form', false);
+            UI.toggleElement('clone-roadmap-modal', true);
+        });
+
+        roadmapItem.addEventListener('mouseenter', () => {
+            roadmapItem.style.borderColor = 'var(--accent-color)';
+            roadmapItem.style.transform = 'translateX(4px)';
+        });
+
+        roadmapItem.addEventListener('mouseleave', () => {
+            roadmapItem.style.borderColor = 'var(--border-color)';
+            roadmapItem.style.transform = 'translateX(0)';
+        });
+
+        listContainer.appendChild(roadmapItem);
+    });
+
+    UI.toggleElement('roadmap-search-results', true);
 }

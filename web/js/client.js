@@ -1064,7 +1064,7 @@ class FlashbackClient {
 
     async searchRoadmaps(token) {
         return new Promise((resolve, reject) => {
-            const request = new proto.flashback.SearchRoadmapRequest();
+            const request = new proto.flashback.SearchRoadmapsRequest();
             const user = this.getAuthenticatedUser();
             request.setUser(user);
             request.setToken(token);
@@ -1098,7 +1098,10 @@ class FlashbackClient {
                     reject(this.handleError(err));
                 } else {
                     const roadmap = response.getRoadmap();
-                    resolve(roadmap);
+                    resolve({
+                        id: roadmap.getId(),
+                        name: roadmap.getName()
+                    });
                 }
             });
         });

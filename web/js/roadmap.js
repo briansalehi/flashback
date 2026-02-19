@@ -161,6 +161,105 @@ window.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // Rename roadmap handlers
+    const renameRoadmapBtn = document.getElementById('rename-roadmap-btn');
+    if (renameRoadmapBtn) {
+        renameRoadmapBtn.addEventListener('click', () => {
+            const modal = document.getElementById('rename-roadmap-modal');
+            UI.toggleElement('rename-roadmap-modal', true);
+            document.getElementById('rename-roadmap-name').value = roadmapName || '';
+            setTimeout(() => {
+                modal.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                document.getElementById('rename-roadmap-name').focus();
+            }, 100);
+        });
+    }
+
+    const cancelRenameBtn = document.getElementById('cancel-rename-btn');
+    if (cancelRenameBtn) {
+        cancelRenameBtn.addEventListener('click', () => {
+            UI.toggleElement('rename-roadmap-modal', false);
+            UI.clearForm('rename-roadmap-form');
+        });
+    }
+
+    const renameRoadmapForm = document.getElementById('rename-roadmap-form');
+    if (renameRoadmapForm) {
+        renameRoadmapForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const newName = document.getElementById('rename-roadmap-name').value.trim();
+            if (!newName) {
+                UI.showError('Please enter a roadmap name');
+                return;
+            }
+
+            UI.hideMessage('error-message');
+            UI.setButtonLoading('save-rename-btn', true);
+
+            try {
+                await client.renameRoadmap(roadmapId, newName);
+
+                UI.toggleElement('rename-roadmap-modal', false);
+                UI.clearForm('rename-roadmap-form');
+                UI.setButtonLoading('save-rename-btn', false);
+
+                // Update the URL and page
+                const newUrl = `roadmap.html?id=${roadmapId}&name=${encodeURIComponent(newName)}`;
+                window.history.replaceState({}, '', newUrl);
+                document.getElementById('roadmap-name').textContent = newName;
+                document.title = `${newName} - Flashback`;
+
+                UI.showSuccess('Roadmap renamed successfully');
+            } catch (err) {
+                console.error('Rename roadmap failed:', err);
+                UI.showError(err.message || 'Failed to rename roadmap');
+                UI.setButtonLoading('save-rename-btn', false);
+            }
+        });
+    }
+
+    // Remove roadmap handlers
+    const removeRoadmapBtn = document.getElementById('remove-roadmap-btn');
+    if (removeRoadmapBtn) {
+        removeRoadmapBtn.addEventListener('click', () => {
+            const modal = document.getElementById('remove-roadmap-modal');
+            UI.toggleElement('remove-roadmap-modal', true);
+            setTimeout(() => {
+                modal.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 100);
+        });
+    }
+
+    const cancelRemoveBtn = document.getElementById('cancel-remove-btn');
+    if (cancelRemoveBtn) {
+        cancelRemoveBtn.addEventListener('click', () => {
+            UI.toggleElement('remove-roadmap-modal', false);
+        });
+    }
+
+    const confirmRemoveBtn = document.getElementById('confirm-remove-btn');
+    if (confirmRemoveBtn) {
+        confirmRemoveBtn.addEventListener('click', async () => {
+            UI.hideMessage('error-message');
+            UI.setButtonLoading('confirm-remove-btn', true);
+
+            try {
+                await client.removeRoadmap(roadmapId);
+
+                UI.toggleElement('remove-roadmap-modal', false);
+                UI.setButtonLoading('confirm-remove-btn', false);
+
+                // Redirect to home page
+                window.location.href = '/home.html';
+            } catch (err) {
+                console.error('Remove roadmap failed:', err);
+                UI.showError(err.message || 'Failed to remove roadmap');
+                UI.setButtonLoading('confirm-remove-btn', false);
+            }
+        });
+    }
+
     loadMilestones();
 });
 
@@ -231,6 +330,10 @@ async function loadMilestones() {
 
         document.getElementById('roadmap-name').textContent = roadmapName;
         document.title = `${roadmapName || 'Roadmap'} - Flashback`;
+
+        // Show rename and remove buttons
+        UI.toggleElement('rename-roadmap-btn', true);
+        UI.toggleElement('remove-roadmap-btn', true);
 
         UI.toggleElement('loading', false);
 
