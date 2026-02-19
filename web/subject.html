@@ -205,9 +205,14 @@
                 <h1 id="subject-name">Loading...</h1>
             </div>
 
-            <div class="tabs">
-                <button class="tab active" data-tab="topics">Topics</button>
-                <button class="tab" data-tab="resources">Resources</button>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                <div class="tabs" style="margin-bottom: 0;">
+                    <button class="tab active" data-tab="topics">Topics</button>
+                    <button class="tab" data-tab="resources">Resources</button>
+                </div>
+                <button id="start-practice-btn" class="btn btn-primary">
+                    Start Practice
+                </button>
             </div>
 
             <div id="error-message" style="display: none;"></div>

@@ -137,7 +137,7 @@ function renderCards(cards) {
         `;
 
         cardItem.addEventListener('click', () => {
-            window.location.href = `card.html?cardId=${card.id}&headline=${encodeURIComponent(card.headline)}&state=${card.state}`;
+            window.location.href = `card.html?cardId=${card.id}&headline=${encodeURIComponent(card.headline)}&state=${card.state}&practiceMode=selective`;
         });
 
         container.appendChild(cardItem);

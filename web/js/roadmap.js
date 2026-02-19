@@ -267,7 +267,8 @@ function renderMilestones(milestones) {
         `;
 
         milestoneCard.addEventListener('click', () => {
-            window.location.href = `subject.html?id=${milestone.id}&name=${encodeURIComponent(milestone.name)}&level=${milestone.level}`;
+            const roadmapId = UI.getUrlParam('id');
+            window.location.href = `subject.html?id=${milestone.id}&name=${encodeURIComponent(milestone.name)}&level=${milestone.level}&roadmapId=${roadmapId}`;
         });
 
         container.appendChild(milestoneCard);

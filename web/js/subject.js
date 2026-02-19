@@ -6,6 +6,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
     const subjectId = UI.getUrlParam('id');
     const subjectName = UI.getUrlParam('name');
+    const roadmapId = UI.getUrlParam('roadmapId');
 
     if (!subjectId) {
         window.location.href = '/home.html';
@@ -22,6 +23,22 @@ window.addEventListener('DOMContentLoaded', () => {
             await client.signOut();
             window.location.href = '/index.html';
         });
+    }
+
+    // Practice mode functionality
+    const startPracticeBtn = document.getElementById('start-practice-btn');
+    if (startPracticeBtn) {
+        if (!roadmapId) {
+            startPracticeBtn.disabled = true;
+            startPracticeBtn.title = 'Access this subject from a roadmap to enable practice mode';
+            startPracticeBtn.style.opacity = '0.5';
+            startPracticeBtn.style.cursor = 'not-allowed';
+        } else {
+            startPracticeBtn.addEventListener('click', async (e) => {
+                e.preventDefault();
+                await startPracticeMode();
+            });
+        }
     }
 
     // Tab switching
@@ -387,4 +404,62 @@ function renderResources(resources) {
 
         container.appendChild(resourceItem);
     });
+}
+
+async function startPracticeMode() {
+    const subjectId = UI.getUrlParam('id');
+    const roadmapId = UI.getUrlParam('roadmapId');
+
+    if (!roadmapId || !subjectId) {
+        UI.showError('Missing roadmap or subject information');
+        return;
+    }
+
+    UI.setButtonLoading('start-practice-btn', true);
+
+    try {
+        const topics = await client.getPracticeTopics(parseInt(roadmapId), parseInt(subjectId));
+
+        if (topics.length === 0) {
+            UI.showError('No topics available for practice');
+            UI.setButtonLoading('start-practice-btn', false);
+            return;
+        }
+
+        // Store practice state in sessionStorage
+        sessionStorage.setItem('practiceState', JSON.stringify({
+            roadmapId: parseInt(roadmapId),
+            subjectId: parseInt(subjectId),
+            topics: topics,
+            currentTopicIndex: 0,
+            practiceMode: 'aggressive'
+        }));
+
+        // Get cards for first topic
+        const firstTopic = topics[0];
+        const cards = await client.getPracticeCards(
+            parseInt(roadmapId),
+            parseInt(subjectId),
+            firstTopic.level,
+            firstTopic.position
+        );
+
+        if (cards.length === 0) {
+            UI.showError('No cards available for practice in first topic');
+            UI.setButtonLoading('start-practice-btn', false);
+            return;
+        }
+
+        // Update practice state with cards
+        const practiceState = JSON.parse(sessionStorage.getItem('practiceState'));
+        practiceState.currentCards = cards;
+        sessionStorage.setItem('practiceState', JSON.stringify(practiceState));
+
+        // Navigate to first card
+        window.location.href = `card.html?cardId=${cards[0].id}&headline=${encodeURIComponent(cards[0].headline)}&state=${cards[0].state}&practiceMode=aggressive&cardIndex=0&totalCards=${cards.length}`;
+    } catch (err) {
+        console.error('Start practice failed:', err);
+        UI.showError('Failed to start practice: ' + (err.message || 'Unknown error'));
+        UI.setButtonLoading('start-practice-btn', false);
+    }
 }
