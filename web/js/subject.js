@@ -445,17 +445,28 @@ async function startPracticeMode() {
             practiceMode: 'aggressive'
         }));
 
-        // Get cards for first topic
-        const firstTopic = topics[0];
-        const cards = await client.getPracticeCards(
-            parseInt(roadmapId),
-            parseInt(subjectId),
-            firstTopic.level,
-            firstTopic.position
-        );
+        // Find first topic with cards
+        let firstTopicWithCards = null;
+        let cards = [];
 
-        if (cards.length === 0) {
-            UI.showError('No cards available for practice in first topic');
+        for (let i = 0; i < topics.length; i++) {
+            const topic = topics[i];
+            const topicCards = await client.getPracticeCards(
+                parseInt(roadmapId),
+                parseInt(subjectId),
+                topic.level,
+                topic.position
+            );
+
+            if (topicCards.length > 0) {
+                firstTopicWithCards = topic;
+                cards = topicCards;
+                break;
+            }
+        }
+
+        if (!firstTopicWithCards || cards.length === 0) {
+            UI.showError('No cards available for practice');
             UI.setButtonLoading('start-practice-btn', false);
             return;
         }
@@ -468,7 +479,7 @@ async function startPracticeMode() {
         // Navigate to first card with context
         const subjectNameParam = UI.getUrlParam('name') || '';
         const roadmapName = UI.getUrlParam('roadmapName') || '';
-        window.location.href = `card.html?cardId=${cards[0].id}&headline=${encodeURIComponent(cards[0].headline)}&state=${cards[0].state}&practiceMode=aggressive&cardIndex=0&totalCards=${cards.length}&subjectName=${encodeURIComponent(subjectNameParam)}&topicName=${encodeURIComponent(firstTopic.name)}&roadmapName=${encodeURIComponent(roadmapName)}`;
+        window.location.href = `card.html?cardId=${cards[0].id}&headline=${encodeURIComponent(cards[0].headline)}&state=${cards[0].state}&practiceMode=aggressive&cardIndex=0&totalCards=${cards.length}&subjectName=${encodeURIComponent(subjectNameParam)}&topicName=${encodeURIComponent(firstTopicWithCards.name)}&roadmapName=${encodeURIComponent(roadmapName)}`;
     } catch (err) {
         console.error('Start practice failed:', err);
         UI.showError('Failed to start practice: ' + (err.message || 'Unknown error'));
