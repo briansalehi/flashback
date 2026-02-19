@@ -879,7 +879,7 @@ class FlashbackClient {
         });
     }
 
-    async createNerve(subjectId, resourceId) {
+    async createNerve(subjectId, resourceName, resourceExpiration) {
         return new Promise((resolve, reject) => {
             const request = new proto.flashback.CreateNerveRequest();
             const user = this.getAuthenticatedUser();
@@ -888,7 +888,8 @@ class FlashbackClient {
             subject.setId(subjectId);
             request.setSubject(subject);
             const resource = new proto.flashback.Resource();
-            resource.setId(resourceId);
+            resource.setName(resourceName);
+            resource.setExpiration(resourceExpiration);
             request.setResource(resource);
 
             this.client.createNerve(request, this.getMetadata(), (err, response) => {
