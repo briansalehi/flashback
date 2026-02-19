@@ -149,7 +149,19 @@
             </div>
 
             <div id="card-content" class="blocks-container" style="display: none;">
-                <h1 id="card-headline" class="card-headline-display"></h1>
+                <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
+                    <h1 id="card-headline" class="card-headline-display" style="margin-bottom: 0;"></h1>
+                    <button id="edit-headline-btn" class="btn btn-secondary" style="padding: 0.5rem 1rem;">
+                        Edit
+                    </button>
+                </div>
+                <div id="edit-headline-form" style="display: none; margin-bottom: 1rem;">
+                    <input type="text" id="headline-input" class="form-input" style="width: 100%; margin-bottom: 0.5rem;" />
+                    <div style="display: flex; gap: 0.5rem;">
+                        <button id="save-headline-btn" class="btn btn-primary">Save</button>
+                        <button id="cancel-edit-btn" class="btn btn-secondary">Cancel</button>
+                    </div>
+                </div>
                 <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem;">
                     <span id="card-state" class="card-state-display"></span>
                     <button id="mark-reviewed-btn" class="btn btn-secondary" style="display: none;">

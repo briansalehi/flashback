@@ -112,6 +112,9 @@ window.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // Setup edit headline functionality
+    setupEditHeadline();
+
     loadBlocks();
 });
 
@@ -417,5 +420,90 @@ function renderBlocks(blocks) {
         `;
 
         container.appendChild(blockItem);
+    });
+}
+
+function setupEditHeadline() {
+    const editBtn = document.getElementById('edit-headline-btn');
+    const saveBtn = document.getElementById('save-headline-btn');
+    const cancelBtn = document.getElementById('cancel-edit-btn');
+    const headlineDisplay = document.getElementById('card-headline');
+    const editForm = document.getElementById('edit-headline-form');
+    const headlineInput = document.getElementById('headline-input');
+
+    if (!editBtn || !saveBtn || !cancelBtn || !headlineDisplay || !editForm || !headlineInput) {
+        return;
+    }
+
+    // Edit button click
+    editBtn.addEventListener('click', () => {
+        headlineInput.value = headlineDisplay.textContent;
+        headlineDisplay.style.display = 'none';
+        editBtn.style.display = 'none';
+        editForm.style.display = 'block';
+        headlineInput.focus();
+    });
+
+    // Cancel button click
+    cancelBtn.addEventListener('click', () => {
+        headlineDisplay.style.display = 'block';
+        editBtn.style.display = 'block';
+        editForm.style.display = 'none';
+    });
+
+    // Save button click
+    saveBtn.addEventListener('click', async () => {
+        const newHeadline = headlineInput.value.trim();
+
+        if (!newHeadline) {
+            UI.showError('Headline cannot be empty');
+            return;
+        }
+
+        if (newHeadline === headlineDisplay.textContent) {
+            // No change, just cancel edit mode
+            headlineDisplay.style.display = 'block';
+            editBtn.style.display = 'block';
+            editForm.style.display = 'none';
+            return;
+        }
+
+        UI.setButtonLoading('save-headline-btn', true);
+
+        try {
+            const cardId = parseInt(UI.getUrlParam('cardId'));
+            await client.editCard(cardId, newHeadline);
+
+            // Update display
+            headlineDisplay.textContent = newHeadline;
+            document.title = `${newHeadline} - Flashback`;
+
+            // Exit edit mode
+            headlineDisplay.style.display = 'block';
+            editBtn.style.display = 'block';
+            editForm.style.display = 'none';
+
+            UI.setButtonLoading('save-headline-btn', false);
+        } catch (err) {
+            console.error('Failed to edit card headline:', err);
+            UI.showError('Failed to edit headline: ' + (err.message || 'Unknown error'));
+            UI.setButtonLoading('save-headline-btn', false);
+        }
+    });
+
+    // Allow Enter key to save
+    headlineInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            saveBtn.click();
+        }
+    });
+
+    // Allow Escape key to cancel
+    headlineInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            e.preventDefault();
+            cancelBtn.click();
+        }
     });
 }
