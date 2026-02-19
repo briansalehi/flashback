@@ -14,7 +14,7 @@ server::server(std::shared_ptr<basic_database> database)
 {
     if (sodium_init() < 0)
     {
-        throw std::runtime_error("Server: sodium library cannot be initialized");
+        throw std::runtime_error("server: sodium library cannot be initialized");
     }
 }
 
@@ -60,14 +60,14 @@ grpc::Status server::SignIn(grpc::ServerContext* context, const SignInRequest* r
         response->set_success(false);
         response->set_details(exp.code());
         response->clear_user();
-        std::cerr << std::format("Client: {}\n", exp.what());
+        std::cerr << std::format("client {}: {}\n", request->user().email(), exp.what());
     }
     catch (std::exception const& exp)
     {
         response->set_success(false);
         response->set_details("internal error");
         response->clear_user();
-        std::cerr << std::format("Server: {}\n", exp.what());
+        std::cerr << std::format("server: {}\n", exp.what());
     }
 
     return grpc::Status::OK;
@@ -94,11 +94,11 @@ grpc::Status server::SignOut(grpc::ServerContext* context, const SignOutRequest*
     catch (client_exception const& exp)
     {
         status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, exp.what()};
-        std::cerr << std::format("Client: {}\n", exp.what());
+        std::cerr << std::format("client {}: {}\n", request->user().token(), exp.what());
     }
     catch (std::exception const& exp)
     {
-        std::cerr << std::format("Server: {}\n", exp.what());
+        std::cerr << std::format("server: {}\n", exp.what());
     }
 
     return status;
@@ -143,19 +143,19 @@ grpc::Status server::SignUp(grpc::ServerContext* context, const SignUpRequest* r
     {
         response->set_success(false);
         response->set_details("user already exists");
-        std::cerr << std::format("Client: {}\n", exp.what());
+        std::cerr << std::format("client {}: {}\n", request->user().email(), exp.what());
     }
     catch (client_exception const& exp)
     {
         response->set_success(false);
         response->set_details(exp.code());
-        std::cerr << std::format("Client: {}\n", exp.what());
+        std::cerr << std::format("client {}: {}\n", request->user().email(), exp.what());
     }
     catch (std::exception const& exp)
     {
         response->set_success(false);
         response->set_details("internal error");
-        std::cerr << std::format("Server: {}\n", exp.what());
+        std::cerr << std::format("server: {}\n", exp.what());
     }
 
     return grpc::Status::OK;
@@ -238,12 +238,12 @@ grpc::Status server::CreateRoadmap(grpc::ServerContext* context, CreateRoadmapRe
     }
     catch (client_exception const& exp)
     {
-        std::cerr << std::format("Client: {}", exp.what());
+        std::cerr << std::format("client {}: {}", request->user().token(), exp.what());
         status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, exp.what()};
     }
     catch (pqxx::unique_violation const& exp)
     {
-        std::cerr << std::format("Server: {}\n", exp.what());
+        std::cerr << std::format("server: {}\n", exp.what());
     }
 
     return status;
@@ -269,11 +269,11 @@ grpc::Status server::GetRoadmaps(grpc::ServerContext* context, GetRoadmapsReques
     }
     catch (client_exception const& exp)
     {
-        std::cerr << std::format("Client {}: {}\n", request->user().token(), exp.what());
+        std::cerr << std::format("client {}: {}\n", request->user().token(), exp.what());
     }
     catch (std::exception const& exp)
     {
-        std::cerr << std::format("Server: failed to collect roadmaps for client {}. {}\n", request->user().token(), exp.what());
+        std::cerr << std::format("server: failed to collect roadmaps for client {}. {}\n", request->user().token(), exp.what());
     }
 
     return grpc::Status::OK;
@@ -305,10 +305,11 @@ grpc::Status server::GetStudyResources(grpc::ServerContext* context, GetStudyRes
     catch (client_exception const& exp)
     {
         status = grpc::Status{grpc::StatusCode::UNAVAILABLE, exp.what()};
+        std::cerr << std::format("client {}: {}\n", request->user().token(), exp.what());
     }
     catch (std::exception const& exp)
     {
-        std::cerr << std::format("Server: {}\n", exp.what());
+        std::cerr << std::format("server: {}\n", exp.what());
     }
 
     return status;
@@ -326,11 +327,11 @@ grpc::Status server::RenameRoadmap(grpc::ServerContext* context, RenameRoadmapRe
     }
     catch (flashback::client_exception const& exp)
     {
-        std::cerr << std::format("Client: {}\n", exp.what());
+        std::cerr << std::format("client {}: {}\n", request->user().token(), exp.what());
     }
     catch (std::exception const& exp)
     {
-        std::cerr << std::format("Server: {}\n", exp.what());
+        std::cerr << std::format("server: {}\n", exp.what());
     }
 
     return grpc::Status::OK;
@@ -349,11 +350,11 @@ grpc::Status server::RemoveRoadmap(grpc::ServerContext* context, RemoveRoadmapRe
     }
     catch (flashback::client_exception const& exp)
     {
-        std::cerr << std::format("Client: {}\n", exp.what());
+        std::cerr << std::format("client {}: {}\n", request->user().token(), exp.what());
     }
     catch (std::exception const& exp)
     {
-        std::cerr << std::format("Server: {}\n", exp.what());
+        std::cerr << std::format("server: {}\n", exp.what());
     }
 
     return grpc::Status::OK;
@@ -383,12 +384,12 @@ grpc::Status server::SearchRoadmaps(grpc::ServerContext* context, SearchRoadmaps
     }
     catch (client_exception const& exp)
     {
-        std::cerr << std::format("Client: {}\n", exp.what());
+        std::cerr << std::format("client {}: {}\n", request->user().token(), exp.what());
         status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, exp.what()};
     }
     catch (std::exception const& exp)
     {
-        std::cerr << std::format("Server: {}\n", exp.what());
+        std::cerr << std::format("server: {}\n", exp.what());
     }
 
     return status;
@@ -429,14 +430,14 @@ grpc::Status server::CloneRoadmap(grpc::ServerContext* context, CloneRoadmapRequ
         response->set_code(2);
         response->set_details(exp.what());
         response->set_success(false);
-        std::cerr << std::format("Client: {}\n", exp.what());
+        std::cerr << std::format("client {}: {}\n", request->user().token(), exp.what());
     }
     catch (std::exception const& exp)
     {
         response->set_code(1);
         response->set_details("internal error");
         response->set_success(false);
-        std::cerr << std::format("Server: {}\n", exp.what());
+        std::cerr << std::format("server: {}\n", exp.what());
     }
 
     return grpc::Status::OK;
@@ -469,12 +470,13 @@ grpc::Status server::GetMilestones(grpc::ServerContext* context, GetMilestonesRe
     {
         response->set_details(exp.what());
         response->set_code(1);
+        std::cerr << std::format("client {}: {}\n", request->user().token(), exp.what());
     }
     catch (std::exception const& exp)
     {
         response->set_details("internal error");
         response->set_code(1);
-        std::cerr << std::format("Server: {}\n", exp.what());
+        std::cerr << std::format("server: {}\n", exp.what());
     }
     return grpc::Status::OK;
 }
@@ -523,10 +525,11 @@ grpc::Status server::AddMilestone(grpc::ServerContext* context, AddMilestoneRequ
         response->set_code(3);
         response->set_details(exp.what());
         response->set_success(false);
+        std::cerr << std::format("client {}: {}\n", request->user().token(), exp.what());
     }
     catch (std::exception const& exp)
     {
-        std::cerr << std::format("Server: {}\n", exp.what());
+        std::cerr << std::format("server: {}\n", exp.what());
         response->set_code(3);
         response->set_details("internal error");
         response->set_success(false);
@@ -555,10 +558,11 @@ grpc::Status server::AddRequirement(grpc::ServerContext* context, AddRequirement
         response->set_code(3);
         response->set_details(exp.what());
         response->set_success(false);
+        std::cerr << std::format("client {}: {}\n", request->user().token(), exp.what());
     }
     catch (std::exception const& exp)
     {
-        std::cerr << std::format("Server: {}\n", exp.what());
+        std::cerr << std::format("server: {}\n", exp.what());
         response->set_code(3);
         response->set_details("internal error");
         response->set_success(false);
@@ -591,10 +595,11 @@ grpc::Status server::GetRequirements(grpc::ServerContext* context, GetRequiremen
         response->set_code(3);
         response->set_details(exp.what());
         response->set_success(false);
+        std::cerr << std::format("client {}: {}\n", request->user().token(), exp.what());
     }
     catch (std::exception const& exp)
     {
-        std::cerr << std::format("Server: {}\n", exp.what());
+        std::cerr << std::format("server: {}\n", exp.what());
         response->set_code(3);
         response->set_details("internal error");
         response->set_success(false);
@@ -632,7 +637,7 @@ grpc::Status server::CreateSubject(grpc::ServerContext* context, CreateSubjectRe
         response->set_success(false);
         response->set_details("internal error");
         response->set_code(3);
-        std::cerr << std::format("Server: error while creating subject: {}\n", exp.what());
+        std::cerr << std::format("server: error while creating subject: {}\n", exp.what());
     }
 
     return grpc::Status::OK;
@@ -655,10 +660,11 @@ grpc::Status server::SearchSubjects(grpc::ServerContext* context, SearchSubjects
     }
     catch (client_exception const& exp)
     {
+        std::cerr << std::format("client {}: {}\n", request->user().token(), exp.what());
     }
     catch (std::exception const& exp)
     {
-        std::cerr << std::format("Server: error while searching for subjects: {}\n", exp.what());
+        std::cerr << std::format("server: error while searching for subjects: {}\n", exp.what());
     }
 
     return grpc::Status::OK;
@@ -721,7 +727,7 @@ grpc::Status server::ReorderMilestone(grpc::ServerContext* context, ReorderMiles
         response->set_success(false);
         response->set_details("internal error");
         response->set_code(3);
-        std::cerr << std::format("Server: error while creating subject: {}\n", exp.what());
+        std::cerr << std::format("server: error while creating subject: {}\n", exp.what());
     }
 
     return grpc::Status::OK;
@@ -763,6 +769,7 @@ grpc::Status server::RemoveMilestone(grpc::ServerContext* context, RemoveMilesto
         response->set_success(false);
         response->set_details(exp.what());
         response->set_code(1);
+        std::cerr << std::format("client {}: {}\n", request->user().token(), exp.what());
     }
     catch (std::exception const& exp)
     {
@@ -807,6 +814,7 @@ grpc::Status server::ChangeMilestoneLevel(grpc::ServerContext* context, ChangeMi
     }
     catch (client_exception const& exp)
     {
+        std::cerr << std::format("client {}: {}\n", request->user().token(), exp.what());
         response->set_success(false);
         response->set_details(exp.what());
         response->set_code(1);
@@ -853,6 +861,7 @@ grpc::Status server::RenameSubject(grpc::ServerContext* context, RenameSubjectRe
     }
     catch (client_exception const& exp)
     {
+        std::cerr << std::format("client {}: {}\n", request->user().token(), exp.what());
         response->set_details(exp.what());
         response->set_code(4);
     }
@@ -887,6 +896,7 @@ grpc::Status server::RemoveSubject(grpc::ServerContext* context, RemoveSubjectRe
     }
     catch (client_exception const& exp)
     {
+        std::cerr << std::format("client {}: {}\n", request->user().token(), exp.what());
         response->set_success(false);
         response->set_details(exp.what());
         response->set_code(1);
@@ -928,6 +938,7 @@ grpc::Status server::MergeSubjects(grpc::ServerContext* context, MergeSubjectsRe
     }
     catch (client_exception const& exp)
     {
+        std::cerr << std::format("client {}: {}\n", request->user().token(), exp.what());
         response->set_success(false);
         response->set_details(exp.what());
         response->set_code(1);
@@ -974,6 +985,7 @@ grpc::Status server::GetResources(grpc::ServerContext* context, GetResourcesRequ
     }
     catch (client_exception const& exp)
     {
+        std::cerr << std::format("client {}: {}\n", request->user().token(), exp.what());
         response->set_success(false);
         response->set_details(exp.what());
         response->set_code(1);
@@ -983,7 +995,7 @@ grpc::Status server::GetResources(grpc::ServerContext* context, GetResourcesRequ
         response->set_success(false);
         response->set_details("internal error");
         response->set_code(2);
-        std::cerr << std::format("Server: {}\n", exp.what());
+        std::cerr << std::format("server: {}\n", exp.what());
     }
 
     return grpc::Status::OK;
@@ -1017,6 +1029,7 @@ grpc::Status server::CreateResource(grpc::ServerContext* context, CreateResource
     }
     catch (client_exception const& exp)
     {
+        std::cerr << std::format("client {}: {}\n", request->user().token(), exp.what());
         response->set_success(false);
         response->set_details(exp.what());
         response->set_code(1);
@@ -1026,7 +1039,7 @@ grpc::Status server::CreateResource(grpc::ServerContext* context, CreateResource
         response->set_success(false);
         response->set_details("internal error");
         response->set_code(2);
-        std::cerr << std::format("Server: {}\n", exp.what());
+        std::cerr << std::format("server: {}\n", exp.what());
     }
 
     return grpc::Status::OK;
@@ -1065,6 +1078,7 @@ grpc::Status server::AddResourceToSubject(grpc::ServerContext* context, AddResou
     }
     catch (client_exception const& exp)
     {
+        std::cerr << std::format("client {}: {}\n", request->user().token(), exp.what());
         response->set_success(false);
         response->set_details(exp.what());
         response->set_code(1);
@@ -1074,7 +1088,7 @@ grpc::Status server::AddResourceToSubject(grpc::ServerContext* context, AddResou
         response->set_success(false);
         response->set_details("internal error");
         response->set_code(2);
-        std::cerr << std::format("Server: {}\n", exp.what());
+        std::cerr << std::format("server: {}\n", exp.what());
     }
 
     return grpc::Status::OK;
@@ -1113,6 +1127,7 @@ grpc::Status server::DropResourceFromSubject(grpc::ServerContext* context, DropR
     }
     catch (client_exception const& exp)
     {
+        std::cerr << std::format("client {}: {}\n", request->user().token(), exp.what());
         response->set_success(false);
         response->set_details(exp.what());
         response->set_code(1);
@@ -1122,7 +1137,7 @@ grpc::Status server::DropResourceFromSubject(grpc::ServerContext* context, DropR
         response->set_success(false);
         response->set_details("internal error");
         response->set_code(2);
-        std::cerr << std::format("Server: {}\n", exp.what());
+        std::cerr << std::format("server: {}\n", exp.what());
     }
 
     return grpc::Status::OK;
@@ -1161,6 +1176,7 @@ grpc::Status server::SearchResources(grpc::ServerContext* context, SearchResourc
     }
     catch (client_exception const& exp)
     {
+        std::cerr << std::format("client {}: {}\n", request->user().token(), exp.what());
         response->set_success(false);
         response->set_details(exp.what());
         response->set_code(1);
@@ -1170,7 +1186,7 @@ grpc::Status server::SearchResources(grpc::ServerContext* context, SearchResourc
         response->set_success(false);
         response->set_details("internal error");
         response->set_code(2);
-        std::cerr << std::format("Server: {}\n", exp.what());
+        std::cerr << std::format("server: {}\n", exp.what());
     }
 
     return grpc::Status::OK;
@@ -1209,6 +1225,7 @@ grpc::Status server::MergeResources(grpc::ServerContext* context, MergeResources
     }
     catch (client_exception const& exp)
     {
+        std::cerr << std::format("client {}: {}\n", request->user().token(), exp.what());
         response->set_success(false);
         response->set_details(exp.what());
         response->set_code(1);
@@ -1218,7 +1235,7 @@ grpc::Status server::MergeResources(grpc::ServerContext* context, MergeResources
         response->set_success(false);
         response->set_details("internal error");
         response->set_code(2);
-        std::cerr << std::format("Server: {}\n", exp.what());
+        std::cerr << std::format("server: {}\n", exp.what());
     }
 
     return grpc::Status::OK;
@@ -1251,6 +1268,7 @@ grpc::Status server::RemoveResource(grpc::ServerContext* context, RemoveResource
     }
     catch (client_exception const& exp)
     {
+        std::cerr << std::format("client {}: {}\n", request->user().token(), exp.what());
         response->set_success(false);
         response->set_details(exp.what());
         response->set_code(1);
@@ -1260,7 +1278,7 @@ grpc::Status server::RemoveResource(grpc::ServerContext* context, RemoveResource
         response->set_success(false);
         response->set_details("internal error");
         response->set_code(2);
-        std::cerr << std::format("Server: {}\n", exp.what());
+        std::cerr << std::format("server: {}\n", exp.what());
     }
 
     return grpc::Status::OK;
@@ -1345,6 +1363,7 @@ grpc::Status server::EditResource(grpc::ServerContext* context, EditResourceRequ
     }
     catch (client_exception const& exp)
     {
+        std::cerr << std::format("client {}: {}\n", request->user().token(), exp.what());
         response->set_success(false);
         response->set_details(exp.what());
         response->set_code(1);
@@ -1354,7 +1373,7 @@ grpc::Status server::EditResource(grpc::ServerContext* context, EditResourceRequ
         response->set_success(false);
         response->set_details("internal error");
         response->set_code(2);
-        std::cerr << std::format("Server: {}\n", exp.what());
+        std::cerr << std::format("server: {}\n", exp.what());
     }
 
     return grpc::Status::OK;
@@ -1393,11 +1412,12 @@ grpc::Status server::CreateNerve(grpc::ServerContext* context, CreateNerveReques
     }
     catch (client_exception const& exp)
     {
+        std::cerr << std::format("client {}: {}\n", request->user().token(), exp.what());
         status = grpc::Status{grpc::StatusCode::UNAVAILABLE, exp.what()};
     }
     catch (std::exception const& exp)
     {
-        std::cerr << std::format("Server: {}\n", exp.what());
+        std::cerr << std::format("server: {}\n", exp.what());
     }
 
     return status;
@@ -1426,11 +1446,12 @@ grpc::Status server::GetNerves(grpc::ServerContext* context, GetNervesRequest co
     }
     catch (client_exception const& exp)
     {
+        std::cerr << std::format("client {}: {}\n", request->user().token(), exp.what());
         status = grpc::Status{grpc::StatusCode::UNAVAILABLE, exp.what()};
     }
     catch (std::exception const& exp)
     {
-        std::cerr << std::format("Server: {}\n", exp.what());
+        std::cerr << std::format("server: {}\n", exp.what());
     }
 
     return status;
@@ -1464,11 +1485,12 @@ grpc::Status server::CreateProvider(grpc::ServerContext* context, CreateProvider
     }
     catch (client_exception const& exp)
     {
+        std::cerr << std::format("client {}: {}\n", request->user().token(), exp.what());
         status = grpc::Status{grpc::StatusCode::UNAVAILABLE, exp.what()};
     }
     catch (std::exception const& exp)
     {
-        std::cerr << std::format("Server: {}\n", exp.what());
+        std::cerr << std::format("server: {}\n", exp.what());
     }
 
     return status;
@@ -1501,11 +1523,12 @@ grpc::Status server::AddProvider(grpc::ServerContext* context, AddProviderReques
     }
     catch (client_exception const& exp)
     {
+        std::cerr << std::format("client {}: {}\n", request->user().token(), exp.what());
         status = grpc::Status{grpc::StatusCode::UNAVAILABLE, exp.what()};
     }
     catch (std::exception const& exp)
     {
-        std::cerr << std::format("Server: {}\n", exp.what());
+        std::cerr << std::format("server: {}\n", exp.what());
     }
 
     return status;
@@ -1538,11 +1561,12 @@ grpc::Status server::DropProvider(grpc::ServerContext* context, DropProviderRequ
     }
     catch (client_exception const& exp)
     {
+        std::cerr << std::format("client {}: {}\n", request->user().token(), exp.what());
         status = grpc::Status{grpc::StatusCode::UNAVAILABLE, exp.what()};
     }
     catch (std::exception const& exp)
     {
-        std::cerr << std::format("Server: {}\n", exp.what());
+        std::cerr << std::format("server: {}\n", exp.what());
     }
 
     return status;
@@ -1576,11 +1600,12 @@ grpc::Status server::SearchProviders(grpc::ServerContext* context, SearchProvide
     }
     catch (client_exception const& exp)
     {
+        std::cerr << std::format("client {}: {}\n", request->user().token(), exp.what());
         status = grpc::Status{grpc::StatusCode::UNAVAILABLE, exp.what()};
     }
     catch (std::exception const& exp)
     {
-        std::cerr << std::format("Server: {}\n", exp.what());
+        std::cerr << std::format("server: {}\n", exp.what());
     }
 
     return status;
@@ -1609,11 +1634,12 @@ grpc::Status server::RenameProvider(grpc::ServerContext* context, RenameProvider
     }
     catch (client_exception const& exp)
     {
+        std::cerr << std::format("client {}: {}\n", request->user().token(), exp.what());
         status = grpc::Status{grpc::StatusCode::UNAVAILABLE, exp.what()};
     }
     catch (std::exception const& exp)
     {
-        std::cerr << std::format("Server: {}\n", exp.what());
+        std::cerr << std::format("server: {}\n", exp.what());
     }
 
     return status;
@@ -1642,11 +1668,12 @@ grpc::Status server::RemoveProvider(grpc::ServerContext* context, RemoveProvider
     }
     catch (client_exception const& exp)
     {
+        std::cerr << std::format("client {}: {}\n", request->user().token(), exp.what());
         status = grpc::Status{grpc::StatusCode::UNAVAILABLE, exp.what()};
     }
     catch (std::exception const& exp)
     {
-        std::cerr << std::format("Server: {}\n", exp.what());
+        std::cerr << std::format("server: {}\n", exp.what());
     }
 
     return status;
@@ -1679,11 +1706,12 @@ grpc::Status server::MergeProviders(grpc::ServerContext* context, MergeProviders
     }
     catch (client_exception const& exp)
     {
+        std::cerr << std::format("client {}: {}\n", request->user().token(), exp.what());
         status = grpc::Status{grpc::StatusCode::UNAVAILABLE, exp.what()};
     }
     catch (std::exception const& exp)
     {
-        std::cerr << std::format("Server: {}\n", exp.what());
+        std::cerr << std::format("server: {}\n", exp.what());
     }
 
     return status;
@@ -1717,11 +1745,12 @@ grpc::Status server::CreatePresenter(grpc::ServerContext* context, CreatePresent
     }
     catch (client_exception const& exp)
     {
+        std::cerr << std::format("client {}: {}\n", request->user().token(), exp.what());
         status = grpc::Status{grpc::StatusCode::UNAVAILABLE, exp.what()};
     }
     catch (std::exception const& exp)
     {
-        std::cerr << std::format("Server: {}\n", exp.what());
+        std::cerr << std::format("server: {}\n", exp.what());
     }
 
     return status;
@@ -1754,11 +1783,12 @@ grpc::Status server::AddPresenter(grpc::ServerContext* context, AddPresenterRequ
     }
     catch (client_exception const& exp)
     {
+        std::cerr << std::format("client {}: {}\n", request->user().token(), exp.what());
         status = grpc::Status{grpc::StatusCode::UNAVAILABLE, exp.what()};
     }
     catch (std::exception const& exp)
     {
-        std::cerr << std::format("Server: {}\n", exp.what());
+        std::cerr << std::format("server: {}\n", exp.what());
     }
 
     return status;
@@ -1791,11 +1821,12 @@ grpc::Status server::DropPresenter(grpc::ServerContext* context, DropPresenterRe
     }
     catch (client_exception const& exp)
     {
+        std::cerr << std::format("client {}: {}\n", request->user().token(), exp.what());
         status = grpc::Status{grpc::StatusCode::UNAVAILABLE, exp.what()};
     }
     catch (std::exception const& exp)
     {
-        std::cerr << std::format("Server: {}\n", exp.what());
+        std::cerr << std::format("server: {}\n", exp.what());
     }
 
     return status;
@@ -1829,11 +1860,12 @@ grpc::Status server::SearchPresenters(grpc::ServerContext* context, SearchPresen
     }
     catch (client_exception const& exp)
     {
+        std::cerr << std::format("client {}: {}\n", request->user().token(), exp.what());
         status = grpc::Status{grpc::StatusCode::UNAVAILABLE, exp.what()};
     }
     catch (std::exception const& exp)
     {
-        std::cerr << std::format("Server: {}\n", exp.what());
+        std::cerr << std::format("server: {}\n", exp.what());
     }
 
     return status;
@@ -1862,11 +1894,12 @@ grpc::Status server::RenamePresenter(grpc::ServerContext* context, RenamePresent
     }
     catch (client_exception const& exp)
     {
+        std::cerr << std::format("client {}: {}\n", request->user().token(), exp.what());
         status = grpc::Status{grpc::StatusCode::UNAVAILABLE, exp.what()};
     }
     catch (std::exception const& exp)
     {
-        std::cerr << std::format("Server: {}\n", exp.what());
+        std::cerr << std::format("server: {}\n", exp.what());
     }
 
     return status;
@@ -1895,11 +1928,12 @@ grpc::Status server::RemovePresenter(grpc::ServerContext* context, RemovePresent
     }
     catch (client_exception const& exp)
     {
+        std::cerr << std::format("client {}: {}\n", request->user().token(), exp.what());
         status = grpc::Status{grpc::StatusCode::UNAVAILABLE, exp.what()};
     }
     catch (std::exception const& exp)
     {
-        std::cerr << std::format("Server: {}\n", exp.what());
+        std::cerr << std::format("server: {}\n", exp.what());
     }
 
     return status;
@@ -1932,11 +1966,12 @@ grpc::Status server::MergePresenters(grpc::ServerContext* context, MergePresente
     }
     catch (client_exception const& exp)
     {
+        std::cerr << std::format("client {}: {}\n", request->user().token(), exp.what());
         status = grpc::Status{grpc::StatusCode::UNAVAILABLE, exp.what()};
     }
     catch (std::exception const& exp)
     {
-        std::cerr << std::format("Server: {}\n", exp.what());
+        std::cerr << std::format("server: {}\n", exp.what());
     }
 
     return status;
@@ -1968,11 +2003,12 @@ grpc::Status server::GetTopics(grpc::ServerContext* context, GetTopicsRequest co
     }
     catch (client_exception const& exp)
     {
+        std::cerr << std::format("client {}: {}\n", request->user().token(), exp.what());
         status = grpc::Status{grpc::StatusCode::UNAVAILABLE, exp.what()};
     }
     catch (std::exception const& exp)
     {
-        std::cerr << std::format("Server: {}\n", exp.what());
+        std::cerr << std::format("server: {}\n", exp.what());
     }
 
     return status;
@@ -2006,11 +2042,12 @@ grpc::Status server::CreateTopic(grpc::ServerContext* context, CreateTopicReques
     }
     catch (client_exception const& exp)
     {
+        std::cerr << std::format("client {}: {}\n", request->user().token(), exp.what());
         status = grpc::Status{grpc::StatusCode::UNAVAILABLE, exp.what()};
     }
     catch (std::exception const& exp)
     {
-        std::cerr << std::format("Server: {}\n", exp.what());
+        std::cerr << std::format("server: {}\n", exp.what());
     }
 
     return status;
@@ -2046,11 +2083,12 @@ grpc::Status server::ReorderTopic(grpc::ServerContext* context, ReorderTopicRequ
     }
     catch (client_exception const& exp)
     {
+        std::cerr << std::format("client {}: {}\n", request->user().token(), exp.what());
         status = grpc::Status{grpc::StatusCode::UNAVAILABLE, exp.what()};
     }
     catch (std::exception const& exp)
     {
-        std::cerr << std::format("Server: {}\n", exp.what());
+        std::cerr << std::format("server: {}\n", exp.what());
     }
 
     return status;
@@ -2082,11 +2120,12 @@ grpc::Status server::RemoveTopic(grpc::ServerContext* context, RemoveTopicReques
     }
     catch (client_exception const& exp)
     {
+        std::cerr << std::format("client {}: {}\n", request->user().token(), exp.what());
         status = grpc::Status{grpc::StatusCode::UNAVAILABLE, exp.what()};
     }
     catch (std::exception const& exp)
     {
-        std::cerr << std::format("Server: {}\n", exp.what());
+        std::cerr << std::format("server: {}\n", exp.what());
     }
 
     return status;
@@ -2122,11 +2161,12 @@ grpc::Status server::MergeTopics(grpc::ServerContext* context, MergeTopicsReques
     }
     catch (client_exception const& exp)
     {
+        std::cerr << std::format("client {}: {}\n", request->user().token(), exp.what());
         status = grpc::Status{grpc::StatusCode::UNAVAILABLE, exp.what()};
     }
     catch (std::exception const& exp)
     {
-        std::cerr << std::format("Server: {}\n", exp.what());
+        std::cerr << std::format("server: {}\n", exp.what());
     }
 
     return status;
@@ -2187,11 +2227,12 @@ grpc::Status server::EditTopic(grpc::ServerContext* context, EditTopicRequest co
     }
     catch (client_exception const& exp)
     {
+        std::cerr << std::format("client {}: {}\n", request->user().token(), exp.what());
         status = grpc::Status{grpc::StatusCode::UNAVAILABLE, exp.what()};
     }
     catch (std::exception const& exp)
     {
-        std::cerr << std::format("Server: {}\n", exp.what());
+        std::cerr << std::format("server: {}\n", exp.what());
     }
 
     return status;
@@ -2232,11 +2273,12 @@ grpc::Status server::MoveTopic(grpc::ServerContext* context, MoveTopicRequest co
     }
     catch (client_exception const& exp)
     {
+        std::cerr << std::format("client {}: {}\n", request->user().token(), exp.what());
         status = grpc::Status{grpc::StatusCode::UNAVAILABLE, exp.what()};
     }
     catch (std::exception const& exp)
     {
-        std::cerr << std::format("Server: {}\n", exp.what());
+        std::cerr << std::format("server: {}\n", exp.what());
     }
 
     return status;
@@ -2273,11 +2315,12 @@ grpc::Status server::SearchTopics(grpc::ServerContext* context, SearchTopicsRequ
     }
     catch (client_exception const& exp)
     {
+        std::cerr << std::format("client {}: {}\n", request->user().token(), exp.what());
         status = grpc::Status{grpc::StatusCode::UNAVAILABLE, exp.what()};
     }
     catch (std::exception const& exp)
     {
-        std::cerr << std::format("Server: {}\n", exp.what());
+        std::cerr << std::format("server: {}\n", exp.what());
     }
 
     return status;
@@ -2308,11 +2351,12 @@ grpc::Status server::GetSections(grpc::ServerContext* context, GetSectionsReques
     }
     catch (client_exception const& exp)
     {
+        std::cerr << std::format("client {}: {}\n", request->user().token(), exp.what());
         status = grpc::Status{grpc::StatusCode::UNAVAILABLE, exp.what()};
     }
     catch (std::exception const& exp)
     {
-        std::cerr << std::format("Server: {}\n", exp.what());
+        std::cerr << std::format("server: {}\n", exp.what());
     }
 
     return status;
@@ -2345,11 +2389,12 @@ grpc::Status server::CreateSection(grpc::ServerContext* context, CreateSectionRe
     }
     catch (client_exception const& exp)
     {
+        std::cerr << std::format("client {}: {}\n", request->user().token(), exp.what());
         status = grpc::Status{grpc::StatusCode::UNAVAILABLE, exp.what()};
     }
     catch (std::exception const& exp)
     {
-        std::cerr << std::format("Server: {}\n", exp.what());
+        std::cerr << std::format("server: {}\n", exp.what());
     }
 
     return status;
@@ -2385,11 +2430,12 @@ grpc::Status server::ReorderSection(grpc::ServerContext* context, ReorderSection
     }
     catch (client_exception const& exp)
     {
+        std::cerr << std::format("client {}: {}\n", request->user().token(), exp.what());
         status = grpc::Status{grpc::StatusCode::UNAVAILABLE, exp.what()};
     }
     catch (std::exception const& exp)
     {
-        std::cerr << std::format("Server: {}\n", exp.what());
+        std::cerr << std::format("server: {}\n", exp.what());
     }
 
     return status;
@@ -2421,11 +2467,12 @@ grpc::Status server::RemoveSection(grpc::ServerContext* context, RemoveSectionRe
     }
     catch (client_exception const& exp)
     {
+        std::cerr << std::format("client {}: {}\n", request->user().token(), exp.what());
         status = grpc::Status{grpc::StatusCode::UNAVAILABLE, exp.what()};
     }
     catch (std::exception const& exp)
     {
-        std::cerr << std::format("Server: {}\n", exp.what());
+        std::cerr << std::format("server: {}\n", exp.what());
     }
 
     return status;
@@ -2461,11 +2508,12 @@ grpc::Status server::MergeSections(grpc::ServerContext* context, MergeSectionsRe
     }
     catch (client_exception const& exp)
     {
+        std::cerr << std::format("client {}: {}\n", request->user().token(), exp.what());
         status = grpc::Status{grpc::StatusCode::UNAVAILABLE, exp.what()};
     }
     catch (std::exception const& exp)
     {
-        std::cerr << std::format("Server: {}\n", exp.what());
+        std::cerr << std::format("server: {}\n", exp.what());
     }
 
     return status;
@@ -2518,11 +2566,12 @@ grpc::Status server::EditSection(grpc::ServerContext* context, EditSectionReques
     }
     catch (client_exception const& exp)
     {
+        std::cerr << std::format("client {}: {}\n", request->user().token(), exp.what());
         status = grpc::Status{grpc::StatusCode::UNAVAILABLE, exp.what()};
     }
     catch (std::exception const& exp)
     {
-        std::cerr << std::format("Server: {}\n", exp.what());
+        std::cerr << std::format("server: {}\n", exp.what());
     }
 
     return status;
@@ -2562,11 +2611,12 @@ grpc::Status server::MoveSection(grpc::ServerContext* context, MoveSectionReques
     }
     catch (client_exception const& exp)
     {
+        std::cerr << std::format("client {}: {}\n", request->user().token(), exp.what());
         status = grpc::Status{grpc::StatusCode::UNAVAILABLE, exp.what()};
     }
     catch (std::exception const& exp)
     {
-        std::cerr << std::format("Server: {}\n", exp.what());
+        std::cerr << std::format("server: {}\n", exp.what());
     }
 
     return status;
@@ -2603,11 +2653,12 @@ grpc::Status server::SearchSections(grpc::ServerContext* context, SearchSections
     }
     catch (client_exception const& exp)
     {
+        std::cerr << std::format("client {}: {}\n", request->user().token(), exp.what());
         status = grpc::Status{grpc::StatusCode::UNAVAILABLE, exp.what()};
     }
     catch (std::exception const& exp)
     {
-        std::cerr << std::format("Server: {}\n", exp.what());
+        std::cerr << std::format("server: {}\n", exp.what());
     }
 
     return status;
@@ -2640,11 +2691,12 @@ grpc::Status server::CreateCard(grpc::ServerContext* context, CreateCardRequest 
     }
     catch (client_exception const& exp)
     {
+        std::cerr << std::format("client {}: {}\n", request->user().token(), exp.what());
         status = grpc::Status{grpc::StatusCode::UNAVAILABLE, exp.what()};
     }
     catch (std::exception const& exp)
     {
-        std::cerr << std::format("Server: {}\n", exp.what());
+        std::cerr << std::format("server: {}\n", exp.what());
     }
 
     return status;
@@ -2680,11 +2732,12 @@ grpc::Status server::AddCardToSection(grpc::ServerContext* context, AddCardToSec
     }
     catch (client_exception const& exp)
     {
+        std::cerr << std::format("client {}: {}\n", request->user().token(), exp.what());
         status = grpc::Status{grpc::StatusCode::UNAVAILABLE, exp.what()};
     }
     catch (std::exception const& exp)
     {
-        std::cerr << std::format("Server: {}\n", exp.what());
+        std::cerr << std::format("server: {}\n", exp.what());
     }
 
     return status;
@@ -2720,11 +2773,12 @@ grpc::Status server::AddCardToTopic(grpc::ServerContext* context, AddCardToTopic
     }
     catch (client_exception const& exp)
     {
+        std::cerr << std::format("client {}: {}\n", request->user().token(), exp.what());
         status = grpc::Status{grpc::StatusCode::UNAVAILABLE, exp.what()};
     }
     catch (std::exception const& exp)
     {
-        std::cerr << std::format("Server: {}\n", exp.what());
+        std::cerr << std::format("server: {}\n", exp.what());
     }
 
     return status;
@@ -2752,11 +2806,12 @@ grpc::Status server::RemoveCard(grpc::ServerContext* context, RemoveCardRequest 
     }
     catch (client_exception const& exp)
     {
+        std::cerr << std::format("client {}: {}\n", request->user().token(), exp.what());
         status = grpc::Status{grpc::StatusCode::UNAVAILABLE, exp.what()};
     }
     catch (std::exception const& exp)
     {
-        std::cerr << std::format("Server: {}\n", exp.what());
+        std::cerr << std::format("server: {}\n", exp.what());
     }
 
     return status;
@@ -2792,11 +2847,12 @@ grpc::Status server::MergeCards(grpc::ServerContext* context, MergeCardsRequest 
     }
     catch (client_exception const& exp)
     {
+        std::cerr << std::format("client {}: {}\n", request->user().token(), exp.what());
         status = grpc::Status{grpc::StatusCode::UNAVAILABLE, exp.what()};
     }
     catch (std::exception const& exp)
     {
-        std::cerr << std::format("Server: {}\n", exp.what());
+        std::cerr << std::format("server: {}\n", exp.what());
     }
 
     return status;
@@ -2833,11 +2889,12 @@ grpc::Status server::SearchCards(grpc::ServerContext* context, SearchCardsReques
     }
     catch (client_exception const& exp)
     {
+        std::cerr << std::format("client {}: {}\n", request->user().token(), exp.what());
         status = grpc::Status{grpc::StatusCode::UNAVAILABLE, exp.what()};
     }
     catch (std::exception const& exp)
     {
-        std::cerr << std::format("Server: {}\n", exp.what());
+        std::cerr << std::format("server: {}\n", exp.what());
     }
 
     return status;
@@ -2877,11 +2934,12 @@ grpc::Status server::MoveCardToSection(grpc::ServerContext* context, MoveCardToS
     }
     catch (client_exception const& exp)
     {
+        std::cerr << std::format("client {}: {}\n", request->user().token(), exp.what());
         status = grpc::Status{grpc::StatusCode::UNAVAILABLE, exp.what()};
     }
     catch (std::exception const& exp)
     {
-        std::cerr << std::format("Server: {}\n", exp.what());
+        std::cerr << std::format("server: {}\n", exp.what());
     }
 
     return status;
@@ -2913,11 +2971,12 @@ grpc::Status server::MarkSectionAsReviewed(grpc::ServerContext* context, MarkSec
     }
     catch (client_exception const& exp)
     {
+        std::cerr << std::format("client {}: {}\n", request->user().token(), exp.what());
         status = grpc::Status{grpc::StatusCode::UNAVAILABLE, exp.what()};
     }
     catch (std::exception const& exp)
     {
-        std::cerr << std::format("Server: {}\n", exp.what());
+        std::cerr << std::format("server: {}\n", exp.what());
     }
 
     return status;
@@ -2958,11 +3017,54 @@ grpc::Status server::GetPracticeCards(grpc::ServerContext* context, GetPracticeC
     }
     catch (client_exception const& exp)
     {
+        std::cerr << std::format("client {}: {}\n", request->user().token(), exp.what());
         status = grpc::Status{grpc::StatusCode::UNAVAILABLE, exp.what()};
     }
     catch (std::exception const& exp)
     {
-        std::cerr << std::format("Server: {}\n", exp.what());
+        std::cerr << std::format("server: {}\n", exp.what());
+    }
+
+    return status;
+}
+
+grpc::Status server::GetPracticeTopics(grpc::ServerContext* context, GetPracticeTopicsRequest const* request, GetPracticeTopicsResponse* response)
+{
+    grpc::Status status{grpc::StatusCode::INTERNAL, {}};
+
+    try
+    {
+        if (!request->has_user() || !session_is_valid(request->user()))
+        {
+            status = grpc::Status{grpc::StatusCode::UNAUTHENTICATED, "invalid user"};
+        }
+        else if (request->roadmap().id() == 0)
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid roadmap"};
+        }
+        else if (request->subject().id() == 0)
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid subject"};
+        }
+        else
+        {
+            std::shared_ptr<User> const user{m_database->get_user(request->user().token(), request->user().device())};
+            for (Topic const& topic: m_database->get_practice_topics(user->id(), request->roadmap().id(), request->subject().id()))
+            {
+                *response->add_topic() = topic;
+            }
+            status = grpc::Status{grpc::StatusCode::OK, {}};
+        }
+    }
+    catch (client_exception const& exp)
+    {
+        std::cerr << std::format("client {}: {}\n", request->user().token(), exp.what());
+        status = grpc::Status{grpc::StatusCode::UNAVAILABLE, exp.what()};
+        std::cerr << std::format("client {}: {}\n", request->user().token(), exp.what());
+    }
+    catch (std::exception const& exp)
+    {
+        std::cerr << std::format("server: {}\n", exp.what());
     }
 
     return status;
@@ -3007,11 +3109,12 @@ grpc::Status server::MoveCardToTopic(grpc::ServerContext* context, MoveCardToTop
     }
     catch (client_exception const& exp)
     {
+        std::cerr << std::format("client {}: {}\n", request->user().token(), exp.what());
         status = grpc::Status{grpc::StatusCode::UNAVAILABLE, exp.what()};
     }
     catch (std::exception const& exp)
     {
-        std::cerr << std::format("Server: {}\n", exp.what());
+        std::cerr << std::format("server: {}\n", exp.what());
     }
 
     return status;
@@ -3047,11 +3150,12 @@ grpc::Status server::CreateAssessment(grpc::ServerContext* context, CreateAssess
     }
     catch (client_exception const& exp)
     {
+        std::cerr << std::format("client {}: {}\n", request->user().token(), exp.what());
         status = grpc::Status{grpc::StatusCode::UNAVAILABLE, exp.what()};
     }
     catch (std::exception const& exp)
     {
-        std::cerr << std::format("Server: {}\n", exp.what());
+        std::cerr << std::format("server: {}\n", exp.what());
     }
 
     return status;
@@ -3087,11 +3191,12 @@ grpc::Status server::GetAssessments(grpc::ServerContext* context, GetAssessments
     }
     catch (client_exception const& exp)
     {
+        std::cerr << std::format("client {}: {}\n", request->user().token(), exp.what());
         status = grpc::Status{grpc::StatusCode::UNAVAILABLE, exp.what()};
     }
     catch (std::exception const& exp)
     {
-        std::cerr << std::format("Server: {}\n", exp.what());
+        std::cerr << std::format("server: {}\n", exp.what());
     }
 
     return status;
@@ -3127,11 +3232,12 @@ grpc::Status server::ExpandAssessment(grpc::ServerContext* context, ExpandAssess
     }
     catch (client_exception const& exp)
     {
+        std::cerr << std::format("client {}: {}\n", request->user().token(), exp.what());
         status = grpc::Status{grpc::StatusCode::UNAVAILABLE, exp.what()};
     }
     catch (std::exception const& exp)
     {
-        std::cerr << std::format("Server: {}\n", exp.what());
+        std::cerr << std::format("server: {}\n", exp.what());
     }
 
     return status;
@@ -3167,11 +3273,12 @@ grpc::Status server::DiminishAssessment(grpc::ServerContext* context, DiminishAs
     }
     catch (client_exception const& exp)
     {
+        std::cerr << std::format("client {}: {}\n", request->user().token(), exp.what());
         status = grpc::Status{grpc::StatusCode::UNAVAILABLE, exp.what()};
     }
     catch (std::exception const& exp)
     {
-        std::cerr << std::format("Server: {}\n", exp.what());
+        std::cerr << std::format("server: {}\n", exp.what());
     }
 
     return status;
@@ -3204,11 +3311,12 @@ grpc::Status server::IsAssimilated(grpc::ServerContext* context, IsAssimilatedRe
     }
     catch (client_exception const& exp)
     {
+        std::cerr << std::format("client {}: {}\n", request->user().token(), exp.what());
         status = grpc::Status{grpc::StatusCode::UNAVAILABLE, exp.what()};
     }
     catch (std::exception const& exp)
     {
-        std::cerr << std::format("Server: {}\n", exp.what());
+        std::cerr << std::format("server: {}\n", exp.what());
     }
 
     return status;
@@ -3251,11 +3359,12 @@ grpc::Status server::EditCard(grpc::ServerContext* context, EditCardRequest cons
     }
     catch (client_exception const& exp)
     {
+        std::cerr << std::format("client {}: {}\n", request->user().token(), exp.what());
         status = grpc::Status{grpc::StatusCode::UNAVAILABLE, exp.what()};
     }
     catch (std::exception const& exp)
     {
-        std::cerr << std::format("Server: {}\n", exp.what());
+        std::cerr << std::format("server: {}\n", exp.what());
     }
 
     return status;
@@ -3292,11 +3401,12 @@ grpc::Status server::CreateBlock(grpc::ServerContext* context, CreateBlockReques
     }
     catch (client_exception const& exp)
     {
+        std::cerr << std::format("client {}: {}\n", request->user().token(), exp.what());
         status = grpc::Status{grpc::StatusCode::UNAVAILABLE, exp.what()};
     }
     catch (std::exception const& exp)
     {
-        std::cerr << std::format("Server: {}\n", exp.what());
+        std::cerr << std::format("server: {}\n", exp.what());
     }
 
     return status;
@@ -3327,11 +3437,12 @@ grpc::Status server::GetBlocks(grpc::ServerContext* context, GetBlocksRequest co
     }
     catch (client_exception const& exp)
     {
+        std::cerr << std::format("client {}: {}\n", request->user().token(), exp.what());
         status = grpc::Status{grpc::StatusCode::UNAVAILABLE, exp.what()};
     }
     catch (std::exception const& exp)
     {
-        std::cerr << std::format("Server: {}\n", exp.what());
+        std::cerr << std::format("server: {}\n", exp.what());
     }
 
     return status;
@@ -3363,11 +3474,12 @@ grpc::Status server::RemoveBlock(grpc::ServerContext* context, RemoveBlockReques
     }
     catch (client_exception const& exp)
     {
+        std::cerr << std::format("client {}: {}\n", request->user().token(), exp.what());
         status = grpc::Status{grpc::StatusCode::UNAVAILABLE, exp.what()};
     }
     catch (std::exception const& exp)
     {
-        std::cerr << std::format("Server: {}\n", exp.what());
+        std::cerr << std::format("server: {}\n", exp.what());
     }
 
     return status;
@@ -3440,11 +3552,12 @@ grpc::Status server::EditBlock(grpc::ServerContext* context, EditBlockRequest co
     }
     catch (client_exception const& exp)
     {
+        std::cerr << std::format("client {}: {}\n", request->user().token(), exp.what());
         status = grpc::Status{grpc::StatusCode::UNAVAILABLE, exp.what()};
     }
     catch (std::exception const& exp)
     {
-        std::cerr << std::format("Server: {}\n", exp.what());
+        std::cerr << std::format("server: {}\n", exp.what());
     }
 
     return status;
@@ -3480,11 +3593,12 @@ grpc::Status server::ReorderBlock(grpc::ServerContext* context, ReorderBlockRequ
     }
     catch (client_exception const& exp)
     {
+        std::cerr << std::format("client {}: {}\n", request->user().token(), exp.what());
         status = grpc::Status{grpc::StatusCode::UNAVAILABLE, exp.what()};
     }
     catch (std::exception const& exp)
     {
-        std::cerr << std::format("Server: {}\n", exp.what());
+        std::cerr << std::format("server: {}\n", exp.what());
     }
 
     return status;
@@ -3520,11 +3634,12 @@ grpc::Status server::MergeBlocks(grpc::ServerContext* context, MergeBlocksReques
     }
     catch (client_exception const& exp)
     {
+        std::cerr << std::format("client {}: {}\n", request->user().token(), exp.what());
         status = grpc::Status{grpc::StatusCode::UNAVAILABLE, exp.what()};
     }
     catch (std::exception const& exp)
     {
-        std::cerr << std::format("Server: {}\n", exp.what());
+        std::cerr << std::format("server: {}\n", exp.what());
     }
 
     return status;
@@ -3559,11 +3674,12 @@ grpc::Status server::SplitBlock(grpc::ServerContext* context, SplitBlockRequest 
     }
     catch (client_exception const& exp)
     {
+        std::cerr << std::format("client {}: {}\n", request->user().token(), exp.what());
         status = grpc::Status{grpc::StatusCode::UNAVAILABLE, exp.what()};
     }
     catch (std::exception const& exp)
     {
-        std::cerr << std::format("Server: {}\n", exp.what());
+        std::cerr << std::format("server: {}\n", exp.what());
     }
 
     return status;
@@ -3591,11 +3707,12 @@ grpc::Status server::MarkCardAsReviewed(grpc::ServerContext* context, MarkCardAs
     }
     catch (client_exception const& exp)
     {
+        std::cerr << std::format("client {}: {}\n", request->user().token(), exp.what());
         status = grpc::Status{grpc::StatusCode::UNAVAILABLE, exp.what()};
     }
     catch (std::exception const& exp)
     {
-        std::cerr << std::format("Server: {}\n", exp.what());
+        std::cerr << std::format("server: {}\n", exp.what());
     }
 
     return status;
@@ -3631,11 +3748,12 @@ grpc::Status server::GetSectionCards(grpc::ServerContext* context, flashback::Ge
     }
     catch (client_exception const& exp)
     {
+        std::cerr << std::format("client {}: {}\n", request->user().token(), exp.what());
         status = grpc::Status{grpc::StatusCode::UNAVAILABLE, exp.what()};
     }
     catch (std::exception const& exp)
     {
-        std::cerr << std::format("Server: {}\n", exp.what());
+        std::cerr << std::format("server: {}\n", exp.what());
     }
 
     return status;
@@ -3671,11 +3789,12 @@ grpc::Status server::GetTopicCards(grpc::ServerContext* context, flashback::GetT
     }
     catch (client_exception const& exp)
     {
+        std::cerr << std::format("client {}: {}\n", request->user().token(), exp.what());
         status = grpc::Status{grpc::StatusCode::UNAVAILABLE, exp.what()};
     }
     catch (std::exception const& exp)
     {
-        std::cerr << std::format("Server: {}\n", exp.what());
+        std::cerr << std::format("server: {}\n", exp.what());
     }
 
     return status;
@@ -3708,11 +3827,12 @@ grpc::Status server::Study(grpc::ServerContext* context, StudyRequest const* req
     }
     catch (client_exception const& exp)
     {
+        std::cerr << std::format("client {}: {}\n", request->user().token(), exp.what());
         status = grpc::Status{grpc::StatusCode::UNAVAILABLE, exp.what()};
     }
     catch (std::exception const& exp)
     {
-        std::cerr << std::format("Server: {}\n", exp.what());
+        std::cerr << std::format("server: {}\n", exp.what());
     }
 
     return status;
@@ -3745,11 +3865,12 @@ grpc::Status server::MakeProgress(grpc::ServerContext* context, MakeProgressRequ
     }
     catch (client_exception const& exp)
     {
+        std::cerr << std::format("client {}: {}\n", request->user().token(), exp.what());
         status = grpc::Status{grpc::StatusCode::UNAVAILABLE, exp.what()};
     }
     catch (std::exception const& exp)
     {
-        std::cerr << std::format("Server: {}\n", exp.what());
+        std::cerr << std::format("server: {}\n", exp.what());
     }
 
     return status;
@@ -3777,11 +3898,12 @@ grpc::Status server::GetProgressWeight(grpc::ServerContext* context, GetProgress
     }
     catch (client_exception const& exp)
     {
+        std::cerr << std::format("client {}: {}\n", request->user().token(), exp.what());
         status = grpc::Status{grpc::StatusCode::UNAVAILABLE, exp.what()};
     }
     catch (std::exception const& exp)
     {
-        std::cerr << std::format("Server: {}\n", exp.what());
+        std::cerr << std::format("server: {}\n", exp.what());
     }
 
     return status;
@@ -3793,7 +3915,7 @@ std::string server::calculate_hash(std::string_view password)
 
     if (crypto_pwhash_str(buffer, password.data(), password.size(), crypto_pwhash_OPSLIMIT_MODERATE, crypto_pwhash_MEMLIMIT_MODERATE) != 0)
     {
-        throw std::runtime_error("Server: sodium cannot create hash");
+        throw std::runtime_error("server: sodium cannot create hash");
     }
 
     return buffer;

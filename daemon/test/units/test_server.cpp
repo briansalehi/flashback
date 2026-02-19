@@ -3691,3 +3691,7 @@ TEST_F(test_server, GetSectionCards)
 TEST_F(test_server, GetTopicCards)
 {
 }
+
+TEST_F(test_server, GetPracticeTopics)
+{
+}

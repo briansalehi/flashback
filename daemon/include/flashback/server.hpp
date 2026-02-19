@@ -118,6 +118,7 @@ public:
 
     // topic page
     grpc::Status GetPracticeCards(grpc::ServerContext* context, GetPracticeCardsRequest const* request, GetPracticeCardsResponse* response) override;
+    grpc::Status GetPracticeTopics(grpc::ServerContext* context, GetPracticeTopicsRequest const* request, GetPracticeTopicsResponse* response) override;
     grpc::Status MoveCardToTopic(grpc::ServerContext* context, MoveCardToTopicRequest const* request, MoveCardToTopicResponse* response) override;
     grpc::Status CreateAssessment(grpc::ServerContext* context, CreateAssessmentRequest const* request, CreateAssessmentResponse* response) override;
     grpc::Status GetAssessments(grpc::ServerContext* context, GetAssessmentsRequest const* request, GetAssessmentsResponse* response) override;

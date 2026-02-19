@@ -211,6 +211,9 @@ message MarkSectionAsReviewedResponse { }
 message GetPracticeCardsRequest { User user = 1; Roadmap roadmap = 2; Subject subject = 3; Topic topic = 4; }
 message GetPracticeCardsResponse { repeated Card card = 1; }
 
+message GetPracticeTopicsRequest { User user = 1; Roadmap roadmap = 2; Subject subject = 3; }
+message GetPracticeTopicsResponse { repeated Topic topic = 1; }
+
 message EditTopicRequest { User user = 1; Subject subject = 2; Topic topic = 3; Topic target = 4; }
 message EditTopicResponse { }
 
