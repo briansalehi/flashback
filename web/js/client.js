@@ -1002,10 +1002,12 @@ class FlashbackClient {
         });
     }
 
-    async editUser() {
+    async editUser(name, email) {
         return new Promise((resolve, reject) => {
             const request = new proto.flashback.EditUserRequest();
             const user = this.getAuthenticatedUser();
+            user.setName(name);
+            user.setEmail(email);
             request.setUser(user);
 
             this.client.editUser(request, this.getMetadata(), (err) => {

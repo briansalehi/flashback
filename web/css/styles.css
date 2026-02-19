@@ -198,6 +198,27 @@ p { margin-bottom: var(--space-sm); }
     font-size: 0.95rem;
 }
 
+/* Messages */
+.success-message,
+.error-message {
+    padding: var(--space-sm) var(--space-md);
+    border-radius: var(--radius);
+    margin-bottom: var(--space-md);
+    font-weight: 500;
+}
+
+.success-message {
+    background: rgba(82, 166, 117, 0.1);
+    color: var(--success);
+    border: 1px solid var(--success);
+}
+
+.error-message {
+    background: rgba(200, 90, 84, 0.1);
+    color: var(--error);
+    border: 1px solid var(--error);
+}
+
 .form-input,
 .form-textarea,
 .form-select {
