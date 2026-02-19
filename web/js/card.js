@@ -366,6 +366,9 @@ async function loadBlocks() {
         const cardId = UI.getUrlParam('cardId');
         const blocks = await client.getBlocks(cardId);
 
+        // Store blocks globally for editing
+        currentBlocks = blocks;
+
         UI.toggleElement('loading', false);
 
         if (blocks.length === 0) {
@@ -388,11 +391,17 @@ function renderBlocks(blocks) {
 
     const blockTypes = ['text', 'code', 'image'];
 
-    blocks.forEach(block => {
+    blocks.forEach((block, index) => {
         const blockItem = document.createElement('div');
         blockItem.className = 'block-item';
+        blockItem.id = `block-${index}`;
 
         const typeName = blockTypes[block.type] || 'text';
+
+        // Display mode
+        const displayDiv = document.createElement('div');
+        displayDiv.className = 'block-display';
+        displayDiv.id = `block-display-${index}`;
 
         let metadataHtml = '';
         if (block.metadata) {
@@ -413,15 +422,159 @@ function renderBlocks(blocks) {
             contentHtml = `<div class="block-content">${UI.escapeHtml(block.content)}</div>`;
         }
 
-        blockItem.innerHTML = `
-            ${metadataHtml}
-            ${extensionHtml}
+        displayDiv.innerHTML = `
+            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 0.5rem;">
+                <div>
+                    ${metadataHtml}
+                    ${extensionHtml}
+                </div>
+                <button class="btn btn-secondary" onclick="editBlock(${index})" style="padding: 0.25rem 0.75rem; font-size: 0.875rem;">Edit</button>
+            </div>
             ${contentHtml}
         `;
 
+        // Edit mode
+        const editDiv = document.createElement('div');
+        editDiv.className = 'block-edit';
+        editDiv.id = `block-edit-${index}`;
+        editDiv.style.display = 'none';
+
+        const extensionValue = block.extension !== undefined && block.extension !== null ? block.extension : '';
+        const metadataValue = block.metadata !== undefined && block.metadata !== null ? block.metadata : '';
+        const contentValue = block.content !== undefined && block.content !== null ? block.content : '';
+
+        editDiv.innerHTML = `
+            <div style="margin-bottom: 1rem;">
+                <label style="display: block; margin-bottom: 0.25rem; font-weight: 500;">Type: <span style="color: red;">*</span></label>
+                <select id="block-type-${index}" class="form-input" style="width: 100%;">
+                    <option value="0" ${block.type === 0 ? 'selected' : ''}>Text</option>
+                    <option value="1" ${block.type === 1 ? 'selected' : ''}>Code</option>
+                    <option value="2" ${block.type === 2 ? 'selected' : ''}>Image</option>
+                </select>
+            </div>
+            <div style="margin-bottom: 1rem;">
+                <label style="display: block; margin-bottom: 0.25rem; font-weight: 500;">Extension: <span style="color: red;">*</span></label>
+                <input type="text" id="block-extension-${index}" class="form-input" style="width: 100%;" value="${UI.escapeHtml(extensionValue)}" placeholder="e.g., js, py, cpp" required>
+            </div>
+            <div style="margin-bottom: 1rem;">
+                <label style="display: block; margin-bottom: 0.25rem; font-weight: 500;">Metadata (optional):</label>
+                <input type="text" id="block-metadata-${index}" class="form-input" style="width: 100%;" value="${UI.escapeHtml(metadataValue)}" placeholder="e.g., Important, Note, Warning">
+            </div>
+            <div style="margin-bottom: 1rem;">
+                <label style="display: block; margin-bottom: 0.25rem; font-weight: 500;">Content: <span style="color: red;">*</span></label>
+                <textarea id="block-content-${index}" class="form-input" style="width: 100%; min-height: 150px; font-family: monospace;" placeholder="Enter block content..." required>${UI.escapeHtml(contentValue)}</textarea>
+            </div>
+            <div style="display: flex; gap: 0.5rem;">
+                <button class="btn btn-primary" onclick="saveBlock(${index})" id="save-block-btn-${index}">Save</button>
+                <button class="btn btn-secondary" onclick="cancelEditBlock(${index})">Cancel</button>
+            </div>
+        `;
+
+        blockItem.appendChild(displayDiv);
+        blockItem.appendChild(editDiv);
         container.appendChild(blockItem);
     });
 }
+
+// Global variable to store current blocks
+let currentBlocks = [];
+
+window.editBlock = function(index) {
+    const displayDiv = document.getElementById(`block-display-${index}`);
+    const editDiv = document.getElementById(`block-edit-${index}`);
+
+    if (displayDiv && editDiv) {
+        displayDiv.style.display = 'none';
+        editDiv.style.display = 'block';
+    }
+};
+
+window.cancelEditBlock = function(index) {
+    const displayDiv = document.getElementById(`block-display-${index}`);
+    const editDiv = document.getElementById(`block-edit-${index}`);
+
+    if (displayDiv && editDiv) {
+        displayDiv.style.display = 'block';
+        editDiv.style.display = 'none';
+    }
+};
+
+window.saveBlock = async function(index) {
+    const block = currentBlocks[index];
+    if (!block) {
+        UI.showError('Block not found');
+        return;
+    }
+
+    const typeSelect = document.getElementById(`block-type-${index}`);
+    const extensionInput = document.getElementById(`block-extension-${index}`);
+    const metadataInput = document.getElementById(`block-metadata-${index}`);
+    const contentTextarea = document.getElementById(`block-content-${index}`);
+
+    if (!typeSelect || !extensionInput || !metadataInput || !contentTextarea) {
+        UI.showError('Form elements not found');
+        return;
+    }
+
+    const newType = parseInt(typeSelect.value);
+    const newExtension = extensionInput.value.trim();
+    const newMetadata = metadataInput.value.trim();
+    const newContent = contentTextarea.value.trim();
+
+    if (!newContent) {
+        UI.showError('Content cannot be empty');
+        return;
+    }
+
+    if (!newExtension) {
+        UI.showError('Extension cannot be empty');
+        return;
+    }
+
+    if (isNaN(newType)) {
+        UI.showError('Type must be selected');
+        return;
+    }
+
+    UI.setButtonLoading(`save-block-btn-${index}`, true);
+
+    try {
+        const cardId = parseInt(UI.getUrlParam('cardId'));
+
+        await client.editBlock(cardId, block.position, newType, newExtension, newContent, newMetadata);
+
+        // Update the block in our current blocks array
+        currentBlocks[index] = {
+            ...block,
+            type: newType,
+            extension: newExtension,
+            metadata: newMetadata,
+            content: newContent
+        };
+
+        // Re-render all blocks to show the updated content
+        renderBlocks(currentBlocks);
+
+        UI.setButtonLoading(`save-block-btn-${index}`, false);
+    } catch (err) {
+        console.error('Failed to edit block:', err);
+
+        // Error code 6 means ALREADY_EXISTS (no changes detected)
+        if (err.code === 6) {
+            // No changes, just exit edit mode
+            const displayDiv = document.getElementById(`block-display-${index}`);
+            const editDiv = document.getElementById(`block-edit-${index}`);
+            if (displayDiv && editDiv) {
+                displayDiv.style.display = 'block';
+                editDiv.style.display = 'none';
+            }
+        } else {
+            UI.showError('Failed to edit block: ' + (err.message || 'Unknown error'));
+        }
+
+        UI.setButtonLoading(`save-block-btn-${index}`, false);
+    }
+};
 
 function setupEditHeadline() {
     const editBtn = document.getElementById('edit-headline-btn');

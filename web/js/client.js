@@ -685,7 +685,7 @@ class FlashbackClient {
             card.setId(cardId);
             block.setType(blockType);
             block.setMetadata(blockMetadata);
-            block.setExtension(blockExtension);
+            block.setExtension$(blockExtension);
             block.setContent(blockContent);
             request.setCard(card);
             request.setBlock(block);
@@ -700,7 +700,7 @@ class FlashbackClient {
                     resolve({
                         position: block.getPosition(),
                         type: block.getType(),
-                        extension: block.getExtension(),
+                        extension: block.getExtension$(),
                         content: block.getContent(),
                         metadata: block.getMetadata()
                     });
@@ -726,7 +726,7 @@ class FlashbackClient {
                     resolve(response.getBlockList().map(block => ({
                         position: block.getPosition(),
                         type: block.getType(),
-                        extension: block.getExtension(),
+                        extension: block.getExtension$(),
                         content: block.getContent(),
                         metadata: block.getMetadata()
                     })));
@@ -958,7 +958,7 @@ class FlashbackClient {
         });
     }
 
-    async editBlock(cardId, blockType, blockExtension, blockMetadata, blockContent) {
+    async editBlock(cardId, blockPosition, blockType, blockExtension, blockContent, blockMetadata) {
         return new Promise((resolve, reject) => {
             const request = new proto.flashback.EditBlockRequest();
             const user = this.getAuthenticatedUser();
@@ -967,10 +967,11 @@ class FlashbackClient {
             card.setId(cardId);
             request.setCard(card);
             const block = new proto.flashback.Block();
+            block.setPosition(blockPosition);
             block.setType(blockType);
-            block.setExtension(blockExtension);
-            block.setMetadata(blockMetadata);
+            block.setExtension$(blockExtension);
             block.setContent(blockContent);
+            block.setMetadata(blockMetadata);
             request.setBlock(block);
 
             this.client.editBlock(request, this.getMetadata(), (err) => {

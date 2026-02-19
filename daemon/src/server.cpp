@@ -176,7 +176,7 @@ grpc::Status server::ResetPassword(grpc::ServerContext* context, ResetPasswordRe
         user->clear_password();
         user->clear_device();
 
-        std::clog << std::format("client {} resetted password on device {}\n", request->user().token(), request->user().device());
+        std::clog << std::format("client {} changed password on device {}\n", request->user().token(), request->user().device());
         m_database->reset_password(user->id(), hash);
 
         response->set_allocated_user(user.release());
@@ -3437,6 +3437,7 @@ grpc::Status server::GetBlocks(grpc::ServerContext* context, GetBlocksRequest co
             {
                 *response->add_block() = block;
             }
+            std::clog << std::format("client {} collected {} blocks from card {}\n", request->user().token(), response->block_size(), request->card().id());
             status = grpc::Status{grpc::StatusCode::OK, {}};
         }
     }
@@ -3524,24 +3525,28 @@ grpc::Status server::EditBlock(grpc::ServerContext* context, EditBlockRequest co
             if (request->block().type() != block.type())
             {
                 modified = true;
+                std::clog << std::format("client {} edited the type of block {}:{}\n", request->user().token(), request->card().id(), request->block().position());
                 m_database->change_block_type(request->card().id(), request->block().position(), request->block().type());
             }
 
             if (request->block().extension() != block.extension())
             {
                 modified = true;
+                std::clog << std::format("client {} edited the extension of block {}:{}\n", request->user().token(), request->card().id(), request->block().position());
                 m_database->edit_block_extension(request->card().id(), request->block().position(), request->block().extension());
             }
 
             if (request->block().content() != block.content())
             {
                 modified = true;
+                std::clog << std::format("client {} edited the content of block {}:{}\n", request->user().token(), request->card().id(), request->block().position());
                 m_database->edit_block_content(request->card().id(), request->block().position(), request->block().content());
             }
 
             if (request->block().metadata() != block.metadata())
             {
                 modified = true;
+                std::clog << std::format("client {} edited the metadata of block {}:{}\n", request->user().token(), request->card().id(), request->block().position());
                 m_database->edit_block_metadata(request->card().id(), request->block().position(), request->block().metadata());
             }
 
@@ -3551,6 +3556,7 @@ grpc::Status server::EditBlock(grpc::ServerContext* context, EditBlockRequest co
             }
             else
             {
+                std::clog << std::format("client {} attempted to edit block {}:{} with no changes\n", request->user().token(), request->card().id(), request->block().position());
                 status = grpc::Status{grpc::StatusCode::ALREADY_EXISTS, {}};
             }
         }
