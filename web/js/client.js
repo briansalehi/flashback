@@ -528,9 +528,14 @@ class FlashbackClient {
                     reject(this.handleError(err));
                 } else {
                     resolve(response.getStudyList().map(study => ({
+                        id: study.getResource().getId(),
                         name: study.getResource().getName(),
+                        type: study.getResource().getType(),
+                        pattern: study.getResource().getPattern(),
+                        production: study.getResource().getProduction(),
+                        expiration: study.getResource().getExpiration(),
                         link: study.getResource().getLink(),
-                        position: study.getResource().getPosition()
+                        position: study.getPosition()
                     })));
                 }
             });

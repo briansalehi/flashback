@@ -89,12 +89,18 @@ window.addEventListener('DOMContentLoaded', () => {
         addPracticeNavigation(practiceMode, cardIndex, totalCards);
     }
 
-    // Track when user navigates away from card (for selective mode without navigation buttons)
-    window.addEventListener('beforeunload', () => {
-        if (practiceMode && cardStartTime) {
-            handleCardExit();
-        }
-    });
+    // Track when user navigates away from card
+    // Intercept link clicks to properly record progress before navigation
+    if (practiceMode) {
+        document.addEventListener('click', async (e) => {
+            const link = e.target.closest('a');
+            if (link && link.href && cardStartTime) {
+                e.preventDefault();
+                await handleCardExit();
+                window.location.href = link.href;
+            }
+        });
+    }
 
     // Setup mark as reviewed button
     const markReviewedBtn = document.getElementById('mark-reviewed-btn');
@@ -161,12 +167,24 @@ async function handleCardExit() {
     const practiceMode = UI.getUrlParam('practiceMode');
     const duration = Math.floor((Date.now() - cardStartTime) / 1000); // Convert to seconds
 
-    // Only record if duration is at least 3 seconds
     if (duration >= 3 && practiceMode) {
         try {
-            // Map practice mode string to enum value
-            const practiceModeValue = practiceMode === 'aggressive' ? 0 : practiceMode === 'progressive' ? 1 : 2;
+            let practiceModeValue;
+            if (practiceMode === 'aggressive') {
+                practiceModeValue = 0;
+            } else if (practiceMode === 'progressive') {
+                practiceModeValue = 1;
+            } else if (practiceMode === 'selective') {
+                practiceModeValue = 2;
+            }
+
+            console.log(`making progress on card ${cardId} in ${duration} seconds with practice mode ${practiceModeValue}`);
             await client.makeProgress(cardId, duration, practiceModeValue);
+
+            if (practiceMode === 'selective') {
+                console.log(`studying card ${cardId} for ${duration} seconds`);
+                await client.study(cardId, duration);
+            }
         } catch (err) {
             console.error('Failed to record progress:', err);
         }

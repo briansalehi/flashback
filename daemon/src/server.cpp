@@ -3860,7 +3860,7 @@ grpc::Status server::MakeProgress(grpc::ServerContext* context, MakeProgressRequ
         }
         else
         {
-            std::clog << std::format("client {} make progress on card {} in {} seconds\n", request->user().token(), request->card().id(), request->duration());
+            std::clog << std::format("client {} make {} progress on card {} in {} seconds\n", request->user().token(), database::practice_mode_to_string(request->mode()), request->card().id(), request->duration());
             std::shared_ptr<User> const user{m_database->get_user(request->user().token(), request->user().device())};
             m_database->make_progress(user->id(), request->card().id(), request->duration(), request->mode());
             status = grpc::Status{grpc::StatusCode::OK, {}};
