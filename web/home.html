@@ -90,6 +90,78 @@
                     <p class="text-muted">No active study resources yet</p>
                 </div>
             </div>
+
+            <!-- Nerves Section -->
+            <div id="nerves-section" style="margin-top: 4rem;">
+                <div class="dashboard-header">
+                    <h2>My Knowledge</h2>
+                </div>
+
+                <div id="nerves-loading" style="display: none; text-align: center; padding: 2rem;">
+                    <div class="loading" style="width: 30px; height: 30px; border-width: 3px;"></div>
+                    <p class="text-muted mt-md">Loading your knowledge...</p>
+                </div>
+
+                <div id="nerves-resources" class="roadmaps-grid" style="margin-top: 1.5rem;">
+                    <!-- nerves will be inserted here -->
+                </div>
+
+                <div id="nerves-empty-state" style="display: none; text-align: center; padding: 2rem;">
+                    <p class="text-muted">No knowledge resources yet</p>
+                </div>
+
+                <button id="create-nerve-btn" class="btn btn-accent mb-lg" style="margin-top: 2rem;">
+                    + Add Knowledge Resource
+                </button>
+
+                <div id="create-nerve-form" class="card" style="display: none; max-width: 600px; margin-bottom: 1rem;">
+                    <form id="nerve-form">
+                        <div class="form-group">
+                            <label class="form-label" for="nerve-subject">Subject</label>
+                            <input
+                                type="text"
+                                id="nerve-subject"
+                                class="form-input"
+                                placeholder="Search for subject..."
+                                required
+                                autocomplete="off"
+                            >
+                            <div id="nerve-subject-results" class="search-results" style="display: none;"></div>
+                            <input type="hidden" id="nerve-subject-id" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="nerve-name">Resource Name</label>
+                            <input
+                                type="text"
+                                id="nerve-name"
+                                class="form-input"
+                                placeholder="My knowledge about..."
+                                required
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="nerve-expiration">Relevant Until (Date)</label>
+                            <input
+                                type="date"
+                                id="nerve-expiration"
+                                class="form-input"
+                                required
+                            >
+                        </div>
+
+                        <div style="display: flex; gap: 1rem;">
+                            <button type="submit" id="save-nerve-btn" class="btn btn-primary">
+                                Create Resource
+                            </button>
+                            <button type="button" id="cancel-nerve-btn" class="btn btn-secondary">
+                                Cancel
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
         </div>
     </main>
     

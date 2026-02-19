@@ -25,6 +25,76 @@ window.addEventListener('DOMContentLoaded', () => {
         UI.toggleElement('create-form', false);
         UI.clearForm('roadmap-form');
     });
+
+    // Nerve form handlers
+    document.getElementById('create-nerve-btn').addEventListener('click', () => {
+        UI.toggleElement('create-nerve-form', true);
+        document.getElementById('nerve-subject').focus();
+    });
+
+    document.getElementById('cancel-nerve-btn').addEventListener('click', () => {
+        UI.toggleElement('create-nerve-form', false);
+        UI.clearForm('nerve-form');
+        UI.toggleElement('nerve-subject-results', false);
+        document.getElementById('nerve-subject-id').value = '';
+    });
+
+    // Subject search for nerve creation
+    let subjectSearchTimeout;
+    document.getElementById('nerve-subject').addEventListener('input', async (e) => {
+        const searchToken = e.target.value.trim();
+
+        clearTimeout(subjectSearchTimeout);
+
+        if (searchToken.length < 2) {
+            UI.toggleElement('nerve-subject-results', false);
+            return;
+        }
+
+        subjectSearchTimeout = setTimeout(async () => {
+            try {
+                const subjects = await client.searchSubjects(searchToken);
+                displayNerveSubjectResults(subjects);
+            } catch (err) {
+                console.error('Subject search error:', err);
+            }
+        }, 300);
+    });
+
+    document.getElementById('nerve-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const subjectId = document.getElementById('nerve-subject-id').value;
+        const name = document.getElementById('nerve-name').value;
+        const expirationDate = document.getElementById('nerve-expiration').value;
+
+        if (!subjectId) {
+            UI.showError('Please select a subject');
+            return;
+        }
+
+        // Convert date string to epoch seconds
+        const expirationEpoch = Math.floor(new Date(expirationDate).getTime() / 1000);
+
+        UI.hideMessage('error-message');
+        UI.setButtonLoading('save-nerve-btn', true);
+
+        try {
+            await client.createNerve(parseInt(subjectId), name, expirationEpoch);
+
+            UI.toggleElement('create-nerve-form', false);
+            UI.clearForm('nerve-form');
+            UI.toggleElement('nerve-subject-results', false);
+            document.getElementById('nerve-subject-id').value = '';
+            UI.setButtonLoading('save-nerve-btn', false);
+
+            loadNerves();
+        } catch (err) {
+            console.error('Create nerve failed:', err);
+            UI.showError(err.message || 'Failed to create knowledge resource');
+            UI.setButtonLoading('save-nerve-btn', false);
+        }
+    });
     
     document.getElementById('roadmap-form').addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -51,6 +121,7 @@ window.addEventListener('DOMContentLoaded', () => {
     
     loadRoadmaps();
     loadStudyingResources();
+    loadNerves();
 });
 
 async function loadRoadmaps() {
@@ -158,4 +229,103 @@ function renderStudyingResources(resources) {
 
         container.appendChild(resourceItem);
     });
+}
+
+async function loadNerves() {
+    UI.toggleElement('nerves-loading', true);
+    UI.toggleElement('nerves-resources', false);
+    UI.toggleElement('nerves-empty-state', false);
+
+    try {
+        const nerves = await client.getNerves();
+
+        UI.toggleElement('nerves-loading', false);
+
+        if (nerves.length === 0) {
+            UI.toggleElement('nerves-empty-state', true);
+        } else {
+            UI.toggleElement('nerves-section', true);
+            UI.toggleElement('nerves-resources', true);
+            renderNerves(nerves);
+        }
+    } catch (err) {
+        console.error('Load nerves failed:', err);
+        UI.toggleElement('nerves-loading', false);
+        // Don't show error for nerves, just hide the section
+    }
+}
+
+function renderNerves(nerves) {
+    const container = document.getElementById('nerves-resources');
+    container.innerHTML = '';
+
+    nerves.forEach(nerve => {
+        const nerveItem = document.createElement('div');
+        nerveItem.className = 'resource-item';
+        nerveItem.style.cursor = 'pointer';
+
+        // Convert epoch seconds to readable dates
+        const productionDate = nerve.production ? new Date(nerve.production * 1000).toLocaleDateString() : 'N/A';
+        const expirationDate = nerve.expiration ? new Date(nerve.expiration * 1000).toLocaleDateString() : 'N/A';
+
+        nerveItem.innerHTML = `
+            <div class="resource-header">
+                <div class="resource-name">${UI.escapeHtml(nerve.name)}</div>
+                <span class="resource-type">Your Knowledge • Memories</span>
+            </div>
+            <div class="resource-url">
+                <a href="${UI.escapeHtml(nerve.link)}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">
+                    ${UI.escapeHtml(nerve.link)}
+                </a>
+            </div>
+            <div class="resource-dates">
+                <div><strong>Produced:</strong> ${UI.escapeHtml(productionDate)}</div>
+                <div><strong>Relevant Until:</strong> ${UI.escapeHtml(expirationDate)}</div>
+            </div>
+        `;
+
+        // Make the whole nerve item clickable to go to resource page (sections/synapses)
+        nerveItem.addEventListener('click', () => {
+            window.location.href = `resource.html?id=${nerve.id}&name=${encodeURIComponent(nerve.name)}`;
+        });
+
+        container.appendChild(nerveItem);
+    });
+}
+
+function displayNerveSubjectResults(subjects) {
+    const resultsContainer = document.getElementById('nerve-subject-results');
+
+    if (!subjects || subjects.length === 0) {
+        UI.toggleElement('nerve-subject-results', false);
+        return;
+    }
+
+    resultsContainer.innerHTML = '';
+    subjects.forEach(subject => {
+        const resultItem = document.createElement('div');
+        resultItem.className = 'search-result-item';
+        resultItem.textContent = subject.name;
+        resultItem.style.cursor = 'pointer';
+        resultItem.style.padding = '0.75rem';
+        resultItem.style.borderBottom = '1px solid var(--border-color)';
+
+        resultItem.addEventListener('click', () => {
+            document.getElementById('nerve-subject').value = subject.name;
+            document.getElementById('nerve-subject-id').value = subject.id;
+            UI.toggleElement('nerve-subject-results', false);
+        });
+
+        resultItem.addEventListener('mouseenter', () => {
+            resultItem.style.backgroundColor = 'var(--background-secondary)';
+        });
+
+        resultItem.addEventListener('mouseleave', () => {
+            resultItem.style.backgroundColor = '';
+        });
+
+        resultsContainer.appendChild(resultItem);
+    });
+
+    UI.toggleElement('nerve-subject-results', true);
 }

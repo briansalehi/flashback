@@ -1389,16 +1389,20 @@ grpc::Status server::CreateNerve(grpc::ServerContext* context, CreateNerveReques
         {
             status = grpc::Status{grpc::StatusCode::UNAUTHENTICATED, "invalid user"};
         }
-        else if (request->resource().id() == 0)
+        else if (request->resource().name().empty())
         {
-            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid resource"};
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid resource name"};
+        }
+        else if (request->resource().expiration() == 0)
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid resource expiration"};
         }
         else
         {
             std::shared_ptr<User> const user{m_database->get_user(request->user().token(), request->user().device())};
             Resource* nerve = response->mutable_resource();
-            std::clog << std::format("client {} created nerve {} in subject {}\n", request->user().token(), nerve->id(), request->subject().id());
             *nerve = m_database->create_nerve(user->id(), request->resource().name(), request->subject().id(), request->resource().expiration());
+            std::clog << std::format("client {} created nerve {} in subject {}\n", request->user().token(), nerve->id(), request->subject().id());
 
             if (nerve->id() == 0)
             {
