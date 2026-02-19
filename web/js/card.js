@@ -13,6 +13,10 @@ window.addEventListener('DOMContentLoaded', () => {
     const practiceMode = UI.getUrlParam('practiceMode');
     const cardIndex = parseInt(UI.getUrlParam('cardIndex'));
     const totalCards = parseInt(UI.getUrlParam('totalCards'));
+    const subjectName = UI.getUrlParam('subjectName');
+    const topicName = UI.getUrlParam('topicName');
+    const resourceName = UI.getUrlParam('resourceName');
+    const sectionName = UI.getUrlParam('sectionName');
 
     if (isNaN(cardId)) {
         window.location.href = '/home.html';
@@ -21,6 +25,9 @@ window.addEventListener('DOMContentLoaded', () => {
 
     // Start timer
     cardStartTime = Date.now();
+
+    // Show context breadcrumb
+    displayContextBreadcrumb(practiceMode, subjectName, topicName, resourceName, sectionName);
 
     document.getElementById('card-headline').textContent = headline || 'Card';
     document.title = `${headline || 'Card'} - Flashback`;
@@ -57,6 +64,50 @@ window.addEventListener('DOMContentLoaded', () => {
 
     loadBlocks();
 });
+
+// Display context breadcrumb (subject/topic or resource/section)
+function displayContextBreadcrumb(practiceMode, subjectName, topicName, resourceName, sectionName) {
+    const breadcrumb = document.getElementById('context-breadcrumb');
+    if (!breadcrumb) return;
+
+    let contextHtml = '';
+
+    if (practiceMode === 'aggressive' && subjectName && topicName) {
+        // Get subject and roadmap info from practice state or URL
+        const practiceState = JSON.parse(sessionStorage.getItem('practiceState') || '{}');
+        const subjectId = practiceState.subjectId || UI.getUrlParam('subjectId') || '';
+        const roadmapId = practiceState.roadmapId || UI.getUrlParam('roadmapId') || '';
+
+        // Get topic info
+        const currentTopic = practiceState.topics ? practiceState.topics[practiceState.currentTopicIndex] : null;
+        const topicLevel = currentTopic ? currentTopic.level : '';
+        const topicPosition = currentTopic ? currentTopic.position : '';
+
+        const roadmapName = UI.getUrlParam('roadmapName') || '';
+
+        const subjectLink = subjectId && roadmapId ?
+            `subject.html?id=${subjectId}&name=${encodeURIComponent(subjectName)}&roadmapId=${roadmapId}&roadmapName=${encodeURIComponent(roadmapName)}` : '#';
+        const topicLink = subjectId && topicLevel !== '' && topicPosition !== '' ?
+            `topic-cards.html?subjectId=${subjectId}&topicPosition=${topicPosition}&topicLevel=${topicLevel}&name=${encodeURIComponent(topicName)}&subjectName=${encodeURIComponent(subjectName)}&roadmapId=${roadmapId}&roadmapName=${encodeURIComponent(roadmapName)}` : '#';
+
+        contextHtml = `<a href="${subjectLink}" style="color: var(--text-primary); text-decoration: none;">${UI.escapeHtml(subjectName)}</a> → <a href="${topicLink}" style="color: var(--text-primary); text-decoration: none;">${UI.escapeHtml(topicName)}</a>`;
+    } else if (practiceMode === 'selective' && resourceName && sectionName) {
+        const resourceId = UI.getUrlParam('resourceId') || '';
+        const sectionPosition = UI.getUrlParam('sectionPosition') || '';
+
+        const resourceLink = resourceId ?
+            `resource.html?id=${resourceId}&name=${encodeURIComponent(resourceName)}` : '#';
+        const sectionLink = resourceId && sectionPosition !== '' ?
+            `section-cards.html?resourceId=${resourceId}&sectionPosition=${sectionPosition}&name=${encodeURIComponent(sectionName)}&resourceName=${encodeURIComponent(resourceName)}` : '#';
+
+        contextHtml = `<a href="${resourceLink}" style="color: var(--text-primary); text-decoration: none;">${UI.escapeHtml(resourceName)}</a> → <a href="${sectionLink}" style="color: var(--text-primary); text-decoration: none;">${UI.escapeHtml(sectionName)}</a>`;
+    }
+
+    if (contextHtml) {
+        breadcrumb.innerHTML = contextHtml;
+        breadcrumb.style.display = 'block';
+    }
+}
 
 // Handle card exit - record progress
 async function handleCardExit() {
@@ -106,8 +157,13 @@ function addPracticeNavigation(practiceMode, cardIndex, totalCards) {
         });
         buttonContainer.appendChild(nextBtn);
     } else {
+        // Check if there's a next topic
+        const practiceState = JSON.parse(sessionStorage.getItem('practiceState') || '{}');
+        const hasNextTopic = practiceState.topics &&
+                             practiceState.currentTopicIndex < practiceState.topics.length - 1;
+
         const finishBtn = document.createElement('button');
-        finishBtn.textContent = 'Finish Topic';
+        finishBtn.textContent = hasNextTopic ? 'Next Topic' : 'Finish Practice';
         finishBtn.className = 'btn btn-accent';
         finishBtn.addEventListener('click', async () => {
             await handleCardExit();
@@ -137,7 +193,10 @@ async function loadNextCard(practiceMode, currentIndex, totalCards) {
         return;
     }
 
-    window.location.href = `card.html?cardId=${nextCard.id}&headline=${encodeURIComponent(nextCard.headline)}&state=${nextCard.state}&practiceMode=${practiceMode}&cardIndex=${nextIndex}&totalCards=${totalCards}`;
+    const subjectName = UI.getUrlParam('subjectName') || '';
+    const topicName = UI.getUrlParam('topicName') || '';
+    const roadmapName = UI.getUrlParam('roadmapName') || '';
+    window.location.href = `card.html?cardId=${nextCard.id}&headline=${encodeURIComponent(nextCard.headline)}&state=${nextCard.state}&practiceMode=${practiceMode}&cardIndex=${nextIndex}&totalCards=${totalCards}&subjectName=${encodeURIComponent(subjectName)}&topicName=${encodeURIComponent(topicName)}&roadmapName=${encodeURIComponent(roadmapName)}`;
 }
 
 // Load next topic or finish practice
@@ -183,7 +242,9 @@ async function loadNextTopic(practiceMode) {
         sessionStorage.setItem('practiceState', JSON.stringify(practiceState));
 
         // Navigate to first card of next topic
-        window.location.href = `card.html?cardId=${cards[0].id}&headline=${encodeURIComponent(cards[0].headline)}&state=${cards[0].state}&practiceMode=${practiceMode}&cardIndex=0&totalCards=${cards.length}`;
+        const subjectName = UI.getUrlParam('subjectName') || '';
+        const roadmapName = UI.getUrlParam('roadmapName') || '';
+        window.location.href = `card.html?cardId=${cards[0].id}&headline=${encodeURIComponent(cards[0].headline)}&state=${cards[0].state}&practiceMode=${practiceMode}&cardIndex=0&totalCards=${cards.length}&subjectName=${encodeURIComponent(subjectName)}&topicName=${encodeURIComponent(nextTopic.name)}&roadmapName=${encodeURIComponent(roadmapName)}`;
     } catch (err) {
         console.error('Failed to load next topic:', err);
         UI.showError('Failed to load next topic');

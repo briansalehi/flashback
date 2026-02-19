@@ -14,6 +14,9 @@ window.addEventListener('DOMContentLoaded', () => {
     document.getElementById('resource-name').textContent = resourceName || 'Resource';
     document.title = `${resourceName || 'Resource'} - Flashback`;
 
+    // Display breadcrumb
+    displayBreadcrumb();
+
     const signoutBtn = document.getElementById('signout-btn');
     if (signoutBtn) {
         signoutBtn.addEventListener('click', async (e) => {
@@ -142,9 +145,39 @@ function renderSections(sections) {
 
         sectionItem.addEventListener('click', () => {
             const resourceId = UI.getUrlParam('id');
-            window.location.href = `section-cards.html?resourceId=${resourceId}&sectionPosition=${section.position}&sectionState=${section.state}&name=${encodeURIComponent(section.name)}`;
+            const resourceName = UI.getUrlParam('name') || '';
+            const subjectId = UI.getUrlParam('subjectId');
+            const subjectName = UI.getUrlParam('subjectName');
+            const roadmapId = UI.getUrlParam('roadmapId');
+            const roadmapName = UI.getUrlParam('roadmapName');
+            window.location.href = `section-cards.html?resourceId=${resourceId}&sectionPosition=${section.position}&sectionState=${section.state}&name=${encodeURIComponent(section.name)}&resourceName=${encodeURIComponent(resourceName)}&subjectId=${subjectId || ''}&subjectName=${encodeURIComponent(subjectName || '')}&roadmapId=${roadmapId || ''}&roadmapName=${encodeURIComponent(roadmapName || '')}`;
         });
 
         container.appendChild(sectionItem);
     });
+}
+
+function displayBreadcrumb() {
+    const breadcrumb = document.getElementById('breadcrumb');
+    if (!breadcrumb) return;
+
+    const subjectId = UI.getUrlParam('subjectId');
+    const subjectName = UI.getUrlParam('subjectName');
+    const roadmapId = UI.getUrlParam('roadmapId');
+    const roadmapName = UI.getUrlParam('roadmapName');
+
+    let breadcrumbHtml = '';
+
+    if (roadmapId && roadmapName) {
+        breadcrumbHtml += `<a href="roadmap.html?id=${roadmapId}&name=${encodeURIComponent(roadmapName)}" style="color: var(--text-primary); text-decoration: none;">${UI.escapeHtml(roadmapName)}</a>`;
+    }
+
+    if (subjectId && subjectName) {
+        if (breadcrumbHtml) breadcrumbHtml += ' → ';
+        breadcrumbHtml += `<a href="subject.html?id=${subjectId}&name=${encodeURIComponent(subjectName)}&roadmapId=${roadmapId || ''}&roadmapName=${encodeURIComponent(roadmapName || '')}" style="color: var(--text-primary); text-decoration: none;">${UI.escapeHtml(subjectName)}</a>`;
+    }
+
+    if (breadcrumbHtml) {
+        breadcrumb.innerHTML = breadcrumbHtml;
+    }
 }

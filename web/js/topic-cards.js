@@ -1,3 +1,36 @@
+function displayBreadcrumb() {
+    const breadcrumb = document.getElementById('breadcrumb');
+    if (!breadcrumb) {
+        console.error('Breadcrumb element not found');
+        return;
+    }
+
+    const subjectId = UI.getUrlParam('subjectId');
+    const subjectName = UI.getUrlParam('subjectName');
+    const roadmapId = UI.getUrlParam('roadmapId');
+    const roadmapName = UI.getUrlParam('roadmapName');
+
+    console.log('Breadcrumb params:', { subjectId, subjectName, roadmapId, roadmapName });
+
+    let breadcrumbHtml = '';
+
+    if (roadmapId && roadmapName) {
+        breadcrumbHtml += `<a href="roadmap.html?id=${roadmapId}&name=${encodeURIComponent(roadmapName)}" style="color: var(--text-primary); text-decoration: none;">${UI.escapeHtml(roadmapName)}</a>`;
+    }
+
+    if (subjectId && subjectName) {
+        if (breadcrumbHtml) breadcrumbHtml += ' → ';
+        breadcrumbHtml += `<a href="subject.html?id=${subjectId}&name=${encodeURIComponent(subjectName)}&roadmapId=${roadmapId || ''}&roadmapName=${encodeURIComponent(roadmapName || '')}" style="color: var(--text-primary); text-decoration: none;">${UI.escapeHtml(subjectName)}</a>`;
+    }
+
+    if (breadcrumbHtml) {
+        breadcrumb.innerHTML = breadcrumbHtml;
+        breadcrumb.style.display = 'block';
+    } else {
+        console.log('No breadcrumb HTML generated');
+    }
+}
+
 window.addEventListener('DOMContentLoaded', () => {
     if (!client.isAuthenticated()) {
         window.location.href = '/index.html';
@@ -16,6 +49,9 @@ window.addEventListener('DOMContentLoaded', () => {
 
     document.getElementById('topic-name').textContent = topicName || 'Topic';
     document.title = `${topicName || 'Topic'} - Flashback`;
+
+    // Display breadcrumb
+    displayBreadcrumb();
 
     const signoutBtn = document.getElementById('signout-btn');
     if (signoutBtn) {

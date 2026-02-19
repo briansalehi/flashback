@@ -16,6 +16,9 @@ window.addEventListener('DOMContentLoaded', () => {
     document.getElementById('subject-name').textContent = subjectName || 'Subject';
     document.title = `${subjectName || 'Subject'} - Flashback`;
 
+    // Display breadcrumb
+    displayBreadcrumb(roadmapId);
+
     const signoutBtn = document.getElementById('signout-btn');
     if (signoutBtn) {
         signoutBtn.addEventListener('click', async (e) => {
@@ -326,7 +329,10 @@ function renderTopics(topics, maxLevel) {
 
                 topicItem.addEventListener('click', () => {
                     const subjectId = UI.getUrlParam('id');
-                    window.location.href = `topic-cards.html?subjectId=${subjectId}&topicPosition=${topic.position}&topicLevel=${topic.level}&name=${encodeURIComponent(topic.name)}`;
+                    const subjectName = UI.getUrlParam('name');
+                    const roadmapId = UI.getUrlParam('roadmapId');
+                    const roadmapName = UI.getUrlParam('roadmapName');
+                    window.location.href = `topic-cards.html?subjectId=${subjectId}&topicPosition=${topic.position}&topicLevel=${topic.level}&name=${encodeURIComponent(topic.name)}&subjectName=${encodeURIComponent(subjectName || '')}&roadmapId=${roadmapId || ''}&roadmapName=${encodeURIComponent(roadmapName || '')}`;
                 });
 
                 levelSection.appendChild(topicItem);
@@ -399,7 +405,11 @@ function renderResources(resources) {
 
         // Make the whole resource item clickable to go to resource page
         resourceItem.addEventListener('click', () => {
-            window.location.href = `resource.html?id=${resource.id}&name=${encodeURIComponent(resource.name)}`;
+            const subjectId = UI.getUrlParam('id');
+            const subjectName = UI.getUrlParam('name');
+            const roadmapId = UI.getUrlParam('roadmapId');
+            const roadmapName = UI.getUrlParam('roadmapName');
+            window.location.href = `resource.html?id=${resource.id}&name=${encodeURIComponent(resource.name)}&subjectId=${subjectId || ''}&subjectName=${encodeURIComponent(subjectName || '')}&roadmapId=${roadmapId || ''}&roadmapName=${encodeURIComponent(roadmapName || '')}`;
         });
 
         container.appendChild(resourceItem);
@@ -455,11 +465,27 @@ async function startPracticeMode() {
         practiceState.currentCards = cards;
         sessionStorage.setItem('practiceState', JSON.stringify(practiceState));
 
-        // Navigate to first card
-        window.location.href = `card.html?cardId=${cards[0].id}&headline=${encodeURIComponent(cards[0].headline)}&state=${cards[0].state}&practiceMode=aggressive&cardIndex=0&totalCards=${cards.length}`;
+        // Navigate to first card with context
+        const subjectNameParam = UI.getUrlParam('name') || '';
+        const roadmapName = UI.getUrlParam('roadmapName') || '';
+        window.location.href = `card.html?cardId=${cards[0].id}&headline=${encodeURIComponent(cards[0].headline)}&state=${cards[0].state}&practiceMode=aggressive&cardIndex=0&totalCards=${cards.length}&subjectName=${encodeURIComponent(subjectNameParam)}&topicName=${encodeURIComponent(firstTopic.name)}&roadmapName=${encodeURIComponent(roadmapName)}`;
     } catch (err) {
         console.error('Start practice failed:', err);
         UI.showError('Failed to start practice: ' + (err.message || 'Unknown error'));
         UI.setButtonLoading('start-practice-btn', false);
+    }
+}
+
+async function displayBreadcrumb(roadmapId) {
+    const breadcrumb = document.getElementById('breadcrumb');
+    if (!breadcrumb || !roadmapId) return;
+
+    try {
+        const roadmapName = UI.getUrlParam('roadmapName');
+        if (roadmapName) {
+            breadcrumb.innerHTML = `<a href="roadmap.html?id=${roadmapId}&name=${encodeURIComponent(roadmapName)}" style="color: var(--text-primary); text-decoration: none;">${UI.escapeHtml(roadmapName)}</a>`;
+        }
+    } catch (err) {
+        console.error('Failed to display breadcrumb:', err);
     }
 }

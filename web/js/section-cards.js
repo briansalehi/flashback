@@ -8,6 +8,7 @@ window.addEventListener('DOMContentLoaded', () => {
     const sectionPosition = parseInt(UI.getUrlParam('sectionPosition'));
     const sectionState = parseInt(UI.getUrlParam('sectionState')) || 0;
     const sectionName = UI.getUrlParam('name');
+    const resourceName = UI.getUrlParam('resourceName');
 
     if (isNaN(resourceId) || isNaN(sectionPosition)) {
         window.location.href = '/home.html';
@@ -16,6 +17,9 @@ window.addEventListener('DOMContentLoaded', () => {
 
     document.getElementById('section-name').textContent = sectionName || 'Section';
     document.title = `${sectionName || 'Section'} - Flashback`;
+
+    // Display breadcrumb
+    displayBreadcrumb();
 
     // Display section state badge
     const stateNames = ['draft', 'reviewed', 'completed'];
@@ -123,6 +127,10 @@ function renderCards(cards) {
     container.innerHTML = '';
 
     const stateNames = ['draft', 'reviewed', 'completed', 'approved', 'released', 'rejected'];
+    const sectionName = UI.getUrlParam('name') || '';
+    const resourceName = UI.getUrlParam('resourceName') || '';
+    const resourceId = UI.getUrlParam('resourceId') || '';
+    const sectionPosition = UI.getUrlParam('sectionPosition') || '';
 
     cards.forEach(card => {
         const cardItem = document.createElement('div');
@@ -137,9 +145,41 @@ function renderCards(cards) {
         `;
 
         cardItem.addEventListener('click', () => {
-            window.location.href = `card.html?cardId=${card.id}&headline=${encodeURIComponent(card.headline)}&state=${card.state}&practiceMode=selective`;
+            window.location.href = `card.html?cardId=${card.id}&headline=${encodeURIComponent(card.headline)}&state=${card.state}&practiceMode=selective&resourceName=${encodeURIComponent(resourceName)}&sectionName=${encodeURIComponent(sectionName)}&resourceId=${resourceId}&sectionPosition=${sectionPosition}`;
         });
 
         container.appendChild(cardItem);
     });
+}
+
+function displayBreadcrumb() {
+    const breadcrumb = document.getElementById('breadcrumb');
+    if (!breadcrumb) return;
+
+    const resourceId = UI.getUrlParam('resourceId');
+    const resourceName = UI.getUrlParam('resourceName');
+    const subjectId = UI.getUrlParam('subjectId');
+    const subjectName = UI.getUrlParam('subjectName');
+    const roadmapId = UI.getUrlParam('roadmapId');
+    const roadmapName = UI.getUrlParam('roadmapName');
+
+    let breadcrumbHtml = '';
+
+    if (roadmapId && roadmapName) {
+        breadcrumbHtml += `<a href="roadmap.html?id=${roadmapId}&name=${encodeURIComponent(roadmapName)}" style="color: var(--text-primary); text-decoration: none;">${UI.escapeHtml(roadmapName)}</a>`;
+    }
+
+    if (subjectId && subjectName) {
+        if (breadcrumbHtml) breadcrumbHtml += ' → ';
+        breadcrumbHtml += `<a href="subject.html?id=${subjectId}&name=${encodeURIComponent(subjectName)}&roadmapId=${roadmapId || ''}&roadmapName=${encodeURIComponent(roadmapName || '')}" style="color: var(--text-primary); text-decoration: none;">${UI.escapeHtml(subjectName)}</a>`;
+    }
+
+    if (resourceId && resourceName) {
+        if (breadcrumbHtml) breadcrumbHtml += ' → ';
+        breadcrumbHtml += `<a href="resource.html?id=${resourceId}&name=${encodeURIComponent(resourceName)}&subjectId=${subjectId || ''}&subjectName=${encodeURIComponent(subjectName || '')}&roadmapId=${roadmapId || ''}&roadmapName=${encodeURIComponent(roadmapName || '')}" style="color: var(--text-primary); text-decoration: none;">${UI.escapeHtml(resourceName)}</a>`;
+    }
+
+    if (breadcrumbHtml) {
+        breadcrumb.innerHTML = breadcrumbHtml;
+    }
 }
