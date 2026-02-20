@@ -1129,7 +1129,7 @@ class FlashbackClient {
         });
     }
 
-    async removeMilestone(roadmapId, milestonePosition) {
+    async removeMilestone(roadmapId, milestoneId) {
         return new Promise((resolve, reject) => {
             const request = new proto.flashback.RemoveMilestoneRequest();
             const user = this.getAuthenticatedUser();
@@ -1137,9 +1137,9 @@ class FlashbackClient {
             const roadmap = new proto.flashback.Roadmap();
             roadmap.setId(roadmapId);
             const milestone = new proto.flashback.Milestone();
-            milestone.setPosition(milestonePosition);
+            milestone.setId(milestoneId);
             request.setRoadmap(roadmap);
-            requset.setMilestone(milestone);
+            request.setMilestone(milestone);
 
             this.client.removeMilestone(request, this.getMetadata(), (err) => {
                 if (err) {
@@ -1152,7 +1152,7 @@ class FlashbackClient {
         });
     }
 
-    async changeMilestoneLevel(roadmapId, milestonePosition, milestoneLevel) {
+    async changeMilestoneLevel(roadmapId, milestoneId, milestoneLevel) {
         return new Promise((resolve, reject) => {
             const request = new proto.flashback.ChangeMilestoneLevelRequest();
             const user = this.getAuthenticatedUser();
@@ -1160,7 +1160,7 @@ class FlashbackClient {
             const roadmap = new proto.flashback.Roadmap();
             roadmap.setId(roadmapId);
             const milestone = new proto.flashback.Milestone();
-            milestone.setPosition(milestonePosition);
+            milestone.setId(milestoneId);
             milestone.setLevel(milestoneLevel);
             request.setRoadmap(roadmap);
             request.setMilestone(milestone);
