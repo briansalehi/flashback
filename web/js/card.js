@@ -184,12 +184,22 @@ function displayContextBreadcrumb(practiceMode, subjectName, topicName, resource
             const sectionPosition = UI.getUrlParam('sectionPosition') || '';
 
             if (resourceId && resourceName) {
-                const resourceLink = `resource.html?id=${resourceId}&name=${encodeURIComponent(resourceName)}&subjectId=${subjectId}&subjectName=${encodeURIComponent(localSubjectName)}&roadmapId=${roadmapId}&roadmapName=${encodeURIComponent(roadmapName)}`;
-                breadcrumbParts.push(`<a href="${resourceLink}" style="color: var(--text-primary); text-decoration: none;">${UI.escapeHtml(resourceName)}</a>`);
+                const resourceType = UI.getUrlParam('resourceType') || '0';
+                const resourcePattern = UI.getUrlParam('resourcePattern') || '0';
+                const resourceLink = UI.getUrlParam('resourceLink') || '';
+                const resourceProduction = UI.getUrlParam('resourceProduction') || '0';
+                const resourceExpiration = UI.getUrlParam('resourceExpiration') || '0';
+                const resLink = `resource.html?id=${resourceId}&name=${encodeURIComponent(resourceName)}&type=${resourceType}&pattern=${resourcePattern}&link=${encodeURIComponent(resourceLink)}&production=${resourceProduction}&expiration=${resourceExpiration}&subjectId=${subjectId}&subjectName=${encodeURIComponent(localSubjectName)}&roadmapId=${roadmapId}&roadmapName=${encodeURIComponent(roadmapName)}`;
+                breadcrumbParts.push(`<a href="${resLink}" style="color: var(--text-primary); text-decoration: none;">${UI.escapeHtml(resourceName)}</a>`);
             }
 
             if (resourceId && sectionPosition !== '' && sectionName) {
-                const sectionLink = `section-cards.html?resourceId=${resourceId}&sectionPosition=${sectionPosition}&name=${encodeURIComponent(sectionName)}&resourceName=${encodeURIComponent(resourceName)}&subjectId=${subjectId}&subjectName=${encodeURIComponent(localSubjectName)}&roadmapId=${roadmapId}&roadmapName=${encodeURIComponent(roadmapName)}`;
+                const resourceType = UI.getUrlParam('resourceType') || '0';
+                const resourcePattern = UI.getUrlParam('resourcePattern') || '0';
+                const resourceLink = UI.getUrlParam('resourceLink') || '';
+                const resourceProduction = UI.getUrlParam('resourceProduction') || '0';
+                const resourceExpiration = UI.getUrlParam('resourceExpiration') || '0';
+                const sectionLink = `section-cards.html?resourceId=${resourceId}&sectionPosition=${sectionPosition}&name=${encodeURIComponent(sectionName)}&resourceName=${encodeURIComponent(resourceName)}&resourceType=${resourceType}&resourcePattern=${resourcePattern}&resourceLink=${encodeURIComponent(resourceLink)}&resourceProduction=${resourceProduction}&resourceExpiration=${resourceExpiration}&subjectId=${subjectId}&subjectName=${encodeURIComponent(localSubjectName)}&roadmapId=${roadmapId}&roadmapName=${encodeURIComponent(roadmapName)}`;
                 breadcrumbParts.push(`<a href="${sectionLink}" style="color: var(--text-primary); text-decoration: none;">${UI.escapeHtml(sectionName)}</a>`);
             }
         }

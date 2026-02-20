@@ -225,7 +225,12 @@ function displayBreadcrumb() {
 
     if (resourceId && resourceName) {
         if (breadcrumbHtml) breadcrumbHtml += ' → ';
-        breadcrumbHtml += `<a href="resource.html?id=${resourceId}&name=${encodeURIComponent(resourceName)}&subjectId=${subjectId || ''}&subjectName=${encodeURIComponent(subjectName || '')}&roadmapId=${roadmapId || ''}&roadmapName=${encodeURIComponent(roadmapName || '')}" style="color: var(--text-primary); text-decoration: none;">${UI.escapeHtml(resourceName)}</a>`;
+        const resourceType = UI.getUrlParam('resourceType') || '0';
+        const resourcePattern = UI.getUrlParam('resourcePattern') || '0';
+        const resourceLink = UI.getUrlParam('resourceLink') || '';
+        const resourceProduction = UI.getUrlParam('resourceProduction') || '0';
+        const resourceExpiration = UI.getUrlParam('resourceExpiration') || '0';
+        breadcrumbHtml += `<a href="resource.html?id=${resourceId}&name=${encodeURIComponent(resourceName)}&type=${resourceType}&pattern=${resourcePattern}&link=${encodeURIComponent(resourceLink)}&production=${resourceProduction}&expiration=${resourceExpiration}&subjectId=${subjectId || ''}&subjectName=${encodeURIComponent(subjectName || '')}&roadmapId=${roadmapId || ''}&roadmapName=${encodeURIComponent(roadmapName || '')}" style="color: var(--text-primary); text-decoration: none;">${UI.escapeHtml(resourceName)}</a>`;
     }
 
     if (breadcrumbHtml) {

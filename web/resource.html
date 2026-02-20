@@ -94,10 +94,112 @@
                 <h2 id="breadcrumb" style="color: var(--text-primary); font-size: 1.5rem; font-weight: 600; margin: 0; margin-bottom: 1rem;">
                     <!-- Breadcrumb will be inserted here -->
                 </h2>
-                <h1 id="resource-name">Loading...</h1>
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <h1 id="resource-name">Loading...</h1>
+                    <div style="display: flex; gap: 1rem;">
+                        <button id="edit-resource-btn" class="btn btn-secondary">Edit Resource</button>
+                        <button id="remove-resource-btn" class="btn btn-danger">Remove Resource</button>
+                    </div>
+                </div>
             </div>
 
             <div id="error-message" style="display: none;"></div>
+
+            <!-- Edit Resource Modal -->
+            <div id="edit-resource-modal" class="card" style="display: none; max-width: 600px; margin-bottom: 2rem;">
+                <div class="card-header">
+                    <h3 class="card-title">Edit Resource</h3>
+                </div>
+                <form id="edit-resource-form">
+                    <div class="form-group">
+                        <label class="form-label" for="edit-resource-name">Resource Name</label>
+                        <input
+                            type="text"
+                            id="edit-resource-name"
+                            class="form-input"
+                            placeholder="e.g., Introduction to Programming"
+                            required
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="edit-resource-type">Type</label>
+                        <select id="edit-resource-type" class="form-input" required>
+                            <option value="0">Book</option>
+                            <option value="1">Website</option>
+                            <option value="2">Course</option>
+                            <option value="3">Video</option>
+                            <option value="4">Channel</option>
+                            <option value="5">Mailing List</option>
+                            <option value="6">Manual</option>
+                            <option value="7">Slides</option>
+                            <option value="8">Your Knowledge</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="edit-resource-pattern">Section Pattern</label>
+                        <select id="edit-resource-pattern" class="form-input" required>
+                            <option value="">Select type first...</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="edit-resource-link">Link (optional)</label>
+                        <input
+                            type="url"
+                            id="edit-resource-link"
+                            class="form-input"
+                            placeholder="https://example.com/resource"
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="edit-resource-production">Release Date</label>
+                        <input
+                            type="date"
+                            id="edit-resource-production"
+                            class="form-input"
+                            required
+                        >
+                        <small class="text-muted">When this resource was published or released</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="edit-resource-expiration">Estimated Expiration Date</label>
+                        <input
+                            type="date"
+                            id="edit-resource-expiration"
+                            class="form-input"
+                            required
+                        >
+                        <small class="text-muted">When you estimate this resource will become outdated</small>
+                    </div>
+
+                    <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                        <button type="submit" id="save-edit-resource-btn" class="btn btn-primary">
+                            Save Changes
+                        </button>
+                        <button type="button" id="cancel-edit-resource-btn" class="btn btn-secondary">
+                            Cancel
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Remove Resource Modal -->
+            <div id="remove-resource-modal" class="card" style="display: none; max-width: 500px; margin-bottom: 2rem;">
+                <div class="card-header">
+                    <h3 class="card-title">Remove Resource</h3>
+                </div>
+                <div style="padding: 1rem 0;">
+                    <p style="color: var(--text-muted); margin-bottom: 1.5rem;">Are you sure you want to remove this resource? This action cannot be undone. All sections and cards associated with this resource will also be removed.</p>
+                    <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+                        <button id="cancel-remove-resource-btn" class="btn btn-secondary">Cancel</button>
+                        <button id="confirm-remove-resource-btn" class="btn btn-danger">Remove Resource</button>
+                    </div>
+                </div>
+            </div>
 
             <div id="loading" style="display: none; text-align: center; padding: 3rem;">
                 <div class="loading" style="width: 40px; height: 40px; border-width: 4px;"></div>

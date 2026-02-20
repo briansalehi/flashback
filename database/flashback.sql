@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict oQkjqBgeSHtUe5wy2Zc7cJazxBXc98I0zOlhhrhc0TyIuqwcyOGm74I3hh0olCP
+\restrict UFYTJgYsDnB1TXKHE83cDEqWwOLqmddTldKS9dZEEZkg7uOVOxdn41xnikRPnOb
 
 -- Dumped from database version 18.1
 -- Dumped by pg_dump version 18.0
@@ -1386,6 +1386,21 @@ end; $$;
 
 
 ALTER FUNCTION flashback.get_requirements(roadmap_id integer, subject_id integer, subject_level flashback.expertise_level) OWNER TO flashback;
+
+--
+-- Name: get_resource(integer); Type: FUNCTION; Schema: flashback; Owner: flashback
+--
+
+CREATE FUNCTION flashback.get_resource(resource_id integer) RETURNS TABLE(id integer, name flashback.citext, type flashback.resource_type, pattern flashback.section_pattern, production integer, expiration integer, link character varying)
+    LANGUAGE plpgsql
+    AS $$
+begin
+    return query select r.id, r.name, r.type, r.pattern, r.production, r.expiration, r.link from resources r where r.id = resource_id;
+end;
+$$;
+
+
+ALTER FUNCTION flashback.get_resource(resource_id integer) OWNER TO flashback;
 
 --
 -- Name: get_resource_state(integer); Type: FUNCTION; Schema: flashback; Owner: flashback
@@ -32039,5 +32054,5 @@ GRANT ALL ON SCHEMA public TO brian;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict oQkjqBgeSHtUe5wy2Zc7cJazxBXc98I0zOlhhrhc0TyIuqwcyOGm74I3hh0olCP
+\unrestrict UFYTJgYsDnB1TXKHE83cDEqWwOLqmddTldKS9dZEEZkg7uOVOxdn41xnikRPnOb
 

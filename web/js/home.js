@@ -282,7 +282,7 @@ function renderStudyingResources(resources) {
 
         // Make the whole resource item clickable to go to resource page (sections)
         resourceItem.addEventListener('click', () => {
-            window.location.href = `resource.html?id=${resource.id}&name=${encodeURIComponent(resource.name)}`;
+            window.location.href = `resource.html?id=${resource.id}&name=${encodeURIComponent(resource.name)}&type=${resource.type}&pattern=${resource.pattern}&link=${encodeURIComponent(resource.link)}&production=${resource.production}&expiration=${resource.expiration}`;
         });
 
         container.appendChild(resourceItem);
@@ -344,7 +344,7 @@ function renderNerves(nerves) {
 
         // Make the whole nerve item clickable to go to resource page (sections/synapses)
         nerveItem.addEventListener('click', () => {
-            window.location.href = `resource.html?id=${nerve.id}&name=${encodeURIComponent(nerve.name)}`;
+            window.location.href = `resource.html?id=${nerve.id}&name=${encodeURIComponent(nerve.name)}&type=${nerve.type}&pattern=${nerve.pattern}&link=${encodeURIComponent(nerve.link)}&production=${nerve.production}&expiration=${nerve.expiration}`;
         });
 
         container.appendChild(nerveItem);

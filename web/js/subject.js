@@ -646,7 +646,7 @@ function renderResources(resources) {
                     const subjectName = UI.getUrlParam('name');
                     const roadmapId = UI.getUrlParam('roadmapId');
                     const roadmapName = UI.getUrlParam('roadmapName');
-                    window.location.href = `resource.html?id=${resource.id}&name=${encodeURIComponent(resource.name)}&subjectId=${subjectId || ''}&subjectName=${encodeURIComponent(subjectName || '')}&roadmapId=${roadmapId || ''}&roadmapName=${encodeURIComponent(roadmapName || '')}`;
+                    window.location.href = `resource.html?id=${resource.id}&name=${encodeURIComponent(resource.name)}&type=${resource.type}&pattern=${resource.pattern}&link=${encodeURIComponent(resource.link)}&production=${resource.production}&expiration=${resource.expiration}&subjectId=${subjectId || ''}&subjectName=${encodeURIComponent(subjectName || '')}&roadmapId=${roadmapId || ''}&roadmapName=${encodeURIComponent(roadmapName || '')}`;
                 });
             }
         });
