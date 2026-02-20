@@ -364,11 +364,12 @@ function renderMilestones(milestones) {
         milestoneCard.draggable = true;
         milestoneCard.dataset.position = milestone.position;
         milestoneCard.innerHTML = `
-            <div class="milestone-position">${index + 1}</div>
-            <div class="milestone-header" style="margin-left: 3rem;">
+            <div class="milestone-header">
+                <div class="milestone-position">${index + 1}</div>
                 <h3 class="milestone-name">${UI.escapeHtml(milestone.name)}</h3>
                 <span class="milestone-level">${UI.escapeHtml(levelName)}</span>
             </div>
+            <button class="remove-milestone-btn" data-id="${milestone.id}" title="Remove milestone">×</button>
         `;
 
         // Click to navigate (but not when dragging)
@@ -422,6 +423,18 @@ function renderMilestones(milestones) {
             }
         });
 
+        // Remove milestone handler
+        const removeBtn = milestoneCard.querySelector('.remove-milestone-btn');
+        if (removeBtn) {
+            removeBtn.addEventListener('click', async (e) => {
+                e.stopPropagation(); // Prevent card click navigation
+
+                if (confirm(`Are you sure you want to remove "${milestone.name}" from this roadmap?`)) {
+                    await removeMilestone(milestone.id);
+                }
+            });
+        }
+
         container.appendChild(milestoneCard);
     });
 }
@@ -435,5 +448,18 @@ async function reorderMilestone(currentPosition, targetPosition) {
     } catch (err) {
         console.error('Reorder milestone failed:', err);
         UI.showError('Failed to reorder milestone: ' + (err.message || 'Unknown error'));
+    }
+}
+
+async function removeMilestone(milestoneId) {
+    const roadmapId = UI.getUrlParam('id');
+
+    try {
+        await client.removeMilestone(roadmapId, milestoneId);
+        await loadMilestones();
+        UI.showSuccess('Milestone removed successfully');
+    } catch (err) {
+        console.error('Remove milestone failed:', err);
+        UI.showError('Failed to remove milestone: ' + (err.message || 'Unknown error'));
     }
 }
