@@ -40,7 +40,7 @@ services:
         cmake --build /build --target rebuild_cache
         cmake --install /build --component web
         /usr/local/bin/flashbackd &
-        while inotifywait -r -e modify,create,delete /src/web; do cmake --install /build --component web; done &
+        while inotifywait -r -e modify,create,delete /src/web; do cmake --install /build --component web; done &>/dev/null &
         wait
 
   envoy:

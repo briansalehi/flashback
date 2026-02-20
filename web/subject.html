@@ -205,7 +205,64 @@
                 <h2 id="breadcrumb" style="color: var(--text-primary); font-size: 1.5rem; font-weight: 600; margin: 0; margin-bottom: 1rem;">
                     <!-- Breadcrumb will be inserted here -->
                 </h2>
-                <h1 id="subject-name">Loading...</h1>
+                <div style="display: flex; justify-content: space-between; align-items: center; gap: 1rem;">
+                    <h1 id="subject-name" style="margin-bottom: 0; flex: 1;">Loading...</h1>
+                    <div style="display: flex; gap: 0.5rem; flex-shrink: 0;">
+                        <button id="rename-subject-btn" class="btn btn-secondary" style="padding: 0.5rem 1rem;">
+                            Rename
+                        </button>
+                        <button id="remove-subject-btn" class="btn btn-danger" style="padding: 0.5rem 1rem;">
+                            Remove
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Rename Subject Modal -->
+            <div id="rename-subject-modal" class="card" style="display: none; max-width: 500px; margin-bottom: 2rem;">
+                <div class="card-header">
+                    <h3 class="card-title">Rename Subject</h3>
+                </div>
+                <form id="rename-subject-form">
+                    <div class="form-group">
+                        <label class="form-label" for="rename-subject-name">Subject Name</label>
+                        <input
+                            type="text"
+                            id="rename-subject-name"
+                            class="form-input"
+                            placeholder="Enter new subject name"
+                            required
+                        >
+                    </div>
+                    <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                        <button type="submit" id="save-rename-subject-btn" class="btn btn-primary">
+                            Save
+                        </button>
+                        <button type="button" id="cancel-rename-subject-btn" class="btn btn-secondary">
+                            Cancel
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Remove Subject Modal -->
+            <div id="remove-subject-modal" class="card" style="display: none; max-width: 500px; margin-bottom: 2rem;">
+                <div class="card-header">
+                    <h3 class="card-title">Remove Subject</h3>
+                </div>
+                <div style="padding: 1rem 0;">
+                    <p style="color: var(--text-muted); margin-bottom: 1.5rem;">
+                        Are you sure you want to remove this subject? This action cannot be undone. All associated topics, resources, and cards will be removed.
+                    </p>
+                    <div style="display: flex; gap: 1rem;">
+                        <button id="confirm-remove-subject-btn" class="btn btn-danger">
+                            Yes, Remove Subject
+                        </button>
+                        <button id="cancel-remove-subject-btn" class="btn btn-secondary">
+                            Cancel
+                        </button>
+                    </div>
+                </div>
             </div>
 
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">

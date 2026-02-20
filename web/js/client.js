@@ -1181,10 +1181,8 @@ class FlashbackClient {
             const request = new proto.flashback.RenameSubjectRequest();
             const user = this.getAuthenticatedUser();
             request.setUser(user);
-            const subject = new proto.flashback.Subject();
-            subject.setId(subjectId);
-            subject.setName(subjectName);
-            request.setSubject(subject);
+            request.setId(subjectId);
+            request.setName(subjectName);
 
             this.client.renameSubject(request, this.getMetadata(), (err) => {
                 if (err) {

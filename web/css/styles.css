@@ -180,6 +180,18 @@ p { margin-bottom: var(--space-sm); }
     transform: translateY(-2px);
 }
 
+.btn-danger {
+    background: var(--error);
+    color: white;
+    box-shadow: var(--shadow-sm);
+}
+
+.btn-danger:hover {
+    background: #d66961;
+    box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
+}
+
 .btn-full {
     width: 100%;
     display: block;

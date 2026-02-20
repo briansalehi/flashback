@@ -28,6 +28,108 @@ window.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // Rename subject handlers
+    const renameSubjectBtn = document.getElementById('rename-subject-btn');
+    if (renameSubjectBtn) {
+        renameSubjectBtn.addEventListener('click', () => {
+            UI.toggleElement('rename-subject-modal', true);
+            document.getElementById('rename-subject-name').value = subjectName || '';
+            setTimeout(() => {
+                document.getElementById('rename-subject-name').focus();
+            }, 100);
+        });
+    } else {
+        console.error('Rename subject button not found');
+    }
+
+    const cancelRenameSubjectBtn = document.getElementById('cancel-rename-subject-btn');
+    if (cancelRenameSubjectBtn) {
+        cancelRenameSubjectBtn.addEventListener('click', () => {
+            UI.toggleElement('rename-subject-modal', false);
+            UI.clearForm('rename-subject-form');
+        });
+    }
+
+    const renameSubjectForm = document.getElementById('rename-subject-form');
+    if (renameSubjectForm) {
+        renameSubjectForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const newName = document.getElementById('rename-subject-name').value.trim();
+            if (!newName) {
+                UI.showError('Please enter a subject name');
+                return;
+            }
+
+            UI.hideMessage('error-message');
+            UI.setButtonLoading('save-rename-subject-btn', true);
+
+            try {
+                await client.renameSubject(subjectId, newName);
+
+                UI.toggleElement('rename-subject-modal', false);
+                UI.clearForm('rename-subject-form');
+                UI.setButtonLoading('save-rename-subject-btn', false);
+
+                // Update the URL and page
+                const newUrl = `subject.html?id=${subjectId}&name=${encodeURIComponent(newName)}&roadmapId=${roadmapId || ''}&roadmapName=${encodeURIComponent(UI.getUrlParam('roadmapName') || '')}&level=${UI.getUrlParam('level') || ''}`;
+                window.history.replaceState({}, '', newUrl);
+                document.getElementById('subject-name').textContent = newName;
+                document.title = `${newName} - Flashback`;
+
+                UI.showSuccess('Subject renamed successfully');
+            } catch (err) {
+                console.error('Rename subject failed:', err);
+                UI.showError(err.message || 'Failed to rename subject');
+                UI.setButtonLoading('save-rename-subject-btn', false);
+            }
+        });
+    }
+
+    // Remove subject handlers
+    const removeSubjectBtn = document.getElementById('remove-subject-btn');
+    if (removeSubjectBtn) {
+        removeSubjectBtn.addEventListener('click', () => {
+            UI.toggleElement('remove-subject-modal', true);
+        });
+    } else {
+        console.error('Remove subject button not found');
+    }
+
+    const cancelRemoveSubjectBtn = document.getElementById('cancel-remove-subject-btn');
+    if (cancelRemoveSubjectBtn) {
+        cancelRemoveSubjectBtn.addEventListener('click', () => {
+            UI.toggleElement('remove-subject-modal', false);
+        });
+    }
+
+    const confirmRemoveSubjectBtn = document.getElementById('confirm-remove-subject-btn');
+    if (confirmRemoveSubjectBtn) {
+        confirmRemoveSubjectBtn.addEventListener('click', async () => {
+            UI.hideMessage('error-message');
+            UI.setButtonLoading('confirm-remove-subject-btn', true);
+
+            try {
+                await client.removeSubject(subjectId);
+
+                UI.toggleElement('remove-subject-modal', false);
+                UI.setButtonLoading('confirm-remove-subject-btn', false);
+
+                // Redirect back to roadmap or home
+                if (roadmapId) {
+                    const roadmapName = UI.getUrlParam('roadmapName') || '';
+                    window.location.href = `roadmap.html?id=${roadmapId}&name=${encodeURIComponent(roadmapName)}`;
+                } else {
+                    window.location.href = '/home.html';
+                }
+            } catch (err) {
+                console.error('Remove subject failed:', err);
+                UI.showError(err.message || 'Failed to remove subject');
+                UI.setButtonLoading('confirm-remove-subject-btn', false);
+            }
+        });
+    }
+
     // Practice mode functionality
     const startPracticeBtn = document.getElementById('start-practice-btn');
     if (startPracticeBtn) {
