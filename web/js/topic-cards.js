@@ -10,8 +10,6 @@ function displayBreadcrumb() {
     const roadmapId = UI.getUrlParam('roadmapId');
     const roadmapName = UI.getUrlParam('roadmapName');
 
-    console.log('Breadcrumb params:', { subjectId, subjectName, roadmapId, roadmapName });
-
     let breadcrumbHtml = '';
 
     if (roadmapId && roadmapName) {

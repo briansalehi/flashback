@@ -143,10 +143,30 @@ window.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // Setup remove block modal handlers
+    const cancelRemoveBlockBtn = document.getElementById('cancel-remove-block-btn');
+    if (cancelRemoveBlockBtn) {
+        cancelRemoveBlockBtn.addEventListener('click', () => {
+            closeRemoveBlockModal();
+        });
+    }
+
+    const confirmRemoveBlockBtn = document.getElementById('confirm-remove-block-btn');
+    if (confirmRemoveBlockBtn) {
+        confirmRemoveBlockBtn.addEventListener('click', async () => {
+            const modal = document.getElementById('remove-block-modal');
+            const position = parseInt(modal.dataset.blockPosition);
+            if (!isNaN(position)) {
+                await removeBlockHandler(position);
+            }
+        });
+    }
+
     const modalOverlay = document.getElementById('modal-overlay');
     if (modalOverlay) {
         modalOverlay.addEventListener('click', () => {
             closeRemoveCardModal();
+            closeRemoveBlockModal();
         });
     }
 
@@ -440,6 +460,8 @@ function renderBlocks(blocks) {
         const blockItem = document.createElement('div');
         blockItem.className = 'block-item';
         blockItem.id = `block-${index}`;
+        blockItem.draggable = true;
+        blockItem.dataset.position = block.position;
 
         const typeName = blockTypes[block.type] || 'text';
 
@@ -468,15 +490,73 @@ function renderBlocks(blocks) {
         }
 
         displayDiv.innerHTML = `
-            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 0.5rem;">
+            <div class="block-header">
                 <div>
                     ${metadataHtml}
                     ${extensionHtml}
                 </div>
-                <button class="btn btn-secondary" onclick="editBlock(${index})" style="padding: 0.25rem 0.75rem; font-size: 0.875rem;">Edit</button>
+                <div class="block-actions">
+                    <button class="btn btn-secondary block-action-btn" onclick="editBlock(${index})">Edit</button>
+                    <button class="remove-block-btn block-action-btn" data-position="${block.position}" data-index="${index}">Remove</button>
+                </div>
             </div>
             ${contentHtml}
         `;
+
+        // Drag and drop handlers
+        let isDragging = false;
+
+        blockItem.addEventListener('dragstart', (e) => {
+            isDragging = true;
+            blockItem.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/plain', JSON.stringify({
+                position: block.position
+            }));
+        });
+
+        blockItem.addEventListener('dragend', () => {
+            blockItem.classList.remove('dragging');
+            setTimeout(() => {
+                isDragging = false;
+            }, 100);
+        });
+
+        blockItem.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+
+            const draggingBlock = document.querySelector('.dragging');
+            if (draggingBlock && draggingBlock !== blockItem) {
+                blockItem.classList.add('drag-over');
+            }
+        });
+
+        blockItem.addEventListener('dragleave', () => {
+            blockItem.classList.remove('drag-over');
+        });
+
+        blockItem.addEventListener('drop', async (e) => {
+            e.preventDefault();
+            blockItem.classList.remove('drag-over');
+
+            const dragData = JSON.parse(e.dataTransfer.getData('text/plain') || '{}');
+            const sourcePosition = dragData.position;
+            const targetPosition = block.position;
+
+            if (sourcePosition !== targetPosition) {
+                await reorderBlockHandler(sourcePosition, targetPosition);
+            }
+        });
+
+        // Remove button handler
+        const removeBtn = displayDiv.querySelector('.remove-block-btn');
+        if (removeBtn) {
+            removeBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                showRemoveBlockModal(block.position);
+            });
+        }
 
         // Edit mode
         const editDiv = document.createElement('div');
@@ -750,5 +830,63 @@ async function confirmRemoveCard() {
         UI.showError('Failed to remove card: ' + (err.message || 'Unknown error'));
         UI.setButtonLoading('confirm-remove-card-btn', false);
         closeRemoveCardModal();
+    }
+}
+
+// Show remove block modal
+function showRemoveBlockModal(position) {
+    const modal = document.getElementById('remove-block-modal');
+    const overlay = document.getElementById('modal-overlay');
+
+    if (modal && overlay) {
+        modal.style.display = 'block';
+        overlay.style.display = 'block';
+
+        // Store position in modal for use when confirming
+        modal.dataset.blockPosition = position;
+    }
+}
+
+// Close remove block modal
+function closeRemoveBlockModal() {
+    const modal = document.getElementById('remove-block-modal');
+    const overlay = document.getElementById('modal-overlay');
+
+    if (modal && overlay) {
+        modal.style.display = 'none';
+        overlay.style.display = 'none';
+        delete modal.dataset.blockPosition;
+    }
+}
+
+// Remove block handler
+async function removeBlockHandler(position) {
+    const cardId = parseInt(UI.getUrlParam('cardId'));
+
+    UI.setButtonLoading('confirm-remove-block-btn', true);
+
+    try {
+        await client.removeBlock(cardId, position);
+        closeRemoveBlockModal();
+        UI.setButtonLoading('confirm-remove-block-btn', false);
+        await loadBlocks();
+        UI.showSuccess('Block removed successfully');
+    } catch (err) {
+        console.error('Remove block failed:', err);
+        UI.showError('Failed to remove block: ' + (err.message || 'Unknown error'));
+        UI.setButtonLoading('confirm-remove-block-btn', false);
+    }
+}
+
+// Reorder block handler
+async function reorderBlockHandler(sourcePosition, targetPosition) {
+    const cardId = parseInt(UI.getUrlParam('cardId'));
+
+    try {
+        await client.reorderBlock(cardId, sourcePosition, targetPosition);
+        await loadBlocks();
+    } catch (err) {
+        console.error('Reorder block failed:', err);
+        UI.showError('Failed to reorder block: ' + (err.message || 'Unknown error'));
     }
 }

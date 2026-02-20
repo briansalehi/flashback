@@ -1352,9 +1352,7 @@ class FlashbackClient {
             const subject = new proto.flashback.Subject();
             subject.setId(subjectId);
             request.setSubject(subject);
-            const topic = new proto.flashback.Topic();
-            topic.setLevel(topicLevel);
-            request.setTopic(topic);
+            request.setLevel(topicLevel);
             request.setSearchToken(token);
 
             this.client.searchTopics(request, this.getMetadata(), (err, response) => {

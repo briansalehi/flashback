@@ -62,10 +62,97 @@
 
         .block-item {
             margin-bottom: 2rem;
-            padding: 1.5rem;
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
+            padding: 2rem 2.5rem;
+            border: 1px solid #e5dfd5;
+            border-radius: 16px;
             background-color: var(--bg-primary);
+            transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+            cursor: grab;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(44, 95, 79, 0.04);
+        }
+
+        .block-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 5px;
+            height: 100%;
+            background: linear-gradient(180deg, #d4845c 0%, #e69b7a 100%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .block-item:hover::before {
+            opacity: 1;
+        }
+
+        .block-item::after {
+            content: '⋮⋮';
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: rgba(44, 95, 79, 0.15);
+            font-size: 1.25rem;
+            letter-spacing: -4px;
+            transition: all 0.3s ease;
+        }
+
+        .block-item:hover::after {
+            color: rgba(44, 95, 79, 0.3);
+        }
+
+        .block-item.dragging {
+            opacity: 0.5;
+            cursor: grabbing;
+            transform: scale(0.98);
+        }
+
+        .block-item.drag-over {
+            border-color: #d4845c;
+            box-shadow: 0 8px 32px rgba(212, 132, 92, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .block-item:hover {
+            border-color: #d4845c;
+            box-shadow: 0 8px 24px rgba(44, 95, 79, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .block-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 1rem;
+        }
+
+        .block-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .block-action-btn {
+            padding: 0.35rem 0.75rem;
+            font-size: 0.875rem;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .remove-block-btn {
+            background: white;
+            border: 1px solid #e5dfd5;
+            color: #dc3545;
+            cursor: pointer;
+        }
+
+        .remove-block-btn:hover {
+            background: #fee8e0;
+            border-color: #dc3545;
+            transform: scale(1.05);
         }
 
         .block-content {
@@ -192,6 +279,20 @@
                     <div style="display: flex; gap: 1rem; justify-content: flex-end;">
                         <button id="cancel-remove-card-btn" class="btn btn-secondary">Cancel</button>
                         <button id="confirm-remove-card-btn" class="btn btn-danger">Remove Card</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Remove Block Modal -->
+            <div id="remove-block-modal" class="card" style="display: none; max-width: 500px; margin-top: 2rem; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 1000; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);">
+                <div class="card-header">
+                    <h3 class="card-title">Remove Block</h3>
+                </div>
+                <div style="padding: 1rem 0;">
+                    <p style="color: var(--text-muted); margin-bottom: 1.5rem;">Are you sure you want to remove this block? This action cannot be undone.</p>
+                    <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+                        <button id="cancel-remove-block-btn" class="btn btn-secondary">Cancel</button>
+                        <button id="confirm-remove-block-btn" class="btn btn-danger">Remove Block</button>
                     </div>
                 </div>
             </div>
