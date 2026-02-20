@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict 1Y8cWNrf1r5DEV8E3L86wiqqH12Lk7FBNrxzfQ2FepF7ROKTiUlcMN4rf9yv4vd
+\restrict WkQjTO30rgSuD1swALIEcTAZDGCKr28obGSLgdLHkE7XZTmGucAIo9hfe067i13
 
 -- Dumped from database version 18.1
 -- Dumped by pg_dump version 18.0
@@ -2543,11 +2543,12 @@ CREATE PROCEDURE flashback.remove_topic(IN subject_id integer, IN topic_level fl
     LANGUAGE plpgsql
     AS $$
 begin
-    if not exists (select 1 from topic_cards where subject = subject_id) then
-        delete from topics where subject = subject_id and level = topic_level and position = topic_position;
+    delete from topics where subject = subject_id and level = topic_level and position = topic_position;
 
-        update topics set position = position - 1 where subject = subject_id and level = topic_level and position > topic_position;
-    end if;
+    update topics t set position = it.updated_position from (
+        select row_number() over (order by tt.position) as updated_position, tt.position, tt.subject, tt.level from topics tt where tt.subject = subject_id and tt.level = topic_level
+    ) it
+    where it.subject = t.subject and it.level = t.level and it.position = t.position;
 end;
 $$;
 
@@ -32724,5 +32725,5 @@ GRANT ALL ON SCHEMA public TO brian;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict 1Y8cWNrf1r5DEV8E3L86wiqqH12Lk7FBNrxzfQ2FepF7ROKTiUlcMN4rf9yv4vd
+\unrestrict WkQjTO30rgSuD1swALIEcTAZDGCKr28obGSLgdLHkE7XZTmGucAIo9hfe067i13
 
