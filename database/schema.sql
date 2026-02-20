@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict Xw7rLhSISvJ8J3lNL2hkC88BIXh9h53eUhysTyzAbsKuO6IqWFhc1pahEXagu6Q
+\restrict mUsn8CpKHNJ5fzbEfyxVG29oyABtblnxg6qvZNPeGZW8eDH6jcycyFieSFjepap
 
 -- Dumped from database version 18.1
 -- Dumped by pg_dump version 18.0
@@ -2817,7 +2817,7 @@ begin
         update topics set position = target_position where subject = subject_id and level = topic_level and position = temporary_position;
 
         if target_position < topic_position then
-            update topics set position = position - safe_margin + target_position where subject = subject_id and level = topic_level and position >= safe_margin;
+            update topics set position = position - safe_margin + target_position where subject = subject_id and level = topic_level and position >= safe_margin and position < topic_position;
         end if;
     end if;
 end; $$;
@@ -3186,36 +3186,6 @@ CREATE TABLE flashback.blocks (
 ALTER TABLE flashback.blocks OWNER TO flashback;
 
 --
--- Name: blocks_activities; Type: TABLE; Schema: flashback; Owner: flashback
---
-
-CREATE TABLE flashback.blocks_activities (
-    id integer NOT NULL,
-    "user" integer NOT NULL,
-    card integer NOT NULL,
-    action flashback.user_action NOT NULL,
-    "time" timestamp with time zone DEFAULT now() NOT NULL,
-    "position" integer NOT NULL
-);
-
-
-ALTER TABLE flashback.blocks_activities OWNER TO flashback;
-
---
--- Name: blocks_activities_id_seq; Type: SEQUENCE; Schema: flashback; Owner: flashback
---
-
-ALTER TABLE flashback.blocks_activities ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
-    SEQUENCE NAME flashback.blocks_activities_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1
-);
-
-
---
 -- Name: cards; Type: TABLE; Schema: flashback; Owner: flashback
 --
 
@@ -3227,35 +3197,6 @@ CREATE TABLE flashback.cards (
 
 
 ALTER TABLE flashback.cards OWNER TO flashback;
-
---
--- Name: cards_activities; Type: TABLE; Schema: flashback; Owner: flashback
---
-
-CREATE TABLE flashback.cards_activities (
-    id integer NOT NULL,
-    "user" integer NOT NULL,
-    card integer NOT NULL,
-    action flashback.user_action NOT NULL,
-    "time" timestamp with time zone DEFAULT now() NOT NULL
-);
-
-
-ALTER TABLE flashback.cards_activities OWNER TO flashback;
-
---
--- Name: cards_activities_id_seq; Type: SEQUENCE; Schema: flashback; Owner: flashback
---
-
-ALTER TABLE flashback.cards_activities ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
-    SEQUENCE NAME flashback.cards_activities_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1
-);
-
 
 --
 -- Name: cards_id_seq; Type: SEQUENCE; Schema: flashback; Owner: flashback
@@ -3286,36 +3227,6 @@ CREATE TABLE flashback.milestones (
 ALTER TABLE flashback.milestones OWNER TO flashback;
 
 --
--- Name: milestones_activities; Type: TABLE; Schema: flashback; Owner: flashback
---
-
-CREATE TABLE flashback.milestones_activities (
-    id integer NOT NULL,
-    "user" integer NOT NULL,
-    action flashback.user_action NOT NULL,
-    "time" timestamp with time zone DEFAULT now() NOT NULL,
-    subject integer NOT NULL,
-    roadmap integer NOT NULL
-);
-
-
-ALTER TABLE flashback.milestones_activities OWNER TO flashback;
-
---
--- Name: milestones_activities_id_seq; Type: SEQUENCE; Schema: flashback; Owner: flashback
---
-
-ALTER TABLE flashback.milestones_activities ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
-    SEQUENCE NAME flashback.milestones_activities_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1
-);
-
-
---
 -- Name: nerves; Type: TABLE; Schema: flashback; Owner: flashback
 --
 
@@ -3327,35 +3238,6 @@ CREATE TABLE flashback.nerves (
 
 
 ALTER TABLE flashback.nerves OWNER TO flashback;
-
---
--- Name: network_activities; Type: TABLE; Schema: flashback; Owner: flashback
---
-
-CREATE TABLE flashback.network_activities (
-    id integer NOT NULL,
-    "user" integer NOT NULL,
-    "time" timestamp with time zone DEFAULT now() NOT NULL,
-    activity flashback.network_activity NOT NULL,
-    address character varying(39) NOT NULL
-);
-
-
-ALTER TABLE flashback.network_activities OWNER TO flashback;
-
---
--- Name: network_activities_id_seq; Type: SEQUENCE; Schema: flashback; Owner: flashback
---
-
-ALTER TABLE flashback.network_activities ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
-    SEQUENCE NAME flashback.network_activities_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1
-);
-
 
 --
 -- Name: presenters; Type: TABLE; Schema: flashback; Owner: flashback
@@ -3469,35 +3351,6 @@ CREATE TABLE flashback.resources (
 ALTER TABLE flashback.resources OWNER TO flashback;
 
 --
--- Name: resources_activities; Type: TABLE; Schema: flashback; Owner: flashback
---
-
-CREATE TABLE flashback.resources_activities (
-    id integer NOT NULL,
-    "user" integer NOT NULL,
-    resource integer NOT NULL,
-    action flashback.user_action NOT NULL,
-    "time" timestamp with time zone DEFAULT now() NOT NULL
-);
-
-
-ALTER TABLE flashback.resources_activities OWNER TO flashback;
-
---
--- Name: resources_activities_id_seq; Type: SEQUENCE; Schema: flashback; Owner: flashback
---
-
-ALTER TABLE flashback.resources_activities ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
-    SEQUENCE NAME flashback.resources_activities_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1
-);
-
-
---
 -- Name: resources_id_seq; Type: SEQUENCE; Schema: flashback; Owner: flashback
 --
 
@@ -3534,35 +3387,6 @@ CREATE TABLE flashback.roadmaps (
 
 
 ALTER TABLE flashback.roadmaps OWNER TO flashback;
-
---
--- Name: roadmaps_activities; Type: TABLE; Schema: flashback; Owner: flashback
---
-
-CREATE TABLE flashback.roadmaps_activities (
-    id integer NOT NULL,
-    "user" integer NOT NULL,
-    roadmap integer NOT NULL,
-    action flashback.user_action NOT NULL,
-    "time" timestamp with time zone DEFAULT now() NOT NULL
-);
-
-
-ALTER TABLE flashback.roadmaps_activities OWNER TO flashback;
-
---
--- Name: roadmaps_activities_id_seq; Type: SEQUENCE; Schema: flashback; Owner: flashback
---
-
-ALTER TABLE flashback.roadmaps_activities ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
-    SEQUENCE NAME flashback.roadmaps_activities_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1
-);
-
 
 --
 -- Name: roadmaps_id_seq; Type: SEQUENCE; Schema: flashback; Owner: flashback
@@ -3608,36 +3432,6 @@ CREATE TABLE flashback.sections (
 ALTER TABLE flashback.sections OWNER TO flashback;
 
 --
--- Name: sections_activities; Type: TABLE; Schema: flashback; Owner: flashback
---
-
-CREATE TABLE flashback.sections_activities (
-    id integer NOT NULL,
-    "user" integer NOT NULL,
-    resource integer NOT NULL,
-    "position" integer NOT NULL,
-    action flashback.user_action NOT NULL,
-    "time" timestamp with time zone DEFAULT now() NOT NULL
-);
-
-
-ALTER TABLE flashback.sections_activities OWNER TO flashback;
-
---
--- Name: sections_activities_id_seq; Type: SEQUENCE; Schema: flashback; Owner: flashback
---
-
-ALTER TABLE flashback.sections_activities ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
-    SEQUENCE NAME flashback.sections_activities_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1
-);
-
-
---
 -- Name: sessions; Type: TABLE; Schema: flashback; Owner: flashback
 --
 
@@ -3664,36 +3458,6 @@ CREATE TABLE flashback.shelves (
 ALTER TABLE flashback.shelves OWNER TO flashback;
 
 --
--- Name: shelves_activities; Type: TABLE; Schema: flashback; Owner: flashback
---
-
-CREATE TABLE flashback.shelves_activities (
-    id integer NOT NULL,
-    "user" integer NOT NULL,
-    resource integer NOT NULL,
-    subject integer NOT NULL,
-    action flashback.user_action,
-    "time" timestamp with time zone
-);
-
-
-ALTER TABLE flashback.shelves_activities OWNER TO flashback;
-
---
--- Name: shelves_activities_id_seq; Type: SEQUENCE; Schema: flashback; Owner: flashback
---
-
-ALTER TABLE flashback.shelves_activities ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
-    SEQUENCE NAME flashback.shelves_activities_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1
-);
-
-
---
 -- Name: studies; Type: TABLE; Schema: flashback; Owner: flashback
 --
 
@@ -3718,35 +3482,6 @@ CREATE TABLE flashback.subjects (
 
 
 ALTER TABLE flashback.subjects OWNER TO flashback;
-
---
--- Name: subjects_activities; Type: TABLE; Schema: flashback; Owner: flashback
---
-
-CREATE TABLE flashback.subjects_activities (
-    id integer NOT NULL,
-    "user" integer NOT NULL,
-    subject integer NOT NULL,
-    action flashback.user_action NOT NULL,
-    "time" timestamp with time zone DEFAULT now() NOT NULL
-);
-
-
-ALTER TABLE flashback.subjects_activities OWNER TO flashback;
-
---
--- Name: subjects_activities_id_seq; Type: SEQUENCE; Schema: flashback; Owner: flashback
---
-
-ALTER TABLE flashback.subjects_activities ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
-    SEQUENCE NAME flashback.subjects_activities_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1
-);
-
 
 --
 -- Name: subjects_id_seq; Type: SEQUENCE; Schema: flashback; Owner: flashback
@@ -3790,37 +3525,6 @@ CREATE TABLE flashback.topics (
 
 
 ALTER TABLE flashback.topics OWNER TO flashback;
-
---
--- Name: topics_activities; Type: TABLE; Schema: flashback; Owner: flashback
---
-
-CREATE TABLE flashback.topics_activities (
-    id integer NOT NULL,
-    "user" integer NOT NULL,
-    topic integer NOT NULL,
-    action flashback.user_action NOT NULL,
-    "time" timestamp with time zone DEFAULT now() NOT NULL,
-    subject integer NOT NULL,
-    level flashback.expertise_level NOT NULL
-);
-
-
-ALTER TABLE flashback.topics_activities OWNER TO flashback;
-
---
--- Name: topics_activities_id_seq; Type: SEQUENCE; Schema: flashback; Owner: flashback
---
-
-ALTER TABLE flashback.topics_activities ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
-    SEQUENCE NAME flashback.topics_activities_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1
-);
-
 
 --
 -- Name: users; Type: TABLE; Schema: flashback; Owner: flashback
@@ -3870,14 +3574,6 @@ ALTER TABLE ONLY flashback.authors
 
 
 --
--- Name: blocks_activities blocks_activities_pkey; Type: CONSTRAINT; Schema: flashback; Owner: flashback
---
-
-ALTER TABLE ONLY flashback.blocks_activities
-    ADD CONSTRAINT blocks_activities_pkey PRIMARY KEY (id);
-
-
---
 -- Name: blocks blocks_pkey; Type: CONSTRAINT; Schema: flashback; Owner: flashback
 --
 
@@ -3886,27 +3582,11 @@ ALTER TABLE ONLY flashback.blocks
 
 
 --
--- Name: cards_activities cards_activities_pkey; Type: CONSTRAINT; Schema: flashback; Owner: flashback
---
-
-ALTER TABLE ONLY flashback.cards_activities
-    ADD CONSTRAINT cards_activities_pkey PRIMARY KEY (id);
-
-
---
 -- Name: cards cards_pkey; Type: CONSTRAINT; Schema: flashback; Owner: flashback
 --
 
 ALTER TABLE ONLY flashback.cards
     ADD CONSTRAINT cards_pkey PRIMARY KEY (id);
-
-
---
--- Name: milestones_activities milestones_activities_pkey; Type: CONSTRAINT; Schema: flashback; Owner: flashback
---
-
-ALTER TABLE ONLY flashback.milestones_activities
-    ADD CONSTRAINT milestones_activities_pkey PRIMARY KEY (id);
 
 
 --
@@ -3931,14 +3611,6 @@ ALTER TABLE ONLY flashback.milestones
 
 ALTER TABLE ONLY flashback.nerves
     ADD CONSTRAINT nerves_pkey PRIMARY KEY ("user", resource, subject);
-
-
---
--- Name: network_activities network_activities_pkey; Type: CONSTRAINT; Schema: flashback; Owner: flashback
---
-
-ALTER TABLE ONLY flashback.network_activities
-    ADD CONSTRAINT network_activities_pkey PRIMARY KEY (id);
 
 
 --
@@ -4006,14 +3678,6 @@ ALTER TABLE ONLY flashback.resources
 
 
 --
--- Name: roadmaps_activities roadmaps_activities_pkey; Type: CONSTRAINT; Schema: flashback; Owner: flashback
---
-
-ALTER TABLE ONLY flashback.roadmaps_activities
-    ADD CONSTRAINT roadmaps_activities_pkey PRIMARY KEY (id);
-
-
---
 -- Name: roadmaps roadmaps_pkey; Type: CONSTRAINT; Schema: flashback; Owner: flashback
 --
 
@@ -4046,14 +3710,6 @@ ALTER TABLE ONLY flashback.section_cards
 
 
 --
--- Name: sections_activities sections_activities_pkey; Type: CONSTRAINT; Schema: flashback; Owner: flashback
---
-
-ALTER TABLE ONLY flashback.sections_activities
-    ADD CONSTRAINT sections_activities_pkey PRIMARY KEY (id);
-
-
---
 -- Name: sections sections_pkey; Type: CONSTRAINT; Schema: flashback; Owner: flashback
 --
 
@@ -4070,14 +3726,6 @@ ALTER TABLE ONLY flashback.sessions
 
 
 --
--- Name: shelves_activities shelves_activities_pkey; Type: CONSTRAINT; Schema: flashback; Owner: flashback
---
-
-ALTER TABLE ONLY flashback.shelves_activities
-    ADD CONSTRAINT shelves_activities_pkey PRIMARY KEY (id);
-
-
---
 -- Name: shelves shelves_pkey; Type: CONSTRAINT; Schema: flashback; Owner: flashback
 --
 
@@ -4091,14 +3739,6 @@ ALTER TABLE ONLY flashback.shelves
 
 ALTER TABLE ONLY flashback.studies
     ADD CONSTRAINT studies_pkey PRIMARY KEY ("user", card);
-
-
---
--- Name: subjects_activities subjects_activities_pkey; Type: CONSTRAINT; Schema: flashback; Owner: flashback
---
-
-ALTER TABLE ONLY flashback.subjects_activities
-    ADD CONSTRAINT subjects_activities_pkey PRIMARY KEY (id);
 
 
 --
@@ -4139,14 +3779,6 @@ ALTER TABLE ONLY flashback.topic_cards
 
 ALTER TABLE ONLY flashback.topic_cards
     ADD CONSTRAINT topic_cards_unique_position_key UNIQUE (subject, topic, level, "position");
-
-
---
--- Name: topics_activities topics_activities_pkey; Type: CONSTRAINT; Schema: flashback; Owner: flashback
---
-
-ALTER TABLE ONLY flashback.topics_activities
-    ADD CONSTRAINT topics_activities_pkey PRIMARY KEY (id);
 
 
 --
@@ -4262,59 +3894,11 @@ ALTER TABLE ONLY flashback.authors
 
 
 --
--- Name: blocks_activities blocks_activities_card_position_fkey; Type: FK CONSTRAINT; Schema: flashback; Owner: flashback
---
-
-ALTER TABLE ONLY flashback.blocks_activities
-    ADD CONSTRAINT blocks_activities_card_position_fkey FOREIGN KEY (card, "position") REFERENCES flashback.blocks(card, "position") ON UPDATE CASCADE;
-
-
---
--- Name: blocks_activities blocks_activities_user_fkey; Type: FK CONSTRAINT; Schema: flashback; Owner: flashback
---
-
-ALTER TABLE ONLY flashback.blocks_activities
-    ADD CONSTRAINT blocks_activities_user_fkey FOREIGN KEY ("user") REFERENCES flashback.users(id) ON UPDATE CASCADE;
-
-
---
 -- Name: blocks blocks_card_fkey; Type: FK CONSTRAINT; Schema: flashback; Owner: flashback
 --
 
 ALTER TABLE ONLY flashback.blocks
     ADD CONSTRAINT blocks_card_fkey FOREIGN KEY (card) REFERENCES flashback.cards(id) ON UPDATE CASCADE ON DELETE CASCADE;
-
-
---
--- Name: cards_activities cards_activities_card_fkey; Type: FK CONSTRAINT; Schema: flashback; Owner: flashback
---
-
-ALTER TABLE ONLY flashback.cards_activities
-    ADD CONSTRAINT cards_activities_card_fkey FOREIGN KEY (card) REFERENCES flashback.cards(id) ON UPDATE CASCADE;
-
-
---
--- Name: cards_activities cards_activities_user_fkey; Type: FK CONSTRAINT; Schema: flashback; Owner: flashback
---
-
-ALTER TABLE ONLY flashback.cards_activities
-    ADD CONSTRAINT cards_activities_user_fkey FOREIGN KEY ("user") REFERENCES flashback.users(id) ON UPDATE CASCADE;
-
-
---
--- Name: milestones_activities milestones_activities_roadmap_subject_fkey; Type: FK CONSTRAINT; Schema: flashback; Owner: flashback
---
-
-ALTER TABLE ONLY flashback.milestones_activities
-    ADD CONSTRAINT milestones_activities_roadmap_subject_fkey FOREIGN KEY (roadmap, subject) REFERENCES flashback.milestones(roadmap, subject) ON UPDATE CASCADE ON DELETE CASCADE;
-
-
---
--- Name: milestones_activities milestones_activities_user_fkey; Type: FK CONSTRAINT; Schema: flashback; Owner: flashback
---
-
-ALTER TABLE ONLY flashback.milestones_activities
-    ADD CONSTRAINT milestones_activities_user_fkey FOREIGN KEY ("user") REFERENCES flashback.users(id) ON UPDATE CASCADE;
 
 
 --
@@ -4355,14 +3939,6 @@ ALTER TABLE ONLY flashback.nerves
 
 ALTER TABLE ONLY flashback.nerves
     ADD CONSTRAINT nerves_user_fkey FOREIGN KEY ("user") REFERENCES flashback.users(id) ON UPDATE CASCADE ON DELETE CASCADE;
-
-
---
--- Name: network_activities network_activities_user_fkey; Type: FK CONSTRAINT; Schema: flashback; Owner: flashback
---
-
-ALTER TABLE ONLY flashback.network_activities
-    ADD CONSTRAINT network_activities_user_fkey FOREIGN KEY ("user") REFERENCES flashback.users(id) ON UPDATE CASCADE;
 
 
 --
@@ -4414,46 +3990,6 @@ ALTER TABLE ONLY flashback.requirements
 
 
 --
--- Name: resources_activities resources_activities_resource_fkey; Type: FK CONSTRAINT; Schema: flashback; Owner: flashback
---
-
-ALTER TABLE ONLY flashback.resources_activities
-    ADD CONSTRAINT resources_activities_resource_fkey FOREIGN KEY (resource) REFERENCES flashback.resources(id) ON UPDATE CASCADE ON DELETE CASCADE;
-
-
---
--- Name: resources_activities resources_activities_resource_fkey1; Type: FK CONSTRAINT; Schema: flashback; Owner: flashback
---
-
-ALTER TABLE ONLY flashback.resources_activities
-    ADD CONSTRAINT resources_activities_resource_fkey1 FOREIGN KEY (resource) REFERENCES flashback.resources(id) ON UPDATE CASCADE;
-
-
---
--- Name: resources_activities resources_activities_user_fkey; Type: FK CONSTRAINT; Schema: flashback; Owner: flashback
---
-
-ALTER TABLE ONLY flashback.resources_activities
-    ADD CONSTRAINT resources_activities_user_fkey FOREIGN KEY ("user") REFERENCES flashback.users(id) ON UPDATE CASCADE;
-
-
---
--- Name: roadmaps_activities roadmaps_activities_roadmap_fkey; Type: FK CONSTRAINT; Schema: flashback; Owner: flashback
---
-
-ALTER TABLE ONLY flashback.roadmaps_activities
-    ADD CONSTRAINT roadmaps_activities_roadmap_fkey FOREIGN KEY (roadmap) REFERENCES flashback.roadmaps(id) ON UPDATE CASCADE;
-
-
---
--- Name: roadmaps_activities roadmaps_activities_user_fkey; Type: FK CONSTRAINT; Schema: flashback; Owner: flashback
---
-
-ALTER TABLE ONLY flashback.roadmaps_activities
-    ADD CONSTRAINT roadmaps_activities_user_fkey FOREIGN KEY ("user") REFERENCES flashback.users(id) ON UPDATE CASCADE;
-
-
---
 -- Name: roadmaps roadmaps_user_fkey; Type: FK CONSTRAINT; Schema: flashback; Owner: flashback
 --
 
@@ -4478,22 +4014,6 @@ ALTER TABLE ONLY flashback.section_cards
 
 
 --
--- Name: sections_activities sections_activities_resource_position_fkey; Type: FK CONSTRAINT; Schema: flashback; Owner: flashback
---
-
-ALTER TABLE ONLY flashback.sections_activities
-    ADD CONSTRAINT sections_activities_resource_position_fkey FOREIGN KEY (resource, "position") REFERENCES flashback.sections(resource, "position") ON UPDATE CASCADE;
-
-
---
--- Name: sections_activities sections_activities_user_fkey; Type: FK CONSTRAINT; Schema: flashback; Owner: flashback
---
-
-ALTER TABLE ONLY flashback.sections_activities
-    ADD CONSTRAINT sections_activities_user_fkey FOREIGN KEY ("user") REFERENCES flashback.users(id) ON UPDATE CASCADE;
-
-
---
 -- Name: sections sections_resource_fkey; Type: FK CONSTRAINT; Schema: flashback; Owner: flashback
 --
 
@@ -4507,30 +4027,6 @@ ALTER TABLE ONLY flashback.sections
 
 ALTER TABLE ONLY flashback.sessions
     ADD CONSTRAINT sessions_user_fkey FOREIGN KEY ("user") REFERENCES flashback.users(id) ON UPDATE CASCADE ON DELETE CASCADE;
-
-
---
--- Name: shelves_activities shelves_activities_resource_fkey; Type: FK CONSTRAINT; Schema: flashback; Owner: flashback
---
-
-ALTER TABLE ONLY flashback.shelves_activities
-    ADD CONSTRAINT shelves_activities_resource_fkey FOREIGN KEY (resource) REFERENCES flashback.resources(id) ON UPDATE CASCADE ON DELETE CASCADE;
-
-
---
--- Name: shelves_activities shelves_activities_subject_fkey; Type: FK CONSTRAINT; Schema: flashback; Owner: flashback
---
-
-ALTER TABLE ONLY flashback.shelves_activities
-    ADD CONSTRAINT shelves_activities_subject_fkey FOREIGN KEY (subject) REFERENCES flashback.subjects(id) ON UPDATE CASCADE ON DELETE CASCADE;
-
-
---
--- Name: shelves_activities shelves_activities_user_fkey; Type: FK CONSTRAINT; Schema: flashback; Owner: flashback
---
-
-ALTER TABLE ONLY flashback.shelves_activities
-    ADD CONSTRAINT shelves_activities_user_fkey FOREIGN KEY ("user") REFERENCES flashback.users(id) ON UPDATE CASCADE ON DELETE CASCADE;
 
 
 --
@@ -4566,22 +4062,6 @@ ALTER TABLE ONLY flashback.studies
 
 
 --
--- Name: subjects_activities subjects_activities_subject_fkey; Type: FK CONSTRAINT; Schema: flashback; Owner: flashback
---
-
-ALTER TABLE ONLY flashback.subjects_activities
-    ADD CONSTRAINT subjects_activities_subject_fkey FOREIGN KEY (subject) REFERENCES flashback.subjects(id) ON UPDATE CASCADE;
-
-
---
--- Name: subjects_activities subjects_activities_user_fkey; Type: FK CONSTRAINT; Schema: flashback; Owner: flashback
---
-
-ALTER TABLE ONLY flashback.subjects_activities
-    ADD CONSTRAINT subjects_activities_user_fkey FOREIGN KEY ("user") REFERENCES flashback.users(id) ON UPDATE CASCADE;
-
-
---
 -- Name: topic_cards topic_cards_card_fkey; Type: FK CONSTRAINT; Schema: flashback; Owner: flashback
 --
 
@@ -4598,22 +4078,6 @@ ALTER TABLE ONLY flashback.topic_cards
 
 
 --
--- Name: topics_activities topics_activities_subject_level_position_fkey; Type: FK CONSTRAINT; Schema: flashback; Owner: flashback
---
-
-ALTER TABLE ONLY flashback.topics_activities
-    ADD CONSTRAINT topics_activities_subject_level_position_fkey FOREIGN KEY (subject, level, topic) REFERENCES flashback.topics(subject, level, "position") ON UPDATE CASCADE;
-
-
---
--- Name: topics_activities topics_activities_user_fkey; Type: FK CONSTRAINT; Schema: flashback; Owner: flashback
---
-
-ALTER TABLE ONLY flashback.topics_activities
-    ADD CONSTRAINT topics_activities_user_fkey FOREIGN KEY ("user") REFERENCES flashback.users(id) ON UPDATE CASCADE;
-
-
---
 -- Name: SCHEMA public; Type: ACL; Schema: -; Owner: flashback
 --
 
@@ -4626,5 +4090,5 @@ GRANT ALL ON SCHEMA public TO brian;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict Xw7rLhSISvJ8J3lNL2hkC88BIXh9h53eUhysTyzAbsKuO6IqWFhc1pahEXagu6Q
+\unrestrict mUsn8CpKHNJ5fzbEfyxVG29oyABtblnxg6qvZNPeGZW8eDH6jcycyFieSFjepap
 
