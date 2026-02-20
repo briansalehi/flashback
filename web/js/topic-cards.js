@@ -20,7 +20,9 @@ function displayBreadcrumb() {
 
     if (subjectId && subjectName) {
         if (breadcrumbHtml) breadcrumbHtml += ' → ';
-        breadcrumbHtml += `<a href="subject.html?id=${subjectId}&name=${encodeURIComponent(subjectName)}&roadmapId=${roadmapId || ''}&roadmapName=${encodeURIComponent(roadmapName || '')}" style="color: var(--text-primary); text-decoration: none;">${UI.escapeHtml(subjectName)}</a>`;
+        const topicLevel = UI.getUrlParam('topicLevel') || '0';
+        const milestoneLevel = UI.getUrlParam('milestoneLevel') || topicLevel;
+        breadcrumbHtml += `<a href="subject.html?id=${subjectId}&name=${encodeURIComponent(subjectName)}&roadmapId=${roadmapId || ''}&roadmapName=${encodeURIComponent(roadmapName || '')}&level=${milestoneLevel}" style="color: var(--text-primary); text-decoration: none;">${UI.escapeHtml(subjectName)}</a>`;
     }
 
     if (breadcrumbHtml) {
@@ -49,6 +51,13 @@ window.addEventListener('DOMContentLoaded', () => {
 
     document.getElementById('topic-name').textContent = topicName || 'Topic';
     document.title = `${topicName || 'Topic'} - Flashback`;
+
+    // Display topic level badge
+    const levelNames = ['Surface', 'Depth', 'Origin'];
+    const levelBadge = document.getElementById('topic-level-badge');
+    if (levelBadge) {
+        levelBadge.textContent = levelNames[topicLevel] || 'Unknown';
+    }
 
     // Display breadcrumb
     displayBreadcrumb();
@@ -116,32 +125,34 @@ window.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Rename topic handlers
-    const renameTopicBtn = document.getElementById('rename-topic-btn');
-    if (renameTopicBtn) {
-        renameTopicBtn.addEventListener('click', () => {
-            UI.toggleElement('rename-topic-modal', true);
-            document.getElementById('rename-topic-name').value = topicName || '';
+    // Edit topic handlers
+    const editTopicBtn = document.getElementById('edit-topic-btn');
+    if (editTopicBtn) {
+        editTopicBtn.addEventListener('click', () => {
+            UI.toggleElement('edit-topic-modal', true);
+            document.getElementById('edit-topic-name').value = topicName || '';
+            document.getElementById('edit-topic-level').value = topicLevel;
             setTimeout(() => {
-                document.getElementById('rename-topic-name').focus();
+                document.getElementById('edit-topic-name').focus();
             }, 100);
         });
     }
 
-    const cancelRenameTopicBtn = document.getElementById('cancel-rename-topic-btn');
-    if (cancelRenameTopicBtn) {
-        cancelRenameTopicBtn.addEventListener('click', () => {
-            UI.toggleElement('rename-topic-modal', false);
-            UI.clearForm('rename-topic-form');
+    const cancelEditTopicBtn = document.getElementById('cancel-edit-topic-btn');
+    if (cancelEditTopicBtn) {
+        cancelEditTopicBtn.addEventListener('click', () => {
+            UI.toggleElement('edit-topic-modal', false);
+            UI.clearForm('edit-topic-form');
         });
     }
 
-    const renameTopicForm = document.getElementById('rename-topic-form');
-    if (renameTopicForm) {
-        renameTopicForm.addEventListener('submit', async (e) => {
+    const editTopicForm = document.getElementById('edit-topic-form');
+    if (editTopicForm) {
+        editTopicForm.addEventListener('submit', async (e) => {
             e.preventDefault();
 
-            const newName = document.getElementById('rename-topic-name').value.trim();
+            const newName = document.getElementById('edit-topic-name').value.trim();
+            const newLevel = parseInt(document.getElementById('edit-topic-level').value);
 
             if (!newName) {
                 UI.showError('Please enter a topic name');
@@ -149,29 +160,37 @@ window.addEventListener('DOMContentLoaded', () => {
             }
 
             UI.hideMessage('error-message');
-            UI.setButtonLoading('save-rename-topic-btn', true);
+            UI.setButtonLoading('save-edit-topic-btn', true);
 
             try {
-                await client.editTopic(subjectId, topicLevel, topicPosition, newName, topicLevel);
+                await client.editTopic(subjectId, topicLevel, topicPosition, newName, newLevel);
 
                 // Update the page title and topic name display
                 document.getElementById('topic-name').textContent = newName;
                 document.title = `${newName} - Flashback`;
 
-                // Update URL with new name
+                // Update level badge
+                const levelNames = ['Surface', 'Depth', 'Origin'];
+                const levelBadge = document.getElementById('topic-level-badge');
+                if (levelBadge) {
+                    levelBadge.textContent = levelNames[newLevel] || 'Unknown';
+                }
+
+                // Update URL with new name and level
                 const currentUrl = new URL(window.location.href);
                 currentUrl.searchParams.set('name', newName);
+                currentUrl.searchParams.set('topicLevel', newLevel);
                 window.history.replaceState({}, '', currentUrl);
 
-                UI.toggleElement('rename-topic-modal', false);
-                UI.clearForm('rename-topic-form');
-                UI.setButtonLoading('save-rename-topic-btn', false);
+                UI.toggleElement('edit-topic-modal', false);
+                UI.clearForm('edit-topic-form');
+                UI.setButtonLoading('save-edit-topic-btn', false);
 
-                UI.showSuccess('Topic renamed successfully');
+                UI.showSuccess('Topic updated successfully');
             } catch (err) {
-                console.error('Rename topic failed:', err);
-                UI.showError(err.message || 'Failed to rename topic');
-                UI.setButtonLoading('save-rename-topic-btn', false);
+                console.error('Edit topic failed:', err);
+                UI.showError(err.message || 'Failed to edit topic');
+                UI.setButtonLoading('save-edit-topic-btn', false);
             }
         });
     }
@@ -207,12 +226,54 @@ window.addEventListener('DOMContentLoaded', () => {
                 const subjectName = UI.getUrlParam('subjectName') || '';
                 const roadmapId = UI.getUrlParam('roadmapId') || '';
                 const roadmapName = UI.getUrlParam('roadmapName') || '';
-                window.location.href = `subject.html?id=${subjectId}&name=${encodeURIComponent(subjectName)}&roadmapId=${roadmapId}&roadmapName=${encodeURIComponent(roadmapName)}`;
+                // Pass the milestone level so subject page knows which levels to display
+                const milestoneLevel = UI.getUrlParam('milestoneLevel') || topicLevel;
+                window.location.href = `subject.html?id=${subjectId}&name=${encodeURIComponent(subjectName)}&roadmapId=${roadmapId}&roadmapName=${encodeURIComponent(roadmapName)}&level=${milestoneLevel}`;
             } catch (err) {
                 console.error('Remove topic failed:', err);
                 UI.showError(err.message || 'Failed to remove topic');
                 UI.setButtonLoading('confirm-remove-topic-btn', false);
             }
+        });
+    }
+
+    // Setup move card modal handlers
+    const cancelMoveCardBtn = document.getElementById('cancel-move-card-btn');
+    if (cancelMoveCardBtn) {
+        cancelMoveCardBtn.addEventListener('click', () => {
+            closeMoveCardModal();
+        });
+    }
+
+    const topicSearchInput = document.getElementById('topic-search-input');
+    if (topicSearchInput) {
+        // Interactive search with debouncing
+        let searchTimeout = null;
+        topicSearchInput.addEventListener('input', (e) => {
+            const searchValue = e.target.value.trim();
+
+            // Clear previous timeout
+            if (searchTimeout) {
+                clearTimeout(searchTimeout);
+            }
+
+            // Hide results if search is empty
+            if (searchValue === '') {
+                document.getElementById('topic-search-results').style.display = 'none';
+                document.getElementById('topic-search-empty').style.display = 'none';
+                document.getElementById('topic-search-loading').style.display = 'none';
+                return;
+            }
+
+            // Show loading state
+            document.getElementById('topic-search-loading').style.display = 'block';
+            document.getElementById('topic-search-results').style.display = 'none';
+            document.getElementById('topic-search-empty').style.display = 'none';
+
+            // Debounce search - wait 300ms after user stops typing
+            searchTimeout = setTimeout(async () => {
+                await searchForTopics(searchValue);
+            }, 300);
         });
     }
 
@@ -262,19 +323,159 @@ function renderCards(cards) {
     cards.forEach(card => {
         const cardItem = document.createElement('div');
         cardItem.className = 'card-item';
-        cardItem.style.cursor = 'pointer';
 
         const stateName = stateNames[card.state] || 'draft';
 
         cardItem.innerHTML = `
-            <div class="card-headline">${UI.escapeHtml(card.headline)}</div>
-            <span class="card-state ${stateName}">${UI.escapeHtml(stateName)}</span>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div style="flex: 1; cursor: pointer;" data-card-id="${card.id}" data-card-headline="${UI.escapeHtml(card.headline)}" data-card-state="${card.state}" class="card-link">
+                    <div class="card-headline">${UI.escapeHtml(card.headline)}</div>
+                    <span class="card-state ${stateName}">${UI.escapeHtml(stateName)}</span>
+                </div>
+                <button class="btn btn-secondary" style="margin-left: 1rem; padding: 0.5rem 1rem;" onclick="handleMoveCard(${card.id}, '${UI.escapeHtml(card.headline).replace(/'/g, "\\'")}')">
+                    Move
+                </button>
+            </div>
         `;
 
-        cardItem.addEventListener('click', () => {
+        const cardLink = cardItem.querySelector('.card-link');
+        cardLink.addEventListener('click', () => {
             window.location.href = `card.html?cardId=${card.id}&headline=${encodeURIComponent(card.headline)}&state=${card.state}&practiceMode=selective&roadmapId=${roadmapId}&roadmapName=${encodeURIComponent(roadmapName)}&subjectId=${subjectId}&subjectName=${encodeURIComponent(subjectName)}&topicPosition=${topicPosition}&topicLevel=${topicLevel}&topicName=${encodeURIComponent(topicName)}`;
         });
 
         container.appendChild(cardItem);
     });
+}
+
+// Global state for move card modal
+let currentMovingCardId = null;
+let currentMovingCardHeadline = null;
+
+window.handleMoveCard = function(cardId, cardHeadline) {
+    currentMovingCardId = cardId;
+    currentMovingCardHeadline = cardHeadline;
+
+    // Open modal
+    const modal = document.getElementById('move-card-modal');
+    modal.style.display = 'block';
+    document.getElementById('moving-card-headline').textContent = cardHeadline;
+    document.getElementById('topic-search-input').value = '';
+    document.getElementById('topic-search-results').style.display = 'none';
+    document.getElementById('topic-search-empty').style.display = 'none';
+    document.getElementById('topic-search-loading').style.display = 'none';
+    document.getElementById('topics-list').innerHTML = '';
+
+    // Scroll modal into view smoothly
+    setTimeout(() => {
+        modal.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        document.getElementById('topic-search-input').focus();
+    }, 100);
+};
+
+function closeMoveCardModal() {
+    document.getElementById('move-card-modal').style.display = 'none';
+    currentMovingCardId = null;
+    currentMovingCardHeadline = null;
+    document.getElementById('topic-search-input').value = '';
+    document.getElementById('topic-search-results').style.display = 'none';
+    document.getElementById('topic-search-empty').style.display = 'none';
+    document.getElementById('topic-search-loading').style.display = 'none';
+    document.getElementById('topics-list').innerHTML = '';
+}
+
+async function searchForTopics(searchToken) {
+    if (!searchToken) {
+        return;
+    }
+
+    const subjectId = parseInt(UI.getUrlParam('subjectId'));
+
+    try {
+        // Search across all levels by trying each level
+        const allTopics = [];
+        for (let level = 0; level <= 2; level++) {
+            try {
+                const levelTopics = await client.searchTopics(subjectId, level, searchToken);
+                allTopics.push(...levelTopics);
+            } catch (err) {
+                console.error(`Failed to search topics at level ${level}:`, err);
+            }
+        }
+
+        // Hide loading
+        document.getElementById('topic-search-loading').style.display = 'none';
+
+        if (allTopics.length === 0) {
+            document.getElementById('topic-search-results').style.display = 'none';
+            document.getElementById('topic-search-empty').style.display = 'block';
+            return;
+        }
+
+        // Display topics
+        displayTopicResults(allTopics);
+        document.getElementById('topic-search-results').style.display = 'block';
+        document.getElementById('topic-search-empty').style.display = 'none';
+    } catch (err) {
+        console.error('Failed to search topics:', err);
+        document.getElementById('topic-search-loading').style.display = 'none';
+        document.getElementById('topic-search-empty').style.display = 'block';
+    }
+}
+
+function displayTopicResults(topics) {
+    const container = document.getElementById('topics-list');
+    container.innerHTML = '';
+
+    const searchInput = document.getElementById('topic-search-input');
+    const searchTerm = searchInput.value.trim();
+    const levelNames = ['Surface', 'Depth', 'Origin'];
+
+    topics.forEach(topic => {
+        const topicItem = document.createElement('div');
+        topicItem.className = 'topic-list-item';
+
+        // Highlight matching text
+        let highlightedName = UI.escapeHtml(topic.name);
+        if (searchTerm) {
+            const regex = new RegExp(`(${searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+            highlightedName = highlightedName.replace(regex, '<mark style="background-color: #fff59d; padding: 0 2px; border-radius: 2px;">$1</mark>');
+        }
+
+        topicItem.innerHTML = `
+            <div style="font-weight: 600; margin-bottom: 0.25rem;">${highlightedName}</div>
+            <div style="font-size: 0.875rem; color: var(--text-muted);">Level: ${levelNames[topic.level] || 'Unknown'} • Position: ${topic.position}</div>
+        `;
+
+        topicItem.addEventListener('click', async () => {
+            await moveCardToTopic(topic);
+        });
+
+        container.appendChild(topicItem);
+    });
+}
+
+async function moveCardToTopic(targetTopic) {
+    const subjectId = parseInt(UI.getUrlParam('subjectId'));
+    const currentTopicLevel = parseInt(UI.getUrlParam('topicLevel'));
+    const currentTopicPosition = parseInt(UI.getUrlParam('topicPosition'));
+
+    try {
+        await client.moveCardToTopic(
+            currentMovingCardId,
+            subjectId,
+            currentTopicLevel,
+            currentTopicPosition,
+            subjectId, // targetSubjectId (same subject)
+            targetTopic.level,
+            targetTopic.position
+        );
+
+        // Close modal and reload cards
+        closeMoveCardModal();
+        UI.showSuccess(`Card moved to "${targetTopic.name}" successfully`);
+        await loadCards();
+    } catch (err) {
+        console.error('Failed to move card:', err);
+        UI.showError('Failed to move card: ' + (err.message || 'Unknown error'));
+    }
 }

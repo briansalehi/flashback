@@ -486,7 +486,8 @@ function renderTopics(topics, maxLevel) {
                         const subjectName = UI.getUrlParam('name');
                         const roadmapId = UI.getUrlParam('roadmapId');
                         const roadmapName = UI.getUrlParam('roadmapName');
-                        window.location.href = `topic-cards.html?subjectId=${subjectId}&topicPosition=${topic.position}&topicLevel=${topic.level}&name=${encodeURIComponent(topic.name)}&subjectName=${encodeURIComponent(subjectName || '')}&roadmapId=${roadmapId || ''}&roadmapName=${encodeURIComponent(roadmapName || '')}`;
+                        const milestoneLevel = UI.getUrlParam('level') || '0';
+                        window.location.href = `topic-cards.html?subjectId=${subjectId}&topicPosition=${topic.position}&topicLevel=${topic.level}&name=${encodeURIComponent(topic.name)}&subjectName=${encodeURIComponent(subjectName || '')}&roadmapId=${roadmapId || ''}&roadmapName=${encodeURIComponent(roadmapName || '')}&milestoneLevel=${milestoneLevel}`;
                     }
                 });
 
