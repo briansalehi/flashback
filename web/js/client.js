@@ -793,7 +793,7 @@ class FlashbackClient {
         });
     }
 
-    async makeProgress(cardId, duration, practiceMode) {
+    async makeProgress(cardId, duration, milestoneId, milestoneLevel) {
         return new Promise((resolve, reject) => {
             const request = new proto.flashback.MakeProgressRequest();
             const user = this.getAuthenticatedUser();
@@ -801,8 +801,11 @@ class FlashbackClient {
             const card = new proto.flashback.Card();
             card.setId(cardId);
             request.setCard(card);
+            const milestone = new proto.flashback.Milestone();
+            milestone.setId(milestoneId);
+            milestone.setLevel(milestoneLevel);
+            request.setMilestone(milestone);
             request.setDuration(duration);
-            request.setMode(practiceMode);
 
             this.client.makeProgress(request, this.getMetadata(), (err) => {
                 if (err) {

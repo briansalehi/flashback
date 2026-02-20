@@ -147,6 +147,21 @@ window.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    const startAssessmentBtn = document.getElementById('start-assessment-btn');
+    if (startAssessmentBtn) {
+        if (!roadmapId) {
+            startAssessmentBtn.disabled = true;
+            startAssessmentBtn.title = 'Access this subject from a roadmap to enable assessment practice';
+            startAssessmentBtn.style.opacity = '0.5';
+            startAssessmentBtn.style.cursor = 'not-allowed';
+        } else {
+            startAssessmentBtn.addEventListener('click', async (e) => {
+                e.preventDefault();
+                await startAssessmentPractice();
+            });
+        }
+    }
+
     // Tab switching
     const tabs = document.querySelectorAll('.tab');
     const tabContents = document.querySelectorAll('.tab-content');
@@ -168,6 +183,8 @@ window.addEventListener('DOMContentLoaded', () => {
             // Load data when switching tabs
             if (targetTab === 'topics' && !topicsLoaded) {
                 loadTopics();
+            } else if (targetTab === 'assessments' && !assessmentsLoaded) {
+                loadAssessments();
             } else if (targetTab === 'resources' && !resourcesLoaded) {
                 loadResources();
             }
@@ -388,6 +405,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
     // Load topics initially (since topics tab is active by default)
     let topicsLoaded = false;
+    let assessmentsLoaded = false;
     let resourcesLoaded = false;
     loadTopics();
 });
@@ -795,6 +813,65 @@ async function searchAndDisplayResources(query) {
     }
 }
 
+async function startAssessmentPractice() {
+    const subjectId = parseInt(UI.getUrlParam('id'));
+    const roadmapId = UI.getUrlParam('roadmapId');
+
+    if (!roadmapId || !subjectId) {
+        UI.showError('Missing roadmap or subject information');
+        return;
+    }
+
+    UI.setButtonLoading('start-assessment-btn', true);
+
+    try {
+        const topics = await client.getTopics(subjectId);
+
+        // Get assessments for assimilated topics
+        const assessmentCards = [];
+        for (const topic of topics) {
+            try {
+                const isAssimilated = await client.isAssimilated(subjectId, topic.level, topic.position);
+                if (isAssimilated) {
+                    const assessment = await client.getAssessments(subjectId, topic.level, topic.position);
+                    if (assessment && assessment.id) {
+                        assessmentCards.push({
+                            id: assessment.id,
+                            headline: assessment.headline,
+                            state: assessment.state,
+                            topicName: topic.name,
+                            topicLevel: topic.level,
+                            topicPosition: topic.position
+                        });
+                    }
+                }
+            } catch (err) {
+                // Topic might not have an assessment yet, continue
+                console.log(`No assessment for topic ${topic.name}:`, err);
+            }
+        }
+
+        if (assessmentCards.length === 0) {
+            UI.showError('No assessments available for practice. Create assessments in the Assessments tab first.');
+            UI.setButtonLoading('start-assessment-btn', false);
+            return;
+        }
+
+        // Navigate to first assessment card
+        const subjectNameParam = UI.getUrlParam('name') || '';
+        const roadmapName = UI.getUrlParam('roadmapName') || '';
+        const firstAssessment = assessmentCards[0];
+
+        window.location.href = `card.html?cardId=${firstAssessment.id}&headline=${encodeURIComponent(firstAssessment.headline)}&state=${firstAssessment.state}&practiceMode=selective&subjectId=${subjectId}&subjectName=${encodeURIComponent(subjectNameParam)}&topicName=${encodeURIComponent(firstAssessment.topicName)}&topicLevel=${firstAssessment.topicLevel}&topicPosition=${firstAssessment.topicPosition}&roadmapId=${roadmapId}&roadmapName=${encodeURIComponent(roadmapName)}`;
+
+        UI.setButtonLoading('start-assessment-btn', false);
+    } catch (err) {
+        console.error('Start assessment practice failed:', err);
+        UI.showError('Failed to start assessment practice: ' + (err.message || 'Unknown error'));
+        UI.setButtonLoading('start-assessment-btn', false);
+    }
+}
+
 async function removeTopic(level, position) {
     const subjectId = UI.getUrlParam('id');
 
@@ -817,5 +894,123 @@ async function reorderTopic(level, sourcePosition, targetPosition) {
     } catch (err) {
         console.error('Reorder topic failed:', err);
         UI.showError('Failed to reorder topic: ' + (err.message || 'Unknown error'));
+    }
+}
+
+// Assessment functions
+async function loadAssessments() {
+    UI.toggleElement('assessments-loading', true);
+    UI.toggleElement('assessments-list', false);
+    UI.toggleElement('assessments-empty-state', false);
+
+    try {
+        const subjectId = parseInt(UI.getUrlParam('id'));
+        const topics = await client.getTopics(subjectId);
+
+        // Get all topics and check which are assimilated
+        const topicsWithAssessments = await Promise.all(
+            topics.map(async (topic) => {
+                try {
+                    const isAssimilated = await client.isAssimilated(subjectId, topic.level, topic.position);
+                    return { ...topic, isAssimilated };
+                } catch (err) {
+                    return { ...topic, isAssimilated: false };
+                }
+            })
+        );
+
+        UI.toggleElement('assessments-loading', false);
+        assessmentsLoaded = true;
+
+        // Filter to only show assimilated topics
+        const assimilatedTopics = topicsWithAssessments.filter(t => t.isAssimilated);
+
+        if (assimilatedTopics.length === 0) {
+            UI.toggleElement('assessments-empty-state', true);
+        } else {
+            UI.toggleElement('assessments-list', true);
+            renderAssessments(assimilatedTopics);
+        }
+    } catch (err) {
+        console.error('Loading assessments failed:', err);
+        UI.toggleElement('assessments-loading', false);
+        UI.showError('Failed to load assessments: ' + (err.message || 'Unknown error'));
+    }
+}
+
+function renderAssessments(topics) {
+    const container = document.getElementById('assessments-list');
+    container.innerHTML = '';
+
+    const levelInfo = {
+        0: { name: 'Beginner', color: '#4caf50' },
+        1: { name: 'Intermediate', color: '#2196f3' },
+        2: { name: 'Advanced', color: '#f44336' }
+    };
+
+    const subjectId = UI.getUrlParam('id');
+    const subjectName = UI.getUrlParam('name');
+    const roadmapId = UI.getUrlParam('roadmapId');
+    const roadmapName = UI.getUrlParam('roadmapName');
+
+    topics.forEach((topic, index) => {
+        const topicCard = document.createElement('div');
+        topicCard.className = 'topic-item';
+        topicCard.style.cursor = 'default';
+
+        const level = topic.level;
+        topicCard.innerHTML = `
+            <div class="topic-content">
+                <div class="topic-position">${index + 1}</div>
+                <div class="topic-name">${UI.escapeHtml(topic.name)}</div>
+                <span class="topic-level">${UI.escapeHtml(levelInfo[level].name)}</span>
+                <span style="background: #4caf50; color: white; padding: 0.35rem 0.75rem; border-radius: 12px; font-size: 0.75rem; font-weight: 600; margin-left: 0.5rem;">✓ Ready</span>
+            </div>
+            <div style="display: flex; gap: 0.5rem;">
+                <button class="btn btn-primary create-assessment-btn" data-topic-level="${topic.level}" data-topic-position="${topic.position}" data-topic-name="${UI.escapeHtml(topic.name)}" style="padding: 0.5rem 1rem; font-size: 0.875rem;">
+                    Create Assessment
+                </button>
+            </div>
+        `;
+
+        // Create assessment button handler
+        const createBtn = topicCard.querySelector('.create-assessment-btn');
+        if (createBtn) {
+            createBtn.addEventListener('click', async () => {
+                await createAssessmentForTopic(topic.level, topic.position, topic.name);
+            });
+        }
+
+        container.appendChild(topicCard);
+    });
+}
+
+async function createAssessmentForTopic(topicLevel, topicPosition, topicName) {
+    const headline = `Assessment: ${topicName}`;
+
+    if (!confirm(`Create an assessment card for "${topicName}"?\n\nThis will create a comprehensive review card for this topic.`)) {
+        return;
+    }
+
+    try {
+        const subjectId = parseInt(UI.getUrlParam('id'));
+
+        // First create the card
+        const card = await client.createCard(headline);
+
+        // Then create the assessment linking the card to the topic
+        await client.createAssessment(card.id, subjectId, topicLevel, topicPosition);
+
+        UI.showSuccess('Assessment created successfully! You can now add blocks to it.');
+
+        // Navigate to the card page to edit it
+        const subjectName = UI.getUrlParam('name');
+        const roadmapId = UI.getUrlParam('roadmapId');
+        const roadmapName = UI.getUrlParam('roadmapName');
+
+        window.location.href = `card.html?cardId=${card.id}&headline=${encodeURIComponent(headline)}&state=${card.state}&practiceMode=selective&subjectId=${subjectId}&subjectName=${encodeURIComponent(subjectName || '')}&topicPosition=${topicPosition}&topicLevel=${topicLevel}&topicName=${encodeURIComponent(topicName)}&roadmapId=${roadmapId || ''}&roadmapName=${encodeURIComponent(roadmapName || '')}`;
+    } catch (err) {
+        console.error('Failed to create assessment:', err);
+        UI.showError('Failed to create assessment: ' + (err.message || 'Unknown error'));
     }
 }

@@ -406,11 +406,17 @@
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
                 <div class="tabs" style="margin-bottom: 0;">
                     <button class="tab active" data-tab="topics">Topics</button>
+                    <button class="tab" data-tab="assessments">Assessments</button>
                     <button class="tab" data-tab="resources">Resources</button>
                 </div>
-                <button id="start-practice-btn" class="btn btn-primary">
-                    Start Practice
-                </button>
+                <div style="display: flex; gap: 0.5rem;">
+                    <button id="start-assessment-btn" class="btn btn-secondary" style="display: none;">
+                        Practice Assessments
+                    </button>
+                    <button id="start-practice-btn" class="btn btn-primary">
+                        Start Practice
+                    </button>
+                </div>
             </div>
 
             <div id="error-message" style="display: none;"></div>
@@ -485,6 +491,27 @@
                         </div>
                     </form>
                 </div>
+            </div>
+
+            <!-- assessments tab -->
+            <div id="assessments-content" class="tab-content">
+                <div id="assessments-loading" style="display: none; text-align: center; padding: 3rem;">
+                    <div class="loading" style="width: 40px; height: 40px; border-width: 4px;"></div>
+                    <p class="text-muted mt-md">Loading assessments...</p>
+                </div>
+
+                <div id="assessments-list">
+                    <!-- assessments will be inserted here -->
+                </div>
+
+                <div id="assessments-empty-state" style="display: none; text-align: center; padding: 4rem 2rem;">
+                    <h3 style="color: var(--text-muted);">No assessments yet</h3>
+                    <p class="text-muted">Create an assessment for topics you've practiced enough!</p>
+                </div>
+
+                <p style="color: var(--text-muted); margin-top: 2rem; font-size: 0.9rem;">
+                    💡 Assessments are comprehensive cards that review entire topics. Once a topic is well-practiced, you can create an assessment to review it more efficiently.
+                </p>
             </div>
 
             <!-- resources tab -->
