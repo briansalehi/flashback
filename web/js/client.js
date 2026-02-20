@@ -1542,10 +1542,9 @@ class FlashbackClient {
         });
     }
 
-    // moveCardToSection { User user = 1; Card card = 2;; Resource resource = 3; Section source = 4; Section target = 5; }  { }
     async moveCardToSection(cardId, resourceId, sourcePosition, targetPosition) {
         return new Promise((resolve, reject) => {
-            const request = new proto.flashback.xxxRequest();
+            const request = new proto.flashback.MoveCardToSectionRequest();
             const user = this.getAuthenticatedUser();
             request.setUser(user);
             const card = new proto.flashback.Card();

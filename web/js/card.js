@@ -115,6 +115,41 @@ window.addEventListener('DOMContentLoaded', () => {
     // Setup edit headline functionality
     setupEditHeadline();
 
+    // Setup remove card button - show for section cards only
+    const resourceId = UI.getUrlParam('resourceId');
+    const sectionPosition = UI.getUrlParam('sectionPosition');
+    const removeCardBtn = document.getElementById('remove-card-btn');
+
+    if (removeCardBtn && resourceId && sectionPosition !== '') {
+        removeCardBtn.style.display = 'inline-block';
+        removeCardBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            openRemoveCardModal();
+        });
+    }
+
+    // Setup remove card modal handlers
+    const cancelRemoveCardBtn = document.getElementById('cancel-remove-card-btn');
+    if (cancelRemoveCardBtn) {
+        cancelRemoveCardBtn.addEventListener('click', () => {
+            closeRemoveCardModal();
+        });
+    }
+
+    const confirmRemoveCardBtn = document.getElementById('confirm-remove-card-btn');
+    if (confirmRemoveCardBtn) {
+        confirmRemoveCardBtn.addEventListener('click', async () => {
+            await confirmRemoveCard();
+        });
+    }
+
+    const modalOverlay = document.getElementById('modal-overlay');
+    if (modalOverlay) {
+        modalOverlay.addEventListener('click', () => {
+            closeRemoveCardModal();
+        });
+    }
+
     loadBlocks();
 });
 
@@ -669,4 +704,51 @@ function setupEditHeadline() {
             cancelBtn.click();
         }
     });
+}
+
+function openRemoveCardModal() {
+    document.getElementById('modal-overlay').style.display = 'block';
+    document.getElementById('remove-card-modal').style.display = 'block';
+}
+
+function closeRemoveCardModal() {
+    document.getElementById('modal-overlay').style.display = 'none';
+    document.getElementById('remove-card-modal').style.display = 'none';
+}
+
+async function confirmRemoveCard() {
+    const cardId = parseInt(UI.getUrlParam('cardId'));
+    const resourceId = UI.getUrlParam('resourceId');
+    const sectionPosition = UI.getUrlParam('sectionPosition');
+
+    if (!cardId) {
+        UI.showError('Invalid card ID');
+        return;
+    }
+
+    UI.setButtonLoading('confirm-remove-card-btn', true);
+
+    try {
+        await client.removeCard(cardId);
+
+        // Navigate back to section cards page
+        const resourceName = UI.getUrlParam('resourceName') || '';
+        const sectionName = UI.getUrlParam('sectionName') || '';
+        const resourceType = UI.getUrlParam('resourceType') || '0';
+        const resourcePattern = UI.getUrlParam('resourcePattern') || '0';
+        const resourceLink = UI.getUrlParam('resourceLink') || '';
+        const resourceProduction = UI.getUrlParam('resourceProduction') || '0';
+        const resourceExpiration = UI.getUrlParam('resourceExpiration') || '0';
+        const subjectId = UI.getUrlParam('subjectId') || '';
+        const subjectName = UI.getUrlParam('subjectName') || '';
+        const roadmapId = UI.getUrlParam('roadmapId') || '';
+        const roadmapName = UI.getUrlParam('roadmapName') || '';
+
+        window.location.href = `section-cards.html?resourceId=${resourceId}&sectionPosition=${sectionPosition}&name=${encodeURIComponent(sectionName)}&resourceName=${encodeURIComponent(resourceName)}&resourceType=${resourceType}&resourcePattern=${resourcePattern}&resourceLink=${encodeURIComponent(resourceLink)}&resourceProduction=${resourceProduction}&resourceExpiration=${resourceExpiration}&subjectId=${subjectId}&subjectName=${encodeURIComponent(subjectName)}&roadmapId=${roadmapId}&roadmapName=${encodeURIComponent(roadmapName)}`;
+    } catch (err) {
+        console.error('Failed to remove card:', err);
+        UI.showError('Failed to remove card: ' + (err.message || 'Unknown error'));
+        UI.setButtonLoading('confirm-remove-card-btn', false);
+        closeRemoveCardModal();
+    }
 }

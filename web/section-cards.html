@@ -82,6 +82,25 @@
             background-color: #e8f5e9;
             color: #388e3c;
         }
+
+        .section-list-item {
+            padding: 0.75rem;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            margin-bottom: 0.5rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            background-color: var(--bg-primary);
+        }
+
+        .section-list-item:hover {
+            border-color: var(--accent-color);
+            background-color: var(--accent-light);
+        }
+
+        .section-list-item:active {
+            transform: scale(0.98);
+        }
     </style>
 </head>
 <body>
@@ -217,6 +236,44 @@
                         </button>
                     </div>
                 </form>
+            </div>
+
+            <!-- Move Card Modal -->
+            <div id="move-card-modal" class="card" style="display: none; max-width: 600px; margin-bottom: 2rem;">
+                <div class="card-header">
+                    <h3 class="card-title">Move Card</h3>
+                </div>
+                <div style="padding: 1rem 0;">
+                    <p style="color: var(--text-muted); margin-bottom: 1rem;">
+                        Moving: <strong id="moving-card-headline"></strong>
+                    </p>
+                    <div class="form-group">
+                        <label class="form-label" for="section-search-input">Search for target section</label>
+                        <input
+                            type="text"
+                            id="section-search-input"
+                            class="form-input"
+                            placeholder="Type to search sections..."
+                            autocomplete="off"
+                        >
+                    </div>
+                    <div id="section-search-loading" style="display: none; text-align: center; padding: 1rem;">
+                        <div class="loading" style="width: 24px; height: 24px; border-width: 3px; margin: 0 auto;"></div>
+                        <p class="text-muted" style="margin-top: 0.5rem; font-size: 0.875rem;">Searching...</p>
+                    </div>
+                    <div id="section-search-results" style="margin-top: 1rem; display: none;">
+                        <h4 style="font-size: 0.9rem; font-weight: 600; margin-bottom: 0.5rem;">Select target section:</h4>
+                        <div id="sections-list" style="max-height: 300px; overflow-y: auto;">
+                            <!-- sections will be inserted here -->
+                        </div>
+                    </div>
+                    <div id="section-search-empty" style="display: none; text-align: center; padding: 1rem; color: var(--text-muted); font-size: 0.875rem;">
+                        No sections found
+                    </div>
+                    <div style="display: flex; gap: 1rem; justify-content: flex-end; margin-top: 1.5rem;">
+                        <button id="cancel-move-card-btn" class="btn btn-secondary">Cancel</button>
+                    </div>
+                </div>
             </div>
         </div>
     </main>

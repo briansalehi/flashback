@@ -250,6 +250,46 @@ window.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // Setup move card modal handlers
+    const cancelMoveCardBtn = document.getElementById('cancel-move-card-btn');
+    if (cancelMoveCardBtn) {
+        cancelMoveCardBtn.addEventListener('click', () => {
+            closeMoveCardModal();
+        });
+    }
+
+    const sectionSearchInput = document.getElementById('section-search-input');
+    if (sectionSearchInput) {
+        // Interactive search with debouncing
+        let searchTimeout = null;
+        sectionSearchInput.addEventListener('input', (e) => {
+            const searchValue = e.target.value.trim();
+
+            // Clear previous timeout
+            if (searchTimeout) {
+                clearTimeout(searchTimeout);
+            }
+
+            // Hide results if search is empty
+            if (searchValue === '') {
+                document.getElementById('section-search-results').style.display = 'none';
+                document.getElementById('section-search-empty').style.display = 'none';
+                document.getElementById('section-search-loading').style.display = 'none';
+                return;
+            }
+
+            // Show loading state
+            document.getElementById('section-search-loading').style.display = 'block';
+            document.getElementById('section-search-results').style.display = 'none';
+            document.getElementById('section-search-empty').style.display = 'none';
+
+            // Debounce search - wait 300ms after user stops typing
+            searchTimeout = setTimeout(async () => {
+                await searchForSections(searchValue);
+            }, 300);
+        });
+    }
+
     loadCards();
 });
 
@@ -296,16 +336,23 @@ function renderCards(cards) {
     cards.forEach(card => {
         const cardItem = document.createElement('div');
         cardItem.className = 'card-item';
-        cardItem.style.cursor = 'pointer';
 
         const stateName = stateNames[card.state] || 'draft';
 
         cardItem.innerHTML = `
-            <div class="card-headline">${UI.escapeHtml(card.headline)}</div>
-            <span class="card-state ${stateName}">${UI.escapeHtml(stateName)}</span>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div style="flex: 1; cursor: pointer;" data-card-id="${card.id}" data-card-headline="${UI.escapeHtml(card.headline)}" data-card-state="${card.state}" class="card-link">
+                    <div class="card-headline">${UI.escapeHtml(card.headline)}</div>
+                    <span class="card-state ${stateName}">${UI.escapeHtml(stateName)}</span>
+                </div>
+                <button class="btn btn-secondary" style="margin-left: 1rem; padding: 0.5rem 1rem;" onclick="handleMoveCard(${card.id}, '${UI.escapeHtml(card.headline).replace(/'/g, "\\'")}')">
+                    Move
+                </button>
+            </div>
         `;
 
-        cardItem.addEventListener('click', () => {
+        const cardLink = cardItem.querySelector('.card-link');
+        cardLink.addEventListener('click', () => {
             window.location.href = `card.html?cardId=${card.id}&headline=${encodeURIComponent(card.headline)}&state=${card.state}&practiceMode=selective&resourceName=${encodeURIComponent(resourceName)}&sectionName=${encodeURIComponent(sectionName)}&resourceId=${resourceId}&sectionPosition=${sectionPosition}&roadmapId=${roadmapId}&roadmapName=${encodeURIComponent(roadmapName)}&subjectId=${subjectId}&subjectName=${encodeURIComponent(subjectName)}`;
         });
 
@@ -347,5 +394,122 @@ function displayBreadcrumb() {
 
     if (breadcrumbHtml) {
         breadcrumb.innerHTML = breadcrumbHtml;
+    }
+}
+
+// Global state for move card modal
+let currentMovingCardId = null;
+let currentMovingCardHeadline = null;
+
+window.handleMoveCard = function(cardId, cardHeadline) {
+    currentMovingCardId = cardId;
+    currentMovingCardHeadline = cardHeadline;
+
+    // Position modal below the dashboard header and scroll to it
+    const modal = document.getElementById('move-card-modal');
+    const dashboardHeader = document.querySelector('.dashboard-header');
+
+    // Open modal
+    modal.style.display = 'block';
+    document.getElementById('moving-card-headline').textContent = cardHeadline;
+    document.getElementById('section-search-input').value = '';
+    document.getElementById('section-search-results').style.display = 'none';
+    document.getElementById('section-search-empty').style.display = 'none';
+    document.getElementById('section-search-loading').style.display = 'none';
+    document.getElementById('sections-list').innerHTML = '';
+
+    // Scroll modal into view smoothly
+    setTimeout(() => {
+        modal.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        document.getElementById('section-search-input').focus();
+    }, 100);
+};
+
+function closeMoveCardModal() {
+    document.getElementById('move-card-modal').style.display = 'none';
+    currentMovingCardId = null;
+    currentMovingCardHeadline = null;
+    document.getElementById('section-search-input').value = '';
+    document.getElementById('section-search-results').style.display = 'none';
+    document.getElementById('section-search-empty').style.display = 'none';
+    document.getElementById('section-search-loading').style.display = 'none';
+    document.getElementById('sections-list').innerHTML = '';
+}
+
+async function searchForSections(searchToken) {
+    if (!searchToken) {
+        return;
+    }
+
+    const resourceId = parseInt(UI.getUrlParam('resourceId'));
+
+    try {
+        const sections = await client.searchSections(resourceId, searchToken);
+
+        // Hide loading
+        document.getElementById('section-search-loading').style.display = 'none';
+
+        if (sections.length === 0) {
+            document.getElementById('section-search-results').style.display = 'none';
+            document.getElementById('section-search-empty').style.display = 'block';
+            return;
+        }
+
+        // Display sections
+        displaySectionResults(sections);
+        document.getElementById('section-search-results').style.display = 'block';
+        document.getElementById('section-search-empty').style.display = 'none';
+    } catch (err) {
+        console.error('Failed to search sections:', err);
+        document.getElementById('section-search-loading').style.display = 'none';
+        document.getElementById('section-search-empty').style.display = 'block';
+    }
+}
+
+function displaySectionResults(sections) {
+    const container = document.getElementById('sections-list');
+    container.innerHTML = '';
+
+    const searchInput = document.getElementById('section-search-input');
+    const searchTerm = searchInput.value.trim();
+
+    sections.forEach(section => {
+        const sectionItem = document.createElement('div');
+        sectionItem.className = 'section-list-item';
+
+        // Highlight matching text
+        let highlightedName = UI.escapeHtml(section.name);
+        if (searchTerm) {
+            const regex = new RegExp(`(${searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+            highlightedName = highlightedName.replace(regex, '<mark style="background-color: #fff59d; padding: 0 2px; border-radius: 2px;">$1</mark>');
+        }
+
+        sectionItem.innerHTML = `
+            <div style="font-weight: 600; margin-bottom: 0.25rem;">${highlightedName}</div>
+            <div style="font-size: 0.875rem; color: var(--text-muted);">Position: ${section.position}</div>
+        `;
+
+        sectionItem.addEventListener('click', async () => {
+            await moveCardToSection(section);
+        });
+
+        container.appendChild(sectionItem);
+    });
+}
+
+async function moveCardToSection(targetSection) {
+    const resourceId = parseInt(UI.getUrlParam('resourceId'));
+    const currentSectionPosition = parseInt(UI.getUrlParam('sectionPosition'));
+
+    try {
+        await client.moveCardToSection(currentMovingCardId, resourceId, currentSectionPosition, targetSection.position);
+
+        // Close modal and reload cards
+        closeMoveCardModal();
+        UI.showSuccess(`Card moved to "${targetSection.name}" successfully`);
+        await loadCards();
+    } catch (err) {
+        console.error('Failed to move card:', err);
+        UI.showError('Failed to move card: ' + (err.message || 'Unknown error'));
     }
 }
