@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict TqCVnxMcHzs9CrTSmTxypESdlaewCW00tdGlumjre2Uhx24OK5yElLjWug1DP8R
+\restrict 3qZUa7q08kdOzHgvjSOiU5xbfb8fbvXLzzoZv6N3QunYWivOJwwdELjAOoojcT3
 
 -- Dumped from database version 18.1
 -- Dumped by pg_dump version 18.0
@@ -2801,7 +2801,7 @@ begin
         update sections set position = target_position where resource = resource_id and position = temporary_position;
 
         if target_position < section_position then
-            update sections set position = position - safe_margin + target_position where resource = resource_id and position >= safe_margin;
+            update sections set position = position - safe_margin + target_position where resource = resource_id and position >= safe_margin and position < section_position;
         end if;
     end if;
 end; $$;
@@ -4105,5 +4105,5 @@ GRANT ALL ON SCHEMA public TO brian;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict TqCVnxMcHzs9CrTSmTxypESdlaewCW00tdGlumjre2Uhx24OK5yElLjWug1DP8R
+\unrestrict 3qZUa7q08kdOzHgvjSOiU5xbfb8fbvXLzzoZv6N3QunYWivOJwwdELjAOoojcT3
 

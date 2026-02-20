@@ -475,21 +475,12 @@ function renderTopics(topics, maxLevel) {
                         <div class="topic-name">${UI.escapeHtml(topic.name)}</div>
                         <span class="topic-level">${UI.escapeHtml(levelInfo[level].name)}</span>
                     </div>
-                    <div class="topic-actions">
-                        <button class="topic-action-btn remove-topic-btn" data-position="${topic.position}" data-level="${topic.level}" data-name="${UI.escapeHtml(topic.name)}" title="Remove topic">×</button>
-                    </div>
                 `;
 
-                // Click to navigate (but not when dragging or clicking buttons)
+                // Click to navigate (but not when dragging)
                 let isDragging = false;
                 topicItem.style.cursor = 'pointer';
                 topicItem.addEventListener('click', (e) => {
-                    // Don't navigate if clicking on buttons
-                    if (e.target.classList.contains('topic-action-btn') ||
-                        e.target.closest('.topic-action-btn')) {
-                        return;
-                    }
-
                     if (!isDragging) {
                         const subjectId = UI.getUrlParam('id');
                         const subjectName = UI.getUrlParam('name');
@@ -550,20 +541,6 @@ function renderTopics(topics, maxLevel) {
                         await reorderTopic(sourceLevel, sourcePosition, targetPosition);
                     }
                 });
-
-                // Remove button handler
-                const removeBtn = topicItem.querySelector('.remove-topic-btn');
-                if (removeBtn) {
-                    removeBtn.addEventListener('click', async (e) => {
-                        e.stopPropagation();
-                        e.preventDefault();
-                        if (confirm(`Are you sure you want to remove "${topic.name}"? All cards in this topic will also be removed.`)) {
-                            await removeTopic(topic.level, topic.position);
-                        }
-                    });
-                } else {
-                    console.error('Remove button not found for topic:', topic.name);
-                }
 
                 levelSection.appendChild(topicItem);
             });

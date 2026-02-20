@@ -176,6 +176,46 @@ window.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // Remove topic handlers
+    const removeTopicBtn = document.getElementById('remove-topic-btn');
+    if (removeTopicBtn) {
+        removeTopicBtn.addEventListener('click', () => {
+            UI.toggleElement('remove-topic-modal', true);
+        });
+    }
+
+    const cancelRemoveTopicBtn = document.getElementById('cancel-remove-topic-btn');
+    if (cancelRemoveTopicBtn) {
+        cancelRemoveTopicBtn.addEventListener('click', () => {
+            UI.toggleElement('remove-topic-modal', false);
+        });
+    }
+
+    const confirmRemoveTopicBtn = document.getElementById('confirm-remove-topic-btn');
+    if (confirmRemoveTopicBtn) {
+        confirmRemoveTopicBtn.addEventListener('click', async () => {
+            UI.hideMessage('error-message');
+            UI.setButtonLoading('confirm-remove-topic-btn', true);
+
+            try {
+                await client.removeTopic(subjectId, topicLevel, topicPosition);
+
+                UI.toggleElement('remove-topic-modal', false);
+                UI.setButtonLoading('confirm-remove-topic-btn', false);
+
+                // Redirect back to subject page
+                const subjectName = UI.getUrlParam('subjectName') || '';
+                const roadmapId = UI.getUrlParam('roadmapId') || '';
+                const roadmapName = UI.getUrlParam('roadmapName') || '';
+                window.location.href = `subject.html?id=${subjectId}&name=${encodeURIComponent(subjectName)}&roadmapId=${roadmapId}&roadmapName=${encodeURIComponent(roadmapName)}`;
+            } catch (err) {
+                console.error('Remove topic failed:', err);
+                UI.showError(err.message || 'Failed to remove topic');
+                UI.setButtonLoading('confirm-remove-topic-btn', false);
+            }
+        });
+    }
+
     loadCards();
 });
 

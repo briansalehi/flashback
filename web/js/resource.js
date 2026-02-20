@@ -316,18 +316,18 @@ function renderSections(sections) {
 
     const stateNames = ['draft', 'reviewed', 'completed'];
 
-    sortedSections.forEach(section => {
+    sortedSections.forEach((section, index) => {
         const sectionItem = document.createElement('div');
         sectionItem.className = 'section-item';
-        sectionItem.style.cursor = 'pointer';
+        sectionItem.draggable = true;
+        sectionItem.dataset.position = section.position;
 
         const stateName = stateNames[section.state] || 'draft';
 
         let html = `
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+            <div class="section-position">${index + 1}</div>
+            <div class="section-content">
                 <div class="section-name">${UI.escapeHtml(section.name)}</div>
-                <span class="section-state ${stateName}">${UI.escapeHtml(stateName)}</span>
-            </div>
         `;
 
         if (section.link) {
@@ -340,21 +340,79 @@ function renderSections(sections) {
             `;
         }
 
+        html += `
+            </div>
+            <span class="section-state ${stateName}">${UI.escapeHtml(stateName)}</span>
+        `;
+
         sectionItem.innerHTML = html;
 
-        sectionItem.addEventListener('click', () => {
-            const resourceId = UI.getUrlParam('id');
-            const resourceName = UI.getUrlParam('name') || '';
-            const resourceType = UI.getUrlParam('type');
-            const resourcePattern = UI.getUrlParam('pattern');
-            const resourceLink = UI.getUrlParam('link');
-            const resourceProduction = UI.getUrlParam('production');
-            const resourceExpiration = UI.getUrlParam('expiration');
-            const subjectId = UI.getUrlParam('subjectId');
-            const subjectName = UI.getUrlParam('subjectName');
-            const roadmapId = UI.getUrlParam('roadmapId');
-            const roadmapName = UI.getUrlParam('roadmapName');
-            window.location.href = `section-cards.html?resourceId=${resourceId}&sectionPosition=${section.position}&sectionState=${section.state}&name=${encodeURIComponent(section.name)}&resourceName=${encodeURIComponent(resourceName)}&resourceType=${resourceType}&resourcePattern=${resourcePattern}&resourceLink=${encodeURIComponent(resourceLink || '')}&resourceProduction=${resourceProduction}&resourceExpiration=${resourceExpiration}&subjectId=${subjectId || ''}&subjectName=${encodeURIComponent(subjectName || '')}&roadmapId=${roadmapId || ''}&roadmapName=${encodeURIComponent(roadmapName || '')}`;
+        // Click to navigate (but not when dragging or clicking links)
+        let isDragging = false;
+        sectionItem.addEventListener('click', (e) => {
+            // Don't navigate if clicking on links
+            if (e.target.tagName === 'A') {
+                return;
+            }
+
+            if (!isDragging) {
+                const resourceId = UI.getUrlParam('id');
+                const resourceName = UI.getUrlParam('name') || '';
+                const resourceType = UI.getUrlParam('type');
+                const resourcePattern = UI.getUrlParam('pattern');
+                const resourceLink = UI.getUrlParam('link');
+                const resourceProduction = UI.getUrlParam('production');
+                const resourceExpiration = UI.getUrlParam('expiration');
+                const subjectId = UI.getUrlParam('subjectId');
+                const subjectName = UI.getUrlParam('subjectName');
+                const roadmapId = UI.getUrlParam('roadmapId');
+                const roadmapName = UI.getUrlParam('roadmapName');
+                window.location.href = `section-cards.html?resourceId=${resourceId}&sectionPosition=${section.position}&sectionState=${section.state}&name=${encodeURIComponent(section.name)}&resourceName=${encodeURIComponent(resourceName)}&resourceType=${resourceType}&resourcePattern=${resourcePattern}&resourceLink=${encodeURIComponent(resourceLink || '')}&resourceProduction=${resourceProduction}&resourceExpiration=${resourceExpiration}&subjectId=${subjectId || ''}&subjectName=${encodeURIComponent(subjectName || '')}&roadmapId=${roadmapId || ''}&roadmapName=${encodeURIComponent(roadmapName || '')}`;
+            }
+        });
+
+        // Drag and drop handlers
+        sectionItem.addEventListener('dragstart', (e) => {
+            isDragging = true;
+            sectionItem.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/plain', JSON.stringify({
+                position: section.position
+            }));
+        });
+
+        sectionItem.addEventListener('dragend', () => {
+            sectionItem.classList.remove('dragging');
+            setTimeout(() => {
+                isDragging = false;
+            }, 100);
+        });
+
+        sectionItem.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+
+            const draggingCard = document.querySelector('.dragging');
+            if (draggingCard && draggingCard !== sectionItem) {
+                sectionItem.classList.add('drag-over');
+            }
+        });
+
+        sectionItem.addEventListener('dragleave', () => {
+            sectionItem.classList.remove('drag-over');
+        });
+
+        sectionItem.addEventListener('drop', async (e) => {
+            e.preventDefault();
+            sectionItem.classList.remove('drag-over');
+
+            const dragData = JSON.parse(e.dataTransfer.getData('text/plain') || '{}');
+            const sourcePosition = dragData.position;
+            const targetPosition = section.position;
+
+            if (sourcePosition !== targetPosition) {
+                await reorderSection(sourcePosition, targetPosition);
+            }
         });
 
         container.appendChild(sectionItem);
@@ -383,5 +441,55 @@ function displayBreadcrumb() {
 
     if (breadcrumbHtml) {
         breadcrumb.innerHTML = breadcrumbHtml;
+    }
+}
+
+async function removeSection(position) {
+    const resourceId = UI.getUrlParam('id');
+
+    try {
+        await client.removeSection(resourceId, position);
+        await loadSections();
+        UI.showSuccess('Section removed successfully');
+    } catch (err) {
+        console.error('Remove section failed:', err);
+        UI.showError('Failed to remove section: ' + (err.message || 'Unknown error'));
+    }
+}
+
+async function reorderSection(sourcePosition, targetPosition) {
+    const resourceId = UI.getUrlParam('id');
+
+    try {
+        await client.reorderSection(resourceId, sourcePosition, targetPosition);
+        await loadSections();
+    } catch (err) {
+        console.error('Reorder section failed:', err);
+        UI.showError('Failed to reorder section: ' + (err.message || 'Unknown error'));
+    }
+}
+
+async function removeSection(position) {
+    const resourceId = UI.getUrlParam('id');
+
+    try {
+        await client.removeSection(resourceId, position);
+        await loadSections();
+        UI.showSuccess('Section removed successfully');
+    } catch (err) {
+        console.error('Remove section failed:', err);
+        UI.showError('Failed to remove section: ' + (err.message || 'Unknown error'));
+    }
+}
+
+async function reorderSection(sourcePosition, targetPosition) {
+    const resourceId = UI.getUrlParam('id');
+
+    try {
+        await client.reorderSection(resourceId, sourcePosition, targetPosition);
+        await loadSections();
+    } catch (err) {
+        console.error('Reorder section failed:', err);
+        UI.showError('Failed to reorder section: ' + (err.message || 'Unknown error'));
     }
 }

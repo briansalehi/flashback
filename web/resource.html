@@ -11,23 +11,107 @@
     <link href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;600;700&family=Source+Sans+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         .section-item {
-            padding: 1rem;
-            border: 1px solid var(--border-color);
-            border-radius: 4px;
-            margin-bottom: 1rem;
-            border-left: 4px solid var(--accent-color);
-            transition: all 0.2s;
+            background: white;
+            border: 1px solid #e5dfd5;
+            border-radius: 16px;
+            padding: 2rem 2.5rem;
+            margin-bottom: 1.25rem;
+            transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+            cursor: grab;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(44, 95, 79, 0.04);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .section-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 5px;
+            height: 100%;
+            background: linear-gradient(180deg, #d4845c 0%, #e69b7a 100%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .section-item:hover::before {
+            opacity: 1;
+        }
+
+        .section-item.dragging {
+            opacity: 0.5;
+            cursor: grabbing;
+            transform: scale(0.98);
+        }
+
+        .section-item.drag-over {
+            border-color: #d4845c;
+            box-shadow: 0 8px 32px rgba(212, 132, 92, 0.2);
+            transform: translateY(-2px);
         }
 
         .section-item:hover {
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            border-color: #d4845c;
+            box-shadow: 0 8px 24px rgba(44, 95, 79, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .section-item::after {
+            content: '⋮⋮';
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: rgba(44, 95, 79, 0.15);
+            font-size: 1.25rem;
+            letter-spacing: -4px;
+            transition: all 0.3s ease;
+        }
+
+        .section-item:hover::after {
+            color: rgba(44, 95, 79, 0.3);
+        }
+
+        .section-content {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            flex: 1;
+            padding-right: 2rem;
+        }
+
+        .section-position {
+            width: 44px;
+            height: 44px;
+            background: linear-gradient(135deg, #2c5f4f 0%, #3d7a65 100%);
+            color: white;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1.125rem;
+            box-shadow: 0 4px 12px rgba(44, 95, 79, 0.2);
+            flex-shrink: 0;
+            transition: all 0.3s ease;
+            margin-right: 1.5rem;
+        }
+
+        .section-item:hover .section-position {
+            box-shadow: 0 6px 16px rgba(44, 95, 79, 0.3);
+            transform: scale(1.05);
         }
 
         .section-name {
+            font-size: 1.5rem;
             font-weight: 600;
-            color: var(--text-primary);
-            font-size: 1.1rem;
-            margin-bottom: 0.5rem;
+            color: #2c5f4f;
+            margin: 0;
+            letter-spacing: -0.01em;
         }
 
         .section-link {
@@ -46,29 +130,61 @@
         }
 
         .section-state {
-            display: inline-block;
-            padding: 0.25rem 0.75rem;
-            background-color: var(--accent-light);
-            color: var(--accent-color);
-            border-radius: 12px;
-            font-size: 0.875rem;
-            font-weight: 500;
-            text-transform: capitalize;
+            display: inline-flex;
+            align-items: center;
+            padding: 0.5rem 1.25rem;
+            background: linear-gradient(135deg, rgba(212, 132, 92, 0.1) 0%, rgba(230, 155, 122, 0.1) 100%);
+            color: #d4845c;
+            border: 1.5px solid rgba(212, 132, 92, 0.3);
+            border-radius: 24px;
+            font-size: 0.8125rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            transition: all 0.3s ease;
+        }
+
+        .section-item:hover .section-state {
+            background: linear-gradient(135deg, #d4845c 0%, #e69b7a 100%);
+            color: white;
+            border-color: #d4845c;
+            box-shadow: 0 4px 12px rgba(212, 132, 92, 0.3);
         }
 
         .section-state.draft {
-            background-color: #f0f0f0;
-            color: #666;
+            background: linear-gradient(135deg, rgba(108, 117, 125, 0.1) 0%, rgba(108, 117, 125, 0.1) 100%);
+            color: #6c757d;
+            border-color: rgba(108, 117, 125, 0.3);
+        }
+
+        .section-item:hover .section-state.draft {
+            background: linear-gradient(135deg, #6c757d 0%, #868e96 100%);
+            color: white;
+            border-color: #6c757d;
         }
 
         .section-state.reviewed {
-            background-color: #e3f2fd;
+            background: linear-gradient(135deg, rgba(25, 118, 210, 0.1) 0%, rgba(25, 118, 210, 0.1) 100%);
             color: #1976d2;
+            border-color: rgba(25, 118, 210, 0.3);
+        }
+
+        .section-item:hover .section-state.reviewed {
+            background: linear-gradient(135deg, #1976d2 0%, #42a5f5 100%);
+            color: white;
+            border-color: #1976d2;
         }
 
         .section-state.completed {
-            background-color: #e8f5e9;
+            background: linear-gradient(135deg, rgba(56, 142, 60, 0.1) 0%, rgba(56, 142, 60, 0.1) 100%);
             color: #388e3c;
+            border-color: rgba(56, 142, 60, 0.3);
+        }
+
+        .section-item:hover .section-state.completed {
+            background: linear-gradient(135deg, #388e3c 0%, #66bb6a 100%);
+            color: white;
+            border-color: #388e3c;
         }
 
         .resources-list {

@@ -78,9 +78,14 @@
                 </h2>
                 <div style="display: flex; justify-content: space-between; align-items: center; gap: 1rem;">
                     <h1 id="topic-name" style="margin-bottom: 0; flex: 1;">Loading...</h1>
-                    <button id="rename-topic-btn" class="btn btn-secondary" style="padding: 0.5rem 1rem;">
-                        Rename Topic
-                    </button>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <button id="rename-topic-btn" class="btn btn-secondary" style="padding: 0.5rem 1rem;">
+                            Rename
+                        </button>
+                        <button id="remove-topic-btn" class="btn btn-danger" style="padding: 0.5rem 1rem;">
+                            Remove
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -111,6 +116,20 @@
                         </button>
                     </div>
                 </form>
+            </div>
+
+            <!-- Remove Topic Modal -->
+            <div id="remove-topic-modal" class="card" style="display: none; max-width: 500px; margin-bottom: 2rem;">
+                <div class="card-header">
+                    <h3 class="card-title">Remove Topic</h3>
+                </div>
+                <div style="padding: 1rem 0;">
+                    <p style="color: var(--text-muted); margin-bottom: 1.5rem;">Are you sure you want to remove this topic? This action cannot be undone. All cards in this topic will also be removed.</p>
+                    <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+                        <button id="cancel-remove-topic-btn" class="btn btn-secondary">Cancel</button>
+                        <button id="confirm-remove-topic-btn" class="btn btn-danger">Remove Topic</button>
+                    </div>
+                </div>
             </div>
 
             <div id="loading" style="display: none; text-align: center; padding: 3rem;">

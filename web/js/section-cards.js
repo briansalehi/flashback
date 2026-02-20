@@ -138,6 +138,53 @@ window.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // Remove section handlers
+    const removeSectionBtn = document.getElementById('remove-section-btn');
+    if (removeSectionBtn) {
+        removeSectionBtn.addEventListener('click', () => {
+            UI.toggleElement('remove-section-modal', true);
+        });
+    }
+
+    const cancelRemoveSectionBtn = document.getElementById('cancel-remove-section-btn');
+    if (cancelRemoveSectionBtn) {
+        cancelRemoveSectionBtn.addEventListener('click', () => {
+            UI.toggleElement('remove-section-modal', false);
+        });
+    }
+
+    const confirmRemoveSectionBtn = document.getElementById('confirm-remove-section-btn');
+    if (confirmRemoveSectionBtn) {
+        confirmRemoveSectionBtn.addEventListener('click', async () => {
+            UI.hideMessage('error-message');
+            UI.setButtonLoading('confirm-remove-section-btn', true);
+
+            try {
+                await client.removeSection(resourceId, sectionPosition);
+
+                UI.toggleElement('remove-section-modal', false);
+                UI.setButtonLoading('confirm-remove-section-btn', false);
+
+                // Redirect back to resource page
+                const resourceName = UI.getUrlParam('resourceName') || '';
+                const resourceType = UI.getUrlParam('resourceType') || '0';
+                const resourcePattern = UI.getUrlParam('resourcePattern') || '0';
+                const resourceLink = UI.getUrlParam('resourceLink') || '';
+                const resourceProduction = UI.getUrlParam('resourceProduction') || '0';
+                const resourceExpiration = UI.getUrlParam('resourceExpiration') || '0';
+                const subjectId = UI.getUrlParam('subjectId') || '';
+                const subjectName = UI.getUrlParam('subjectName') || '';
+                const roadmapId = UI.getUrlParam('roadmapId') || '';
+                const roadmapName = UI.getUrlParam('roadmapName') || '';
+                window.location.href = `resource.html?id=${resourceId}&name=${encodeURIComponent(resourceName)}&type=${resourceType}&pattern=${resourcePattern}&link=${encodeURIComponent(resourceLink)}&production=${resourceProduction}&expiration=${resourceExpiration}&subjectId=${subjectId}&subjectName=${encodeURIComponent(subjectName)}&roadmapId=${roadmapId}&roadmapName=${encodeURIComponent(roadmapName)}`;
+            } catch (err) {
+                console.error('Remove section failed:', err);
+                UI.showError(err.message || 'Failed to remove section');
+                UI.setButtonLoading('confirm-remove-section-btn', false);
+            }
+        });
+    }
+
     loadCards();
 });
 
