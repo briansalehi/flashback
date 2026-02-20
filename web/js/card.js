@@ -273,25 +273,29 @@ async function handleCardExit() {
     if (!cardStartTime) return;
 
     const cardId = parseInt(UI.getUrlParam('cardId'));
-    const practiceMode = UI.getUrlParam('practiceMode');
     const duration = Math.floor((Date.now() - cardStartTime) / 1000); // Convert to seconds
 
-    if (duration >= 3 && practiceMode) {
+    // Check if this is from a resource/section (study mode) or from topic practice
+    const resourceId = UI.getUrlParam('resourceId');
+    const sectionPosition = UI.getUrlParam('sectionPosition');
+    const milestoneId = UI.getUrlParam('milestoneId');
+    const milestoneLevel = UI.getUrlParam('milestoneLevel');
+
+    if (duration >= 3) {
         try {
-            let practiceModeValue;
-            if (practiceMode === 'aggressive') {
-                practiceModeValue = 0;
-            } else if (practiceMode === 'progressive') {
-                practiceModeValue = 1;
-            } else if (practiceMode === 'selective') {
-                practiceModeValue = 2;
-            }
-
-            console.log(`making progress on card ${cardId} in ${duration} seconds with practice mode ${practiceModeValue}`);
-            await client.makeProgress(cardId, duration, practiceModeValue);
-
-            if (practiceMode === 'selective') {
+            // If viewing from resource/section, only call study()
+            if (resourceId && sectionPosition !== '') {
                 console.log(`studying card ${cardId} for ${duration} seconds`);
+                await client.study(cardId, duration);
+            }
+            // If practicing topics (has milestone info), call makeProgress()
+            else if (milestoneId && milestoneLevel !== undefined) {
+                console.log(`making progress on card ${cardId} in ${duration} seconds with milestone ${milestoneId}, level ${milestoneLevel}`);
+                await client.makeProgress(cardId, duration, parseInt(milestoneId), parseInt(milestoneLevel));
+            }
+            // Fallback: if neither, just call study
+            else {
+                console.log(`studying card ${cardId} for ${duration} seconds (fallback)`);
                 await client.study(cardId, duration);
             }
         } catch (err) {
@@ -367,7 +371,9 @@ async function loadNextCard(practiceMode, currentIndex, totalCards) {
     const subjectName = UI.getUrlParam('subjectName') || '';
     const topicName = UI.getUrlParam('topicName') || '';
     const roadmapName = UI.getUrlParam('roadmapName') || '';
-    window.location.href = `card.html?cardId=${nextCard.id}&headline=${encodeURIComponent(nextCard.headline)}&state=${nextCard.state}&practiceMode=${practiceMode}&cardIndex=${nextIndex}&totalCards=${totalCards}&subjectName=${encodeURIComponent(subjectName)}&topicName=${encodeURIComponent(topicName)}&roadmapName=${encodeURIComponent(roadmapName)}`;
+    const milestoneId = UI.getUrlParam('milestoneId') || '';
+    const milestoneLevel = UI.getUrlParam('milestoneLevel') || '';
+    window.location.href = `card.html?cardId=${nextCard.id}&headline=${encodeURIComponent(nextCard.headline)}&state=${nextCard.state}&practiceMode=${practiceMode}&cardIndex=${nextIndex}&totalCards=${totalCards}&subjectName=${encodeURIComponent(subjectName)}&topicName=${encodeURIComponent(topicName)}&roadmapName=${encodeURIComponent(roadmapName)}&milestoneId=${milestoneId}&milestoneLevel=${milestoneLevel}`;
 }
 
 // Load next topic or finish practice
@@ -415,7 +421,9 @@ async function loadNextTopic(practiceMode) {
         // Navigate to first card of next topic
         const subjectName = UI.getUrlParam('subjectName') || '';
         const roadmapName = UI.getUrlParam('roadmapName') || '';
-        window.location.href = `card.html?cardId=${cards[0].id}&headline=${encodeURIComponent(cards[0].headline)}&state=${cards[0].state}&practiceMode=${practiceMode}&cardIndex=0&totalCards=${cards.length}&subjectName=${encodeURIComponent(subjectName)}&topicName=${encodeURIComponent(nextTopic.name)}&roadmapName=${encodeURIComponent(roadmapName)}`;
+        const milestoneId = UI.getUrlParam('milestoneId') || '';
+        const milestoneLevel = UI.getUrlParam('milestoneLevel') || '';
+        window.location.href = `card.html?cardId=${cards[0].id}&headline=${encodeURIComponent(cards[0].headline)}&state=${cards[0].state}&practiceMode=${practiceMode}&cardIndex=0&totalCards=${cards.length}&subjectName=${encodeURIComponent(subjectName)}&topicName=${encodeURIComponent(nextTopic.name)}&roadmapName=${encodeURIComponent(roadmapName)}&milestoneId=${milestoneId}&milestoneLevel=${milestoneLevel}`;
     } catch (err) {
         console.error('Failed to load next topic:', err);
         UI.showError('Failed to load next topic');

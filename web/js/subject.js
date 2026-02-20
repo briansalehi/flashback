@@ -728,9 +728,13 @@ async function startPracticeMode() {
         sessionStorage.setItem('practiceState', JSON.stringify(practiceState));
 
         // Navigate to first card with context
+        // Get milestone info (when coming from roadmap, subjectId is actually milestoneId)
+        const milestoneId = UI.getUrlParam('id'); // This is the milestone ID
+        const milestoneLevel = UI.getUrlParam('level'); // This is the milestone level
         const subjectNameParam = UI.getUrlParam('name') || '';
         const roadmapName = UI.getUrlParam('roadmapName') || '';
-        window.location.href = `card.html?cardId=${cards[0].id}&headline=${encodeURIComponent(cards[0].headline)}&state=${cards[0].state}&practiceMode=aggressive&cardIndex=0&totalCards=${cards.length}&subjectName=${encodeURIComponent(subjectNameParam)}&topicName=${encodeURIComponent(firstTopicWithCards.name)}&roadmapName=${encodeURIComponent(roadmapName)}`;
+
+        window.location.href = `card.html?cardId=${cards[0].id}&headline=${encodeURIComponent(cards[0].headline)}&state=${cards[0].state}&practiceMode=aggressive&cardIndex=0&totalCards=${cards.length}&subjectName=${encodeURIComponent(subjectNameParam)}&topicName=${encodeURIComponent(firstTopicWithCards.name)}&roadmapName=${encodeURIComponent(roadmapName)}&milestoneId=${milestoneId}&milestoneLevel=${milestoneLevel}`;
     } catch (err) {
         console.error('Start practice failed:', err);
         UI.showError('Failed to start practice: ' + (err.message || 'Unknown error'));
