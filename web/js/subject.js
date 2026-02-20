@@ -271,17 +271,61 @@ window.addEventListener('DOMContentLoaded', () => {
     });
 
     // Resources functionality
-    const addResourceBtn = document.getElementById('add-resource-btn');
-    if (addResourceBtn) {
-        addResourceBtn.addEventListener('click', (e) => {
+    const addExistingResourceBtn = document.getElementById('add-existing-resource-btn');
+    if (addExistingResourceBtn) {
+        addExistingResourceBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            UI.toggleElement('search-resource-form', true);
+            UI.toggleElement('add-resource-form', false);
+            setTimeout(() => {
+                const searchInput = document.getElementById('search-resource-input');
+                if (searchInput) {
+                    searchInput.focus();
+                }
+            }, 100);
+        });
+    }
+
+    const createNewResourceBtn = document.getElementById('create-new-resource-btn');
+    if (createNewResourceBtn) {
+        createNewResourceBtn.addEventListener('click', (e) => {
             e.preventDefault();
             UI.toggleElement('add-resource-form', true);
+            UI.toggleElement('search-resource-form', false);
             setTimeout(() => {
                 const nameInput = document.getElementById('resource-name');
                 if (nameInput) {
                     nameInput.focus();
                 }
             }, 100);
+        });
+    }
+
+    // Search resources functionality
+    const searchResourceInput = document.getElementById('search-resource-input');
+    if (searchResourceInput) {
+        let searchTimeout;
+        searchResourceInput.addEventListener('input', (e) => {
+            clearTimeout(searchTimeout);
+            const query = e.target.value.trim();
+
+            if (query.length < 2) {
+                document.getElementById('search-resource-results').innerHTML = '<p style="color: var(--text-muted); text-align: center; padding: 1rem;">Type at least 2 characters to search...</p>';
+                return;
+            }
+
+            searchTimeout = setTimeout(async () => {
+                await searchAndDisplayResources(query);
+            }, 300);
+        });
+    }
+
+    const cancelSearchResourceBtn = document.getElementById('cancel-search-resource-btn');
+    if (cancelSearchResourceBtn) {
+        cancelSearchResourceBtn.addEventListener('click', () => {
+            UI.toggleElement('search-resource-form', false);
+            document.getElementById('search-resource-input').value = '';
+            document.getElementById('search-resource-results').innerHTML = '';
         });
     }
 
@@ -478,7 +522,6 @@ function renderResources(resources) {
     resources.forEach(resource => {
         const resourceItem = document.createElement('div');
         resourceItem.className = 'resource-item';
-        resourceItem.style.cursor = 'pointer';
 
         // Convert epoch seconds to readable dates
         const productionDate = resource.production ? new Date(resource.production * 1000).toLocaleDateString() : 'N/A';
@@ -489,27 +532,53 @@ function renderResources(resources) {
 
         resourceItem.innerHTML = `
             <div class="resource-header">
-                <div class="resource-name">${UI.escapeHtml(resource.name)}</div>
-                <span class="resource-type">${UI.escapeHtml(typeName)} • ${UI.escapeHtml(patternName)}</span>
+                <div style="flex: 1; cursor: pointer;" data-resource-id="${resource.id}">
+                    <div class="resource-name">${UI.escapeHtml(resource.name)}</div>
+                    <span class="resource-type">${UI.escapeHtml(typeName)} • ${UI.escapeHtml(patternName)}</span>
+                </div>
+                <button class="drop-resource-btn" data-resource-id="${resource.id}" onclick="event.stopPropagation()">
+                    Drop
+                </button>
             </div>
-            <div class="resource-url">
+            <div class="resource-url" style="cursor: pointer;" data-resource-id="${resource.id}">
                 <a href="${UI.escapeHtml(resource.link)}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">
                     ${UI.escapeHtml(resource.link)}
                 </a>
             </div>
-            <div class="resource-dates">
+            <div class="resource-dates" style="cursor: pointer;" data-resource-id="${resource.id}">
                 <div><strong>Produced:</strong> ${UI.escapeHtml(productionDate)}</div>
                 <div><strong>Relevant Until:</strong> ${UI.escapeHtml(expirationDate)}</div>
             </div>
         `;
 
-        // Make the whole resource item clickable to go to resource page
-        resourceItem.addEventListener('click', () => {
-            const subjectId = UI.getUrlParam('id');
-            const subjectName = UI.getUrlParam('name');
-            const roadmapId = UI.getUrlParam('roadmapId');
-            const roadmapName = UI.getUrlParam('roadmapName');
-            window.location.href = `resource.html?id=${resource.id}&name=${encodeURIComponent(resource.name)}&subjectId=${subjectId || ''}&subjectName=${encodeURIComponent(subjectName || '')}&roadmapId=${roadmapId || ''}&roadmapName=${encodeURIComponent(roadmapName || '')}`;
+        // Make most of the resource item clickable to go to resource page
+        const clickableElements = resourceItem.querySelectorAll('[data-resource-id]');
+        clickableElements.forEach(element => {
+            if (!element.classList.contains('drop-resource-btn')) {
+                element.addEventListener('click', () => {
+                    const subjectId = UI.getUrlParam('id');
+                    const subjectName = UI.getUrlParam('name');
+                    const roadmapId = UI.getUrlParam('roadmapId');
+                    const roadmapName = UI.getUrlParam('roadmapName');
+                    window.location.href = `resource.html?id=${resource.id}&name=${encodeURIComponent(resource.name)}&subjectId=${subjectId || ''}&subjectName=${encodeURIComponent(subjectName || '')}&roadmapId=${roadmapId || ''}&roadmapName=${encodeURIComponent(roadmapName || '')}`;
+                });
+            }
+        });
+
+        // Add drop button handler
+        const dropBtn = resourceItem.querySelector('.drop-resource-btn');
+        dropBtn.addEventListener('click', async (e) => {
+            e.stopPropagation();
+            if (confirm(`Are you sure you want to drop "${resource.name}" from this subject?`)) {
+                try {
+                    const subjectId = UI.getUrlParam('id');
+                    await client.dropResourceFromSubject(resource.id, parseInt(subjectId));
+                    loadResources(); // Reload the list
+                } catch (err) {
+                    console.error('Drop resource failed:', err);
+                    UI.showError('Failed to drop resource: ' + (err.message || 'Unknown error'));
+                }
+            }
         });
 
         container.appendChild(resourceItem);
@@ -598,5 +667,66 @@ async function displayBreadcrumb(roadmapId) {
         }
     } catch (err) {
         console.error('Failed to display breadcrumb:', err);
+    }
+}
+
+async function searchAndDisplayResources(query) {
+    const resultsContainer = document.getElementById('search-resource-results');
+    resultsContainer.innerHTML = '<p style="color: var(--text-muted); text-align: center; padding: 1rem;">Searching...</p>';
+
+    try {
+        const results = await client.searchResources(query);
+
+        if (results.length === 0) {
+            resultsContainer.innerHTML = '<p style="color: var(--text-muted); text-align: center; padding: 1rem;">No resources found.</p>';
+            return;
+        }
+
+        resultsContainer.innerHTML = '';
+        const typeNames = ['Book', 'Website', 'Course', 'Video', 'Channel', 'Mailing List', 'Manual', 'Slides', 'Your Knowledge'];
+        const patternNames = ['Chapters', 'Pages', 'Sessions', 'Episodes', 'Playlist', 'Posts', 'Memories'];
+
+        results.forEach(resource => {
+            const resultItem = document.createElement('div');
+            resultItem.className = 'search-result-item';
+
+            const typeName = typeNames[resource.type] || 'Unknown';
+            const patternName = patternNames[resource.pattern] || 'Unknown';
+
+            resultItem.innerHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 0.25rem;">
+                            ${UI.escapeHtml(resource.name)}
+                        </div>
+                        <div style="font-size: 0.875rem; color: var(--text-muted);">
+                            ${UI.escapeHtml(typeName)} • ${UI.escapeHtml(patternName)}
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            resultItem.addEventListener('click', async () => {
+                try {
+                    const subjectId = UI.getUrlParam('id');
+                    await client.addResourceToSubject(parseInt(subjectId), resource.id);
+
+                    UI.toggleElement('search-resource-form', false);
+                    document.getElementById('search-resource-input').value = '';
+                    resultsContainer.innerHTML = '';
+
+                    loadResources(); // Reload the resources list
+                    UI.showSuccess(`Resource "${resource.name}" added successfully`);
+                } catch (err) {
+                    console.error('Add resource failed:', err);
+                    UI.showError('Failed to add resource: ' + (err.message || 'Unknown error'));
+                }
+            });
+
+            resultsContainer.appendChild(resultItem);
+        });
+    } catch (err) {
+        console.error('Search resources failed:', err);
+        resultsContainer.innerHTML = `<p style="color: var(--text-danger); text-align: center; padding: 1rem;">Search failed: ${UI.escapeHtml(err.message || 'Unknown error')}</p>`;
     }
 }

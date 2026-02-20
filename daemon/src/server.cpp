@@ -1053,6 +1053,8 @@ grpc::Status server::CreateResource(grpc::ServerContext* context, CreateResource
 
 grpc::Status server::AddResourceToSubject(grpc::ServerContext* context, AddResourceToSubjectRequest const* request, AddResourceToSubjectResponse* response)
 {
+    grpc::Status{grpc::StatusCode::INTERNAL, {}};
+
     try
     {
         if (!request->has_user() || !session_is_valid(request->user()))
@@ -1060,27 +1062,39 @@ grpc::Status server::AddResourceToSubject(grpc::ServerContext* context, AddResou
             response->set_success(false);
             response->set_details("invalid user");
             response->set_code(3);
+            grpc::Status{grpc::StatusCode::UNAUTHENTICATED, "invalid user"};
         }
         else if (request->resource().id() == 0)
         {
             response->set_success(false);
             response->set_details("invalid resource");
             response->set_code(4);
+            grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid resource"};
         }
         else if (request->subject().id() == 0)
         {
             response->set_success(false);
             response->set_details("invalid subject");
             response->set_code(4);
+            grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid subject"};
         }
         else
         {
-            std::clog << std::format("client {} added resource {} to subject\n", request->user().token(), request->resource().id(), request->subject().id());
+            std::clog << std::format("client {} added resource {} to subject {}\n", request->user().token(), request->resource().id(), request->subject().id());
             m_database->add_resource_to_subject(request->resource().id(), request->subject().id());
             response->set_success(true);
             response->clear_details();
             response->set_code(0);
+            grpc::Status{grpc::StatusCode::OK, {}};
         }
+    }
+    catch (pqxx::unique_violation const& exp)
+    {
+        std::cerr << std::format("client {} attempted to add duplicate resource {} to subject {}\n", request->user().token(), request->resource().id(), request->subject().id());
+        response->set_success(false);
+        response->set_details(exp.what());
+        response->set_code(1);
+        grpc::Status{grpc::StatusCode::ALREADY_EXISTS, "duplicate resources in subject are not allowed"};
     }
     catch (client_exception const& exp)
     {
@@ -1088,6 +1102,7 @@ grpc::Status server::AddResourceToSubject(grpc::ServerContext* context, AddResou
         response->set_success(false);
         response->set_details(exp.what());
         response->set_code(1);
+        grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, exp.what()};
     }
     catch (std::exception const& exp)
     {
@@ -1124,7 +1139,7 @@ grpc::Status server::DropResourceFromSubject(grpc::ServerContext* context, DropR
         }
         else
         {
-            std::clog << std::format("client {} dropped resource {} to subject\n", request->user().token(), request->resource().id(), request->subject().id());
+            std::clog << std::format("client {} dropped resource {} from subject {}\n", request->user().token(), request->resource().id(), request->subject().id());
             m_database->drop_resource_from_subject(request->resource().id(), request->subject().id());
             response->set_success(true);
             response->clear_details();

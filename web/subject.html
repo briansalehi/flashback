@@ -75,6 +75,35 @@
             margin-bottom: 0.5rem;
         }
 
+        .search-result-item {
+            padding: 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            margin-bottom: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .search-result-item:hover {
+            border-color: var(--accent-color);
+            background-color: var(--accent-light);
+        }
+
+        .drop-resource-btn {
+            padding: 0.35rem 0.75rem;
+            background-color: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.875rem;
+            transition: background-color 0.2s;
+        }
+
+        .drop-resource-btn:hover {
+            background-color: #c82333;
+        }
+
         .resource-name {
             font-weight: 600;
             color: var(--text-primary);
@@ -365,13 +394,46 @@
                     <p class="text-muted">Add your first resource to this subject!</p>
                 </div>
 
-                <button id="add-resource-btn" class="btn btn-accent mb-lg" style="margin-top: 2rem;">
-                    + Add Resource
-                </button>
+                <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                    <button id="add-existing-resource-btn" class="btn btn-accent mb-lg">
+                        + Add Existing Resource
+                    </button>
+                    <button id="create-new-resource-btn" class="btn btn-secondary mb-lg">
+                        + Create New Resource
+                    </button>
+                </div>
 
+                <!-- Search for existing resources -->
+                <div id="search-resource-form" class="card" style="display: none; max-width: 700px;">
+                    <div class="card-header">
+                        <h3 class="card-title">Search Resources</h3>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="search-resource-input">Search by name</label>
+                        <input
+                            type="text"
+                            id="search-resource-input"
+                            class="form-input"
+                            placeholder="Type to search resources..."
+                        >
+                    </div>
+
+                    <div id="search-resource-results" style="max-height: 400px; overflow-y: auto; margin-top: 1rem;">
+                        <!-- Search results will be inserted here -->
+                    </div>
+
+                    <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                        <button type="button" id="cancel-search-resource-btn" class="btn btn-secondary">
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Create new resource -->
                 <div id="add-resource-form" class="card" style="display: none; max-width: 700px;">
                     <div class="card-header">
-                        <h3 class="card-title">Add Resource</h3>
+                        <h3 class="card-title">Create New Resource</h3>
                     </div>
 
                     <form id="resource-form">
