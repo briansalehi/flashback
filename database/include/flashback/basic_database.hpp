@@ -148,7 +148,7 @@ public:
     [[nodiscard]] virtual Block get_block(uint64_t card_id, uint64_t position) const = 0;
 
     // progress
-    virtual void make_progress(uint64_t user_id, uint64_t card_id, uint64_t duration, practice_mode mode) const = 0;
+    virtual void make_progress(uint64_t user_id, uint64_t milestone_id, expertise_level milestone_level, uint64_t card_id, uint64_t duration) const = 0;
     [[nodiscard]] virtual expertise_level get_user_cognitive_level(uint64_t user_id, uint64_t roadmap_id, uint64_t subject_id) const = 0;
     [[nodiscard]] virtual practice_mode get_practice_mode(uint64_t user_id, uint64_t subject_id, expertise_level level) const = 0;
     [[nodiscard]] virtual std::vector<Topic> get_practice_topics(uint64_t user_id, uint64_t roadmap_id, uint64_t subject_id) const = 0;

@@ -277,7 +277,7 @@ message IsAssimilatedResponse { bool is_assimilated = 1; }
 message StudyRequest { User user = 1; Card card = 2; uint64 duration = 3; }
 message StudyResponse { }
 
-message MakeProgressRequest { User user = 1; Card card = 2; uint64 duration = 3; practice_mode mode = 4; }
+message MakeProgressRequest { User user = 1; Milestone milestone = 2; Card card = 3; uint64 duration = 4; }
 message MakeProgressResponse { }
 
 message GetProgressWeightRequest { User user = 1; }

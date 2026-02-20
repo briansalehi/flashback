@@ -74,3 +74,4 @@ message TopicSearchResult { Topic topic = 1; uint64 position = 2; }
 message SectionSearchResult { Section section = 1; uint64 position = 2; }
 message CardSearchResult { Card card = 1; uint64 position = 2; }
 message StudyResource { Resource resource = 1; uint64 order = 2; }
+message PracticeTopic { Topic topic = 1; bool collapsed = 2; }

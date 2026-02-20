@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict W8jWhAF3rxycLmTCy1TU8tzEBwriwj3BR0hvcPqJfiwOMfpG1DHKoThIztYNhg6
+\restrict B08ZzCIaCxQgNgTSnKBaRZJDuvuaRH8VveFhQJfmOXnralEBqg2QYG0YjBffmWe
 
 -- Dumped from database version 18.1
 -- Dumped by pg_dump version 18.0
@@ -1330,22 +1330,36 @@ end; $$;
 ALTER FUNCTION flashback.get_practice_mode(user_id integer, subject_id integer, topic_level flashback.expertise_level) OWNER TO flashback;
 
 --
--- Name: get_practice_topics(integer, integer, integer); Type: FUNCTION; Schema: flashback; Owner: flashback
+-- Name: get_practice_topics(integer, integer, integer, flashback.expertise_level); Type: FUNCTION; Schema: flashback; Owner: flashback
 --
 
-CREATE FUNCTION flashback.get_practice_topics(user_id integer, roadmap_id integer, subject_id integer) RETURNS TABLE("position" integer, name flashback.citext, level flashback.expertise_level)
+CREATE FUNCTION flashback.get_practice_topics(user_id integer, roadmap_id integer, milestone_id integer, milestone_level flashback.expertise_level) RETURNS TABLE("position" integer, name flashback.citext, level flashback.expertise_level)
     LANGUAGE plpgsql
     AS $$
 begin
     return query
-    select t.position, t.name, t.level
-    from topics t
-    where t.subject = subject_id and t.level <= get_user_cognitive_level(user_id, roadmap_id, subject_id);
+    with base as (
+        select  t.position,
+                t.name,
+                t.level,
+                is_assimilated(user_id, t.subject, t.level, t.position) as assimilated,
+                (select a.id from get_assessment_coverage(t.subject, t.position, t.level) a order by a.coverage desc limit 1) as assessment
+        from topics t
+        where t.subject = milestone_id and t.level <= get_user_cognitive_level(user_id, roadmap_id, milestone_id)
+    )
+    select * from (
+        select distinct on (assessment) b."position", b.name, b.level
+        from base b
+        where coalesce(assimilated, false) and assessment is not null
+        order by assessment, position desc
+    )
+    union all
+    select b.position, b.name, b.level from base b where not coalesce(assimilated, false) or assessment is null order by position;
 end;
 $$;
 
 
-ALTER FUNCTION flashback.get_practice_topics(user_id integer, roadmap_id integer, subject_id integer) OWNER TO flashback;
+ALTER FUNCTION flashback.get_practice_topics(user_id integer, roadmap_id integer, milestone_id integer, milestone_level flashback.expertise_level) OWNER TO flashback;
 
 --
 -- Name: get_progress_weight(integer); Type: FUNCTION; Schema: flashback; Owner: flashback
@@ -1879,13 +1893,16 @@ $$;
 ALTER PROCEDURE flashback.log_sections_activities(IN user_id integer, IN address character varying, IN section integer, IN action flashback.user_action) OWNER TO flashback;
 
 --
--- Name: make_progress(integer, integer, integer, flashback.practice_mode); Type: PROCEDURE; Schema: flashback; Owner: flashback
+-- Name: make_progress(integer, integer, flashback.expertise_level, integer, integer); Type: PROCEDURE; Schema: flashback; Owner: flashback
 --
 
-CREATE PROCEDURE flashback.make_progress(IN user_id integer, IN card_id integer, IN time_duration integer, IN mode flashback.practice_mode)
+CREATE PROCEDURE flashback.make_progress(IN user_id integer, IN milestone_id integer, IN milestone_level flashback.expertise_level, IN card_id integer, IN time_duration integer)
     LANGUAGE plpgsql
     AS $$
+declare mode practice_mode;
 begin
+    mode := get_practice_mode(user_id, milestone_id, milestone_level);
+
     insert into progress ("user", card, duration, progression)
     values (user_id, card_id, time_duration, 0)
     on conflict on constraint progress_pkey
@@ -1898,7 +1915,7 @@ end;
 $$;
 
 
-ALTER PROCEDURE flashback.make_progress(IN user_id integer, IN card_id integer, IN time_duration integer, IN mode flashback.practice_mode) OWNER TO flashback;
+ALTER PROCEDURE flashback.make_progress(IN user_id integer, IN milestone_id integer, IN milestone_level flashback.expertise_level, IN card_id integer, IN time_duration integer) OWNER TO flashback;
 
 --
 -- Name: mark_card_as_approved(integer); Type: PROCEDURE; Schema: flashback; Owner: flashback
@@ -32054,5 +32071,5 @@ GRANT ALL ON SCHEMA public TO brian;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict W8jWhAF3rxycLmTCy1TU8tzEBwriwj3BR0hvcPqJfiwOMfpG1DHKoThIztYNhg6
+\unrestrict B08ZzCIaCxQgNgTSnKBaRZJDuvuaRH8VveFhQJfmOXnralEBqg2QYG0YjBffmWe
 

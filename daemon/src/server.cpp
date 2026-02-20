@@ -3919,6 +3919,10 @@ grpc::Status server::MakeProgress(grpc::ServerContext* context, MakeProgressRequ
         {
             status = grpc::Status{grpc::StatusCode::UNAUTHENTICATED, "invalid user"};
         }
+        else if (request->milestone().id() == 0)
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid milestone id"};
+        }
         else if (request->card().id() == 0)
         {
             status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid card"};
@@ -3929,9 +3933,9 @@ grpc::Status server::MakeProgress(grpc::ServerContext* context, MakeProgressRequ
         }
         else
         {
-            std::clog << std::format("client {} made {} progress on card {} in {} seconds\n", request->user().token(), database::practice_mode_to_string(request->mode()), request->card().id(), request->duration());
+            std::clog << std::format("client {} made progress on card {} in subject {} level {} in {} seconds\n", request->user().token(), request->card().id(), request->milestone().id(), database::level_to_string(request->milestone().level()), request->duration());
             std::shared_ptr<User> const user{m_database->get_user(request->user().token(), request->user().device())};
-            m_database->make_progress(user->id(), request->card().id(), request->duration(), request->mode());
+            m_database->make_progress(user->id(), request->milestone().id(), request->milestone().level(), request->card().id(), request->duration());
             status = grpc::Status{grpc::StatusCode::OK, {}};
         }
     }

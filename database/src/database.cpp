@@ -1208,9 +1208,9 @@ void database::mark_card_as_released(uint64_t const card_id) const
     exec("call mark_card_as_released($1)", card_id);
 }
 
-void database::make_progress(uint64_t const user_id, uint64_t const card_id, uint64_t const duration, practice_mode const mode) const
+void database::make_progress(uint64_t const user_id, uint64_t const milestone_id, expertise_level const milestone_level, uint64_t const card_id, uint64_t const duration) const
 {
-    exec("call make_progress($1, $2, $3, $4)", user_id, card_id, duration, practice_mode_to_string(mode));
+    exec("call make_progress($1, $2, $3, $4, $5)", user_id, milestone_id, level_to_string(milestone_level), card_id, duration);
 }
 
 closure_state database::get_resource_state(uint64_t const resource_id) const

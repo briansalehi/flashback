@@ -155,7 +155,7 @@ public:
     void mark_section_as_completed(uint64_t resource_id, uint64_t section_position) const override;
     void mark_card_as_approved(uint64_t card_id) const override;
     void mark_card_as_released(uint64_t card_id) const override;
-    void make_progress(uint64_t user_id, uint64_t card_id, uint64_t duration, practice_mode mode) const override;
+    void make_progress(uint64_t user_id, uint64_t milestone_id, expertise_level milestone_level, uint64_t card_id, uint64_t duration) const override;
     [[nodiscard]] std::vector<Weight> get_progress_weight(uint64_t user_id) const override;
     [[nodiscard]] std::vector<Card> get_variations(uint64_t card_id) const override;
     [[nodiscard]] bool is_absolute(uint64_t card_id) const override;
