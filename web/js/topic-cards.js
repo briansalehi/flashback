@@ -116,6 +116,66 @@ window.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // Rename topic handlers
+    const renameTopicBtn = document.getElementById('rename-topic-btn');
+    if (renameTopicBtn) {
+        renameTopicBtn.addEventListener('click', () => {
+            UI.toggleElement('rename-topic-modal', true);
+            document.getElementById('rename-topic-name').value = topicName || '';
+            setTimeout(() => {
+                document.getElementById('rename-topic-name').focus();
+            }, 100);
+        });
+    }
+
+    const cancelRenameTopicBtn = document.getElementById('cancel-rename-topic-btn');
+    if (cancelRenameTopicBtn) {
+        cancelRenameTopicBtn.addEventListener('click', () => {
+            UI.toggleElement('rename-topic-modal', false);
+            UI.clearForm('rename-topic-form');
+        });
+    }
+
+    const renameTopicForm = document.getElementById('rename-topic-form');
+    if (renameTopicForm) {
+        renameTopicForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const newName = document.getElementById('rename-topic-name').value.trim();
+
+            if (!newName) {
+                UI.showError('Please enter a topic name');
+                return;
+            }
+
+            UI.hideMessage('error-message');
+            UI.setButtonLoading('save-rename-topic-btn', true);
+
+            try {
+                await client.editTopic(subjectId, topicLevel, topicPosition, newName, topicLevel);
+
+                // Update the page title and topic name display
+                document.getElementById('topic-name').textContent = newName;
+                document.title = `${newName} - Flashback`;
+
+                // Update URL with new name
+                const currentUrl = new URL(window.location.href);
+                currentUrl.searchParams.set('name', newName);
+                window.history.replaceState({}, '', currentUrl);
+
+                UI.toggleElement('rename-topic-modal', false);
+                UI.clearForm('rename-topic-form');
+                UI.setButtonLoading('save-rename-topic-btn', false);
+
+                UI.showSuccess('Topic renamed successfully');
+            } catch (err) {
+                console.error('Rename topic failed:', err);
+                UI.showError(err.message || 'Failed to rename topic');
+                UI.setButtonLoading('save-rename-topic-btn', false);
+            }
+        });
+    }
+
     loadCards();
 });
 

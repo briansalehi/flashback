@@ -76,10 +76,42 @@
                 <h2 id="breadcrumb" style="color: var(--text-primary); font-size: 1.5rem; font-weight: 600; margin: 0; margin-bottom: 1rem;">
                     <!-- Breadcrumb will be inserted here -->
                 </h2>
-                <h1 id="topic-name">Loading...</h1>
+                <div style="display: flex; justify-content: space-between; align-items: center; gap: 1rem;">
+                    <h1 id="topic-name" style="margin-bottom: 0; flex: 1;">Loading...</h1>
+                    <button id="rename-topic-btn" class="btn btn-secondary" style="padding: 0.5rem 1rem;">
+                        Rename Topic
+                    </button>
+                </div>
             </div>
 
             <div id="error-message" style="display: none;"></div>
+
+            <!-- Rename Topic Modal -->
+            <div id="rename-topic-modal" class="card" style="display: none; max-width: 500px; margin-bottom: 2rem;">
+                <div class="card-header">
+                    <h3 class="card-title">Rename Topic</h3>
+                </div>
+                <form id="rename-topic-form">
+                    <div class="form-group">
+                        <label class="form-label" for="rename-topic-name">Topic Name</label>
+                        <input
+                            type="text"
+                            id="rename-topic-name"
+                            class="form-input"
+                            placeholder="Enter new topic name"
+                            required
+                        >
+                    </div>
+                    <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                        <button type="submit" id="save-rename-topic-btn" class="btn btn-primary">
+                            Save
+                        </button>
+                        <button type="button" id="cancel-rename-topic-btn" class="btn btn-secondary">
+                            Cancel
+                        </button>
+                    </div>
+                </form>
+            </div>
 
             <div id="loading" style="display: none; text-align: center; padding: 3rem;">
                 <div class="loading" style="width: 40px; height: 40px; border-width: 4px;"></div>

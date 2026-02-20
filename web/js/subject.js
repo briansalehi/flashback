@@ -1,3 +1,4 @@
+// Updated: 2026-02-20 with topic remove/reorder features
 window.addEventListener('DOMContentLoaded', () => {
     if (!client.isAuthenticated()) {
         window.location.href = '/index.html';
@@ -450,34 +451,119 @@ function renderTopics(topics, maxLevel) {
     levelsToShow.forEach(level => {
         if (topicsByLevel[level] && topicsByLevel[level].length > 0) {
             const levelSection = document.createElement('div');
-            levelSection.style.marginBottom = '2rem';
+            levelSection.className = 'level-section';
 
             const levelHeader = document.createElement('div');
-            levelHeader.style.cssText = 'display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 2px solid var(--border-color);';
+            levelHeader.className = 'level-header';
             levelHeader.innerHTML = `
-                <span class="topic-level">${UI.escapeHtml(levelInfo[level].name)}</span>
-                <span style="color: var(--text-muted); font-size: 0.9rem;">${UI.escapeHtml(levelInfo[level].description)}</span>
+                ${UI.escapeHtml(levelInfo[level].name)} — ${UI.escapeHtml(levelInfo[level].description)}
             `;
             levelSection.appendChild(levelHeader);
 
             // Sort topics by position within each level
             const sortedTopics = topicsByLevel[level].sort((a, b) => a.position - b.position);
 
-            sortedTopics.forEach(topic => {
+            sortedTopics.forEach((topic, index) => {
                 const topicItem = document.createElement('div');
                 topicItem.className = 'topic-item';
-                topicItem.style.cursor = 'pointer';
+                topicItem.draggable = true;
+                topicItem.dataset.position = topic.position;
+                topicItem.dataset.level = topic.level;
                 topicItem.innerHTML = `
-                    <div class="topic-name">${UI.escapeHtml(topic.name)}</div>
+                    <div class="topic-content">
+                        <div class="topic-position">${index + 1}</div>
+                        <div class="topic-name">${UI.escapeHtml(topic.name)}</div>
+                        <span class="topic-level">${UI.escapeHtml(levelInfo[level].name)}</span>
+                    </div>
+                    <div class="topic-actions">
+                        <button class="topic-action-btn remove-topic-btn" data-position="${topic.position}" data-level="${topic.level}" data-name="${UI.escapeHtml(topic.name)}" title="Remove topic">×</button>
+                    </div>
                 `;
 
-                topicItem.addEventListener('click', () => {
-                    const subjectId = UI.getUrlParam('id');
-                    const subjectName = UI.getUrlParam('name');
-                    const roadmapId = UI.getUrlParam('roadmapId');
-                    const roadmapName = UI.getUrlParam('roadmapName');
-                    window.location.href = `topic-cards.html?subjectId=${subjectId}&topicPosition=${topic.position}&topicLevel=${topic.level}&name=${encodeURIComponent(topic.name)}&subjectName=${encodeURIComponent(subjectName || '')}&roadmapId=${roadmapId || ''}&roadmapName=${encodeURIComponent(roadmapName || '')}`;
+                // Click to navigate (but not when dragging or clicking buttons)
+                let isDragging = false;
+                topicItem.style.cursor = 'pointer';
+                topicItem.addEventListener('click', (e) => {
+                    // Don't navigate if clicking on buttons
+                    if (e.target.classList.contains('topic-action-btn') ||
+                        e.target.closest('.topic-action-btn')) {
+                        return;
+                    }
+
+                    if (!isDragging) {
+                        const subjectId = UI.getUrlParam('id');
+                        const subjectName = UI.getUrlParam('name');
+                        const roadmapId = UI.getUrlParam('roadmapId');
+                        const roadmapName = UI.getUrlParam('roadmapName');
+                        window.location.href = `topic-cards.html?subjectId=${subjectId}&topicPosition=${topic.position}&topicLevel=${topic.level}&name=${encodeURIComponent(topic.name)}&subjectName=${encodeURIComponent(subjectName || '')}&roadmapId=${roadmapId || ''}&roadmapName=${encodeURIComponent(roadmapName || '')}`;
+                    }
                 });
+
+                // Drag and drop handlers
+                topicItem.addEventListener('dragstart', (e) => {
+                    isDragging = true;
+                    topicItem.classList.add('dragging');
+                    e.dataTransfer.effectAllowed = 'move';
+                    e.dataTransfer.setData('text/plain', JSON.stringify({
+                        position: topic.position,
+                        level: topic.level
+                    }));
+                });
+
+                topicItem.addEventListener('dragend', () => {
+                    topicItem.classList.remove('dragging');
+                    setTimeout(() => {
+                        isDragging = false;
+                    }, 100);
+                });
+
+                topicItem.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    e.dataTransfer.dropEffect = 'move';
+
+                    const draggingCard = document.querySelector('.dragging');
+                    if (draggingCard && draggingCard !== topicItem) {
+                        const draggingData = JSON.parse(e.dataTransfer.getData('text/plain') || '{}');
+                        // Only allow drag-drop within same level
+                        if (draggingData.level === topic.level) {
+                            topicItem.classList.add('drag-over');
+                        }
+                    }
+                });
+
+                topicItem.addEventListener('dragleave', () => {
+                    topicItem.classList.remove('drag-over');
+                });
+
+                topicItem.addEventListener('drop', async (e) => {
+                    e.preventDefault();
+                    topicItem.classList.remove('drag-over');
+
+                    const dragData = JSON.parse(e.dataTransfer.getData('text/plain') || '{}');
+                    const sourcePosition = dragData.position;
+                    const sourceLevel = dragData.level;
+                    const targetPosition = topic.position;
+                    const targetLevel = topic.level;
+
+                    // Only reorder within same level
+                    if (sourceLevel === targetLevel && sourcePosition !== targetPosition) {
+                        await reorderTopic(sourceLevel, sourcePosition, targetPosition);
+                    }
+                });
+
+                // Remove button handler
+                const removeBtn = topicItem.querySelector('.remove-topic-btn');
+                if (removeBtn) {
+                    removeBtn.addEventListener('click', async (e) => {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        if (confirm(`Are you sure you want to remove "${topic.name}"? All cards in this topic will also be removed.`)) {
+                            await removeTopic(topic.level, topic.position);
+                        }
+                    });
+                } else {
+                    console.error('Remove button not found for topic:', topic.name);
+                }
 
                 levelSection.appendChild(topicItem);
             });
@@ -728,5 +814,30 @@ async function searchAndDisplayResources(query) {
     } catch (err) {
         console.error('Search resources failed:', err);
         resultsContainer.innerHTML = `<p style="color: var(--text-danger); text-align: center; padding: 1rem;">Search failed: ${UI.escapeHtml(err.message || 'Unknown error')}</p>`;
+    }
+}
+
+async function removeTopic(level, position) {
+    const subjectId = UI.getUrlParam('id');
+
+    try {
+        await client.removeTopic(parseInt(subjectId), level, position);
+        await loadTopics();
+        UI.showSuccess('Topic removed successfully');
+    } catch (err) {
+        console.error('Remove topic failed:', err);
+        UI.showError('Failed to remove topic: ' + (err.message || 'Unknown error'));
+    }
+}
+
+async function reorderTopic(level, sourcePosition, targetPosition) {
+    const subjectId = UI.getUrlParam('id');
+
+    try {
+        await client.reorderTopic(parseInt(subjectId), level, sourcePosition, targetPosition);
+        await loadTopics();
+    } catch (err) {
+        console.error('Reorder topic failed:', err);
+        UI.showError('Failed to reorder topic: ' + (err.message || 'Unknown error'));
     }
 }
