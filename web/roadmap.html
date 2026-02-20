@@ -181,6 +181,42 @@
             box-shadow: 0 4px 12px rgba(212, 132, 92, 0.3);
         }
 
+        .milestone-level-selector {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.5rem 1rem;
+            background: linear-gradient(135deg, rgba(212, 132, 92, 0.1) 0%, rgba(230, 155, 122, 0.1) 100%);
+            color: #d4845c;
+            border: 1.5px solid rgba(212, 132, 92, 0.3);
+            border-radius: 24px;
+            font-size: 0.8125rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            outline: none;
+        }
+
+        .milestone-level-selector:hover,
+        .milestone-level-selector:focus {
+            background: linear-gradient(135deg, rgba(212, 132, 92, 0.15) 0%, rgba(230, 155, 122, 0.15) 100%);
+            border-color: #d4845c;
+            box-shadow: 0 2px 8px rgba(212, 132, 92, 0.2);
+        }
+
+        .milestone-card:hover .milestone-level-selector {
+            background: linear-gradient(135deg, #d4845c 0%, #e69b7a 100%);
+            color: white;
+            border-color: #d4845c;
+        }
+
+        .milestone-level-selector option {
+            background: white;
+            color: #2c5f4f;
+            text-transform: uppercase;
+        }
+
         .milestone-position {
             width: 44px;
             height: 44px;

@@ -763,7 +763,7 @@ grpc::Status server::RemoveMilestone(grpc::ServerContext* context, RemoveMilesto
         }
         else
         {
-            std::clog << std::format("client {} removed milestone {} in roadmap {}\n", request->user().token(), request->roadmap().id(), request->milestone().position(), request->roadmap().id());
+            std::clog << std::format("client {} removed milestone {} in roadmap {}\n", request->user().token(), request->roadmap().id(), request->milestone().id(), request->roadmap().id());
             m_database->remove_milestone(request->roadmap().id(), request->milestone().id());
             response->set_success(true);
             response->clear_details();
@@ -811,7 +811,7 @@ grpc::Status server::ChangeMilestoneLevel(grpc::ServerContext* context, ChangeMi
         }
         else
         {
-            std::clog << std::format("client {} changed the level of milestone {}:{}\n", request->user().token(), request->roadmap().id(), request->milestone().position());
+            std::clog << std::format("client {} changed the level of milestone {} in roadmap {} to {}\n", request->user().token(), request->milestone().id(), request->roadmap().id(), database::level_to_string(request->milestone().level()));
             m_database->change_milestone_level(request->roadmap().id(), request->milestone().id(), request->milestone().level());
             response->set_success(true);
             response->clear_details();

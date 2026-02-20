@@ -367,7 +367,11 @@ function renderMilestones(milestones) {
             <div class="milestone-header">
                 <div class="milestone-position">${index + 1}</div>
                 <h3 class="milestone-name">${UI.escapeHtml(milestone.name)}</h3>
-                <span class="milestone-level">${UI.escapeHtml(levelName)}</span>
+                <select class="milestone-level-selector" data-id="${milestone.id}" data-current-level="${milestone.level}" title="Change level">
+                    <option value="0" ${milestone.level === 0 ? 'selected' : ''}>Surface</option>
+                    <option value="1" ${milestone.level === 1 ? 'selected' : ''}>Depth</option>
+                    <option value="2" ${milestone.level === 2 ? 'selected' : ''}>Origin</option>
+                </select>
             </div>
             <button class="remove-milestone-btn" data-id="${milestone.id}" title="Remove milestone">×</button>
         `;
@@ -423,6 +427,24 @@ function renderMilestones(milestones) {
             }
         });
 
+        // Level selector handler
+        const levelSelector = milestoneCard.querySelector('.milestone-level-selector');
+        if (levelSelector) {
+            levelSelector.addEventListener('click', (e) => {
+                e.stopPropagation(); // Prevent card click navigation
+            });
+
+            levelSelector.addEventListener('change', async (e) => {
+                e.stopPropagation(); // Prevent card click navigation
+                const newLevel = parseInt(e.target.value);
+                const currentLevel = parseInt(e.target.dataset.currentLevel);
+
+                if (newLevel !== currentLevel) {
+                    await changeMilestoneLevel(milestone.id, newLevel);
+                }
+            });
+        }
+
         // Remove milestone handler
         const removeBtn = milestoneCard.querySelector('.remove-milestone-btn');
         if (removeBtn) {
@@ -461,5 +483,18 @@ async function removeMilestone(milestoneId) {
     } catch (err) {
         console.error('Remove milestone failed:', err);
         UI.showError('Failed to remove milestone: ' + (err.message || 'Unknown error'));
+    }
+}
+
+async function changeMilestoneLevel(milestoneId, newLevel) {
+    const roadmapId = UI.getUrlParam('id');
+
+    try {
+        await client.changeMilestoneLevel(roadmapId, milestoneId, newLevel);
+        await loadMilestones();
+        UI.showSuccess('Milestone level updated successfully');
+    } catch (err) {
+        console.error('Change milestone level failed:', err);
+        UI.showError('Failed to change milestone level: ' + (err.message || 'Unknown error'));
     }
 }
