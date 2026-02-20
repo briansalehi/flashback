@@ -590,7 +590,7 @@ std::map<uint64_t, Section> database::get_sections(uint64_t const resource_id) c
         Section section{};
         section.set_position(row.at("position").as<uint64_t>());
         section.set_state(to_closure_state(row.at("state").as<std::string>()));
-        section.set_name(row.at("name").as<std::string>());
+        section.set_name(row.at("name").is_null() ? "" : row.at("name").as<std::string>());
         section.set_link(row.at("link").is_null() ? "" : row.at("link").as<std::string>());
         sections.insert({section.position(), section});
     }
@@ -1376,7 +1376,7 @@ Section database::get_section(uint64_t resource_id, uint64_t position) const
         pqxx::row const& row{result.at(0)};
         section.set_position(row.at("position").as<uint64_t>());
         section.set_state(to_closure_state(row.at("state").as<std::string>()));
-        section.set_name(row.at("name").as<std::string>());
+        section.set_name(row.at("name").is_null() ? "" : row.at("name").as<std::string>());
         section.set_link(row.at("link").is_null() ? "" : row.at("link").as<std::string>());
     }
     return section;

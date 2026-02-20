@@ -138,6 +138,71 @@ window.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // Edit section handlers
+    const editSectionBtn = document.getElementById('edit-section-btn');
+    if (editSectionBtn) {
+        editSectionBtn.addEventListener('click', () => {
+            UI.toggleElement('edit-section-modal', true);
+            document.getElementById('edit-section-name').value = sectionName || '';
+            // Get the link from URL params - we'll need to add it to the URL params
+            const sectionLink = UI.getUrlParam('sectionLink') || '';
+            document.getElementById('edit-section-link').value = sectionLink;
+            setTimeout(() => {
+                document.getElementById('edit-section-name').focus();
+            }, 100);
+        });
+    }
+
+    const cancelEditSectionBtn = document.getElementById('cancel-edit-section-btn');
+    if (cancelEditSectionBtn) {
+        cancelEditSectionBtn.addEventListener('click', () => {
+            UI.toggleElement('edit-section-modal', false);
+            UI.clearForm('edit-section-form');
+        });
+    }
+
+    const editSectionForm = document.getElementById('edit-section-form');
+    if (editSectionForm) {
+        editSectionForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const newName = document.getElementById('edit-section-name').value.trim();
+            const newLink = document.getElementById('edit-section-link').value.trim();
+
+            if (!newName) {
+                UI.showError('Please enter a section name');
+                return;
+            }
+
+            UI.hideMessage('error-message');
+            UI.setButtonLoading('save-edit-section-btn', true);
+
+            try {
+                await client.editSection(resourceId, sectionPosition, newName, newLink);
+
+                // Update the page title and section name display
+                document.getElementById('section-name').textContent = newName;
+                document.title = `${newName} - Flashback`;
+
+                // Update URL with new name and link
+                const currentUrl = new URL(window.location.href);
+                currentUrl.searchParams.set('name', newName);
+                currentUrl.searchParams.set('sectionLink', newLink);
+                window.history.replaceState({}, '', currentUrl);
+
+                UI.toggleElement('edit-section-modal', false);
+                UI.clearForm('edit-section-form');
+                UI.setButtonLoading('save-edit-section-btn', false);
+
+                UI.showSuccess('Section updated successfully');
+            } catch (err) {
+                console.error('Edit section failed:', err);
+                UI.showError(err.message || 'Failed to edit section');
+                UI.setButtonLoading('save-edit-section-btn', false);
+            }
+        });
+    }
+
     // Remove section handlers
     const removeSectionBtn = document.getElementById('remove-section-btn');
     if (removeSectionBtn) {

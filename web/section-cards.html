@@ -111,11 +111,50 @@
                         <button id="mark-section-reviewed-btn" class="btn btn-secondary" style="display: none;">
                             Mark as Reviewed
                         </button>
+                        <button id="edit-section-btn" class="btn btn-secondary">
+                            Edit
+                        </button>
                         <button id="remove-section-btn" class="btn btn-danger">
-                            Remove Section
+                            Remove
                         </button>
                     </div>
                 </div>
+            </div>
+
+            <!-- Edit Section Modal -->
+            <div id="edit-section-modal" class="card" style="display: none; max-width: 600px; margin-bottom: 2rem;">
+                <div class="card-header">
+                    <h3 class="card-title">Edit Section</h3>
+                </div>
+                <form id="edit-section-form">
+                    <div class="form-group">
+                        <label class="form-label" for="edit-section-name">Section Name</label>
+                        <input
+                            type="text"
+                            id="edit-section-name"
+                            class="form-input"
+                            placeholder="e.g., Chapter 1: Introduction"
+                            required
+                        >
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="edit-section-link">Link (optional)</label>
+                        <input
+                            type="url"
+                            id="edit-section-link"
+                            class="form-input"
+                            placeholder="https://example.com/chapter1"
+                        >
+                    </div>
+                    <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                        <button type="submit" id="save-edit-section-btn" class="btn btn-primary">
+                            Save Changes
+                        </button>
+                        <button type="button" id="cancel-edit-section-btn" class="btn btn-secondary">
+                            Cancel
+                        </button>
+                    </div>
+                </form>
             </div>
 
             <!-- Remove Section Modal -->
