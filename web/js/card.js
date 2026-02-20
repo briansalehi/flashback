@@ -587,17 +587,40 @@ function renderBlocks(blocks) {
             </div>
             <div style="margin-bottom: 1rem;">
                 <label style="display: block; margin-bottom: 0.25rem; font-weight: 500;">Content: <span style="color: red;">*</span></label>
+                <p style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 0.5rem;">
+                    💡 Tip: Leave a blank line (press Enter twice) to split this block into multiple blocks
+                </p>
                 <textarea id="block-content-${index}" class="form-input" style="width: 100%; min-height: 150px; font-family: monospace;" placeholder="Enter block content..." required>${UI.escapeHtml(contentValue)}</textarea>
             </div>
-            <div style="display: flex; gap: 0.5rem;">
+            <div style="display: flex; gap: 0.5rem; align-items: center;">
                 <button class="btn btn-primary" onclick="saveBlock(${index})" id="save-block-btn-${index}">Save</button>
                 <button class="btn btn-secondary" onclick="cancelEditBlock(${index})">Cancel</button>
+                <button class="btn btn-secondary" onclick="saveSplitBlock(${index})" id="split-block-btn-${index}" style="display: none; background-color: #d4845c; color: white;">Save & Split</button>
             </div>
         `;
 
         blockItem.appendChild(displayDiv);
         blockItem.appendChild(editDiv);
         container.appendChild(blockItem);
+
+        // Add auto-split detection for content textarea
+        // Wait for next tick to ensure textarea is in DOM
+        setTimeout(() => {
+            const contentTextarea = document.getElementById(`block-content-${index}`);
+            const splitBtn = document.getElementById(`split-block-btn-${index}`);
+
+            if (contentTextarea && splitBtn) {
+                contentTextarea.addEventListener('input', () => {
+                    const content = contentTextarea.value;
+                    // Check if content contains three newlines (blank line between content)
+                    if (content.includes('\n\n\n')) {
+                        splitBtn.style.display = 'inline-block';
+                    } else {
+                        splitBtn.style.display = 'none';
+                    }
+                });
+            }
+        }, 0);
     });
 }
 
@@ -698,6 +721,72 @@ window.saveBlock = async function(index) {
         }
 
         UI.setButtonLoading(`save-block-btn-${index}`, false);
+    }
+};
+
+window.saveSplitBlock = async function(index) {
+    const block = currentBlocks[index];
+    if (!block) {
+        UI.showError('Block not found');
+        return;
+    }
+
+    const typeSelect = document.getElementById(`block-type-${index}`);
+    const extensionInput = document.getElementById(`block-extension-${index}`);
+    const metadataInput = document.getElementById(`block-metadata-${index}`);
+    const contentTextarea = document.getElementById(`block-content-${index}`);
+
+    if (!typeSelect || !extensionInput || !metadataInput || !contentTextarea) {
+        UI.showError('Form elements not found');
+        return;
+    }
+
+    const newType = parseInt(typeSelect.value);
+    const newExtension = extensionInput.value.trim();
+    const newMetadata = metadataInput.value.trim();
+    const newContent = contentTextarea.value.trim();
+
+    if (!newContent) {
+        UI.showError('Content cannot be empty');
+        return;
+    }
+
+    if (!newExtension) {
+        UI.showError('Extension cannot be empty');
+        return;
+    }
+
+    if (isNaN(newType)) {
+        UI.showError('Type must be selected');
+        return;
+    }
+
+    // Check if content actually contains three newlines (blank line)
+    if (!newContent.includes('\n\n\n')) {
+        UI.showError('Content must contain a blank line (three newlines) to split');
+        return;
+    }
+
+    UI.setButtonLoading(`split-block-btn-${index}`, true);
+
+    try {
+        const cardId = parseInt(UI.getUrlParam('cardId'));
+
+        // First, update the block with the new content
+        await client.editBlock(cardId, block.position, newType, newExtension, newContent, newMetadata);
+
+        // Then, split the block
+        await client.splitBlock(cardId, block.position);
+
+        // Reload all blocks to show the split result
+        await loadBlocks();
+
+        UI.showSuccess('Block split successfully');
+        UI.setButtonLoading(`split-block-btn-${index}`, false);
+    } catch (err) {
+        console.error('Failed to split block:', err);
+        UI.showError('Failed to split block: ' + (err.message || 'Unknown error'));
+        UI.setButtonLoading(`split-block-btn-${index}`, false);
     }
 };
 
