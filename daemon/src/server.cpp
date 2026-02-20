@@ -3093,14 +3093,14 @@ grpc::Status server::GetPracticeTopics(grpc::ServerContext* context, GetPractice
         {
             status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid roadmap"};
         }
-        else if (request->subject().id() == 0)
+        else if (request->milestone().id() == 0)
         {
             status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid subject"};
         }
         else
         {
             std::shared_ptr<User> const user{m_database->get_user(request->user().token(), request->user().device())};
-            for (Topic const& topic: m_database->get_practice_topics(user->id(), request->roadmap().id(), request->subject().id()))
+            for (Topic const& topic: m_database->get_practice_topics(user->id(), request->roadmap().id(), request->milestone().id(), request->milestone().level()))
             {
                 *response->add_topic() = topic;
             }

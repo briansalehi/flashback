@@ -144,7 +144,7 @@ public:
     // practices
     [[nodiscard]] expertise_level get_user_cognitive_level(uint64_t user_id, uint64_t roadmap_id, uint64_t subject_id) const override;
     [[nodiscard]] practice_mode get_practice_mode(uint64_t user_id, uint64_t subject_id, expertise_level level) const override;
-    [[nodiscard]] std::vector<Topic> get_practice_topics(uint64_t user_id, uint64_t roadmap_id, uint64_t subject_id) const override;
+    [[nodiscard]] std::vector<Topic> get_practice_topics(uint64_t user_id, uint64_t roadmap_id, uint64_t milestone_id, expertise_level milestone_level) const override;
     [[nodiscard]] std::vector<Card> get_practice_cards(uint64_t user_id, uint64_t roadmap_id, uint64_t subject_id, expertise_level level, uint64_t topic_position) const override;
     [[nodiscard]] closure_state get_resource_state(uint64_t resource_id) const override;
     void study(uint64_t user_id, uint64_t card_id, std::chrono::seconds duration) const override;

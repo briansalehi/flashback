@@ -151,7 +151,7 @@ public:
     virtual void make_progress(uint64_t user_id, uint64_t milestone_id, expertise_level milestone_level, uint64_t card_id, uint64_t duration) const = 0;
     [[nodiscard]] virtual expertise_level get_user_cognitive_level(uint64_t user_id, uint64_t roadmap_id, uint64_t subject_id) const = 0;
     [[nodiscard]] virtual practice_mode get_practice_mode(uint64_t user_id, uint64_t subject_id, expertise_level level) const = 0;
-    [[nodiscard]] virtual std::vector<Topic> get_practice_topics(uint64_t user_id, uint64_t roadmap_id, uint64_t subject_id) const = 0;
+    [[nodiscard]] virtual std::vector<Topic> get_practice_topics(uint64_t user_id, uint64_t roadmap_id, uint64_t milestone_id, expertise_level milestone_level) const = 0;
     [[nodiscard]] virtual std::vector<Card> get_practice_cards(uint64_t user_id, uint64_t roadmap_id, uint64_t subject_id, expertise_level level, uint64_t topic_position) const =
     0;
     virtual void mark_section_as_reviewed(uint64_t resource_id, uint64_t section_position) const = 0;

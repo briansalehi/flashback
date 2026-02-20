@@ -735,7 +735,7 @@ class FlashbackClient {
         });
     }
 
-    async getPracticeTopics(roadmapId, subjectId) {
+    async getPracticeTopics(roadmapId, milestoneId, milestoneLevel) {
         return new Promise((resolve, reject) => {
             const request = new proto.flashback.GetPracticeTopicsRequest();
             const user = this.getAuthenticatedUser();
@@ -743,9 +743,10 @@ class FlashbackClient {
             const roadmap = new proto.flashback.Roadmap();
             roadmap.setId(roadmapId);
             request.setRoadmap(roadmap);
-            const subject = new proto.flashback.Subject();
-            subject.setId(subjectId);
-            request.setSubject(subject);
+            const milestone = new proto.flashback.Milestone();
+            milestone.setId(milestoneId);
+            milestone.setLevel(milestoneLevel);
+            request.setMilestone(milestone);
 
             this.client.getPracticeTopics(request, this.getMetadata(), (err, response) => {
                 if (err) {
