@@ -368,12 +368,14 @@ async function loadNextCard(practiceMode, currentIndex, totalCards) {
         return;
     }
 
+    const roadmapId = UI.getUrlParam('roadmapId') || '';
+    const roadmapName = UI.getUrlParam('roadmapName') || '';
+    const subjectId = UI.getUrlParam('subjectId') || '';
     const subjectName = UI.getUrlParam('subjectName') || '';
     const topicName = UI.getUrlParam('topicName') || '';
-    const roadmapName = UI.getUrlParam('roadmapName') || '';
     const milestoneId = UI.getUrlParam('milestoneId') || '';
     const milestoneLevel = UI.getUrlParam('milestoneLevel') || '';
-    window.location.href = `card.html?cardId=${nextCard.id}&headline=${encodeURIComponent(nextCard.headline)}&state=${nextCard.state}&practiceMode=${practiceMode}&cardIndex=${nextIndex}&totalCards=${totalCards}&subjectName=${encodeURIComponent(subjectName)}&topicName=${encodeURIComponent(topicName)}&roadmapName=${encodeURIComponent(roadmapName)}&milestoneId=${milestoneId}&milestoneLevel=${milestoneLevel}`;
+    window.location.href = `card.html?cardId=${nextCard.id}&headline=${encodeURIComponent(nextCard.headline)}&state=${nextCard.state}&practiceMode=${practiceMode}&cardIndex=${nextIndex}&totalCards=${totalCards}&roadmapId=${roadmapId}&roadmapName=${encodeURIComponent(roadmapName)}&subjectId=${subjectId}&subjectName=${encodeURIComponent(subjectName)}&topicName=${encodeURIComponent(topicName)}&milestoneId=${milestoneId}&milestoneLevel=${milestoneLevel}`;
 }
 
 // Load next topic or finish practice
@@ -419,11 +421,13 @@ async function loadNextTopic(practiceMode) {
         sessionStorage.setItem('practiceState', JSON.stringify(practiceState));
 
         // Navigate to first card of next topic
-        const subjectName = UI.getUrlParam('subjectName') || '';
+        const roadmapId = UI.getUrlParam('roadmapId') || practiceState.roadmapId || '';
         const roadmapName = UI.getUrlParam('roadmapName') || '';
+        const subjectId = UI.getUrlParam('subjectId') || practiceState.subjectId || '';
+        const subjectName = UI.getUrlParam('subjectName') || '';
         const milestoneId = UI.getUrlParam('milestoneId') || '';
         const milestoneLevel = UI.getUrlParam('milestoneLevel') || '';
-        window.location.href = `card.html?cardId=${cards[0].id}&headline=${encodeURIComponent(cards[0].headline)}&state=${cards[0].state}&practiceMode=${practiceMode}&cardIndex=0&totalCards=${cards.length}&subjectName=${encodeURIComponent(subjectName)}&topicName=${encodeURIComponent(nextTopic.name)}&roadmapName=${encodeURIComponent(roadmapName)}&milestoneId=${milestoneId}&milestoneLevel=${milestoneLevel}`;
+        window.location.href = `card.html?cardId=${cards[0].id}&headline=${encodeURIComponent(cards[0].headline)}&state=${cards[0].state}&practiceMode=${practiceMode}&cardIndex=0&totalCards=${cards.length}&roadmapId=${roadmapId}&roadmapName=${encodeURIComponent(roadmapName)}&subjectId=${subjectId}&subjectName=${encodeURIComponent(subjectName)}&topicName=${encodeURIComponent(nextTopic.name)}&milestoneId=${milestoneId}&milestoneLevel=${milestoneLevel}`;
     } catch (err) {
         console.error('Failed to load next topic:', err);
         UI.showError('Failed to load next topic');
