@@ -338,16 +338,24 @@
     </style>
 </head>
 <body>
-    <header class="header">
-        <div class="container header-content">
-            <a href="home.html" class="logo">Flashback</a>
-            <nav class="nav">
-                <a href="home.html">Home</a>
-                <a href="account.html">Account</a>
-                <a href="#" id="signout-btn">Sign Out</a>
-            </nav>
-        </div>
-    </header>
+  <div class="background-pattern"></div>
+  <div class="menu-overlay"></div>
+
+  <header class="header">
+    <div class="container header-content">
+      <a href="home.html" class="logo">Flashback</a>
+      <button class="menu-toggle" aria-label="Toggle menu">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+      <nav class="nav">
+        <a href="home.html">Home</a>
+        <a href="account.html">Account</a>
+        <a href="#" id="signout-btn">Sign Out</a>
+      </nav>
+    </div>
+  </header>
 
     <main class="dashboard">
         <div class="container">
@@ -664,5 +672,6 @@
     <script src="js/client.js"></script>
     <script src="js/ui.js"></script>
     <script src="js/subject.js"></script>
+    <script src="js/nav.js"></script>
 </body>
 </html>
