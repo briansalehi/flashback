@@ -318,21 +318,24 @@ function renderSections(sections) {
 
     sortedSections.forEach((section, index) => {
         const sectionItem = document.createElement('div');
-        sectionItem.className = 'section-item';
+        sectionItem.className = 'item-block';
         sectionItem.draggable = true;
         sectionItem.dataset.position = section.position;
 
         const stateName = stateNames[section.state] || 'draft';
 
-        let html = `
-            <div class="section-position">${index + 1}</div>
-            <div class="section-content">
-                <div class="section-name">${UI.escapeHtml(section.name)}</div>
-        `;
+        // State badge colors
+        const stateColors = {
+            'draft': { bg: 'rgba(158, 158, 158, 0.2)', color: '#9e9e9e' },
+            'reviewed': { bg: 'rgba(33, 150, 243, 0.2)', color: '#2196f3' },
+            'completed': { bg: 'rgba(76, 175, 80, 0.2)', color: '#4caf50' }
+        };
+        const stateColor = stateColors[stateName] || stateColors['draft'];
 
+        let linkHtml = '';
         if (section.link) {
-            html += `
-                <div class="section-link">
+            linkHtml = `
+                <div class="item-content">
                     <a href="${UI.escapeHtml(section.link)}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">
                         ${UI.escapeHtml(section.link)}
                     </a>
@@ -340,12 +343,18 @@ function renderSections(sections) {
             `;
         }
 
-        html += `
+        sectionItem.innerHTML = `
+            <div style="width: 100%;">
+                <div class="item-header">
+                    <div style="display: flex; align-items: center; gap: var(--space-md); flex: 1;">
+                        <span class="item-badge">${index + 1}</span>
+                        <h3 class="item-title" style="margin: 0;">${UI.escapeHtml(section.name)}</h3>
+                    </div>
+                    <span class="item-badge" style="background: ${stateColor.bg}; color: ${stateColor.color}; text-transform: capitalize;">${UI.escapeHtml(stateName)}</span>
+                </div>
+                ${linkHtml}
             </div>
-            <span class="section-state ${stateName}">${UI.escapeHtml(stateName)}</span>
         `;
-
-        sectionItem.innerHTML = html;
 
         // Click to navigate (but not when dragging or clicking links)
         let isDragging = false;
