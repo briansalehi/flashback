@@ -87,6 +87,9 @@ window.addEventListener('DOMContentLoaded', () => {
     // Add navigation buttons for practice mode
     if (practiceMode && !isNaN(cardIndex) && !isNaN(totalCards)) {
         addPracticeNavigation(practiceMode, cardIndex, totalCards);
+    } else {
+        // Add "Read" button for study mode (viewing from resource/section)
+        addStudyNavigation();
     }
 
     // Track when user navigates away from card
@@ -268,43 +271,109 @@ function displayContextBreadcrumb(practiceMode, subjectName, topicName, resource
     }
 }
 
-// Handle card exit - record progress
+// Handle card exit - no longer records progress automatically
 async function handleCardExit() {
-    if (!cardStartTime) return;
+    // Just reset the timer when exiting
+    cardStartTime = null;
+}
+
+// Manual progress recording triggered by "Read" button (study mode only)
+async function recordProgress(hideAfterSuccess = true) {
+    if (!cardStartTime) {
+        UI.showError('No reading session to record');
+        return;
+    }
 
     const cardId = parseInt(UI.getUrlParam('cardId'));
     const duration = Math.floor((Date.now() - cardStartTime) / 1000); // Convert to seconds
 
-    // Check if this is from a resource/section (study mode) or from topic practice
+    if (duration < 3) {
+        UI.showError('Please read the card for at least 3 seconds');
+        return;
+    }
+
+    // Check if this is from a resource/section (study mode)
     const resourceId = UI.getUrlParam('resourceId');
     const sectionPosition = UI.getUrlParam('sectionPosition');
-    const milestoneId = UI.getUrlParam('milestoneId');
-    const milestoneLevel = UI.getUrlParam('milestoneLevel');
+
+    UI.setButtonLoading('record-progress-btn', true);
+
+    try {
+        console.log(`studying card ${cardId} for ${duration} seconds`);
+        await client.study(cardId, duration);
+        UI.showSuccess('Study progress recorded!');
+
+        // Hide button after successful recording in study mode
+        if (hideAfterSuccess) {
+            const readBtn = document.getElementById('record-progress-btn');
+            if (readBtn) {
+                readBtn.style.display = 'none';
+            }
+        }
+
+        // Reset timer after successful recording
+        cardStartTime = Date.now();
+        UI.setButtonLoading('record-progress-btn', false);
+    } catch (err) {
+        console.error('Failed to record progress:', err);
+        UI.showError('Failed to record progress: ' + (err.message || 'Unknown error'));
+        UI.setButtonLoading('record-progress-btn', false);
+    }
+}
+
+// Record practice progress and navigate
+async function recordProgressAndNavigate(nextAction) {
+    if (!cardStartTime) {
+        // If no timer, just navigate
+        await nextAction();
+        return;
+    }
+
+    const cardId = parseInt(UI.getUrlParam('cardId'));
+    const duration = Math.floor((Date.now() - cardStartTime) / 1000);
 
     if (duration >= 3) {
+        const milestoneId = UI.getUrlParam('milestoneId');
+        const milestoneLevel = UI.getUrlParam('milestoneLevel');
+
         try {
-            // If viewing from resource/section, only call study()
-            if (resourceId && sectionPosition !== '') {
-                console.log(`studying card ${cardId} for ${duration} seconds`);
-                await client.study(cardId, duration);
-            }
-            // If practicing topics (has milestone info), call makeProgress()
-            else if (milestoneId && milestoneLevel !== undefined) {
+            if (milestoneId && milestoneLevel !== undefined) {
                 console.log(`making progress on card ${cardId} in ${duration} seconds with milestone ${milestoneId}, level ${milestoneLevel}`);
                 await client.makeProgress(cardId, duration, parseInt(milestoneId), parseInt(milestoneLevel));
-            }
-            // Fallback: if neither, just call study
-            else {
-                console.log(`studying card ${cardId} for ${duration} seconds (fallback)`);
-                await client.study(cardId, duration);
             }
         } catch (err) {
             console.error('Failed to record progress:', err);
         }
     }
 
-    // Reset timer to prevent duplicate calls
+    // Reset timer and navigate
     cardStartTime = null;
+    await nextAction();
+}
+
+// Add navigation for study mode (non-practice)
+function addStudyNavigation() {
+    const contentDiv = document.getElementById('card-content');
+    if (!contentDiv) return;
+
+    const navContainer = document.createElement('div');
+    navContainer.style.cssText = 'display: flex; justify-content: center; align-items: center; margin-top: 2rem; padding-top: 1rem; border-top: 2px solid var(--border-color);';
+
+    const buttonContainer = document.createElement('div');
+    buttonContainer.style.cssText = 'display: flex; gap: 1rem;';
+
+    // Add "Read" button for recording study progress
+    const readBtn = document.createElement('button');
+    readBtn.textContent = 'Read';
+    readBtn.id = 'record-progress-btn';
+    readBtn.className = 'btn btn-primary';
+    readBtn.addEventListener('click', async () => {
+        await recordProgress();
+    });
+    buttonContainer.appendChild(readBtn);
+
+    navContainer.appendChild(buttonContainer);
+    contentDiv.appendChild(navContainer);
 }
 
 // Add navigation for practice mode
@@ -322,27 +391,53 @@ function addPracticeNavigation(practiceMode, cardIndex, totalCards) {
     const buttonContainer = document.createElement('div');
     buttonContainer.style.cssText = 'display: flex; gap: 1rem;';
 
-    if (cardIndex + 1 < totalCards) {
+    // Check if there's a next card or topic
+    const practiceState = JSON.parse(sessionStorage.getItem('practiceState') || '{}');
+    const hasNextCard = cardIndex + 1 < totalCards;
+    const hasNextTopic = practiceState.topics &&
+                         practiceState.currentTopicIndex < practiceState.topics.length - 1;
+
+    if (hasNextCard) {
+        // Show "Next Card" button that records progress and navigates
         const nextBtn = document.createElement('button');
         nextBtn.textContent = 'Next Card';
         nextBtn.className = 'btn btn-primary';
         nextBtn.addEventListener('click', async () => {
-            await handleCardExit();
-            await loadNextCard(practiceMode, cardIndex, totalCards);
+            await recordProgressAndNavigate(async () => {
+                await loadNextCard(practiceMode, cardIndex, totalCards);
+            });
         });
         buttonContainer.appendChild(nextBtn);
+    } else if (hasNextTopic) {
+        // Show "Next Topic" button that records progress and navigates
+        const nextTopicBtn = document.createElement('button');
+        nextTopicBtn.textContent = 'Next Topic';
+        nextTopicBtn.className = 'btn btn-primary';
+        nextTopicBtn.addEventListener('click', async () => {
+            await recordProgressAndNavigate(async () => {
+                await loadNextTopic(practiceMode);
+            });
+        });
+        buttonContainer.appendChild(nextTopicBtn);
     } else {
-        // Check if there's a next topic
-        const practiceState = JSON.parse(sessionStorage.getItem('practiceState') || '{}');
-        const hasNextTopic = practiceState.topics &&
-                             practiceState.currentTopicIndex < practiceState.topics.length - 1;
-
+        // Last card of last topic - show "Finish Practice" button
         const finishBtn = document.createElement('button');
-        finishBtn.textContent = hasNextTopic ? 'Next Topic' : 'Finish Practice';
+        finishBtn.textContent = 'Finish Practice';
+        finishBtn.id = 'record-progress-btn';
         finishBtn.className = 'btn btn-accent';
         finishBtn.addEventListener('click', async () => {
-            await handleCardExit();
-            await loadNextTopic(practiceMode);
+            await recordProgressAndNavigate(async () => {
+                // Finish practice and go back to roadmap
+                const roadmapId = UI.getUrlParam('roadmapId') || practiceState.roadmapId || '';
+                const roadmapName = UI.getUrlParam('roadmapName') || '';
+                sessionStorage.removeItem('practiceState');
+
+                if (roadmapId && roadmapName) {
+                    window.location.href = `roadmap.html?id=${roadmapId}&name=${encodeURIComponent(roadmapName)}`;
+                } else {
+                    window.location.href = '/home.html';
+                }
+            });
         });
         buttonContainer.appendChild(finishBtn);
     }
