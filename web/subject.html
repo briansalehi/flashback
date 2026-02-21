@@ -418,20 +418,21 @@
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
                 <div class="tabs" style="margin-bottom: 0;">
                     <button class="tab active" data-tab="topics">Topics</button>
-                    <button class="tab" data-tab="assessments">Assessments</button>
+                    <!-- <button class="tab" data-tab="assessments">Assessments</button> -->
                     <button class="tab" data-tab="resources">Resources</button>
                 </div>
                 <div style="display: flex; gap: 0.5rem;">
-                    <button id="start-assessment-btn" class="btn btn-secondary" style="display: none;">
-                        Practice Assessments
-                    </button>
                     <button id="start-practice-btn" class="btn btn-primary">
                         Start Practice
                     </button>
                 </div>
             </div>
 
-            <div id="error-message" style="display: none;"></div>
+          <button id="add-topic-btn" class="btn btn-primary btn-full" style="margin-bottom: 2rem; margin-top: 1.5rem;">
+            + Add Topic
+          </button>
+
+          <div id="error-message" style="display: none;"></div>
 
             <!-- topics tab -->
             <div id="topics-content" class="tab-content active">
@@ -448,10 +449,6 @@
                     <h3 style="color: var(--text-muted);">No topics yet</h3>
                     <p class="text-muted">Add your first topic to this subject!</p>
                 </div>
-
-                <button id="add-topic-btn" class="btn btn-accent mb-lg" style="margin-top: 2rem;">
-                    + Add Topic
-                </button>
 
                 <div id="add-topic-form" class="card" style="display: none; max-width: 700px;">
                     <div class="card-header">
