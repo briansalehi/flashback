@@ -537,12 +537,7 @@ function renderBlocks(blocks) {
 
         let metadataHtml = '';
         if (block.metadata) {
-            metadataHtml = `<span class="item-badge" style="font-size: var(--font-size-xs);">${UI.escapeHtml(block.metadata)}</span>`;
-        }
-
-        let extensionHtml = '';
-        if (block.extension) {
-            extensionHtml = `<span class="item-badge" style="background: rgba(102, 126, 234, 0.2); color: var(--color-primary-start); font-size: var(--font-size-xs);">${UI.escapeHtml(block.extension)}</span>`;
+            metadataHtml = `<span class="block-metadata-badge">${UI.escapeHtml(block.metadata)}</span>`;
         }
 
         let contentHtml = '';
@@ -551,7 +546,7 @@ function renderBlocks(blocks) {
             const language = mapExtensionToLanguage(block.extension);
             contentHtml = `<pre class="content-block-text" style="background: rgba(0, 0, 0, 0.3); padding: var(--space-md); border-radius: var(--radius-md); overflow-x: auto;"><code class="language-${language}">${UI.escapeHtml(block.content)}</code></pre>`;
         } else if (block.type === 2) { // image
-            contentHtml = `<img src="${UI.escapeHtml(block.content)}" alt="Block image" style="max-width: 100%; height: auto; border-radius: var(--radius-md); margin-left: var(--space-lg);" />`;
+            contentHtml = `<img src="${UI.escapeHtml(block.content)}" alt="Block image" style="max-width: 100%; height: auto; border-radius: var(--radius-md);" />`;
         } else { // text (type 0 or default)
             contentHtml = `<div class="content-block-text">${UI.escapeHtml(block.content)}</div>`;
         }
@@ -562,15 +557,22 @@ function renderBlocks(blocks) {
         displayDiv.id = `block-display-${index}`;
 
         displayDiv.innerHTML = `
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-md); padding-left: var(--space-lg);">
-                <div style="display: flex; gap: var(--space-sm); align-items: center;">
-                    ${metadataHtml}
-                    ${extensionHtml}
-                </div>
-                <div class="content-block-actions" style="margin: 0; padding: 0; border: none;">
-                    <button class="btn btn-sm btn-secondary" onclick="editBlock(${index})">Edit</button>
-                    <button class="btn btn-sm item-action-btn remove-block-btn" data-position="${block.position}" data-index="${index}" style="color: #f44336; border-color: rgba(244, 67, 54, 0.3);">Remove</button>
-                </div>
+            ${metadataHtml}
+            <div class="block-actions-overlay">
+                <button class="block-action-btn block-edit-btn" onclick="editBlock(${index})">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                    </svg>
+                    Edit
+                </button>
+                <button class="block-action-btn block-remove-btn remove-block-btn" data-position="${block.position}" data-index="${index}">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="3 6 5 6 21 6"></polyline>
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                    </svg>
+                    Remove
+                </button>
             </div>
             ${contentHtml}
         `;
@@ -783,6 +785,20 @@ function renderBlocks(blocks) {
             touchClone = null;
             touchTargetElement = null;
             isDragEnabled = false;
+        });
+
+        // Mobile tap to show/hide actions
+        let tapTimer = null;
+        blockItem.addEventListener('click', (e) => {
+            // Don't toggle actions if clicking a button
+            if (e.target.closest('.block-action-btn')) {
+                return;
+            }
+
+            // Toggle actions visibility on mobile
+            if (window.innerWidth <= 768) {
+                blockItem.classList.toggle('show-actions');
+            }
         });
 
         // Remove button handler

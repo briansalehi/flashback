@@ -829,16 +829,94 @@ a:hover {
     line-height: 1.8;
     white-space: pre-wrap;
     word-wrap: break-word;
-    padding-left: var(--space-lg);
 }
 
-.content-block-actions {
+/* Block metadata badge */
+.block-metadata-badge {
+    display: inline-block;
+    padding: var(--space-xs) var(--space-md);
+    background: rgba(102, 126, 234, 0.15);
+    color: var(--color-primary-start);
+    border-radius: var(--radius-md);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-medium);
+    margin-bottom: var(--space-md);
+}
+
+/* Block actions overlay */
+.block-actions-overlay {
+    position: absolute;
+    top: var(--space-md);
+    right: var(--space-md);
     display: flex;
-    gap: var(--space-sm);
-    margin-top: var(--space-lg);
-    padding-top: var(--space-md);
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
-    padding-left: var(--space-lg);
+    gap: var(--space-xs);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--transition-fast);
+    z-index: 10;
+}
+
+/* Show actions on hover (desktop) */
+.content-block:hover .block-actions-overlay {
+    opacity: 1;
+    pointer-events: all;
+}
+
+/* Show actions when tapped (mobile) */
+.content-block.show-actions .block-actions-overlay {
+    opacity: 1;
+    pointer-events: all;
+}
+
+/* Modern action buttons */
+.block-action-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-xs);
+    padding: var(--space-sm) var(--space-md);
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: var(--radius-md);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-text-primary);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.block-action-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.block-action-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+}
+
+.block-action-btn svg {
+    width: 14px;
+    height: 14px;
+}
+
+.block-edit-btn {
+    color: var(--color-primary-start);
+}
+
+.block-edit-btn:hover {
+    background: rgba(102, 126, 234, 0.1);
+    border-color: var(--color-primary-start);
+}
+
+.block-remove-btn {
+    color: #dc3545;
+}
+
+.block-remove-btn:hover {
+    background: rgba(220, 53, 69, 0.1);
+    border-color: #dc3545;
 }
 
 @media (min-width: 768px) {
