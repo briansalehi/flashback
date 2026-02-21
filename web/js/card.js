@@ -458,6 +458,68 @@ async function loadBlocks() {
     }
 }
 
+// Map file extension to Prism language identifier
+function mapExtensionToLanguage(extension) {
+    if (!extension) return 'plaintext';
+
+    const ext = extension.toLowerCase();
+    const mapping = {
+        'js': 'javascript',
+        'ts': 'typescript',
+        'jsx': 'jsx',
+        'tsx': 'tsx',
+        'py': 'python',
+        'rb': 'ruby',
+        'java': 'java',
+        'c': 'c',
+        'cpp': 'cpp',
+        'cc': 'cpp',
+        'cxx': 'cpp',
+        'cs': 'csharp',
+        'php': 'php',
+        'swift': 'swift',
+        'kt': 'kotlin',
+        'go': 'go',
+        'rs': 'rust',
+        'scala': 'scala',
+        'sh': 'bash',
+        'bash': 'bash',
+        'zsh': 'bash',
+        'ps1': 'powershell',
+        'sql': 'sql',
+        'html': 'html',
+        'htm': 'html',
+        'xml': 'xml',
+        'css': 'css',
+        'scss': 'scss',
+        'sass': 'sass',
+        'less': 'less',
+        'json': 'json',
+        'yaml': 'yaml',
+        'yml': 'yaml',
+        'md': 'markdown',
+        'markdown': 'markdown',
+        'r': 'r',
+        'lua': 'lua',
+        'perl': 'perl',
+        'dart': 'dart',
+        'elixir': 'elixir',
+        'clj': 'clojure',
+        'clojure': 'clojure',
+        'lisp': 'lisp',
+        'vim': 'vim',
+        'dockerfile': 'docker',
+        'makefile': 'makefile',
+        'graphql': 'graphql',
+        'proto': 'protobuf',
+        'toml': 'toml',
+        'ini': 'ini',
+        'tex': 'latex'
+    };
+
+    return mapping[ext] || ext;
+}
+
 function renderBlocks(blocks) {
     const container = document.getElementById('blocks-list');
     container.innerHTML = '';
@@ -485,7 +547,9 @@ function renderBlocks(blocks) {
 
         let contentHtml = '';
         if (block.type === 1) { // code
-            contentHtml = `<pre class="content-block-text" style="background: rgba(0, 0, 0, 0.3); padding: var(--space-md); border-radius: var(--radius-md); overflow-x: auto;"><code>${UI.escapeHtml(block.content)}</code></pre>`;
+            // Map extension to Prism language
+            const language = mapExtensionToLanguage(block.extension);
+            contentHtml = `<pre class="content-block-text" style="background: rgba(0, 0, 0, 0.3); padding: var(--space-md); border-radius: var(--radius-md); overflow-x: auto;"><code class="language-${language}">${UI.escapeHtml(block.content)}</code></pre>`;
         } else if (block.type === 2) { // image
             contentHtml = `<img src="${UI.escapeHtml(block.content)}" alt="Block image" style="max-width: 100%; height: auto; border-radius: var(--radius-md); margin-left: var(--space-lg);" />`;
         } else { // text (type 0 or default)
@@ -630,6 +694,11 @@ function renderBlocks(blocks) {
             }
         }, 0);
     });
+
+    // Apply Prism syntax highlighting to all code blocks
+    if (typeof Prism !== 'undefined') {
+        Prism.highlightAll();
+    }
 }
 
 // Global variable to store current blocks

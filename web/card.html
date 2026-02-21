@@ -14,7 +14,39 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 
+    <!-- Prism.js for syntax highlighting -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+
     <style>
+        /* Override Prism theme to match our dark theme */
+        code[class*="language-"],
+        pre[class*="language-"] {
+            color: #ccc;
+            background: none;
+            font-family: 'JetBrains Mono', Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;
+            font-size: var(--font-size-sm);
+            text-align: left;
+            white-space: pre;
+            word-spacing: normal;
+            word-break: normal;
+            word-wrap: normal;
+            line-height: 1.6;
+            tab-size: 4;
+        }
+
+        pre[class*="language-"] {
+            padding: 0;
+            margin: 0;
+            overflow: auto;
+        }
+
+        :not(pre) > code[class*="language-"] {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 0.1em 0.3em;
+            border-radius: 0.3em;
+            white-space: normal;
+        }
+
         /* Card page specific styles only */
         body {
             padding-top: 5rem;
@@ -317,6 +349,11 @@
     <script src="proto/flashback.js"></script>
     <script src="js/client.js"></script>
     <script src="js/ui.js"></script>
+
+    <!-- Prism.js core and language support -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+
     <script src="js/card.js"></script>
 </body>
 </html>
