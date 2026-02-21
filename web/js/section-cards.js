@@ -335,19 +335,34 @@ function renderCards(cards) {
 
     cards.forEach(card => {
         const cardItem = document.createElement('div');
-        cardItem.className = 'card-item';
+        cardItem.className = 'item-block';
+        cardItem.style.minHeight = 'auto';
+        cardItem.style.padding = 'var(--space-md) var(--space-lg)';
 
         const stateName = stateNames[card.state] || 'draft';
 
+        // State badge colors
+        const stateColors = {
+            'draft': { bg: 'rgba(158, 158, 158, 0.2)', color: '#9e9e9e' },
+            'reviewed': { bg: 'rgba(33, 150, 243, 0.2)', color: '#2196f3' },
+            'completed': { bg: 'rgba(76, 175, 80, 0.2)', color: '#4caf50' },
+            'approved': { bg: 'rgba(255, 152, 0, 0.2)', color: '#ff9800' },
+            'released': { bg: 'rgba(3, 169, 244, 0.2)', color: '#03a9f4' },
+            'rejected': { bg: 'rgba(244, 67, 54, 0.2)', color: '#f44336' }
+        };
+        const stateColor = stateColors[stateName] || stateColors['draft'];
+
         cardItem.innerHTML = `
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-                <div style="flex: 1; cursor: pointer;" data-card-id="${card.id}" data-card-headline="${UI.escapeHtml(card.headline)}" data-card-state="${card.state}" class="card-link">
-                    <div class="card-headline">${UI.escapeHtml(card.headline)}</div>
-                    <span class="card-state ${stateName}">${UI.escapeHtml(stateName)}</span>
+            <div class="item-header" style="margin-bottom: 0;">
+                <div style="display: flex; align-items: center; gap: var(--space-sm); flex: 1; cursor: pointer;" data-card-id="${card.id}" data-card-headline="${UI.escapeHtml(card.headline)}" data-card-state="${card.state}" class="card-link">
+                    <h3 class="item-title" style="margin: 0; font-size: var(--font-size-base);">${UI.escapeHtml(card.headline)}</h3>
                 </div>
-                <button class="btn btn-secondary" style="margin-left: 1rem; padding: 0.5rem 1rem;" onclick="handleMoveCard(${card.id}, '${UI.escapeHtml(card.headline).replace(/'/g, "\\'")}')">
-                    Move
-                </button>
+                <div style="display: flex; gap: var(--space-xs); align-items: center;">
+                    <span class="item-badge" style="background: ${stateColor.bg}; color: ${stateColor.color}; text-transform: capitalize; font-size: var(--font-size-xs);">${UI.escapeHtml(stateName)}</span>
+                    <button class="btn btn-sm btn-secondary" onclick="handleMoveCard(${card.id}, '${UI.escapeHtml(card.headline).replace(/'/g, "\\'")}')">
+                        Move
+                    </button>
+                </div>
             </div>
         `;
 
