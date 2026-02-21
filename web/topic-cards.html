@@ -1,277 +1,283 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Topic Cards - Flashback</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Topic Cards - Flashback</title>
 
-    <!-- Design System CSS - MUST be loaded first -->
-    <link rel="stylesheet" href="css/flashback-design.css">
-    <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <!-- Design System CSS - MUST be loaded first -->
+  <link rel="stylesheet" href="css/flashback-design.css">
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
 
-    <!-- Google Fonts - Inter (matching design system) -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <!-- Google Fonts - Inter (matching design system) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet">
 
-    <style>
-        /* Topic cards page specific styles only */
-        body {
-            padding-top: 5rem;
-            padding-bottom: var(--space-xl);
-        }
+  <style>
+      /* Topic cards page specific styles only */
+      body {
+          padding-top: 5rem;
+          padding-bottom: var(--space-xl);
+      }
 
-        /* Page-specific component styles */
-        .card-item {
-            padding: 1rem;
-            border: 1px solid var(--border-color);
-            border-radius: 4px;
-            margin-bottom: 1rem;
-            transition: all 0.2s;
-            background-color: var(--bg-primary);
-        }
+      /* Page-specific component styles */
+      .card-item {
+          padding: 1rem;
+          border: 1px solid var(--border-color);
+          border-radius: 4px;
+          margin-bottom: 1rem;
+          transition: all 0.2s;
+          background-color: var(--bg-primary);
+      }
 
-        .card-item:hover {
-            border-color: var(--accent-color);
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-        }
+      .card-item:hover {
+          border-color: var(--accent-color);
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      }
 
-        .card-headline {
-            font-weight: 600;
-            color: var(--text-primary);
-            font-size: 1.1rem;
-            margin-bottom: 0.5rem;
-        }
+      .card-headline {
+          font-weight: 600;
+          color: var(--text-primary);
+          font-size: 1.1rem;
+          margin-bottom: 0.5rem;
+      }
 
-        .card-state {
-            display: inline-block;
-            padding: 0.25rem 0.75rem;
-            background-color: var(--accent-light);
-            color: var(--accent-color);
-            border-radius: 12px;
-            font-size: 0.875rem;
-            font-weight: 500;
-            text-transform: capitalize;
-        }
+      .card-state {
+          display: inline-block;
+          padding: 0.25rem 0.75rem;
+          background-color: var(--accent-light);
+          color: var(--accent-color);
+          border-radius: 12px;
+          font-size: 0.875rem;
+          font-weight: 500;
+          text-transform: capitalize;
+      }
 
-        .card-state.draft {
-            background-color: #f0f0f0;
-            color: #666;
-        }
+      .card-state.draft {
+          background-color: #f0f0f0;
+          color: #666;
+      }
 
-        .card-state.reviewed {
-            background-color: #e3f2fd;
-            color: #1976d2;
-        }
+      .card-state.reviewed {
+          background-color: #e3f2fd;
+          color: #1976d2;
+      }
 
-        .card-state.completed {
-            background-color: #e8f5e9;
-            color: #388e3c;
-        }
+      .card-state.completed {
+          background-color: #e8f5e9;
+          color: #388e3c;
+      }
 
-        .topic-list-item {
-            padding: 0.75rem;
-            border: 1px solid var(--border-color);
-            border-radius: 4px;
-            margin-bottom: 0.5rem;
-            cursor: pointer;
-            transition: all 0.2s;
-            background-color: var(--bg-primary);
-        }
+      .topic-list-item {
+          padding: 0.75rem;
+          border: 1px solid var(--border-color);
+          border-radius: 4px;
+          margin-bottom: 0.5rem;
+          cursor: pointer;
+          transition: all 0.2s;
+          background-color: var(--bg-primary);
+      }
 
-        .topic-list-item:hover {
-            border-color: var(--accent-color);
-            background-color: var(--accent-light);
-        }
+      .topic-list-item:hover {
+          border-color: var(--accent-color);
+          background-color: var(--accent-light);
+      }
 
-        .topic-list-item:active {
-            transform: scale(0.98);
-        }
-    </style>
+      .topic-list-item:active {
+          transform: scale(0.98);
+      }
+  </style>
 </head>
 <body>
-  <div class="background-pattern"></div>
-  <div class="menu-overlay"></div>
+<div class="background-pattern"></div>
+<div class="menu-overlay"></div>
 
-  <header class="header">
-    <div class="container header-content">
-      <a href="home.html" class="logo">Flashback</a>
-      <button class="menu-toggle" aria-label="Toggle menu">
-        <span></span>
-        <span></span>
-        <span></span>
-      </button>
-      <nav class="nav">
-        <a href="home.html">Home</a>
-        <a href="account.html">Account</a>
-        <a href="#" id="signout-btn">Sign Out</a>
-      </nav>
-    </div>
-  </header>
+<header class="header">
+  <div class="container header-content">
+    <a href="home.html" class="logo">Flashback</a>
+    <button class="menu-toggle" aria-label="Toggle menu">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+    <nav class="nav">
+      <a href="home.html">Home</a>
+      <a href="account.html">Account</a>
+      <a href="#" id="signout-btn">Sign Out</a>
+    </nav>
+  </div>
+</header>
 
-    <main class="dashboard">
-        <div class="container">
-            <div class="dashboard-header">
-                <h2 id="breadcrumb" style="color: var(--text-primary); font-size: 1.5rem; font-weight: 600; margin: 0; margin-bottom: 1rem;">
-                    <!-- Breadcrumb will be inserted here -->
-                </h2>
-                <div style="display: flex; justify-content: space-between; align-items: center; gap: 1rem;">
-                    <div style="flex: 1;">
-                        <h1 id="topic-name" style="margin-bottom: 0.25rem;">Loading...</h1>
-                        <span id="topic-level-badge" style="display: inline-block; padding: 0.25rem 0.75rem; background-color: var(--accent-light); color: var(--accent-color); border-radius: 12px; font-size: 0.875rem; font-weight: 500;"></span>
-                    </div>
-                    <div style="display: flex; gap: 0.5rem;">
-                        <button id="edit-topic-btn" class="btn btn-secondary" style="padding: 0.5rem 1rem;">
-                            Edit
-                        </button>
-                        <button id="remove-topic-btn" class="btn btn-danger" style="padding: 0.5rem 1rem;">
-                            Remove
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <div id="error-message" style="display: none;"></div>
-
-            <!-- Edit Topic Modal -->
-            <div id="edit-topic-modal" class="card" style="display: none; max-width: 500px; margin-bottom: 2rem;">
-                <div class="card-header">
-                    <h3 class="card-title">Edit Topic</h3>
-                </div>
-                <form id="edit-topic-form">
-                    <div class="form-group">
-                        <label class="form-label" for="edit-topic-name">Topic Name</label>
-                        <input
-                            type="text"
-                            id="edit-topic-name"
-                            class="form-input"
-                            placeholder="Enter topic name"
-                            required
-                        >
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label" for="edit-topic-level">Level</label>
-                        <select id="edit-topic-level" class="form-input" required>
-                            <option value="0">Surface</option>
-                            <option value="1">Depth</option>
-                            <option value="2">Origin</option>
-                        </select>
-                    </div>
-                    <div style="display: flex; gap: 1rem; margin-top: 2rem;">
-                        <button type="submit" id="save-edit-topic-btn" class="btn btn-primary">
-                            Save Changes
-                        </button>
-                        <button type="button" id="cancel-edit-topic-btn" class="btn btn-secondary">
-                            Cancel
-                        </button>
-                    </div>
-                </form>
-            </div>
-
-            <!-- Remove Topic Modal -->
-            <div id="remove-topic-modal" class="card" style="display: none; max-width: 500px; margin-bottom: 2rem;">
-                <div class="card-header">
-                    <h3 class="card-title">Remove Topic</h3>
-                </div>
-                <div style="padding: 1rem 0;">
-                    <p style="color: var(--text-muted); margin-bottom: 1.5rem;">Are you sure you want to remove this topic? This action cannot be undone. All cards in this topic will also be removed.</p>
-                    <div style="display: flex; gap: 1rem; justify-content: flex-end;">
-                        <button id="cancel-remove-topic-btn" class="btn btn-secondary">Cancel</button>
-                        <button id="confirm-remove-topic-btn" class="btn btn-danger">Remove Topic</button>
-                    </div>
-                </div>
-            </div>
-
-            <div id="loading" style="display: none; text-align: center; padding: 3rem;">
-                <div class="loading" style="width: 40px; height: 40px; border-width: 4px;"></div>
-                <p class="text-muted mt-md">Loading cards...</p>
-            </div>
-
-            <div id="cards-list">
-                <!-- cards will be inserted here -->
-            </div>
-
-            <div id="empty-state" style="display: none; text-align: center; padding: 4rem 2rem;">
-                <h3 style="color: var(--text-muted);">No cards yet</h3>
-                <p class="text-muted">Add your first card to this topic!</p>
-            </div>
-
-            <button id="add-card-btn" class="btn btn-primary btn-full" style="margin-top: 2rem;">
-                + Add Card
-            </button>
-
-            <div id="add-card-form" class="card" style="display: none; max-width: 700px;">
-                <div class="card-header">
-                    <h3 class="card-title">Add Card</h3>
-                </div>
-
-                <form id="card-form">
-                    <div class="form-group">
-                        <label class="form-label" for="card-headline">Headline (in question form)</label>
-                        <input
-                            type="text"
-                            id="card-headline"
-                            class="form-input"
-                            placeholder="e.g., What is gradient descent?"
-                            required
-                        >
-                    </div>
-
-                    <div style="display: flex; gap: 1rem; margin-top: 2rem;">
-                        <button type="submit" id="save-card-btn" class="btn btn-primary">
-                            Save Card
-                        </button>
-                        <button type="button" id="cancel-card-btn" class="btn btn-secondary">
-                            Cancel
-                        </button>
-                    </div>
-                </form>
-            </div>
-
-            <!-- Move Card Modal -->
-            <div id="move-card-modal" class="card" style="display: none; max-width: 600px; margin-bottom: 2rem;">
-                <div class="card-header">
-                    <h3 class="card-title">Move Card to Topic</h3>
-                </div>
-                <div style="padding: 1rem 0;">
-                    <p style="color: var(--text-muted); margin-bottom: 1rem;">
-                        Moving: <strong id="moving-card-headline"></strong>
-                    </p>
-                    <div class="form-group">
-                        <label class="form-label" for="topic-search-input">Search for target topic</label>
-                        <input
-                            type="text"
-                            id="topic-search-input"
-                            class="form-input"
-                            placeholder="Type to search topics..."
-                            autocomplete="off"
-                        >
-                    </div>
-                    <div id="topic-search-loading" style="display: none; text-align: center; padding: 1rem;">
-                        <div class="loading" style="width: 24px; height: 24px; border-width: 3px; margin: 0 auto;"></div>
-                        <p class="text-muted" style="margin-top: 0.5rem; font-size: 0.875rem;">Searching...</p>
-                    </div>
-                    <div id="topic-search-results" style="margin-top: 1rem; display: none;">
-                        <h4 style="font-size: 0.9rem; font-weight: 600; margin-bottom: 0.5rem;">Select target topic:</h4>
-                        <div id="topics-list" style="max-height: 300px; overflow-y: auto;">
-                            <!-- topics will be inserted here -->
-                        </div>
-                    </div>
-                    <div id="topic-search-empty" style="display: none; text-align: center; padding: 1rem; color: var(--text-muted); font-size: 0.875rem;">
-                        No topics found
-                    </div>
-                    <div style="display: flex; gap: 1rem; justify-content: flex-end; margin-top: 1.5rem;">
-                        <button id="cancel-move-card-btn" class="btn btn-secondary">Cancel</button>
-                    </div>
-                </div>
-            </div>
+<main class="dashboard">
+  <div class="container">
+    <div class="dashboard-header">
+      <h2 id="breadcrumb"
+          style="color: var(--text-primary); font-size: 1.5rem; font-weight: 600; margin: 0; margin-bottom: 1rem;">
+        <!-- Breadcrumb will be inserted here -->
+      </h2>
+      <div style="display: flex; justify-content: space-between; align-items: center; gap: 1rem;">
+        <div style="flex: 1;">
+          <h1 id="topic-name" style="margin-bottom: 0.25rem;">Loading...</h1>
+          <span id="topic-level-badge"
+                style="display: inline-block; padding: 0.25rem 0.75rem; background-color: var(--accent-light); color: var(--accent-color); border-radius: 12px; font-size: 0.875rem; font-weight: 500;"></span>
         </div>
-    </main>
+        <div style="display: flex; gap: 0.5rem;">
+          <button id="edit-topic-btn" class="btn btn-secondary" style="padding: 0.5rem 1rem;">
+            Edit
+          </button>
+          <button id="remove-topic-btn" class="btn btn-danger" style="padding: 0.5rem 1rem;">
+            Remove
+          </button>
+        </div>
+      </div>
+    </div>
 
-    <script src="proto/flashback.js"></script>
-    <script src="js/client.js"></script>
-    <script src="js/ui.js"></script>
-    <script src="js/topic-cards.js"></script>
-    <script src="js/nav.js"></script>
+    <div id="error-message" style="display: none;"></div>
+
+    <!-- Edit Topic Modal -->
+    <div id="edit-topic-modal" class="card" style="display: none; max-width: 500px; margin-bottom: 2rem;">
+      <div class="card-header">
+        <h3 class="card-title">Edit Topic</h3>
+      </div>
+      <form id="edit-topic-form">
+        <div class="form-group">
+          <label class="form-label" for="edit-topic-name">Topic Name</label>
+          <input
+              type="text"
+              id="edit-topic-name"
+              class="form-input"
+              placeholder="Enter topic name"
+              required
+          >
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="edit-topic-level">Level</label>
+          <select id="edit-topic-level" class="form-input" required>
+            <option value="0">Surface</option>
+            <option value="1">Depth</option>
+            <option value="2">Origin</option>
+          </select>
+        </div>
+        <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+          <button type="submit" id="save-edit-topic-btn" class="btn btn-primary">
+            Save Changes
+          </button>
+          <button type="button" id="cancel-edit-topic-btn" class="btn btn-secondary">
+            Cancel
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Remove Topic Modal -->
+    <div id="remove-topic-modal" class="card" style="display: none; max-width: 500px; margin-bottom: 2rem;">
+      <div class="card-header">
+        <h3 class="card-title">Remove Topic</h3>
+      </div>
+      <div style="padding: 1rem 0;">
+        <p style="color: var(--text-muted); margin-bottom: 1.5rem;">Are you sure you want to remove this topic? This
+          action cannot be undone. All cards in this topic will also be removed.</p>
+        <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+          <button id="cancel-remove-topic-btn" class="btn btn-secondary">Cancel</button>
+          <button id="confirm-remove-topic-btn" class="btn btn-danger">Remove Topic</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="loading" style="display: none; text-align: center; padding: 3rem;">
+      <div class="loading" style="width: 40px; height: 40px; border-width: 4px;"></div>
+      <p class="text-muted mt-md">Loading cards...</p>
+    </div>
+
+    <div id="cards-list">
+      <!-- cards will be inserted here -->
+    </div>
+
+    <div id="empty-state" style="display: none; text-align: center; padding: 4rem 2rem;">
+      <h3 style="color: var(--text-muted);">No cards yet</h3>
+      <p class="text-muted">Add your first card to this topic!</p>
+    </div>
+
+    <button id="add-card-btn" class="btn btn-primary btn-full" style="margin-top: 2rem;">
+      + Add Card
+    </button>
+
+    <div id="add-card-form" class="card" style="display: none; max-width: 700px;">
+      <div class="card-header">
+        <h3 class="card-title">Add Card</h3>
+      </div>
+
+      <form id="card-form">
+        <div class="form-group">
+          <label class="form-label" for="card-headline">Headline (in question form)</label>
+          <input
+              type="text"
+              id="card-headline"
+              class="form-input"
+              placeholder="e.g., What is gradient descent?"
+              required
+          >
+        </div>
+
+        <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+          <button type="submit" id="save-card-btn" class="btn btn-primary">
+            Save Card
+          </button>
+          <button type="button" id="cancel-card-btn" class="btn btn-secondary">
+            Cancel
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Move Card Modal -->
+    <div id="move-card-modal" class="card" style="display: none; max-width: 600px; margin-bottom: 2rem;">
+      <div class="card-header">
+        <h3 class="card-title">Move Card to Topic</h3>
+      </div>
+      <div style="padding: 1rem 0;">
+        <p style="color: var(--text-muted); margin-bottom: 1rem;">
+          Moving: <strong id="moving-card-headline"></strong>
+        </p>
+        <div class="form-group">
+          <label class="form-label" for="topic-search-input">Search for target topic</label>
+          <input
+              type="text"
+              id="topic-search-input"
+              class="form-input"
+              placeholder="Type to search topics..."
+              autocomplete="off"
+          >
+        </div>
+        <div id="topic-search-loading" style="display: none; text-align: center; padding: 1rem;">
+          <div class="loading" style="width: 24px; height: 24px; border-width: 3px; margin: 0 auto;"></div>
+          <p class="text-muted" style="margin-top: 0.5rem; font-size: 0.875rem;">Searching...</p>
+        </div>
+        <div id="topic-search-results" style="margin-top: 1rem; display: none;">
+          <h4 style="font-size: 0.9rem; font-weight: 600; margin-bottom: 0.5rem;">Select target topic:</h4>
+          <div id="topics-list" style="max-height: 300px; overflow-y: auto;">
+            <!-- topics will be inserted here -->
+          </div>
+        </div>
+        <div id="topic-search-empty"
+             style="display: none; text-align: center; padding: 1rem; color: var(--text-muted); font-size: 0.875rem;">
+          No topics found
+        </div>
+        <div style="display: flex; gap: 1rem; justify-content: flex-end; margin-top: 1.5rem;">
+          <button id="cancel-move-card-btn" class="btn btn-secondary">Cancel</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script src="proto/flashback.js"></script>
+<script src="js/client.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/topic-cards.js"></script>
+<script src="js/nav.js"></script>
 </body>
 </html>

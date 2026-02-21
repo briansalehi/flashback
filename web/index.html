@@ -1,391 +1,391 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta
-        name="google-site-verification"
-        content="7zG1tHYhsnKfE5-n0Hlo8ggombXCVy5Xj0zITYX_Eko"
-    />
-    <title>
-        FLASHBACK - Transform Complex Technical Subjects Into Muscle Memory
-    </title>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta
+      name="google-site-verification"
+      content="7zG1tHYhsnKfE5-n0Hlo8ggombXCVy5Xj0zITYX_Eko"
+  />
+  <title>
+    FLASHBACK - Transform Complex Technical Subjects Into Muscle Memory
+  </title>
 
-    <!-- Design System CSS - MUST be loaded first -->
-    <link rel="stylesheet" href="css/flashback-design.css">
-    <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <!-- Design System CSS - MUST be loaded first -->
+  <link rel="stylesheet" href="css/flashback-design.css">
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
 
-    <!-- Google Fonts - Inter (matching backup.html) -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
-        rel="stylesheet"
-    />
+  <!-- Google Fonts - Inter (matching backup.html) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+  />
 
-    <style>
-        /* Landing page specific styles only */
-        body {
-            padding-top: 5rem;
-            padding-bottom: var(--space-xl);
-        }
+  <style>
+      /* Landing page specific styles only */
+      body {
+          padding-top: 5rem;
+          padding-bottom: var(--space-xl);
+      }
 
-        .container {
-            text-align: center;
-            padding-top: var(--space-2xl);
-        }
+      .container {
+          text-align: center;
+          padding-top: var(--space-2xl);
+      }
 
-        .logo-container {
-            margin-bottom: var(--space-2xl);
-            animation: fadeInUp 1s ease-out;
-        }
+      .logo-container {
+          margin-bottom: var(--space-2xl);
+          animation: fadeInUp 1s ease-out;
+      }
 
-        .logo-container img {
-            width: 140px;
-            height: auto;
-            filter: drop-shadow(0 10px 30px rgba(255, 255, 255, 0.1));
-            transition: transform var(--transition-base);
-        }
+      .logo-container img {
+          width: 140px;
+          height: auto;
+          filter: drop-shadow(0 10px 30px rgba(255, 255, 255, 0.1));
+          transition: transform var(--transition-base);
+      }
 
-        .logo-container img:hover {
-            transform: scale(1.05);
-        }
+      .logo-container img:hover {
+          transform: scale(1.05);
+      }
 
-        .tagline {
-            font-size: var(--font-size-3xl); /* Mobile: 2rem */
-            font-weight: var(--font-weight-black);
-            margin-bottom: var(--space-lg);
-            background: var(--gradient-primary);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            letter-spacing: -0.05em;
-            line-height: 1.1;
-        }
+      .tagline {
+          font-size: var(--font-size-3xl); /* Mobile: 2rem */
+          font-weight: var(--font-weight-black);
+          margin-bottom: var(--space-lg);
+          background: var(--gradient-primary);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+          letter-spacing: -0.05em;
+          line-height: 1.1;
+      }
 
-        @media (min-width: 768px) {
-            .tagline {
-                font-size: var(--font-size-5xl); /* Desktop: 3.5rem */
-            }
-        }
+      @media (min-width: 768px) {
+          .tagline {
+              font-size: var(--font-size-5xl); /* Desktop: 3.5rem */
+          }
+      }
 
-        .coming-soon-section {
-            margin-top: var(--space-xl);
-            padding-top: var(--space-2xl);
-        }
+      .coming-soon-section {
+          margin-top: var(--space-xl);
+          padding-top: var(--space-2xl);
+      }
 
-        .coming-soon-title {
-            font-size: var(--font-size-base);
-            font-weight: var(--font-weight-medium);
-            color: var(--color-text-muted);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            cursor: pointer;
-        }
+      .coming-soon-title {
+          font-size: var(--font-size-base);
+          font-weight: var(--font-weight-medium);
+          color: var(--color-text-muted);
+          text-transform: uppercase;
+          letter-spacing: 1px;
+          cursor: pointer;
+      }
 
-        .divider {
-            margin: var(--space-lg) 0;
-            width: 100%;
-            height: 2px;
-            background-color: rgba(255, 255, 255, 0.1);
-        }
+      .divider {
+          margin: var(--space-lg) 0;
+          width: 100%;
+          height: 2px;
+          background-color: rgba(255, 255, 255, 0.1);
+      }
 
-        .download-section {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: var(--space-sm);
-            justify-items: center;
-            margin: 0 auto;
-            width: 100%;
-            max-width: 600px;
-        }
+      .download-section {
+          display: grid;
+          grid-template-columns: 1fr;
+          gap: var(--space-sm);
+          justify-items: center;
+          margin: 0 auto;
+          width: 100%;
+          max-width: 600px;
+      }
 
-        .download-badge {
-            width: 180px;
-            height: auto;
-            transition: var(--transition-base);
-            opacity: 0.5;
-            border-radius: var(--radius-md);
-            overflow: hidden;
-        }
+      .download-badge {
+          width: 180px;
+          height: auto;
+          transition: var(--transition-base);
+          opacity: 0.5;
+          border-radius: var(--radius-md);
+          overflow: hidden;
+      }
 
-        .download-badge:not(.disabled) {
-            opacity: 1;
-            cursor: pointer;
-        }
+      .download-badge:not(.disabled) {
+          opacity: 1;
+          cursor: pointer;
+      }
 
-        .download-badge:not(.disabled):hover {
-            transform: translateY(-3px);
-            filter: brightness(1.1);
-        }
+      .download-badge:not(.disabled):hover {
+          transform: translateY(-3px);
+          filter: brightness(1.1);
+      }
 
-        .download-badge.disabled {
-            filter: grayscale(90%);
-            cursor: not-allowed;
-        }
+      .download-badge.disabled {
+          filter: grayscale(90%);
+          cursor: not-allowed;
+      }
 
-        .download-badge img {
-            width: 100%;
-            height: auto;
-            display: block;
-        }
+      .download-badge img {
+          width: 100%;
+          height: auto;
+          display: block;
+      }
 
-        .linux-section {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: var(--space-sm);
-            justify-items: center;
-            margin: 0 auto;
-            width: 100%;
-        }
+      .linux-section {
+          display: grid;
+          grid-template-columns: 1fr;
+          gap: var(--space-sm);
+          justify-items: center;
+          margin: 0 auto;
+          width: 100%;
+      }
 
-        @media (min-width: 768px) {
-            .download-section {
-                grid-template-columns: repeat(3, 1fr);
-            }
+      @media (min-width: 768px) {
+          .download-section {
+              grid-template-columns: repeat(3, 1fr);
+          }
 
-            .linux-section {
-                grid-column: 1 / -1;
-                grid-template-columns: repeat(3, 1fr);
-                margin-top: var(--space-sm);
-                justify-self: center;
-            }
-        }
+          .linux-section {
+              grid-column: 1 / -1;
+              grid-template-columns: repeat(3, 1fr);
+              margin-top: var(--space-sm);
+              justify-self: center;
+          }
+      }
 
-        .github-standalone {
-            text-align: center;
-            margin-top: var(--space-xl);
-        }
+      .github-standalone {
+          text-align: center;
+          margin-top: var(--space-xl);
+      }
 
-        .github-standalone .download-badge {
-            display: inline-flex;
-            width: 180px;
-        }
+      .github-standalone .download-badge {
+          display: inline-flex;
+          width: 180px;
+      }
 
-        .header {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            padding: var(--space-lg) var(--space-xl);
-            display: flex;
-            justify-content: flex-end;
-            align-items: center;
-            z-index: 3;
-        }
+      .header {
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          padding: var(--space-lg) var(--space-xl);
+          display: flex;
+          justify-content: flex-end;
+          align-items: center;
+          z-index: 3;
+      }
 
-        .logo {
-            display: none;
-        }
+      .logo {
+          display: none;
+      }
 
-        /* Auth form styles */
-        .auth-container {
-            width: 100%;
-            max-width: 420px;
-            margin: var(--space-2xl) auto 0;
-            animation: fadeInUp 0.6s ease-out;
-        }
+      /* Auth form styles */
+      .auth-container {
+          width: 100%;
+          max-width: 420px;
+          margin: var(--space-2xl) auto 0;
+          animation: fadeInUp 0.6s ease-out;
+      }
 
-        #signin-form {
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: var(--radius-xl);
-            padding: var(--space-xl);
-            backdrop-filter: blur(10px);
-        }
+      #signin-form {
+          background: rgba(255, 255, 255, 0.03);
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          border-radius: var(--radius-xl);
+          padding: var(--space-xl);
+          backdrop-filter: blur(10px);
+      }
 
-        .btn-full {
-            width: 100%;
-            margin-top: var(--space-md);
-        }
+      .btn-full {
+          width: 100%;
+          margin-top: var(--space-md);
+      }
 
-        .auth-footer {
-            text-align: center;
-            margin-top: var(--space-xl);
-            color: var(--color-text-muted);
-            font-size: var(--font-size-sm);
-        }
+      .auth-footer {
+          text-align: center;
+          margin-top: var(--space-xl);
+          color: var(--color-text-muted);
+          font-size: var(--font-size-sm);
+      }
 
-        .auth-footer a {
-            color: var(--color-primary-start);
-            font-weight: var(--font-weight-medium);
-            text-decoration: none;
-            transition: var(--transition-fast);
-        }
+      .auth-footer a {
+          color: var(--color-primary-start);
+          font-weight: var(--font-weight-medium);
+          text-decoration: none;
+          transition: var(--transition-fast);
+      }
 
-        .auth-footer a:hover {
-            color: var(--color-primary-end);
-            text-decoration: underline;
-        }
+      .auth-footer a:hover {
+          color: var(--color-primary-end);
+          text-decoration: underline;
+      }
 
-        #error-message {
-            background: rgba(244, 67, 54, 0.1);
-            border: 1px solid rgba(244, 67, 54, 0.3);
-            color: #f44336;
-            padding: var(--space-md);
-            border-radius: var(--radius-md);
-            margin-bottom: var(--space-lg);
-            font-size: var(--font-size-sm);
-            animation: fadeIn 0.3s ease-out;
-        }
+      #error-message {
+          background: rgba(244, 67, 54, 0.1);
+          border: 1px solid rgba(244, 67, 54, 0.3);
+          color: #f44336;
+          padding: var(--space-md);
+          border-radius: var(--radius-md);
+          margin-bottom: var(--space-lg);
+          font-size: var(--font-size-sm);
+          animation: fadeIn 0.3s ease-out;
+      }
 
-        /* Mobile optimizations */
-        @media (max-width: 480px) {
-            #signin-form {
-                padding: var(--space-lg);
-            }
+      /* Mobile optimizations */
+      @media (max-width: 480px) {
+          #signin-form {
+              padding: var(--space-lg);
+          }
 
-            .logo-container img {
-                width: 100px;
-            }
-        }
-    </style>
+          .logo-container img {
+              width: 100px;
+          }
+      }
+  </style>
 </head>
 <body>
-    <div class="background-pattern"></div>
+<div class="background-pattern"></div>
 
-    <header class="header">
-        <div class="logo">
-            <img src="images/flashback-logo.png" alt="Logo" />
-        </div>
-    </header>
+<header class="header">
+  <div class="logo">
+    <img src="images/flashback-logo.png" alt="Logo"/>
+  </div>
+</header>
 
-    <div class="container">
-        <div class="logo-container">
-            <img
-                src="images/flashback-logo.png"
-                alt="FLASHBACK"
-            />
-        </div>
+<div class="container">
+  <div class="logo-container">
+    <img
+        src="images/flashback-logo.png"
+        alt="FLASHBACK"
+    />
+  </div>
 
-        <p class="tagline">Turn Expertise into Instinct</p>
+  <p class="tagline">Turn Expertise into Instinct</p>
 
-        <div class="auth-container">
-            <div id="error-message" style="display: none;"></div>
+  <div class="auth-container">
+    <div id="error-message" style="display: none;"></div>
 
-            <form id="signin-form">
-                <div class="form-group">
-                    <label class="form-label" for="email">Email</label>
-                    <input
-                        type="email"
-                        id="email"
-                        class="form-input"
-                        placeholder="you@example.com"
-                        required
-                        autocomplete="email"
-                    >
-                </div>
+    <form id="signin-form">
+      <div class="form-group">
+        <label class="form-label" for="email">Email</label>
+        <input
+            type="email"
+            id="email"
+            class="form-input"
+            placeholder="you@example.com"
+            required
+            autocomplete="email"
+        >
+      </div>
 
-                <div class="form-group">
-                    <label class="form-label" for="password">Password</label>
-                    <input
-                        type="password"
-                        id="password"
-                        class="form-input"
-                        placeholder="Enter your password"
-                        required
-                        autocomplete="current-password"
-                    >
-                </div>
+      <div class="form-group">
+        <label class="form-label" for="password">Password</label>
+        <input
+            type="password"
+            id="password"
+            class="form-input"
+            placeholder="Enter your password"
+            required
+            autocomplete="current-password"
+        >
+      </div>
 
-                <button type="submit" id="signin-btn" class="btn btn-primary btn-full">
-                    Sign In
-                </button>
-            </form>
+      <button type="submit" id="signin-btn" class="btn btn-primary btn-full">
+        Sign In
+      </button>
+    </form>
 
-            <div class="auth-footer">
-                Don't have an account? <a href="signup.html">Sign up</a>
-            </div>
-        </div>
-
-        <div class="coming-soon-section">
-            <p onclick="test_connection()" class="coming-soon-title">Coming soon to all major platforms</p>
-            <div class="divider"></div>
-            <div class="download-section">
-                <div class="download-badge disabled">
-                    <a href="#" class="download-badge disabled">
-                        <img
-                            src="images/playstore.png"
-                            alt="Google Play"
-                        />
-                    </a>
-                </div>
-                <div class="download-badge disabled">
-                    <a href="#" class="download-badge disabled">
-                        <img
-                            src="images/applestore.png"
-                            alt="App Store"
-                        />
-                    </a>
-                </div>
-                <div class="download-badge disabled">
-                    <a href="#" class="download-badge disabled">
-                        <img
-                            src="images/msstore.png"
-                            alt="Microsoft Store"
-                        />
-                    </a>
-                </div>
-                <div class="linux-section">
-                    <div class="download-badge" disabled>
-                        <a href="https://github.com/briansalehi/flashback" disabled>
-                            <img
-                                src="images/linux-shell.png"
-                                alt="Linux Shell"
-                            />
-                        </a>
-                    </div>
-                    <div class="download-badge disabled">
-                        <a href="#" class="download-badge disabled">
-                            <img
-                                src="images/download-debian.png"
-                                alt="Debian"
-                            />
-                        </a>
-                    </div>
-                    <div class="download-badge disabled">
-                        <a href="#" class="download-badge disabled">
-                            <img
-                                src="images/download-fedora.png"
-                                alt="Fedora"
-                            />
-                        </a>
-                    </div>
-                </div>
-            </div>
-            <div class="github-standalone">
-                <a
-                    href="https://github.com/briansalehi/flashback"
-                    class="download-badge"
-                >
-                    <img
-                        src="images/flashback-github.png"
-                        alt="Github"
-                    />
-                </a>
-            </div>
-        </div>
+    <div class="auth-footer">
+      Don't have an account? <a href="signup.html">Sign up</a>
     </div>
+  </div>
 
-    <script>
-        function test_connection() {
-            fetch('https://api.flashback.eu.com', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/grpc-web+proto'
-                }
-            })
+  <div class="coming-soon-section">
+    <p onclick="test_connection()" class="coming-soon-title">Coming soon to all major platforms</p>
+    <div class="divider"></div>
+    <div class="download-section">
+      <div class="download-badge disabled">
+        <a href="#" class="download-badge disabled">
+          <img
+              src="images/playstore.png"
+              alt="Google Play"
+          />
+        </a>
+      </div>
+      <div class="download-badge disabled">
+        <a href="#" class="download-badge disabled">
+          <img
+              src="images/applestore.png"
+              alt="App Store"
+          />
+        </a>
+      </div>
+      <div class="download-badge disabled">
+        <a href="#" class="download-badge disabled">
+          <img
+              src="images/msstore.png"
+              alt="Microsoft Store"
+          />
+        </a>
+      </div>
+      <div class="linux-section">
+        <div class="download-badge" disabled>
+          <a href="https://github.com/briansalehi/flashback" disabled>
+            <img
+                src="images/linux-shell.png"
+                alt="Linux Shell"
+            />
+          </a>
+        </div>
+        <div class="download-badge disabled">
+          <a href="#" class="download-badge disabled">
+            <img
+                src="images/download-debian.png"
+                alt="Debian"
+            />
+          </a>
+        </div>
+        <div class="download-badge disabled">
+          <a href="#" class="download-badge disabled">
+            <img
+                src="images/download-fedora.png"
+                alt="Fedora"
+            />
+          </a>
+        </div>
+      </div>
+    </div>
+    <div class="github-standalone">
+      <a
+          href="https://github.com/briansalehi/flashback"
+          class="download-badge"
+      >
+        <img
+            src="images/flashback-github.png"
+            alt="Github"
+        />
+      </a>
+    </div>
+  </div>
+</div>
+
+<script>
+    function test_connection() {
+        fetch('https://api.flashback.eu.com', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/grpc-web+proto'
+            }
+        })
             .then(response => {
                 console.log('Status', response.status, ': Connection successful!');
             })
             .catch(error => {
                 console.log('Error:', error);
             });
-        }
-    </script>
-    <script defer src="proto/flashback.js"></script>
-    <script defer src="js/client.js"></script>
-    <script defer src="js/ui.js"></script>
-    <script defer src="js/signin.js"></script>
+    }
+</script>
+<script defer src="proto/flashback.js"></script>
+<script defer src="js/client.js"></script>
+<script defer src="js/ui.js"></script>
+<script defer src="js/signin.js"></script>
 </body>
 </html>

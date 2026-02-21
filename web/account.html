@@ -1,110 +1,112 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Account Management - Flashback</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Account Management - Flashback</title>
 
-    <!-- Design System CSS - MUST be loaded first -->
-    <link rel="stylesheet" href="css/flashback-design.css">
-    <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <!-- Design System CSS - MUST be loaded first -->
+  <link rel="stylesheet" href="css/flashback-design.css">
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
 
-    <!-- Google Fonts - Inter (matching design system) -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <!-- Google Fonts - Inter (matching design system) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet">
 
-    <style>
-        /* Account page specific styles only */
-        body {
-            padding-top: 5rem;
-            padding-bottom: var(--space-xl);
-        }
-    </style>
+  <style>
+      /* Account page specific styles only */
+      body {
+          padding-top: 5rem;
+          padding-bottom: var(--space-xl);
+      }
+  </style>
 </head>
 <body>
-    <div class="background-pattern"></div>
+<div class="background-pattern"></div>
 
-    <div class="menu-overlay"></div>
+<div class="menu-overlay"></div>
 
-    <header class="header">
-        <div class="container header-content">
-            <a href="home.html" class="logo">Flashback</a>
-            <button class="menu-toggle" aria-label="Toggle menu">
-                <span></span>
-                <span></span>
-                <span></span>
-            </button>
-            <nav class="nav">
-                <a href="home.html">Home</a>
-                <a href="account.html">Account</a>
-                <a href="#" id="signout-btn">Sign Out</a>
-            </nav>
+<header class="header">
+  <div class="container header-content">
+    <a href="home.html" class="logo">Flashback</a>
+    <button class="menu-toggle" aria-label="Toggle menu">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+    <nav class="nav">
+      <a href="home.html">Home</a>
+      <a href="account.html">Account</a>
+      <a href="#" id="signout-btn">Sign Out</a>
+    </nav>
+  </div>
+</header>
+
+<main class="dashboard">
+  <div class="container">
+    <div class="dashboard-header">
+      <h1>Account Management</h1>
+    </div>
+
+    <div id="success-message" class="success-message" style="display: none;"></div>
+    <div id="error-message" class="error-message" style="display: none;"></div>
+
+    <!-- Edit User Information Section -->
+    <div class="card" style="max-width: 600px; margin-bottom: 2rem;">
+      <h2 style="margin-bottom: 1.5rem;">Edit User Information</h2>
+      <form id="edit-user-form">
+        <div class="form-group">
+          <label class="form-label" for="user-name">Name</label>
+          <input
+              type="text"
+              id="user-name"
+              class="form-input"
+              placeholder="Your name"
+              required
+          >
         </div>
-    </header>
 
-    <main class="dashboard">
-        <div class="container">
-            <div class="dashboard-header">
-                <h1>Account Management</h1>
-            </div>
-
-            <div id="success-message" class="success-message" style="display: none;"></div>
-            <div id="error-message" class="error-message" style="display: none;"></div>
-
-            <!-- Edit User Information Section -->
-            <div class="card" style="max-width: 600px; margin-bottom: 2rem;">
-                <h2 style="margin-bottom: 1.5rem;">Edit User Information</h2>
-                <form id="edit-user-form">
-                    <div class="form-group">
-                        <label class="form-label" for="user-name">Name</label>
-                        <input
-                            type="text"
-                            id="user-name"
-                            class="form-input"
-                            placeholder="Your name"
-                            required
-                        >
-                    </div>
-
-                    <div class="form-group">
-                        <label class="form-label" for="user-email">Email</label>
-                        <input
-                            type="email"
-                            id="user-email"
-                            class="form-input"
-                            placeholder="your.email@example.com"
-                            required
-                        >
-                    </div>
-
-                    <p class="text-muted" style="font-size: 0.9rem; margin-bottom: 1rem;">
-                        Note: Both fields are required. Any changes will take effect immediately.
-                    </p>
-
-                    <button type="submit" id="save-user-btn" class="btn btn-primary">
-                        Save Changes
-                    </button>
-                </form>
-            </div>
-
-            <!-- Reset Password Section -->
-            <div class="card" style="max-width: 600px;">
-                <h2 style="margin-bottom: 1.5rem;">Reset Password</h2>
-                <p class="text-muted" style="margin-bottom: 1.5rem;">
-                    Click the button below to reset your password. A new password will be generated and sent to your email.
-                </p>
-                <button id="reset-password-btn" class="btn btn-accent">
-                    Reset Password
-                </button>
-            </div>
+        <div class="form-group">
+          <label class="form-label" for="user-email">Email</label>
+          <input
+              type="email"
+              id="user-email"
+              class="form-input"
+              placeholder="your.email@example.com"
+              required
+          >
         </div>
-    </main>
 
-    <script src="proto/flashback.js"></script>
-    <script src="js/ui.js"></script>
-    <script src="js/client.js"></script>
-    <script src="js/nav.js"></script>
-    <script src="js/account.js"></script>
+        <p class="text-muted" style="font-size: 0.9rem; margin-bottom: 1rem;">
+          Note: Both fields are required. Any changes will take effect immediately.
+        </p>
+
+        <button type="submit" id="save-user-btn" class="btn btn-primary">
+          Save Changes
+        </button>
+      </form>
+    </div>
+
+    <!-- Reset Password Section -->
+    <div class="card" style="max-width: 600px;">
+      <h2 style="margin-bottom: 1.5rem;">Reset Password</h2>
+      <p class="text-muted" style="margin-bottom: 1.5rem;">
+        Click the button below to reset your password. A new password will be generated and sent to your email.
+      </p>
+      <button id="reset-password-btn" class="btn btn-accent">
+        Reset Password
+      </button>
+    </div>
+  </div>
+</main>
+
+<script src="proto/flashback.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/client.js"></script>
+<script src="js/nav.js"></script>
+<script src="js/account.js"></script>
 </body>
 </html>

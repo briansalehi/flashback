@@ -1,364 +1,370 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Card - Flashback</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Card - Flashback</title>
 
-    <!-- Design System CSS - MUST be loaded first -->
-    <link rel="stylesheet" href="css/flashback-design.css">
-    <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <!-- Design System CSS - MUST be loaded first -->
+  <link rel="stylesheet" href="css/flashback-design.css">
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
 
-    <!-- Google Fonts - Inter (matching design system) -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <!-- Google Fonts - Inter (matching design system) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet">
 
-    <!-- Prism.js for syntax highlighting -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+  <style>
+      /* Override Prism theme to match our dark theme */
+      code[class*="language-"],
+      pre[class*="language-"] {
+          color: #ccc;
+          background: none;
+          font-family: 'JetBrains Mono', Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;
+          font-size: var(--font-size-sm);
+          text-align: left;
+          white-space: pre;
+          word-spacing: normal;
+          word-break: normal;
+          word-wrap: normal;
+          line-height: 1.6;
+          tab-size: 4;
+      }
 
-    <style>
-        /* Override Prism theme to match our dark theme */
-        code[class*="language-"],
-        pre[class*="language-"] {
-            color: #ccc;
-            background: none;
-            font-family: 'JetBrains Mono', Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;
-            font-size: var(--font-size-sm);
-            text-align: left;
-            white-space: pre;
-            word-spacing: normal;
-            word-break: normal;
-            word-wrap: normal;
-            line-height: 1.6;
-            tab-size: 4;
-        }
+      pre[class*="language-"] {
+          padding: 0;
+          margin: 0;
+          overflow: auto;
+      }
 
-        pre[class*="language-"] {
-            padding: 0;
-            margin: 0;
-            overflow: auto;
-        }
+      :not(pre) > code[class*="language-"] {
+          background: rgba(0, 0, 0, 0.3);
+          padding: 0.1em 0.3em;
+          border-radius: 0.3em;
+          white-space: normal;
+      }
 
-        :not(pre) > code[class*="language-"] {
-            background: rgba(0, 0, 0, 0.3);
-            padding: 0.1em 0.3em;
-            border-radius: 0.3em;
-            white-space: normal;
-        }
+      /* Card page specific styles only */
+      body {
+          padding-top: 5rem;
+          padding-bottom: var(--space-xl);
+      }
 
-        /* Card page specific styles only */
-        body {
-            padding-top: 5rem;
-            padding-bottom: var(--space-xl);
-        }
+      /* Page-specific component styles */
+      .card-headline-display {
+          font-size: 2rem;
+          font-weight: 700;
+          color: var(--text-primary);
+          margin-bottom: 1rem;
+          line-height: 1.3;
+      }
 
-        /* Page-specific component styles */
-        .card-headline-display {
-            font-size: 2rem;
-            font-weight: 700;
-            color: var(--text-primary);
-            margin-bottom: 1rem;
-            line-height: 1.3;
-        }
+      .card-state-display {
+          display: inline-block;
+          padding: 0.25rem 0.75rem;
+          background-color: var(--accent-light);
+          color: var(--accent-color);
+          border-radius: 12px;
+          font-size: 0.875rem;
+          font-weight: 500;
+          text-transform: capitalize;
+          margin-bottom: 1.5rem;
+      }
 
-        .card-state-display {
-            display: inline-block;
-            padding: 0.25rem 0.75rem;
-            background-color: var(--accent-light);
-            color: var(--accent-color);
-            border-radius: 12px;
-            font-size: 0.875rem;
-            font-weight: 500;
-            text-transform: capitalize;
-            margin-bottom: 1.5rem;
-        }
+      .card-state-display.draft {
+          background-color: #f0f0f0;
+          color: #666;
+      }
 
-        .card-state-display.draft {
-            background-color: #f0f0f0;
-            color: #666;
-        }
+      .card-state-display.reviewed {
+          background-color: #e3f2fd;
+          color: #1976d2;
+      }
 
-        .card-state-display.reviewed {
-            background-color: #e3f2fd;
-            color: #1976d2;
-        }
+      .card-state-display.completed {
+          background-color: #e8f5e9;
+          color: #388e3c;
+      }
 
-        .card-state-display.completed {
-            background-color: #e8f5e9;
-            color: #388e3c;
-        }
+      .card-state-display.approved {
+          background-color: #fff3e0;
+          color: #f57c00;
+      }
 
-        .card-state-display.approved {
-            background-color: #fff3e0;
-            color: #f57c00;
-        }
+      .card-state-display.released {
+          background-color: #e1f5fe;
+          color: #0277bd;
+      }
 
-        .card-state-display.released {
-            background-color: #e1f5fe;
-            color: #0277bd;
-        }
+      .card-state-display.rejected {
+          background-color: #ffebee;
+          color: #c62828;
+      }
 
-        .card-state-display.rejected {
-            background-color: #ffebee;
-            color: #c62828;
-        }
+      .block-item {
+          margin-bottom: 2rem;
+          padding: 2rem 2.5rem;
+          border: 1px solid #e5dfd5;
+          border-radius: 16px;
+          background-color: var(--bg-primary);
+          transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+          cursor: grab;
+          position: relative;
+          overflow: hidden;
+          box-shadow: 0 2px 8px rgba(44, 95, 79, 0.04);
+      }
 
-        .block-item {
-            margin-bottom: 2rem;
-            padding: 2rem 2.5rem;
-            border: 1px solid #e5dfd5;
-            border-radius: 16px;
-            background-color: var(--bg-primary);
-            transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
-            cursor: grab;
-            position: relative;
-            overflow: hidden;
-            box-shadow: 0 2px 8px rgba(44, 95, 79, 0.04);
-        }
+      .block-item::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 5px;
+          height: 100%;
+          background: linear-gradient(180deg, #d4845c 0%, #e69b7a 100%);
+          opacity: 0;
+          transition: opacity 0.3s ease;
+      }
 
-        .block-item::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 5px;
-            height: 100%;
-            background: linear-gradient(180deg, #d4845c 0%, #e69b7a 100%);
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        }
+      .block-item:hover::before {
+          opacity: 1;
+      }
 
-        .block-item:hover::before {
-            opacity: 1;
-        }
+      .block-item::after {
+          content: '⋮⋮';
+          position: absolute;
+          left: 1rem;
+          top: 50%;
+          transform: translateY(-50%);
+          color: rgba(44, 95, 79, 0.15);
+          font-size: 1.25rem;
+          letter-spacing: -4px;
+          transition: all 0.3s ease;
+      }
 
-        .block-item::after {
-            content: '⋮⋮';
-            position: absolute;
-            left: 1rem;
-            top: 50%;
-            transform: translateY(-50%);
-            color: rgba(44, 95, 79, 0.15);
-            font-size: 1.25rem;
-            letter-spacing: -4px;
-            transition: all 0.3s ease;
-        }
+      .block-item:hover::after {
+          color: rgba(44, 95, 79, 0.3);
+      }
 
-        .block-item:hover::after {
-            color: rgba(44, 95, 79, 0.3);
-        }
+      .block-item.dragging {
+          opacity: 0.5;
+          cursor: grabbing;
+          transform: scale(0.98);
+      }
 
-        .block-item.dragging {
-            opacity: 0.5;
-            cursor: grabbing;
-            transform: scale(0.98);
-        }
+      .block-item.drag-over {
+          border-color: #d4845c;
+          box-shadow: 0 8px 32px rgba(212, 132, 92, 0.2);
+          transform: translateY(-2px);
+      }
 
-        .block-item.drag-over {
-            border-color: #d4845c;
-            box-shadow: 0 8px 32px rgba(212, 132, 92, 0.2);
-            transform: translateY(-2px);
-        }
+      .block-item:hover {
+          border-color: #d4845c;
+          box-shadow: 0 8px 24px rgba(44, 95, 79, 0.1);
+          transform: translateY(-2px);
+      }
 
-        .block-item:hover {
-            border-color: #d4845c;
-            box-shadow: 0 8px 24px rgba(44, 95, 79, 0.1);
-            transform: translateY(-2px);
-        }
+      .block-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: start;
+          margin-bottom: 1rem;
+      }
 
-        .block-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: start;
-            margin-bottom: 1rem;
-        }
+      .block-actions {
+          display: flex;
+          gap: 0.5rem;
+      }
 
-        .block-actions {
-            display: flex;
-            gap: 0.5rem;
-        }
+      .block-action-btn {
+          padding: 0.35rem 0.75rem;
+          font-size: 0.875rem;
+          border-radius: 8px;
+          transition: all 0.3s ease;
+      }
 
-        .block-action-btn {
-            padding: 0.35rem 0.75rem;
-            font-size: 0.875rem;
-            border-radius: 8px;
-            transition: all 0.3s ease;
-        }
+      .remove-block-btn {
+          background: white;
+          border: 1px solid #e5dfd5;
+          color: #dc3545;
+          cursor: pointer;
+      }
 
-        .remove-block-btn {
-            background: white;
-            border: 1px solid #e5dfd5;
-            color: #dc3545;
-            cursor: pointer;
-        }
+      .remove-block-btn:hover {
+          background: #fee8e0;
+          border-color: #dc3545;
+          transform: scale(1.05);
+      }
 
-        .remove-block-btn:hover {
-            background: #fee8e0;
-            border-color: #dc3545;
-            transform: scale(1.05);
-        }
+      .block-content {
+          font-size: 1rem;
+          line-height: 1.7;
+          color: var(--text-primary);
+          white-space: pre-wrap;
+          word-wrap: break-word;
+      }
 
-        .block-content {
-            font-size: 1rem;
-            line-height: 1.7;
-            color: var(--text-primary);
-            white-space: pre-wrap;
-            word-wrap: break-word;
-        }
+      .block-code {
+          background-color: #f5f5f5;
+          border: 1px solid #e0e0e0;
+          border-radius: 4px;
+          padding: 1rem;
+          overflow-x: auto;
+          font-family: 'Courier New', monospace;
+          font-size: 0.9rem;
+          line-height: 1.5;
+      }
 
-        .block-code {
-            background-color: #f5f5f5;
-            border: 1px solid #e0e0e0;
-            border-radius: 4px;
-            padding: 1rem;
-            overflow-x: auto;
-            font-family: 'Courier New', monospace;
-            font-size: 0.9rem;
-            line-height: 1.5;
-        }
+      .block-image {
+          max-width: 100%;
+          height: auto;
+          border-radius: 4px;
+      }
 
-        .block-image {
-            max-width: 100%;
-            height: auto;
-            border-radius: 4px;
-        }
+      .block-metadata {
+          display: inline-block;
+          padding: 0.25rem 0.75rem;
+          background-color: var(--accent-light);
+          color: var(--accent-color);
+          border-radius: 12px;
+          font-size: 0.75rem;
+          font-weight: 500;
+          margin-bottom: 1rem;
+      }
 
-        .block-metadata {
-            display: inline-block;
-            padding: 0.25rem 0.75rem;
-            background-color: var(--accent-light);
-            color: var(--accent-color);
-            border-radius: 12px;
-            font-size: 0.75rem;
-            font-weight: 500;
-            margin-bottom: 1rem;
-        }
+      .block-type {
+          display: inline-block;
+          padding: 0.25rem 0.75rem;
+          background-color: #f0f0f0;
+          color: #666;
+          border-radius: 12px;
+          font-size: 0.75rem;
+          font-weight: 500;
+          margin-bottom: 1rem;
+          margin-left: 0.5rem;
+      }
 
-        .block-type {
-            display: inline-block;
-            padding: 0.25rem 0.75rem;
-            background-color: #f0f0f0;
-            color: #666;
-            border-radius: 12px;
-            font-size: 0.75rem;
-            font-weight: 500;
-            margin-bottom: 1rem;
-            margin-left: 0.5rem;
-        }
-
-        .blocks-container {
-            max-width: 900px;
-            margin: 0 auto;
-        }
-    </style>
+      .blocks-container {
+          max-width: 900px;
+          margin: 0 auto;
+      }
+  </style>
 </head>
 <body>
-  <div class="background-pattern"></div>
-  <div class="menu-overlay"></div>
+<div class="background-pattern"></div>
+<div class="menu-overlay"></div>
 
-  <header class="header">
-      <div class="container header-content">
-        <a href="home.html" class="logo">Flashback</a>
-        <button class="menu-toggle" aria-label="Toggle menu">
-          <span></span>
-          <span></span>
-          <span></span>
+<header class="header">
+  <div class="container header-content">
+    <a href="home.html" class="logo">Flashback</a>
+    <button class="menu-toggle" aria-label="Toggle menu">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+    <nav class="nav">
+      <a href="home.html">Home</a>
+      <a href="account.html">Account</a>
+      <a href="#" id="signout-btn">Sign Out</a>
+    </nav>
+  </div>
+</header>
+
+<main class="dashboard">
+  <div class="container">
+    <div class="dashboard-header">
+      <h2 id="context-breadcrumb"
+          style="color: var(--text-primary); font-size: 1.5rem; font-weight: 600; margin: 0; display: none;">
+        <!-- Context will be inserted here -->
+      </h2>
+    </div>
+
+    <div id="error-message" style="display: none;"></div>
+
+    <div id="loading" style="display: none; text-align: center; padding: 3rem;">
+      <div class="loading" style="width: 40px; height: 40px; border-width: 4px;"></div>
+      <p class="text-muted mt-md">Loading card...</p>
+    </div>
+
+    <div id="card-content" class="blocks-container" style="display: none;">
+      <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
+        <h1 id="card-headline" class="card-headline-display" style="margin-bottom: 0;"></h1>
+        <button id="edit-headline-btn" class="btn btn-secondary" style="padding: 0.5rem 1rem;">
+          Edit
         </button>
-        <nav class="nav">
-          <a href="home.html">Home</a>
-          <a href="account.html">Account</a>
-          <a href="#" id="signout-btn">Sign Out</a>
-        </nav>
       </div>
-    </header>
-
-    <main class="dashboard">
-        <div class="container">
-            <div class="dashboard-header">
-                <h2 id="context-breadcrumb" style="color: var(--text-primary); font-size: 1.5rem; font-weight: 600; margin: 0; display: none;">
-                    <!-- Context will be inserted here -->
-                </h2>
-            </div>
-
-            <div id="error-message" style="display: none;"></div>
-
-            <div id="loading" style="display: none; text-align: center; padding: 3rem;">
-                <div class="loading" style="width: 40px; height: 40px; border-width: 4px;"></div>
-                <p class="text-muted mt-md">Loading card...</p>
-            </div>
-
-            <div id="card-content" class="blocks-container" style="display: none;">
-                <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
-                    <h1 id="card-headline" class="card-headline-display" style="margin-bottom: 0;"></h1>
-                    <button id="edit-headline-btn" class="btn btn-secondary" style="padding: 0.5rem 1rem;">
-                        Edit
-                    </button>
-                </div>
-                <div id="edit-headline-form" style="display: none; margin-bottom: 1rem;">
-                    <input type="text" id="headline-input" class="form-input" style="width: 100%; margin-bottom: 0.5rem;" />
-                    <div style="display: flex; gap: 0.5rem;">
-                        <button id="save-headline-btn" class="btn btn-primary">Save</button>
-                        <button id="cancel-edit-btn" class="btn btn-secondary">Cancel</button>
-                    </div>
-                </div>
-                <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem;">
-                    <span id="card-state" class="card-state-display"></span>
-                    <button id="mark-reviewed-btn" class="btn btn-secondary" style="display: none;">
-                        Mark as Reviewed
-                    </button>
-                    <button id="remove-card-btn" class="btn btn-secondary" style="display: none; background-color: #c62828; color: white;">
-                        Remove Card
-                    </button>
-                </div>
-                <div id="blocks-list">
-                    <!-- blocks will be inserted here -->
-                </div>
-            </div>
-
-            <div id="empty-state" style="display: none; text-align: center; padding: 4rem 2rem;">
-                <h3 style="color: var(--text-muted);">No content yet</h3>
-                <p class="text-muted">This card doesn't have any blocks yet.</p>
-            </div>
-
-            <!-- Remove Card Modal -->
-            <div id="remove-card-modal" class="card" style="display: none; max-width: 500px; margin-top: 2rem; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 1000; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);">
-                <div class="card-header">
-                    <h3 class="card-title">Remove Card</h3>
-                </div>
-                <div style="padding: 1rem 0;">
-                    <p style="color: var(--text-muted); margin-bottom: 1.5rem;">Are you sure you want to remove this card? This action cannot be undone.</p>
-                    <div style="display: flex; gap: 1rem; justify-content: flex-end;">
-                        <button id="cancel-remove-card-btn" class="btn btn-secondary">Cancel</button>
-                        <button id="confirm-remove-card-btn" class="btn btn-danger">Remove Card</button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Remove Block Modal -->
-            <div id="remove-block-modal" class="card" style="display: none; max-width: 500px; margin-top: 2rem; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 1000; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);">
-                <div class="card-header">
-                    <h3 class="card-title">Remove Block</h3>
-                </div>
-                <div style="padding: 1rem 0;">
-                    <p style="color: var(--text-muted); margin-bottom: 1.5rem;">Are you sure you want to remove this block? This action cannot be undone.</p>
-                    <div style="display: flex; gap: 1rem; justify-content: flex-end;">
-                        <button id="cancel-remove-block-btn" class="btn btn-secondary">Cancel</button>
-                        <button id="confirm-remove-block-btn" class="btn btn-danger">Remove Block</button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Modal Overlay -->
-            <div id="modal-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.5); z-index: 999;"></div>
+      <div id="edit-headline-form" style="display: none; margin-bottom: 1rem;">
+        <input type="text" id="headline-input" class="form-input" style="width: 100%; margin-bottom: 0.5rem;"/>
+        <div style="display: flex; gap: 0.5rem;">
+          <button id="save-headline-btn" class="btn btn-primary">Save</button>
+          <button id="cancel-edit-btn" class="btn btn-secondary">Cancel</button>
         </div>
-    </main>
+      </div>
+      <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem;">
+        <span id="card-state" class="card-state-display"></span>
+        <button id="mark-reviewed-btn" class="btn btn-secondary" style="display: none;">
+          Mark as Reviewed
+        </button>
+        <button id="remove-card-btn" class="btn btn-secondary"
+                style="display: none; background-color: #c62828; color: white;">
+          Remove Card
+        </button>
+      </div>
+      <div id="blocks-list">
+        <!-- blocks will be inserted here -->
+      </div>
+    </div>
 
-    <script src="proto/flashback.js"></script>
-    <script src="js/client.js"></script>
-    <script src="js/ui.js"></script>
-    <script src="js/nav.js"></script>
-    <script src="js/prism.js"></script>
-    <script src="js/card.js"></script>
+    <div id="empty-state" style="display: none; text-align: center; padding: 4rem 2rem;">
+      <h3 style="color: var(--text-muted);">No content yet</h3>
+      <p class="text-muted">This card doesn't have any blocks yet.</p>
+    </div>
+
+    <!-- Remove Card Modal -->
+    <div id="remove-card-modal" class="card"
+         style="display: none; max-width: 500px; margin-top: 2rem; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 1000; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);">
+      <div class="card-header">
+        <h3 class="card-title">Remove Card</h3>
+      </div>
+      <div style="padding: 1rem 0;">
+        <p style="color: var(--text-muted); margin-bottom: 1.5rem;">Are you sure you want to remove this card? This
+          action cannot be undone.</p>
+        <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+          <button id="cancel-remove-card-btn" class="btn btn-secondary">Cancel</button>
+          <button id="confirm-remove-card-btn" class="btn btn-danger">Remove Card</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Remove Block Modal -->
+    <div id="remove-block-modal" class="card"
+         style="display: none; max-width: 500px; margin-top: 2rem; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 1000; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);">
+      <div class="card-header">
+        <h3 class="card-title">Remove Block</h3>
+      </div>
+      <div style="padding: 1rem 0;">
+        <p style="color: var(--text-muted); margin-bottom: 1.5rem;">Are you sure you want to remove this block? This
+          action cannot be undone.</p>
+        <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+          <button id="cancel-remove-block-btn" class="btn btn-secondary">Cancel</button>
+          <button id="confirm-remove-block-btn" class="btn btn-danger">Remove Block</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal Overlay -->
+    <div id="modal-overlay"
+         style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.5); z-index: 999;"></div>
+  </div>
+</main>
+
+<script src="proto/flashback.js"></script>
+<script src="js/client.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/nav.js"></script>
+<script src="js/prism.js"></script>
+<script src="js/card.js"></script>
 </body>
 </html>

@@ -1,558 +1,590 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Roadmap - Flashback</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Roadmap - Flashback</title>
 
-    <!-- Design System CSS - MUST be loaded first -->
-    <link rel="stylesheet" href="css/flashback-design.css">
-    <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <!-- Design System CSS - MUST be loaded first -->
+  <link rel="stylesheet" href="css/flashback-design.css">
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
 
-    <!-- Google Fonts - Inter (matching design system) -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <!-- Google Fonts - Inter (matching design system) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet">
 
-    <style>
-        /* Roadmap page specific styles only */
-        body {
-            padding-top: 5rem;
-            padding-bottom: var(--space-xl);
-        }
+  <style>
+      /* Roadmap page specific styles only */
+      body {
+          padding-top: 5rem;
+          padding-bottom: var(--space-xl);
+      }
 
-        /* Page-specific component styles */
-        .search-result-item {
-            padding: 0.75rem;
-            border: 1px solid var(--border-color);
-            border-radius: 4px;
-            margin-bottom: 0.5rem;
-            transition: background-color 0.2s;
-        }
+      /* Page-specific component styles */
+      .search-result-item {
+          padding: 0.75rem;
+          border: 1px solid var(--border-color);
+          border-radius: 4px;
+          margin-bottom: 0.5rem;
+          transition: background-color 0.2s;
+      }
 
-        .search-result-item:hover {
-            background-color: var(--bg-secondary);
-        }
+      .search-result-item:hover {
+          background-color: var(--bg-secondary);
+      }
 
-        .search-result-label {
-            display: flex;
-            align-items: flex-start;
-            cursor: pointer;
-            gap: 0.75rem;
-        }
+      .search-result-label {
+          display: flex;
+          align-items: flex-start;
+          cursor: pointer;
+          gap: 0.75rem;
+      }
 
-        .search-result-label input[type="radio"] {
-            margin-top: 0.25rem;
-            cursor: pointer;
-        }
+      .search-result-label input[type="radio"] {
+          margin-top: 0.25rem;
+          cursor: pointer;
+      }
 
-        .search-result-name {
-            font-weight: 500;
-            color: var(--text-primary);
-        }
+      .search-result-name {
+          font-weight: 500;
+          color: var(--text-primary);
+      }
 
-        .search-section {
-            margin-bottom: 1.5rem;
-        }
+      .search-section {
+          margin-bottom: 1.5rem;
+      }
 
-        .create-subject-section {
-            margin-top: 1rem;
-            padding-top: 1rem;
-            border-top: 1px solid var(--border-color);
-        }
+      .create-subject-section {
+          margin-top: 1rem;
+          padding-top: 1rem;
+          border-top: 1px solid var(--border-color);
+      }
 
-        #search-results {
-            max-height: 300px;
-            overflow-y: auto;
-            margin-top: 1rem;
-        }
+      #search-results {
+          max-height: 300px;
+          overflow-y: auto;
+          margin-top: 1rem;
+      }
 
-        .level-selector {
-            display: flex;
-            gap: 0.5rem;
-            margin-top: 1rem;
-        }
+      .level-selector {
+          display: flex;
+          gap: 0.5rem;
+          margin-top: 1rem;
+      }
 
-        .level-option {
-            flex: 1;
-        }
+      .level-option {
+          flex: 1;
+      }
 
-        .level-option input[type="radio"] {
-            display: none;
-        }
+      .level-option input[type="radio"] {
+          display: none;
+      }
 
-        .level-option label {
-            display: block;
-            padding: 0.75rem;
-            text-align: center;
-            border: 2px solid var(--border-color);
-            border-radius: 4px;
-            cursor: pointer;
-            transition: all 0.2s;
-            font-weight: 500;
-        }
+      .level-option label {
+          display: block;
+          padding: 0.75rem;
+          text-align: center;
+          border: 2px solid var(--border-color);
+          border-radius: 4px;
+          cursor: pointer;
+          transition: all 0.2s;
+          font-weight: 500;
+      }
 
-        .level-option input[type="radio"]:checked + label {
-            border-color: var(--accent-color);
-            background-color: var(--accent-light);
-            color: var(--accent-color);
-        }
+      .level-option input[type="radio"]:checked + label {
+          border-color: var(--accent-color);
+          background-color: var(--accent-light);
+          color: var(--accent-color);
+      }
 
-        .level-option label:hover {
-            border-color: var(--accent-color);
-        }
+      .level-option label:hover {
+          border-color: var(--accent-color);
+      }
 
-        .level-description {
-            font-size: 0.875rem;
-            color: var(--text-muted);
-            margin-top: 0.25rem;
-        }
+      .level-description {
+          font-size: 0.875rem;
+          color: var(--text-muted);
+          margin-top: 0.25rem;
+      }
 
-        .milestone-card {
-            background: white;
-            border: 1px solid #e5dfd5;
-            border-radius: 16px;
-            padding: 2rem 2.5rem;
-            margin-bottom: 1.25rem;
-            transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
-            cursor: grab;
-            position: relative;
-            overflow: hidden;
-            box-shadow: 0 2px 8px rgba(44, 95, 79, 0.04);
-        }
+      .milestone-card {
+          background: white;
+          border: 1px solid #e5dfd5;
+          border-radius: 16px;
+          padding: 2rem 2.5rem;
+          margin-bottom: 1.25rem;
+          transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+          cursor: grab;
+          position: relative;
+          overflow: hidden;
+          box-shadow: 0 2px 8px rgba(44, 95, 79, 0.04);
+      }
 
-        .milestone-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 5px;
-            height: 100%;
-            background: linear-gradient(180deg, #d4845c 0%, #e69b7a 100%);
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        }
+      .milestone-card::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 5px;
+          height: 100%;
+          background: linear-gradient(180deg, #d4845c 0%, #e69b7a 100%);
+          opacity: 0;
+          transition: opacity 0.3s ease;
+      }
 
-        .milestone-card:hover::before {
-            opacity: 1;
-        }
+      .milestone-card:hover::before {
+          opacity: 1;
+      }
 
-        .milestone-card.dragging {
-            opacity: 0.5;
-            cursor: grabbing;
-            transform: scale(0.98);
-        }
+      .milestone-card.dragging {
+          opacity: 0.5;
+          cursor: grabbing;
+          transform: scale(0.98);
+      }
 
-        .milestone-card.drag-over {
-            border-color: #d4845c;
-            box-shadow: 0 8px 32px rgba(212, 132, 92, 0.2);
-            transform: translateY(-2px);
-        }
+      .milestone-card.drag-over {
+          border-color: #d4845c;
+          box-shadow: 0 8px 32px rgba(212, 132, 92, 0.2);
+          transform: translateY(-2px);
+      }
 
-        .milestone-card:hover {
-            border-color: #d4845c;
-            box-shadow: 0 8px 24px rgba(44, 95, 79, 0.1);
-            transform: translateY(-2px);
-        }
+      .milestone-card:hover {
+          border-color: #d4845c;
+          box-shadow: 0 8px 24px rgba(44, 95, 79, 0.1);
+          transform: translateY(-2px);
+      }
 
-        .milestone-header {
-            display: flex;
-            align-items: center;
-            gap: 1.5rem;
-            padding-right: 4rem;
-        }
+      .milestone-header {
+          display: flex;
+          align-items: center;
+          gap: 1.5rem;
+          padding-right: 4rem;
+      }
 
-        .milestone-name {
-            font-size: 1.5rem;
-            font-weight: 600;
-            color: #2c5f4f;
-            margin: 0;
-            flex: 1;
-            letter-spacing: -0.01em;
-        }
+      .milestone-name {
+          font-size: 1.5rem;
+          font-weight: 600;
+          color: #2c5f4f;
+          margin: 0;
+          flex: 1;
+          letter-spacing: -0.01em;
+      }
 
-        .milestone-level {
-            display: inline-flex;
-            align-items: center;
-            padding: 0.5rem 1.25rem;
-            background: linear-gradient(135deg, rgba(212, 132, 92, 0.1) 0%, rgba(230, 155, 122, 0.1) 100%);
-            color: #d4845c;
-            border: 1.5px solid rgba(212, 132, 92, 0.3);
-            border-radius: 24px;
-            font-size: 0.8125rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.8px;
-            transition: all 0.3s ease;
-        }
+      .milestone-level {
+          display: inline-flex;
+          align-items: center;
+          padding: 0.5rem 1.25rem;
+          background: linear-gradient(135deg, rgba(212, 132, 92, 0.1) 0%, rgba(230, 155, 122, 0.1) 100%);
+          color: #d4845c;
+          border: 1.5px solid rgba(212, 132, 92, 0.3);
+          border-radius: 24px;
+          font-size: 0.8125rem;
+          font-weight: 600;
+          text-transform: uppercase;
+          letter-spacing: 0.8px;
+          transition: all 0.3s ease;
+      }
 
-        .milestone-card:hover .milestone-level {
-            background: linear-gradient(135deg, #d4845c 0%, #e69b7a 100%);
-            color: white;
-            border-color: #d4845c;
-            box-shadow: 0 4px 12px rgba(212, 132, 92, 0.3);
-        }
+      .milestone-card:hover .milestone-level {
+          background: linear-gradient(135deg, #d4845c 0%, #e69b7a 100%);
+          color: white;
+          border-color: #d4845c;
+          box-shadow: 0 4px 12px rgba(212, 132, 92, 0.3);
+      }
 
-        .milestone-level-selector {
-            display: inline-flex;
-            align-items: center;
-            padding: 0.5rem 1rem;
-            background: linear-gradient(135deg, rgba(212, 132, 92, 0.1) 0%, rgba(230, 155, 122, 0.1) 100%);
-            color: #d4845c;
-            border: 1.5px solid rgba(212, 132, 92, 0.3);
-            border-radius: 24px;
-            font-size: 0.8125rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.8px;
-            transition: all 0.3s ease;
-            cursor: pointer;
-            outline: none;
-        }
+      .milestone-level-selector {
+          display: inline-flex;
+          align-items: center;
+          padding: 0.5rem 1rem;
+          background: linear-gradient(135deg, rgba(212, 132, 92, 0.1) 0%, rgba(230, 155, 122, 0.1) 100%);
+          color: #d4845c;
+          border: 1.5px solid rgba(212, 132, 92, 0.3);
+          border-radius: 24px;
+          font-size: 0.8125rem;
+          font-weight: 600;
+          text-transform: uppercase;
+          letter-spacing: 0.8px;
+          transition: all 0.3s ease;
+          cursor: pointer;
+          outline: none;
+      }
 
-        .milestone-level-selector:hover,
-        .milestone-level-selector:focus {
-            background: linear-gradient(135deg, rgba(212, 132, 92, 0.15) 0%, rgba(230, 155, 122, 0.15) 100%);
-            border-color: #d4845c;
-            box-shadow: 0 2px 8px rgba(212, 132, 92, 0.2);
-        }
+      .milestone-level-selector:hover,
+      .milestone-level-selector:focus {
+          background: linear-gradient(135deg, rgba(212, 132, 92, 0.15) 0%, rgba(230, 155, 122, 0.15) 100%);
+          border-color: #d4845c;
+          box-shadow: 0 2px 8px rgba(212, 132, 92, 0.2);
+      }
 
-        .milestone-card:hover .milestone-level-selector {
-            background: linear-gradient(135deg, #d4845c 0%, #e69b7a 100%);
-            color: white;
-            border-color: #d4845c;
-        }
+      .milestone-card:hover .milestone-level-selector {
+          background: linear-gradient(135deg, #d4845c 0%, #e69b7a 100%);
+          color: white;
+          border-color: #d4845c;
+      }
 
-        .milestone-level-selector option {
-            background: white;
-            color: #2c5f4f;
-            text-transform: uppercase;
-        }
+      .milestone-level-selector option {
+          background: white;
+          color: #2c5f4f;
+          text-transform: uppercase;
+      }
 
-        .milestone-position {
-            width: 44px;
-            height: 44px;
-            background: linear-gradient(135deg, #2c5f4f 0%, #3d7a65 100%);
-            color: white;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 700;
-            font-size: 1.125rem;
-            box-shadow: 0 4px 12px rgba(44, 95, 79, 0.2);
-            flex-shrink: 0;
-            transition: all 0.3s ease;
-        }
+      .milestone-position {
+          width: 44px;
+          height: 44px;
+          background: linear-gradient(135deg, #2c5f4f 0%, #3d7a65 100%);
+          color: white;
+          border-radius: 12px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-weight: 700;
+          font-size: 1.125rem;
+          box-shadow: 0 4px 12px rgba(44, 95, 79, 0.2);
+          flex-shrink: 0;
+          transition: all 0.3s ease;
+      }
 
-        .milestone-card:hover .milestone-position {
-            box-shadow: 0 6px 16px rgba(44, 95, 79, 0.3);
-            transform: scale(1.05);
-        }
+      .milestone-card:hover .milestone-position {
+          box-shadow: 0 6px 16px rgba(44, 95, 79, 0.3);
+          transform: scale(1.05);
+      }
 
-        .milestone-card::after {
-            content: '⋮⋮';
-            position: absolute;
-            left: 1rem;
-            top: 50%;
-            transform: translateY(-50%);
-            color: rgba(44, 95, 79, 0.15);
-            font-size: 1.25rem;
-            letter-spacing: -4px;
-            line-height: 1;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-            pointer-events: none;
-        }
+      .milestone-card::after {
+          content: '⋮⋮';
+          position: absolute;
+          left: 1rem;
+          top: 50%;
+          transform: translateY(-50%);
+          color: rgba(44, 95, 79, 0.15);
+          font-size: 1.25rem;
+          letter-spacing: -4px;
+          line-height: 1;
+          opacity: 0;
+          transition: opacity 0.3s ease;
+          pointer-events: none;
+      }
 
-        .milestone-card:hover::after {
-            opacity: 1;
-        }
+      .milestone-card:hover::after {
+          opacity: 1;
+      }
 
-        #milestones-container {
-            margin-top: 2rem;
-        }
+      #milestones-container {
+          margin-top: 2rem;
+      }
 
-        @keyframes slideInUp {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
+      @keyframes slideInUp {
+          from {
+              opacity: 0;
+              transform: translateY(20px);
+          }
+          to {
+              opacity: 1;
+              transform: translateY(0);
+          }
+      }
 
-        .milestone-card {
-            animation: slideInUp 0.4s ease-out backwards;
-        }
+      .milestone-card {
+          animation: slideInUp 0.4s ease-out backwards;
+      }
 
-        .milestone-card:nth-child(1) { animation-delay: 0.05s; }
-        .milestone-card:nth-child(2) { animation-delay: 0.1s; }
-        .milestone-card:nth-child(3) { animation-delay: 0.15s; }
-        .milestone-card:nth-child(4) { animation-delay: 0.2s; }
-        .milestone-card:nth-child(5) { animation-delay: 0.25s; }
-        .milestone-card:nth-child(6) { animation-delay: 0.3s; }
-        .milestone-card:nth-child(7) { animation-delay: 0.35s; }
-        .milestone-card:nth-child(8) { animation-delay: 0.4s; }
-        .milestone-card:nth-child(9) { animation-delay: 0.45s; }
-        .milestone-card:nth-child(10) { animation-delay: 0.5s; }
+      .milestone-card:nth-child(1) {
+          animation-delay: 0.05s;
+      }
 
-        .remove-milestone-btn {
-            position: absolute;
-            top: 50%;
-            right: 1.5rem;
-            transform: translateY(-50%) scale(0.8);
-            width: 36px;
-            height: 36px;
-            background: rgba(200, 90, 84, 0.08);
-            color: #c85a54;
-            border: 1.5px solid rgba(200, 90, 84, 0.2);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 24px;
-            font-weight: 300;
-            line-height: 1;
-            cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
-            opacity: 0;
-        }
+      .milestone-card:nth-child(2) {
+          animation-delay: 0.1s;
+      }
 
-        .milestone-card:hover .remove-milestone-btn {
-            opacity: 1;
-            transform: translateY(-50%) scale(1);
-        }
+      .milestone-card:nth-child(3) {
+          animation-delay: 0.15s;
+      }
 
-        .remove-milestone-btn:hover {
-            background: #c85a54;
-            color: white;
-            border-color: #c85a54;
-            transform: translateY(-50%) scale(1.1);
-            box-shadow: 0 4px 12px rgba(200, 90, 84, 0.3);
-        }
+      .milestone-card:nth-child(4) {
+          animation-delay: 0.2s;
+      }
 
-        .remove-milestone-btn:active {
-            transform: translateY(-50%) scale(0.95);
-        }
-    </style>
+      .milestone-card:nth-child(5) {
+          animation-delay: 0.25s;
+      }
+
+      .milestone-card:nth-child(6) {
+          animation-delay: 0.3s;
+      }
+
+      .milestone-card:nth-child(7) {
+          animation-delay: 0.35s;
+      }
+
+      .milestone-card:nth-child(8) {
+          animation-delay: 0.4s;
+      }
+
+      .milestone-card:nth-child(9) {
+          animation-delay: 0.45s;
+      }
+
+      .milestone-card:nth-child(10) {
+          animation-delay: 0.5s;
+      }
+
+      .remove-milestone-btn {
+          position: absolute;
+          top: 50%;
+          right: 1.5rem;
+          transform: translateY(-50%) scale(0.8);
+          width: 36px;
+          height: 36px;
+          background: rgba(200, 90, 84, 0.08);
+          color: #c85a54;
+          border: 1.5px solid rgba(200, 90, 84, 0.2);
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 24px;
+          font-weight: 300;
+          line-height: 1;
+          cursor: pointer;
+          transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+          opacity: 0;
+      }
+
+      .milestone-card:hover .remove-milestone-btn {
+          opacity: 1;
+          transform: translateY(-50%) scale(1);
+      }
+
+      .remove-milestone-btn:hover {
+          background: #c85a54;
+          color: white;
+          border-color: #c85a54;
+          transform: translateY(-50%) scale(1.1);
+          box-shadow: 0 4px 12px rgba(200, 90, 84, 0.3);
+      }
+
+      .remove-milestone-btn:active {
+          transform: translateY(-50%) scale(0.95);
+      }
+  </style>
 </head>
 <body>
-  <div class="background-pattern"></div>
-  <div class="menu-overlay"></div>
+<div class="background-pattern"></div>
+<div class="menu-overlay"></div>
 
-  <header class="header">
-    <div class="container header-content">
-      <a href="home.html" class="logo">Flashback</a>
-      <button class="menu-toggle" aria-label="Toggle menu">
-        <span></span>
-        <span></span>
-        <span></span>
-      </button>
-      <nav class="nav">
-        <a href="home.html">Home</a>
-        <a href="account.html">Account</a>
-        <a href="#" id="signout-btn">Sign Out</a>
-      </nav>
+<header class="header">
+  <div class="container header-content">
+    <a href="home.html" class="logo">Flashback</a>
+    <button class="menu-toggle" aria-label="Toggle menu">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+    <nav class="nav">
+      <a href="home.html">Home</a>
+      <a href="account.html">Account</a>
+      <a href="#" id="signout-btn">Sign Out</a>
+    </nav>
+  </div>
+</header>
+
+<main class="dashboard">
+  <div class="container">
+    <div class="dashboard-header">
+      <h1 id="roadmap-name">Loading...</h1>
+      <div style="display: flex; gap: 0.5rem;">
+        <button id="rename-roadmap-btn" class="btn btn-secondary" style="display: none;">
+          Rename
+        </button>
+        <button id="remove-roadmap-btn" class="btn btn-danger" style="display: none;">
+          Remove Roadmap
+        </button>
+      </div>
     </div>
-  </header>
 
-    <main class="dashboard">
-        <div class="container">
-            <div class="dashboard-header">
-                <h1 id="roadmap-name">Loading...</h1>
-                <div style="display: flex; gap: 0.5rem;">
-                    <button id="rename-roadmap-btn" class="btn btn-secondary" style="display: none;">
-                        Rename
-                    </button>
-                    <button id="remove-roadmap-btn" class="btn btn-danger" style="display: none;">
-                        Remove Roadmap
-                    </button>
-                </div>
-            </div>
-            
-            <div id="error-message" style="display: none;"></div>
+    <div id="error-message" style="display: none;"></div>
 
-            <!-- Rename Roadmap Modal -->
-            <div id="rename-roadmap-modal" class="card" style="display: none; max-width: 500px; margin-bottom: 2rem;">
-                <div class="card-header">
-                    <h3 class="card-title">Rename Roadmap</h3>
-                </div>
-                <form id="rename-roadmap-form">
-                    <div class="form-group">
-                        <label class="form-label" for="rename-roadmap-name">New Roadmap Name</label>
-                        <input
-                            type="text"
-                            id="rename-roadmap-name"
-                            class="form-input"
-                            placeholder="Enter new name..."
-                            required
-                        >
-                    </div>
-                    <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
-                        <button type="submit" id="save-rename-btn" class="btn btn-primary">
-                            Save
-                        </button>
-                        <button type="button" id="cancel-rename-btn" class="btn btn-secondary">
-                            Cancel
-                        </button>
-                    </div>
-                </form>
-            </div>
+    <!-- Rename Roadmap Modal -->
+    <div id="rename-roadmap-modal" class="card" style="display: none; max-width: 500px; margin-bottom: 2rem;">
+      <div class="card-header">
+        <h3 class="card-title">Rename Roadmap</h3>
+      </div>
+      <form id="rename-roadmap-form">
+        <div class="form-group">
+          <label class="form-label" for="rename-roadmap-name">New Roadmap Name</label>
+          <input
+              type="text"
+              id="rename-roadmap-name"
+              class="form-input"
+              placeholder="Enter new name..."
+              required
+          >
+        </div>
+        <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+          <button type="submit" id="save-rename-btn" class="btn btn-primary">
+            Save
+          </button>
+          <button type="button" id="cancel-rename-btn" class="btn btn-secondary">
+            Cancel
+          </button>
+        </div>
+      </form>
+    </div>
 
-            <!-- Remove Roadmap Confirmation -->
-            <div id="remove-roadmap-modal" class="card" style="display: none; max-width: 500px; margin-bottom: 2rem;">
-                <div class="card-header">
-                    <h3 class="card-title" style="color: var(--danger-color);">Remove Roadmap</h3>
-                </div>
-                <div style="padding: 1rem 0;">
-                    <p>Are you sure you want to remove this roadmap? This action cannot be undone.</p>
-                </div>
-                <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
-                    <button id="confirm-remove-btn" class="btn btn-danger">
-                        Yes, Remove
-                    </button>
-                    <button id="cancel-remove-btn" class="btn btn-secondary">
-                        Cancel
-                    </button>
-                </div>
-            </div>
+    <!-- Remove Roadmap Confirmation -->
+    <div id="remove-roadmap-modal" class="card" style="display: none; max-width: 500px; margin-bottom: 2rem;">
+      <div class="card-header">
+        <h3 class="card-title" style="color: var(--danger-color);">Remove Roadmap</h3>
+      </div>
+      <div style="padding: 1rem 0;">
+        <p>Are you sure you want to remove this roadmap? This action cannot be undone.</p>
+      </div>
+      <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+        <button id="confirm-remove-btn" class="btn btn-danger">
+          Yes, Remove
+        </button>
+        <button id="cancel-remove-btn" class="btn btn-secondary">
+          Cancel
+        </button>
+      </div>
+    </div>
 
-          <button id="create-milestone-btn" class="btn btn-primary btn-full" style="margin-top: 2rem;">
-            + Add Subject to Roadmap
+    <button id="create-milestone-btn" class="btn btn-primary btn-full" style="margin-top: 2rem;">
+      + Add Subject to Roadmap
+    </button>
+
+    <div id="loading" style="display: none; text-align: center; padding: 3rem;">
+      <div class="loading" style="width: 40px; height: 40px; border-width: 4px;"></div>
+      <p class="text-muted mt-md">Loading subjects...</p>
+    </div>
+
+    <div id="milestones-container" class="timeline">
+      <!-- milestones will be inserted here -->
+    </div>
+
+    <div id="empty-state" style="display: none; text-align: center; padding: 4rem 2rem;">
+      <h3 style="color: var(--text-muted);">No subjects yet</h3>
+      <p class="text-muted">Add your first subject to this roadmap!</p>
+    </div>
+
+    <div id="add-milestone-form" class="card" style="display: none; max-width: 700px;">
+      <div class="card-header">
+        <h3 class="card-title">Add Subject to Roadmap</h3>
+      </div>
+
+      <form id="milestone-form">
+        <!-- Search existing subjects section -->
+        <div id="search-subject-section" class="search-section">
+          <div class="form-group">
+            <label class="form-label" for="subject-search-input">Search for a subject</label>
+            <input
+                type="text"
+                id="subject-search-input"
+                class="form-input"
+                placeholder="Start typing to search..."
+                autocomplete="off"
+            >
+          </div>
+
+          <div id="search-results-loading" style="display: none; text-align: center; padding: 1rem;">
+            <div class="loading" style="width: 30px; height: 30px; border-width: 3px; margin: 0 auto;"></div>
+          </div>
+
+          <div id="search-results" style="display: none;">
+            <!-- Search results will be inserted here -->
+          </div>
+
+          <div id="no-search-results"
+               style="display: none; text-align: center; padding: 1rem; color: var(--text-muted);">
+            No subjects found
+          </div>
+
+          <div style="margin-top: 1rem; text-align: center;">
+            <button type="button" id="create-new-subject-btn" class="btn btn-secondary">
+              + Create New Subject
+            </button>
+          </div>
+        </div>
+
+        <!-- Create new subject section -->
+        <div id="create-subject-section" class="create-subject-section" style="display: none;">
+          <button type="button" id="back-to-search-btn" class="btn btn-link" style="padding: 0; margin-bottom: 1rem;">
+            ← Back to search
           </button>
 
-          <div id="loading" style="display: none; text-align: center; padding: 3rem;">
-                <div class="loading" style="width: 40px; height: 40px; border-width: 4px;"></div>
-                <p class="text-muted mt-md">Loading subjects...</p>
+          <div id="create-subject-form">
+            <div class="form-group">
+              <label class="form-label" for="new-subject-name">New Subject Name</label>
+              <input
+                  type="text"
+                  id="new-subject-name"
+                  class="form-input"
+                  placeholder="e.g., Linear Algebra"
+              >
             </div>
 
-          <div id="milestones-container" class="timeline">
-                <!-- milestones will be inserted here -->
-            </div>
-
-            <div id="empty-state" style="display: none; text-align: center; padding: 4rem 2rem;">
-                <h3 style="color: var(--text-muted);">No subjects yet</h3>
-                <p class="text-muted">Add your first subject to this roadmap!</p>
-            </div>
-
-            <div id="add-milestone-form" class="card" style="display: none; max-width: 700px;">
-                <div class="card-header">
-                    <h3 class="card-title">Add Subject to Roadmap</h3>
-                </div>
-
-                <form id="milestone-form">
-                    <!-- Search existing subjects section -->
-                    <div id="search-subject-section" class="search-section">
-                        <div class="form-group">
-                            <label class="form-label" for="subject-search-input">Search for a subject</label>
-                            <input
-                                type="text"
-                                id="subject-search-input"
-                                class="form-input"
-                                placeholder="Start typing to search..."
-                                autocomplete="off"
-                            >
-                        </div>
-
-                        <div id="search-results-loading" style="display: none; text-align: center; padding: 1rem;">
-                            <div class="loading" style="width: 30px; height: 30px; border-width: 3px; margin: 0 auto;"></div>
-                        </div>
-
-                        <div id="search-results" style="display: none;">
-                            <!-- Search results will be inserted here -->
-                        </div>
-
-                        <div id="no-search-results" style="display: none; text-align: center; padding: 1rem; color: var(--text-muted);">
-                            No subjects found
-                        </div>
-
-                        <div style="margin-top: 1rem; text-align: center;">
-                            <button type="button" id="create-new-subject-btn" class="btn btn-secondary">
-                                + Create New Subject
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Create new subject section -->
-                    <div id="create-subject-section" class="create-subject-section" style="display: none;">
-                        <button type="button" id="back-to-search-btn" class="btn btn-link" style="padding: 0; margin-bottom: 1rem;">
-                            ← Back to search
-                        </button>
-
-                        <div id="create-subject-form">
-                            <div class="form-group">
-                                <label class="form-label" for="new-subject-name">New Subject Name</label>
-                                <input
-                                    type="text"
-                                    id="new-subject-name"
-                                    class="form-input"
-                                    placeholder="e.g., Linear Algebra"
-                                >
-                            </div>
-
-                            <button type="button" id="save-new-subject-btn" class="btn btn-primary">
-                                Create Subject
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Expertise level selection -->
-                    <div class="form-group" style="margin-top: 2rem;">
-                        <label class="form-label">Select expertise level for this roadmap</label>
-                        <div class="level-selector">
-                            <div class="level-option">
-                                <input type="radio" id="level-surface" name="expertise-level" value="0" checked>
-                                <label for="level-surface">
-                                    Surface
-                                    <div class="level-description">Basic understanding</div>
-                                </label>
-                            </div>
-                            <div class="level-option">
-                                <input type="radio" id="level-depth" name="expertise-level" value="1">
-                                <label for="level-depth">
-                                    Depth
-                                    <div class="level-description">Intermediate mastery</div>
-                                </label>
-                            </div>
-                            <div class="level-option">
-                                <input type="radio" id="level-origin" name="expertise-level" value="2">
-                                <label for="level-origin">
-                                    Origin
-                                    <div class="level-description">Expert level</div>
-                                </label>
-                            </div>
-                        </div>
-                        <input type="hidden" id="expertise-level" value="0">
-                    </div>
-
-                    <div style="display: flex; gap: 1rem; margin-top: 2rem;">
-                        <button type="submit" id="save-milestone-btn" class="btn btn-primary">
-                            Add to Roadmap
-                        </button>
-                        <button type="button" id="cancel-milestone-btn" class="btn btn-secondary">
-                            Cancel
-                        </button>
-                    </div>
-                </form>
-            </div>
+            <button type="button" id="save-new-subject-btn" class="btn btn-primary">
+              Create Subject
+            </button>
+          </div>
         </div>
-    </main>
-    
-    <script src="proto/flashback.js"></script>
-    <script src="js/client.js"></script>
-    <script src="js/ui.js"></script>
-    <script src="js/roadmap.js"></script>
-    <script src="js/nav.js"></script>
-    <script>
-        // Update hidden input when radio button changes
-        document.querySelectorAll('input[name="expertise-level"]').forEach(radio => {
-            radio.addEventListener('change', (e) => {
-                document.getElementById('expertise-level').value = e.target.value;
-            });
+
+        <!-- Expertise level selection -->
+        <div class="form-group" style="margin-top: 2rem;">
+          <label class="form-label">Select expertise level for this roadmap</label>
+          <div class="level-selector">
+            <div class="level-option">
+              <input type="radio" id="level-surface" name="expertise-level" value="0" checked>
+              <label for="level-surface">
+                Surface
+                <div class="level-description">Basic understanding</div>
+              </label>
+            </div>
+            <div class="level-option">
+              <input type="radio" id="level-depth" name="expertise-level" value="1">
+              <label for="level-depth">
+                Depth
+                <div class="level-description">Intermediate mastery</div>
+              </label>
+            </div>
+            <div class="level-option">
+              <input type="radio" id="level-origin" name="expertise-level" value="2">
+              <label for="level-origin">
+                Origin
+                <div class="level-description">Expert level</div>
+              </label>
+            </div>
+          </div>
+          <input type="hidden" id="expertise-level" value="0">
+        </div>
+
+        <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+          <button type="submit" id="save-milestone-btn" class="btn btn-primary">
+            Add to Roadmap
+          </button>
+          <button type="button" id="cancel-milestone-btn" class="btn btn-secondary">
+            Cancel
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</main>
+
+<script src="proto/flashback.js"></script>
+<script src="js/client.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/roadmap.js"></script>
+<script src="js/nav.js"></script>
+<script>
+    // Update hidden input when radio button changes
+    document.querySelectorAll('input[name="expertise-level"]').forEach(radio => {
+        radio.addEventListener('change', (e) => {
+            document.getElementById('expertise-level').value = e.target.value;
         });
-    </script>
+    });
+</script>
 </body>
 </html>

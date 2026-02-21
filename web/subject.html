@@ -1,677 +1,682 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Subject - Flashback</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Subject - Flashback</title>
 
-    <!-- Design System CSS - MUST be loaded first -->
-    <link rel="stylesheet" href="css/flashback-design.css">
-    <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <!-- Design System CSS - MUST be loaded first -->
+  <link rel="stylesheet" href="css/flashback-design.css">
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
 
-    <!-- Google Fonts - Inter (matching design system) -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <!-- Google Fonts - Inter (matching design system) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet">
 
-    <style>
-        /* Subject page specific styles only */
-        body {
-            padding-top: 5rem;
-            padding-bottom: var(--space-xl);
-        }
+  <style>
+      /* Subject page specific styles only */
+      body {
+          padding-top: 5rem;
+          padding-bottom: var(--space-xl);
+      }
 
-        /* Page-specific component styles */
-        .tabs {
-            display: flex;
-            gap: 1rem;
-            border-bottom: 2px solid var(--border-color);
-            margin-bottom: 2rem;
-        }
+      /* Page-specific component styles */
+      .tabs {
+          display: flex;
+          gap: 1rem;
+          border-bottom: 2px solid var(--border-color);
+          margin-bottom: 2rem;
+      }
 
-        .tab {
-            padding: 0.75rem 1.5rem;
-            background: none;
-            border: none;
-            color: var(--text-muted);
-            font-size: 1rem;
-            font-weight: 500;
-            cursor: pointer;
-            position: relative;
-            transition: color 0.2s;
-        }
+      .tab {
+          padding: 0.75rem 1.5rem;
+          background: none;
+          border: none;
+          color: var(--text-muted);
+          font-size: 1rem;
+          font-weight: 500;
+          cursor: pointer;
+          position: relative;
+          transition: color 0.2s;
+      }
 
-        .tab:hover {
-            color: var(--text-primary);
-        }
+      .tab:hover {
+          color: var(--text-primary);
+      }
 
-        .tab.active {
-            color: var(--accent-color);
-        }
+      .tab.active {
+          color: var(--accent-color);
+      }
 
-        .tab.active::after {
-            content: '';
-            position: absolute;
-            bottom: -2px;
-            left: 0;
-            right: 0;
-            height: 2px;
-            background-color: var(--accent-color);
-        }
+      .tab.active::after {
+          content: '';
+          position: absolute;
+          bottom: -2px;
+          left: 0;
+          right: 0;
+          height: 2px;
+          background-color: var(--accent-color);
+      }
 
-        .tab-content {
-            display: none;
-        }
+      .tab-content {
+          display: none;
+      }
 
-        .tab-content.active {
-            display: block;
-        }
+      .tab-content.active {
+          display: block;
+      }
 
-        .resource-item {
-            padding: 1rem;
-            border: 1px solid var(--border-color);
-            border-radius: 4px;
-            margin-bottom: 1rem;
-            transition: all 0.2s;
-        }
+      .resource-item {
+          padding: 1rem;
+          border: 1px solid var(--border-color);
+          border-radius: 4px;
+          margin-bottom: 1rem;
+          transition: all 0.2s;
+      }
 
-        .resource-item:hover {
-            border-color: var(--accent-color);
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-        }
+      .resource-item:hover {
+          border-color: var(--accent-color);
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      }
 
-        .resource-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 0.5rem;
-        }
+      .resource-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-start;
+          margin-bottom: 0.5rem;
+      }
 
-        .search-result-item {
-            padding: 1rem;
-            border: 1px solid var(--border-color);
-            border-radius: 4px;
-            margin-bottom: 0.75rem;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
+      .search-result-item {
+          padding: 1rem;
+          border: 1px solid var(--border-color);
+          border-radius: 4px;
+          margin-bottom: 0.75rem;
+          cursor: pointer;
+          transition: all 0.2s;
+      }
 
-        .search-result-item:hover {
-            border-color: var(--accent-color);
-            background-color: var(--accent-light);
-        }
+      .search-result-item:hover {
+          border-color: var(--accent-color);
+          background-color: var(--accent-light);
+      }
 
-        .drop-resource-btn {
-            padding: 0.35rem 0.75rem;
-            background-color: #dc3545;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 0.875rem;
-            transition: background-color 0.2s;
-        }
+      .drop-resource-btn {
+          padding: 0.35rem 0.75rem;
+          background-color: #dc3545;
+          color: white;
+          border: none;
+          border-radius: 4px;
+          cursor: pointer;
+          font-size: 0.875rem;
+          transition: background-color 0.2s;
+      }
 
-        .drop-resource-btn:hover {
-            background-color: #c82333;
-        }
+      .drop-resource-btn:hover {
+          background-color: #c82333;
+      }
 
-        .resource-name {
-            font-weight: 600;
-            color: var(--text-primary);
-            font-size: 1.1rem;
-        }
+      .resource-name {
+          font-weight: 600;
+          color: var(--text-primary);
+          font-size: 1.1rem;
+      }
 
-        .resource-type {
-            display: inline-block;
-            padding: 0.25rem 0.75rem;
-            background-color: var(--accent-light);
-            color: var(--accent-color);
-            border-radius: 12px;
-            font-size: 0.875rem;
-            font-weight: 500;
-            text-transform: capitalize;
-        }
+      .resource-type {
+          display: inline-block;
+          padding: 0.25rem 0.75rem;
+          background-color: var(--accent-light);
+          color: var(--accent-color);
+          border-radius: 12px;
+          font-size: 0.875rem;
+          font-weight: 500;
+          text-transform: capitalize;
+      }
 
-        .resource-url {
-            color: var(--text-muted);
-            word-break: break-all;
-            font-size: 0.9rem;
-        }
+      .resource-url {
+          color: var(--text-muted);
+          word-break: break-all;
+          font-size: 0.9rem;
+      }
 
-        .resource-url a {
-            color: var(--accent-color);
-            text-decoration: none;
-        }
+      .resource-url a {
+          color: var(--accent-color);
+          text-decoration: none;
+      }
 
-        .resource-url a:hover {
-            text-decoration: underline;
-        }
+      .resource-url a:hover {
+          text-decoration: underline;
+      }
 
-        .sections-container {
-            margin-top: 1rem;
-            padding-top: 1rem;
-            border-top: 1px solid var(--border-color);
-        }
+      .sections-container {
+          margin-top: 1rem;
+          padding-top: 1rem;
+          border-top: 1px solid var(--border-color);
+      }
 
-        .section-item {
-            padding: 0.5rem;
-            margin-bottom: 0.5rem;
-            border-left: 3px solid var(--accent-color);
-            padding-left: 0.75rem;
-        }
+      .section-item {
+          padding: 0.5rem;
+          margin-bottom: 0.5rem;
+          border-left: 3px solid var(--accent-color);
+          padding-left: 0.75rem;
+      }
 
-        .section-name {
-            font-weight: 500;
-            color: var(--text-primary);
-            margin-bottom: 0.25rem;
-        }
+      .section-name {
+          font-weight: 500;
+          color: var(--text-primary);
+          margin-bottom: 0.25rem;
+      }
 
-        .section-link {
-            font-size: 0.85rem;
-        }
+      .section-link {
+          font-size: 0.85rem;
+      }
 
-        .section-link a {
-            color: var(--accent-color);
-            text-decoration: none;
-        }
+      .section-link a {
+          color: var(--accent-color);
+          text-decoration: none;
+      }
 
-        .section-link a:hover {
-            text-decoration: underline;
-        }
+      .section-link a:hover {
+          text-decoration: underline;
+      }
 
-        .toggle-sections-btn {
-            margin-top: 0.75rem;
-            padding: 0.5rem 1rem;
-            background: none;
-            border: 1px solid var(--border-color);
-            border-radius: 4px;
-            cursor: pointer;
-            color: var(--accent-color);
-            font-size: 0.9rem;
-            transition: all 0.2s;
-        }
+      .toggle-sections-btn {
+          margin-top: 0.75rem;
+          padding: 0.5rem 1rem;
+          background: none;
+          border: 1px solid var(--border-color);
+          border-radius: 4px;
+          cursor: pointer;
+          color: var(--accent-color);
+          font-size: 0.9rem;
+          transition: all 0.2s;
+      }
 
-        .toggle-sections-btn:hover {
-            background-color: var(--accent-light);
-            border-color: var(--accent-color);
-        }
+      .toggle-sections-btn:hover {
+          background-color: var(--accent-light);
+          border-color: var(--accent-color);
+      }
 
-        .topic-item {
-            background: white;
-            border: 1px solid #e5dfd5;
-            border-radius: 16px;
-            padding: 2rem 2.5rem;
-            margin-bottom: 1.25rem;
-            transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
-            cursor: grab;
-            position: relative;
-            overflow: hidden;
-            box-shadow: 0 2px 8px rgba(44, 95, 79, 0.04);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
+      .topic-item {
+          background: white;
+          border: 1px solid #e5dfd5;
+          border-radius: 16px;
+          padding: 2rem 2.5rem;
+          margin-bottom: 1.25rem;
+          transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+          cursor: grab;
+          position: relative;
+          overflow: hidden;
+          box-shadow: 0 2px 8px rgba(44, 95, 79, 0.04);
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+      }
 
-        .topic-item::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 5px;
-            height: 100%;
-            background: linear-gradient(180deg, #d4845c 0%, #e69b7a 100%);
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        }
+      .topic-item::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 5px;
+          height: 100%;
+          background: linear-gradient(180deg, #d4845c 0%, #e69b7a 100%);
+          opacity: 0;
+          transition: opacity 0.3s ease;
+      }
 
-        .topic-item:hover::before {
-            opacity: 1;
-        }
+      .topic-item:hover::before {
+          opacity: 1;
+      }
 
-        .topic-item.dragging {
-            opacity: 0.5;
-            cursor: grabbing;
-            transform: scale(0.98);
-        }
+      .topic-item.dragging {
+          opacity: 0.5;
+          cursor: grabbing;
+          transform: scale(0.98);
+      }
 
-        .topic-item.drag-over {
-            border-color: #d4845c;
-            box-shadow: 0 8px 32px rgba(212, 132, 92, 0.2);
-            transform: translateY(-2px);
-        }
+      .topic-item.drag-over {
+          border-color: #d4845c;
+          box-shadow: 0 8px 32px rgba(212, 132, 92, 0.2);
+          transform: translateY(-2px);
+      }
 
-        .topic-item:hover {
-            border-color: #d4845c;
-            box-shadow: 0 8px 24px rgba(44, 95, 79, 0.1);
-            transform: translateY(-2px);
-        }
+      .topic-item:hover {
+          border-color: #d4845c;
+          box-shadow: 0 8px 24px rgba(44, 95, 79, 0.1);
+          transform: translateY(-2px);
+      }
 
-        .topic-item::after {
-            content: '⋮⋮';
-            position: absolute;
-            left: 1rem;
-            top: 50%;
-            transform: translateY(-50%);
-            color: rgba(44, 95, 79, 0.15);
-            font-size: 1.25rem;
-            letter-spacing: -4px;
-            transition: all 0.3s ease;
-        }
+      .topic-item::after {
+          content: '⋮⋮';
+          position: absolute;
+          left: 1rem;
+          top: 50%;
+          transform: translateY(-50%);
+          color: rgba(44, 95, 79, 0.15);
+          font-size: 1.25rem;
+          letter-spacing: -4px;
+          transition: all 0.3s ease;
+      }
 
-        .topic-item:hover::after {
-            color: rgba(44, 95, 79, 0.3);
-        }
+      .topic-item:hover::after {
+          color: rgba(44, 95, 79, 0.3);
+      }
 
-        .topic-content {
-            display: flex;
-            align-items: center;
-            gap: 1.5rem;
-            flex: 1;
-        }
+      .topic-content {
+          display: flex;
+          align-items: center;
+          gap: 1.5rem;
+          flex: 1;
+      }
 
-        .topic-position {
-            width: 44px;
-            height: 44px;
-            background: linear-gradient(135deg, #2c5f4f 0%, #3d7a65 100%);
-            color: white;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 700;
-            font-size: 1.125rem;
-            box-shadow: 0 4px 12px rgba(44, 95, 79, 0.2);
-            flex-shrink: 0;
-            transition: all 0.3s ease;
-        }
+      .topic-position {
+          width: 44px;
+          height: 44px;
+          background: linear-gradient(135deg, #2c5f4f 0%, #3d7a65 100%);
+          color: white;
+          border-radius: 12px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-weight: 700;
+          font-size: 1.125rem;
+          box-shadow: 0 4px 12px rgba(44, 95, 79, 0.2);
+          flex-shrink: 0;
+          transition: all 0.3s ease;
+      }
 
-        .topic-item:hover .topic-position {
-            box-shadow: 0 6px 16px rgba(44, 95, 79, 0.3);
-            transform: scale(1.05);
-        }
+      .topic-item:hover .topic-position {
+          box-shadow: 0 6px 16px rgba(44, 95, 79, 0.3);
+          transform: scale(1.05);
+      }
 
-        .topic-name {
-            font-size: 1.5rem;
-            font-weight: 600;
-            color: #2c5f4f;
-            margin: 0;
-            flex: 1;
-            letter-spacing: -0.01em;
-        }
+      .topic-name {
+          font-size: 1.5rem;
+          font-weight: 600;
+          color: #2c5f4f;
+          margin: 0;
+          flex: 1;
+          letter-spacing: -0.01em;
+      }
 
-        .topic-level {
-            display: inline-flex;
-            align-items: center;
-            padding: 0.5rem 1.25rem;
-            background: linear-gradient(135deg, rgba(212, 132, 92, 0.1) 0%, rgba(230, 155, 122, 0.1) 100%);
-            color: #d4845c;
-            border: 1.5px solid rgba(212, 132, 92, 0.3);
-            border-radius: 24px;
-            font-size: 0.8125rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.8px;
-            transition: all 0.3s ease;
-        }
+      .topic-level {
+          display: inline-flex;
+          align-items: center;
+          padding: 0.5rem 1.25rem;
+          background: linear-gradient(135deg, rgba(212, 132, 92, 0.1) 0%, rgba(230, 155, 122, 0.1) 100%);
+          color: #d4845c;
+          border: 1.5px solid rgba(212, 132, 92, 0.3);
+          border-radius: 24px;
+          font-size: 0.8125rem;
+          font-weight: 600;
+          text-transform: uppercase;
+          letter-spacing: 0.8px;
+          transition: all 0.3s ease;
+      }
 
-        .topic-item:hover .topic-level {
-            background: linear-gradient(135deg, #d4845c 0%, #e69b7a 100%);
-            color: white;
-            border-color: #d4845c;
-            box-shadow: 0 4px 12px rgba(212, 132, 92, 0.3);
-        }
+      .topic-item:hover .topic-level {
+          background: linear-gradient(135deg, #d4845c 0%, #e69b7a 100%);
+          color: white;
+          border-color: #d4845c;
+          box-shadow: 0 4px 12px rgba(212, 132, 92, 0.3);
+      }
 
-        .level-section {
-            margin-bottom: 3rem;
-        }
+      .level-section {
+          margin-bottom: 3rem;
+      }
 
-        .level-header {
-            font-size: 1.125rem;
-            font-weight: 600;
-            color: #2c5f4f;
-            margin-bottom: 1.5rem;
-            padding-bottom: 0.75rem;
-            border-bottom: 2px solid #e5dfd5;
-            letter-spacing: -0.01em;
-        }
-    </style>
+      .level-header {
+          font-size: 1.125rem;
+          font-weight: 600;
+          color: #2c5f4f;
+          margin-bottom: 1.5rem;
+          padding-bottom: 0.75rem;
+          border-bottom: 2px solid #e5dfd5;
+          letter-spacing: -0.01em;
+      }
+  </style>
 </head>
 <body>
-  <div class="background-pattern"></div>
-  <div class="menu-overlay"></div>
+<div class="background-pattern"></div>
+<div class="menu-overlay"></div>
 
-  <header class="header">
-    <div class="container header-content">
-      <a href="home.html" class="logo">Flashback</a>
-      <button class="menu-toggle" aria-label="Toggle menu">
-        <span></span>
-        <span></span>
-        <span></span>
-      </button>
-      <nav class="nav">
-        <a href="home.html">Home</a>
-        <a href="account.html">Account</a>
-        <a href="#" id="signout-btn">Sign Out</a>
-      </nav>
-    </div>
-  </header>
+<header class="header">
+  <div class="container header-content">
+    <a href="home.html" class="logo">Flashback</a>
+    <button class="menu-toggle" aria-label="Toggle menu">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+    <nav class="nav">
+      <a href="home.html">Home</a>
+      <a href="account.html">Account</a>
+      <a href="#" id="signout-btn">Sign Out</a>
+    </nav>
+  </div>
+</header>
 
-    <main class="dashboard">
-        <div class="container">
-            <div class="dashboard-header">
-                <h2 id="breadcrumb" style="color: var(--text-primary); font-size: 1.5rem; font-weight: 600; margin: 0; margin-bottom: 1rem;">
-                    <!-- Breadcrumb will be inserted here -->
-                </h2>
-                <div style="display: flex; justify-content: space-between; align-items: center; gap: 1rem;">
-                    <h1 id="subject-name" style="margin-bottom: 0; flex: 1;">Loading...</h1>
-                    <div style="display: flex; gap: 0.5rem; flex-shrink: 0;">
-                        <button id="rename-subject-btn" class="btn btn-secondary" style="padding: 0.5rem 1rem;">
-                            Rename
-                        </button>
-                        <button id="remove-subject-btn" class="btn btn-danger" style="padding: 0.5rem 1rem;">
-                            Remove
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Rename Subject Modal -->
-            <div id="rename-subject-modal" class="card" style="display: none; max-width: 500px; margin-bottom: 2rem;">
-                <div class="card-header">
-                    <h3 class="card-title">Rename Subject</h3>
-                </div>
-                <form id="rename-subject-form">
-                    <div class="form-group">
-                        <label class="form-label" for="rename-subject-name">Subject Name</label>
-                        <input
-                            type="text"
-                            id="rename-subject-name"
-                            class="form-input"
-                            placeholder="Enter new subject name"
-                            required
-                        >
-                    </div>
-                    <div style="display: flex; gap: 1rem; margin-top: 2rem;">
-                        <button type="submit" id="save-rename-subject-btn" class="btn btn-primary">
-                            Save
-                        </button>
-                        <button type="button" id="cancel-rename-subject-btn" class="btn btn-secondary">
-                            Cancel
-                        </button>
-                    </div>
-                </form>
-            </div>
-
-            <!-- Remove Subject Modal -->
-            <div id="remove-subject-modal" class="card" style="display: none; max-width: 500px; margin-bottom: 2rem;">
-                <div class="card-header">
-                    <h3 class="card-title">Remove Subject</h3>
-                </div>
-                <div style="padding: 1rem 0;">
-                    <p style="color: var(--text-muted); margin-bottom: 1.5rem;">
-                        Are you sure you want to remove this subject? This action cannot be undone. All associated topics, resources, and cards will be removed.
-                    </p>
-                    <div style="display: flex; gap: 1rem;">
-                        <button id="confirm-remove-subject-btn" class="btn btn-danger">
-                            Yes, Remove Subject
-                        </button>
-                        <button id="cancel-remove-subject-btn" class="btn btn-secondary">
-                            Cancel
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
-                <div class="tabs" style="margin-bottom: 0;">
-                    <button class="tab active" data-tab="topics">Topics</button>
-                    <!-- <button class="tab" data-tab="assessments">Assessments</button> -->
-                    <button class="tab" data-tab="resources">Resources</button>
-                </div>
-                <div style="display: flex; gap: 0.5rem;">
-                    <button id="start-practice-btn" class="btn btn-primary">
-                        Start Practice
-                    </button>
-                </div>
-            </div>
-
-          <button id="add-topic-btn" class="btn btn-primary btn-full" style="margin-bottom: 2rem; margin-top: 1.5rem;">
-            + Add Topic
+<main class="dashboard">
+  <div class="container">
+    <div class="dashboard-header">
+      <h2 id="breadcrumb"
+          style="color: var(--text-primary); font-size: 1.5rem; font-weight: 600; margin: 0; margin-bottom: 1rem;">
+        <!-- Breadcrumb will be inserted here -->
+      </h2>
+      <div style="display: flex; justify-content: space-between; align-items: center; gap: 1rem;">
+        <h1 id="subject-name" style="margin-bottom: 0; flex: 1;">Loading...</h1>
+        <div style="display: flex; gap: 0.5rem; flex-shrink: 0;">
+          <button id="rename-subject-btn" class="btn btn-secondary" style="padding: 0.5rem 1rem;">
+            Rename
           </button>
-
-          <div id="error-message" style="display: none;"></div>
-
-            <!-- topics tab -->
-            <div id="topics-content" class="tab-content active">
-                <div id="topics-loading" style="display: none; text-align: center; padding: 3rem;">
-                    <div class="loading" style="width: 40px; height: 40px; border-width: 4px;"></div>
-                    <p class="text-muted mt-md">Loading topics...</p>
-                </div>
-
-                <div id="topics-list">
-                    <!-- topics will be inserted here -->
-                </div>
-
-                <div id="topics-empty-state" style="display: none; text-align: center; padding: 4rem 2rem;">
-                    <h3 style="color: var(--text-muted);">No topics yet</h3>
-                    <p class="text-muted">Add your first topic to this subject!</p>
-                </div>
-
-                <div id="add-topic-form" class="card" style="display: none; max-width: 700px;">
-                    <div class="card-header">
-                        <h3 class="card-title">Add Topic</h3>
-                    </div>
-
-                    <form id="topic-form">
-                        <div class="form-group">
-                            <label class="form-label" for="topic-name">Topic Name</label>
-                            <input
-                                type="text"
-                                id="topic-name"
-                                class="form-input"
-                                placeholder="e.g., Gradient Descent"
-                                required
-                            >
-                        </div>
-
-                        <div class="form-group">
-                            <label class="form-label">Expertise Level</label>
-                            <div style="display: flex; gap: 1rem; margin-top: 0.5rem;">
-                                <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
-                                    <input type="radio" name="topic-level" value="0" checked>
-                                    <span>Surface</span>
-                                </label>
-                                <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
-                                    <input type="radio" name="topic-level" value="1">
-                                    <span>Depth</span>
-                                </label>
-                                <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
-                                    <input type="radio" name="topic-level" value="2">
-                                    <span>Origin</span>
-                                </label>
-                            </div>
-                            <p style="font-size: 0.875rem; color: var(--text-muted); margin-top: 0.5rem;">
-                                <strong>Surface:</strong> Complete understanding •
-                                <strong>Depth:</strong> In-depth details •
-                                <strong>Origin:</strong> Creator level
-                            </p>
-                        </div>
-
-                        <div style="display: flex; gap: 1rem; margin-top: 2rem;">
-                            <button type="submit" id="save-topic-btn" class="btn btn-primary">
-                                Save Topic
-                            </button>
-                            <button type="button" id="cancel-topic-btn" class="btn btn-secondary">
-                                Cancel
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-
-            <!-- assessments tab -->
-            <div id="assessments-content" class="tab-content">
-                <div id="assessments-loading" style="display: none; text-align: center; padding: 3rem;">
-                    <div class="loading" style="width: 40px; height: 40px; border-width: 4px;"></div>
-                    <p class="text-muted mt-md">Loading assessments...</p>
-                </div>
-
-                <div id="assessments-list">
-                    <!-- assessments will be inserted here -->
-                </div>
-
-                <div id="assessments-empty-state" style="display: none; text-align: center; padding: 4rem 2rem;">
-                    <h3 style="color: var(--text-muted);">No assessments yet</h3>
-                    <p class="text-muted">Create an assessment for topics you've practiced enough!</p>
-                </div>
-
-                <p style="color: var(--text-muted); margin-top: 2rem; font-size: 0.9rem;">
-                    💡 Assessments are comprehensive cards that review entire topics. Once a topic is well-practiced, you can create an assessment to review it more efficiently.
-                </p>
-            </div>
-
-            <!-- resources tab -->
-            <div id="resources-content" class="tab-content">
-                <div id="resources-loading" style="display: none; text-align: center; padding: 3rem;">
-                    <div class="loading" style="width: 40px; height: 40px; border-width: 4px;"></div>
-                    <p class="text-muted mt-md">Loading resources...</p>
-                </div>
-
-                <div id="resources-list">
-                    <!-- resources will be inserted here -->
-                </div>
-
-                <div id="resources-empty-state" style="display: none; text-align: center; padding: 4rem 2rem;">
-                    <h3 style="color: var(--text-muted);">No resources yet</h3>
-                    <p class="text-muted">Add your first resource to this subject!</p>
-                </div>
-
-                <div style="display: flex; gap: 1rem; margin-top: 2rem;">
-                    <button id="add-existing-resource-btn" class="btn btn-accent mb-lg">
-                        + Add Existing Resource
-                    </button>
-                    <button id="create-new-resource-btn" class="btn btn-secondary mb-lg">
-                        + Create New Resource
-                    </button>
-                </div>
-
-                <!-- Search for existing resources -->
-                <div id="search-resource-form" class="card" style="display: none; max-width: 700px;">
-                    <div class="card-header">
-                        <h3 class="card-title">Search Resources</h3>
-                    </div>
-
-                    <div class="form-group">
-                        <label class="form-label" for="search-resource-input">Search by name</label>
-                        <input
-                            type="text"
-                            id="search-resource-input"
-                            class="form-input"
-                            placeholder="Type to search resources..."
-                        >
-                    </div>
-
-                    <div id="search-resource-results" style="max-height: 400px; overflow-y: auto; margin-top: 1rem;">
-                        <!-- Search results will be inserted here -->
-                    </div>
-
-                    <div style="display: flex; gap: 1rem; margin-top: 2rem;">
-                        <button type="button" id="cancel-search-resource-btn" class="btn btn-secondary">
-                            Cancel
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Create new resource -->
-                <div id="add-resource-form" class="card" style="display: none; max-width: 700px;">
-                    <div class="card-header">
-                        <h3 class="card-title">Create New Resource</h3>
-                    </div>
-
-                    <form id="resource-form">
-                        <div class="form-group">
-                            <label class="form-label" for="resource-name">Resource Name</label>
-                            <input
-                                type="text"
-                                id="resource-name"
-                                class="form-input"
-                                placeholder="e.g., Linear Algebra Course"
-                                required
-                            >
-                        </div>
-
-                        <div class="form-group">
-                            <label class="form-label" for="resource-type">Type</label>
-                            <select id="resource-type" class="form-input" required>
-                                <option value="">Select type...</option>
-                                <option value="0">Book</option>
-                                <option value="1">Website</option>
-                                <option value="2">Course</option>
-                                <option value="3">Video</option>
-                                <option value="4">Channel</option>
-                                <option value="5">Mailing List</option>
-                                <option value="6">Manual</option>
-                                <option value="7">Slides</option>
-                                <option value="8">Your Knowledge</option>
-                            </select>
-                        </div>
-
-                        <div class="form-group">
-                            <label class="form-label" for="resource-pattern">Section Pattern</label>
-                            <select id="resource-pattern" class="form-input" required disabled>
-                                <option value="">Select type first...</option>
-                            </select>
-                        </div>
-
-                        <div class="form-group">
-                            <label class="form-label" for="resource-url">URL (optional)</label>
-                            <input
-                                type="url"
-                                id="resource-url"
-                                class="form-input"
-                                placeholder="https://example.com/resource"
-                            >
-                        </div>
-
-                        <div class="form-group">
-                            <label class="form-label" for="resource-production">Production Date</label>
-                            <input
-                                type="date"
-                                id="resource-production"
-                                class="form-input"
-                                required
-                            >
-                        </div>
-
-                        <div class="form-group">
-                            <label class="form-label" for="resource-expiration">Expiration Date (Estimated)</label>
-                            <input
-                                type="date"
-                                id="resource-expiration"
-                                class="form-input"
-                                required
-                            >
-                        </div>
-
-                        <div style="display: flex; gap: 1rem; margin-top: 2rem;">
-                            <button type="submit" id="save-resource-btn" class="btn btn-primary">
-                                Save Resource
-                            </button>
-                            <button type="button" id="cancel-resource-btn" class="btn btn-secondary">
-                                Cancel
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </div>
+          <button id="remove-subject-btn" class="btn btn-danger" style="padding: 0.5rem 1rem;">
+            Remove
+          </button>
         </div>
-    </main>
+      </div>
+    </div>
 
-    <script src="proto/flashback.js"></script>
-    <script src="js/client.js"></script>
-    <script src="js/ui.js"></script>
-    <script src="js/subject.js"></script>
-    <script src="js/nav.js"></script>
+    <!-- Rename Subject Modal -->
+    <div id="rename-subject-modal" class="card" style="display: none; max-width: 500px; margin-bottom: 2rem;">
+      <div class="card-header">
+        <h3 class="card-title">Rename Subject</h3>
+      </div>
+      <form id="rename-subject-form">
+        <div class="form-group">
+          <label class="form-label" for="rename-subject-name">Subject Name</label>
+          <input
+              type="text"
+              id="rename-subject-name"
+              class="form-input"
+              placeholder="Enter new subject name"
+              required
+          >
+        </div>
+        <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+          <button type="submit" id="save-rename-subject-btn" class="btn btn-primary">
+            Save
+          </button>
+          <button type="button" id="cancel-rename-subject-btn" class="btn btn-secondary">
+            Cancel
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Remove Subject Modal -->
+    <div id="remove-subject-modal" class="card" style="display: none; max-width: 500px; margin-bottom: 2rem;">
+      <div class="card-header">
+        <h3 class="card-title">Remove Subject</h3>
+      </div>
+      <div style="padding: 1rem 0;">
+        <p style="color: var(--text-muted); margin-bottom: 1.5rem;">
+          Are you sure you want to remove this subject? This action cannot be undone. All associated topics, resources,
+          and cards will be removed.
+        </p>
+        <div style="display: flex; gap: 1rem;">
+          <button id="confirm-remove-subject-btn" class="btn btn-danger">
+            Yes, Remove Subject
+          </button>
+          <button id="cancel-remove-subject-btn" class="btn btn-secondary">
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+      <div class="tabs" style="margin-bottom: 0;">
+        <button class="tab active" data-tab="topics">Topics</button>
+        <!-- <button class="tab" data-tab="assessments">Assessments</button> -->
+        <button class="tab" data-tab="resources">Resources</button>
+      </div>
+      <div style="display: flex; gap: 0.5rem;">
+        <button id="start-practice-btn" class="btn btn-primary">
+          Start Practice
+        </button>
+      </div>
+    </div>
+
+    <button id="add-topic-btn" class="btn btn-primary btn-full" style="margin-bottom: 2rem; margin-top: 1.5rem;">
+      + Add Topic
+    </button>
+
+    <div id="error-message" style="display: none;"></div>
+
+    <!-- topics tab -->
+    <div id="topics-content" class="tab-content active">
+      <div id="topics-loading" style="display: none; text-align: center; padding: 3rem;">
+        <div class="loading" style="width: 40px; height: 40px; border-width: 4px;"></div>
+        <p class="text-muted mt-md">Loading topics...</p>
+      </div>
+
+      <div id="topics-list">
+        <!-- topics will be inserted here -->
+      </div>
+
+      <div id="topics-empty-state" style="display: none; text-align: center; padding: 4rem 2rem;">
+        <h3 style="color: var(--text-muted);">No topics yet</h3>
+        <p class="text-muted">Add your first topic to this subject!</p>
+      </div>
+
+      <div id="add-topic-form" class="card" style="display: none; max-width: 700px;">
+        <div class="card-header">
+          <h3 class="card-title">Add Topic</h3>
+        </div>
+
+        <form id="topic-form">
+          <div class="form-group">
+            <label class="form-label" for="topic-name">Topic Name</label>
+            <input
+                type="text"
+                id="topic-name"
+                class="form-input"
+                placeholder="e.g., Gradient Descent"
+                required
+            >
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Expertise Level</label>
+            <div style="display: flex; gap: 1rem; margin-top: 0.5rem;">
+              <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                <input type="radio" name="topic-level" value="0" checked>
+                <span>Surface</span>
+              </label>
+              <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                <input type="radio" name="topic-level" value="1">
+                <span>Depth</span>
+              </label>
+              <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                <input type="radio" name="topic-level" value="2">
+                <span>Origin</span>
+              </label>
+            </div>
+            <p style="font-size: 0.875rem; color: var(--text-muted); margin-top: 0.5rem;">
+              <strong>Surface:</strong> Complete understanding •
+              <strong>Depth:</strong> In-depth details •
+              <strong>Origin:</strong> Creator level
+            </p>
+          </div>
+
+          <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+            <button type="submit" id="save-topic-btn" class="btn btn-primary">
+              Save Topic
+            </button>
+            <button type="button" id="cancel-topic-btn" class="btn btn-secondary">
+              Cancel
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- assessments tab -->
+    <div id="assessments-content" class="tab-content">
+      <div id="assessments-loading" style="display: none; text-align: center; padding: 3rem;">
+        <div class="loading" style="width: 40px; height: 40px; border-width: 4px;"></div>
+        <p class="text-muted mt-md">Loading assessments...</p>
+      </div>
+
+      <div id="assessments-list">
+        <!-- assessments will be inserted here -->
+      </div>
+
+      <div id="assessments-empty-state" style="display: none; text-align: center; padding: 4rem 2rem;">
+        <h3 style="color: var(--text-muted);">No assessments yet</h3>
+        <p class="text-muted">Create an assessment for topics you've practiced enough!</p>
+      </div>
+
+      <p style="color: var(--text-muted); margin-top: 2rem; font-size: 0.9rem;">
+        💡 Assessments are comprehensive cards that review entire topics. Once a topic is well-practiced, you can create
+        an assessment to review it more efficiently.
+      </p>
+    </div>
+
+    <!-- resources tab -->
+    <div id="resources-content" class="tab-content">
+      <div id="resources-loading" style="display: none; text-align: center; padding: 3rem;">
+        <div class="loading" style="width: 40px; height: 40px; border-width: 4px;"></div>
+        <p class="text-muted mt-md">Loading resources...</p>
+      </div>
+
+      <div id="resources-list">
+        <!-- resources will be inserted here -->
+      </div>
+
+      <div id="resources-empty-state" style="display: none; text-align: center; padding: 4rem 2rem;">
+        <h3 style="color: var(--text-muted);">No resources yet</h3>
+        <p class="text-muted">Add your first resource to this subject!</p>
+      </div>
+
+      <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+        <button id="add-existing-resource-btn" class="btn btn-accent mb-lg">
+          + Add Existing Resource
+        </button>
+        <button id="create-new-resource-btn" class="btn btn-secondary mb-lg">
+          + Create New Resource
+        </button>
+      </div>
+
+      <!-- Search for existing resources -->
+      <div id="search-resource-form" class="card" style="display: none; max-width: 700px;">
+        <div class="card-header">
+          <h3 class="card-title">Search Resources</h3>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="search-resource-input">Search by name</label>
+          <input
+              type="text"
+              id="search-resource-input"
+              class="form-input"
+              placeholder="Type to search resources..."
+          >
+        </div>
+
+        <div id="search-resource-results" style="max-height: 400px; overflow-y: auto; margin-top: 1rem;">
+          <!-- Search results will be inserted here -->
+        </div>
+
+        <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+          <button type="button" id="cancel-search-resource-btn" class="btn btn-secondary">
+            Cancel
+          </button>
+        </div>
+      </div>
+
+      <!-- Create new resource -->
+      <div id="add-resource-form" class="card" style="display: none; max-width: 700px;">
+        <div class="card-header">
+          <h3 class="card-title">Create New Resource</h3>
+        </div>
+
+        <form id="resource-form">
+          <div class="form-group">
+            <label class="form-label" for="resource-name">Resource Name</label>
+            <input
+                type="text"
+                id="resource-name"
+                class="form-input"
+                placeholder="e.g., Linear Algebra Course"
+                required
+            >
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="resource-type">Type</label>
+            <select id="resource-type" class="form-input" required>
+              <option value="">Select type...</option>
+              <option value="0">Book</option>
+              <option value="1">Website</option>
+              <option value="2">Course</option>
+              <option value="3">Video</option>
+              <option value="4">Channel</option>
+              <option value="5">Mailing List</option>
+              <option value="6">Manual</option>
+              <option value="7">Slides</option>
+              <option value="8">Your Knowledge</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="resource-pattern">Section Pattern</label>
+            <select id="resource-pattern" class="form-input" required disabled>
+              <option value="">Select type first...</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="resource-url">URL (optional)</label>
+            <input
+                type="url"
+                id="resource-url"
+                class="form-input"
+                placeholder="https://example.com/resource"
+            >
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="resource-production">Production Date</label>
+            <input
+                type="date"
+                id="resource-production"
+                class="form-input"
+                required
+            >
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="resource-expiration">Expiration Date (Estimated)</label>
+            <input
+                type="date"
+                id="resource-expiration"
+                class="form-input"
+                required
+            >
+          </div>
+
+          <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+            <button type="submit" id="save-resource-btn" class="btn btn-primary">
+              Save Resource
+            </button>
+            <button type="button" id="cancel-resource-btn" class="btn btn-secondary">
+              Cancel
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script src="proto/flashback.js"></script>
+<script src="js/client.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/subject.js"></script>
+<script src="js/nav.js"></script>
 </body>
 </html>
