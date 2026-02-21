@@ -623,10 +623,13 @@ function renderBlocks(blocks) {
 
         // Touch event handlers for mobile drag-and-drop
         let touchStartY = 0;
+        let touchStartX = 0;
         let touchCurrentY = 0;
         let touchStartElement = null;
         let touchClone = null;
         let touchTargetElement = null;
+        let longPressTimer = null;
+        let isDragEnabled = false;
 
         blockItem.addEventListener('touchstart', (e) => {
             // Don't interfere with buttons, inputs, or textareas
@@ -635,34 +638,63 @@ function renderBlocks(blocks) {
             }
 
             touchStartY = e.touches[0].clientY;
+            touchStartX = e.touches[0].clientX;
             touchCurrentY = touchStartY;
             touchStartElement = blockItem;
+            isDragEnabled = false;
 
-            // Create a visual clone for dragging
-            touchClone = blockItem.cloneNode(true);
-            touchClone.style.position = 'fixed';
-            touchClone.style.top = blockItem.getBoundingClientRect().top + 'px';
-            touchClone.style.left = blockItem.getBoundingClientRect().left + 'px';
-            touchClone.style.width = blockItem.offsetWidth + 'px';
-            touchClone.style.opacity = '0.8';
-            touchClone.style.pointerEvents = 'none';
-            touchClone.style.zIndex = '1000';
-            touchClone.classList.add('dragging');
-            document.body.appendChild(touchClone);
+            // Start long-press timer (500ms)
+            longPressTimer = setTimeout(() => {
+                isDragEnabled = true;
 
-            blockItem.style.opacity = '0.3';
+                // Vibrate for feedback if available
+                if (navigator.vibrate) {
+                    navigator.vibrate(50);
+                }
+
+                // Create a visual clone for dragging
+                touchClone = blockItem.cloneNode(true);
+                touchClone.style.position = 'fixed';
+                touchClone.style.top = blockItem.getBoundingClientRect().top + 'px';
+                touchClone.style.left = blockItem.getBoundingClientRect().left + 'px';
+                touchClone.style.width = blockItem.offsetWidth + 'px';
+                touchClone.style.opacity = '0.8';
+                touchClone.style.pointerEvents = 'none';
+                touchClone.style.zIndex = '1000';
+                touchClone.classList.add('dragging');
+                document.body.appendChild(touchClone);
+
+                blockItem.style.opacity = '0.3';
+            }, 500);
         });
 
         blockItem.addEventListener('touchmove', (e) => {
-            if (!touchStartElement || !touchClone) return;
+            if (!touchStartElement) return;
+
+            // Calculate movement distance
+            const deltaX = Math.abs(e.touches[0].clientX - touchStartX);
+            const deltaY = Math.abs(e.touches[0].clientY - touchStartY);
+
+            // If user moved significantly before long-press completed, cancel it (they're scrolling)
+            if (!isDragEnabled && (deltaX > 10 || deltaY > 10)) {
+                if (longPressTimer) {
+                    clearTimeout(longPressTimer);
+                    longPressTimer = null;
+                }
+                touchStartElement = null;
+                return;
+            }
+
+            // Only proceed if drag is enabled
+            if (!isDragEnabled || !touchClone) return;
 
             e.preventDefault(); // Prevent scrolling while dragging
             touchCurrentY = e.touches[0].clientY;
-            const deltaY = touchCurrentY - touchStartY;
+            const dragDeltaY = touchCurrentY - touchStartY;
 
             // Move the clone
             const rect = touchStartElement.getBoundingClientRect();
-            touchClone.style.top = (rect.top + deltaY) + 'px';
+            touchClone.style.top = (rect.top + dragDeltaY) + 'px';
 
             // Find the element under the touch point
             touchClone.style.display = 'none';
@@ -683,6 +715,18 @@ function renderBlocks(blocks) {
         });
 
         blockItem.addEventListener('touchend', async (e) => {
+            // Clear the long-press timer if it hasn't fired yet
+            if (longPressTimer) {
+                clearTimeout(longPressTimer);
+                longPressTimer = null;
+            }
+
+            // Only proceed if drag was enabled
+            if (!isDragEnabled) {
+                touchStartElement = null;
+                return;
+            }
+
             if (!touchStartElement || !touchClone) return;
 
             e.preventDefault();
@@ -710,13 +754,21 @@ function renderBlocks(blocks) {
 
             // Reset touch state
             touchStartY = 0;
+            touchStartX = 0;
             touchCurrentY = 0;
             touchStartElement = null;
             touchClone = null;
             touchTargetElement = null;
+            isDragEnabled = false;
         });
 
         blockItem.addEventListener('touchcancel', () => {
+            // Clear the long-press timer
+            if (longPressTimer) {
+                clearTimeout(longPressTimer);
+                longPressTimer = null;
+            }
+
             if (touchClone && touchClone.parentNode) {
                 touchClone.parentNode.removeChild(touchClone);
             }
@@ -725,10 +777,12 @@ function renderBlocks(blocks) {
             }
             document.querySelectorAll('.content-block').forEach(b => b.classList.remove('drag-over'));
             touchStartY = 0;
+            touchStartX = 0;
             touchCurrentY = 0;
             touchStartElement = null;
             touchClone = null;
             touchTargetElement = null;
+            isDragEnabled = false;
         });
 
         // Remove button handler
