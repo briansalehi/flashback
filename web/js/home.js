@@ -234,11 +234,18 @@ function renderRoadmaps(roadmaps) {
     container.innerHTML = '';
 
     roadmaps.forEach(roadmap => {
-        container.innerHTML += `
-            <a href="roadmap.html?id=${roadmap.id}&name=${UI.escapeHtml(roadmap.name)}" class="roadmap-card">
-                <h3 class="roadmap-title">${UI.escapeHtml(roadmap.name)}</h3>
-            </a>
+        const roadmapEl = document.createElement('a');
+        roadmapEl.href = `roadmap.html?id=${roadmap.id}&name=${encodeURIComponent(roadmap.name)}`;
+        roadmapEl.className = 'item-block';
+        roadmapEl.style.textDecoration = 'none';
+
+        roadmapEl.innerHTML = `
+            <div class="item-header">
+                <h3 class="item-title">${UI.escapeHtml(roadmap.name)}</h3>
+            </div>
         `;
+
+        container.appendChild(roadmapEl);
     });
 }
 
@@ -254,8 +261,7 @@ function renderStudyingResources(resources) {
 
     sortedResources.forEach(resource => {
         const resourceItem = document.createElement('div');
-        resourceItem.className = 'resource-item';
-        resourceItem.style.cursor = 'pointer';
+        resourceItem.className = 'item-block';
 
         // Convert epoch seconds to readable dates
         const productionDate = resource.production ? new Date(resource.production * 1000).toLocaleDateString() : 'N/A';
@@ -265,18 +271,29 @@ function renderStudyingResources(resources) {
         const patternName = patternNames[resource.pattern] || 'Unknown';
 
         resourceItem.innerHTML = `
-            <div class="resource-header">
-                <div class="resource-name">${UI.escapeHtml(resource.name)}</div>
-                <span class="resource-type">${UI.escapeHtml(typeName)} • ${UI.escapeHtml(patternName)}</span>
-            </div>
-            <div class="resource-url">
-                <a href="${UI.escapeHtml(resource.link)}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">
-                    ${UI.escapeHtml(resource.link)}
-                </a>
-            </div>
-            <div class="resource-dates">
-                <div><strong>Produced:</strong> ${UI.escapeHtml(productionDate)}</div>
-                <div><strong>Relevant Until:</strong> ${UI.escapeHtml(expirationDate)}</div>
+            <div style="width: 100%;">
+                <div class="item-header">
+                    <div style="display: flex; align-items: center; gap: var(--space-sm); flex: 1;">
+                        <h3 class="item-title" style="margin: 0;">${UI.escapeHtml(resource.name)}</h3>
+                    </div>
+                    <div style="display: flex; gap: var(--space-xs); align-items: center;">
+                        <span class="item-badge" style="font-size: var(--font-size-xs);">${UI.escapeHtml(typeName)}</span>
+                        <span class="item-badge" style="background: rgba(102, 126, 234, 0.2); color: var(--color-primary-start); font-size: var(--font-size-xs);">${UI.escapeHtml(patternName)}</span>
+                    </div>
+                </div>
+                <div class="item-content">
+                    <a href="${UI.escapeHtml(resource.link)}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">
+                        ${UI.escapeHtml(resource.link)}
+                    </a>
+                </div>
+                <div class="item-footer">
+                    <div class="item-meta">
+                        <span>📅 ${UI.escapeHtml(productionDate)}</span>
+                    </div>
+                    <div class="item-meta">
+                        <span>⏰ ${UI.escapeHtml(expirationDate)}</span>
+                    </div>
+                </div>
             </div>
         `;
 
@@ -319,26 +336,39 @@ function renderNerves(nerves) {
 
     nerves.forEach(nerve => {
         const nerveItem = document.createElement('div');
-        nerveItem.className = 'resource-item';
-        nerveItem.style.cursor = 'pointer';
+        nerveItem.className = 'item-block';
 
         // Convert epoch seconds to readable dates
         const productionDate = nerve.production ? new Date(nerve.production * 1000).toLocaleDateString() : 'N/A';
         const expirationDate = nerve.expiration ? new Date(nerve.expiration * 1000).toLocaleDateString() : 'N/A';
 
+        const typeName = 'Knowledge';
+        const patternName = 'Memories';
+
         nerveItem.innerHTML = `
-            <div class="resource-header">
-                <div class="resource-name">${UI.escapeHtml(nerve.name)}</div>
-                <span class="resource-type">Your Knowledge • Memories</span>
-            </div>
-            <div class="resource-url">
-                <a href="${UI.escapeHtml(nerve.link)}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">
-                    ${UI.escapeHtml(nerve.link)}
-                </a>
-            </div>
-            <div class="resource-dates">
-                <div><strong>Produced:</strong> ${UI.escapeHtml(productionDate)}</div>
-                <div><strong>Relevant Until:</strong> ${UI.escapeHtml(expirationDate)}</div>
+            <div style="width: 100%;">
+                <div class="item-header">
+                    <div style="display: flex; align-items: center; gap: var(--space-sm); flex: 1;">
+                        <h3 class="item-title" style="margin: 0;">${UI.escapeHtml(nerve.name)}</h3>
+                    </div>
+                    <div style="display: flex; gap: var(--space-xs); align-items: center;">
+                        <span class="item-badge" style="font-size: var(--font-size-xs);">${UI.escapeHtml(typeName)}</span>
+                        <span class="item-badge" style="background: rgba(102, 126, 234, 0.2); color: var(--color-primary-start); font-size: var(--font-size-xs);">${UI.escapeHtml(patternName)}</span>
+                    </div>
+                </div>
+                <div class="item-content">
+                    <a href="${UI.escapeHtml(nerve.link)}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">
+                        ${UI.escapeHtml(nerve.link)}
+                    </a>
+                </div>
+                <div class="item-footer">
+                    <div class="item-meta">
+                        <span>📅 ${UI.escapeHtml(productionDate)}</span>
+                    </div>
+                    <div class="item-meta">
+                        <span>⏰ ${UI.escapeHtml(expirationDate)}</span>
+                    </div>
+                </div>
             </div>
         `;
 

@@ -466,46 +466,46 @@ function renderBlocks(blocks) {
 
     blocks.forEach((block, index) => {
         const blockItem = document.createElement('div');
-        blockItem.className = 'block-item';
+        blockItem.className = 'content-block';
         blockItem.id = `block-${index}`;
         blockItem.draggable = true;
         blockItem.dataset.position = block.position;
 
         const typeName = blockTypes[block.type] || 'text';
 
+        let metadataHtml = '';
+        if (block.metadata) {
+            metadataHtml = `<span class="item-badge" style="font-size: var(--font-size-xs);">${UI.escapeHtml(block.metadata)}</span>`;
+        }
+
+        let extensionHtml = '';
+        if (block.extension) {
+            extensionHtml = `<span class="item-badge" style="background: rgba(102, 126, 234, 0.2); color: var(--color-primary-start); font-size: var(--font-size-xs);">${UI.escapeHtml(block.extension)}</span>`;
+        }
+
+        let contentHtml = '';
+        if (block.type === 1) { // code
+            contentHtml = `<pre class="content-block-text" style="background: rgba(0, 0, 0, 0.3); padding: var(--space-md); border-radius: var(--radius-md); overflow-x: auto;"><code>${UI.escapeHtml(block.content)}</code></pre>`;
+        } else if (block.type === 2) { // image
+            contentHtml = `<img src="${UI.escapeHtml(block.content)}" alt="Block image" style="max-width: 100%; height: auto; border-radius: var(--radius-md); margin-left: var(--space-lg);" />`;
+        } else { // text (type 0 or default)
+            contentHtml = `<div class="content-block-text">${UI.escapeHtml(block.content)}</div>`;
+        }
+
         // Display mode
         const displayDiv = document.createElement('div');
         displayDiv.className = 'block-display';
         displayDiv.id = `block-display-${index}`;
 
-        let metadataHtml = '';
-        if (block.metadata) {
-            metadataHtml = `<span class="block-metadata">${UI.escapeHtml(block.metadata)}</span>`;
-        }
-
-        let extensionHtml = '';
-        if (block.extension) {
-            extensionHtml = `<span class="block-type">${UI.escapeHtml(block.extension)}</span>`;
-        }
-
-        let contentHtml = '';
-        if (block.type === 1) { // code
-            contentHtml = `<pre class="block-code"><code>${UI.escapeHtml(block.content)}</code></pre>`;
-        } else if (block.type === 2) { // image
-            contentHtml = `<img src="${UI.escapeHtml(block.content)}" alt="Block image" class="block-image" />`;
-        } else { // text (type 0 or default)
-            contentHtml = `<div class="block-content">${UI.escapeHtml(block.content)}</div>`;
-        }
-
         displayDiv.innerHTML = `
-            <div class="block-header">
-                <div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-md); padding-left: var(--space-lg);">
+                <div style="display: flex; gap: var(--space-sm); align-items: center;">
                     ${metadataHtml}
                     ${extensionHtml}
                 </div>
-                <div class="block-actions">
-                    <button class="btn btn-secondary block-action-btn" onclick="editBlock(${index})">Edit</button>
-                    <button class="remove-block-btn block-action-btn" data-position="${block.position}" data-index="${index}">Remove</button>
+                <div class="content-block-actions" style="margin: 0; padding: 0; border: none;">
+                    <button class="btn btn-sm btn-secondary" onclick="editBlock(${index})">Edit</button>
+                    <button class="btn btn-sm item-action-btn remove-block-btn" data-position="${block.position}" data-index="${index}" style="color: #f44336; border-color: rgba(244, 67, 54, 0.3);">Remove</button>
                 </div>
             </div>
             ${contentHtml}

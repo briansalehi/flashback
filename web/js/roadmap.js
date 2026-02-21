@@ -360,20 +360,24 @@ function renderMilestones(milestones) {
         const levelName = levelNames[milestone.level] || 'Unknown';
 
         const milestoneCard = document.createElement('div');
-        milestoneCard.className = 'milestone-card';
+        milestoneCard.className = 'item-block';
         milestoneCard.draggable = true;
         milestoneCard.dataset.position = milestone.position;
         milestoneCard.innerHTML = `
-            <div class="milestone-header">
-                <div class="milestone-position">${index + 1}</div>
-                <h3 class="milestone-name">${UI.escapeHtml(milestone.name)}</h3>
-                <select class="milestone-level-selector" data-id="${milestone.id}" data-current-level="${milestone.level}" title="Change level">
-                    <option value="0" ${milestone.level === 0 ? 'selected' : ''}>Surface</option>
-                    <option value="1" ${milestone.level === 1 ? 'selected' : ''}>Depth</option>
-                    <option value="2" ${milestone.level === 2 ? 'selected' : ''}>Origin</option>
-                </select>
+            <div class="item-header">
+                <div style="display: flex; align-items: center; gap: var(--space-md); flex: 1;">
+                    <span class="item-badge">${index + 1}</span>
+                    <h3 class="item-title" style="margin: 0;">${UI.escapeHtml(milestone.name)}</h3>
+                </div>
+                <div style="display: flex; align-items: center; gap: var(--space-sm);">
+                    <select class="milestone-level-selector btn btn-sm" data-id="${milestone.id}" data-current-level="${milestone.level}" title="Change level" style="cursor: pointer;">
+                        <option value="0" ${milestone.level === 0 ? 'selected' : ''}>Surface</option>
+                        <option value="1" ${milestone.level === 1 ? 'selected' : ''}>Depth</option>
+                        <option value="2" ${milestone.level === 2 ? 'selected' : ''}>Origin</option>
+                    </select>
+                    <button class="item-action-btn" data-id="${milestone.id}" title="Remove milestone" style="color: #f44336; border-color: rgba(244, 67, 54, 0.3);">×</button>
+                </div>
             </div>
-            <button class="remove-milestone-btn" data-id="${milestone.id}" title="Remove milestone">×</button>
         `;
 
         // Click to navigate (but not when dragging)
@@ -446,7 +450,7 @@ function renderMilestones(milestones) {
         }
 
         // Remove milestone handler
-        const removeBtn = milestoneCard.querySelector('.remove-milestone-btn');
+        const removeBtn = milestoneCard.querySelector('.item-action-btn');
         if (removeBtn) {
             removeBtn.addEventListener('click', async (e) => {
                 e.stopPropagation(); // Prevent card click navigation

@@ -483,15 +483,17 @@ function renderTopics(topics, maxLevel) {
 
             sortedTopics.forEach((topic, index) => {
                 const topicItem = document.createElement('div');
-                topicItem.className = 'topic-item';
+                topicItem.className = 'item-block';
                 topicItem.draggable = true;
                 topicItem.dataset.position = topic.position;
                 topicItem.dataset.level = topic.level;
                 topicItem.innerHTML = `
-                    <div class="topic-content">
-                        <div class="topic-position">${index + 1}</div>
-                        <div class="topic-name">${UI.escapeHtml(topic.name)}</div>
-                        <span class="topic-level">${UI.escapeHtml(levelInfo[level].name)}</span>
+                    <div class="item-header">
+                        <div style="display: flex; align-items: center; gap: var(--space-md); flex: 1;">
+                            <span class="item-badge">${index + 1}</span>
+                            <h3 class="item-title" style="margin: 0;">${UI.escapeHtml(topic.name)}</h3>
+                        </div>
+                        <span class="item-badge" style="background: rgba(102, 126, 234, 0.2); color: var(--color-primary-start);">${UI.escapeHtml(levelInfo[level].name)}</span>
                     </div>
                 `;
 
@@ -603,7 +605,7 @@ function renderResources(resources) {
 
     resources.forEach(resource => {
         const resourceItem = document.createElement('div');
-        resourceItem.className = 'resource-item';
+        resourceItem.className = 'item-block';
 
         // Convert epoch seconds to readable dates
         const productionDate = resource.production ? new Date(resource.production * 1000).toLocaleDateString() : 'N/A';
@@ -613,23 +615,32 @@ function renderResources(resources) {
         const patternName = patternNames[resource.pattern] || 'Unknown';
 
         resourceItem.innerHTML = `
-            <div class="resource-header">
-                <div style="flex: 1; cursor: pointer;" data-resource-id="${resource.id}">
-                    <div class="resource-name">${UI.escapeHtml(resource.name)}</div>
-                    <span class="resource-type">${UI.escapeHtml(typeName)} • ${UI.escapeHtml(patternName)}</span>
+            <div style="width: 100%;">
+                <div class="item-header" data-resource-id="${resource.id}" style="cursor: pointer;">
+                    <div style="display: flex; align-items: center; gap: var(--space-sm); flex: 1;">
+                        <h3 class="item-title" style="margin: 0;">${UI.escapeHtml(resource.name)}</h3>
+                    </div>
+                    <div style="display: flex; gap: var(--space-xs); align-items: center;">
+                        <span class="item-badge" style="font-size: var(--font-size-xs);">${UI.escapeHtml(typeName)}</span>
+                        <span class="item-badge" style="background: rgba(102, 126, 234, 0.2); color: var(--color-primary-start); font-size: var(--font-size-xs);">${UI.escapeHtml(patternName)}</span>
+                    </div>
                 </div>
-                <button class="drop-resource-btn" data-resource-id="${resource.id}" onclick="event.stopPropagation()">
-                    Drop
-                </button>
-            </div>
-            <div class="resource-url" style="cursor: pointer;" data-resource-id="${resource.id}">
-                <a href="${UI.escapeHtml(resource.link)}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">
-                    ${UI.escapeHtml(resource.link)}
-                </a>
-            </div>
-            <div class="resource-dates" style="cursor: pointer;" data-resource-id="${resource.id}">
-                <div><strong>Produced:</strong> ${UI.escapeHtml(productionDate)}</div>
-                <div><strong>Relevant Until:</strong> ${UI.escapeHtml(expirationDate)}</div>
+                <div class="item-content" data-resource-id="${resource.id}" style="cursor: pointer;">
+                    <a href="${UI.escapeHtml(resource.link)}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">
+                        ${UI.escapeHtml(resource.link)}
+                    </a>
+                </div>
+                <div class="item-footer">
+                    <div class="item-meta">
+                        <span>📅 ${UI.escapeHtml(productionDate)}</span>
+                    </div>
+                    <div class="item-meta">
+                        <span>⏰ ${UI.escapeHtml(expirationDate)}</span>
+                    </div>
+                    <div class="item-actions">
+                        <button class="item-action-btn drop-resource-btn" data-resource-id="${resource.id}" style="color: #f44336; border-color: rgba(244, 67, 54, 0.3);">Drop</button>
+                    </div>
+                </div>
             </div>
         `;
 
@@ -959,21 +970,29 @@ function renderAssessments(topics) {
 
     topics.forEach((topic, index) => {
         const topicCard = document.createElement('div');
-        topicCard.className = 'topic-item';
+        topicCard.className = 'item-block';
         topicCard.style.cursor = 'default';
 
         const level = topic.level;
         topicCard.innerHTML = `
-            <div class="topic-content">
-                <div class="topic-position">${index + 1}</div>
-                <div class="topic-name">${UI.escapeHtml(topic.name)}</div>
-                <span class="topic-level">${UI.escapeHtml(levelInfo[level].name)}</span>
-                <span style="background: #4caf50; color: white; padding: 0.35rem 0.75rem; border-radius: 12px; font-size: 0.75rem; font-weight: 600; margin-left: 0.5rem;">✓ Ready</span>
-            </div>
-            <div style="display: flex; gap: 0.5rem;">
-                <button class="btn btn-primary create-assessment-btn" data-topic-level="${topic.level}" data-topic-position="${topic.position}" data-topic-name="${UI.escapeHtml(topic.name)}" style="padding: 0.5rem 1rem; font-size: 0.875rem;">
-                    Create Assessment
-                </button>
+            <div style="width: 100%;">
+                <div class="item-header">
+                    <div style="display: flex; align-items: center; gap: var(--space-md); flex: 1;">
+                        <span class="item-badge">${index + 1}</span>
+                        <h3 class="item-title" style="margin: 0;">${UI.escapeHtml(topic.name)}</h3>
+                    </div>
+                    <div style="display: flex; gap: var(--space-sm); align-items: center;">
+                        <span class="item-badge" style="background: rgba(102, 126, 234, 0.2); color: var(--color-primary-start);">${UI.escapeHtml(levelInfo[level].name)}</span>
+                        <span class="item-badge" style="background: rgba(76, 175, 80, 0.2); color: #4caf50;">✓ Ready</span>
+                    </div>
+                </div>
+                <div class="item-footer" style="margin-top: var(--space-md); padding-top: 0; border-top: none;">
+                    <div class="item-actions" style="margin-left: 0;">
+                        <button class="btn btn-sm btn-primary create-assessment-btn" data-topic-level="${topic.level}" data-topic-position="${topic.position}" data-topic-name="${UI.escapeHtml(topic.name)}">
+                            Create Assessment
+                        </button>
+                    </div>
+                </div>
             </div>
         `;
 

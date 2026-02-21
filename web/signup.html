@@ -3,14 +3,61 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sign Up</title>
+    <title>Sign Up - Flashback</title>
+
+    <!-- Design System CSS - MUST be loaded first -->
+    <link rel="stylesheet" href="css/flashback-design.css">
     <link rel="icon" type="image/x-icon" href="favicon.ico">
-    <link rel="stylesheet" href="css/styles.css">
+
+    <!-- Google Fonts - Inter (matching design system) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;600;700&family=Source+Sans+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+    <style>
+        /* Sign up page specific styles only */
+        body {
+            padding-top: 5rem;
+            padding-bottom: var(--space-xl);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .auth-page {
+            width: 100%;
+            max-width: 420px;
+            padding: 0 var(--space-lg);
+        }
+
+        .auth-logo h1 {
+            font-size: var(--font-size-3xl);
+            font-weight: var(--font-weight-black);
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-align: center;
+            margin-bottom: var(--space-md);
+        }
+
+        .auth-subtitle {
+            text-align: center;
+            color: var(--color-text-muted);
+            margin-bottom: var(--space-xl);
+        }
+
+        @media (max-width: 480px) {
+            .auth-logo h1 {
+                font-size: var(--font-size-2xl);
+            }
+        }
+    </style>
 </head>
 <body>
+    <!-- Background pattern from design system -->
+    <div class="background-pattern"></div>
+
     <div class="auth-page">
         <div class="auth-container">
             <div class="auth-logo">
