@@ -563,6 +563,176 @@ function renderTopics(topics, maxLevel) {
                     }
                 });
 
+                // Touch event handlers for mobile drag-and-drop
+                let touchStartY = 0;
+                let touchStartX = 0;
+                let touchCurrentY = 0;
+                let touchStartElement = null;
+                let touchClone = null;
+                let touchTargetElement = null;
+                let longPressTimer = null;
+                let isTouchDragEnabled = false;
+
+                topicItem.addEventListener('touchstart', (e) => {
+                    touchStartY = e.touches[0].clientY;
+                    touchStartX = e.touches[0].clientX;
+                    touchCurrentY = touchStartY;
+                    touchStartElement = topicItem;
+                    isTouchDragEnabled = false;
+
+                    // Start long-press timer (500ms)
+                    longPressTimer = setTimeout(() => {
+                        isTouchDragEnabled = true;
+
+                        // Vibrate for feedback if available
+                        if (navigator.vibrate) {
+                            navigator.vibrate(50);
+                        }
+
+                        // Create a visual clone for dragging
+                        touchClone = topicItem.cloneNode(true);
+                        touchClone.style.position = 'fixed';
+                        touchClone.style.top = topicItem.getBoundingClientRect().top + 'px';
+                        touchClone.style.left = topicItem.getBoundingClientRect().left + 'px';
+                        touchClone.style.width = topicItem.offsetWidth + 'px';
+                        touchClone.style.opacity = '0.8';
+                        touchClone.style.pointerEvents = 'none';
+                        touchClone.style.zIndex = '1000';
+                        touchClone.classList.add('dragging');
+                        document.body.appendChild(touchClone);
+
+                        topicItem.style.opacity = '0.3';
+                    }, 500);
+                });
+
+                topicItem.addEventListener('touchmove', (e) => {
+                    if (!touchStartElement) return;
+
+                    // Calculate movement distance
+                    const deltaX = Math.abs(e.touches[0].clientX - touchStartX);
+                    const deltaY = Math.abs(e.touches[0].clientY - touchStartY);
+
+                    // If user moved significantly before long-press completed, cancel it (they're scrolling)
+                    if (!isTouchDragEnabled && (deltaX > 10 || deltaY > 10)) {
+                        if (longPressTimer) {
+                            clearTimeout(longPressTimer);
+                            longPressTimer = null;
+                        }
+                        touchStartElement = null;
+                        return;
+                    }
+
+                    // Only proceed if drag is enabled
+                    if (!isTouchDragEnabled || !touchClone) return;
+
+                    e.preventDefault(); // Prevent scrolling while dragging
+                    touchCurrentY = e.touches[0].clientY;
+                    const dragDeltaY = touchCurrentY - touchStartY;
+
+                    // Move the clone
+                    const rect = touchStartElement.getBoundingClientRect();
+                    touchClone.style.top = (rect.top + dragDeltaY) + 'px';
+
+                    // Find the element under the touch point
+                    touchClone.style.display = 'none';
+                    const elementBelow = document.elementFromPoint(e.touches[0].clientX, e.touches[0].clientY);
+                    touchClone.style.display = 'block';
+
+                    const itemBelow = elementBelow ? elementBelow.closest('.item-block') : null;
+
+                    // Remove drag-over class from all items
+                    document.querySelectorAll('.item-block').forEach(i => i.classList.remove('drag-over'));
+
+                    // Only allow drag-drop within same level
+                    if (itemBelow && itemBelow !== touchStartElement) {
+                        const itemBelowLevel = parseInt(itemBelow.dataset.level);
+                        const touchStartLevel = parseInt(touchStartElement.dataset.level);
+                        if (itemBelowLevel === touchStartLevel) {
+                            touchTargetElement = itemBelow;
+                            itemBelow.classList.add('drag-over');
+                        } else {
+                            touchTargetElement = null;
+                        }
+                    } else {
+                        touchTargetElement = null;
+                    }
+                });
+
+                topicItem.addEventListener('touchend', async (e) => {
+                    // Clear the long-press timer if it hasn't fired yet
+                    if (longPressTimer) {
+                        clearTimeout(longPressTimer);
+                        longPressTimer = null;
+                    }
+
+                    // Only proceed if drag was enabled
+                    if (!isTouchDragEnabled) {
+                        touchStartElement = null;
+                        return;
+                    }
+
+                    if (!touchStartElement || !touchClone) return;
+
+                    e.preventDefault();
+
+                    // Remove the clone
+                    if (touchClone && touchClone.parentNode) {
+                        touchClone.parentNode.removeChild(touchClone);
+                    }
+
+                    // Restore opacity
+                    touchStartElement.style.opacity = '1';
+
+                    // Remove drag-over class from all items
+                    document.querySelectorAll('.item-block').forEach(i => i.classList.remove('drag-over'));
+
+                    // Perform the reorder if dropped on a different item in same level
+                    if (touchTargetElement && touchTargetElement !== touchStartElement) {
+                        const sourcePosition = parseInt(touchStartElement.dataset.position);
+                        const sourceLevel = parseInt(touchStartElement.dataset.level);
+                        const targetPosition = parseInt(touchTargetElement.dataset.position);
+                        const targetLevel = parseInt(touchTargetElement.dataset.level);
+
+                        if (!isNaN(sourcePosition) && !isNaN(targetPosition) && !isNaN(sourceLevel) && !isNaN(targetLevel)) {
+                            if (sourceLevel === targetLevel && sourcePosition !== targetPosition) {
+                                await reorderTopic(sourceLevel, sourcePosition, targetPosition);
+                            }
+                        }
+                    }
+
+                    // Reset touch state
+                    touchStartY = 0;
+                    touchStartX = 0;
+                    touchCurrentY = 0;
+                    touchStartElement = null;
+                    touchClone = null;
+                    touchTargetElement = null;
+                    isTouchDragEnabled = false;
+                });
+
+                topicItem.addEventListener('touchcancel', () => {
+                    // Clear the long-press timer
+                    if (longPressTimer) {
+                        clearTimeout(longPressTimer);
+                        longPressTimer = null;
+                    }
+
+                    if (touchClone && touchClone.parentNode) {
+                        touchClone.parentNode.removeChild(touchClone);
+                    }
+                    if (touchStartElement) {
+                        touchStartElement.style.opacity = '1';
+                    }
+                    document.querySelectorAll('.item-block').forEach(i => i.classList.remove('drag-over'));
+                    touchStartY = 0;
+                    touchStartX = 0;
+                    touchCurrentY = 0;
+                    touchStartElement = null;
+                    touchClone = null;
+                    touchTargetElement = null;
+                    isTouchDragEnabled = false;
+                });
+
                 levelSection.appendChild(topicItem);
             });
 
