@@ -621,6 +621,116 @@ function renderBlocks(blocks) {
             }
         });
 
+        // Touch event handlers for mobile drag-and-drop
+        let touchStartY = 0;
+        let touchCurrentY = 0;
+        let touchStartElement = null;
+        let touchClone = null;
+        let touchTargetElement = null;
+
+        blockItem.addEventListener('touchstart', (e) => {
+            // Don't interfere with buttons, inputs, or textareas
+            if (e.target.closest('button') || e.target.closest('input') || e.target.closest('textarea') || e.target.closest('select')) {
+                return;
+            }
+
+            touchStartY = e.touches[0].clientY;
+            touchCurrentY = touchStartY;
+            touchStartElement = blockItem;
+
+            // Create a visual clone for dragging
+            touchClone = blockItem.cloneNode(true);
+            touchClone.style.position = 'fixed';
+            touchClone.style.top = blockItem.getBoundingClientRect().top + 'px';
+            touchClone.style.left = blockItem.getBoundingClientRect().left + 'px';
+            touchClone.style.width = blockItem.offsetWidth + 'px';
+            touchClone.style.opacity = '0.8';
+            touchClone.style.pointerEvents = 'none';
+            touchClone.style.zIndex = '1000';
+            touchClone.classList.add('dragging');
+            document.body.appendChild(touchClone);
+
+            blockItem.style.opacity = '0.3';
+        });
+
+        blockItem.addEventListener('touchmove', (e) => {
+            if (!touchStartElement || !touchClone) return;
+
+            e.preventDefault(); // Prevent scrolling while dragging
+            touchCurrentY = e.touches[0].clientY;
+            const deltaY = touchCurrentY - touchStartY;
+
+            // Move the clone
+            const rect = touchStartElement.getBoundingClientRect();
+            touchClone.style.top = (rect.top + deltaY) + 'px';
+
+            // Find the element under the touch point
+            touchClone.style.display = 'none';
+            const elementBelow = document.elementFromPoint(e.touches[0].clientX, e.touches[0].clientY);
+            touchClone.style.display = 'block';
+
+            const blockBelow = elementBelow ? elementBelow.closest('.content-block') : null;
+
+            // Remove drag-over class from all blocks
+            document.querySelectorAll('.content-block').forEach(b => b.classList.remove('drag-over'));
+
+            if (blockBelow && blockBelow !== touchStartElement) {
+                touchTargetElement = blockBelow;
+                blockBelow.classList.add('drag-over');
+            } else {
+                touchTargetElement = null;
+            }
+        });
+
+        blockItem.addEventListener('touchend', async (e) => {
+            if (!touchStartElement || !touchClone) return;
+
+            e.preventDefault();
+
+            // Remove the clone
+            if (touchClone && touchClone.parentNode) {
+                touchClone.parentNode.removeChild(touchClone);
+            }
+
+            // Restore opacity
+            touchStartElement.style.opacity = '1';
+
+            // Remove drag-over class from all blocks
+            document.querySelectorAll('.content-block').forEach(b => b.classList.remove('drag-over'));
+
+            // Perform the reorder if dropped on a different block
+            if (touchTargetElement && touchTargetElement !== touchStartElement) {
+                const sourcePosition = parseInt(touchStartElement.dataset.position);
+                const targetPosition = parseInt(touchTargetElement.dataset.position);
+
+                if (!isNaN(sourcePosition) && !isNaN(targetPosition) && sourcePosition !== targetPosition) {
+                    await reorderBlockHandler(sourcePosition, targetPosition);
+                }
+            }
+
+            // Reset touch state
+            touchStartY = 0;
+            touchCurrentY = 0;
+            touchStartElement = null;
+            touchClone = null;
+            touchTargetElement = null;
+        });
+
+        blockItem.addEventListener('touchcancel', () => {
+            if (touchClone && touchClone.parentNode) {
+                touchClone.parentNode.removeChild(touchClone);
+            }
+            if (touchStartElement) {
+                touchStartElement.style.opacity = '1';
+            }
+            document.querySelectorAll('.content-block').forEach(b => b.classList.remove('drag-over'));
+            touchStartY = 0;
+            touchCurrentY = 0;
+            touchStartElement = null;
+            touchClone = null;
+            touchTargetElement = null;
+        });
+
         // Remove button handler
         const removeBtn = displayDiv.querySelector('.remove-block-btn');
         if (removeBtn) {
