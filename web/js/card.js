@@ -643,7 +643,7 @@ function renderBlocks(blocks) {
         if (block.type === 1) { // code
             // Map extension to Prism language
             const language = mapExtensionToLanguage(block.extension);
-            contentHtml = `<pre class="content-block-text" style="background: rgba(0, 0, 0, 0.3); padding: var(--space-md); border-radius: var(--radius-md); overflow-x: auto;"><code class="language-${language}">${UI.escapeHtml(block.content)}</code></pre>`;
+            contentHtml = `<pre class="content-block-text" style="background: rgba(0, 0, 0, 0.3); padding: var(--space-md); border-radius: var(--radius-md); overflow-x: auto;"><code class="language-${language} show-language">${UI.escapeHtml(block.content)}</code></pre>`;
         } else if (block.type === 2) { // image
             contentHtml = `<img src="${UI.escapeHtml(block.content)}" alt="Block image" style="max-width: 100%; height: auto; border-radius: var(--radius-md);" />`;
         } else { // text (type 0 or default)
@@ -776,8 +776,9 @@ function renderBlocks(blocks) {
             const deltaX = Math.abs(e.touches[0].clientX - touchStartX);
             const deltaY = Math.abs(e.touches[0].clientY - touchStartY);
 
-            // If user moved significantly before long-press completed, cancel it (they're scrolling)
-            if (!isDragEnabled && (deltaX > 10 || deltaY > 10)) {
+            // Issue #1 fix: If user moved even slightly before long-press completed, cancel it (they're scrolling)
+            // Reduced threshold to 5px to be more sensitive to scrolling
+            if (!isDragEnabled && (deltaX > 5 || deltaY > 5)) {
                 if (longPressTimer) {
                     clearTimeout(longPressTimer);
                     longPressTimer = null;
@@ -889,14 +890,24 @@ function renderBlocks(blocks) {
         // Mobile tap to show/hide actions
         let tapTimer = null;
         blockItem.addEventListener('click', (e) => {
-            // Don't toggle actions if clicking a button
-            if (e.target.closest('.block-action-btn')) {
+            // Don't toggle actions if clicking a button or inside edit form
+            if (e.target.closest('.block-action-btn') || e.target.closest('.block-edit')) {
                 return;
             }
 
             // Toggle actions visibility on mobile
             if (window.innerWidth <= 768) {
                 blockItem.classList.toggle('show-actions');
+            }
+        });
+
+        // Hide actions when tapping outside on mobile - Issue #2 fix
+        document.addEventListener('click', (e) => {
+            if (window.innerWidth <= 768) {
+                // If click is outside this block and block has show-actions class
+                if (!blockItem.contains(e.target) && blockItem.classList.contains('show-actions')) {
+                    blockItem.classList.remove('show-actions');
+                }
             }
         });
 
@@ -970,6 +981,21 @@ function renderBlocks(blocks) {
                         splitBtn.style.display = 'none';
                     }
                 });
+
+                // Issue #3 fix: Add touch handler to properly position cursor in textarea on mobile
+                contentTextarea.addEventListener('touchstart', (e) => {
+                    // Allow the default touch behavior for textarea
+                    // This ensures cursor positioning works correctly
+                    e.stopPropagation();
+                }, { passive: true });
+
+                contentTextarea.addEventListener('touchend', (e) => {
+                    // Focus the textarea to show keyboard
+                    if (document.activeElement !== contentTextarea) {
+                        contentTextarea.focus();
+                    }
+                    e.stopPropagation();
+                }, { passive: true });
             }
         }, 0);
     });
