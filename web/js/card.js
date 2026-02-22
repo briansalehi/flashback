@@ -680,6 +680,16 @@ function renderBlocks(blocks) {
         let isDragging = false;
 
         blockItem.addEventListener('dragstart', (e) => {
+            // Don't allow dragging when in edit mode or interacting with form elements
+            if (e.target.closest('.block-edit') ||
+                e.target.closest('textarea') ||
+                e.target.closest('input') ||
+                e.target.closest('select') ||
+                e.target.closest('button')) {
+                e.preventDefault();
+                return;
+            }
+
             isDragging = true;
             blockItem.classList.add('dragging');
             e.dataTransfer.effectAllowed = 'move';
@@ -733,8 +743,14 @@ function renderBlocks(blocks) {
         let isDragEnabled = false;
 
         blockItem.addEventListener('touchstart', (e) => {
-            // Don't interfere with buttons, inputs, or textareas
-            if (e.target.closest('button') || e.target.closest('input') || e.target.closest('textarea') || e.target.closest('select')) {
+            // Don't interfere with buttons, inputs, textareas, or any edit form elements
+            // Check the actual target, not just closest
+            const target = e.target;
+            if (target.tagName === 'TEXTAREA' ||
+                target.tagName === 'INPUT' ||
+                target.tagName === 'SELECT' ||
+                target.tagName === 'BUTTON' ||
+                target.closest('.block-edit')) {
                 return;
             }
 
@@ -970,6 +986,8 @@ function renderBlocks(blocks) {
         setTimeout(() => {
             const contentTextarea = document.getElementById(`block-content-${index}`);
             const splitBtn = document.getElementById(`split-block-btn-${index}`);
+            const extensionInput = document.getElementById(`block-extension-${index}`);
+            const metadataInput = document.getElementById(`block-metadata-${index}`);
 
             if (contentTextarea && splitBtn) {
                 contentTextarea.addEventListener('input', () => {
@@ -982,20 +1000,22 @@ function renderBlocks(blocks) {
                     }
                 });
 
-                // Issue #3 fix: Add touch handler to properly position cursor in textarea on mobile
-                contentTextarea.addEventListener('touchstart', (e) => {
-                    // Allow the default touch behavior for textarea
-                    // This ensures cursor positioning works correctly
-                    e.stopPropagation();
-                }, { passive: true });
-
-                contentTextarea.addEventListener('touchend', (e) => {
-                    // Focus the textarea to show keyboard
-                    if (document.activeElement !== contentTextarea) {
-                        contentTextarea.focus();
+                // Fix cursor positioning on desktop and touch devices
+                // Stop event propagation for all input fields to prevent interference
+                [contentTextarea, extensionInput, metadataInput].forEach(input => {
+                    if (input) {
+                        // Stop all pointer/touch events from bubbling to block handlers
+                        input.addEventListener('mousedown', (e) => {
+                            e.stopPropagation();
+                        });
+                        input.addEventListener('touchstart', (e) => {
+                            e.stopPropagation();
+                        });
+                        input.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                        });
                     }
-                    e.stopPropagation();
-                }, { passive: true });
+                });
             }
         }, 0);
     });
@@ -1012,20 +1032,32 @@ let currentBlocks = [];
 window.editBlock = function(index) {
     const displayDiv = document.getElementById(`block-display-${index}`);
     const editDiv = document.getElementById(`block-edit-${index}`);
+    const blockItem = document.getElementById(`block-${index}`);
 
     if (displayDiv && editDiv) {
         displayDiv.style.display = 'none';
         editDiv.style.display = 'block';
+
+        // Disable dragging when in edit mode
+        if (blockItem) {
+            blockItem.draggable = false;
+        }
     }
 };
 
 window.cancelEditBlock = function(index) {
     const displayDiv = document.getElementById(`block-display-${index}`);
     const editDiv = document.getElementById(`block-edit-${index}`);
+    const blockItem = document.getElementById(`block-${index}`);
 
     if (displayDiv && editDiv) {
         displayDiv.style.display = 'block';
         editDiv.style.display = 'none';
+
+        // Re-enable dragging when exiting edit mode
+        if (blockItem) {
+            blockItem.draggable = true;
+        }
     }
 };
 
@@ -1094,9 +1126,14 @@ window.saveBlock = async function(index) {
             // No changes, just exit edit mode
             const displayDiv = document.getElementById(`block-display-${index}`);
             const editDiv = document.getElementById(`block-edit-${index}`);
+            const blockItem = document.getElementById(`block-${index}`);
             if (displayDiv && editDiv) {
                 displayDiv.style.display = 'block';
                 editDiv.style.display = 'none';
+                // Re-enable dragging
+                if (blockItem) {
+                    blockItem.draggable = true;
+                }
             }
         } else {
             UI.showError('Failed to edit block: ' + (err.message || 'Unknown error'));
