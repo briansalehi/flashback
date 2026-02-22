@@ -647,7 +647,18 @@ function renderBlocks(blocks) {
         } else if (block.type === 2) { // image
             contentHtml = `<img src="${UI.escapeHtml(block.content)}" alt="Block image" style="max-width: 100%; height: auto; border-radius: var(--radius-md);" />`;
         } else { // text (type 0 or default)
-            contentHtml = `<div class="content-block-text">${UI.escapeHtml(block.content)}</div>`;
+            // Parse markdown for md or txt extensions
+            const ext = block.extension ? block.extension.toLowerCase() : '';
+            if ((ext === 'md' || ext === 'txt') && typeof marked !== 'undefined') {
+                // Configure marked for better rendering
+                marked.setOptions({
+                    breaks: true,
+                    gfm: true
+                });
+                contentHtml = `<div class="content-block-text markdown-content">${marked.parse(block.content)}</div>`;
+            } else {
+                contentHtml = `<div class="content-block-text">${UI.escapeHtml(block.content)}</div>`;
+            }
         }
 
         // Display mode
@@ -680,16 +691,6 @@ function renderBlocks(blocks) {
         let isDragging = false;
 
         blockItem.addEventListener('dragstart', (e) => {
-            // Don't allow dragging when in edit mode or interacting with form elements
-            if (e.target.closest('.block-edit') ||
-                e.target.closest('textarea') ||
-                e.target.closest('input') ||
-                e.target.closest('select') ||
-                e.target.closest('button')) {
-                e.preventDefault();
-                return;
-            }
-
             isDragging = true;
             blockItem.classList.add('dragging');
             e.dataTransfer.effectAllowed = 'move';
@@ -744,13 +745,11 @@ function renderBlocks(blocks) {
 
         blockItem.addEventListener('touchstart', (e) => {
             // Don't interfere with buttons, inputs, textareas, or any edit form elements
-            // Check the actual target, not just closest
-            const target = e.target;
-            if (target.tagName === 'TEXTAREA' ||
-                target.tagName === 'INPUT' ||
-                target.tagName === 'SELECT' ||
-                target.tagName === 'BUTTON' ||
-                target.closest('.block-edit')) {
+            if (e.target.closest('button') ||
+                e.target.closest('input') ||
+                e.target.closest('textarea') ||
+                e.target.closest('select') ||
+                e.target.closest('.block-edit')) {
                 return;
             }
 
@@ -986,8 +985,6 @@ function renderBlocks(blocks) {
         setTimeout(() => {
             const contentTextarea = document.getElementById(`block-content-${index}`);
             const splitBtn = document.getElementById(`split-block-btn-${index}`);
-            const extensionInput = document.getElementById(`block-extension-${index}`);
-            const metadataInput = document.getElementById(`block-metadata-${index}`);
 
             if (contentTextarea && splitBtn) {
                 contentTextarea.addEventListener('input', () => {
@@ -1000,22 +997,12 @@ function renderBlocks(blocks) {
                     }
                 });
 
-                // Fix cursor positioning on desktop and touch devices
-                // Stop event propagation for all input fields to prevent interference
-                [contentTextarea, extensionInput, metadataInput].forEach(input => {
-                    if (input) {
-                        // Stop all pointer/touch events from bubbling to block handlers
-                        input.addEventListener('mousedown', (e) => {
-                            e.stopPropagation();
-                        });
-                        input.addEventListener('touchstart', (e) => {
-                            e.stopPropagation();
-                        });
-                        input.addEventListener('click', (e) => {
-                            e.stopPropagation();
-                        });
-                    }
-                });
+                // Issue #3 fix: Mark form elements so block handlers can ignore them
+                // Don't stop propagation - let native browser behavior work
+                // The block's touchstart handler already checks for .block-edit
+
+                // No special handling needed - the block's handlers already exclude .block-edit
+                // Native browser input handling will work correctly
             }
         }, 0);
     });
@@ -1032,32 +1019,20 @@ let currentBlocks = [];
 window.editBlock = function(index) {
     const displayDiv = document.getElementById(`block-display-${index}`);
     const editDiv = document.getElementById(`block-edit-${index}`);
-    const blockItem = document.getElementById(`block-${index}`);
 
     if (displayDiv && editDiv) {
         displayDiv.style.display = 'none';
         editDiv.style.display = 'block';
-
-        // Disable dragging when in edit mode
-        if (blockItem) {
-            blockItem.draggable = false;
-        }
     }
 };
 
 window.cancelEditBlock = function(index) {
     const displayDiv = document.getElementById(`block-display-${index}`);
     const editDiv = document.getElementById(`block-edit-${index}`);
-    const blockItem = document.getElementById(`block-${index}`);
 
     if (displayDiv && editDiv) {
         displayDiv.style.display = 'block';
         editDiv.style.display = 'none';
-
-        // Re-enable dragging when exiting edit mode
-        if (blockItem) {
-            blockItem.draggable = true;
-        }
     }
 };
 
@@ -1126,14 +1101,9 @@ window.saveBlock = async function(index) {
             // No changes, just exit edit mode
             const displayDiv = document.getElementById(`block-display-${index}`);
             const editDiv = document.getElementById(`block-edit-${index}`);
-            const blockItem = document.getElementById(`block-${index}`);
             if (displayDiv && editDiv) {
                 displayDiv.style.display = 'block';
                 editDiv.style.display = 'none';
-                // Re-enable dragging
-                if (blockItem) {
-                    blockItem.draggable = true;
-                }
             }
         } else {
             UI.showError('Failed to edit block: ' + (err.message || 'Unknown error'));

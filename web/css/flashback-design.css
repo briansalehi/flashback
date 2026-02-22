@@ -831,6 +831,112 @@ a:hover {
     word-wrap: break-word;
 }
 
+/* Markdown content styling */
+.markdown-content {
+    white-space: normal;
+}
+
+.markdown-content h1,
+.markdown-content h2,
+.markdown-content h3,
+.markdown-content h4,
+.markdown-content h5,
+.markdown-content h6 {
+    color: var(--color-text-primary);
+    margin-top: var(--space-lg);
+    margin-bottom: var(--space-md);
+    font-weight: var(--font-weight-semibold);
+}
+
+.markdown-content h1 { font-size: 2em; }
+.markdown-content h2 { font-size: 1.5em; }
+.markdown-content h3 { font-size: 1.25em; }
+
+.markdown-content p {
+    margin-bottom: var(--space-md);
+}
+
+.markdown-content ul,
+.markdown-content ol {
+    margin-bottom: var(--space-md);
+    padding-left: var(--space-xl);
+}
+
+.markdown-content li {
+    margin-bottom: var(--space-xs);
+}
+
+.markdown-content code {
+    background: rgba(102, 126, 234, 0.2);
+    color: var(--color-primary-start);
+    padding: 0.2em 0.4em;
+    border-radius: var(--radius-sm);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.9em;
+}
+
+.markdown-content pre {
+    background: rgba(0, 0, 0, 0.3);
+    padding: var(--space-md);
+    border-radius: var(--radius-md);
+    overflow-x: auto;
+    margin-bottom: var(--space-md);
+}
+
+.markdown-content pre code {
+    background: none;
+    padding: 0;
+    color: var(--color-text-primary);
+}
+
+.markdown-content blockquote {
+    border-left: 4px solid rgba(102, 126, 234, 0.5);
+    padding-left: var(--space-md);
+    margin-left: 0;
+    margin-bottom: var(--space-md);
+    color: var(--color-text-secondary);
+    font-style: italic;
+}
+
+.markdown-content a {
+    color: var(--color-primary-start);
+    text-decoration: underline;
+}
+
+.markdown-content a:hover {
+    color: var(--color-primary-end);
+}
+
+.markdown-content hr {
+    border: none;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    margin: var(--space-lg) 0;
+}
+
+.markdown-content table {
+    border-collapse: collapse;
+    width: 100%;
+    margin-bottom: var(--space-md);
+}
+
+.markdown-content th,
+.markdown-content td {
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: var(--space-sm);
+    text-align: left;
+}
+
+.markdown-content th {
+    background: rgba(102, 126, 234, 0.2);
+    font-weight: var(--font-weight-semibold);
+}
+
+.markdown-content img {
+    max-width: 100%;
+    height: auto;
+    border-radius: var(--radius-md);
+}
+
 /* Block metadata badge */
 .block-metadata-badge {
     display: inline-block;
