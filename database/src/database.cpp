@@ -1131,7 +1131,7 @@ practice_mode database::get_practice_mode(uint64_t const user_id, uint64_t const
 std::vector<Topic> database::get_practice_topics(uint64_t const user_id, uint64_t const roadmap_id, uint64_t const milestone_id, expertise_level const milestone_level) const
 {
     std::vector<Topic> topics{};
-    for (pqxx::result const result{query("select position, name, level from get_practice_topics($1, $2, $3, $4)", user_id, roadmap_id, milestone_id, level_to_string(milestone_level))}; pqxx::row const& row: result)
+    for (pqxx::result const result{query("select position, name, level from get_practice_topics($1, $2, $3, $4) order by position", user_id, roadmap_id, milestone_id, level_to_string(milestone_level))}; pqxx::row const& row: result)
     {
         Topic topic{};
         topic.set_position(row.at("position").as<uint64_t>());
