@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict TvMCvc0bPsBE6TWxh6cFfA38Ghhky31mVAbBBUizsoxGhQ0X9MlFqfFmWeGGyQy
+\restrict MfCXpf19lP7pL4jiU4jXRv2UlMbXXCoJT0OKjLvKHrO4KuS9pK0ZGADbHqOfwOC
 
 -- Dumped from database version 18.1
 -- Dumped by pg_dump version 18.1
@@ -1279,14 +1279,6 @@ begin
         from get_assessments(user_id, subject_id, topic_level, topic_position) a
         order by a.assimilations desc
         limit 1;
-    elsif mode = 'progressive'::practice_mode then
-        return query
-        select c.id, c.state, c.headline
-        from topic_cards tc
-        join cards c on c.id = tc.card
-        left join progress p on p.user = user_id and p.card = tc.card
-        where tc.subject = subject_id and tc.level <= cognitive_level and tc.level = topic_level and tc.topic = topic_position
-        and coalesce(p.last_practice, long_time_ago) < last_acceptable_read;
     else
         return query
         select c.id, c.state, c.headline
@@ -1322,7 +1314,7 @@ begin
         into most_recent_practice, last_recent_practice, unread_cards
     from topic_cards tc
     left join progress p on p.user = user_id and p.card = tc.card
-    where tc.subject = subject_id and tc.level <= topic_level;
+    where tc.subject = subject_id and tc.level = topic_level;
 
     -- unread cards immediately result in aggressive mode
     -- consequently, users in progressive mode will temporarily switch to aggressive when a new card is available
@@ -1356,7 +1348,7 @@ declare cognitive_level expertise_level;
 declare mode practice_mode;
 begin
     cognitive_level := get_user_cognitive_level(user_id, roadmap_id, milestone_id);
-    mode := get_practice_mode(user_id, milestone_id, milestone_level);
+    mode := get_practice_mode(user_id, milestone_id, cognitive_level);
 
     if mode = 'progressive'::practice_mode then
         return query
@@ -28345,10 +28337,10 @@ COPY flashback.sections (resource, "position", name, link, state) FROM stdin;
 COPY flashback.sessions ("user", token, device, last_usage) FROM stdin;
 2	Txqw8ldUFaI+e9TGfBlP6YxBkn6bgngfQMJITK8DUSQ	b53c3d26-9f71-a69d-d031-c7bf2febd123	2025-12-22 23:00:00+00
 2	S+QZFj/aiqeZCU9t68F97mH7tZH9XEySCgQF/8R08pA	0bdb9226-aefa-4351-8d6e-195d6e5ff28f	2026-02-22 00:00:00+00
-2	KHvqvUtrQuNuv1D8yEfHNP9erEx3zsfN4pKEasnauQs	5b33a8c4-d1c2-4e3b-af88-fa12dce84284	2026-02-23 00:00:00+00
 6	6iF44Iw2Y/NIvt+c1TVX3ReZJDsfJynkhR22sxGymJg	0b0f1bd6-8e6b-4ce9-aa4a-61b54e7a9bfb	2026-02-24 00:00:00+00
-2	z1N4Egb7ZDMyS4LR1cbFr+CuVWwwr39x3BbEUSpYhW0	70c60675-db09-4fc2-bd9a-0e178401f6e7	2026-02-24 00:00:00+00
+2	KHvqvUtrQuNuv1D8yEfHNP9erEx3zsfN4pKEasnauQs	5b33a8c4-d1c2-4e3b-af88-fa12dce84284	2026-02-24 00:00:00+00
 2	kENXFbSZvJrAggEpbDHV0DVnUKDNwYlRsoszdHSYNf4	ea96bd44-1ab3-4c68-9ed3-ab47883e57ef	2026-02-24 00:00:00+00
+2	z1N4Egb7ZDMyS4LR1cbFr+CuVWwwr39x3BbEUSpYhW0	70c60675-db09-4fc2-bd9a-0e178401f6e7	2026-02-24 00:00:00+00
 \.
 
 
@@ -32213,5 +32205,5 @@ GRANT ALL ON SCHEMA public TO brian;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict TvMCvc0bPsBE6TWxh6cFfA38Ghhky31mVAbBBUizsoxGhQ0X9MlFqfFmWeGGyQy
+\unrestrict MfCXpf19lP7pL4jiU4jXRv2UlMbXXCoJT0OKjLvKHrO4KuS9pK0ZGADbHqOfwOC
 
