@@ -3104,7 +3104,7 @@ grpc::Status server::GetPracticeTopics(grpc::ServerContext* context, GetPractice
             {
                 *response->add_topic() = topic;
             }
-            std::clog << std::format("client {} collected {} practice topics from {}\n", request->user().token(), response->topic_size(), request->milestone().id());
+            std::clog << std::format("client {} collected {} practice topics from subject {} in level {}\n", request->user().token(), response->topic_size(), request->milestone().id(), database::level_to_string(request->milestone().level()));
             status = grpc::Status{grpc::StatusCode::OK, {}};
         }
     }
