@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict B08ZzCIaCxQgNgTSnKBaRZJDuvuaRH8VveFhQJfmOXnralEBqg2QYG0YjBffmWe
+\restrict jLpd9OGj9gCG5MPxqmkcitQWqUv09lULMtgbGW1B8OVtgcl4qRdvOh27u4UgVHW
 
 -- Dumped from database version 18.1
 -- Dumped by pg_dump version 18.0
@@ -1089,7 +1089,7 @@ begin
 
     return query
     select ta.id, ta.state, ta.headline, count(*) filter (where ac.assimilated) as assimilations
-    from get_topic_assessments(user_id, subject_id, topic_position, topic_level) ta
+    from get_topic_assessments(user_id, subject_id, topic_level, topic_position) ta
     cross join lateral get_assimilation_coverage(user_id, subject_id, ta.id) as ac
     group by ta.id, ta.state, ta.headline;
 end; $$;
@@ -1268,19 +1268,33 @@ CREATE FUNCTION flashback.get_practice_cards(user_id integer, roadmap_id integer
 declare cognitive_level expertise_level;
 declare last_acceptable_read timestamp with time zone = now() - interval '7 days';
 declare long_time_ago timestamp with time zone = now() - interval '100 days';
+declare mode practice_mode;
 begin
     cognitive_level := get_user_cognitive_level(user_id, roadmap_id, subject_id);
+    mode := get_practice_mode(user_id, subject_id, cognitive_level);
 
-    return query
-    select c.id, c.state, c.headline
-    from topic_cards tc
-    join cards c on c.id = tc.card
-    left join progress p on p.user = user_id and p.card = tc.card
-    where tc.subject = subject_id and tc.level <= cognitive_level and tc.level = topic_level and tc.topic = topic_position
-    and (
-        get_practice_mode(user_id, subject_id, cognitive_level) <> 'aggressive'::practice_mode
-        or coalesce(p.last_practice, long_time_ago) < last_acceptable_read
-    );
+    if mode = 'progressive'::practice_mode and is_assimilated(user_id, subject_id, topic_level, topic_position) then
+        return query
+        select a.id, a.state, a.headline
+        from get_assessments(user_id, subject_id, topic_level, topic_position) a
+        order by a.assimilations desc
+        limit 1;
+    elsif mode = 'progressive'::practice_mode then
+        return query
+        select c.id, c.state, c.headline
+        from topic_cards tc
+        join cards c on c.id = tc.card
+        left join progress p on p.user = user_id and p.card = tc.card
+        where tc.subject = subject_id and tc.level <= cognitive_level and tc.level = topic_level and tc.topic = topic_position
+        and coalesce(p.last_practice, long_time_ago) < last_acceptable_read;
+    else
+        return query
+        select c.id, c.state, c.headline
+        from topic_cards tc
+        join cards c on c.id = tc.card
+        left join progress p on p.user = user_id and p.card = tc.card
+        where tc.subject = subject_id and tc.level <= cognitive_level and tc.level = topic_level and tc.topic = topic_position;
+    end if;
 end; $$;
 
 
@@ -1336,25 +1350,78 @@ ALTER FUNCTION flashback.get_practice_mode(user_id integer, subject_id integer, 
 CREATE FUNCTION flashback.get_practice_topics(user_id integer, roadmap_id integer, milestone_id integer, milestone_level flashback.expertise_level) RETURNS TABLE("position" integer, name flashback.citext, level flashback.expertise_level)
     LANGUAGE plpgsql
     AS $$
+declare long_time_ago timestamp = now() - interval '100 days';
+declare last_acceptable_read timestamp = now() - interval '7 days';
+declare cognitive_level expertise_level;
+declare mode practice_mode;
 begin
-    return query
-    with base as (
-        select  t.position,
-                t.name,
-                t.level,
-                is_assimilated(user_id, t.subject, t.level, t.position) as assimilated,
-                (select a.id from get_assessment_coverage(t.subject, t.position, t.level) a order by a.coverage desc limit 1) as assessment
-        from topics t
-        where t.subject = milestone_id and t.level <= get_user_cognitive_level(user_id, roadmap_id, milestone_id)
-    )
-    select * from (
-        select distinct on (assessment) b."position", b.name, b.level
-        from base b
-        where coalesce(assimilated, false) and assessment is not null
-        order by assessment, position desc
-    )
-    union all
-    select b.position, b.name, b.level from base b where not coalesce(assimilated, false) or assessment is null order by position;
+    cognitive_level := get_user_cognitive_level(user_id, roadmap_id, milestone_id);
+    mode := get_practice_mode(user_id, milestone_id, milestone_level);
+
+    if mode = 'progressive'::practice_mode then
+        return query
+        with base as (
+            select  t.position,
+                    t.name,
+                    t.level,
+                    is_assimilated(user_id, t.subject, t.level, t.position) as assimilated,
+                    (select a.id from get_assessment_coverage(t.subject, t.position, t.level) a order by a.coverage desc limit 1) as assessment
+            from topics t
+            join topic_cards tc on t.subject = tc.subject and t.level = tc.level and t.position = tc.topic
+            left join progress p on p.user = user_id and p.card = tc.card
+            where t.subject = milestone_id and t.level <= cognitive_level and (is_assimilated(user_id, t.subject, t.level, t.position) or now() - coalesce(p.last_practice, long_time_ago) > interval '1 day')
+            group by t.subject, t.level, t.position, t.name
+        )
+        select * from (
+            select distinct on (assessment) b."position", b.name, b.level
+            from base b
+            where coalesce(assimilated, false) and assessment is not null
+            order by assessment, position desc
+        )
+        union all
+        select b.position, b.name, b.level from base b where not coalesce(assimilated, false) or assessment is null order by position;
+    else
+        return query
+        with base as (
+            select  t.position,
+                    t.name,
+                    t.level,
+                    is_assimilated(user_id, t.subject, t.level, t.position) as assimilated,
+                    (select a.id from get_assessment_coverage(t.subject, t.position, t.level) a order by a.coverage desc limit 1) as assessment
+            from topics t
+            join topic_cards tc on t.subject = tc.subject and t.level = tc.level and t.position = tc.topic
+            left join progress p on p.user = user_id and p.card = tc.card
+            where t.subject = milestone_id and t.level <= cognitive_level and coalesce(p.last_practice, long_time_ago) < last_acceptable_read
+            group by t.subject, t.level, t.position, t.name
+        )
+        select * from (
+            select distinct on (assessment) b."position", b.name, b.level
+            from base b
+            where coalesce(assimilated, false) and assessment is not null
+            order by assessment, position desc
+        )
+        union all
+        select b.position, b.name, b.level from base b where not coalesce(assimilated, false) or assessment is null order by position;
+    end if;
+
+--    return query
+--    with base as (
+--        select  t.position,
+--                t.name,
+--                t.level,
+--                is_assimilated(user_id, t.subject, t.level, t.position) as assimilated,
+--                (select a.id from get_assessment_coverage(t.subject, t.position, t.level) a order by a.coverage desc limit 1) as assessment
+--        from topics t
+--        where t.subject = milestone_id and t.level <= get_user_cognitive_level(user_id, roadmap_id, milestone_id)
+--    )
+--    select * from (
+--        select distinct on (assessment) b."position", b.name, b.level
+--        from base b
+--        where coalesce(assimilated, false) and assessment is not null
+--        order by assessment, position desc
+--    )
+--    union all
+--    select b.position, b.name, b.level from base b where not coalesce(assimilated, false) or assessment is null order by position;
 end;
 $$;
 
@@ -1620,22 +1687,22 @@ end; $$;
 ALTER FUNCTION flashback.get_topic(subject_id integer, topic_level flashback.expertise_level, topic_position integer) OWNER TO flashback;
 
 --
--- Name: get_topic_assessments(integer, integer, integer, flashback.expertise_level); Type: FUNCTION; Schema: flashback; Owner: flashback
+-- Name: get_topic_assessments(integer, integer, flashback.expertise_level, integer); Type: FUNCTION; Schema: flashback; Owner: flashback
 --
 
-CREATE FUNCTION flashback.get_topic_assessments(user_id integer, subject_id integer, topic_position integer, max_level flashback.expertise_level) RETURNS TABLE(id integer, state flashback.card_state, headline flashback.citext, level flashback.expertise_level)
+CREATE FUNCTION flashback.get_topic_assessments(user_id integer, subject_id integer, topic_level flashback.expertise_level, topic_position integer) RETURNS TABLE(id integer, state flashback.card_state, headline flashback.citext)
     LANGUAGE plpgsql
     AS $$
 begin
     return query
-    select c.id, c.state, c.headline, a.level
+    select c.id, c.state, c.headline
     from assessments a
     join cards c on c.id = a.card
-    where a.subject = subject_id and a.topic = topic_position and a.level <= max_level;
+    where a.subject = subject_id and a.topic = topic_position and a.level = topic_level;
 end; $$;
 
 
-ALTER FUNCTION flashback.get_topic_assessments(user_id integer, subject_id integer, topic_position integer, max_level flashback.expertise_level) OWNER TO flashback;
+ALTER FUNCTION flashback.get_topic_assessments(user_id integer, subject_id integer, topic_level flashback.expertise_level, topic_position integer) OWNER TO flashback;
 
 --
 -- Name: get_topic_cards(integer, integer, flashback.expertise_level); Type: FUNCTION; Schema: flashback; Owner: flashback
@@ -3602,6 +3669,7 @@ COPY flashback.assessments (topic, card, subject, level) FROM stdin;
 9	5371	6	surface
 15	5372	6	surface
 8	5372	6	surface
+1	5645	3	surface
 \.
 
 
@@ -4065,8 +4133,6 @@ COPY flashback.blocks (card, "position", content, type, extension, metadata) FRO
 107	9	static const char *const nova_compat[] __initconst = {\n    "ti,nova",\n    NULL,\n};	text	txt	\N
 107	10	DT_MACHINE_START(NOVA_DT, "Nova board (Flattened Device Tree)")\n    .reserve = omap_reserve,\n    .map_io = am33xx_map_io,\n    .init_early = am33xx_init_early,\n    .init_machine = omap_generic_init,\n    .init_late = am33xx_init_late,\n    .init_time = omap3_gptimer_timer_init,\n    .dt_compat = nova_compat,\n    .restart = am33xx_restart,\nMACHINE_END\n#endif	code	txt	\N
 107	11	*drivers/net/ethernet/ti/cpsw-common.c*\nint ti_cm_get_macid(struct device *dev, int slave, u8 *mac_addr)\n{\n    […]\n    if (of_machine_is_compatible("ti,am33xx"))\n        return cpsw_am33xx_cm_get_macid(dev, 0x630, slave, mac_addr);\n    […]\n}	code	txt	\N
-108	1	g++ -o program source.cpp -std=c++20	code	txt	\N
-108	2	clang++ -o program source.cpp -std=c++20	code	txt	\N
 112	1	#include <iostream>	text	txt	\N
 112	2	int main()\n{\n    std::cout << sizeof(long double) << '\\\\n';\n}	code	txt	\N
 113	1	int number = 200000;\nlong large_number = 200000000;\nint regular_number{large_number}; // ERROR: Type long narrowed to int	code	txt	\N
@@ -4377,6 +4443,7 @@ COPY flashback.blocks (card, "position", content, type, extension, metadata) FRO
 198	2	- `std::istream_iterator`\n- `std::ostream_iterator`\n- `std::istreambuf_iterator`\n- `std::ostreambuf_iterator`	text	txt	\N
 208	1	Standard Library containers use value semantics on elements. Thus, when you\nwrite classes that you intend to use with the Standard Library, you need to\nmake sure they are copyable.	text	txt	\N
 183	6	def delete(valueToDelete, node):\n    if node is None:\n        return None\n    elif valueToDelete < node.value:\n        node.leftChild = delete(valueToDelete, node.leftChild)\n        return node\n    elif valueToDelete > node.value:\n        node.rightChild = delete(valueToDelete, node.rightChild)\n        return node\n    elif valueToDelete == node.value:\n        if node.leftChild is None:\n            return node.rightChild\n        elif node.rightChild is None:\n            return node.leftChild\n        else:\n            node.rightChild = lift(node.rightChild, node)\n            return node	text	txt	\N
+4373	1	The `std::sort` algorithm is the canonical `O(N log N)` sort (typically\nimplemented as *intro-sort*).	text	txt	\N
 183	7	def lift(node, nodeToDelete):\n    if node.leftChild:\n        node.leftChild = lift(node.leftChild, nodeToDelete)\n        return node\n    else:\n        nodeToDelete.value = node.value\n        return node.rightChild	code	txt	\N
 184	1	1. Call itself recursively on the node's left child. The function will keep getting called until we hit a node that does not have a left child.\n2. Visit a node.\n3. Call itself recursively on the node's right child. The function will keep getting called until we hit a node that does not have a right child.	text	txt	\N
 184	2	def traverse_and_print(node):\n    if node is None:\n        return	text	txt	\N
@@ -4487,13 +4554,7 @@ COPY flashback.blocks (card, "position", content, type, extension, metadata) FRO
 228	1	The first single process of PostgreSQL is **postmaster** which waits for incoming\nclient connections.	text	txt	\N
 229	1	The postmaster process forks backend processes which each of them serve one\nand only one connection.	text	txt	\N
 230	1	First build the project:	text	txt	\N
-230	2	git clone https://github.com - https://github.com/postgresql/postgresql\ncd postgresql\ngit checkout <latest>\n./configure --prefix=$HOME/.local\nmake\nmake install	code	txt	\N
 230	3	Create postgres user and initialize database:	text	txt	\N
-230	4	sudo useradd postgres\nsudo mkdir /opt/postgres\nsudo chown postgres:postgres /opt/postgres\ninitdb -D /opt/postgresql	code	txt	\N
-231	1	./configure --prefix=$HOME/.local --with-systemd	code	txt	\N
-232	1	git clone https://github.com - https://github.com/theory/pgenv\ncp pgenv/bin/pgenv ~/.local/bin/\npgenv available\npgenv build <version>	code	txt	\N
-233	1	psql -U postgres -h localhost template1	code	txt	\N
-234	1	target_link_libraries(executable PRIVATE pq pqxx)	code	txt	\N
 235	1	`pg_ctl` command-line utility is shipped with postgres that helps in managing\nthe clusters.	text	txt	\N
 236	1	* `start`, `stop`, and `restart` execute the corresponding actions.\n* `status` reports current status of cluster.\n* `reload` reloads the configuration.\n* `initdb` or briefly `init` executes the initialization of the cluster.\n* `promote` is used when the cluster is running as a subordinate server in a\n  replication setup and now must be detached from the origin master and\n  become independent.	text	txt	\N
 237	1	`postmaster` process is started by `pg_ctl start` and prints\n`$PGENV_ROOT/bin/postgres` when it runs.	text	txt	\N
@@ -4507,6 +4568,11 @@ COPY flashback.blocks (card, "position", content, type, extension, metadata) FRO
 240	3	Option `-D` precedes using environment variables.	text	txt	\N
 241	1	`template0` and `template1` are first databases. `template0` is a safe copy\nfor rebuilding in case `template1` is accidentally damaged or removed.	text	txt	\N
 242	1	You can either use command options or use a connection string to address a\ncluster.	text	txt	\N
+230	4	sudo useradd postgres\nsudo mkdir /opt/postgres\nsudo chown postgres:postgres /opt/postgres\ninitdb -D /opt/postgresql	code	sh	\N
+231	1	./configure --prefix=$HOME/.local --with-systemd	code	sh	\N
+233	1	sudo -u postgres psql template1	code	sh	\N
+232	1	git clone https://github.com/theory/pgenv\ncp pgenv/bin/pgenv ~/.local/bin/\npgenv available\npgenv build <version>	code	sh	\N
+234	1	target_link_libraries(executable PRIVATE pq pqxx)	code	cmake	\N
 242	2	psql -U <username> -h <hostname> -d <database>\npsql postgresql://username@hostname:5432/database	code	txt	\N
 243	1	\\\\q	code	txt	\N
 244	1	psql -l	code	txt	\N
@@ -4763,6 +4829,8 @@ COPY flashback.blocks (card, "position", content, type, extension, metadata) FRO
 567	4	int main(int argc, char **argv)\n{\nint result = -1;	text	txt	\N
 592	7	if (fclose(fp) == -1)\n{\nperror(NULL);\nreturn 3;\n}\n}	code	txt	\N
 1713	1	The class `image-buildinfo` writes a plain text file containing build information and layers revisions to the target filesystem at `${sysconfdir}/buildinfo` by default.	text	txt	\N
+2792	6	Before building an image, you should edit and configure the `build/local.conf` file and set `MACHINE` variable to whatever target you desire, e.g. qemuarm, qemuarm64, qemux86-64, etc.	text	txt	\N
+2792	7	sed -i '/^MACHINE[ ?=]\\\\+/s/^MACHINE\\\\([ ?=]\\\\+\\\\).*/MACHINE\\\\1"qemuarm64"/' conf/local.conf	code	txt	\N
 402	5	int main()\n{\n    try\n    {\n        std::filesystem::path relative_path{"./lib/../include"};\n        std::filesystem::path base_path{"/usr"};\n        std::filesystem::path canonical_path{std::filesystem::canonical(relative_path, base_path)};\n        std::cout << canonical_path << std::endl;\n    }\n    catch (std::filesystem::filesystem_error const& exp)\n    {\n        std::cerr << exp.what() << std::endl;\n    }\n    catch (std::bad_alloc const& exp)\n    {\n        std::cerr << exp.what() << std::endl;\n    }\n}	code	txt	\N
 403	1	`std::filesystem::canonical()` does what `std::filesystem::absolute()` does,\nbut canonical additionally removes any "." or ".." paths.	text	txt	\N
 403	2	`std::filesystem::absolute()` does not call system calls.	text	txt	\N
@@ -5498,6 +5566,7 @@ COPY flashback.blocks (card, "position", content, type, extension, metadata) FRO
 647	3	auto operator<=>(T const& rhs) const = default;	code	cpp	\N
 647	4	constexpr auto operator<=>(T const& rhs) const noexcept;	code	cpp	\N
 647	5	When declaring the default member `operator<=>`, the following applies for the generated operators:	text	txt	\N
+2792	8	Using `bitbake` utility which was sourced earlier build an image by choice:	text	txt	\N
 647	6	- `noexcept`: if comparing the members never throws.\n- `constexpr`: if comparing the members is possible at compile time.\n- **rewriting**: implicit type conversions for the first operand is supported.\n- `operator==`: defines equality support with `operator==` and `operator!=`.\n- `operator<=>`: defines relational support with `<`, `<=`, `>`, `>=` operators.	text	list	\N
 648	1	To have more control over the generated comparison operators, we can define `operator==` and `operator<=>` ourselves.	text	txt	\N
 648	2	constexpr auto operator==(T const& rhs) const noexcept\n{\n    return value == rhs.value;\n}\n\nconstexpr auto operator<=>(T const& rhs) const noexcept\n{\n    return value <=> rhs.value;\n}	code	cpp	\N
@@ -5797,6 +5866,7 @@ COPY flashback.blocks (card, "position", content, type, extension, metadata) FRO
 803	4	Here, the exception to the rule - that the kernel doesn't interpret the minor\nnumber – is the `misc` class (type character, major `#10`). It uses the minor\nnumbers as second-level majors.	text	txt	\N
 803	5	A common problem is that of the namespace getting exhausted. Within the misc\nclass (`#10`) live a lot of devices and their corresponding drivers. In\neffect, they share the same major number and rely on a unique minor number to\nidentify themselves.	text	txt	\N
 804	1	- The **buses** on the system.\n- The **devices** on them.\n- The **device drivers** that drive the devices.	text	txt	\N
+2792	9	bitbake core-image-minimal	code	txt	\N
 805	1	A fundamental **LDM** tenet is that every single device must reside on a bus.\nUSB devices will be on USB bus, PCI devices on PCI bus, I2C devices on I2C\nbus, and so on. Available buses are available under `/sys/bus` directory.	text	txt	\N
 806	1	Critically, they organize and recognize the devices on them. If a new device\nsurfaces, like a pen drive, the USB bus driver will recognize the fact and\nbind it to its device driver.	text	txt	\N
 807	1	After its corresponding bus driver binds the device to its correct device\ndriver, the kernel driver framework invokes the registered `probe()` method\nof the driver. This probe method now sets up the device, allocating\nresources, IRQs, memory setup, registering it as required, and so on.	text	txt	\N
@@ -6348,6 +6418,7 @@ COPY flashback.blocks (card, "position", content, type, extension, metadata) FRO
 965	8	int main(void)\n{\n    int result = sum(4, 2);\n    printf("%i\\\\n", result);\n}	code	txt	\N
 965	9	gcc -g -o program main.c sum.o\n./program	code	txt	\N
 966	1	There are two types of inline assembly: **basic** and **extended**.	text	txt	\N
+2792	10	There might be dependency packages to run `bitbake` on Arch Linux:	text	txt	\N
 966	2	Compilers will not optimize assembly parts of the program, so using inline assembly is not advices.\nThere will be no error checking on inline assembly code.	text	txt	\N
 967	1	Instructions should be terminated by `;`.\n`-mintel` compiler option is required.\nSwitching to Intel assembly syntax is required as the first argument of `__asm__`.	text	txt	\N
 967	2	int main(void)\n{\n    __asm__(\n        ".intel_syntax noprefix;"\n        "xor rax, rax;"\n    );\n}	code	txt	\N
@@ -7096,6 +7167,7 @@ COPY flashback.blocks (card, "position", content, type, extension, metadata) FRO
 1244	2		code	txt	\N
 1245	1	By explicitly passing a launch policy directing `async()` that it should\ndefinitely start the passed functionality asynchronously the moment it is\ncalled.	text	txt	\N
 1245	2	std::future<long> result = std::async(std::launch::async, do_something);	code	txt	\N
+2792	11	sudo pacman -Ss inetutils net-tools diffstat chrpath rpcscv-proto	code	txt	\N
 1245	3	If the asynchronous call is not possible here, the program will throw a\n`std::system_error` exception with the error code\n`resource_unavailable_try_again`, which is equivalent to the POSIX errno\n`EAGAIN`.	text	txt	\N
 1246	1	With the `std::launch::async` policy, you don't necessarily have to call\n`get()` anymore because, if the life time of the returned future ends, the\nprogram will wait for the function to finish. Thus, if you don't call `get()`,\nleaving the scope of the future object will wait for the background task to\nend. Nevertheless, also calling `get()` here before a program ends makes the\nbehavior clearer.	text	txt	\N
 1246	2	{\n    std::future<void> result = std::async(std::launch::async, do_something);\n    // result's destructor blocks at the end of scope\n}	code	txt	\N
@@ -7238,6 +7310,7 @@ COPY flashback.blocks (card, "position", content, type, extension, metadata) FRO
 1294	2	docker image build --squash --tag container:latest .	code	txt	\N
 1322	2	In *ingress mode* every node gets a mapping and can therefore redirect your request to a node that is running the service.	text	txt	\N
 1323	1	docker service create --name my-service --network my-network --publish published=80,target=80,mode=host --replicas 12	code	txt	\N
+2792	12	An image was built to be run by `runqemu`:	text	txt	\N
 1323	2	Open a web browser and point it to the IP address of any of the nodes in the swarm on port 80 to see the service running.	text	txt	\N
 1324	1	docker service update --image repository/project:v2 --update-parallelism 2 --update-delay 20s my-project\ndocker service inspect --pretty my-project	code	txt	\N
 1325	1	docker service logs my-project	code	txt	\N
@@ -7283,6 +7356,7 @@ COPY flashback.blocks (card, "position", content, type, extension, metadata) FRO
 1709	7	After the build process is over, the image will be available inside the `build/tmp/deploy/images/visionfive/` directory. The file we want to use is `core-image-full-cmdline-visionfive.wic.gz`.	text	txt	\N
 1341	2	The application running on node-1 updates some data in the shared volume.\nHowever, instead of writing the update directly to the volume, it holds it in its local buﬀer for faster recall.\nAt this point, the application in node-1 thinks the data has been written to the volume.\nHowever, before node-1 flushes its buffers and commits the data to the volume, the app on node-2 updates the same data with a diﬀerent value and commits it directly to the volume.\nAt this point, both applications think they’ve updated the data in the volume, but in reality only the application in node-2 has.\nA few seconds later, on node-1 flushes the data to the volume, overwriting the changes made by the application in node-2.\nHowever, the application in node-2 is totally unaware of this! This is one of the ways data corruption happens.\nTo prevent this, you need to write your applications in a way to avoid things like this.	text	txt	\N
 1342	1	Docker Swarm Mode is secure by default. Image vulnerability scanning analyses\nimages, detects known vulnerabilities, and provides detailed reports and\nfixes.	text	txt	\N
+2792	13	runqemu core-image-minimal nographics	code	txt	\N
 1342	2	Scanners work by building a list of all software in an image and then comparing the packages against databases of known vulnerabilities.\nMost vulnerability scanners will rank vulnerabilities and provide advice and help on fixes.	text	txt	\N
 1343	1	**Docker Content Trust (DCT)** lets us sign our own images and verify the\nintegrity and publisher of images we consume.	text	txt	\N
 1344	1	Kernel namespaces are the main technology used to build containers. They\nvirtualise operating system constructs such as process trees and filesystems\nin the same way that hypervisors virtualise physical resources such as CPUS\nand disks. If namespaces are about isolation, control groups (cgroups) are\nabout limits.	text	txt	\N
@@ -7369,6 +7443,7 @@ COPY flashback.blocks (card, "position", content, type, extension, metadata) FRO
 1374	7	namespace correct_implementation\n{\n    #ifndef _lib_version_1\n    inline namespace v1\n    {\n        template<typename T>\n        int test(T value) { return 1; }\n    }\n    #endif	text	txt	\N
 1376	1	* The type of objects without template arguments are not types, but act as a placeholder for a type that activates CTAD. When compiler encouters it, it builds a set of deduction guides which can be complemented by user with user defined deduction rules.\n* CTAD does not occur if the template argument list is present.	text	txt	\N
 1380	1	* A sign, plus (**+**) or minus (**-**) (optional)\n* Prefix **0** to indicate an octal base (optional)\n* Prefix **0x** or **0X** to indicate a hexadecimal base (optional)\n* A sequence of digits	text	txt	\N
+2792	14	Origin: 1.2	text	txt	\N
 1382	1	* Decimal floating-point expression (optional sign, sequence of decimal digits with optional point, optional e or E, followed by exponent with optional sign).\n* Binary floating-point expression (optional sign, 0x or 0X prefix, sequence of hexadecimal digits with optional point, optional p or P, followed by exponent with optional sign).\n* Infinity expression (optional sign followed by case-insensitive INF or INFINITY).\n* A non-number expression (optional sign followed by case-insensitive NAN and possibly other alphanumeric characters).	text	txt	\N
 1375	1	* Only by C++20 structured bindings can include `static` or `thread_local` specifiers in the declaration.\n* Only by C++20 `[[maybe_unused]]` attribute can be used in the declaration.\n* Only by C++20 a lambda can capture structure binding identifiers.	text	txt	\N
 1376	2	std::pair p{42, "demo"};    // std::pair<int, char const*>\nstd::vector v{1, 2};        // std::vector<int>	code	cpp	\N
@@ -7402,6 +7477,7 @@ COPY flashback.blocks (card, "position", content, type, extension, metadata) FRO
 1422	1	Converting from an `std::basic_string_view` to an `std::basic_string` is not possible. You must explicitly construct an `std::basic_string` object from a `std::basic_string_view`.	text	txt	\N
 1423	1	Only class member functions can be `defaulted`.	text	txt	\N
 1715	1	When using the Yocto Project, we usually add many configurations in `build/conf/local.conf`. However, as discussed in the book, this is bad as it is not at source control management and is likely to differ among developers. Using a custom distribution allows consistent use among multiple developers, provides a clear view of the different `DISTRO_FEATURES` we use when compared to our base distribution, and provides a central place where we can have a global view of all the required recipe configurations we need for our product, reducing the number of bbappend files required to configure our recipes (for example, `PACKAGECONFIG:pn-<myrecipe>:append = " myfeature"`)	text	txt	\N
+2793	1	Add the following line to `build/local.conf` file:	text	txt	\N
 1425	1	* **user defined constructor** inhibits **default constructor**: If a user-defined constructor exists, the default constructor is not generated by default.\n* **virtual destructor** inhibits **default constructor**: If a user-defined virtual destructor exists, the default constructor is not generated by default.\n* **user defined move constructor/assignment** inhibits **default copy constructor/assignment**: If a user-defined move constructor or move assignment operator exists, then the copy constructor and copy assignment operator are not generated by default.\n* **user defined copy constructor/assignment, move constructor/assignment, destructor** inhibits **default move constructor/assignment**: If a user-defined copy constructor, move constructor, copy assignment operator, move assignment operator, or destructor exists, then the move constructor and move assignment operator are not generated by default.\n* If a user-defined copy constructor or destructor exists, then the copy assignment operator is generated by default. <span style="color:green">(deprecated)</span>\n* If a user-defined copy assignment operator or destructor exists, then the copy constructor is generated by default. <span style="color:green">(deprecated)</span>	text	txt	\N
 1425	2	The rule of thumb, also known as The Rule of Five, for class special member functions is that if you explicitly define any copy constructor, move constructor, copy assignment operator, move assignment operator, or destructor, then you must either explicitly define or default all of them.	text	txt	\N
 1426	1	Declare the copy constructor and the copy assignment operator as `deleted`.	text	txt	\N
@@ -7429,6 +7505,8 @@ COPY flashback.blocks (card, "position", content, type, extension, metadata) FRO
 1441	2	1. Define an overload with a fixed number of arguments to end compile-time recursion if the semantics of the variadic function template require it.\n2. Define a template parameter pack that is a template parameter that can hold any number of arguments, including zero; these arguments can be either types, non-types, or templates.\n3. Define a function parameter pack to hold any number of function arguments, including zero; the size of the template parameter pack and the corresponding function parameter pack is the same. This size can be determined with the sizeof... operator.\n4. Expand the parameter pack in order to replace it with the actual arguments being supplied.	text	txt	\N
 1441	3	With GCC and Clang, you can use the `__PRETTY_FUNCTION__` macro to print the name and the signature of the function.	text	txt	\N
 1441	4	Make return type `auto` to ensure all of the function template initializations have the same return type, for example, in case of having `std::string` and `char` types in parameter pack.	text	txt	\N
+2793	2	```\nIMAGE_INSTALL_append = " binutils"\n``````	text	txt	\N
+2793	3	bitbake qemuarm64 core-image-minimal\nrunqemu core-image-minimal nographics	code	txt	\N
 1443	1	Fold expressions work with all overloads for the supported **binary operators**, but do not work with **arbitrary binary operators**. It is possible to implement a workaround for that by providing a wrapper type that will hold a value and an overloaded operator for that wrapper type:	text	txt	\N
 1444	1	A higher-order function is a function that takes one or more other functions as arguments and applies them to a range (a list, vector, map, tree, and so on), thus producing either a new range or a value.	text	txt	\N
 1444	2	To implement the map function, you should:	text	txt	\N
@@ -7522,6 +7600,7 @@ COPY flashback.blocks (card, "position", content, type, extension, metadata) FRO
 1495	1	The Yocto Project has a release every six months, in April and October.	text	txt	\N
 1495	2	The support for the stable release is for 7 months, offering 1 month of\noverlapped support for every stable release. The LTS release has a minimal\nsupport period of 2 years, optionally extended. After the official support\nperiod ends, it moves to Community support and finally reaches End Of Life\n(EOL).	text	txt	\N
 1495	3	`Initial Release -> Stable Release -> Community -> End of Life`	text	txt	\N
+2793	4	Origin: 1.2	text	txt	\N
 1496	1	Poky is the default Yocto project reference distribution, which uses OpenEmbedded build system technology.	text	txt	\N
 1496	2	It is composed of a collection of tools, configuration files, and recipe data (known as metadata).	text	txt	\N
 1497	1	The code that is parsed generates and runs tasks, which are a set of steps ordered per the code's dependencies.	text	txt	\N
@@ -8678,6 +8757,7 @@ COPY flashback.blocks (card, "position", content, type, extension, metadata) FRO
 1952	11	sudo unattended-upgrade --dry-run -d	code	txt	\N
 1952	12	8. To manually install the security-related updates without installing non-security updates, just run:	text	txt	\N
 1952	13	sudo unattended-upgrade -d	code	txt	\N
+2794	1	We just need to configure `conf/local.conf` file and add the following line before building an image:	text	txt	\N
 1952	14	Also, if you’re running a non-Ubuntu flavor of Debian, which would include Rasp-bian for the Raspberry Pi, you can give it the same functionality as Ubuntu by installing the unattended-upgrades package. Just run this command:	text	txt	\N
 1952	15	sudo apt install unattended-upgrades	code	txt	\N
 2741	2	root=/dev/mmcblk0p2 rootwait\nconsole=ttyS0	code	txt	\N
@@ -8735,6 +8815,7 @@ COPY flashback.blocks (card, "position", content, type, extension, metadata) FRO
 1961	2	sudo passwd -l root	code	txt	\N
 1962	1	You can either create an entry for an individual user or create a user alias.	text	txt	\N
 1962	2	ADMINS ALL=(ALL) ALL	code	txt	\N
+2794	2	```\necho 'IMAGE_INSTALL_appen = " binutils"' >> conf/local.conf\n``````	text	txt	\N
 1962	3	It’s also possible to add a sudo entry for just a single user, and you might need to do that under very special circumstances.	text	txt	\N
 1962	4	frank ALL=(ALL) ALL	code	txt	\N
 1963	1	You can, for example, create a `BACKUPADMINS` user alias for backup administrators, a `WEBADMINS` user alias for web server administrators, or whatever else you desire:	text	txt	\N
@@ -8846,6 +8927,7 @@ COPY flashback.blocks (card, "position", content, type, extension, metadata) FRO
 1983	2	cd /home\nsudo chmod 700 *	code	txt	\N
 1983	3	To change the default permissions setting for home directories, edit `/etc/login.defs` configuration file and set directive values accordingly:	text	txt	\N
 1983	4	UMASK 077\nHOME_MODE 0750	code	txt	\N
+2794	3	And the follow up all the steps required to build an image using `bitbake`:	text	txt	\N
 1983	5	This includes access permissions for a user’s own personal group, but that’s okay. It still effectively means that only the respective owners of the various home directories can get into them.	text	txt	\N
 1984	1	Debian-based distros have two user creation utilities:	text	txt	\N
 1984	2	* `useradd`\n* `adduser`	text	txt	\N
@@ -8979,6 +9061,7 @@ COPY flashback.blocks (card, "position", content, type, extension, metadata) FRO
 2008	3	The XMAS scan sends invalid packets that consist of the `FIN`, `PSH`, and `URG` flags.	text	txt	\N
 2008	4	To see packats counter on the target machine run:	text	txt	\N
 2008	5	sudo iptables -t mangle -L PREROUTING -v	code	txt	\N
+230	2	git clone https://github.com/postgresql/postgresql\ncd postgresql\ngit checkout <latest>\n./configure --prefix=$HOME/.local\nmake\nmake install	code	sh	\N
 2008	6	The fact that all 1,000 scanned ports show as `open|filtered` means that the scan was blocked, and that Nmap can’t determine the true state of the ports.\nWe can view the result to see which rule did the blocking.\nHere, you can see that the first rule — the `INVALID` rule — blocked 2,000 packets and 80,000 bytes.	text	txt	\N
 2008	7	Now, let’s zero out the counter so that we can do another scan:	text	txt	\N
 2008	8	sudo iptables -t mangle -Z PREROUTING	code	txt	\N
@@ -11053,22 +11136,6 @@ COPY flashback.blocks (card, "position", content, type, extension, metadata) FRO
 2774	2	The `dispatch()` function can be invoked from the current worker thread, while\nthe `post()` function has to wait until the handler of the worker is complete\nbefore it can be invoked. In other words, the `dispatch()` function's events\ncan be executed from the current worker thread even if there are other pending\nevents queued up, while the `post()` function's events have to wait until the\nhandler completes the execution before being allowed to be executed.	text	txt	\N
 2775	1	Strand is a class in the <code>io_service</code> object that provides handler\nexecution serialization. It can be used to ensure the work we have will be\nexecuted serially.	text	txt	\N
 2775	3	The `boost::asio::io_context::strand::wrap()` function creates a new handler\nfunction object that will automatically pass the wrapped handler to the strand\nobject's dispatch function when it is called.	text	txt	\N
-2792	6	Before building an image, you should edit and configure the `build/local.conf` file and set `MACHINE` variable to whatever target you desire, e.g. qemuarm, qemuarm64, qemux86-64, etc.	text	txt	\N
-2792	7	sed -i '/^MACHINE[ ?=]\\\\+/s/^MACHINE\\\\([ ?=]\\\\+\\\\).*/MACHINE\\\\1"qemuarm64"/' conf/local.conf	code	txt	\N
-2792	8	Using `bitbake` utility which was sourced earlier build an image by choice:	text	txt	\N
-2792	9	bitbake core-image-minimal	code	txt	\N
-2792	10	There might be dependency packages to run `bitbake` on Arch Linux:	text	txt	\N
-2792	11	sudo pacman -Ss inetutils net-tools diffstat chrpath rpcscv-proto	code	txt	\N
-2792	12	An image was built to be run by `runqemu`:	text	txt	\N
-2792	13	runqemu core-image-minimal nographics	code	txt	\N
-2792	14	Origin: 1.2	text	txt	\N
-2793	1	Add the following line to `build/local.conf` file:	text	txt	\N
-2793	2	```\nIMAGE_INSTALL_append = " binutils"\n``````	text	txt	\N
-2793	3	bitbake qemuarm64 core-image-minimal\nrunqemu core-image-minimal nographics	code	txt	\N
-2793	4	Origin: 1.2	text	txt	\N
-2794	1	We just need to configure `conf/local.conf` file and add the following line before building an image:	text	txt	\N
-2794	2	```\necho 'IMAGE_INSTALL_appen = " binutils"' >> conf/local.conf\n``````	text	txt	\N
-2794	3	And the follow up all the steps required to build an image using `bitbake`:	text	txt	\N
 2794	4	git clone git://git.yoctoproject.org/poky\ncd poky\nsource oe-init-build-env\nsed -i '/^MACHINE[ ?=]\\\\+/s/^MACHINE\\\\([ ?=]\\\\+\\\\).*/MACHINE\\\\1"qemuarm64"/' conf/local.conf\nbitbake qemuarm64 core-image-sato\nrunqemu core-image-sato	code	txt	\N
 2794	5	Origin: 1.2	text	txt	\N
 2796	1	Historically, `class` keyword can be used instead of `typename`. However,\nbecause this use of `class` can be misleading, you should prefer the use of\n`typename`. The keyword `struct` cannot be used in place of `typename` when\ndeclaring type parameters.	text	txt	\N
@@ -11788,6 +11855,8 @@ COPY flashback.blocks (card, "position", content, type, extension, metadata) FRO
 4351	4	*Sentinels* follow the same idea. However, they do not need to be of an\n*iterator* type. Instead, they only need to be comparable to an *iterator*.\nThe exclusive end of the range is then the first iterator that compares equal\nto the sentinel.	text	txt	\N
 4351	5	#include <iostream>\n#include <algorithm>\n#include <ranges>\n#include <vector>\n\ntemplate<typename T>\nstruct sentinel\n{\n    using iter_t = typename std::vector<T>::iterator;\n    iter_t begin;\n    std::iter_difference_t<iter_t> count;\n    bool operator==(iter_t const& other) const { return std::distance(begin, other) >= count; }\n};\n\nint main()\n{\n    std::vector<long> numbers{1,2,3,4,5};\n    std::vector<long>::iterator iter = numbers.begin();\n    std::ranges::for_each(iter, sentinel<long>{iter, 3}, [](auto e) { std::cout << e << " "; });\n}	code	cpp	\N
 5559	2	---	text	md	\N
+4373	2	Due to the `O(N log N)` complexity guarantee, `std::sort` only operates on\n`random_access` ranges. Notably, `std::list` offers a method with an\napproximate `O(N log N)` complexity.	text	txt	\N
+4374	1	| `std::sort` | standard |\n| --- | --- |\n| introduced | C++98 |\n| paralllel | C++17 |\n| constexpr | C++20 |\n| rangified | C++20 |	text	txt	\N
 3119	1	const GLchar* vertex120 = R"END(\n#version 120\nattribute vec3 position;\nattribute vec3 color;\nvarying vec3 outColor;\nattribute vec2 inUvs;\nvarying vec2 outUvs;\nuniform float time;\nuniform mat4 matrix;\nuniform mat4 projection;\nvoid main()\n{\n    float theta = time;\n    \n    float co = cos(theta);\n    float si = sin(theta);\n    \n    mat4 rotationY = mat4(co, 0, si,  0,\n                          0,  1,  0,  0,\n                          -si,  0, co, 0,\n                          0,  0,  0,  1);\n\n    co = cos(theta/2.);\n    si = sin(theta/2.);\n\n    mat4 rotationX = mat4(1, 0, 0, 0,\n                          0, co, -si, 0,\n                          0, si, co, 0,\n                          0, 0, 0, 1);\n    outUvs = inUvs;\n    outColor = color;\n    gl_Position = projection * matrix * rotationY * rotationX * vec4(position,1.f);\n}\n)END";\n\n// fragment shader source\n\nconst GLchar* raster120 = R"END(\n#version 120\nvarying vec3 outColor;\nvarying vec2 outUvs;\nuniform sampler2D tex;\nuniform float time;\nvoid main()\n{\n    gl_FragColor = vec4(outColor,1.f)/2.f + vec4(texture2D(tex,outUvs))/2.f;\n}\n)END";\n\nGLfloat vertices[] = {\n    -1, -1, +1, // 0\n    -1, +1, +1,\n    +1, +1, +1,\n    +1, -1, +1,\n    -1, -1, -1,\n    -1, +1, -1,\n    +1, +1, -1,\n    +1, -1, -1, //7\n    -1, -1, +1, // "8" - 0\n    -1, +1, +1, // "9" - 1, etc...\n    +1, +1, +1,\n    +1, -1, +1,\n};\n\nGLfloat colors[] = {\n    1, 0, 0, // rgb\n    0, 1, 0,\n    0, 0, 1,\n    1, 0, 1,\n    1, 1, 0,\n    0, 1, 1,\n    0, 1, 0,\n    1, 0, 0,\n    1, 1, 1, // colors for 4 additional verices\n    1, 1, 1,\n    1, 1, 1,\n    1, 1, 1,\n};\n\nGLubyte indices[] = {\n    0,1,\n    1,2,\n    2,3,\n    3,0,\n    0,4,\n    4,5,\n    5,1,\n    1,0,\n    1,5,\n    5,6,\n    6,2,\n    2,1,\n    3,2,\n    2,6,\n    6,7,\n    7,3,\n    7,6,\n    6,5,\n    5,4,\n    4,7,\n    0,3,\n    3,7,\n    7,4,\n    4,0\n};\n\nGLuint verticesBuf;\nglGenBuffers(1, & verticesBuf);\nglBindBuffer(GL_ARRAY_BUFFER, verticesBuf);\nglBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);\n\nGLuint colorsBuf;\nglGenBuffers(1, & colorsBuf);\nglBindBuffer(GL_ARRAY_BUFFER, colorsBuf);\nglBufferData(GL_ARRAY_BUFFER, sizeof(colors), colors, GL_STATIC_DRAW);\n\nGLuint indicesBuf;\nglGenBuffers(1, & indicesBuf);\nglBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indicesBuf);\nglBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);\n\n// ----------------- attributes\n\nGLuint attribPosition;\nattribPosition = glGetAttribLocation(shaderProgram, "position");\nglEnableVertexAttribArray(attribPosition);\nglBindBuffer(GL_ARRAY_BUFFER, verticesBuf);\nglVertexAttribPointer(attribPosition, 3, GL_FLOAT, GL_FALSE, 0, 0);\n\nGLuint attribColor;\nattribColor = glGetAttribLocation(shaderProgram, "color");\nglEnableVertexAttribArray(attribColor);\nglBindBuffer(GL_ARRAY_BUFFER, colorsBuf);\nglVertexAttribPointer(attribColor, 3, GL_FLOAT, GL_FALSE, 0, 0);\n\nGLfloat matrix[] = {\n    0.5, 0,   0,   0,\n    0,   0.5, 0,   0,\n    0,   0,   0.5, 0,\n    0,   0,   0,   1\n};\n\nGLuint attribMatrix;\nattribMatrix = glGetUniformLocation(shaderProgram, "matrix");\nglUniformMatrix4fv(attribMatrix, 1, GL_FALSE, matrix);\n\nGLuint uniformTime;\nuniformTime = glGetUniformLocation(shaderProgram, "time");\n\n// ----------------- texture\n\nbmpread_t bitmap;\nif (!bmpread("texture2.bmp", 0, &bitmap)) {\n    std::cout << "texture loading error";\n    exit(-1);\n}\n\nGLuint texid;\nglGenTextures(1, &texid);\nglActiveTexture(GL_TEXTURE0);\nglBindTexture(GL_TEXTURE_2D, texid);\n\nglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);\nglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);\nglPixelStorei(GL_UNPACK_ALIGNMENT, 1);\n\nglTexImage2D(GL_TEXTURE_2D,0,3,bitmap.width,bitmap.height,0,GL_RGB,GL_UNSIGNED_BYTE,bitmap.data);\n\nGLuint attribTex = glGetAttribLocation(shaderProgram, "tex");\nglUniform1i(attribTex, 0);\n\nGLfloat uvs[] = {\n    0, 0,\n    0, 0,\n    0, 0,\n    0, 0,\n    0, 0,\n    0, 0,\n    0, 0,\n    0, 0,\n    0, 0, // full rect for our additional "overlay" side\n    0, 1,\n    1, 1,\n    1, 0,\n};\n\nGLuint uvsData;\nglGenBuffers(1, &uvsData);\nglBindBuffer(GL_ARRAY_BUFFER, uvsData);\nglBufferData(GL_ARRAY_BUFFER, sizeof(uvs), uvs, GL_STATIC_DRAW);\n\nGLuint attribUvs;\nattribUvs = glGetAttribLocation(shaderProgram, "inUvs");\nglEnableVertexAttribArray(attribUvs);\nglBindBuffer(GL_ARRAY_BUFFER, uvsData);\nglVertexAttribPointer(attribUvs, 2, GL_FLOAT, GL_FALSE, 0, 0);\n\n//glEnable(GL_CULL_FACE); //cw backface culling\n\nglLineWidth(5);\n\nglm::mat4 scaleMatrix = glm::mat4(1.f);\nscaleMatrix = glm::translate(scaleMatrix, glm::vec3(0,0,-2));\n\nglm::mat4 projMatrix = glm::perspective(glm::radians(60.f),1.f,0.f,10.f) * scaleMatrix;\nGLint uniformProj = glGetUniformLocation(shaderProgram, "projection");\nglUniformMatrix4fv(uniformProj, 1, GL_FALSE, glm::value_ptr(projMatrix));	code	cpp	\N
 3120	1	Yocto always builds binary packages.	text	txt	\N
 3121	1	`bitbake` is written in Python and is a task scheduler like `make`.	text	txt	\N
@@ -13560,6 +13629,10 @@ COPY flashback.blocks (card, "position", content, type, extension, metadata) FRO
 4338	2	#include <chrono>\n#include <thread>\n\nusing namespace std::chrono_literals;\n\nauto tp1 = std::chrono::steady_clock::now();\nstd::this_thread::sleep_for(1ms);\nauto tp2 = std::chrono::steady_clock::now();\n\nauto duration = tp2 - tp1;\nstd::cout << duration << "\\\\n";\n// example output: 1115389ns	code	cpp	\N
 4339	1	#include <chrono>\n#include <thread>\n\nusing namespace std::chrono_literals;\n\nauto tp1 = std::chrono::steady_clock::now();\nstd::this_thread::sleep_for(1ms);\nauto tp2 = std::chrono::steady_clock::now();\n\n// explicit type of duration, base type double, with micro precision\nstd::chrono::duration<double, std::micro> sleep_duration = tp2 - tp1;\nstd::cout << sleep_duration << "\\\\n";\n// example output: 1115.39µs	code	cpp	\N
 4340	1	Duractions can be converted between each other using `duration_cast`.	text	txt	\N
+4371	3	#include <algorithm>\n#include <ranges>\n#include <vector>\n#include <string>\n\nint main()\n{\n    std::vector<long> range1{1, 2, 3};\n    std::vector<long> range2{1, 3};\n    std::vector<long> range3{1, 3, 1};\n\n    bool cmp1 = std::lexicographical_compare(range1.cbegin(), range1.cend(), range2.cbegin(), range2.cend());\n    // same as\n    bool cmp2 = range1 < range2;\n    // cmp1 = cmp2 = true\n\n    bool cmp3 = std::lexicographical_compare(range2.cbegin(), range2.cend(), range3.cbegin(), range3.cend());\n    // same as\n    bool cmp4 = range2 < range3;\n    // cmp3 = cmp4 = true\n\n    std::vector<std::string> range4{"Zoe", "Alice"};\n    std::vector<std::string> range5{"Adam", "Maria"};\n    auto compare_length = [](auto const& l, auto const& r) { return l.length() < r.length(); };\n\n    bool cmp5 = std::ranges::lexicographical_compare(range4, range5, compare_length);\n    // different than\n    bool cmp6 = range1 < range2;\n    // cmp5 = true, cmp6 = false\n}	code	cpp	\N
+4372	1	| `std::lexicographical_compare_three_way` | standard |\n| --- | --- |\n| introduced | C++20 |\n| constexpr | C++20 |\n| paralllel | N/A |\n| rangified | N/A |	text	txt	\N
+4372	2	The `std::lexicographical_compare_three_way` is the spaceship operator\nequivalent to `std::lexicographical_compare`. It returns one of:	text	txt	\N
+4372	3	* `std::strong_ordering`\n* `std::weak_ordering`\n* `std::partial_ordering`	text	txt	\N
 3965	1	#include <vector>\n#include <ranges>\n#include <string>\n#include <memory>\n#include <iostream>\n#include <iterator>\n\nclass console\n{\nprivate:\n    std::vector<std::string> m_logs;\npublic:\n    void clear() noexcept { m_logs.clear(); }\n    void print() const { std::ranges::copy(m_logs, std::ostream_iterator{std::cout, "\\n"}); }\n    void add(std::string const& log) { m_logs.push_back(log); }\n};\n\nclass basic_console_command\n{\npublic:\n    virtual ~basic_console_command() = default;\n    virtual void execute() = 0;\n};\n\nclass clear_console_command: public basic_console_command\n{\nprivate:\n    console& m_console;\npublic:\n    explicit clear_console_command(console& tty): m_console{tty} { }\n    void execute() override { m_console.clear(); }\n};\n\nclass print_console_command: public basic_console_command\n{\nprivate:\n    console& m_console;\npublic:\n    explicit print_console_command(console& tty): m_console{tty} { }\n    void execute() override { m_console.print(); }\n};\n\nclass add_console_command: public basic_console_command\n{\nprivate:\n    console& m_console;\n    std::string m_value;\npublic:\n    explicit print_console_command(console& tty, std::string const& value): m_console{tty}, m_value{value} { }\n    void execute() override { m_console.add(m_value); }\n};\n\nclass button\n{\nprivate:\n    std::shared_ptr<basic_console_command> m_command;\npublic:\n    explicit button(std::shared_ptr<basic_console_command> command): m_command{command} { }\n    void click() { m_command.execute(); }\n};\n\nint main()\n{\n    console tty{};\n\n    std::shared_ptr<clear_console_command> clear_command{std::make_shared<clear_console_command>(tty)};\n    std::shared_ptr<print_console_command> print_command{std::make_shared<print_console_command>(tty)};\n    std::shared_ptr<add_console_command> add_command{std::make_shared<add_console_command>(tty, "Command Pattern")};\n\n    button clear{clear_command};\n    button print{print_command};\n    button add{add_command};\n}	code	cpp	\N
 3966	1	List of emails in the currently opened mailbox. By default it opens the system mailbox.	text	txt	\N
 3967	1	The pager contains the email content. How much information can be seen depends on configuration.	text	txt	\N
@@ -13594,6 +13667,7 @@ COPY flashback.blocks (card, "position", content, type, extension, metadata) FRO
 3979	1	Ensure a class only has one instance, and provide a global point of access to it.	text	txt	\N
 3979	2	The class is responsible for its own instance. Direct construction of the object is prohibited. It contains a method to construct and return a single instance.	text	txt	\N
 3979	3	Singleton {\n    + static createInstance(): unique_instance\n    + SingletonOperation()\n    + GetSingletonData()\n    - static unique_instance\n    - singleton_data\n}	code	uml	\N
+4372	4	The type depends on the type returned by the elements’ spaceship operator.	text	txt	\N
 3980	1	class Singleton\n{\nprivate:\n    Singleton() = default;\n    static Singleton m_instance;\n\npublic:\n    static Singleton& createInstance();\n    void doSomething();\n    void doSomethingElse();\n};	code	cpp	\N
 3980	2	#include "singleton.hpp"\n\nSingleton Singleton::m_instance;\n\nSingleton& Singleton::createInstance()\n{\n    return m_instance;\n}\n\nvoid Singleton::doSomething()\n{\n}\n\nvoid Singleton::doSomethingElse()\n{\n}	code	cpp	\N
 3980	3	#include "singleton.hpp"\n\nint main()\n{\n    Singleton& singleton = Singleton::createInstance();\n    singleton.doSomething();\n}	code	cpp	\N
@@ -13935,6 +14009,7 @@ COPY flashback.blocks (card, "position", content, type, extension, metadata) FRO
 4176	13	- are `noexcept` if comparing the members never throws\n- are `constexpr` if comparing the members is possible at compile time\n- implicit type conversions for the first operand are also supported if a\n  corresponding implicit type conversion is defined\n- may warn if the result of a comparison is not used (compiler dependent)	text	txt	\N
 4177	1	If the `operator <=>` for `x <= y` does not find a matching definition of\n`operator <=`, it might be rewritten as `(x <=> y) <= 0` or even `0 <= (y <=>\nx)`. By this rewriting, the `operator <=>` performs a three-way comparison,\nwhich yields a value that can be compared with 0:	text	txt	\N
 4177	2	- If the value of `x <=> y` compares equal to 0, `x` and `y` are equal or equivalent.\n- If the value of `x <=> y` compares less than 0, `x` is less than `y`.\n- If the value of `x <=> y` compares greater than 0, `x` is greater than `y`.	text	txt	\N
+5196	5	#include <Context.hpp>\n#include <StrategyA.hpp>\n#include <StrategyB.hpp>\n\nint main()\n{\n    std::shared_ptr<Context> context{std::make_shared<Context>()};\n    context->setStrategy(std::move(std::make_unique<StrategyA>()));\n    context->setStrategy(std::move(std::make_unique<StrategyB>()));\n    context->contextInterface();\n}	code	cpp	\N
 4174	1	#include <variant>\n#include <string>\n#include <iostream>\n\nstd::variant<int, double, std::string> v;\n\ntemplate<typename ...Ts>\nstruct overloaded : Ts...\n{\n    using Ts::operator()...;\n};\n\nv = 3.14;\n\nstd::visit(overloaded{\n    [](int& x) {\n        std::cout << "int: " << x << '\\n';\n    },\n    [](double& x) {\n        std::cout << "double: " << x << '\\n';\n    },\n    [](std::string& x) {\n        std::cout << "std::string: " << x << '\\n';\n    }\n}, v);\n// prints "double: 3.14"	code	cpp	\N
 4177	3	The return type of `operator <=>` is not an integral value. The return type\nis a type that signals the comparison category, which could be the *strong\nordering*, *weak ordering*, or *partial ordering*. These types support the\ncomparison with 0 to deal with the result.	text	txt	\N
 4177	4	You have to include a specific header file to deal with the result of\n`operator <=>`.	text	txt	\N
@@ -14166,16 +14241,7 @@ COPY flashback.blocks (card, "position", content, type, extension, metadata) FRO
 4370	5	The type returned for the spaceship operator is the common comparison\ncategory type for the bases and members, one of:	text	txt	\N
 4370	6	* `std::strong_ordering`\n* `std::weak_ordering`\n* `std::partial_ordering`	text	txt	\N
 4371	1	Lexicographical `strict_weak_ordering` for ranges is exposed through the\n`std::lexicographical_compare` algorithm.	text	txt	\N
-4371	3	#include <algorithm>\n#include <ranges>\n#include <vector>\n#include <string>\n\nint main()\n{\n    std::vector<long> range1{1, 2, 3};\n    std::vector<long> range2{1, 3};\n    std::vector<long> range3{1, 3, 1};\n\n    bool cmp1 = std::lexicographical_compare(range1.cbegin(), range1.cend(), range2.cbegin(), range2.cend());\n    // same as\n    bool cmp2 = range1 < range2;\n    // cmp1 = cmp2 = true\n\n    bool cmp3 = std::lexicographical_compare(range2.cbegin(), range2.cend(), range3.cbegin(), range3.cend());\n    // same as\n    bool cmp4 = range2 < range3;\n    // cmp3 = cmp4 = true\n\n    std::vector<std::string> range4{"Zoe", "Alice"};\n    std::vector<std::string> range5{"Adam", "Maria"};\n    auto compare_length = [](auto const& l, auto const& r) { return l.length() < r.length(); };\n\n    bool cmp5 = std::ranges::lexicographical_compare(range4, range5, compare_length);\n    // different than\n    bool cmp6 = range1 < range2;\n    // cmp5 = true, cmp6 = false\n}	code	cpp	\N
-4372	1	| `std::lexicographical_compare_three_way` | standard |\n| --- | --- |\n| introduced | C++20 |\n| constexpr | C++20 |\n| paralllel | N/A |\n| rangified | N/A |	text	txt	\N
-4372	2	The `std::lexicographical_compare_three_way` is the spaceship operator\nequivalent to `std::lexicographical_compare`. It returns one of:	text	txt	\N
-4372	3	* `std::strong_ordering`\n* `std::weak_ordering`\n* `std::partial_ordering`	text	txt	\N
-4372	4	The type depends on the type returned by the elements’ spaceship operator.	text	txt	\N
-5196	5	#include <Context.hpp>\n#include <StrategyA.hpp>\n#include <StrategyB.hpp>\n\nint main()\n{\n    std::shared_ptr<Context> context{std::make_shared<Context>()};\n    context->setStrategy(std::move(std::make_unique<StrategyA>()));\n    context->setStrategy(std::move(std::make_unique<StrategyB>()));\n    context->contextInterface();\n}	code	cpp	\N
 4372	5	#include <algorithm>\n#include <vector>\n#include <string>\n\nint main()\n{\n    std::vector<long> numbers1{1, 1, 1};\n    std::vector<long> numbers2{1, 2, 3};\n\n    auto cmp1 = std::lexicographical_compare_three_way(numbers1.cbegin(), numbers1.cend(), numbers2.cbegin(), numbers2.cend());\n    // cmp1 = std::strong_ordering::less\n\n    std::vector<std::string> strings1{"Zoe", "Alice"};\n    std::vector<std::string> strings2{"Adam", "Maria"};\n\n    auto cmp2 = std::lexicographical_compare_three_way(strings1.cbegin(), strings1.cend(), strings2.cbegin(), strings2.cend());\n    // cmp2 = std::strong_ordering::greater\n}	code	cpp	\N
-4373	1	The `std::sort` algorithm is the canonical `O(N log N)` sort (typically\nimplemented as *intro-sort*).	text	txt	\N
-4373	2	Due to the `O(N log N)` complexity guarantee, `std::sort` only operates on\n`random_access` ranges. Notably, `std::list` offers a method with an\napproximate `O(N log N)` complexity.	text	txt	\N
-4374	1	| `std::sort` | standard |\n| --- | --- |\n| introduced | C++98 |\n| paralllel | C++17 |\n| constexpr | C++20 |\n| rangified | C++20 |	text	txt	\N
 4374	2	#include <algorithm>\n#include <ranges>\n#include <vector>\n#include <list>\n\nstruct Account\n{\n    long value() { return value_; }\n    long value_;\n};\n\nint main()\n{\n    std::vector<long> series1{6,2,4,1,5,3};\n    std::sort(series1.begin(), series1.end());\n\n    std::list<long> series2{6,2,4,1,5,3};\n    //std::sort(series2.begin(), series2.end()); // won't compile\n    series2.sort();\n\n    // With C++20, we can take advantage of projections to sort by a method or member\n    std::vector<Account> accounts{{6},{2},{4},{1},{5},{3}};\n    std::ranges::sort(accounts, std::greater<>{}, &Account::value);\n}	code	cpp	\N
 4375	1	The `std::sort` is free to re-arrange equivalent elements, which can be\nundesirable when re-sorting an already sorted range. The `std::stable_sort`\nprovides the additional guarantee of preserving the relative order of equal\nelements.	text	txt	\N
 4375	2	| `std::stable_sort` | standard |\n| --- | --- |\n| introduced | C++98 |\n| paralllel | C++17 |\n| constexpr | N/A |\n| rangified | C++20 |	text	txt	\N
@@ -14837,6 +14903,7 @@ COPY flashback.blocks (card, "position", content, type, extension, metadata) FRO
 4926	1	During build, kernel module signing facility signs modules and during module\nloading the signature is checked.	text	txt	\N
 4926	2	```.config\nCONFIG_MODULE_SIG = 'y'\nCONFIG_MODULE_SIG_ALL='y'\nCONFIG_MODULE_SIG_SHA512='y'\nCONFIG_MODULE_SIG_FORCE='y'\n``````	text	txt	\N
 4926	3	You must create the signing authority or SubCA certificate. For that you need\nto first create the asymmetric keys and CSR. The CSR will get signed from\nroot CA or upper level signing authority. The signed CSR will call it as\nsigning authority for kernel module signing. All the root CA and signing\nauthority must be aligned with the organization or product group who is going\nto protect their assets.	text	txt	\N
+5387	1	PostgreSQL does not require a special backup permission to dump the content of a database. But, in order to restore data, the user must obtain sufficient permission to write data into tables.	text	md	\N
 4927	1	Above signing setup is one time process. You should have a script to take\ncare of your kernel module signing.\nIt probes all modules by running `depmod` utility and writes the results into\n`/usr/lib/modules/$(uname -r)/modules.dep` file and its binary counterpart\n`/usr/lib/modules/$(uname -r)/modules.dep.bin`. Each entry consists of a\nmodule name followed by its dependencies in front of a colon.	text	txt	\N
 4927	2	grep 'btusb.ko' /usr/lib/modules/$(uname -r)/modules.dep	code	txt	\N
 4928	1	`depmod` command probes all modules by default when no kernel object file is\ngiven. Try `-n` for dry run.	text	txt	\N
@@ -14976,6 +15043,7 @@ COPY flashback.blocks (card, "position", content, type, extension, metadata) FRO
 2775	2	#include <thread>\n#include <chrono>\n#include <functional>\n#include <boost/asio.hpp>\n\nvoid some_work(std::size_t s)\n{\n    std::this_thread::sleep_for(std::chrono::seconds(s));\n}\n\nvoid finish_tasks(boost::asio::io_service& service)\n{\n    service.run();\n}\n\nint main()\n{\n    boost::asio::io_context service;\n    boost::asio::io_context::strand strand{service};\n    std::thread worker{finish_tasks, std::ref(service)};\n    strand.post(std::bind(some_work, 2));\n    service.post(strand.wrap(std::bind(some_work, 2)));\n    worker.join();\n    service.stop();\n}	code	cpp	\N
 4144	3	consteval int f(int i) { return i; }\n\nconstexpr int g(int i)\n{\n    if consteval\n    {\n        return f(i) + 1; // immediate function context\n    }\n    else\n    {\n        return 42;\n    }\n}\n\nconsteval int h(int i)\n{\n    return f(i) + 1; // immediate function context\n}	code	cpp	\N
 5254	1	which --skip-dot <command>	code	sh	\N
+5387	3	There are two predefined roles, `pg_read_all_data` and `pg_write_all_data`, that can be granted to the user who performs restore.	text	md	\N
 2776	1	#include <thread>\n#include <mutex>\n#include <iostream>\n#include <exception>\n#include <boost/asio.hpp>\n\nstd::mutex ostream_lock;\n\nvoid some_work()\n{\n    throw std::runtime_error("i/o failure");\n}\n\nvoid finish_tasks(boost::asio::io_service& service)\n{\n    try\n    {\n        service.run();\n    }\n    catch (std::runtime_error const& exp)\n    {\n        std::lock_guard<std::mutex> lock{ostream_lock};\n        std::cerr << exp.what() << "\\\\n";\n    }\n}\n\nint main()\n{\n    boost::asio::io_context service;\n    std::thread worker{finish_tasks, std::ref(service)};\n    service.post(some_work);\n    service.post(some_work); // no more io context to dispatch\n    worker.join();\n    service.stop();\n}	code	cpp	\N
 1438	1	#include <iostream>\n\nstruct base\n{\n    static void show() { std::cout << "base\\\\n"; }\n};\n\n// pre-c++20\nauto tshow = [](auto x)\n{\n    using T = std::decay_t<decltype(x)>;\n\n    T other;   // create instance\n    T::show(); // call static method\n};\n\n// post-c++20\nauto generic_show = []<typename T>(T const& x)\n{\n    T other;   // create instance\n    T::show(); // call static method\n};\n\nint main()\n{\n    base object;\n\n    tshow(object);\n    generic_show(object);\n}	code	cpp	\N
 1439	1	template<typename ...T>\nvoid do_something(T&& ...args) { /* ... */ }\n\nauto forward_something = [](auto&& ...args)\n{\n    return do_something(std::forward<decltype(args)>(args)...);\n};\n\nauto generic_forward = []<typename ...T>(T&& ...args)\n{\n    return do_something(std::forward<T>(args)...);\n};	code	cpp	\N
@@ -15007,6 +15075,7 @@ COPY flashback.blocks (card, "position", content, type, extension, metadata) FRO
 1356	2	* It is not possible to leave a variable uninitialized with `auto`.\n* It prevents narrowing conversion of data types. (?)\n* It makes generic programming easy.\n* It can be used where we don't care about types.	text	txt	\N
 1356	3	Preconditions of using `auto`:	text	txt	\N
 1356	4	* `auto` does not retain cv-ref qualifiers.\n* `auto` cannot be used for non-movable objects.\n* `auto` cannot be used for multi-word types like long long.	text	txt	\N
+5406	1	select pg_catalog.set_config('search_path', 'public', '"$user"', false);	code	plsql	\N
 1356	5	#include <string>\n#include <vector>\n#include <memory>\n\nint main()\n{\n    auto i = 42; // int\n    auto d = 42.5; // double\n    auto c = "text"; // char const*\n    auto z = {1, 2, 3}; // std::initializer_list<int>\n\n    auto b = new char[10]{0}; // char*\n    auto s = std::string{"text"}; // std::string\n    auto v = std::vector<int>{1, 2, 3}; // std::vector<int>\n    auto p = std::make_shared<int>(42); // std::shared_ptr<int>\n\n    auto upper = [](char const c) { return toupper(c); };\n    auto add = [](auto const a, auto const b) { return a + b; };\n\n    template<typename F, typename F>\n    auto apply(F&& f, T value)\n    {\n        return f(value);\n    }\n}\n\nclass foo\n{\n    int _x;\npublic:\n    foo(int const x = 0): _x{x} {}\n    int& get() { return _x; }\n};\n\ndecltype(auto) proxy_gen(foo& f) { return f.get(); }\n// ^__ decltype() preserves cv-ref qualification of return type	code	cpp	\N
 1357	1	#include <bitset>\n\nusing byte = std::bitset<8>;\nusing fn = void(byte, double);\nusing fn_ptr = void(*)(byte, double);\n\nvoid func(byte b, double d) { /* ... */ }\n\nint main()\n{\n    byte b{001101001};\n    fn* f = func;\n    fn_ptr fp = func;\n}	code	cpp	\N
 1358	3	#include <vector>\n\ntemplate<typename T>\nclass custom_allocator { /* ... */ };\n\ntemplate<typename T>\nusing vec_t = std::vector<T, custom_allocator<T>>;\n\nint main()\n{\n    vec_t<int> vi;\n    vec_t<std::string> vs;\n}	code	cpp	\N
@@ -15036,6 +15105,8 @@ COPY flashback.blocks (card, "position", content, type, extension, metadata) FRO
 1374	12	    // okay\n    auto y = correct_implementation::test(foor{42});\n}	code	txt	\N
 1374	3	    #ifndef _lib_version_1\n    using namespace v1;\n    #endif\n\n    namespace v2\n    {\n        template<typename T>\n        int test(T value) { return 2; }\n    }\n\n    #ifndef _lib_version_2\n    using namespace v2;\n    #endif\n}\n\nnamespace broken_client_code\n{\n    // okay\n    auto x = incorrect_implementation::test(42);\n\n    struct foo { int a; };\n\n    // breaks\n    namespace incorrect_implementation\n    {\n        template <>\n        int test(foo value) { return value.a; }\n    }	text	cpp	\N
 1375	2	#include <iostream>\n#include <set>\n\nint main()\n{\n    std::set<int> numbers;\n\n    if (auto const [iter, inserted] = numbers.insert(1); inserted)\n        std::cout << std::distance(numbers.cbegin(), iter);\n}	code	cpp	\N
+5418	1	copy (select * from <database>.<table> where pk % 2 = 1)\nto '/srv/postgres/<database>.<table>.txt'\nwith (format csv);	code	plsql	\N
+108	2	clang++ -o program source.cpp -std=c++20	code	sh	\N
 1378	1	auto i1 = std::stoi("42");\nauto i2 = std::stoi("101010", nullptr, 2);\nauto i3 = std::stoi("052", nullptr, 8);\nauto i7 = std::stoi("052", nullptr, 0);\nauto i4 = std::stoi("0x2A", nullptr, 16);\nauto i9 = std::stoi("0x2A", nullptr, 0);\nauto i10 = std::stoi("101010", nullptr, 2);\nauto i11 = std::stoi("22", nullptr, 20);\nauto i12 = std::stoi("-22", nullptr, 20);\n\nauto d1 = std::stod("123.45"); // d1 = 123.45000000000000\nauto d2 = std::stod("1.2345e+2"); // d2 = 123.45000000000000\nauto d3 = std::stod("0xF.6E6666p3"); // d3 = 123.44999980926514	code	cpp	\N
 1379	2	template<typename T, typename = typename T = std::is_integral_v<T>>\nT stoi(std::string const& str, std::size_t* pos = 0, T base = 10);\n\ntemplate<typename F, typename = typename F = std::is_floating_point_v<F>>\nF stof(std::string const& str, std::size_t* pos = 0);	code	cpp	\N
 1381	2	try\n{\nauto i1 = std::stoi("");\n}\ncatch (std::invalid_argument const& exp)\n{\nstd::cerr << exp.what() << '\\\\n';\n}\n\ntry\n{\nauto i2 = std::stoi("12345678901234");\nauto i3 = std::stoi("12345678901234");\n}\ncatch (std::out_of_range const& exp)\n{\nstd::cerr << exp.what() << '\\\\n';\n}	code	cpp	\N
@@ -15060,6 +15131,7 @@ COPY flashback.blocks (card, "position", content, type, extension, metadata) FRO
 1397	1	namespace units\n{\n    inline namespace literals\n    {\n        inline namespace units_literals\n        {\n            constexpr size_t operator ""_KB(unsigned long long const size)\n            {\n                return static_cast<size_t>(size * 1024);\n            }\n        }\n    }\n}\n\nint main()\n{\n    using namespace units::units_literals;\n\n    size_t bytes = "1024"_KB;\n}	code	cpp	\N
 1398	1	#include <string>\n\nusing namespace std::string_literals;\n\nauto s1{ "text"s }; // std::string\nauto s2{ L"text"s }; // std::wstring\nauto s3{ u8"text"s }; // std::u8string\nauto s3{ u"text"s }; // std::u16string\nauto s4{ U"text"s }; // std::u32string\n\nusing namespace std::string_view_literals;\n\nauto s5{ "text"sv }; // std::string_view	code	cpp	\N
 1399	1	#include <chrono>\n\nusing namespace std::chrono_literals;\n\nauto timer {2h + 42min + 15s}; // std::chrono::duration<long long>\n\nauto year { 2035y }; // std::chrono::year (c++20)\nauto day { 15d }; // std::chrono::day (c++20)	code	cpp	\N
+108	1	g++ -o program source.cpp -std=c++20	code	sh	\N
 1400	1	#include <complex>\n\nusing namespace std::complex_literals;\n\nauto c{ 12.0 + 4.2i }; // std::complex<double>	code	cpp	\N
 1401	2	T operator ""_suffix(char const*);\n\ntemplate <char...>\nT operator ""_suffix();	code	cpp	\N
 5462	1	Shape analysis is crucial in computer vision. The common use cases are identifying shapes in an image, for example a logo. The shape module provides algorithms to extract shapes, measure similarities and transform the shape of objects, and more.	text	md	\N
@@ -15356,7 +15428,6 @@ COPY flashback.blocks (card, "position", content, type, extension, metadata) FRO
 5384	1	sed -i '1i <line>' <file>	code	sh	\N
 5385	1	sed -i '/<pattern>/a <line>' <file>	code	sh	\N
 5386	1	A logical backup interacts directly with the database and its running transactions. A physical backup is a copy of the underlying filesystem and the WALs so that the last known clear state of the database can be restored.	text	md	\N
-5387	1	PostgreSQL does not require a special backup permission to dump the content of a database. But, in order to restore data, the user must obtain sufficient permission to write data into tables. There are two predefined roles, `pg_read_all_data` and `pg_write_all_data`, that can be granted to the user who performs restore.	text	md	\N
 5388	1	* Performing a logical backup is simple\n* It is consistent\n* It can be restored easily\n* This method works between database versions	text	md	\N
 5392	1	* This kind of backup is much more complex to set up\n* On the other hand, physical backups will only work between the very same major versions of PostgreSQL instances and operating system architecture	text	md	\N
 5393	1	pg_dump <database> 	code	sh	\N
@@ -15385,7 +15456,6 @@ COPY flashback.blocks (card, "position", content, type, extension, metadata) FRO
 5405	3	psql -U postgres -c "drop database if exists <database>"\npsql --username postgres --command "drop database if exists <database>"	code	sh	\N
 5405	4	psql -U postgres -c "create database <database> with owner <owner>"	code	sh	\N
 5405	5	psql -U <owner> -f <database>.sql <database>	code	sh	\N
-5406	1	select pg_catalog.set_config('search_path', 'public', '"$user"', false);	code	postgres	\N
 5407	1	Plain text is the default format and can be omitted:	text	md	\N
 5407	2	pg_dump -F p -f <database>.sql <database>\npg_dump --format p --file <database>.sql <database>	code	sh	\N
 5407	3	Custom format:	text	md	\N
@@ -15412,23 +15482,22 @@ COPY flashback.blocks (card, "position", content, type, extension, metadata) FRO
 5415	1	#!/usr/bin/env bash\n\nbackup_root=/srv/postgres/backup\n\nreadarray databases < <(psql -U postgres -d postgres -At -c "select datname from pg_database where datname <> 'template0'")\n\nfor database in "${databases[@]}"\ndo\n    backup_directory="$backup_root/$database/$(date +%Y-%m-%d)"\n    \n    if [ ! -d "$backup_directory" ]\n    then\n        mkdir --parents "$backup_directory"\n        if pg_dump -U postgres -d "$database" -F c\n        then\n            echo "$(date +%Y-%m-%d): $database backup successful"\n        else\n            echo "$(date +%Y-%m-%d): $database backup failed"\n        fi\n    fi\ndone	code	sh	\N
 5415	2	The script can be used by crontab or systemd for scheduling.	text	md	\N
 5415	3	30 0 * * * backup-cluster.sh	code	crontab	\N
-5416	1	copy <database>.<table> to '/srv/postgres/<database>.<table>.txt';	code	postgres	\N
 5417	1	Output can be customized:	text	md	\N
-5417	2	copy <database>.<table> to '/srv/postgres/<database>.<table>.txt' with (header on, delimiter ';');	code	postgres	\N
 5417	3	But for known formats, we can use `format` option:	text	md	\N
-5417	4	copy <database>.<table> to '/srv/postgres/<database>.<table>.txt' with (format csv);	code	postgres	\N
 5440	2	A better programmatic way of checking for MLS policy is:	text	md	\N
-5418	1	copy (select * from <database>.<table> where pk % 2 = 1)\nto '/srv/postgres/<database>.<table>.txt'\nwith (format csv);	code	postgres	\N
-5419	1	create table <table>_reloaded (like <table>);	code	postgres	\N
-5419	2	copy <database>.<table> from '/srv/postgres/<database>.<table>.txt';	code	postgres	\N
-5420	1	copy <database>.<table>\nfrom '/srv/postgres/<database>.<table>.txt'\nwhere pk % 2 = 1;	code	postgres	\N
 5421	1	#!/usr/bin/env bash\n\nfor id in {1..10}\ndo\n    echo "$id,$RANDOM"\ndone	code	sh	\N
 5421	2	chmod u+x random-generator	code	sh	\N
-5421	3	copy <database>.<table>\nfrom program $code$ ./random-generator $code$\nwith (format csv);	code	postgres	\N
-5422	1	copy <database>.<table>\nto program $code$ awk '{print $2}' > /tmp/col2.txt $code$;	code	postgres	\N
 5423	1	Running `copy` requires `pg_write_server` privilege, but unprivileged users can run `\\copy` as an alternative:	text	md	\N
-5423	2	\\copy <database>.<table> to '/srv/postgres/<database>.<table>.txt' with (format csv);	code	postgres	\N
 5497	1	#include <ftxui/dom/elements.hpp>\n\nconstexpr auto content{"Flashback, for experts like you."};\n\nint main()\n{\n    ftxui::Element text{ftxui::paragraph(content)};\n}	code	cpp	\N
+5419	1	create table <table>_reloaded (like <table>);	code	plsql	\N
+5419	2	copy <database>.<table> from '/srv/postgres/<database>.<table>.txt';	code	plsql	\N
+5416	1	copy <database>.<table> to '/srv/postgres/<database>.<table>.txt';	code	plsql	\N
+5422	1	copy <database>.<table> to program $code$ awk '{print $2}' > /tmp/col2.txt $code$;	code	plsql	\N
+5420	1	copy <database>.<table>\nfrom '/srv/postgres/<database>.<table>.txt'\nwhere pk % 2 = 1;	code	plsql	\N
+5421	3	copy <database>.<table>\nfrom program $code$ ./random-generator $code$\nwith (format csv);	code	plsql	\N
+5423	2	\\copy <database>.<table> to '/srv/postgres/<database>.<table>.txt' with (format csv);	code	plsql	\N
+5417	2	copy <database>.<table> to '/srv/postgres/<database>.<table>.txt' with (header on, delimiter ';');	code	plsql	\N
+5417	4	copy <database>.<table> to '/srv/postgres/<database>.<table>.txt' with (format csv);	code	plsql	\N
 5424	1	A database cluster requires both the data files contained in `PGDATA/base` and the WALs contained in `PGDATA/wal`, as well as a few other files, because they can make the cluster self-healing and recover from a crash.	text	md	\N
 5424	2	Therefore, a physical backup performs a copy of all the cluster files and then, when the restore is required, it simulates a database crash and makes the cluster self-heal with the WALs in place.	text	md	\N
 5424	3	The physical backup can be taken pretty much at every moment without impacting the database with a huge transaction.	text	md	\N
@@ -15839,6 +15908,30 @@ COPY flashback.blocks (card, "position", content, type, extension, metadata) FRO
 --
 
 COPY flashback.cards (id, headline, state) FROM stdin;
+5645	Is it working?	draft
+447	Create a tab:	draft
+772	Drop an index?	draft
+320	Update values of a table?	draft
+321	Delete rows from a table?	draft
+2750	Insert modules?	draft
+3292	Remove a layer?	draft
+3955	Create job summaries?	draft
+710	Delete all rows of a table?	draft
+3021	Install an export file?	draft
+3256	Extend a task?	draft
+916	Enable TUI in gdb:	draft
+3288	Include another layer?	draft
+1806	Rename a file?	draft
+1064	Compute the length of a vector?	draft
+2946	Reverse the elements of a list?	draft
+25	Specify hardware requirements for Embedded Linux?	draft
+117	Initialize a constant?	draft
+2947	Sort the elements of a list?	draft
+1339	List available plugins?	draft
+2948	Write a conditional block?	draft
+2700	What command can be used within U-Boot shell to set environment variables?	draft
+3443	When does a test fail?	draft
+2966	Check if a file exists?	draft
 1	Use formatted messages in static assertion?	draft
 2	Delete a function with giving reasons for it?	draft
 3	Create a break point in code?	draft
@@ -15865,14 +15958,33 @@ COPY flashback.cards (id, headline, state) FROM stdin;
 85	Identify which kernel version and kernel release do we have in kernel source tree?	draft
 86	By which configuration option can kernel release be appended with release information?	draft
 87	How does the <code>Kbuild</code> work with configuration options to properly build kernel?	draft
-88	By assuming to have a complete <code>.config</code> file in the kernel source, what are the required environment variables to be given to <code>make</code> to build the kernel?	draft
 89	Which kernel target should be used to generate kernel image?	draft
 91	What are the build artifacts of <code>Kbuild</code>?	draft
+319	Copy a table?	draft
+2310	What is a task?	draft
+612	Create a PTY:	draft
+613	Disable echo on PTY:	draft
+614	Get terminal size:	draft
+5614	Specify compiler launcher?	draft
+3076		draft
+3234	What are the default tasks?	draft
+3316	What is the advanced metadata?	draft
+3399	Generate an SDK for an image?	draft
+3703	What data types are available in YAML?	draft
+3984	Calculate the midpoint between two values?	draft
+4817	Examine a memory address or register?	draft
+1830	Remove a file?	draft
+3637	Write an image to file?	draft
+1025	Reference a variable?	draft
+1026	Reference two nested variables?	draft
+1027	How many scopes exist?	draft
+294	What is a schema?	draft
+113	Initialize a variable without narrowing?	draft
+88	By assuming to have a complete <code>.config</code> file in the kernel source, what are the required environment variables to be given to <code>make</code> to build the kernel?	draft
 92	Make debug symbols available in the <code>vmlinux</code> kernel image?	draft
 95	How many cleaning <code>make</code> targets are available?	draft
 100	Assuming kernel image and device tree blobs are built and put on the microSD already, what are the required boot instructions on Raspberry Pi 4?	draft
 106	What are the required procedures to port Linux to a new board?	draft
-113	Initialize a variable without narrowing?	draft
 114	Initialize variables with automatic type deduction?	draft
 120	Declare a type containing limited constants?	draft
 121	Generate a string formatted with an integral value?	draft
@@ -15947,9 +16059,11 @@ COPY flashback.cards (id, headline, state) FROM stdin;
 190	What is a complete tree?	draft
 191	What are the standard iterators?	draft
 192	What iterator types are publically provided by standard data structures?	draft
+311	Select data from a table out of order?	draft
 193	What non-member functions are provided by standard to return supported iterators?	draft
 194	What is the advantage of having argument dependent lookup supported?	draft
 195	When does a function supports argument dependent lookup?	draft
+411	Start learning about Vim:	draft
 196	Compute the distance between two iterators of a container?	draft
 197	What iterator type traits are supported by the standard?	draft
 198	What stream iterators are provided by the standard?	draft
@@ -15984,6 +16098,7 @@ COPY flashback.cards (id, headline, state) FROM stdin;
 249	What is the secondary statement terminator in psql?	draft
 250	What command opens an editor to edit psql query buffer?	draft
 251	What psql command executes sql statements from a file?	draft
+2277	Represent an empty view?	draft
 252	What command gives help information about psql?	draft
 253	What command gives help with the psql commands?	draft
 254	Query the name of current database?	draft
@@ -16041,7 +16156,6 @@ COPY flashback.cards (id, headline, state) FROM stdin;
 308	Get the object ID of a table on storage?	draft
 309	How many ways are possible to insert into data a table?	draft
 310	Insert data into a table with value expressions?	draft
-311	Select data from a table out of order?	draft
 312	Order the output of a select query?	draft
 313	Insert multiple rows into a table in one insertion?	draft
 314	Filter select query results?	draft
@@ -16049,9 +16163,6 @@ COPY flashback.cards (id, headline, state) FROM stdin;
 316	Write an order by clause with column positions?	draft
 317	Sort result set by putting null values on top?	draft
 318	Sort result set by putting null values at the bottom?	draft
-319	Copy a table?	draft
-320	Update values of a table?	draft
-321	Delete rows from a table?	draft
 322	Filter the resultset by arithmetic conditions?	draft
 323	Filter the resultset to only records with a substring?	draft
 324	Use case-insensitive filtering to match a substring?	draft
@@ -16140,7 +16251,6 @@ COPY flashback.cards (id, headline, state) FROM stdin;
 407	Make the type checking of a file cheaper by not calling system calls?	draft
 408	Check if the permission of a file includes user, group, and others access?	draft
 409	Get the size of a regular file?	draft
-411	Start learning about Vim:	draft
 412	Start reading Vim reference manual:	draft
 413	Also read the quick reference:	draft
 414	Then study the Vim's user manual to learn essential commands:	draft
@@ -16176,7 +16286,6 @@ COPY flashback.cards (id, headline, state) FROM stdin;
 444	Enter into Command-line mode:	draft
 445	Edit a file after entering into Vim:	draft
 446	Write file contents into file:	draft
-447	Create a tab:	draft
 448	Split window:	draft
 449	Inspect the list of Ex commands:	draft
 450	Inspect the differences of Vi and Vim:	draft
@@ -16233,7 +16342,6 @@ COPY flashback.cards (id, headline, state) FROM stdin;
 521	How to restrict SSH connections only to a certain address family?	draft
 522	What modules is used to enfore users from following strict password policies?	draft
 523	How to use <b>Pluggable Authentication Modules (PAM)</b> to implement password policies and enforce users to follow strict rules for setting their passwords?	draft
-612	Create a PTY:	draft
 524	How to restrict SSH access to only users in <i>sshusers</i> group on a remote server?	draft
 525	What is the name of firewall mechanism used in the Linux kernel and what is the common firewall interface used to interact with it?	draft
 526	How to get all the zones from firewalld?	draft
@@ -16322,8 +16430,6 @@ COPY flashback.cards (id, headline, state) FROM stdin;
 609	Install a dynamic library on system:	draft
 610	Inspect terminal information:	draft
 611	Check if process connected to terminal:	draft
-613	Disable echo on PTY:	draft
-614	Get terminal size:	draft
 615	Send signals to a process given by user:	draft
 616	Create a pipe between a parent and a forked child process:	draft
 617	Create a message sender and receiver using FIFO:	draft
@@ -16407,7 +16513,6 @@ COPY flashback.cards (id, headline, state) FROM stdin;
 707	Limit the results of a query by comparing the calculated values of two columns?	draft
 708	Update a cell within a very big table?	draft
 709	Delete a row from a table?	draft
-710	Delete all rows of a table?	draft
 711	How many relationships are possible between data?	draft
 712	What are the characteristics of a primary key?	draft
 713	What is the common way of making a primary key auto generate a unique id in postgres?	draft
@@ -16469,7 +16574,6 @@ COPY flashback.cards (id, headline, state) FROM stdin;
 769	What is the structure of each block in postgres?	draft
 770	What is an index?	draft
 771	Create an index for a table?	draft
-772	Drop an index?	draft
 773	Analyze a query?	draft
 774	Estimate the overall size of an index on memory?	draft
 775	Convert a size value to human readable memory size?	draft
@@ -16490,12 +16594,13 @@ COPY flashback.cards (id, headline, state) FROM stdin;
 791	What is the advantage of dynamic loading functionality in <code>eBPF</code>?	draft
 792	How efficient is loading <code>eBPF</code> programs?	draft
 793	How to load a simple <code>eBPF</code> code in python's BCC library as a simplified example?	draft
+2022	How to create a thread?	draft
 794	What capabilities are required for eBPF programs to run?	draft
 795	Where does the <code>eBPF</code> trace printing function write output?	draft
 796	What is the convenient alternative to trace output by <code>bpf_trace_printk</code> helper function?	draft
 797	What is an <code>eBPF</code> map?	draft
+881	Make sure the kernel configuration has security options enabled?	draft
 798	What mechanisms are required for user space applications to gain access to the underlying device drivers within the kernel?	draft
-1064	Compute the length of a vector?	draft
 799	How does <b>Linux Device Model</b> expose device driver details to user space?	draft
 800	What inode attributes are used to distinguish between device files?	draft
 801	What is a device driver namespace?	draft
@@ -16578,7 +16683,6 @@ COPY flashback.cards (id, headline, state) FROM stdin;
 878	What component turns configs into header files to be used by kernel build system?	draft
 879	Check the difference of two kernel configuration files?	draft
 880	Toggle individual kernel configuration options without interacting with user interfaces?	draft
-881	Make sure the kernel configuration has security options enabled?	draft
 882	Enable GCC arch specific security features?	draft
 883	Enable availability of kernel headers 	draft
 884	Enable BPF Type Format metadata to enable kernel debugging information generation?	draft
@@ -16623,7 +16727,7 @@ COPY flashback.cards (id, headline, state) FROM stdin;
 974	Compare two strings in x64 assembly without a loop? <span style="color:green">(needs work)</span>	draft
 975	Scan a string if a character exists in it without a loop?	draft
 982	How does alignment of data in `.data` and `.bss` sections can improve performance of a program?	draft
-909	Set breakpoints in gdb?	reviewed
+909	Set breakpoints in gdb?	draft
 983	How can we align data in `.data` and `.bss` sections in specific byte sizes?	draft
 984	What register is responsible for controlling the floating-point operations?	draft
 994	How many ways exist to create a docker image?	draft
@@ -16658,10 +16762,12 @@ COPY flashback.cards (id, headline, state) FROM stdin;
 1043	What is the result of addition of two vectors $v = (v₁, v₂)$ and $w = (w₁, w₂)$?	draft
 1044	What is the geometric representation of addition of two vectors $v$ and $w$?	draft
 1045	What are the properties of vector addition?	draft
+2434	Animate an object to fade away?	draft
 1046	Practice: Compute the following vector sums $(2, 5, −1) + (1, −1, 2)$ and $(1, 2) + (3, 1) + (2, -1)$?	draft
 1047	What is the result of multiplication of scalar $c$ to vector $v = (v₁, v₂)$?	draft
 1048	What are the properties of scalar to vector multiplication?	draft
 1049	Practice: Solve the following equations $x − (3 , 2 , 1) = (1 , 2 , 3) − 3x$ and $x + 2(v + w) = −v − 3(x − w)$ for the vector $x$?	draft
+1749	Bind a TCP acceptor to a port?	draft
 1050	What is the result of subtraction of vector $v = (v₁, v₂)$ to vector $w = (w₁, w₂)$?	draft
 1051	What is the geometric representation of subtraction of two vectors $v$ and $w$?	draft
 1052	What are linear combinations of vectors $v_1 , v_2 , ... , v_k$?	draft
@@ -16687,6 +16793,7 @@ COPY flashback.cards (id, headline, state) FROM stdin;
 1074	Determine whether or not function $T(v_1, v_2) = (v_1-v_2, v_1+v_2)$ when $T: R^2 → R^2$ is a linear transformation?	draft
 1075	Using the fact that linear transformation functions preserve linear combinations, write linear transformation T(v) as linear combination of its basis vectors when T: R^n → R^n?	draft
 1076	Compute $T(2,3)$ supposing $T: R^2 → R^2$ is a linear transformation for which we have its standard basis vector transformations $T(e₁)=(1,1)$ and $T(e₂)=(-1,1)$.	draft
+1243	When does asking for result might cause execution of two threads in sequence?	draft
 1077	Find a general formula for $T(v₁,v₂)$ when $T: R^2 → R^2$ is a linear transformation for which we have its standard basis vector transformations $T(e₁)=(1,1)$ and $T(e₂)=(-1,1)$.	draft
 1078	What method is used to construct a matrix called the standard matrix of $T$ that does the linear transformation by matrix multiplication?	draft
 1079	Find the standard matrix of linear transformation $T(v₁,v₂) = (v₁+2v₂, 3v₁+4v₂)$ when $v₁,v₂ \\in \\mathbb{R}^2$?	draft
@@ -16720,15 +16827,18 @@ COPY flashback.cards (id, headline, state) FROM stdin;
 1124	What is the granularity of synchronization operations in the kernel?	draft
 1125	What locking types are available in the kernel?	draft
 1126	What conditional variable types are available in the kernel?	draft
+5405	Restore a plain text backup?	draft
 1127	What are the use cases of conditional variables in the kernel?	draft
 1128	What does the locking mechanism in the kernel depend on?	draft
 1129	What is a simple workaround for a system to ensure atomicity of synchronization operations?	draft
 1130	How does spinlocks operate?	draft
 1131	How does preemption toggle in a CPU?	draft
+1674	What are the parsing order of configuration files in a layer?	draft
 1132	Why does changing of preemption status depends on atomic operations?	draft
 1133	Create and initialize a spinlock using macro?	draft
 1134	Dynamically create and initialize a spinlock?	draft
 1135	Lock and unlock a spinlock?	draft
+3680	How many thread types exist?	draft
 1136	What are the use cases of spin_lock_irq and spin_unlock variations?	draft
 1137	What are the side effects of disabling and enabling interrupts by spinlocks?	draft
 1138	What is the safe way of enabling and disabling spinlocks?	draft
@@ -16804,10 +16914,12 @@ COPY flashback.cards (id, headline, state) FROM stdin;
 1208	How to construct a <code>std::pair</code> using its move constructor or move assignment operator?	draft
 4156	What C++ entities can be exported as module interface?	draft
 1209	How <code>std::make\\_pair</code> can be used to create a <code>std::pair</code>?	draft
+287	Connect to a postgres instance?	draft
 1210	How member variables of <code>std::pair</code> struct can be accessed?	draft
 1211	What comparison operators does the <code>std::pair</code> support?	draft
 1212	How two <code>std::pair</code> objects can be swapped?	draft
 1213	Which containers use <code>std::pair</code> to manage their elements?	draft
+1750	Bind a UDP acceptor to a port?	draft
 4249	Evaluate alignment of structures considering the size of their members?	draft
 1214	How to construct parameter types of a <code>std::pair</code> piecewise by using tuples as its parameters?	draft
 1215	How a <code>std::tuple</code> can be constructed?	draft
@@ -16838,7 +16950,7 @@ COPY flashback.cards (id, headline, state) FROM stdin;
 1240	What are the possible executions when calling a function asynchronously?	draft
 1241	Specialize a future that calls a function with no return value?	draft
 1242	What are the available async policies?	draft
-1243	When does asking for result might cause execution of two threads in sequence?	draft
+2711	Edit an environment variable on U-Boot command line?	draft
 1244	What is the best practice for running functionalities asynchronously?	draft
 1245	What would happen if the system fails to execute functionality after directing async call with async launch policy?	draft
 1246	What happens when the result of functionality is never requested after an async call with async launch policy?	draft
@@ -16879,7 +16991,7 @@ COPY flashback.cards (id, headline, state) FROM stdin;
 1387	How `std::numeric_limits<T>` class template can be used to identify if a numeric type is signed?	draft
 4251	Set alignment of object types?	draft
 1388	How `std::numeric_limits<T>` class template can be used to verify a numeric type is an integer?	draft
-1307	What is advantage of locking a swarm?	reviewed
+1307	What is advantage of locking a swarm?	draft
 1389	How to make sure if a floating-point value is exact using `std::numeric_limits<T>` class template?	draft
 1390	How to verify if a floating-point value holds infinity value?	draft
 1391	How can we get the minimum and maximum value that a random engine can generate?	draft
@@ -17017,11 +17129,12 @@ COPY flashback.cards (id, headline, state) FROM stdin;
 1667	Add partitions to an image?	draft
 1668	When do we have to create a distribution?	draft
 1669	What are the use cases of distributions?	draft
+495	Install OpenCV library?	draft
 1670	Create a new distribution to replace wayland by frame buffer?	draft
 1671	What variable defines the features used in a distro?	draft
 1672	What distro features are available?	draft
 1673	What are the differences of machine features and distro features?	draft
-1674	What are the parsing order of configuration files in a layer?	draft
+5360	Create a daemon thread?	draft
 1675	What are the scope of configuration and recipe variables?	draft
 1676	What is the best practice to change a preexisting recipe?	draft
 1677	Change a preexisting recipe?	draft
@@ -17077,7 +17190,7 @@ COPY flashback.cards (id, headline, state) FROM stdin;
 1762	Write a C++ function to decide at compile time wether it should return a passed string, call <code>std::to_string()</code> for a passed integral or floating-point value, or try to convert the passed argument to std::string.	draft
 1763	What object can be used in C++ STL to have a value with certain type or not have any value at all?	draft
 1764	How can <code>std::optional<></code> be used as return values?	draft
-1737	How many sockets are available?	rejected
+1737	How many sockets are available?	draft
 1840	How do browsers detect existance of a captive portal?	draft
 1841	What is a target AP?	draft
 1842	What are the requirements of attacking a captive portal?	draft
@@ -17173,12 +17286,12 @@ COPY flashback.cards (id, headline, state) FROM stdin;
 2014	How to IPv4 rules with IPv6 rules in the same <code>nftables</code> configuration file?	draft
 2015	How to stop an attack in progress quickly without bringing down the system?	draft
 2018	What is the Yocto Project's reference build system?	draft
-2022	How to create a thread?	draft
 2023	How to launch a thread using callable objects?	draft
 2024	How to wait for a thread to complete?	draft
 2025	Join threads on normal and exceptional exists:	draft
 2026	Use RAII idiom to handle joining threads:	draft
 2027	How to run threads in background?	draft
+3797	Write a job to cache a step?	draft
 2028	How to pass arguments to a thread?	draft
 2029	How to transfer ownership of a thread?	draft
 2030	Choosing number of threads at runtime:	draft
@@ -17247,8 +17360,10 @@ COPY flashback.cards (id, headline, state) FROM stdin;
 2093	How integer options can be used in <code>/etc/sudoers</code> file?	draft
 2094	How string options can be used in <code>/etc/sudoers</code> file?	draft
 2095	How list options can be written in <code>/etc/sudoers</code> file?	draft
+2433	Animate an object rotating horizontally?	draft
 2096	How to set <code>sudo</code> options for specific users in <code>/etc/sudoers</code> file?	draft
 2097	How to limit <code>sudo</code> default options per host or host alias in <code>/etc/sudoers</code> file?	draft
+2247	Selectively copy elements for which the predicate returns false?	draft
 2098	How to limit <code>sudo</code> default options per command or command alias in <code>/etc/sudoers</code> file?	draft
 2099	How to limit <code>sudo</code> default options per run-as in <code>/etc/sudoers</code> file?	draft
 2100	How to limit the times users attempt incorrect passwords in <code>/etc/sudoers</code> file?	draft
@@ -17376,7 +17491,6 @@ COPY flashback.cards (id, headline, state) FROM stdin;
 2244	Copy and move a non-overlapping and overlapping ranges in the opposite direction?	draft
 2245	Copy only a limited elements of a non-overlapping and overlapping ranges?	draft
 2246	Selectively copy elements for which the predicate returns true?	draft
-2247	Selectively copy elements for which the predicate returns false?	draft
 2248	Selectively copy elements that do not match the provided value?	draft
 2249	Copy a random selection N elements from the source range to the destination range utilising the provided random number generator?	draft
 2250	Replace elements in a range matching a value?	draft
@@ -17420,7 +17534,6 @@ COPY flashback.cards (id, headline, state) FROM stdin;
 2307	What is a thread-local data?	draft
 2308	What is a condition variable?	draft
 2309	What are the use cases of condition variables?	draft
-2310	What is a task?	draft
 2311	What objects can be transferred in the communication channel made by a task?	draft
 2312	What are the execution policies?	draft
 2313	What are the advantages of using jthread?	draft
@@ -17465,6 +17578,7 @@ COPY flashback.cards (id, headline, state) FROM stdin;
 2351	What is the difference between atomic boolean and atomic flag?	draft
 2352	Use an atomic boolean to protect a shared value in a critical section using C++11 fundamental atomic interface?	draft
 2353	What is the difference between the way atomic boolean and condition variable query the atomic value?	draft
+2437	What are the possible ways of applying animations?	draft
 2354	Use an atomic boolean to protect a shared value in a critical section using C++20 fundamental atomic interface?	draft
 2355	What is the functionality of <code>compare_exchange_strong</code> in a fundamental atomic interface?	draft
 2356	Why does <code>compare_exchange_weak</code> exists in the fundamental atomic interface?	draft
@@ -17544,11 +17658,9 @@ COPY flashback.cards (id, headline, state) FROM stdin;
 2430	Record user key presses?	draft
 2431	How to precompile QML to avoid the initial startup penalty induced by the initial parsing?	draft
 2432	Where do animations apply?	draft
-2433	Animate an object rotating horizontally?	draft
-2434	Animate an object to fade away?	draft
 2435	How many types of animation elements exist?	draft
 2436	What action elements are used to change a property or to run a script during an ongoing animation?	draft
-2437	What are the possible ways of applying animations?	draft
+3713	Create a variable?	draft
 2438	Enable wrapping on Text elements?	draft
 2439	How many easing curves are available for animations?	draft
 2440	Animate an object moving horizontally with an easing curve?	draft
@@ -17624,6 +17736,7 @@ COPY flashback.cards (id, headline, state) FROM stdin;
 2538	What is the deduced type of a universal reference?	draft
 2539	Check for constness of an argument?	draft
 2540	Divide the execution of a function based on constness of its argument?	draft
+3771	What are the macros?	draft
 2541	Check whether the passed argument of an object is an lvalue or an rvalue?	draft
 2542	Restrict a universal reference to a specifc type?	draft
 2543	What corner cases exist that rvalue references might look like universal references?	draft
@@ -17703,6 +17816,7 @@ COPY flashback.cards (id, headline, state) FROM stdin;
 2617	How does <code>std::optional</code> take advantage of move semantics?	draft
 2618	What methods in <code>std::optional</code> overload with move semantics?	draft
 2619	When does using a <code>std::shared_ptr</code> become expensive?	draft
+4968	Define a spinlock?	draft
 2620	How does move semantics optimize the iteration over a collection of shared pointers?	draft
 2621	How does <code>std::unique_ptr</code> take advantage of move semantics?	draft
 2622	How do IOStream objects take advantage of move semantics?	draft
@@ -17733,7 +17847,6 @@ COPY flashback.cards (id, headline, state) FROM stdin;
 2647	Use move semantics to pass future and promise types to two different threads passing value?	draft
 2648	Pass string literals as universal references?	draft
 2763	Where are the process related information on the system?	draft
-2711	Edit an environment variable on U-Boot command line?	draft
 2712	Restart the board with a U-Boot command?	draft
 2713	Where to download the Raspberry Pi bootloader from?	draft
 2714	What files are required to to boot using a Raspberry Pi device?	draft
@@ -17766,7 +17879,6 @@ COPY flashback.cards (id, headline, state) FROM stdin;
 2747	Where is the device node representing kernel log buffer?	draft
 2748	Print the information about a module?	draft
 2749	List kernel modules?	draft
-2750	Insert modules?	draft
 2751	Which tool loads kernel modules while also loading their dependencies?	draft
 2752	Pass parameters to a module through modprobe configuration?	draft
 2753	Pass parameters to a module through kernel parameters?	draft
@@ -17789,6 +17901,7 @@ COPY flashback.cards (id, headline, state) FROM stdin;
 2840	What is the relation between objects of a class instantiated by different nontype template parameter values?	draft
 2935	Find an element within a list?	draft
 2841	What is the use case of nontype class template parameters with default values?	draft
+5063	Where does the kernel log?	draft
 2842	How many stages does CMake have to build a project?	draft
 2843	What file does CMake use as cache in configuration stage?	draft
 2844	What are the crucial CMake commands needed in every project?	draft
@@ -17889,9 +18002,6 @@ COPY flashback.cards (id, headline, state) FROM stdin;
 2943	Remove an element by index from a list?	draft
 2944	Remove duplicate entries of a list?	draft
 2945	Transform elements of a list?	draft
-2946	Reverse the elements of a list?	draft
-2947	Sort the elements of a list?	draft
-2948	Write a conditional block?	draft
 2949	How many conditional operators exist in CMake?	draft
 2950	Write two nested conditional expressions?	draft
 2951	How variables can be used as conditional operands?	draft
@@ -17963,7 +18073,6 @@ COPY flashback.cards (id, headline, state) FROM stdin;
 3018	Specify runtime dependencies for a target?	draft
 3019	What steps are required to make a project accessible system-wide?	draft
 3020	Make include directories relocatable?	draft
-3021	Install an export file?	draft
 3022	What are the building blocks of a package definition config file?	draft
 3023	What are the requirements of a package?	draft
 3024	What are the requirements of package location and name?	draft
@@ -18018,7 +18127,6 @@ COPY flashback.cards (id, headline, state) FROM stdin;
 3073	Reset model view matrix to identity matrix?	draft
 3074	Scale down a circle to look smaller?	draft
 3075	Store and restore matrix state before and after translations?	draft
-3076		draft
 3077		draft
 3078	Rotate a two dimensional circles rotating around z axis?	draft
 3079	What structure is used instead of a vertex due to performance reasons?	draft
@@ -18111,6 +18219,7 @@ COPY flashback.cards (id, headline, state) FROM stdin;
 3166	Remove all occurances of a value within a variable using override operators?	draft
 3167	What does the dropbear package do?	draft
 3168	Assign on a variable only for a specific machine?	draft
+2278	Represent a single element view?	draft
 3169	What is the precedence between override assignments and regular assignments?	draft
 3170	Append to a variable only for a specific machine using override variables?	draft
 3171	What is the precedence of override operators?	draft
@@ -18176,7 +18285,6 @@ COPY flashback.cards (id, headline, state) FROM stdin;
 3231	What variable defines runtime dependencies of a recipe?	draft
 3232	Reflect the dependency of a recipe on a specific version of another recipe?	draft
 3233	Inspect the dependencies of an image?	draft
-3234	What are the default tasks?	draft
 3235	Get a list of existing tasks from a recipe?	draft
 3236	What variable defines the location of generated objects during build?	draft
 3237	What variable defines the location where files are installed?	draft
@@ -18198,7 +18306,6 @@ COPY flashback.cards (id, headline, state) FROM stdin;
 3253	Extend a recipe in third-party layers?	draft
 3254	What are the considerations of extending a recipe?	draft
 3255	Which variable should be changed when new files are added in recipe extension?	draft
-3256	Extend a task?	draft
 3257	Use a class in a custome recipe?	draft
 3258	What are the common classes?	draft
 3259	Which class is automatically inherited by all recipes?	draft
@@ -18230,11 +18337,9 @@ COPY flashback.cards (id, headline, state) FROM stdin;
 3285	What are the common layers in Poky?	draft
 3286	Where is the list of maintained layers?	draft
 3287	Where are the bitbake layers located?	draft
-3288	Include another layer?	draft
 3289	What tool is used to inspect layers?	draft
 3290	Get a list of layers?	draft
 3291	Add an existing layer?	draft
-3292	Remove a layer?	draft
 3293	What layers provide board support?	draft
 3294	What layers provide application support?	draft
 3295	Create a new layer?	draft
@@ -18259,7 +18364,6 @@ COPY flashback.cards (id, headline, state) FROM stdin;
 3313	What configuration variable is used in UBoot recipe as the make target used to build the bootloader?	draft
 3314	In how many ways the kernel can be built with yocto?	draft
 3315	Use <code>linux-yocto</code> to build a specific kernel in an image?	draft
-3316	What is the advanced metadata?	draft
 3317	What is a Kernel Metadata?	draft
 3318	Write a simple kernel metadata specifying a configuration and a patch?	draft
 3319	What is advantage of creating a distribution layer?	draft
@@ -18342,7 +18446,6 @@ COPY flashback.cards (id, headline, state) FROM stdin;
 3396	Where will be the generated generic SDK stored?	draft
 3397	What SDK can be used to develop applications running on a target?	draft
 3398	What task is responsible for generating an SDK?	draft
-3399	Generate an SDK for an image?	draft
 3400	What configuration variables control what will be installed in an SDK?	draft
 3401	Install an SDK?	draft
 3402	Use an installed SDK?	draft
@@ -18392,7 +18495,7 @@ COPY flashback.cards (id, headline, state) FROM stdin;
 3610	What is the shebang line in bsah script?	draft
 3611	Make a shell script file executable?	draft
 3612	Dry run a script without executing commands for debugging?	draft
-3456	Write a test entry point?	reviewed
+3456	Write a test entry point?	draft
 3613	Run a script by printing line by line execution for debugging?	draft
 3614	How many routine types exist?	draft
 3615	When does a function is considered a coroutine?	draft
@@ -18433,7 +18536,6 @@ COPY flashback.cards (id, headline, state) FROM stdin;
 3700	What is the comment character in YAML syntax?	draft
 3701	What is the syntax of assigning a value in YAML?	draft
 3702	What characters can be used to surround a string value in YAML?	draft
-3703	What data types are available in YAML?	draft
 3704	How can we use JSON syntax in YAML?	draft
 3705	What triggers are available in GitHub workflows?	draft
 3706	How do webhook triggers function?	draft
@@ -18442,10 +18544,7 @@ COPY flashback.cards (id, headline, state) FROM stdin;
 3710	What characters are acceptable in secret names?	draft
 3711	What expression expands to the secret value?	draft
 3712	Create a secret?	draft
-3713	Create a variable?	draft
 3714	How many ways are possible to pass values when creating variables?	draft
-5614	Specify compiler launcher?	reviewed
-3680	How many thread types exist?	reviewed
 3715	What are the use cases of environments?	draft
 3716	Specify an environment in a job?	draft
 3717	Depend a job to another?	draft
@@ -18589,9 +18688,8 @@ COPY flashback.cards (id, headline, state) FROM stdin;
 3952	Pass outputs to subsequent steps?	draft
 3953	Mask the output of a step?	draft
 3954	Use environment variables to pass values to subsequent steps?	draft
-5272	Remove a file interactively?	reviewed
-3883	What is the signature of a coroutine generator function?	reviewed
-3955	Create job summaries?	draft
+5272	Remove a file interactively?	draft
+3883	What is the signature of a coroutine generator function?	draft
 3956	How many context levels exist?	draft
 3957	In what context level secrets and variables exist?	draft
 3958	Set secrets and variables?	draft
@@ -18619,7 +18717,6 @@ COPY flashback.cards (id, headline, state) FROM stdin;
 3981	What is the difference between ordinary programs and system programs?	draft
 3982	Find the minimum and maximum value in a series of values?	draft
 3983	What overloads of min and max functions are available?	draft
-3984	Calculate the midpoint between two values?	draft
 3985	Calculate the interpolation of two numbers?	draft
 3986	Safely compare two integral values?	draft
 3987	Mark an object as no longer needed while passed as an argument?	draft
@@ -18628,6 +18725,8 @@ COPY flashback.cards (id, headline, state) FROM stdin;
 3989	Cast a scoped enumeration into its underlying type?	draft
 3990	Swap the value of two objects?	draft
 3991	Bind arguments to an arbitrary position?	draft
+4172	Retreive value of the active type within a variant?	draft
+1024	Clear a variable?	draft
 3992	What is the difference between <code>std::function()</code> and <code>std::bind()</code>	draft
 3993	Construct a pair of two objects?	draft
 3994	Get either of the two elements of a pair?	draft
@@ -18714,7 +18813,6 @@ COPY flashback.cards (id, headline, state) FROM stdin;
 4169	Export enumerators of an enumeration in a local scope?	draft
 4170	Construct a variant to hold three different types?	draft
 4171	Change the active type of a variant?	draft
-4172	Retreive value of the active type within a variant?	draft
 4173	Access the content of a variant with visitor approach?	draft
 4174	Create a helper to be compatible with any of the variant types?	draft
 4175	Use <code>std::expected</code> to link possible outcomes of an operation?	draft
@@ -18882,6 +18980,7 @@ COPY flashback.cards (id, headline, state) FROM stdin;
 4466	What is the use case of stop callbacks in threads?	draft
 4467	Retrieve the maximum number of threads efficiently running at runtime?	draft
 4469	What are the basic synchronization points in a concurrent program?	draft
+1017	Where is the source directory?	draft
 4470	What synchronization facilities are available in C++?	draft
 4472	What methods does a mutex have?	draft
 4473	What is the downside of manually locking mutexes?	draft
@@ -18975,6 +19074,7 @@ COPY flashback.cards (id, headline, state) FROM stdin;
 4649	Extract joining tokens of a swarm?	draft
 4650	Join Docker nodes to a swarm?	draft
 4651	How does the <b>High Availability</b> mechanism in swarms work?	draft
+1551	What is a task?	draft
 4652	How to apply <b>High Availability</b> mechanisms to a swarm?	draft
 4654	Apply a lock on a swarm?	draft
 4655	Check the current swarm unlock key?	draft
@@ -19053,7 +19153,6 @@ COPY flashback.cards (id, headline, state) FROM stdin;
 4813	Manually write the content of a file in which breakpoints were saved?	draft
 4814	Watch changes of a variable only when a criteria is met?	draft
 4815	Track a particular location in memory rather than the value of an expression?	draft
-4817	Examine a memory address or register?	draft
 4818	Get information of threads?	draft
 4819	List the innermost or outermost frames of backtrace?	draft
 4820	Where the coredumps are stored?	draft
@@ -19112,7 +19211,7 @@ COPY flashback.cards (id, headline, state) FROM stdin;
 4879	Update an already existing kernel configuration file with new released options?	draft
 4880	Extract the kernel configuration file from the running machine?	draft
 4881	Configure kernel to make its configuration options available in <code>/proc</code>?	draft
-1785	Append a subpath to a path?	reviewed
+1785	Append a subpath to a path?	draft
 4882	Configure kernel to allow extending command line options from within the configuration?	draft
 4883	Configure kernel to make kernel symbol table available through procfs?	draft
 4891	Print the version or release of configured kernel?	draft
@@ -19156,8 +19255,6 @@ COPY flashback.cards (id, headline, state) FROM stdin;
 4948	Compile a device tree source?	draft
 4964	Configure udev in order to give devices another name?	draft
 4967	What is the mechanism of a spinlock on processors?	draft
-4968	Define a spinlock?	draft
-5063	Where does the kernel log?	draft
 5064	Where is the tracing directory usually mounted?	draft
 5065	What is the common method to write a document as a beginner?	draft
 5066	What is the best practice in naming tex files?	draft
@@ -19235,1666 +19332,1639 @@ COPY flashback.cards (id, headline, state) FROM stdin;
 5190	What are the building blocks of a GPU?	draft
 5191	What operation makes a GPU operate faster than a CPU?	draft
 3709	What are the possible ways of taking inputs for an action?	draft
-5291	Rename a file?	reviewed
-5538	Create a table?	reviewed
+5291	Rename a file?	draft
+5538	Create a table?	draft
 4189	Replace ref-qualified overloads of a method with one generic overload?	draft
-34	Inspect the configuration details of crosstool-ng targets?	reviewed
-33	Print the list of crosstool-ng sample configurations?	reviewed
-35	Build a cross-toolchain for Raspberry Pi Zero?	reviewed
-36	Build a cross-toolchain for BeagleBone Black?	reviewed
-37	Build a cross-toolchain for QEMU?	reviewed
-39	Override the default processor configuration options using GCC compiler?	reviewed
-40	List available architecture specific options in a project source tree using GCC compiler?	reviewed
-41	Print the <code>sysroot</code> path using GCC compiler?	reviewed
-43	Print the linked libraries of an executable using GNU toolchains?	reviewed
-44	Print the runtime linker used for an executable using GNU toolchains?	reviewed
-45	Compile by linking libraries statically using GNU GCC compiler?	reviewed
-46	Where are static libraries located in <code>sysroot</code> directory used by GNU toolchains?	reviewed
-47	Use GNU toolchains to create a static library containing two executable objects compiled from C source files?	reviewed
-48	Use GNU toolchains to create a shared library containing two executable objects compiled from C source files?	reviewed
-49	Use GNU cross-toolchains to print the <code>SONAME</code> of a shared library?	reviewed
-50	Use GNU toolchains to cross-compile for a specific target?	reviewed
-52	Override the toolchain in an autotools compatible project?	reviewed
-53	Use <code>crosstool-ng</code> to cross compile <i>SQlite</i> and add it to an existing toolchain?	reviewed
-54	Prepare <code>pkg-config</code> to look up library dependencies in a sysroot?	reviewed
-55	Use CMake to cross compile a project?	reviewed
-61	Use <code>include</code> in a device tree source?	reviewed
-63	Use <code>dtc</code> to compile a device tree source?	reviewed
-30	What C libraries are commonly used in toolchains?	reviewed
-29	Print the tuple embedded in GNU GCC compiler?	reviewed
-42	What are the main C library components?	reviewed
-74	What is the basic layout of the kernel source tree?	reviewed
-77	What are the constructs of each menu in a <code>Kconfig</code> file?	reviewed
-58	What is a Device Tree and where is its specification?	reviewed
-59	What are the common properties of device tree specification?	reviewed
-60	Specify an interrupt controller in a device tree source?	reviewed
-64	Build and install <b>U-Boot</b> from source?	reviewed
-56	Describe the boot sequence in an embedded device?	reviewed
-57	Describe what parameters should be passed to the kernel on moving from the bootloader to a kernel?	reviewed
-65	Use U-Boot to read flash memory over serial console?	reviewed
-66	Set environment variables in U-Boot environment?	reviewed
-68	Load a kernel image in a U-Boot shell environment?	reviewed
-69	Boot a kernel image across network in a U-Boot shell environment?	reviewed
-70	Boot Linux kernel after loading it within U-Boot shell environment?	reviewed
-71	Automate the boot process in U-Boot shell environment?	reviewed
-9	What are the basic data types in OpenCV?	reviewed
-10	What operations are supported by <code>cv::Point<></code> template class?	reviewed
-11	What operations are supported by <code>cv::Scalar</code> class?	reviewed
-12	What operations are supported by <code>cv::Size</code> class?	reviewed
-13	What operations are supported by <code>cv::Rect</code> class?	reviewed
-14	What operations are supported by <code>cv::RotatedRect</code> class?	reviewed
-15	What operations are supported by <code>cv::Matx</code> template class?	reviewed
-16	What operations are supported by <code>cv::Vec</code> template class?	reviewed
-17	What operations are supported by <code>cv::Complex<></code> class template?	reviewed
-24	Specify the elements of Embedded Linux?	reviewed
-25	Specify hardware requirements for Embedded Linux?	reviewed
-26	Build a fundamental ARM machine with QEMU?	reviewed
-19	What data type is used to specify color by convention?	reviewed
-20	What line types are used by drawing functions?	reviewed
-21	What values can be accepted as thickness parameter of drawing functions?	reviewed
-22	Draw a circle on an image?	reviewed
-111	Initialize scoped and global variables?	reviewed
-117	Initialize a constant?	reviewed
-110	Declare and define a function separately?	reviewed
-118	Declare a function evaluated at compile time?	reviewed
-119	Ensure compile time evaluation of a function?	reviewed
-109	Abbreviate namespaces to avoid repetition?	reviewed
-115	Define a new type based on predefined types?	reviewed
-112	Determine the size of an expression?	reviewed
-93	See the actual commands being executed in kernel build process in case build fails?	reviewed
-96	What are the steps required to build a kernel for the Raspberry Pi 4?	reviewed
-97	What are the steps required to build a kernel for the Raspberry Pi Zero?	reviewed
-98	What are the steps required to build a kernel for the BeagleBone Black?	reviewed
-99	What are the steps required to build a kernel for the QEMU?	reviewed
-94	What are the required steps after building a kernel image?	reviewed
-107	Assuming a new device is designed similar to BeagleBone Black and a new device tree needs to be ported for it, what are the necessary steps to make one?	reviewed
-101	What are the required boot instructions on BeagleBone Black?	reviewed
-102	What are the required boot instructions on QEMU?	reviewed
-104	What are the essential kernel command lines?	reviewed
-105	Reduce the time of calculating the constant <code>loops_per_jiffy</code> variable on boot time?	reviewed
-103	What is the early user space after kernel is booted?	reviewed
-499	Display an image on a window?	reviewed
-214	How does PostgreSQL store data on storage?	reviewed
-215	How long is the life time of a PostgreSQL release?	reviewed
-216	What is a PostgreSQL cluster?	reviewed
-217	What is a schema?	reviewed
-218	What are the building blocks of an instance?	reviewed
-220	What schema do users belong to?	reviewed
-221	How many user categories exist in postgres?	reviewed
-222	How many superusers are allowed in a postgres instance?	reviewed
-223	Where are the internal postgres instance data stored?	reviewed
-224	Where does postgres store its data?	reviewed
-225	What is <code>PGDATA</code> contained of?	reviewed
-226	How is it possible to have multiple postgres installations?	reviewed
-227	When does postgres need the <code>PGDATA</code> directory?	reviewed
-228	What is the purpose of postgres's first process?	reviewed
-229	How does postgres handles connections?	reviewed
-230	Build postgres from source?	reviewed
-231	How to add systemd support to postgres installation?	reviewed
-232	Build postgres using pgenv?	reviewed
-233	Connect to a postgres instance?	reviewed
-5405	Restore a plain text backup?	reviewed
-287	Connect to a postgres instance?	reviewed
-495	Install OpenCV library?	reviewed
-496	Include OpenCV headers in source file?	reviewed
-497	Print the size of a matrix?	reviewed
-498	Open an image from file?	reviewed
-500	Save a processed image into a file?	reviewed
-502	Get the number of image channels?	reviewed
-501	Transform image by flipping an image horizontally?	reviewed
-503	Set a mouse callback to get notified when user clicks on image?	reviewed
-504	Draw a circle on an image?	reviewed
-505	Draw a rectangle on an image?	reviewed
-506	Draw a text on an image?	reviewed
-507	Create a single channel gray image?	reviewed
-508	Recreate an image object?	reviewed
-509	Copy an image object into another?	reviewed
-511	Occupy the region of interest in an image with a rectangle?	reviewed
-512	Occupy the region of interest in an image with ranges?	reviewed
-513	Specify columns and rows of an image as region of interest?	reviewed
-514	Mask an image so that only a part of it will be affected by operations?	reviewed
-676	Implement a concept to constraint passing only raw pointers?	reviewed
-677	Apply a concept restricting parameters only to take raw pointers to a template?	reviewed
-678	Using overload resolution with concepts implement two function templates for pointers and non-pointers?	reviewed
-679	How many ways concepts can be applied into templates?	reviewed
-680	In how many ways a template can be constrained?	reviewed
-681	What is the advantage of using trailing requires clause over regular requires clause?	reviewed
-682	Constraint a template to take only two comparable types?	reviewed
-683	Constraint a template to only accept objects supporting pointer deference operator?	reviewed
-684	What difference does it take for constraints to declare parameters as value or reference?	reviewed
-685	Constraint a template with a requires expression?	reviewed
-5527	Make an element dim?	reviewed
-5196	Implement the strategy pattern?	reviewed
-5525	Make an element bold?	reviewed
-903	List source lines in debugging?	reviewed
-904	Change the line number of source listing?	reviewed
-905	Set disassembly flavor in gdb?	reviewed
-906	Store gdb configurations in file for future use?	reviewed
-907	Disassemble a function or line of source in gdb?	reviewed
-908	Examine an address in memory in gdb?	reviewed
-910	Start execution of the debugging program in gdb?	reviewed
-911	Inspect registers in gdb?	reviewed
-913	Manipulate breakpoints in gdb?	reviewed
-914	Change executation of the debugging program in gdb?	reviewed
-915	Print variables through debugging session?	reviewed
-916	Enable TUI in gdb:	reviewed
-926	Read the ELF header of an executable object?	reviewed
-927	Read symbols of an executable object?	reviewed
-928	Sort executable object symbols based on its memory locations?	reviewed
-897	Convert decimal, binary, and hexadecimal representations of integral and floating point numbers?	reviewed
-898	Name x64 registers?	reviewed
-899	What is the name of <b>Instruction Pointer</b> register?	reviewed
-900	Name the flag registers?	reviewed
-901	Name SIMD registers?	reviewed
-950	What header contains Linux system calls?	reviewed
-896	Write exit procedure in x64 Assembly?	reviewed
-919	Exit program without directly writing the exit syscall?	reviewed
-917	Create values in data section of memory?	reviewed
-923	Consecutively store a sequence of data into read-only memory section?	reviewed
-924	Preserve uninitialized variables in a writable memory section?	reviewed
-918	Use external functions from C in x64 assembly code?	reviewed
-931	Specify how many bits each floating point number occupies for exponent and fraction?	reviewed
-941	Evaluate bit-wise operations?	reviewed
-942	Set and reset specific bits of numeric variable?	reviewed
-943	Check if its 8th bit of a quadword variable is set?	reviewed
-920	Conditionally change the execution flow?	reviewed
-921	Repeat execution of a code section by manually counting down?	reviewed
-922	Repeat execution of a code section by automatically counting down?	reviewed
-925	Load the address of an array into a register to run operations on?	reviewed
-940	Use calling conventions to transfer variables from callee to caller functions?	reviewed
-938	Expose a function to external linkage?	reviewed
-939	Expose a variable to external linkage?	reviewed
-944	Use inline procedures to avoid runtime overhead of function calls?	reviewed
-951	What header contains file operation constants?	reviewed
-954	Open and close a file in x64 assembly?	reviewed
-5223	Run a workflow locally?	reviewed
-965	Use an assembly function in a C source?	reviewed
-967	Write a basic inline assembly in C programs?	reviewed
-968	Write extended inline assembly in C programs? (needs work)	reviewed
-963	Read command line arguments from an x64 assembly program?	reviewed
-955	Write content to a file in x64 assembly?	reviewed
-956	Truncate a file in x64 assembly?	reviewed
-977	Obtain the CPU information of the processor in x64 assembly?	reviewed
-978	Check the processors which version of SSE extensions do they support?	reviewed
-979	How many registers of SSE are available on any processor supporting it?	reviewed
-980	What are the two types of data that can be stored on SSE registers?	reviewed
-981	What are AVX registers and how much data can they hold?	reviewed
-987	Where should we check regularly for deprecation of features and removal on recent updates?	reviewed
-988	Enable docker daemon to start on boot up?	reviewed
-993	Manually run docker daemon?	reviewed
-989	Connect docker client to a remote server?	reviewed
-991	List all the contexts available to client?	reviewed
-990	Configure client to permanently connect to a remote server?	reviewed
-992	Switch client context to make it connect to another remote server?	reviewed
-986	What facilities are available to extend the Docker functionality?	reviewed
-985	What communication channel is used by containers to talk to each other?	reviewed
-1011	Install Cmake?	reviewed
-1012	Configure and build a project?	reviewed
-1013	What are the artifacts of CMake configuration stage?	reviewed
-1014	Write a minimal CMake listfile?	reviewed
-1015	What are the stages of building by cmake?	reviewed
-1016	Specify which generator should be used in build?	reviewed
-1017	Where is the source directory?	reviewed
-1018	What is the definition of a project in CMake?	reviewed
-1019	What variable holds the project name?	reviewed
-1020	Determine if the project is the top level project?	reviewed
-1021	What variable holds project description?	reviewed
-1022	What variables hold project version information?	reviewed
-1023	Declare and initialize a variable?	reviewed
-1024	Clear a variable?	reviewed
-1025	Reference a variable?	reviewed
-1026	Reference two nested variables?	reviewed
-1027	How many scopes exist?	reviewed
-1028	Make variable visible to its parent scope?	reviewed
-5247	Locate the files of a command?	reviewed
-1106	How does spinlocks operate on a CPU?	reviewed
-1105	What is a spinlock?	reviewed
-1107	Define a spinlock in module source?	reviewed
-1108	Lock a previously defined spinlock in module source?	reviewed
-5266	Generate a sequence of numbers?	reviewed
-1111	How does spinlocks affect preemtion after locking and unlocking?	reviewed
-1112	Store and restore previous IRQs status when using spinlocks?	reviewed
-1113	How a critical section can be protected from being preemted by kernel?	reviewed
-1114	What is a mutex and how does it operate?	reviewed
-1115	Initialize a mutex in the kernel?	reviewed
-1116	Acquire a mutex in the kernel?	reviewed
-1117	Release an acquired mutex in the kernel?	reviewed
-1118	Check mutex locking availability before acquiring it?	reviewed
-1119	What are specific rules while using mutexes in the kernel?	reviewed
-1120	What is more efficient between spinlocks and mutexes compared in terms of CPU cycles?	reviewed
-1110	Prevent deadlock caused by IRQs when using spinlocks?	reviewed
-1255	How to list available images on host?	reviewed
-1257	How to exit a container's shell without killing its process in docker?	reviewed
-1258	How to attach host's shell to the shell of a running container?	reviewed
-1259	How to stop a container?	reviewed
-1260	How to start a stopped container?	reviewed
-1261	How to stop and remove a container?	reviewed
-1262	How to list containers in docker?	reviewed
-1263	How to verify that a container was successfully deleted by docker?	reviewed
-1264	How to retrieve detailed information of installed docker on host?	reviewed
-1265	How to pull an image from official repositories?	reviewed
-1266	How to pull an image from unofficial repositories?	reviewed
-1267	How to pull an image from other registeries?	reviewed
-1268	What is a dangling image in docker and how can we list them?	reviewed
-1269	How to remove all dangling images in docker?	reviewed
-1270	What are the common filtering options for listing images in docker?	reviewed
-1272	How to search an image on registeries?	reviewed
-1273	How to inspect the layers of an image?	reviewed
-1275	How to see the digests of an image in docker?	reviewed
-1276	How does docker use manifests to fetch host compatible image layers when pulling images?	reviewed
-1277	How to create an image for different platforms and architectures?	reviewed
-1279	What are docker restart policies and how can they be applied to containers?	reviewed
-1280	What is the behavior of <code>always</code> docker restart policy?	reviewed
-1281	What is the <code>unless-stopped</code> docker restart policy?	reviewed
-1282	What is the <code>on-failure</code> docker restart policy?	reviewed
-1284	How to write a Dockerfile for a Linux based image containing a nodejs program?	reviewed
-1285	How to build an image from its Dockerfile?	reviewed
-1286	What are the prerequisites of pushing images into DockerHub?	reviewed
-1287	How is it possible to push an image into a registry other than the DockerHub?	reviewed
-1288	How to add an additional tag to an image?	reviewed
-1289	How to write comments in Dockerfile?	reviewed
-5270	Remove an empty directory?	reviewed
-1343	Verify the integrity of images?	reviewed
-1352	Configure <b>Docker Content Trust</b> to sign images?	reviewed
-1353	Inspect signing data of an image?	reviewed
-1354	Permanently configure docker to verify image push and pull operations?	reviewed
-1297	How many types of swarm nodes exist?	reviewed
-3463	Use a mocked object in a test	reviewed
-1322	How many publishing modes are available in docker service creation?	reviewed
-1347	Join new managers in a swarm?	reviewed
-1348	Revoke compromised token and issue new swarm join-token?	reviewed
-1342	What analyzing tool scans images for vulnerability?	reviewed
-1344	What kernel feature provides container isolation?	reviewed
-1345	What kernel feature provides container resource management?	reviewed
-1346	Secure the network connections of a swarm?	reviewed
-1349	Inspect a node’s client certificate?	reviewed
-1351	Manage CA related configuration?	reviewed
-1355	Create a secret on swarm to store credentials?	reviewed
-1338	Install a plugin on docker?	reviewed
-1339	List available plugins?	reviewed
-1330	Create a volume?	reviewed
-1335	Create a volume in Dockerfile?	reviewed
-1340	Create a volume with an installed plugin?	reviewed
-1331	List available volumes?	reviewed
-1332	Inspect into a volume?	reviewed
-1333	Delete a volume?	reviewed
-1336	Attach a volume to a container?	reviewed
-1337	Attach a volume to a cluster?	reviewed
-1341	What is the potential data corruption on a shared volume between nodes?	reviewed
-1291	How to view the instructions that were used to build an image?	reviewed
-1292	How to make docker ignore caches in creation of image layers?	reviewed
-1293	How does involved filesystem invalidate docker cache when the corresponding instruction has not changed in Dockerfile?	reviewed
-1294	What is a squashed image and how can it be built?	reviewed
-1295	How can we avoid installing excessive packages by <code>apt</code> when installing packages in docker images?	reviewed
-1296	What is a <b>Docker Swarm</b>?	reviewed
-1298	How does a swarm is maintained?	reviewed
-1299	What are different swarm modes?	reviewed
-1300	How to initialize a swarm?	reviewed
-1301	What is the default port for <b>Docker Swarm</b>?	reviewed
-1302	how to list available <i>swarm</i> nodes?	reviewed
-1303	How to extract tokens to join Docker nodes to a swarm?	reviewed
-1304	How to join Docker nodes to a swarm?	reviewed
-1305	How does the high availability mechanism of <b>Docker Swarm</b> work?	reviewed
-1306	What are the best practices to apply on Swarm high availability?	reviewed
-1308	How to apply a lock to a swarm?	reviewed
-1309	How to check the current swarm unlock key?	reviewed
-1310	How to re-join Docker nodes to a locked swarm?	reviewed
-1312	How to create a docker service?	reviewed
-1311	How many ways exist to create a docker service?	reviewed
-1313	How to list services running by docker?	reviewed
-1314	How to list the service replicas in docker?	reviewed
-1315	How to inspect a docker service?	reviewed
-1317	How to scale up and down a docker serivce?	reviewed
-1318	How to remove a docker service?	reviewed
-1319	How to create an overlay network for a docker service?	reviewed
-1320	How to list available docker networks?	reviewed
-1321	How to create a docker service and attach it to a network?	reviewed
-1323	How to create docker service replicas on <b>host mode</b>?	reviewed
-1324	How to push an update image to the swarm in a staged manner?	reviewed
-1325	How to troubleshoot docker services by printing its logs?	reviewed
-1326	How to configure docker daemon to log on different logging drivers?	reviewed
-1327	What makes the urge to make swarm backups?	reviewed
-1328	What is a swarm backup file contained of?	reviewed
-1784	Concatenate a string to a path?	reviewed
-1329	How to perform a docker swarm backup and restore operation?	reviewed
-1334	Delete all volumes?	reviewed
-1404	Express different types of strings that raw string literals can generate?	reviewed
-1420	Find the first and last occurance of a character in a <code>string_view</code>?	reviewed
-1421	Remove tailing and trailing characters from a <code>string_view</code>?	reviewed
-1405	Convert a string to lowercase or uppercase?	reviewed
-5470	Manually link to ftxui library?	reviewed
-1483	Express a module to be used within another translation unit?	reviewed
-1485	What is a module partition?	reviewed
-1486	What is a module interface partition?	reviewed
-1487	What is a module implementation partition?	reviewed
-1488	What is the difference between module partitions and submodules?	reviewed
-1491	What are the building blocks of the Poky build tool?	reviewed
-1493	What are the responsibilities of OpenEmbedded Core in the Yocto Project?	reviewed
-1494	What are the responsibilities of Metadata in the Yocto Project?	reviewed
-1490	What is the default referencing build system in the Yocto Project?	reviewed
-1495	What are the release cycles of the Yocto Project?	reviewed
-1496	What is Poky?	reviewed
-1497	What is the usage of bitbake?	reviewed
-1498	How does bitbake operate?	reviewed
-1499	What is OpenEmbedded Core?	reviewed
-1501	Get poky source code?	reviewed
-1500	What metadata is made of?	reviewed
-1503	What configuration variable is required for build system?	reviewed
-1504	Get poky source tree?	reviewed
-1505	Prepare the poky build environment?	reviewed
-1509	What is the role of <code>conf/local.conf</code> file?	reviewed
-1510	Define the target machine to the project?	reviewed
-1511	List all available images?	reviewed
-1512	What predefined images exist in poky?	reviewed
-1513	Build an image?	reviewed
-1514	What layer provides necessary tool to run built images?	reviewed
-1515	What is the role of Toaster in the Yocto project?	reviewed
-1516	Install toaster and its requirements?	reviewed
-1517	Start toaster?	reviewed
-1521	What is the role of classes in layers?	reviewed
-1518	Where is the configuration file for each layer?	reviewed
-1519	What metadata types exist?	reviewed
-1520	What is the role of configurations in layers?	reviewed
-1523	What configuration files are be parsed by bitbake?	reviewed
-1524	What configuration variable is used to list required layers in metadata?	reviewed
-1525	What is the metadata parsing order of bitbake?	reviewed
-1526	When does architecture specific metadata loads into metadata?	reviewed
-1527	What dependencies exist in metadata?	reviewed
-1528	What recipes will only run on host and not the target device?	reviewed
-1529	What configuration variables hold metadata dependencies?	reviewed
-1530	What configuration variable is used to satisfy metadata dependecies?	reviewed
-1531	What configuration variable signifies higher precedence of a provider over others?	reviewed
-1532	How many ways exist for a provider to provide a functionality?	reviewed
-1533	When do we use virtual namespace in provider names?	reviewed
-1535	Override the default version preference of bitbake over selecting between multiple versions of the same provider?	reviewed
-1536	Change the default version preference of a recipe?	reviewed
-1537	What mechanism does bitbake have to fetch sources?	reviewed
-1538	What recipe variable is used to fetch source files?	reviewed
-5481	Create a full-size screen?	reviewed
-1539	What mechanism is used by bitbake to verify downloaded files?	reviewed
-1540	Override the download path in a layer?	reviewed
-1541	How does bitbake avoid conflicts between possible git repositories with the same project name?	reviewed
-1542	What are the use cases of <code>SRCREV</code> variable?	reviewed
-1543	Specify branch and protocol of a git repository to be fetched?	reviewed
-1544	What are the use cases of mirrors?	reviewed
-1545	What locations are searched by bitbake to download a repository?	reviewed
-1546	Instruct the build system to redirect any download request to a local server?	reviewed
-1547	Share downloads between multiple build directories?	reviewed
-1548	Disable internet access to bitbake?	reviewed
-1549	Run a specific task?	reviewed
-1550	List the defined tasks for a recipe?	reviewed
-1551	What is a task?	reviewed
-1552	What are the common tasks specified in each recipe?	reviewed
-1553	What are the entries of the build directory after image creation?	reviewed
-1554	Which directories are critical to know for analyzing the build process and troubleshooting?	reviewed
-1555	What directory is modified in each step of the build process?	reviewed
-1556	What is the structure of work directory?	reviewed
-1557	Reduce disk usage after each recipe compilation by removing artifacts?	reviewed
-1559	What is the general approach to fix broken builds when a missing header or link failure happens?	reviewed
-1558	Where is the list of sysroot providers?	reviewed
-1560	What package formats are available to poky?	reviewed
-1561	Select a package format?	reviewed
-1562	What package installation scripts are available in a recipe?	reviewed
-1563	Run post installation scripts on target devices instead of host?	reviewed
-1564	What variable holds the path to the installation directory?	reviewed
-1565	What is the best practice to run target specific processes?	reviewed
-1566	What is a shared state cache?	reviewed
-1567	Clean the shared state cache?	reviewed
-1568	Enforce building from scratch?	reviewed
-1569	What variables are used in package versioning of poky?	reviewed
-1570	What variables are used to specify runtime package dependencies?	reviewed
-1571	What is the role of rootfs directory?	reviewed
-1572	What variable holds the list of packages to be installed into rootfs?	reviewed
-1573	What variable holds the filesystem types to be generated?	reviewed
-1574	What are the steps of rootfs directory generation?	reviewed
-1582	How many types a metadata covers?	reviewed
-1575	What is a package feed?	reviewed
-1576	What are the use cases of package feeds?	reviewed
-1577	What is the role of PR service in package versioning?	reviewed
-1578	Enable PR service in a layer?	reviewed
-1579	What is the role of package index?	reviewed
-1580	Where do installed packages reside?	reviewed
-1581	Add support for package management to an image?	reviewed
-1583	What is the language of a recipe?	reviewed
-1585	Assign value to a variable in a recipe file?	reviewed
-1586	Use variable expansion in value assignment?	reviewed
-1587	How many expansion rules exist?	reviewed
-1588	How many assignments with different priorities exist?	reviewed
-1589	Use an immediate variable expansion?	reviewed
-1590	Append and prepend a value to a list?	reviewed
-1591	Append and prepend a value to a string?	reviewed
-1592	What are the differences between both variations of string append and prepend operators?	reviewed
-1593	Remove an item from a list?	reviewed
-1594	What variable is used to control the conditional metadata override?	reviewed
-1595	Conditionally assign value to a variable only when target device is Beagle Bone?	reviewed
-1597	How many ways exist to include another recipe file?	reviewed
-1598	Use inline Python code?	reviewed
-1599	Define a Shell function inside a recipe?	reviewed
-1600	Define a Python function inside a recipe?	reviewed
-1601	Get access to global datastore of bitbake within a Python function?	reviewed
-1602	Inherit from a class inside a recipe?	reviewed
-1603	What is a toolchain?	reviewed
-1604	What is an SDK?	reviewed
-1605	Generate a native SDK for development on target device?	reviewed
-1606	What SDK types can bitbake generate?	reviewed
-1607	In how many places an SDK can be generated?	reviewed
-1608	Build a generic standard SDK?	reviewed
-1609	Where are the generated SDK files after build?	reviewed
-1610	Install an SDK?	reviewed
-5494	Create a text widget?	reviewed
-1484	What are the building blocks of a module?	reviewed
-1612	Use an installed standard SDK to build a custom application?	reviewed
-1613	Use an installed standard SDK to build the kernel?	reviewed
-1614	Build an extensible SDK?	reviewed
-1615	Install an extensible SDK?	reviewed
-1616	What are the advantages of using an extensible SDK?	reviewed
-1618	Run an image using an installed extensible SDK?	reviewed
-1619	Create a recipe from an external git repository using an installed extensible SDK?	reviewed
-1620	Build a recipe using an installed extensible SDK?	reviewed
-1621	Deploy an image to the target using an installed extensible SDK?	reviewed
-1622	Extend an installed extensible SDK?	reviewed
-1623	What are the use cases of a shared extensible SDK?	reviewed
-1717	What are the main phases of compiling a C code?	reviewed
-1718	Stop compiler processing source after preprocessing phase?	reviewed
-1719	Specify the assembly flavor for gcc?	reviewed
-1720	Stop compiler processing source after compilation phase?	reviewed
-1721	Stop compiler processing source after assembly phase?	reviewed
-1722	How many relocatable files exist?	reviewed
-1723	View the symbolic information of an executable?	reviewed
-1725	What library can be used to programmatically parse debugging symbols?	reviewed
-1726	Strip all the debugging symbols of an executable?	reviewed
-1727	Specify the assembly flavor for objdump utility?	reviewed
-1728	Inspect the rodata section of an object file?	reviewed
-1729	Disassembly an object file?	reviewed
-1730	List all the relocation symbols present in an object file?	reviewed
-1731	What address do relocation offsets are pointing to in relocation table of an object file?	reviewed
-1732	List all the available sections in an object file?	reviewed
-1734	Represent the IP address and port of an endpoint?	reviewed
-1733	What sockets API does the Asio library use to implement networking?	reviewed
-1735	Create an endpoint to designate the address of a network node?	reviewed
-1736	Create an endpoint in the server to designate addresses on which the server wants to listen?	reviewed
-1738	Create an active socket in client code?	reviewed
-1739	Create a passive socket in server code?	reviewed
-1740	What information does an endpoint contain?	reviewed
-1741	How many forms an endpoint address can have?	reviewed
-1742	Create a tcp and udp endpoint for client?	reviewed
-1743	Create a tcp and udp endpoint for server?	reviewed
-1744	How many address types exist?	reviewed
-1745	What is the difference between active and passive sockets?	reviewed
-1746	Create an active socket?	reviewed
-1747	Create a passive socket?	reviewed
-1748	Resolve a DNS name?	reviewed
-1749	Bind a TCP acceptor to a port?	reviewed
-1750	Bind a UDP acceptor to a port?	reviewed
-1751	Connect socket to a server address?	reviewed
-5360	Create a daemon thread?	reviewed
-1767	What are the properties of a normalized path?	reviewed
-1769	How many error handling approaches are available on filesystem library?	reviewed
-1770	Handle a filesystem operation error with exceptions?	reviewed
-1771	Handle a filesystem operation error with error code?	reviewed
-1772	What are the supporting different file types?	reviewed
-1773	Create a path with different string types?	reviewed
-1774	Create a path with a range?	reviewed
-1775	Get current path of the executing process?	reviewed
-1776	Get the path of temporary directory?	reviewed
-1777	Yield whether a path is empty?	reviewed
-1778	Yield whether a path is absolute or relative?	reviewed
-1779	Yield all the constituents of a path?	reviewed
-1780	Yield if a path is normalized?	reviewed
-1781	Yield a path as string objects of any byte size?	reviewed
-1782	Yield a relative path from two paths?	reviewed
-1783	Yield a path as a generic string?	reviewed
-1786	Add extension to a file path that does not already have an extension?	reviewed
-1787	Assign a string to a path as a new path?	reviewed
-1788	Swap two path objects?	reviewed
-1789	Replace filename in a path?	reviewed
-1790	Replace extension in a path?	reviewed
-1792	Remove filename from a path?	reviewed
-1793	Remove extension from a path?	reviewed
-1794	What comparison operators are supported by path objects?	reviewed
-1795	Compare two paths <code>tmp/f</code> and <code>tmp/./f</code>?	reviewed
-1796	Compare two paths holding symbolic links?	reviewed
-1797	Check for existance of a file?	reviewed
-1798	Check if a file is a regular file or a directory or a symbolic link?	reviewed
-1799	Check if a file is neither a regular nor a directory nor a symbolic link?	reviewed
-1800	Check if a file is a special block, character, a fifo or a socket file?	reviewed
-1801	Check if a file is empty?	reviewed
-1802	Get the size of a file in bytes?	reviewed
-1803	Get the number of hard links to a file?	reviewed
-1804	Get the last time a file was written into?	reviewed
-1805	Yield information about the disk space available at a given path?	reviewed
-1806	Rename a file?	reviewed
-1807	Change the timepoint of the last write access of a file?	reviewed
-1808	Replace the permissions of a file?	reviewed
-1809	Resize a regular file?	reviewed
-1810	Change the current directory of the process?	reviewed
-1811	Check if a file exists?	reviewed
-1812	Use filesystem operations without following symbolic links?	reviewed
-1813	Yield the status of a file following any symbolic links?	reviewed
-1814	Yield the status of a file without following symbolic links?	reviewed
-1815	Improve performance of file operation calls using file status?	reviewed
-1816	Yield the type of a file using file status?	reviewed
-1817	Yield the permissions of a file using its file status?	reviewed
-1818	Yield the type of a file?	reviewed
-1819	Yield which permissions does a file have?	reviewed
-1820	Create a regular file?	reviewed
-1821	Create a directory inside an existing directory?	reviewed
-1822	Create a tree of nested directories?	reviewed
-1823	Create a symbolic link to a regular file?	reviewed
-1824	Create a symbolic link to a directory?	reviewed
-1825	Create a hard link from a file?	reviewed
-1826	Copy from a file of any type?	reviewed
-1827	Copy from a regular file?	reviewed
-1829	Copy a symbolic link?	reviewed
-1830	Remove a file?	reviewed
-1831	Recursively remove a directory and all of its contents?	reviewed
-1832	Yield the file an existing symbolic link refers to?	reviewed
-1833	Yield the absolute path of an existing path?	reviewed
-1834	Yield the relative path from current directory to a path?	reviewed
-1835	Yield the relative path from a base path to another path?	reviewed
-1836	Iterate over the entries of a directory?	reviewed
-1838	What are the directory iterator options?	reviewed
-1839	What operations are supported by directory entries?	reviewed
-1852	Create a new default configuration target in kernel source tree?	reviewed
-1861	What kernel configuration option allows debugging input devices?	reviewed
-1862	What kernel configuration option enables system request key combinations to recover system after crash?	reviewed
-1863	What kernel configuration option enables the <code>ftrace</code> tracer support?	reviewed
-1864	What kernel configuration option allows tracing any non-inline function in the kernel?	reviewed
-1865	What kernel configuration option allows tracking off periods of IRQs in the kernel?	reviewed
-1866	What kernel configuration option allows measuring preemption off latency and schedule latency tracing?	reviewed
-1874	What kernel configuration option enables module loading on runtime?	reviewed
-1875	What kernel configuration option enables unloading modules on runtime?	reviewed
-1876	What kernel configuration option ignores safely unloading modules having dependencies?	reviewed
-1867	What <code>make</code> target should be used to build the kernel in the source tree?	reviewed
-1869	Install the kernel binary file on native and non-native targets?	reviewed
-1872	What artifacts does <code>make modules_install</code> command generate on the host machine?	reviewed
-1918	How does spinlocks operate on a CPU?	reviewed
-1921	What are the limitations of locking/unlocking spinlocks in a kernel module?	reviewed
-1922	Prevent deadlock caused by IRQs when using spinlocks?	reviewed
-1923	How does spinlocks affect preemtion after locking and unlocking?	reviewed
-1924	Store and restore previous IRQs status when using spinlocks?	reviewed
-1925	How a critical section can be protected from being preemted by kernel?	reviewed
-1926	What is a mutex and how does it operate?	reviewed
-1927	Initialize a mutex in the kernel?	reviewed
-1928	Acquire a mutex in the kernel?	reviewed
-1929	Release an acquired mutex in the kernel?	reviewed
-1930	Check mutex locking availability before acquiring it?	reviewed
-1931	What are specific rules while using mutexes in the kernel?	reviewed
-1932	What is more efficient between spinlocks and mutexes compared in terms of CPU cycles?	reviewed
-1933	Acquire a lock only if it is not already held by another contender?	reviewed
-1873	How many module types are available?	reviewed
-1877	What is the basic skeleton of a kernel module?	reviewed
-1878	What functions are the entry points of all kernel modules?	reviewed
-1879	What are the <code>\\_\\_init</code> and <code>\\_\\_exit</code> function prefixes in kernel modules?	reviewed
-1880	What section is used in kernel objects to store module information?	reviewed
-1881	What macros are commonly used in kernel modules to store module information?	reviewed
-1882	What is the real underlying macro provided by the kernel to add an entry to the <code>.modinfo</code> section?	reviewed
-1883	What utility dumps the <code>.modinfo</code> section of kernel modules?	reviewed
-2274	Represent the view of all the elements of a range?	reviewed
-3637	Write an image to file?	reviewed
-1884	What are the differences of <code>EXPORT_SYMBOL</code> and <code>EXPORT_SYMBOL_GPL</code> macros exporting symbols based on license?	reviewed
-1885	What is the <b>out-of-tree</b> kernel module building?	reviewed
-1886	What is the <b>built-in</b> kernel module building?	reviewed
-1887	Write a custom <code>Makefile</code> for <b>out-of-tree</b> kernel modules?	reviewed
-1888	What <code>make</code> targets should be available when writing a custom <code>Makefile</code> for kernel modules?	reviewed
-2282	How to update Qt components after manual installation?	reviewed
-1889	Write configuration dependent target in <code>Makefile</code> for a <b>built-in</b> kernel module?	reviewed
-1890	Specify multiple source files in a custom <code>Makefile</code> for a specific target?	reviewed
-1891	Specify compiler and linker flags in <code>Makefile</code> for kernel module building?	reviewed
-1892	Include other kernel source directories within a <code>Makefile</code>?	reviewed
-1893	Obtain a prebuilt kernel for building <b>out-of-tree</b> module?	reviewed
-1894	Load and unload an <b>out-of-tree</b> built kernel module?	reviewed
-1895	Write <code>Makefile</code> for a <b>built-in</b> kernel module?	reviewed
-1896	Define parameters in kernel modules?	reviewed
-1897	What psuedo-files represent module parameters?	reviewed
-1898	Pass parameters to built-in modules?	reviewed
-1899	How kernel functions can be called from a kernel module?	reviewed
-1900	How does <code>depmod</code> utility determine module dependencies?	reviewed
-1901	How does <code>modprobe</code> utility loads modules?	reviewed
-1902	How does <code>depmod</code> utility map devices to their drivers?	reviewed
-1903	Load a module at boot time?	reviewed
-1904	Unload an automatically loaded module?	reviewed
-1905	List loaded modules?	reviewed
-1906	Where the error macros defined are defined?	reviewed
-1908	Why <code>goto</code> statement is preferable over than nested <code>if</code>s in kernel modules?	reviewed
-1909	What is the standard way of handling null pointer errors in kernel modules?	reviewed
-1910	Where are the <code>printk()</code> function log levels are defined?	reviewed
-1911	What are the recommended helper functions alternative to <code>printk()</code>?	reviewed
-1912	What are the log levels of kernel printing helper functions?	reviewed
-1913	What is the default kernel log level?	reviewed
-1914	Change current kernel log level?	reviewed
-1915	Prefix the module output messages with a custom string?	reviewed
-1917	What is a spinlock?	reviewed
-1919	Define a spinlock in module source?	reviewed
-1920	Lock a previously defined spinlock in module source?	reviewed
-1936	What queues are implemented in the kernel to hold tasks?	reviewed
-1937	What is a wait queue?	reviewed
-1938	Initialize a wait queue?	reviewed
-1939	Put a process to sleep waiting for an event to occur?	reviewed
-1940	Put a process to sleep waiting either for an event to occur or a timeout to be reached?	reviewed
-1941	What values does the <code>wait_event_timeout()</code> function return?	reviewed
-1943	Wake up a process waiting on a wait queue?	reviewed
-1944	What values do <code>wait_up</code> family functions return?	reviewed
-1934	What does the term sleeping mean in the kernel?	reviewed
-2021	What are the different roles and their tasks in Linux-based software development teams?	reviewed
-2017	What are the expected outputs from the Yocto Project?	reviewed
-2195	Find the end iterator of the maximal sorted sub-range within a range using standard algorithms?	reviewed
-2200	Check if a range is partitioned?	reviewed
-2202	Find the nth element within a range?	reviewed
-2203	Find the lower and upper bounds of a value within a sorted range?	reviewed
-2208	Merge two sorted ranges into one?	reviewed
-2211	Produce a range containing elements present in the first range but not in the second range?	reviewed
-2212	Produce a range containing elements present only in one of two ranges, but not both?	reviewed
-2213	Produce a range containing elements present in either of the ranges?	reviewed
-2214	Produce a range containing elements present in both of the ranges?	reviewed
-2215	Apply a transformation function to each element within a range?	reviewed
-2216	Remove elements that match the given value within a range?	reviewed
-2217	Remove elements for which the given predicate evaluates true within a range?	reviewed
-2218	Replace elements that match the given value within a range?	reviewed
-2220	Reverse the order of elements in a range?	reviewed
-2221	Rearrange elements in the range from <code>[first, middle), [middle, last)</code> to <code>[middle, last), [first, middle)</code>?	reviewed
-2222	Move elements in the provided range by the specified amount of positions into left or right?	reviewed
-2223	Rearrange elements in the given array in a randomly order?	reviewed
-2224	Rearrange elements of given array so that they are in their next or previous permutation?	reviewed
-2225	Check whether two ranges have the same content but not necessarily the same order of elements?	reviewed
-2234	Indicate if all of the elements within a range evaluate to true for a predicate?	reviewed
-5497	Create a paragraph?	reviewed
-2235	Indicate if at least one element within a range evaluates to true for a predicate?	reviewed
-2236	Indicate if no elements within a range evaluates to true for a predicate?	reviewed
-2264	Produce the view of Nth elements from a range of tuple-like elements?	reviewed
-2265	Apply a transformation functor to every element of the view of a range?	reviewed
-2266	Take first N elements of the view of a range?	reviewed
-2267	Take the sequence of elements from the view of a range for which the predicate evaluates to true?	reviewed
-2268	Drop the first N elements of the view of a range?	reviewed
-2269	Drop the sequence of elements from the view of a range for which the predicate evaluates to true?	reviewed
-2270	Filter the view of a range to consist all elements that satisfy the provided predicate?	reviewed
-2271	Reverse the view of a range for bidirectional ranges?	reviewed
-2272	Adapt an iterator and the number of elements following it into the view of a range?	reviewed
-2273	Adapt a view into a range with a begin and end iterator of matching types for non-range versions of algorithms?	reviewed
-2275	Split a single range into a view over sub-ranges? (incomplete)	reviewed
-2276	Flatten a splited view of a range?	reviewed
-2277	Represent an empty view?	reviewed
-2278	Represent a single element view?	reviewed
-2279	Represent a view of the generated sequence formed by repeatedly incrementing an initial value?	reviewed
-2280	Represent a view obtained by successively applying the istream input iterator?	reviewed
-2281	Where the Qt installer can be found?	reviewed
-2451	How move semantics can be implemented for a class?	reviewed
-2452	What happens to an object when move semantics is not available?	reviewed
-2453	What happens to an object declared with <code>const</code> when moved?	reviewed
-2454	Why return values should not be marked as <code>const</code>?	reviewed
-2455	What should be the state of an object after it has been moved?	reviewed
-2457	What header file should be included when using move semantics?	reviewed
-2458	What is the equivallent form of <code>std::move()</code>?	reviewed
-2460	What is the moved-from object state?	reviewed
-2461	What are the major ways of call-by-reference and what kind of arguments does each take?	reviewed
-2463	Why does automatic move operations disable when user declares special member functions?	reviewed
-2464	Based on the exact rules for <i>generated special member functions</i> when would copy constructor and copy assignment operator automatically be generated?	reviewed
-2465	Based on the exact rules for <i>generated special member functions</i> when would move constructor and move assignment operator be automatically generated?	reviewed
-2466	Based on the exact rules for <i>generated special member functions</i> when would destructor disable automatic move operations?	reviewed
-2468	What special member functions are generated by default for a class?	reviewed
-2469	When do move operations become broken?	reviewed
-2474	What declarations does the <b>Rule of Five</b> formulate to simplify special member functions generation?	reviewed
-2467	What does it mean to say move semantics is not passed through?	reviewed
-2470	How to deal with moving an object to itself?	reviewed
-2471	Why deleting moving operations does not make semantic sence?	reviewed
-2475	Why should we avoid using move operations when returning a local object?	reviewed
-2472	How to properly disable move semantics in an object without disabling fallback mechanism?	reviewed
-2473	How does move operation work for a class containing a member with disabled move operations?	reviewed
-2477	Does <code>virtual</code> destructor in a base class disable automatic move operations in its derived classes?	reviewed
-2462	When does the call-by-value become cheap with move semantics?	reviewed
-2476	When would passing by value becomes cheaper than passing by const lvalue references?	reviewed
-2478	When to take arguments by value and when to take by references?	reviewed
-5482	Create a custom size screen?	reviewed
-2669	How to list the GNU GCC compiler default configurations?	reviewed
-2670	How to inspect the detailed steps the GNU GCC takes to compile a source file?	reviewed
-2671	How to inspect the meta data of an executable file?	reviewed
-2672	How to remove symbol table from an executable file using binary utilities?	reviewed
-2673	How to use GNU GCC compiler to compile C source files separately?	reviewed
-2674	How to list the symbol paths within an executable file?	reviewed
-2675	Why do C libraries require kernel headers and how kernel headers can be installed?	reviewed
-2676	What is the GNU GCC compiler flag to specify processor architecture and processor specific optimization?	reviewed
-2677	What toolchains are available to use in kernel image build process?	reviewed
-2678	How to build <code>Crosstool-ng</code>?	reviewed
-2679	How to list <code>Crosstool-ng</code> sample configurations?	reviewed
-2680	How to use <code>Crosstool-ng</code> to show a brief info of current or specified configuration?	reviewed
-2681	How to use <code>Crosstool-ng</code> to load a target specific configuration sample?	reviewed
-5520	Draw the graph of a function?	reviewed
-2650	Separate source and build directories when building a project with cmake?	reviewed
-2651	Build a project?	reviewed
-2652	Specify the exact target to build?	reviewed
-2653	Show possible targets within a project?	reviewed
-2654	What targets are predefined by cmake?	reviewed
-2655	Explicitly specify generator for building the project?	reviewed
-2656	How many library types are defined in cmake?	reviewed
-2657	Create static and shared libraries?	reviewed
-2659	Enable position independent executable for an executable?	reviewed
-2660	Change the name of the target on output?	reviewed
-2661	What is the default library build strategy when library type is not specified?	reviewed
-2662	What values are equivalent to true and false in cmake?	reviewed
-2663	Use conditional statements to either make libraries and link to program or build them into one executable?	reviewed
-2664	What is the better alternative to making variables optional for user than using if expressions?	reviewed
-2665	What is the common way to pass source files to targets?	reviewed
-2666	Make an option dependent to another?	reviewed
-2683	How to use <code>Crosstool-ng</code> to print the tuple of the currently configured toolchain?	reviewed
-2684	How to use <code>Crosstool-ng</code> to separate downloading source files from building stage?	reviewed
-2685	How to use <code>Crosstool-ng</code> to build the desired architecture specific cross-toolchain?	reviewed
-2686	How to set library and headers path for a cross-compiled GNU GCC compiler?	reviewed
-2687	How to obtain U-Boot and configure it?	reviewed
-2688	How to load a file from a filesystem to RAM within U-Boot shell?	reviewed
-2689	What command can be used within U-Boot shell to load a kernel image into RAM from network?	reviewed
-2690	What command can be used within U-Boot shell to test network conectivity?	reviewed
-2691	What utilities can be used within U-Boot shell to load a kernel image from serial line to RAM?	reviewed
-2692	What command can be used within U-Boot shell to control the USB subsystem?	reviewed
-2785	Show source code in debugging session?	reviewed
-2693	What command can be used within U-Boot shell to control MMC subsystem?	reviewed
-2695	What commands can be used within U-Boot shell to erase, modify protection or write contents to NOR flash?	reviewed
-2696	What command can be used within U-Boot shell to display memory info?	reviewed
-2697	What command can be used within U-Boot shell to modify memory info?	reviewed
-2698	What command can be used within U-Boot shell to display board information?	reviewed
-2699	What command can be used within U-Boot shell to display environment variables?	reviewed
-2700	What command can be used within U-Boot shell to set environment variables?	reviewed
-2701	What command can be used within U-Boot shell to edit an environment variable?	reviewed
-2702	What command can be used within U-Boot shell to save environment variables permanently?	reviewed
-5495	Create a vertical text widget?	reviewed
-2703	What environment variable can be set within U-Boot shell to specify the boot command sequence that U-Boot should automatically execute at boot time?	reviewed
-2704	What environment variable can be set within U-Boot shell to be passed to the kernel as arguments?	reviewed
-2705	What environment variables should be set within U-Boot shell to load an image into RAM from network?	reviewed
-2706	What command can be used within U-Boot shell to see the size of the latest copy into memory?	reviewed
-2707	How to write conditional expressions within U-Boot shell?	reviewed
-2708	How to run a script within U-Boot shell?	reviewed
-2709	How to reference other variable within U-Boot shell?	reviewed
-2710	What does the <code>source</code> command do in U-Boot shell environment?	reviewed
-2715	How to list all available processors available to QEMU?	reviewed
-2716	How to use <code>qemu-system-arm</code> command to boot into <code>u-boot</code>?	reviewed
-2717	How to create a patch?	reviewed
-2771	Start an event processing loop on a worker thread?	reviewed
-2772	Start an event processing loop without blocking thread execution?	reviewed
-2773	Start an event processing loop to run queued tasks?	reviewed
-2774	Start an event processing loop to run tasks out of queue?	reviewed
-2775	Serialize concurrent execution of an event processing loop?	reviewed
-2777	Expire a task when reached to a deadline?	reviewed
-2779	Write a client establishing an asynchronous tcp connection to a server?	reviewed
-2780	Write a server accepting synchronous tcp requests?	reviewed
-2782	Write and read from server socket?	reviewed
-2778	Write a client establishing a synchronous tcp connection to a server?	reviewed
-2781	Write a server accepting asynchronous tcp requests?	reviewed
-2813	When does auto type decays?	reviewed
-2795	What are the alternatives to templates which should be avoided by using templates?	reviewed
-2796	What are the alternatives to typename keyword?	reviewed
-2797	What are the translation phases of a template?	reviewed
-2798	What happens when a function template triggers its instantiation?	reviewed
-2799	What is the signature of a function template?	reviewed
-2800	What requirements should the type of a function template parameter meet?	reviewed
-2801	Use a function template with different types?	reviewed
-2803	What are the limits of type conversion during type deduction of function template arguments?	reviewed
-2804	What are the common ways to handle type conversions during type deduction of function template arguments?	reviewed
-2805	How does the compiler deduce the default function template parameters?	reviewed
-2806	Declare a function template with multiple template parameters?	reviewed
-2808	What are the disadvantages of using additional template parameter for return types when having multiple function template parameters?	reviewed
-2809	What are the disadvantages of using automatic deduction of return types when multiple function template parameters are used?	reviewed
-2810	Use trailing return type to deduce the return type of a function template?	reviewed
-2811	What is the drawback of using trailing return type?	reviewed
-2812	Use common type as the return type of a function template?	reviewed
-2814	What are the use cases of default template arguments?	reviewed
-2793	How to add a package to the root filesystem of built qemu image using <b>Yocto Poky</b> tools?	reviewed
-2815	What ordering default template parameter can have?	reviewed
-2816	What are the rules of overload resolution for matching a function template overload by a compiler?	reviewed
-2817	What happens when there are two matching template overloads for a function call?	reviewed
-2818	What are the common use cases of overloading function templates?	reviewed
-2819	What is the drawback of overloading function templates?	reviewed
-2821	Declare a class template?	reviewed
-2822	Declare copy constructor and copy assignment operator of a class template?	reviewed
-2823	Define the member functions of a class template outside of the scope of the class?	reviewed
-2824	Declare a friend function template in a class template?	reviewed
-2825	Specialize a class template for a specific type?	reviewed
-2826	Partially specialize a class template for pointers?	reviewed
-2827	What are the possible template specializations of a class template with multiple template parameters?	reviewed
-2828	Define default values for class template parameters?	reviewed
-2829	Define an alias template?	reviewed
-2830	Use alias templates for member types of class templates?	reviewed
-2831	Under what condition class templates do not require specifying template parameters?	reviewed
-2832	What is the common way of supporting type deduction for a class template?	reviewed
-2833	What is the drawback of supporting class template argument deduction by providing constructors passing initial argument?	reviewed
-2834	What is the drawback of passing arguments of a template type by reference when supporting class template argument deduction?	reviewed
-2835	Disable automatic deduction of raw character pointers using deduction guides instead of constructors passing arguments?	reviewed
-2836	Where are the edge cases where deduction guides do not work?	reviewed
-2837	Define deduction guides for aggregate class templates?	reviewed
-2783	Begin debugging session of an executable?	reviewed
-2820	When would a template function overload be missed by a call?	reviewed
-2786	Set breakpoints on a program?	reviewed
-2787	Delete a breakpoint from a program?	reviewed
-2784	Step through program execution in debugging session?	reviewed
-2788	Print the value of an object?	reviewed
-2790	Inspect the type of a variable?	reviewed
-2789	Modify the value of a variable?	reviewed
-2791	Run shell commands in debugging session?	reviewed
-2769	What is the objective of <code>io_context</code> in boost?	reviewed
-5623	Attach files to the build?	reviewed
-3440	Provide a custom failure message to an assertion?	reviewed
-3441	What string types are allowed to extract into assertions?	reviewed
-3442	Define a test unit with a comparison for equality?	reviewed
-3443	When does a test fail?	reviewed
-3444	What are the arguments of a test unit?	reviewed
-3446	Write a test case that uses a fixture?	reviewed
-3470	Specify a method in a mock that should never be called?	reviewed
-3471	What is the cardinality of a mock when <code>Times()</code> is omitted?	reviewed
-3472	What is the default behavior of gMock when a mock function returns?	reviewed
-3473	Specify the return value of mock function for three calls?	reviewed
-3475	What happens if the cardinality is bigger than the specified return occurrances?	reviewed
-3476	In what order expectations are searched?	reviewed
-3477	Specify multiple expectations for a mock function?	reviewed
-3478	What is the best practice in ordering of multiple expectations?	reviewed
-3479	Verify that the call to a series of mock functions are in a specific order?	reviewed
-3480	Verify that a mock function will be called with an specific argument value exactly once and ignore the rest of the calls?	reviewed
-3481	What are the downsides of expectations being sticky?	reviewed
-3482	Specify a series of expectations that retire after reaching invocation upper bounds?	reviewed
-3484	What qualifiers are possible to specify as the fourth parameter of mock method?	reviewed
-3486	Write an expectation call to a mock method when the method is const qualified?	reviewed
-3487	What is an unprotected comma?	reviewed
-3488	In which access specifier a mock method is allowed to be written?	reviewed
-3489	Write mock methods for overloaded functions?	reviewed
-3490	Mock a class template?	reviewed
-3491	Mock a non-virtual method?	reviewed
-3492	Mock a free function?	reviewed
-3493	What is an uninteresting call?	reviewed
-3494	What is a nice mock?	reviewed
-3495	What is a strict mock?	reviewed
-3496	What are the limitations of nice and strict mocks?	reviewed
-3497	What is a naggy mock?	reviewed
-3498	What are the use cases of succeed and fail assertions?	reviewed
-3499	What is the use case of succeed assertion?	reviewed
-3500	What is the use case of fail assertion?	reviewed
-3501	What is the limitation of using fail assertion?	reviewed
-3502	Write a non-fatal failure assertion?	reviewed
-3503	Write a non-fatal failure for a specific line of file?	reviewed
-3595	Use a matcher as a predicate?	reviewed
-3447	What is the naming convention of test fixtures?	reviewed
-3448	What is the lifetime of a fixture?	reviewed
-3449	Define a test fixture for Queue class?	reviewed
-3451	What are the advantages of using <code>SetUp()</code> virtual function over constructor?	reviewed
-3452	What are the advantages of using <code>TearDown()</code> virtual function over destructor?	reviewed
-3453	Initialize tests by parsing arguments?	reviewed
-3454	What function macro is used to run tests across all linking units?	reviewed
-3455	What is the preferred way of building and running tests?	reviewed
-3457	When should we write manual main function for tests?	reviewed
-3458	What are the limitations of using GoogleTest assertions in threads?	reviewed
-3459	What is a mock?	reviewed
-3460	What is the workflow of running a mock object?	reviewed
-3461	What are the use cases of mocks?	reviewed
-3462	Write a mock for Queue class?	reviewed
-3464	What is the ordering of mock expectation calls?	reviewed
-3465	What is the general syntax of a mock?	reviewed
-3466	Where matchers are used in mocks?	reviewed
-3467	Specify an expectation for a mock that the argument given to its method will be at least 100?	reviewed
-3468	Ignore an argument when it is not in our interest when it is passed to a mock method?	reviewed
-3505	In what namespace are matchers defined?	reviewed
-3507	Write test assertions to evaluate boolean values?	reviewed
-3508	What are the binary comparison assertions?	reviewed
-3509	What are the requirements of writing binary comparison test assertions?	reviewed
-3510	When does GoogleTest print assertion arguments when the assertion fails?	reviewed
-3511	What is the evaluation order of arguments in assertions?	reviewed
-3512	What is the behavior of comparison assertions for pointers and C-style strings?	reviewed
-3513	Write a test to verify comparison of a pointer or a C-style string with null?	reviewed
-3514	Write a test to verify comparison of two C-style strings for equality and inequality?	reviewed
-3515	Write a test to verify comparison of two C-style strings without case sensitivity?	reviewed
-3516	Write a test to verify comparison of two floating point values?	reviewed
-3517	Write a test to verify if difference of two floating points does not exceed an absolute error bound?	reviewed
-3518	What are the exception assertions?	reviewed
-3519	Write a test to verify that a statement throws a specific exception type?	reviewed
-3520	Write a test to verify that a statement throws any exception?	reviewed
-3521	Write a test to verify that a statement does not throw any exceptions?	reviewed
-3522	Write a test to verify the return value of a predicate with given arguments?	reviewed
-3524	What is a predicate formatter?	reviewed
-3525	Create an assertion result object?	reviewed
-3526	What are the assertions taking predicate formatter?	reviewed
-3527	Write a test to verify a predicate using predicate formatter?	reviewed
-3636	Read an image from file?	reviewed
-3528	What is the use case of death assertions?	reviewed
-3529	When does a death assertion asserts?	reviewed
-3530	What is the difference between exception tests and death tests?	reviewed
-3531	What arguments does a death test take?	reviewed
-3532	Write a death test to verify exit status of a statement when death tsets are supported?	reviewed
-3533	What are the use cases of exit assertions?	reviewed
-3534	What are the common predicates used to verify exit status of a statement in exit assertions?	reviewed
-3535	What is the predicate type that exit assertions take as second argument?	reviewed
-3536	Write a wildcard matcher?	reviewed
-3537	What arithmetic comparison matchers exist?	reviewed
-3538	What boolean comparison matchers exist?	reviewed
-3539	What pointer comparison matchers exist?	reviewed
-3540	What matcher exists to check for returned <code>std::optional<></code> object?	reviewed
-3541	What matcher exists to check for returneed <code>std::variant<></code> object?	reviewed
-3542	What matcher should be used when given argument is a reference?	reviewed
-3543	What matcher can be used when testing a function template?	reviewed
-3544	What value category is used in matchers to take arguments?	reviewed
-3545	What is the difference between using boolean comparison matchers and assertions?	reviewed
-3546	What matchers exist for comparing equality of doubles?	reviewed
-3547	What is the difference between variants of floating-point matchers?	reviewed
-3548	Write a test to compare any floating point value to <code>NaN</code>	reviewed
-3549	What matchers exist to compare two floating-point values with specified approximity?	reviewed
-3550	 Verify given string contains a match against a regular expression?	reviewed
-3551	 Verify given string entirely matches against a regular expression?	reviewed
-3552	 Verify given string ends with a suffix?	reviewed
-3553	 Verify given string contains a substring?	reviewed
-3554	 Verify given string is empty?	reviewed
-3555	 Verify given string starts with a prefix?	reviewed
-3556	Verify two strings are equal without case sensitivity?	reviewed
-3557	Verify two strings are not equal regardless of their case?	reviewed
-3558	Verify two strings are equal?	reviewed
-3559	Verify two strings are not equal?	reviewed
-3560	Verify given argument is a base64 escaped sequence of a string?	reviewed
-3562	Verify a container that provides size method contains an expected number of elements?	reviewed
-3563	Verify two containers are equal?	reviewed
-3564	Verify a container contains an expected value?	reviewed
-3565	Verify a container has an expected repition of a value?	reviewed
-3566	Verify that each element of a container matches with a value or a matcher?	reviewed
-3568	Verify that a container matches a given range element-wise?	reviewed
-3569	Verify that a container is empty?	reviewed
-3570	Verify that a container is a subset of given range?	reviewed
-3572	Match each of the elements of a container with a matcher compared to another range?	reviewed
-3574	Verify that elements of a container match a series of criteria without orders?	reviewed
-3575	Match each of the elements of a container with a criteria without ordering?	reviewed
-3576	Verify a container holds given elements after being sorted?	reviewed
-3577	Verify a container holds given elements after being sorted by a predicate?	reviewed
-3578	Verify that member of a class that a pointer is pointing to matches to a criteria?	reviewed
-3579	Verify a map contains a key matching a certain criteria?	reviewed
-3580	Verify a pair contains expected key and value?	reviewed
-3582	Verify that the returning object from a member function matches a criteria when called by the test?	reviewed
-3583	Verify the result of calling a function matches a pattern?	reviewed
-3584	Verify the address of given argument matches a pattern?	reviewed
-3585	Verify that given pointer is pointing to an object that matches a pattern?	reviewed
-3586	Verify that given pointer holds a pointer that matches a pattern?	reviewed
-3587	Verify that given pointer matches a pattern after a dynamic cast to specified type?	reviewed
-3588	Verify that all the arguments of a tuple matches a pattern?	reviewed
-3589	Composite multiple matches into one?	reviewed
-3590	Make sure at least one of a few matchers apply?	reviewed
-3591	Verify that given argument does not match a pattern?	reviewed
-3592	Use a ternary like operator to conditionally compare the given argument to one of the two existing patterns?	reviewed
-3593	Cast a matcher to another matcher type?	reviewed
-3594	Verify that a predicate returns true when given argument is passed into it?	reviewed
-3596	Use a matcher to redirect results into a listener?	reviewed
-3597	Verify a value matches a pattern?	reviewed
-3598	Define a matcher taking no arguments?	reviewed
-3599	Define a matcher taking argumetns?	reviewed
-3600	Define a matcher taking a range?	reviewed
-3601	What are the restrictions of defining a matcher?	reviewed
-3665	How many parallel programming paradigms exist?	reviewed
-3667	What are the advantages of preemptive multitasking?	reviewed
-3668	Use Amdahl's law to measure the speed-up factor of a parallel system?	reviewed
-3669	Use Gustafson's law to compute the speed-up gained by using multiple processors?	reviewed
-3681	Construct a thread of execution?	reviewed
-3682	Check how many threads can run on the host in parallel?	reviewed
-3672	What are the main characteristics of a daemon?	reviewed
-3673	What are the steps into creating a daemon?	reviewed
-3674	What are the major differences between a process and a thread?	reviewed
-3675	What are the use cases of syncronization primitives?	reviewed
-3676	What are the characteristics of coroutines?	reviewed
-3677	What is the life cycle of a thread?	reviewed
-3678	What are the common synchronization primitives?	reviewed
-3679	What are the common synchronization failures?	reviewed
-3633	Install OpenCV from source?	reviewed
-3634	Use OpenCV in a simple CMake configured project?	reviewed
-3635	What type is used to store image data?	reviewed
-3638	What coloring formats are possible to apply on importing images?	reviewed
-3639	Retrieve the number of rows and columns within a matrix?	reviewed
-3640	What type is used to contain pixel information?	reviewed
-3641	Retrieve a pixel from a matrix?	reviewed
-3642	Display an image in a window?	reviewed
-3643	Record video feed from a camera?	reviewed
-3644	What are the basic objects in OpenCV?	reviewed
-3645	What type aliases are available for <code>cv::Vec</code> class template?	reviewed
-3646	What operations does <code>cv::Vec</code> class template support?	reviewed
-3647	What operations does Scalar type support?	reviewed
-3648	What operations does Point type support?	reviewed
-3649	What type aliases are available for Point class template?	reviewed
-3650	What operations does Size type support?	reviewed
-3651	Initialize an object of type Rect?	reviewed
-3652	Initialize an object of type RotatedRect?	reviewed
-3654	Create a matrix with specific channels?	reviewed
-3655	How many channel options are available?	reviewed
-3656	Initialize a matrix with zeros?	reviewed
-3657	Initialize a matrix with ones?	reviewed
-3658	Create an eye matrix?	reviewed
-3659	What operations are supported on Mat type?	reviewed
-3660	Count non-zero elements in a matrix?	reviewed
-3661	Calculate mean standard deviation of a matrix?	reviewed
-3662	Locate minimum and maximum values in a matrix?	reviewed
-3663	Store matrix data in a persistent storage?	reviewed
-3664	Read data from a persistent storage?	reviewed
-3734	Configure a project?	reviewed
-3735	What directories should be ignored in projects?	reviewed
-3737	What are the first stages of cmake execution?	reviewed
-3738	What is the underlying build system?	reviewed
-5605	Enable compiler warnings?	reviewed
-3739	What is the incompatibility difference between build systems?	reviewed
-3740	What is the minimum required commands to build a project?	reviewed
-3741	What is a policy?	reviewed
-3742	What is a target?	reviewed
-3743	What options are available for <code>project()</code> command?	reviewed
-3745	What is the difference between variables and their CMAKE prefixed counterparts?	reviewed
-3746	What are the available target types?	reviewed
-3747	Specify languages features for a single target?	reviewed
-3748	Explicitly specify which generator should be used to build the project?	reviewed
-3749	Start over building the binary directory?	reviewed
-3750	Build a project with single-config generators?	reviewed
-3751	Build a project with multi-config generators?	reviewed
-3752	What options are available to add a third-party dependency to a project?	reviewed
-3753	What are the advantages of <code>FetchContent</code> over <code>add_subdirectory</code>?	reviewed
-3754	Where the dependencies will be stored by <code>FetchContent</code>?	reviewed
-3755	What are the disadvantages of using <code>FetchContent</code>?	reviewed
-3756	Integrate an external library into the project from a remote source?	reviewed
-3757	Integrate an external library into the project from a local path?	reviewed
-3758	Add an external library to our project and make the dependency ready to use	reviewed
-3759	What wrapper can be used to fetch contents with ease?	reviewed
-3760	Toggle features of an imported external library?	reviewed
-3761	Make library’s headers visible to clients?	reviewed
-3762	What does the term generator expressions refer to?	reviewed
-3763	Why should we specify two interfaces for library headers?	reviewed
-3764	What is the difference between the two existing build interfaces?	reviewed
-3765	Specify which subdirectory should be fetched when importing an external library?	reviewed
-3766	What extra step needs to be done for shared libraries on Windows to be exported?	reviewed
-3768	What target properties should be avoided when making cross platform projects?	reviewed
-3769	Why do we need to link targets to a header only library?	reviewed
-3770	Write a configuration preset?	reviewed
-3771	What are the macros?	reviewed
-3772	What is the best practice in inheritance of presets?	reviewed
-3773	When do user specified presets become handy?	reviewed
-3774	Put a condition on a preset?	reviewed
-3775	Write a build preset?	reviewed
-3776	Write a workflow preset?	reviewed
-3777	Specify a separate directory for installation?	reviewed
-3778	How many ways exist to install a project?	reviewed
-3779	What are the default configurations of cmake commands when build type is not specified?	reviewed
-3780	Override the install directory when installing?	reviewed
-3781	How many search modes exist to find an external library?	reviewed
-3782	What files will be searched for in the config mode?	reviewed
-3783	What files will be searched for in the module mode?	reviewed
-3784	What are the advantages of both search modes?	reviewed
-3786	What event types exist to trigger workflows?	reviewed
-3787	What runners are supported?	reviewed
-3788	Create a job?	reviewed
-3789	Create multiple jobs running in sequence?	reviewed
-3790	How many types exist for steps?	reviewed
-3791	What are the steps properties?	reviewed
-3792	Write a job to checkout the source repository?	reviewed
-3793	Write a job to setup nodejs modules?	reviewed
-3795	Write a job to create a release?	reviewed
-3796	Write a job to release generated artifacts?	reviewed
-3797	Write a job to cache a step?	reviewed
-3798	Write a job to upload artifacts in storage?	reviewed
-3799	Write a job to download artifacts from storage?	reviewed
-3800	Write a job to delete artifacts within storage?	reviewed
-3801	Make job execution conditional?	reviewed
-3802	Write a job to continue execution even after failure?	reviewed
-3803	Create an output for a step?	reviewed
-3804	Create an output for a job?	reviewed
-3805	Run a job on a matrix of runners?	reviewed
-3884	What does the body of a coroutine generator look like?	reviewed
-3885	What is the return type of a coroutine generator?	reviewed
-3886	What is the responsibility of the promise type in a coroutine?	reviewed
-3887	What function in a coroutine will be called first by the compiler?	reviewed
-3888	What function in a coroutine will be called to handle the <code>co_return</code> statement?	reviewed
-3889	What function in a coroutine will be called to handle when the coroutine reaches an exception point?	reviewed
-3890	What functions in a coroutine will be called to handle execution flow?	reviewed
-3892	What is the role of an awaitable in a coroutine code?	reviewed
-3891	Construct a coroutine by defining its return type outside of the body of the coroutine?	reviewed
-3893	When do awaitables suspend coroutine code?	reviewed
-3894	What function does awaitable call to check if it needs to suspend or not?	reviewed
-3895	What function in an awaitable will be called before function suspension?	reviewed
-3896	What function in an awaitable will be called before function resumes execution?	reviewed
-3897	What is the body of an awaitable that always suspends on start up?	reviewed
-3898	What is the body of a coroutine handle?	reviewed
-3900	What kind of object does the promise type return to the coroutine?	reviewed
-3901	What interface should values have in order to be usable by coroutines?	reviewed
-3939	What are the advantages of using strategies as non-member functions?	reviewed
-3941	Where are the common use cases of the command pattern?	reviewed
-3942	What is the structure of the command pattern?	reviewed
-3943	Use command pattern to decouple invoker and receiver classes?	reviewed
-3940	What are the use cases of template method pattern?	reviewed
-1492	What are the responsibilities of BitBake in the Yocto Project?	reviewed
-5521	Colorize an element?	reviewed
-3483	What parameters does a mock method take?	reviewed
-5274	Remove an empty directory?	reviewed
-5248	Locate the manual pages of a command?	reviewed
-5616	Specify test launcher?	reviewed
-5278	Create a directory?	reviewed
-32	Build and install <i>crosstool-ng</i>?	reviewed
-3785	What are the building blocks of a workflow?	reviewed
-3794	Give enough permissions to an action to create a release?	reviewed
-5192	Permit write access to a job to create releases?	reviewed
-5193	Permit write access to a job to create pull requests?	reviewed
-5194	What is the structure of strategy pattern?	reviewed
-5197	When do we inject the strategy into the context through constructor and when do we use a setter method?	reviewed
-5199	What is the definition of null object pattern?	reviewed
-5201	What are the differences between static and dynamic strategy patterns?	reviewed
-5203	What part of the kernel does SELinux integrate with?	reviewed
-5205	What are the disadvantages of having fine-grained access control policies in SELinux?	reviewed
-5207	Get the access control list of a file?	reviewed
-5209	Check the current SELinux status?	reviewed
-5211	What is a context in an SELinux policy?	reviewed
-5213	What is a label in SELinux terminology?	reviewed
-5219	Take the attributes of processes?	reviewed
-5215	What makes label-based access control in SELinux more flexible than using path names in other LSM implementations?	reviewed
-5217	Where are process attributes stored in the system?	reviewed
-5221	What annotations are available for logs?	reviewed
-5224	List available jobs inside a workflow locally?	reviewed
-5226	Validate correctness of a workflow without running any containers?	reviewed
-5228	Provide a secret to the local runner in order to use as a substitute to GitHub secrets?	reviewed
-5230	Provide an input to the actions running by local runners?	reviewed
-5232	Rename the actor on local runners?	reviewed
-5234	Write an action to run a local container?	reviewed
-5236	Where are SELinux roles defined?	reviewed
-5238	Obtain an overview of the SELinux roles?	reviewed
-5240	What restrictions does SELinux user impose on a Linux user?	reviewed
-5242	What is the role of sensitivity labels in access control?	reviewed
-5244	How many confidentiality levels are available in MLS?	reviewed
-5195	What are the definitions of strategy pattern?	reviewed
-5198	What is the implementation of non-member strategy pointer?	reviewed
-5200	Implement the strategy pattern with null object pattern?	reviewed
-5202	What mechanism does SELinux use to enforce access control?	reviewed
-5204	Read the list of active LSM modules on a system?	reviewed
-5206	What are the building blocks of SELinux implementation?	reviewed
-5208	Set the access control list of a file?	reviewed
-5210	What are the prerequisites for enabling SELinux on a system?	reviewed
-5212	How does SELinux identify a process?	reviewed
-5214	Print the context of your user?	reviewed
-5216	What are the four components of an SELinux context?	reviewed
-5218	What each of the attribute files in the process directory represent?	reviewed
-5220	What does the type component in an SELinux context enforce?	reviewed
-5222	What utility provides containerized runners?	reviewed
-5225	Draw the graph of workflows on local runners?	reviewed
-5227	Run a local workflow each time a modification is made?	reviewed
-5229	Provide a variable to the local runner in order to use as a substitute to GitHub variables?	reviewed
-5231	Provide environment variables to the actions running by local runners?	reviewed
-5233	Disable steps output on local runners?	reviewed
-5526	Make an element italic?	reviewed
-5607	Enable clazy for Qt projects?	reviewed
-5235	What is the role of SELinux roles in access control?	reviewed
-5237	What roles are available in a default SELinux installation?	reviewed
-5239	How does SELinux prevent unprivileged access when the Linux user has switched?	reviewed
-5241	What is the relationship between SELinux users and Linux users?	reviewed
-5243	What confidentiality model does MLS implement?	reviewed
-5245	What are the use cases for categories in SELinux?	reviewed
-5246	How tenants are isolated using categories?	reviewed
-5249	Locate the binaries of a command?	reviewed
-5295	Copy a file into another path?	reviewed
-5250	Locate the binaries of a command with a specific pattern in their name?	reviewed
-5269	Remove a file with suppressing errors?	reviewed
-5251	Locate all the binary instances of a command?	reviewed
-5252	Locate the binaries of a command used inside of an alias?	reviewed
-5286	Open a manpage in your favorite browser?	reviewed
-5253	Locate the binaries of a command used inside of a shell function?	reviewed
-5271	Remove a directly and its contents?	reviewed
-5254	Locate the binaries of a command excluding directories starting with dot?	reviewed
-5255	Locate the binaries of a command excluding directories starting with tilde?	reviewed
-5256	What are the commonly used system monitoring commands?	reviewed
-5273	Remove a file with receiving a confirmation of the removal?	reviewed
-5257	Print the path to the working directory of your running shell?	reviewed
-5258	Print the resolved path to the working directory of your running shell?	reviewed
-5259	Print the name of the user you are logged in with?	reviewed
-5275	Remove empty directories and ignore non-empty ones?	reviewed
-5260	Print the name of your system within a local domain?	reviewed
-5261	Print the network addresses of your system?	reviewed
-5287	Locate the path to the manual page files of a command?	reviewed
-5262	Print the fully qualified domain name on your system?	reviewed
-5276	Remove nested empty directories?	reviewed
-5263	Change the name of your system within a local domain?	reviewed
-5264	Print the currently used kernel release?	reviewed
-5265	Print the machine architecture of the running system?	reviewed
-5277	Remove empty directories with removal confirmations?	reviewed
-5267	Generate a sequence of numbers with specific steps?	reviewed
-5279	Create nested directories?	reviewed
-5288	Search for the manual page of a command?	reviewed
-5280	Create directories with specific permissions?	reviewed
-5281	Create directories with confirmations after creation?	reviewed
-5296	Recursively copy files inside a directory?	reviewed
-5282	Open the manual page of a command?	reviewed
-5289	Open the manual page of a command in a specific locale?	reviewed
-5283	Where is the common path to manual page files?	reviewed
-5284	List available manpage sections of a command?	reviewed
-5285	Select a specific manpage section of a command?	reviewed
-5290	Open the manual page of a command with a specific pager?	reviewed
-5300	Change the working directory of the running shell into root directory?	reviewed
-5292	Prevent file overwrites when moving?	reviewed
-5297	Update files when there are differences between source and destination?	reviewed
-5293	Overwrite files when moving without prompts?	reviewed
-5294	Interactively move files?	reviewed
-5298	Change the working directory of the running shell?	reviewed
-5301	Change the working directory of the running shell to its parent directory?	reviewed
-5299	Change the working directory of the running shell into home directory?	reviewed
-5303	List the entries of a directory?	reviewed
-5302	List entries of the current working directory of the running shell?	reviewed
-5305	List the entries of a directory sorted by modification time?	reviewed
-5304	List the entries of a directory with human readable file sizes?	reviewed
-5306	List the entries of a directory sorted by file sizes?	reviewed
-5307	List the entries of a directory with directories grouped first?	reviewed
-5308	Randomly shuffle the lines of a file or input stream?	reviewed
-5309	Generate a sequence of shuffled numbers?	reviewed
-5310	Generate a random percentage?	reviewed
-5311	Generate a stream of randomly shuffled numbers?	reviewed
-5312	Sort the lines of a file or input stream?	reviewed
-5313	Reversely sort the lines of a file or input stream?	reviewed
-5314	Sort numerically the lines of a file or input stream?	reviewed
-5315	Randomly sort the lines of a file or input stream?	reviewed
-5316	Sort a column of a file or input stream?	reviewed
-5317	Unique sort the lines of a file or input stream?	reviewed
-5318	Search for a pattern in a file or input stream?	reviewed
-5341	What damages can information disclosure cause and what are the mitigations?	reviewed
-5319	Use extended regular expressions for searching a pattern in a file or input stream?	reviewed
-5320	Search for a fixed string in a file or input stream?	reviewed
-5321	Invert the search results of a pattern in a file or input stream?	reviewed
-5342	What damages can denial of service cause and what are the mitigations?	reviewed
-5322	Recursively search for a pattern in a directory?	reviewed
-5323	Ignore binary files when searching for a pattern?	reviewed
-5324	Find the files containing a pattern rather than the lines?	reviewed
-5343	What damages can elevation of privileges cause and what are the mitigations?	reviewed
-5325	Ignore case sensitivity when searching for a pattern?	reviewed
-5326	Include line numbers in the search results of a pattern?	reviewed
-5327	Suppress error messages when searching for a pattern?	reviewed
-5344	What are the post-exploitation steps?	reviewed
-5328	Suppress all output and only return the exit status when searching for a pattern?	reviewed
-5329	Search for a whole word pattern in a file or input stream?	reviewed
-5330	Search for a pattern that matches the whole line in a file or input stream?	reviewed
-5345	What are the penetration testing approaches?	reviewed
-5331	Count the number of matching lines for a pattern in a file or input stream?	reviewed
-5332	Limit the number of matching lines for a pattern in a file or input stream?	reviewed
-5333	How does penetration testing methodologies help testers?	reviewed
-5346	What is the difference between vulnerability assessment and penetration testing?	reviewed
-5334	What are the common penetration testing methodologies?	reviewed
-5335	What are the pre-engagement steps before starting penetration tests?	reviewed
-5336	What are the benefits of using threat modeling in penetration testing?	reviewed
-5347	What are the phases of exploitation?	reviewed
-5337	What are the common threat models?	reviewed
-5338	What damages can spoofing identity threat cause and what are the mitigations?	reviewed
-5339	What damages can tampering data cause and what are the mitigations?	reviewed
-5348	Setup the latest Metasploit?	reviewed
-5340	What damages can repudiation threads cause and what are the mitigations?	reviewed
-5349	Pass a value as parameter to a thread?	reviewed
-5350	Pass a reference as parameter to a thread?	reviewed
-5351	Pass a constant reference as a parameter to a thread?	reviewed
-5352	Pass a value as parameter to a thread?	reviewed
-5369	What are the differences between Decorator and Chain of Responsibility pattern?	reviewed
-5353	Pass a reference as parameter to a thread?	reviewed
-5354	Pass a constant reference as a parameter to a thread?	reviewed
-5355	Pass an rvalue reference as a parameter to a thread?	reviewed
-5356	What are the considerations of returning a value from threads?	reviewed
-5357	Move the ownership of a thread to another thread object?	reviewed
-5358	Wait for a thread to complete execution?	reviewed
-5359	Check if a thread has already joined?	reviewed
-5361	What specific situation should remind you of using the Command pattern in your program?	reviewed
-5362	What is the structure of the Command pattern?	reviewed
-5363	Implement the command pattern?	reviewed
-5364	What specific situation would remind you of using the Memento pattern in your program?	reviewed
-5365	What is the structure of the Memento pattern?	reviewed
-5366	What are the disadvantages of Memento design pattern?	reviewed
-5367	Implement the Memento pattern?	reviewed
-5368	What is the structure of Chain of Responsibility pattern?	reviewed
-5370	Compile an optimized release configuration of a source that includes a header from the source directory and a header from the system and linked to a library?	reviewed
-5383	Remove empty lines in a file?	reviewed
-5375	Use extended regular expressions on sed?	reviewed
-5384	Add a line on top of a file?	reviewed
-5371	Define a function to evaluate multiplication of a double to a global constant number in compile time?	reviewed
-5376	Capitalize occurrences of a pattern?	reviewed
-5377	Combine multiple sed statements?	reviewed
-5372	Share the instance of an object without losing ownership?	reviewed
-5388	What are the advantages of using logical backup?	reviewed
-5373	Replace occurrences of a pattern with a substitute?	reviewed
-5378	Write changes of sed command inplace?	reviewed
-5374	Replace occurrences of a pattern with a substitute without case sensitivity?	reviewed
-5385	Write a line after a pattern match?	reviewed
-5379	Use sed to print a range of lines?	reviewed
-5380	Print lines containing occurrences of a pattern?	reviewed
-5381	Delete lines containing occurrences of a pattern?	reviewed
-5386	What are the differences between logical backup and physical backup?	reviewed
-5382	Make a backup of the original file while in a sed command?	reviewed
-5387	What permissions are required for the user to perform a database backup?	reviewed
-5391	What are the advantages of physical backup?	reviewed
-5389	What are the disadvantages of using logical backup?	reviewed
-5390	What logical backup formats are available in PostgreSQL?	reviewed
-5392	What are the disadvantages of physical backup?	reviewed
-5393	Perform a logical backup on a local cluster?	reviewed
-5394	Perform a logical backup and write the results into a file?	reviewed
-5395	Perform a backup with verbose output?	reviewed
-5396	Perform a logical backup remotely on a cluster?	reviewed
-5397	What is the side effect of removed search path in the backup?	reviewed
-5398	In what scenarios would you want to use insert instead of copy statements in the backup?	reviewed
-5399	Perform a logical backup including database creation statement?	reviewed
-5400	Perform a logical backup including only schema?	reviewed
-5401	Perform a logical backup excluding schema?	reviewed
-5402	Perform a logical backup limited to the scope of a table?	reviewed
-5403	Perform a logical backup excluding a table?	reviewed
-5404	Perform a logical backup stored in a compressed archive?	reviewed
-5406	Configure a database to look up for tables within a search path?	reviewed
-5407	Perform a formated logical backup?	reviewed
-5408	Perform a faster backup with parallel processes?	reviewed
-5409	Print the list of content of the backup?	reviewed
-5410	Restore a database from a formatted backup?	reviewed
-5411	Restore a database from a formatted backup into a file?	reviewed
-5412	Perform a backup using list of content?	reviewed
-5413	Perform a restoration in parallel?	reviewed
-5414	Perform a backup from the entire cluster?	reviewed
-2966	Check if a file exists?	reviewed
-5415	Schedule backup?	reviewed
-1828	Why there is copy options?	reviewed
-5416	Export contents of a table into a file?	reviewed
-5268	Remove a file?	reviewed
-5417	Export contents of a table with CSV format into a file?	reviewed
-410	Iterate over the entries of a directory?	reviewed
-5418	Filter contents of a table when exporting to a file?	reviewed
-1837	Recursively iterate over directories with following symbolic links?	reviewed
-5419	Import contents of a table from a file?	reviewed
-1278	How to remove an image in docker?	reviewed
-5615	Specify linker launcher?	reviewed
-5420	Filter contents of a table when importing from a file?	reviewed
-1350	Configure the swarm certificate rotation period?	reviewed
-5421	Import contents of a table from a program?	reviewed
-31	What toolchains are available to build cross-toolchains with?	reviewed
-5422	Export contents of a table into a program?	reviewed
-38	Get the version and configurations of a native or cross-compiled GCC compiler?	reviewed
-5423	What is the alternative to the copy command for unprivileged users?	reviewed
-2667	What are prerequisites for communicating with an embedded device?	reviewed
-5424	What is the major use case of physical backup?	reviewed
-2668	How to connect to an embedded device using <code>picocom</code> through <code>/dev/ttyUSB0</code> device driver?	reviewed
-5425	What are the limitations of performing a physical restoration?	reviewed
-2682	How to use <code>Crosstool-ng</code> to configure selected architecture specific cross-toolchain?	reviewed
-5426	What tools can be used to perform a physical backup?	reviewed
-2694	What command can be used within U-Boot shell to read, write and erase contents to NAND flash?	reviewed
-5427	What are the prerequisites of performing a physical backup?	reviewed
-5428	Perform a physical backup?	reviewed
-1860	What kernel configuration option enables timing information while printing messages from the kernel?	reviewed
-5429	Verify the integrity of a physical backup?	reviewed
-90	Solve different relocation addresses of the kernel with multi-platform ARM <code>uImage</code>?	reviewed
-5430	Restore a physical backup?	reviewed
-5431	What is the use case of Point in Time Recovery?	reviewed
-62	Overlay nodes on top of another to create a composite tree in which the outer layers extend or modify the inner ones?	reviewed
-5432	What are the disadvantages of Point in Time Recovery?	reviewed
-895	Compile an x64 assembly program?	reviewed
-902	Debug a compiled program with gdb?	reviewed
-912	Inspect the breakpoint, stack, threads and other resources of the debugging program in gdb?	reviewed
-976	Indicate that a literal number is in hexadecimal base in x64 assembly?	reviewed
-962	What registers are used to read command line arguments from an x64 assembly program?	reviewed
-2770	What is the objective of <code>io_object</code> in boost?	reviewed
-2776	Handle exceptional asynchronous control flow in an event processing loop?	reviewed
-108	Build an executable from C++ source?	reviewed
-116	How many constants are available in C++?	reviewed
-1481	What are the main module properties?	reviewed
-640	Compare two derived objects having a base class?	reviewed
-641	What is the compatibility defect of comparison operators in C++20?	reviewed
-2807	What are the common ways of handling return type deduction for function templates having multiple function template parameters?	reviewed
-1362	Query alignment of object types?	reviewed
-1396	What types can be used to create a cooked user-defined literal?	reviewed
-3964	What are the use cases of command pattern?	reviewed
-1402	How literal operators or literal operator templates can be used to construct a numberic value by its binary representation?	reviewed
-2450	Where does move semantics apply optimizations compared to prior C++11 standard?	reviewed
-2456	When do compilers automatically switch to move semantics?	reviewed
-2459	What is the behavior of a parameter that is declared as an rvalue reference?	reviewed
-2178	How to move iterators back and forth regardless of their bidirectional support?	reviewed
-2210	Remove consecutive duplicate values within a sorted range?	reviewed
-2219	Replace elements for which the given predicate evaluates to true within a range?	reviewed
-3602	What is the use case of a mutex?	reviewed
-1765	What are the constituents of a path?	reviewed
-1766	What path formats are available?	reviewed
-1768	What are the differences of member and free-standing functions of path?	reviewed
-1791	Convert directory separators inside a path to the native format?	reviewed
-67	Use <code>mkimage</code> to create a compressed kernel image from an uncompressed kernel image?	reviewed
-1907	What is the standard way to return an error in kernel modules?	reviewed
-1104	How many synchronization mechanisms for accessibility of shared resources are available in the kernel?	reviewed
-1916	How many synchronization mechanisms for accessibility of shared resources are available in the kernel?	reviewed
-1109	What are the limitations of locking/unlocking spinlocks in a kernel module?	reviewed
-1121	Acquire a lock only if it is not already held by another contender?	reviewed
-1935	What passive waiting mechanisms are implemented in the kernel?	reviewed
-1942	Convert standard time units to jiffies?	reviewed
-213	What is the meaning of ACID terminology?	reviewed
-294	What is a schema?	reviewed
-219	What schema an object in postgres belongs to?	reviewed
-234	What libraries are required for C++ projects to link to postgres?	reviewed
-1724	What formats are used to represent debugging symbols for executables?	reviewed
-5433	What is the process of distributing SELinux policies?	reviewed
-5434	What languages can be used to write SELinux policies?	reviewed
-5435	What are the policy files?	reviewed
-5436	Where SELinux policy modules are usually placed after distribution?	reviewed
-5437	Where SELinux policy modules are placed after they are activated?	reviewed
-5438	Figure out which policy is active on a system?	reviewed
-5439	Where does SELinux look for the configuration for next reboot?	reviewed
-5440	Check if MLS policy is enabled?	reviewed
-5441	How many policy stores are available?	reviewed
-5442	How does SELinux react to new kernel permissions that is not yet known to SELinux?	reviewed
-5443	Configure how SELinux should react to unknown permissions?	reviewed
-5444	Check if a type is available?	reviewed
-1752	Accept connections by listening on a port?	reviewed
-3882	How does a compiler know if a function is a coroutine?	reviewed
-3899	What key components in a coroutine interact with each other to make the suspending functions functional?	reviewed
-5522	Construct a linear gradient?	reviewed
-5445	What specific scenario would remind you of using the Observer pattern in your program?	reviewed
-5446	What is the structure of Observer pattern?	reviewed
-5447	Implement Observer pattern?	reviewed
-5448	Implement Observer pattern with a connection manager?	reviewed
-5449	Export the stack usage of a program with GCC?	reviewed
-5450	Activate stack usage warning when it exceeds a certain threshold?	reviewed
-5451	What are the use cases of core module?	reviewed
-5452	What are the use cases of imgcodecs module?	reviewed
-5453	What are the use cases of videoio module?	reviewed
-5454	What are the use cases of imgproc and ximgproc module?	reviewed
-5455	What are the use cases of highgui module?	reviewed
-5456	What are the use cases of video and videostab modules?	reviewed
-5457	What are the use cases of calib3d module?	reviewed
-5458	What are the use cases of features2d, xfeatures2d and bioinspired modules?	reviewed
-5459	What are the use cases of objdetect and xobjdetect modules?	reviewed
-5460	What are the use cases of ml module?	reviewed
-5461	What are the use cases of photo and xphoto modules?	reviewed
-5462	What are the use cases of shape module?	reviewed
-5463	What are the use cases of optflow and tracking modules?	reviewed
-5464	What are the use cases of face and saliency modules?	reviewed
-5465	What are the use cases of surface_matching module?	reviewed
-5466	What are the use cases of text module?	reviewed
-5467	Install opencv with contrib modules?	reviewed
-5468	Write a CMake listfile to link OpenCV to a program?	reviewed
-2020	What are the building blocks of the Metadata component in the Poky build system?	reviewed
-2016	What are the input requirements for the Yocto Project?	reviewed
-1596	Conditionally append and prepend value to a variable only when target device is Beagle Bone?	reviewed
-1502	Set up the building environment using <code>oe-init-build-env</code>?	reviewed
-1522	What are the required variables in the configuration file of a layer?	reviewed
-1534	What is the preference of bitbake over selecting between multiple versions of the same provider?	reviewed
-3439	How many assertion variations exist?	reviewed
-3445	What testing feature can be used to share data between multiple tests?	reviewed
-3450	What are the advantages of using constructor over <code>SetUp()</code> virtual function?	reviewed
-1584	Trace the variable changes during execution of a recipe?	reviewed
-1611	What machine architecture is supported by a standard SDK?	reviewed
-1617	Build an image using an installed extensible SDK?	reviewed
-2792	How to build a kernel image using <b>Yocto Poky</b> tools?	reviewed
-2794	How to build a <code>qemuarm64</code> image with <b>SATO</b> as desktop environment for mobile devices using <b>Yocto Poky</b> tools?	reviewed
-3670	What is the life cycle of a process?	reviewed
-23	Specify the life cycle of Embedded Linux projects?	reviewed
-3671	What are the major Inter Process Communication mechanisms supported by Linux?	reviewed
-3736	Configure a project from another path?	reviewed
-3744	What variables will be provided by the <code>project()</code> command?	reviewed
-3767	Bake the run path into a library where it can be loaded after build and installation?	reviewed
-1009	How many components does CMake have?	reviewed
-1010	How many graphical interfaces officially exists for cmake?	reviewed
-2649	What should be the bare minimum content of a <code>CMakeLists.txt</code> file?	reviewed
-2658	Use common library object to use static and shared in one go?	reviewed
-3653	Retrieve the bounding rectangle of a rotated rectangle?	reviewed
-1254	How to check if docker is connected to server?	reviewed
-1256	How to run a container from an existing image?	reviewed
-1271	How to format the output of image lists in docker?	reviewed
-1274	How to see the build history of an image and its image layers?	reviewed
-1283	How does default programs are embedded in docker images so that containers know which program to run when they are launched with no arguments?	reviewed
-1290	What instructions in Dockerfile do create new layers into an image?	reviewed
-1316	What are the differences of replicated and global docker services?	reviewed
-18	What image channels are affected by drawing functions?	reviewed
-510	Convert an image into another image of different type?	reviewed
-5469	Integrate ftxui library into your project?	reviewed
-5471	What are the use cases of screen module in ftxui?	reviewed
-5472	What are the use cases of dom module in ftxui?	reviewed
-5473	What are the use cases of component module in ftxui?	reviewed
-5474	Declare a dimension type representing full screen size?	reviewed
-5478	What color spaces are supported by ftxui?	reviewed
-5475	Declare a dimension type representing a fixed size?	reviewed
-5476	Declare a dimension type representing the size of an element?	reviewed
-5477	Access to the dimensions of a dimension type?	reviewed
-5487	Register a hyperlink to a pixel?	reviewed
-5479	Use literals to create a color object?	reviewed
-5484	Access to a pixel inside a screen?	reviewed
-5480	What are the properties of a pixel?	reviewed
-5483	Print an empty screen on the terminal?	reviewed
-5486	Access characters inside a pixel of a screen?	reviewed
-5485	Colorize a pixel inside a screen?	reviewed
-5488	What would happen if we access a pixel outside the bounds of a screen?	reviewed
-5489	Reset cursor position to the top left corner of the terminal?	reviewed
-5490	What types does the dom module provide?	reviewed
-5491	Render an element onto a screen?	reviewed
-5492	What is the role of a decorator?	reviewed
-5493	What operator can be used to apply a decorator to an element?	reviewed
-5496	What is the difference between text and paragraph?	reviewed
-5498	What are the alignment variations of a paragraph?	reviewed
-5499	Draw a border around an element?	reviewed
-5500	Draw a border around an element with sharp edges?	reviewed
-5501	Draw a border around an element with dashed lines?	reviewed
-5502	Draw a border around an element with thick lines?	reviewed
-5503	Draw a border around an element with double lines?	reviewed
-5504	Draw an invisible border around an element?	reviewed
-5505	Draw a border around an element with a custom character?	reviewed
-5506	Draw a border around an element with a header?	reviewed
-5507	Separate two elements by drawing a line between them?	reviewed
-5508	Separate two elements with a thick line?	reviewed
-5509	Separate two elements with a double line?	reviewed
-5510	Separate two elements with a space?	reviewed
-5511	Separate two elements with a variable styled line?	reviewed
-5512	Separate two elements with a custom character?	reviewed
-5513	Separate two elements with a colorized line?	reviewed
-5514	Draw a bar representing progress?	reviewed
-5515	Draw a bar representing progress moving towards the right direction?	reviewed
-5516	Draw a bar representing progress moving towards the left direction?	reviewed
-5517	Draw a bar representing progress moving upwards?	reviewed
-5518	Draw a bar representing progress moving downwards?	reviewed
-5519	Explicitly specify the direction of a progress bar?	reviewed
-5523	Define multiple stops for a linear gradient?	reviewed
-5524	Colorize an element with a linear gradient?	reviewed
-5528	Invert the color of an element?	reviewed
-5529	Underline an element?	reviewed
-5562	Use extended regular expressions on sed?	reviewed
-5530	Underline an element with double lines?	reviewed
-5531	Strikethrough an element?	reviewed
-5532	Make an element blink?	reviewed
-5563	Capitalize occurrences of a pattern?	reviewed
-5533	Horizontally align elements?	reviewed
-5534	Vertically align elements?	reviewed
-5535	Align elements inside a grid?	reviewed
-5564	Combine multiple sed statements?	reviewed
-5536	Fill the space between two aligned elements?	reviewed
-5537	Make nested layouts?	reviewed
-5565	Write changes of sed command inplace?	reviewed
-5539	Draw on a canvas?	reviewed
-5540	Take input from keyboard?	reviewed
-5541	Filter input?	reviewed
-5566	Use sed to print a range of lines?	reviewed
-5542	Create a menu of selectable items?	reviewed
-5543	Create a toggle option?	reviewed
-5544	Create a checkbox?	reviewed
-5567	Print lines containing occurrences of a pattern?	reviewed
-5545	Create a radio button?	reviewed
-5546	Create a dropdown?	reviewed
-5547	Create a slider?	reviewed
-5568	Delete lines containing occurrences of a pattern?	reviewed
-5548	Render the screen with a different function?	reviewed
-5549	Catch key presses?	reviewed
-5550	Hide a component based on a predicate?	reviewed
-5569	Make a backup of the original file while in a sed command?	reviewed
-5551	What are the use cases of collapsible elements?	reviewed
-5552	Make an element collapsible?	reviewed
-5553	What are the use cases of containers?	reviewed
-5570	Remove empty lines in a file?	reviewed
-5554	Create a few vertical tabs each containing elements?	reviewed
-5555	Create a few horizontal tabs each containing elements?	reviewed
-5556	Split a few elements within resizable areas?	reviewed
-5571	Add a line on top of a file?	reviewed
-5557	Handle events other than mouse, keyboard, or window resizing?	reviewed
-5558	Import ftxui library as modules?	reviewed
-5559	Toggle processing of piped input?	reviewed
-5572	Write a line after a pattern match?	reviewed
-5560	Replace occurrences of a pattern with a substitute?	reviewed
-3469	What is a cardinality in mock functions?	reviewed
-5561	Replace occurrences of a pattern with a substitute without case sensitivity?	reviewed
-3474	Specify the return value of a mock function for indefinite calls?	reviewed
-5573	In what granularity should we configure targets?	reviewed
-5574	How properties are affected by CMake commands?	reviewed
-5575	What properties are available for targets?	reviewed
-5576	How properties are affected by CMake commands?	reviewed
-5577	How properties are affected by CMake commands?	reviewed
-5582	What is the best practice to requiring an optional package?	reviewed
-5578	What do we need to collect for packaging a project?	reviewed
-5579	How does the install command populate install directory?	reviewed
-5580	What are the disadvantages of using fetch content?	reviewed
-5583	Why build settings and usage requirements should be separated in configurations?	reviewed
-5581	How dependencies should be linked with targets properly?	reviewed
-5586	What is the bare minimum CTest configuration file that should exist on the top of the source directory?	reviewed
-5584	What does CTest offer out of the box other that handling unit tests?	reviewed
-5585	What is the recommended way of configuring CTest in a project?	reviewed
-5587	What would be the assumption of users about the project developers when there is a CMakeLists.txt file in the top level directory of a project?	reviewed
-5588	What would be the assumption of users about the project developers when there is a GitHub workflow in the project?	reviewed
-5589	What would be the assumption of users about the project developers when there is a CTestConfig.cmake file in the top level directory of a project?	reviewed
-5590	What should be the goal of project developers when preparing their build system?	reviewed
-5591	What is the challenge between project maintainers and build pipeline maintainers?	reviewed
-5592	What is the recommended behavior of the default workflow in projects?	reviewed
-5593	Why excluding tests from the default build workflow of a project is discouraged?	reviewed
-5594	Write a CTest configuration that builds your project?	reviewed
-5595	Take the return value of CTest when updating the repository?	reviewed
-5596	Use CTest commands to collect the test coverage of a project?	reviewed
-5597	Use CTest commands to perform memory checks on tests?	reviewed
-5598	Use CTest commands to sanitize tests?	reviewed
-3504	What is an assertion matcher?	reviewed
-5599	Use CTest to build the project in parallel?	reviewed
-5600	Use CTest to run tests in parallel?	reviewed
-5601	Use CTest to run memory checks in parallel?	reviewed
-5602	Use a known number of cores to run tests?	reviewed
-5603	Acquire all of the system resources for running tests?	reviewed
-5604	Acquire system resources with fine grained allocations?	reviewed
-5606	Treat warnings as errors in build piplines?	reviewed
-5608	Disable clazy warnings for one file?	reviewed
-5609	Disable individual clazy checks for one file?	reviewed
-5610	Disable individual clazy checks for one line?	reviewed
-5611	What linters are supported through target properties?	reviewed
-5612	Disable linting for a source file?	reviewed
-5613	What are the use cases of using launchers?	reviewed
-5617	What is the best approach when CMake and CTest both need to know about build variables?	reviewed
-5618	What build information is available to CTest?	reviewed
-5619	What properties are used by CTest to scrap build outputs?	reviewed
-5620	What environment variables are available for instrumentation?	reviewed
-5621	Why instrumentation variables should be environment variables?	reviewed
-5622	What additional build information will be available when using instrumentation?	reviewed
-5624	Which test properties can be used to attach files into the test?	reviewed
-5625	What are the disadvantages of building separate small tests?	reviewed
-5626	Allow CTest to schedule and parallelize tests?	reviewed
-5627	Write a toolchain file to crosscompile a target?	reviewed
-5628	Crosscompile with CTest?	reviewed
-5629	Define tests with crosscompiling in CMake?	reviewed
-3485	Write an expectation call to a mock method when the method returns a const reference to a string?	reviewed
-3506	What is the best practice for equality matching using matchers?	reviewed
-3523	How overloaded functions and function templates should be treated when given as argument to predicate assertions?	reviewed
-3561	Verify a container that does not provide size method contains an expected number of elements?	reviewed
-3567	Verify what each element of a container should match with?	reviewed
-3571	Verify that a container is a superset of given range?	reviewed
-3573	Verify the size of a container?	reviewed
-3581	Verify that an object supporting <code>std::get<I>(object)</code> contains elements that match a certain criteria piece-wise?	reviewed
-675	Constraint a template function with a requirement to not be available if raw pointers are passed?	reviewed
-5630	Export a package with CPS information?	reviewed
-5631	What file trees exist in a project?	reviewed
-5632	How can we describe a source tree of a project in CMake?	reviewed
-5633	What is the role of base directories inside a file set?	reviewed
-5634	How would file set description looks like when reduced to only include private header files for a target?	reviewed
-5635	What are the supported private file sets?	reviewed
-5636	What is the reason of separating sources into different file sets?	reviewed
-5637	Why should we never describe build trees in CMake?	reviewed
-5638	Describe the install tree in CMake?	reviewed
-5639	What is the use case of component parameter in install command?	reviewed
-5640	What is the use case of export parameter in install command?	reviewed
-5641	What are the known paths to install tree?	reviewed
-5642	What scope is not in the responsibility of developers to manipulate?	reviewed
-5643	Describe a package containing installed artifacts of the project?	reviewed
-674	How many ways constraints can be applied to a template?	reviewed
-2802	How does the compiler deduce the type of function template arguments?	reviewed
-3666	What is the difference between preemptive and non-preemptive concurrency?	reviewed
-3937	What are the use cases of strategy pattern?	reviewed
-3938	What are the advantages of static strategy pattern over dynamic strategy pattern?	reviewed
+34	Inspect the configuration details of crosstool-ng targets?	draft
+33	Print the list of crosstool-ng sample configurations?	draft
+35	Build a cross-toolchain for Raspberry Pi Zero?	draft
+36	Build a cross-toolchain for BeagleBone Black?	draft
+37	Build a cross-toolchain for QEMU?	draft
+39	Override the default processor configuration options using GCC compiler?	draft
+40	List available architecture specific options in a project source tree using GCC compiler?	draft
+41	Print the <code>sysroot</code> path using GCC compiler?	draft
+43	Print the linked libraries of an executable using GNU toolchains?	draft
+44	Print the runtime linker used for an executable using GNU toolchains?	draft
+45	Compile by linking libraries statically using GNU GCC compiler?	draft
+46	Where are static libraries located in <code>sysroot</code> directory used by GNU toolchains?	draft
+47	Use GNU toolchains to create a static library containing two executable objects compiled from C source files?	draft
+48	Use GNU toolchains to create a shared library containing two executable objects compiled from C source files?	draft
+49	Use GNU cross-toolchains to print the <code>SONAME</code> of a shared library?	draft
+50	Use GNU toolchains to cross-compile for a specific target?	draft
+52	Override the toolchain in an autotools compatible project?	draft
+53	Use <code>crosstool-ng</code> to cross compile <i>SQlite</i> and add it to an existing toolchain?	draft
+54	Prepare <code>pkg-config</code> to look up library dependencies in a sysroot?	draft
+55	Use CMake to cross compile a project?	draft
+61	Use <code>include</code> in a device tree source?	draft
+63	Use <code>dtc</code> to compile a device tree source?	draft
+30	What C libraries are commonly used in toolchains?	draft
+29	Print the tuple embedded in GNU GCC compiler?	draft
+42	What are the main C library components?	draft
+74	What is the basic layout of the kernel source tree?	draft
+77	What are the constructs of each menu in a <code>Kconfig</code> file?	draft
+58	What is a Device Tree and where is its specification?	draft
+59	What are the common properties of device tree specification?	draft
+60	Specify an interrupt controller in a device tree source?	draft
+64	Build and install <b>U-Boot</b> from source?	draft
+56	Describe the boot sequence in an embedded device?	draft
+57	Describe what parameters should be passed to the kernel on moving from the bootloader to a kernel?	draft
+65	Use U-Boot to read flash memory over serial console?	draft
+66	Set environment variables in U-Boot environment?	draft
+68	Load a kernel image in a U-Boot shell environment?	draft
+69	Boot a kernel image across network in a U-Boot shell environment?	draft
+70	Boot Linux kernel after loading it within U-Boot shell environment?	draft
+71	Automate the boot process in U-Boot shell environment?	draft
+9	What are the basic data types in OpenCV?	draft
+10	What operations are supported by <code>cv::Point<></code> template class?	draft
+11	What operations are supported by <code>cv::Scalar</code> class?	draft
+12	What operations are supported by <code>cv::Size</code> class?	draft
+13	What operations are supported by <code>cv::Rect</code> class?	draft
+14	What operations are supported by <code>cv::RotatedRect</code> class?	draft
+15	What operations are supported by <code>cv::Matx</code> template class?	draft
+16	What operations are supported by <code>cv::Vec</code> template class?	draft
+17	What operations are supported by <code>cv::Complex<></code> class template?	draft
+24	Specify the elements of Embedded Linux?	draft
+26	Build a fundamental ARM machine with QEMU?	draft
+19	What data type is used to specify color by convention?	draft
+20	What line types are used by drawing functions?	draft
+21	What values can be accepted as thickness parameter of drawing functions?	draft
+22	Draw a circle on an image?	draft
+111	Initialize scoped and global variables?	draft
+110	Declare and define a function separately?	draft
+118	Declare a function evaluated at compile time?	draft
+119	Ensure compile time evaluation of a function?	draft
+109	Abbreviate namespaces to avoid repetition?	draft
+115	Define a new type based on predefined types?	draft
+112	Determine the size of an expression?	draft
+93	See the actual commands being executed in kernel build process in case build fails?	draft
+96	What are the steps required to build a kernel for the Raspberry Pi 4?	draft
+97	What are the steps required to build a kernel for the Raspberry Pi Zero?	draft
+98	What are the steps required to build a kernel for the BeagleBone Black?	draft
+99	What are the steps required to build a kernel for the QEMU?	draft
+94	What are the required steps after building a kernel image?	draft
+107	Assuming a new device is designed similar to BeagleBone Black and a new device tree needs to be ported for it, what are the necessary steps to make one?	draft
+101	What are the required boot instructions on BeagleBone Black?	draft
+102	What are the required boot instructions on QEMU?	draft
+104	What are the essential kernel command lines?	draft
+105	Reduce the time of calculating the constant <code>loops_per_jiffy</code> variable on boot time?	draft
+103	What is the early user space after kernel is booted?	draft
+499	Display an image on a window?	draft
+214	How does PostgreSQL store data on storage?	draft
+215	How long is the life time of a PostgreSQL release?	draft
+216	What is a PostgreSQL cluster?	draft
+217	What is a schema?	draft
+218	What are the building blocks of an instance?	draft
+221	How many user categories exist in postgres?	draft
+222	How many superusers are allowed in a postgres instance?	draft
+223	Where are the internal postgres instance data stored?	draft
+224	Where does postgres store its data?	draft
+226	How is it possible to have multiple postgres installations?	draft
+228	What is the purpose of postgres's first process?	draft
+230	Build postgres from source?	draft
+231	How to add systemd support to postgres installation?	draft
+232	Build postgres using pgenv?	draft
+233	Connect to a postgres instance?	draft
+496	Include OpenCV headers in source file?	draft
+497	Print the size of a matrix?	draft
+498	Open an image from file?	draft
+500	Save a processed image into a file?	draft
+502	Get the number of image channels?	draft
+501	Transform image by flipping an image horizontally?	draft
+503	Set a mouse callback to get notified when user clicks on image?	draft
+504	Draw a circle on an image?	draft
+505	Draw a rectangle on an image?	draft
+506	Draw a text on an image?	draft
+507	Create a single channel gray image?	draft
+508	Recreate an image object?	draft
+509	Copy an image object into another?	draft
+511	Occupy the region of interest in an image with a rectangle?	draft
+512	Occupy the region of interest in an image with ranges?	draft
+513	Specify columns and rows of an image as region of interest?	draft
+514	Mask an image so that only a part of it will be affected by operations?	draft
+676	Implement a concept to constraint passing only raw pointers?	draft
+677	Apply a concept restricting parameters only to take raw pointers to a template?	draft
+678	Using overload resolution with concepts implement two function templates for pointers and non-pointers?	draft
+679	How many ways concepts can be applied into templates?	draft
+680	In how many ways a template can be constrained?	draft
+681	What is the advantage of using trailing requires clause over regular requires clause?	draft
+682	Constraint a template to take only two comparable types?	draft
+683	Constraint a template to only accept objects supporting pointer deference operator?	draft
+684	What difference does it take for constraints to declare parameters as value or reference?	draft
+685	Constraint a template with a requires expression?	draft
+5527	Make an element dim?	draft
+5196	Implement the strategy pattern?	draft
+5525	Make an element bold?	draft
+903	List source lines in debugging?	draft
+904	Change the line number of source listing?	draft
+905	Set disassembly flavor in gdb?	draft
+906	Store gdb configurations in file for future use?	draft
+907	Disassemble a function or line of source in gdb?	draft
+908	Examine an address in memory in gdb?	draft
+910	Start execution of the debugging program in gdb?	draft
+911	Inspect registers in gdb?	draft
+913	Manipulate breakpoints in gdb?	draft
+914	Change executation of the debugging program in gdb?	draft
+915	Print variables through debugging session?	draft
+926	Read the ELF header of an executable object?	draft
+927	Read symbols of an executable object?	draft
+225	What does PGDATA contain?	draft
+229	How does postgres handle connections?	draft
+220	What schema users belong to?	draft
+928	Sort executable object symbols based on its memory locations?	draft
+897	Convert decimal, binary, and hexadecimal representations of integral and floating point numbers?	draft
+898	Name x64 registers?	draft
+899	What is the name of <b>Instruction Pointer</b> register?	draft
+900	Name the flag registers?	draft
+901	Name SIMD registers?	draft
+950	What header contains Linux system calls?	draft
+896	Write exit procedure in x64 Assembly?	draft
+919	Exit program without directly writing the exit syscall?	draft
+917	Create values in data section of memory?	draft
+923	Consecutively store a sequence of data into read-only memory section?	draft
+924	Preserve uninitialized variables in a writable memory section?	draft
+918	Use external functions from C in x64 assembly code?	draft
+931	Specify how many bits each floating point number occupies for exponent and fraction?	draft
+941	Evaluate bit-wise operations?	draft
+942	Set and reset specific bits of numeric variable?	draft
+943	Check if its 8th bit of a quadword variable is set?	draft
+920	Conditionally change the execution flow?	draft
+921	Repeat execution of a code section by manually counting down?	draft
+922	Repeat execution of a code section by automatically counting down?	draft
+925	Load the address of an array into a register to run operations on?	draft
+940	Use calling conventions to transfer variables from callee to caller functions?	draft
+938	Expose a function to external linkage?	draft
+939	Expose a variable to external linkage?	draft
+944	Use inline procedures to avoid runtime overhead of function calls?	draft
+951	What header contains file operation constants?	draft
+954	Open and close a file in x64 assembly?	draft
+5223	Run a workflow locally?	draft
+965	Use an assembly function in a C source?	draft
+967	Write a basic inline assembly in C programs?	draft
+968	Write extended inline assembly in C programs? (needs work)	draft
+963	Read command line arguments from an x64 assembly program?	draft
+955	Write content to a file in x64 assembly?	draft
+956	Truncate a file in x64 assembly?	draft
+977	Obtain the CPU information of the processor in x64 assembly?	draft
+978	Check the processors which version of SSE extensions do they support?	draft
+979	How many registers of SSE are available on any processor supporting it?	draft
+980	What are the two types of data that can be stored on SSE registers?	draft
+981	What are AVX registers and how much data can they hold?	draft
+987	Where should we check regularly for deprecation of features and removal on recent updates?	draft
+988	Enable docker daemon to start on boot up?	draft
+993	Manually run docker daemon?	draft
+989	Connect docker client to a remote server?	draft
+991	List all the contexts available to client?	draft
+990	Configure client to permanently connect to a remote server?	draft
+992	Switch client context to make it connect to another remote server?	draft
+986	What facilities are available to extend the Docker functionality?	draft
+985	What communication channel is used by containers to talk to each other?	draft
+1011	Install Cmake?	draft
+1012	Configure and build a project?	draft
+1013	What are the artifacts of CMake configuration stage?	draft
+1014	Write a minimal CMake listfile?	draft
+1015	What are the stages of building by cmake?	draft
+1016	Specify which generator should be used in build?	draft
+1018	What is the definition of a project in CMake?	draft
+1019	What variable holds the project name?	draft
+1020	Determine if the project is the top level project?	draft
+1021	What variable holds project description?	draft
+1022	What variables hold project version information?	draft
+1023	Declare and initialize a variable?	draft
+1028	Make variable visible to its parent scope?	draft
+5247	Locate the files of a command?	draft
+1106	How does spinlocks operate on a CPU?	draft
+1105	What is a spinlock?	draft
+1107	Define a spinlock in module source?	draft
+1108	Lock a previously defined spinlock in module source?	draft
+5266	Generate a sequence of numbers?	draft
+1111	How does spinlocks affect preemtion after locking and unlocking?	draft
+1112	Store and restore previous IRQs status when using spinlocks?	draft
+1113	How a critical section can be protected from being preemted by kernel?	draft
+1114	What is a mutex and how does it operate?	draft
+1115	Initialize a mutex in the kernel?	draft
+1116	Acquire a mutex in the kernel?	draft
+1117	Release an acquired mutex in the kernel?	draft
+1118	Check mutex locking availability before acquiring it?	draft
+1119	What are specific rules while using mutexes in the kernel?	draft
+1120	What is more efficient between spinlocks and mutexes compared in terms of CPU cycles?	draft
+1110	Prevent deadlock caused by IRQs when using spinlocks?	draft
+1255	How to list available images on host?	draft
+1257	How to exit a container's shell without killing its process in docker?	draft
+1258	How to attach host's shell to the shell of a running container?	draft
+1259	How to stop a container?	draft
+1260	How to start a stopped container?	draft
+1261	How to stop and remove a container?	draft
+1262	How to list containers in docker?	draft
+1263	How to verify that a container was successfully deleted by docker?	draft
+1264	How to retrieve detailed information of installed docker on host?	draft
+1265	How to pull an image from official repositories?	draft
+1266	How to pull an image from unofficial repositories?	draft
+1267	How to pull an image from other registeries?	draft
+1268	What is a dangling image in docker and how can we list them?	draft
+1269	How to remove all dangling images in docker?	draft
+1270	What are the common filtering options for listing images in docker?	draft
+1272	How to search an image on registeries?	draft
+1273	How to inspect the layers of an image?	draft
+1275	How to see the digests of an image in docker?	draft
+1276	How does docker use manifests to fetch host compatible image layers when pulling images?	draft
+1277	How to create an image for different platforms and architectures?	draft
+1279	What are docker restart policies and how can they be applied to containers?	draft
+1280	What is the behavior of <code>always</code> docker restart policy?	draft
+1281	What is the <code>unless-stopped</code> docker restart policy?	draft
+1282	What is the <code>on-failure</code> docker restart policy?	draft
+1284	How to write a Dockerfile for a Linux based image containing a nodejs program?	draft
+1285	How to build an image from its Dockerfile?	draft
+1286	What are the prerequisites of pushing images into DockerHub?	draft
+1287	How is it possible to push an image into a registry other than the DockerHub?	draft
+1288	How to add an additional tag to an image?	draft
+1289	How to write comments in Dockerfile?	draft
+5270	Remove an empty directory?	draft
+1343	Verify the integrity of images?	draft
+1352	Configure <b>Docker Content Trust</b> to sign images?	draft
+1353	Inspect signing data of an image?	draft
+1354	Permanently configure docker to verify image push and pull operations?	draft
+1297	How many types of swarm nodes exist?	draft
+3463	Use a mocked object in a test	draft
+1322	How many publishing modes are available in docker service creation?	draft
+1347	Join new managers in a swarm?	draft
+1348	Revoke compromised token and issue new swarm join-token?	draft
+1342	What analyzing tool scans images for vulnerability?	draft
+1344	What kernel feature provides container isolation?	draft
+1345	What kernel feature provides container resource management?	draft
+1346	Secure the network connections of a swarm?	draft
+1349	Inspect a node’s client certificate?	draft
+1351	Manage CA related configuration?	draft
+1355	Create a secret on swarm to store credentials?	draft
+1338	Install a plugin on docker?	draft
+1330	Create a volume?	draft
+1335	Create a volume in Dockerfile?	draft
+1340	Create a volume with an installed plugin?	draft
+1331	List available volumes?	draft
+1332	Inspect into a volume?	draft
+1333	Delete a volume?	draft
+1336	Attach a volume to a container?	draft
+1337	Attach a volume to a cluster?	draft
+1341	What is the potential data corruption on a shared volume between nodes?	draft
+1291	How to view the instructions that were used to build an image?	draft
+1292	How to make docker ignore caches in creation of image layers?	draft
+1293	How does involved filesystem invalidate docker cache when the corresponding instruction has not changed in Dockerfile?	draft
+1294	What is a squashed image and how can it be built?	draft
+1295	How can we avoid installing excessive packages by <code>apt</code> when installing packages in docker images?	draft
+1296	What is a <b>Docker Swarm</b>?	draft
+1298	How does a swarm is maintained?	draft
+1299	What are different swarm modes?	draft
+1300	How to initialize a swarm?	draft
+1301	What is the default port for <b>Docker Swarm</b>?	draft
+1302	how to list available <i>swarm</i> nodes?	draft
+1303	How to extract tokens to join Docker nodes to a swarm?	draft
+1304	How to join Docker nodes to a swarm?	draft
+1305	How does the high availability mechanism of <b>Docker Swarm</b> work?	draft
+1306	What are the best practices to apply on Swarm high availability?	draft
+1308	How to apply a lock to a swarm?	draft
+1309	How to check the current swarm unlock key?	draft
+1310	How to re-join Docker nodes to a locked swarm?	draft
+1312	How to create a docker service?	draft
+1311	How many ways exist to create a docker service?	draft
+1313	How to list services running by docker?	draft
+1314	How to list the service replicas in docker?	draft
+1315	How to inspect a docker service?	draft
+1317	How to scale up and down a docker serivce?	draft
+1318	How to remove a docker service?	draft
+1319	How to create an overlay network for a docker service?	draft
+1320	How to list available docker networks?	draft
+1321	How to create a docker service and attach it to a network?	draft
+1323	How to create docker service replicas on <b>host mode</b>?	draft
+1324	How to push an update image to the swarm in a staged manner?	draft
+1325	How to troubleshoot docker services by printing its logs?	draft
+1326	How to configure docker daemon to log on different logging drivers?	draft
+1327	What makes the urge to make swarm backups?	draft
+1328	What is a swarm backup file contained of?	draft
+1784	Concatenate a string to a path?	draft
+1329	How to perform a docker swarm backup and restore operation?	draft
+1334	Delete all volumes?	draft
+1404	Express different types of strings that raw string literals can generate?	draft
+1420	Find the first and last occurance of a character in a <code>string_view</code>?	draft
+1421	Remove tailing and trailing characters from a <code>string_view</code>?	draft
+1405	Convert a string to lowercase or uppercase?	draft
+5470	Manually link to ftxui library?	draft
+1483	Express a module to be used within another translation unit?	draft
+1485	What is a module partition?	draft
+1486	What is a module interface partition?	draft
+1487	What is a module implementation partition?	draft
+1488	What is the difference between module partitions and submodules?	draft
+1491	What are the building blocks of the Poky build tool?	draft
+1493	What are the responsibilities of OpenEmbedded Core in the Yocto Project?	draft
+1494	What are the responsibilities of Metadata in the Yocto Project?	draft
+1490	What is the default referencing build system in the Yocto Project?	draft
+1495	What are the release cycles of the Yocto Project?	draft
+1496	What is Poky?	draft
+1497	What is the usage of bitbake?	draft
+1498	How does bitbake operate?	draft
+1499	What is OpenEmbedded Core?	draft
+1501	Get poky source code?	draft
+1500	What metadata is made of?	draft
+1503	What configuration variable is required for build system?	draft
+1504	Get poky source tree?	draft
+1505	Prepare the poky build environment?	draft
+1509	What is the role of <code>conf/local.conf</code> file?	draft
+1510	Define the target machine to the project?	draft
+1511	List all available images?	draft
+1512	What predefined images exist in poky?	draft
+1513	Build an image?	draft
+1514	What layer provides necessary tool to run built images?	draft
+1515	What is the role of Toaster in the Yocto project?	draft
+1516	Install toaster and its requirements?	draft
+1517	Start toaster?	draft
+1521	What is the role of classes in layers?	draft
+1518	Where is the configuration file for each layer?	draft
+1519	What metadata types exist?	draft
+1520	What is the role of configurations in layers?	draft
+1523	What configuration files are be parsed by bitbake?	draft
+1524	What configuration variable is used to list required layers in metadata?	draft
+1525	What is the metadata parsing order of bitbake?	draft
+1526	When does architecture specific metadata loads into metadata?	draft
+1527	What dependencies exist in metadata?	draft
+1528	What recipes will only run on host and not the target device?	draft
+1529	What configuration variables hold metadata dependencies?	draft
+1530	What configuration variable is used to satisfy metadata dependecies?	draft
+1531	What configuration variable signifies higher precedence of a provider over others?	draft
+1532	How many ways exist for a provider to provide a functionality?	draft
+1533	When do we use virtual namespace in provider names?	draft
+1535	Override the default version preference of bitbake over selecting between multiple versions of the same provider?	draft
+1536	Change the default version preference of a recipe?	draft
+1537	What mechanism does bitbake have to fetch sources?	draft
+1538	What recipe variable is used to fetch source files?	draft
+5481	Create a full-size screen?	draft
+1539	What mechanism is used by bitbake to verify downloaded files?	draft
+1540	Override the download path in a layer?	draft
+1541	How does bitbake avoid conflicts between possible git repositories with the same project name?	draft
+1542	What are the use cases of <code>SRCREV</code> variable?	draft
+1543	Specify branch and protocol of a git repository to be fetched?	draft
+1544	What are the use cases of mirrors?	draft
+1545	What locations are searched by bitbake to download a repository?	draft
+1546	Instruct the build system to redirect any download request to a local server?	draft
+1547	Share downloads between multiple build directories?	draft
+1548	Disable internet access to bitbake?	draft
+1549	Run a specific task?	draft
+1550	List the defined tasks for a recipe?	draft
+1552	What are the common tasks specified in each recipe?	draft
+1553	What are the entries of the build directory after image creation?	draft
+1554	Which directories are critical to know for analyzing the build process and troubleshooting?	draft
+1555	What directory is modified in each step of the build process?	draft
+1556	What is the structure of work directory?	draft
+1557	Reduce disk usage after each recipe compilation by removing artifacts?	draft
+1751	Connect socket to a server address?	draft
+1559	What is the general approach to fix broken builds when a missing header or link failure happens?	draft
+1558	Where is the list of sysroot providers?	draft
+1560	What package formats are available to poky?	draft
+1561	Select a package format?	draft
+1562	What package installation scripts are available in a recipe?	draft
+1563	Run post installation scripts on target devices instead of host?	draft
+1564	What variable holds the path to the installation directory?	draft
+1565	What is the best practice to run target specific processes?	draft
+1566	What is a shared state cache?	draft
+1567	Clean the shared state cache?	draft
+1568	Enforce building from scratch?	draft
+1569	What variables are used in package versioning of poky?	draft
+1570	What variables are used to specify runtime package dependencies?	draft
+1571	What is the role of rootfs directory?	draft
+1572	What variable holds the list of packages to be installed into rootfs?	draft
+1573	What variable holds the filesystem types to be generated?	draft
+1574	What are the steps of rootfs directory generation?	draft
+1582	How many types a metadata covers?	draft
+1575	What is a package feed?	draft
+1576	What are the use cases of package feeds?	draft
+1577	What is the role of PR service in package versioning?	draft
+1578	Enable PR service in a layer?	draft
+1579	What is the role of package index?	draft
+1580	Where do installed packages reside?	draft
+1581	Add support for package management to an image?	draft
+1583	What is the language of a recipe?	draft
+1585	Assign value to a variable in a recipe file?	draft
+1586	Use variable expansion in value assignment?	draft
+1587	How many expansion rules exist?	draft
+1588	How many assignments with different priorities exist?	draft
+1589	Use an immediate variable expansion?	draft
+1590	Append and prepend a value to a list?	draft
+1591	Append and prepend a value to a string?	draft
+1592	What are the differences between both variations of string append and prepend operators?	draft
+1593	Remove an item from a list?	draft
+1594	What variable is used to control the conditional metadata override?	draft
+1595	Conditionally assign value to a variable only when target device is Beagle Bone?	draft
+1597	How many ways exist to include another recipe file?	draft
+1598	Use inline Python code?	draft
+1599	Define a Shell function inside a recipe?	draft
+1600	Define a Python function inside a recipe?	draft
+1601	Get access to global datastore of bitbake within a Python function?	draft
+1602	Inherit from a class inside a recipe?	draft
+1603	What is a toolchain?	draft
+1604	What is an SDK?	draft
+1605	Generate a native SDK for development on target device?	draft
+1606	What SDK types can bitbake generate?	draft
+1607	In how many places an SDK can be generated?	draft
+1608	Build a generic standard SDK?	draft
+1609	Where are the generated SDK files after build?	draft
+1610	Install an SDK?	draft
+5494	Create a text widget?	draft
+1484	What are the building blocks of a module?	draft
+1612	Use an installed standard SDK to build a custom application?	draft
+1613	Use an installed standard SDK to build the kernel?	draft
+1614	Build an extensible SDK?	draft
+1615	Install an extensible SDK?	draft
+1616	What are the advantages of using an extensible SDK?	draft
+1618	Run an image using an installed extensible SDK?	draft
+1619	Create a recipe from an external git repository using an installed extensible SDK?	draft
+1620	Build a recipe using an installed extensible SDK?	draft
+1621	Deploy an image to the target using an installed extensible SDK?	draft
+1622	Extend an installed extensible SDK?	draft
+1623	What are the use cases of a shared extensible SDK?	draft
+1717	What are the main phases of compiling a C code?	draft
+1718	Stop compiler processing source after preprocessing phase?	draft
+1719	Specify the assembly flavor for gcc?	draft
+1720	Stop compiler processing source after compilation phase?	draft
+1721	Stop compiler processing source after assembly phase?	draft
+1722	How many relocatable files exist?	draft
+1723	View the symbolic information of an executable?	draft
+1725	What library can be used to programmatically parse debugging symbols?	draft
+1726	Strip all the debugging symbols of an executable?	draft
+1727	Specify the assembly flavor for objdump utility?	draft
+1728	Inspect the rodata section of an object file?	draft
+1729	Disassembly an object file?	draft
+1730	List all the relocation symbols present in an object file?	draft
+1731	What address do relocation offsets are pointing to in relocation table of an object file?	draft
+1732	List all the available sections in an object file?	draft
+1734	Represent the IP address and port of an endpoint?	draft
+1733	What sockets API does the Asio library use to implement networking?	draft
+1735	Create an endpoint to designate the address of a network node?	draft
+1736	Create an endpoint in the server to designate addresses on which the server wants to listen?	draft
+1738	Create an active socket in client code?	draft
+1739	Create a passive socket in server code?	draft
+1740	What information does an endpoint contain?	draft
+1741	How many forms an endpoint address can have?	draft
+1742	Create a tcp and udp endpoint for client?	draft
+1743	Create a tcp and udp endpoint for server?	draft
+1744	How many address types exist?	draft
+1745	What is the difference between active and passive sockets?	draft
+1746	Create an active socket?	draft
+1747	Create a passive socket?	draft
+1748	Resolve a DNS name?	draft
+1767	What are the properties of a normalized path?	draft
+1769	How many error handling approaches are available on filesystem library?	draft
+1770	Handle a filesystem operation error with exceptions?	draft
+1771	Handle a filesystem operation error with error code?	draft
+1772	What are the supporting different file types?	draft
+1773	Create a path with different string types?	draft
+1774	Create a path with a range?	draft
+1775	Get current path of the executing process?	draft
+1776	Get the path of temporary directory?	draft
+1777	Yield whether a path is empty?	draft
+1778	Yield whether a path is absolute or relative?	draft
+1779	Yield all the constituents of a path?	draft
+1780	Yield if a path is normalized?	draft
+1781	Yield a path as string objects of any byte size?	draft
+1782	Yield a relative path from two paths?	draft
+1783	Yield a path as a generic string?	draft
+1786	Add extension to a file path that does not already have an extension?	draft
+1787	Assign a string to a path as a new path?	draft
+1788	Swap two path objects?	draft
+1789	Replace filename in a path?	draft
+1790	Replace extension in a path?	draft
+1792	Remove filename from a path?	draft
+1793	Remove extension from a path?	draft
+1794	What comparison operators are supported by path objects?	draft
+1795	Compare two paths <code>tmp/f</code> and <code>tmp/./f</code>?	draft
+1796	Compare two paths holding symbolic links?	draft
+1797	Check for existance of a file?	draft
+1798	Check if a file is a regular file or a directory or a symbolic link?	draft
+1799	Check if a file is neither a regular nor a directory nor a symbolic link?	draft
+1800	Check if a file is a special block, character, a fifo or a socket file?	draft
+1801	Check if a file is empty?	draft
+1802	Get the size of a file in bytes?	draft
+1803	Get the number of hard links to a file?	draft
+1804	Get the last time a file was written into?	draft
+1805	Yield information about the disk space available at a given path?	draft
+1807	Change the timepoint of the last write access of a file?	draft
+1808	Replace the permissions of a file?	draft
+1809	Resize a regular file?	draft
+1810	Change the current directory of the process?	draft
+1811	Check if a file exists?	draft
+1812	Use filesystem operations without following symbolic links?	draft
+1813	Yield the status of a file following any symbolic links?	draft
+1814	Yield the status of a file without following symbolic links?	draft
+1815	Improve performance of file operation calls using file status?	draft
+1816	Yield the type of a file using file status?	draft
+1817	Yield the permissions of a file using its file status?	draft
+1818	Yield the type of a file?	draft
+1819	Yield which permissions does a file have?	draft
+1820	Create a regular file?	draft
+1821	Create a directory inside an existing directory?	draft
+1822	Create a tree of nested directories?	draft
+1823	Create a symbolic link to a regular file?	draft
+1824	Create a symbolic link to a directory?	draft
+1825	Create a hard link from a file?	draft
+1826	Copy from a file of any type?	draft
+1827	Copy from a regular file?	draft
+1829	Copy a symbolic link?	draft
+1831	Recursively remove a directory and all of its contents?	draft
+1832	Yield the file an existing symbolic link refers to?	draft
+1833	Yield the absolute path of an existing path?	draft
+1834	Yield the relative path from current directory to a path?	draft
+1835	Yield the relative path from a base path to another path?	draft
+1836	Iterate over the entries of a directory?	draft
+1838	What are the directory iterator options?	draft
+1839	What operations are supported by directory entries?	draft
+1852	Create a new default configuration target in kernel source tree?	draft
+1861	What kernel configuration option allows debugging input devices?	draft
+1862	What kernel configuration option enables system request key combinations to recover system after crash?	draft
+1863	What kernel configuration option enables the <code>ftrace</code> tracer support?	draft
+1864	What kernel configuration option allows tracing any non-inline function in the kernel?	draft
+1865	What kernel configuration option allows tracking off periods of IRQs in the kernel?	draft
+1866	What kernel configuration option allows measuring preemption off latency and schedule latency tracing?	draft
+1874	What kernel configuration option enables module loading on runtime?	draft
+1875	What kernel configuration option enables unloading modules on runtime?	draft
+1876	What kernel configuration option ignores safely unloading modules having dependencies?	draft
+1867	What <code>make</code> target should be used to build the kernel in the source tree?	draft
+1869	Install the kernel binary file on native and non-native targets?	draft
+1872	What artifacts does <code>make modules_install</code> command generate on the host machine?	draft
+1918	How does spinlocks operate on a CPU?	draft
+2218	Replace elements that match the given value within a range?	draft
+1921	What are the limitations of locking/unlocking spinlocks in a kernel module?	draft
+1922	Prevent deadlock caused by IRQs when using spinlocks?	draft
+1923	How does spinlocks affect preemtion after locking and unlocking?	draft
+1924	Store and restore previous IRQs status when using spinlocks?	draft
+1925	How a critical section can be protected from being preemted by kernel?	draft
+1926	What is a mutex and how does it operate?	draft
+1927	Initialize a mutex in the kernel?	draft
+1928	Acquire a mutex in the kernel?	draft
+1929	Release an acquired mutex in the kernel?	draft
+1930	Check mutex locking availability before acquiring it?	draft
+1931	What are specific rules while using mutexes in the kernel?	draft
+1932	What is more efficient between spinlocks and mutexes compared in terms of CPU cycles?	draft
+1933	Acquire a lock only if it is not already held by another contender?	draft
+1873	How many module types are available?	draft
+1877	What is the basic skeleton of a kernel module?	draft
+1878	What functions are the entry points of all kernel modules?	draft
+1879	What are the <code>\\_\\_init</code> and <code>\\_\\_exit</code> function prefixes in kernel modules?	draft
+1880	What section is used in kernel objects to store module information?	draft
+1881	What macros are commonly used in kernel modules to store module information?	draft
+1882	What is the real underlying macro provided by the kernel to add an entry to the <code>.modinfo</code> section?	draft
+1883	What utility dumps the <code>.modinfo</code> section of kernel modules?	draft
+2274	Represent the view of all the elements of a range?	draft
+1884	What are the differences of <code>EXPORT_SYMBOL</code> and <code>EXPORT_SYMBOL_GPL</code> macros exporting symbols based on license?	draft
+1885	What is the <b>out-of-tree</b> kernel module building?	draft
+1886	What is the <b>built-in</b> kernel module building?	draft
+1887	Write a custom <code>Makefile</code> for <b>out-of-tree</b> kernel modules?	draft
+1888	What <code>make</code> targets should be available when writing a custom <code>Makefile</code> for kernel modules?	draft
+2282	How to update Qt components after manual installation?	draft
+1889	Write configuration dependent target in <code>Makefile</code> for a <b>built-in</b> kernel module?	draft
+1890	Specify multiple source files in a custom <code>Makefile</code> for a specific target?	draft
+1891	Specify compiler and linker flags in <code>Makefile</code> for kernel module building?	draft
+1892	Include other kernel source directories within a <code>Makefile</code>?	draft
+1893	Obtain a prebuilt kernel for building <b>out-of-tree</b> module?	draft
+1894	Load and unload an <b>out-of-tree</b> built kernel module?	draft
+1895	Write <code>Makefile</code> for a <b>built-in</b> kernel module?	draft
+1896	Define parameters in kernel modules?	draft
+1897	What psuedo-files represent module parameters?	draft
+1898	Pass parameters to built-in modules?	draft
+1899	How kernel functions can be called from a kernel module?	draft
+1900	How does <code>depmod</code> utility determine module dependencies?	draft
+1901	How does <code>modprobe</code> utility loads modules?	draft
+1902	How does <code>depmod</code> utility map devices to their drivers?	draft
+1903	Load a module at boot time?	draft
+1904	Unload an automatically loaded module?	draft
+1905	List loaded modules?	draft
+1906	Where the error macros defined are defined?	draft
+1908	Why <code>goto</code> statement is preferable over than nested <code>if</code>s in kernel modules?	draft
+1909	What is the standard way of handling null pointer errors in kernel modules?	draft
+1910	Where are the <code>printk()</code> function log levels are defined?	draft
+1911	What are the recommended helper functions alternative to <code>printk()</code>?	draft
+1912	What are the log levels of kernel printing helper functions?	draft
+1913	What is the default kernel log level?	draft
+1914	Change current kernel log level?	draft
+1915	Prefix the module output messages with a custom string?	draft
+1917	What is a spinlock?	draft
+1919	Define a spinlock in module source?	draft
+1920	Lock a previously defined spinlock in module source?	draft
+1936	What queues are implemented in the kernel to hold tasks?	draft
+1937	What is a wait queue?	draft
+1938	Initialize a wait queue?	draft
+1939	Put a process to sleep waiting for an event to occur?	draft
+1940	Put a process to sleep waiting either for an event to occur or a timeout to be reached?	draft
+1941	What values does the <code>wait_event_timeout()</code> function return?	draft
+1943	Wake up a process waiting on a wait queue?	draft
+1944	What values do <code>wait_up</code> family functions return?	draft
+1934	What does the term sleeping mean in the kernel?	draft
+2021	What are the different roles and their tasks in Linux-based software development teams?	draft
+2017	What are the expected outputs from the Yocto Project?	draft
+2195	Find the end iterator of the maximal sorted sub-range within a range using standard algorithms?	draft
+2200	Check if a range is partitioned?	draft
+2202	Find the nth element within a range?	draft
+2203	Find the lower and upper bounds of a value within a sorted range?	draft
+2208	Merge two sorted ranges into one?	draft
+2211	Produce a range containing elements present in the first range but not in the second range?	draft
+2212	Produce a range containing elements present only in one of two ranges, but not both?	draft
+2213	Produce a range containing elements present in either of the ranges?	draft
+2214	Produce a range containing elements present in both of the ranges?	draft
+2215	Apply a transformation function to each element within a range?	draft
+2216	Remove elements that match the given value within a range?	draft
+2217	Remove elements for which the given predicate evaluates true within a range?	draft
+2220	Reverse the order of elements in a range?	draft
+2221	Rearrange elements in the range from <code>[first, middle), [middle, last)</code> to <code>[middle, last), [first, middle)</code>?	draft
+2222	Move elements in the provided range by the specified amount of positions into left or right?	draft
+2223	Rearrange elements in the given array in a randomly order?	draft
+2224	Rearrange elements of given array so that they are in their next or previous permutation?	draft
+2225	Check whether two ranges have the same content but not necessarily the same order of elements?	draft
+2234	Indicate if all of the elements within a range evaluate to true for a predicate?	draft
+5497	Create a paragraph?	draft
+3673	What are the steps into creating a daemon?	draft
+2235	Indicate if at least one element within a range evaluates to true for a predicate?	draft
+2236	Indicate if no elements within a range evaluates to true for a predicate?	draft
+2264	Produce the view of Nth elements from a range of tuple-like elements?	draft
+2265	Apply a transformation functor to every element of the view of a range?	draft
+2266	Take first N elements of the view of a range?	draft
+2267	Take the sequence of elements from the view of a range for which the predicate evaluates to true?	draft
+2268	Drop the first N elements of the view of a range?	draft
+2269	Drop the sequence of elements from the view of a range for which the predicate evaluates to true?	draft
+2270	Filter the view of a range to consist all elements that satisfy the provided predicate?	draft
+2271	Reverse the view of a range for bidirectional ranges?	draft
+2272	Adapt an iterator and the number of elements following it into the view of a range?	draft
+2273	Adapt a view into a range with a begin and end iterator of matching types for non-range versions of algorithms?	draft
+2275	Split a single range into a view over sub-ranges? (incomplete)	draft
+2276	Flatten a splited view of a range?	draft
+2279	Represent a view of the generated sequence formed by repeatedly incrementing an initial value?	draft
+2280	Represent a view obtained by successively applying the istream input iterator?	draft
+2281	Where the Qt installer can be found?	draft
+2451	How move semantics can be implemented for a class?	draft
+2452	What happens to an object when move semantics is not available?	draft
+2453	What happens to an object declared with <code>const</code> when moved?	draft
+2454	Why return values should not be marked as <code>const</code>?	draft
+2455	What should be the state of an object after it has been moved?	draft
+2457	What header file should be included when using move semantics?	draft
+2458	What is the equivallent form of <code>std::move()</code>?	draft
+2460	What is the moved-from object state?	draft
+2461	What are the major ways of call-by-reference and what kind of arguments does each take?	draft
+2463	Why does automatic move operations disable when user declares special member functions?	draft
+2464	Based on the exact rules for <i>generated special member functions</i> when would copy constructor and copy assignment operator automatically be generated?	draft
+2465	Based on the exact rules for <i>generated special member functions</i> when would move constructor and move assignment operator be automatically generated?	draft
+2466	Based on the exact rules for <i>generated special member functions</i> when would destructor disable automatic move operations?	draft
+2468	What special member functions are generated by default for a class?	draft
+2469	When do move operations become broken?	draft
+2474	What declarations does the <b>Rule of Five</b> formulate to simplify special member functions generation?	draft
+2467	What does it mean to say move semantics is not passed through?	draft
+2470	How to deal with moving an object to itself?	draft
+2471	Why deleting moving operations does not make semantic sence?	draft
+2475	Why should we avoid using move operations when returning a local object?	draft
+2472	How to properly disable move semantics in an object without disabling fallback mechanism?	draft
+2473	How does move operation work for a class containing a member with disabled move operations?	draft
+2477	Does <code>virtual</code> destructor in a base class disable automatic move operations in its derived classes?	draft
+2462	When does the call-by-value become cheap with move semantics?	draft
+2476	When would passing by value becomes cheaper than passing by const lvalue references?	draft
+2478	When to take arguments by value and when to take by references?	draft
+5482	Create a custom size screen?	draft
+2669	How to list the GNU GCC compiler default configurations?	draft
+2670	How to inspect the detailed steps the GNU GCC takes to compile a source file?	draft
+2671	How to inspect the meta data of an executable file?	draft
+2672	How to remove symbol table from an executable file using binary utilities?	draft
+2673	How to use GNU GCC compiler to compile C source files separately?	draft
+2674	How to list the symbol paths within an executable file?	draft
+2675	Why do C libraries require kernel headers and how kernel headers can be installed?	draft
+2676	What is the GNU GCC compiler flag to specify processor architecture and processor specific optimization?	draft
+2677	What toolchains are available to use in kernel image build process?	draft
+2678	How to build <code>Crosstool-ng</code>?	draft
+2679	How to list <code>Crosstool-ng</code> sample configurations?	draft
+2680	How to use <code>Crosstool-ng</code> to show a brief info of current or specified configuration?	draft
+2681	How to use <code>Crosstool-ng</code> to load a target specific configuration sample?	draft
+5520	Draw the graph of a function?	draft
+2650	Separate source and build directories when building a project with cmake?	draft
+2651	Build a project?	draft
+2652	Specify the exact target to build?	draft
+2653	Show possible targets within a project?	draft
+2654	What targets are predefined by cmake?	draft
+2655	Explicitly specify generator for building the project?	draft
+2656	How many library types are defined in cmake?	draft
+2657	Create static and shared libraries?	draft
+2659	Enable position independent executable for an executable?	draft
+2660	Change the name of the target on output?	draft
+2661	What is the default library build strategy when library type is not specified?	draft
+2662	What values are equivalent to true and false in cmake?	draft
+2663	Use conditional statements to either make libraries and link to program or build them into one executable?	draft
+2664	What is the better alternative to making variables optional for user than using if expressions?	draft
+2665	What is the common way to pass source files to targets?	draft
+2666	Make an option dependent to another?	draft
+2683	How to use <code>Crosstool-ng</code> to print the tuple of the currently configured toolchain?	draft
+2684	How to use <code>Crosstool-ng</code> to separate downloading source files from building stage?	draft
+2685	How to use <code>Crosstool-ng</code> to build the desired architecture specific cross-toolchain?	draft
+2686	How to set library and headers path for a cross-compiled GNU GCC compiler?	draft
+2687	How to obtain U-Boot and configure it?	draft
+2688	How to load a file from a filesystem to RAM within U-Boot shell?	draft
+2689	What command can be used within U-Boot shell to load a kernel image into RAM from network?	draft
+2690	What command can be used within U-Boot shell to test network conectivity?	draft
+2691	What utilities can be used within U-Boot shell to load a kernel image from serial line to RAM?	draft
+2692	What command can be used within U-Boot shell to control the USB subsystem?	draft
+2785	Show source code in debugging session?	draft
+2693	What command can be used within U-Boot shell to control MMC subsystem?	draft
+2695	What commands can be used within U-Boot shell to erase, modify protection or write contents to NOR flash?	draft
+2696	What command can be used within U-Boot shell to display memory info?	draft
+2697	What command can be used within U-Boot shell to modify memory info?	draft
+2698	What command can be used within U-Boot shell to display board information?	draft
+2699	What command can be used within U-Boot shell to display environment variables?	draft
+2701	What command can be used within U-Boot shell to edit an environment variable?	draft
+2702	What command can be used within U-Boot shell to save environment variables permanently?	draft
+5495	Create a vertical text widget?	draft
+2703	What environment variable can be set within U-Boot shell to specify the boot command sequence that U-Boot should automatically execute at boot time?	draft
+2704	What environment variable can be set within U-Boot shell to be passed to the kernel as arguments?	draft
+2705	What environment variables should be set within U-Boot shell to load an image into RAM from network?	draft
+2706	What command can be used within U-Boot shell to see the size of the latest copy into memory?	draft
+2707	How to write conditional expressions within U-Boot shell?	draft
+2708	How to run a script within U-Boot shell?	draft
+2709	How to reference other variable within U-Boot shell?	draft
+2710	What does the <code>source</code> command do in U-Boot shell environment?	draft
+2715	How to list all available processors available to QEMU?	draft
+2716	How to use <code>qemu-system-arm</code> command to boot into <code>u-boot</code>?	draft
+2717	How to create a patch?	draft
+2771	Start an event processing loop on a worker thread?	draft
+2772	Start an event processing loop without blocking thread execution?	draft
+2773	Start an event processing loop to run queued tasks?	draft
+2774	Start an event processing loop to run tasks out of queue?	draft
+2775	Serialize concurrent execution of an event processing loop?	draft
+2777	Expire a task when reached to a deadline?	draft
+2779	Write a client establishing an asynchronous tcp connection to a server?	draft
+2780	Write a server accepting synchronous tcp requests?	draft
+2782	Write and read from server socket?	draft
+2778	Write a client establishing a synchronous tcp connection to a server?	draft
+2781	Write a server accepting asynchronous tcp requests?	draft
+2813	When does auto type decays?	draft
+2795	What are the alternatives to templates which should be avoided by using templates?	draft
+2796	What are the alternatives to typename keyword?	draft
+2797	What are the translation phases of a template?	draft
+2798	What happens when a function template triggers its instantiation?	draft
+2799	What is the signature of a function template?	draft
+2800	What requirements should the type of a function template parameter meet?	draft
+2801	Use a function template with different types?	draft
+2803	What are the limits of type conversion during type deduction of function template arguments?	draft
+2804	What are the common ways to handle type conversions during type deduction of function template arguments?	draft
+2805	How does the compiler deduce the default function template parameters?	draft
+2806	Declare a function template with multiple template parameters?	draft
+2808	What are the disadvantages of using additional template parameter for return types when having multiple function template parameters?	draft
+2809	What are the disadvantages of using automatic deduction of return types when multiple function template parameters are used?	draft
+2810	Use trailing return type to deduce the return type of a function template?	draft
+2811	What is the drawback of using trailing return type?	draft
+2812	Use common type as the return type of a function template?	draft
+2814	What are the use cases of default template arguments?	draft
+2793	How to add a package to the root filesystem of built qemu image using <b>Yocto Poky</b> tools?	draft
+2815	What ordering default template parameter can have?	draft
+2816	What are the rules of overload resolution for matching a function template overload by a compiler?	draft
+2817	What happens when there are two matching template overloads for a function call?	draft
+2818	What are the common use cases of overloading function templates?	draft
+2819	What is the drawback of overloading function templates?	draft
+2821	Declare a class template?	draft
+2822	Declare copy constructor and copy assignment operator of a class template?	draft
+2823	Define the member functions of a class template outside of the scope of the class?	draft
+2824	Declare a friend function template in a class template?	draft
+2825	Specialize a class template for a specific type?	draft
+2826	Partially specialize a class template for pointers?	draft
+2827	What are the possible template specializations of a class template with multiple template parameters?	draft
+2828	Define default values for class template parameters?	draft
+2829	Define an alias template?	draft
+2830	Use alias templates for member types of class templates?	draft
+2831	Under what condition class templates do not require specifying template parameters?	draft
+2832	What is the common way of supporting type deduction for a class template?	draft
+2833	What is the drawback of supporting class template argument deduction by providing constructors passing initial argument?	draft
+2834	What is the drawback of passing arguments of a template type by reference when supporting class template argument deduction?	draft
+2835	Disable automatic deduction of raw character pointers using deduction guides instead of constructors passing arguments?	draft
+2836	Where are the edge cases where deduction guides do not work?	draft
+2837	Define deduction guides for aggregate class templates?	draft
+2783	Begin debugging session of an executable?	draft
+2820	When would a template function overload be missed by a call?	draft
+2786	Set breakpoints on a program?	draft
+2787	Delete a breakpoint from a program?	draft
+2784	Step through program execution in debugging session?	draft
+2788	Print the value of an object?	draft
+2790	Inspect the type of a variable?	draft
+2789	Modify the value of a variable?	draft
+2791	Run shell commands in debugging session?	draft
+5623	Attach files to the build?	draft
+3440	Provide a custom failure message to an assertion?	draft
+3441	What string types are allowed to extract into assertions?	draft
+3442	Define a test unit with a comparison for equality?	draft
+3444	What are the arguments of a test unit?	draft
+3446	Write a test case that uses a fixture?	draft
+3470	Specify a method in a mock that should never be called?	draft
+3471	What is the cardinality of a mock when <code>Times()</code> is omitted?	draft
+3472	What is the default behavior of gMock when a mock function returns?	draft
+3473	Specify the return value of mock function for three calls?	draft
+3475	What happens if the cardinality is bigger than the specified return occurrances?	draft
+3476	In what order expectations are searched?	draft
+3477	Specify multiple expectations for a mock function?	draft
+3478	What is the best practice in ordering of multiple expectations?	draft
+3479	Verify that the call to a series of mock functions are in a specific order?	draft
+3480	Verify that a mock function will be called with an specific argument value exactly once and ignore the rest of the calls?	draft
+3481	What are the downsides of expectations being sticky?	draft
+3482	Specify a series of expectations that retire after reaching invocation upper bounds?	draft
+3484	What qualifiers are possible to specify as the fourth parameter of mock method?	draft
+3486	Write an expectation call to a mock method when the method is const qualified?	draft
+3487	What is an unprotected comma?	draft
+3488	In which access specifier a mock method is allowed to be written?	draft
+3489	Write mock methods for overloaded functions?	draft
+3490	Mock a class template?	draft
+3491	Mock a non-virtual method?	draft
+3492	Mock a free function?	draft
+3493	What is an uninteresting call?	draft
+3494	What is a nice mock?	draft
+3495	What is a strict mock?	draft
+3496	What are the limitations of nice and strict mocks?	draft
+3497	What is a naggy mock?	draft
+3498	What are the use cases of succeed and fail assertions?	draft
+3499	What is the use case of succeed assertion?	draft
+3500	What is the use case of fail assertion?	draft
+3501	What is the limitation of using fail assertion?	draft
+3502	Write a non-fatal failure assertion?	draft
+3503	Write a non-fatal failure for a specific line of file?	draft
+3595	Use a matcher as a predicate?	draft
+3447	What is the naming convention of test fixtures?	draft
+3448	What is the lifetime of a fixture?	draft
+3449	Define a test fixture for Queue class?	draft
+3451	What are the advantages of using <code>SetUp()</code> virtual function over constructor?	draft
+3452	What are the advantages of using <code>TearDown()</code> virtual function over destructor?	draft
+3453	Initialize tests by parsing arguments?	draft
+3454	What function macro is used to run tests across all linking units?	draft
+3455	What is the preferred way of building and running tests?	draft
+3457	When should we write manual main function for tests?	draft
+3458	What are the limitations of using GoogleTest assertions in threads?	draft
+3459	What is a mock?	draft
+3460	What is the workflow of running a mock object?	draft
+3461	What are the use cases of mocks?	draft
+3462	Write a mock for Queue class?	draft
+3464	What is the ordering of mock expectation calls?	draft
+3465	What is the general syntax of a mock?	draft
+3466	Where matchers are used in mocks?	draft
+3467	Specify an expectation for a mock that the argument given to its method will be at least 100?	draft
+3468	Ignore an argument when it is not in our interest when it is passed to a mock method?	draft
+3505	In what namespace are matchers defined?	draft
+3507	Write test assertions to evaluate boolean values?	draft
+3508	What are the binary comparison assertions?	draft
+3509	What are the requirements of writing binary comparison test assertions?	draft
+3510	When does GoogleTest print assertion arguments when the assertion fails?	draft
+3511	What is the evaluation order of arguments in assertions?	draft
+3512	What is the behavior of comparison assertions for pointers and C-style strings?	draft
+3513	Write a test to verify comparison of a pointer or a C-style string with null?	draft
+3514	Write a test to verify comparison of two C-style strings for equality and inequality?	draft
+3515	Write a test to verify comparison of two C-style strings without case sensitivity?	draft
+3516	Write a test to verify comparison of two floating point values?	draft
+3517	Write a test to verify if difference of two floating points does not exceed an absolute error bound?	draft
+3518	What are the exception assertions?	draft
+3519	Write a test to verify that a statement throws a specific exception type?	draft
+3520	Write a test to verify that a statement throws any exception?	draft
+3521	Write a test to verify that a statement does not throw any exceptions?	draft
+3522	Write a test to verify the return value of a predicate with given arguments?	draft
+3524	What is a predicate formatter?	draft
+3525	Create an assertion result object?	draft
+3526	What are the assertions taking predicate formatter?	draft
+3527	Write a test to verify a predicate using predicate formatter?	draft
+3636	Read an image from file?	draft
+3528	What is the use case of death assertions?	draft
+3529	When does a death assertion asserts?	draft
+3530	What is the difference between exception tests and death tests?	draft
+3531	What arguments does a death test take?	draft
+3532	Write a death test to verify exit status of a statement when death tsets are supported?	draft
+3533	What are the use cases of exit assertions?	draft
+3534	What are the common predicates used to verify exit status of a statement in exit assertions?	draft
+3535	What is the predicate type that exit assertions take as second argument?	draft
+3536	Write a wildcard matcher?	draft
+3537	What arithmetic comparison matchers exist?	draft
+3538	What boolean comparison matchers exist?	draft
+3539	What pointer comparison matchers exist?	draft
+3540	What matcher exists to check for returned <code>std::optional<></code> object?	draft
+3541	What matcher exists to check for returneed <code>std::variant<></code> object?	draft
+3542	What matcher should be used when given argument is a reference?	draft
+3543	What matcher can be used when testing a function template?	draft
+3544	What value category is used in matchers to take arguments?	draft
+3545	What is the difference between using boolean comparison matchers and assertions?	draft
+3546	What matchers exist for comparing equality of doubles?	draft
+3547	What is the difference between variants of floating-point matchers?	draft
+3548	Write a test to compare any floating point value to <code>NaN</code>	draft
+3549	What matchers exist to compare two floating-point values with specified approximity?	draft
+3550	 Verify given string contains a match against a regular expression?	draft
+3551	 Verify given string entirely matches against a regular expression?	draft
+3552	 Verify given string ends with a suffix?	draft
+3553	 Verify given string contains a substring?	draft
+3554	 Verify given string is empty?	draft
+3555	 Verify given string starts with a prefix?	draft
+3556	Verify two strings are equal without case sensitivity?	draft
+3557	Verify two strings are not equal regardless of their case?	draft
+3558	Verify two strings are equal?	draft
+3559	Verify two strings are not equal?	draft
+3560	Verify given argument is a base64 escaped sequence of a string?	draft
+3562	Verify a container that provides size method contains an expected number of elements?	draft
+3563	Verify two containers are equal?	draft
+3564	Verify a container contains an expected value?	draft
+3565	Verify a container has an expected repition of a value?	draft
+3566	Verify that each element of a container matches with a value or a matcher?	draft
+3568	Verify that a container matches a given range element-wise?	draft
+3569	Verify that a container is empty?	draft
+3570	Verify that a container is a subset of given range?	draft
+3572	Match each of the elements of a container with a matcher compared to another range?	draft
+3574	Verify that elements of a container match a series of criteria without orders?	draft
+3575	Match each of the elements of a container with a criteria without ordering?	draft
+3576	Verify a container holds given elements after being sorted?	draft
+3577	Verify a container holds given elements after being sorted by a predicate?	draft
+3578	Verify that member of a class that a pointer is pointing to matches to a criteria?	draft
+3579	Verify a map contains a key matching a certain criteria?	draft
+3580	Verify a pair contains expected key and value?	draft
+3582	Verify that the returning object from a member function matches a criteria when called by the test?	draft
+3583	Verify the result of calling a function matches a pattern?	draft
+3584	Verify the address of given argument matches a pattern?	draft
+3585	Verify that given pointer is pointing to an object that matches a pattern?	draft
+3586	Verify that given pointer holds a pointer that matches a pattern?	draft
+3587	Verify that given pointer matches a pattern after a dynamic cast to specified type?	draft
+3588	Verify that all the arguments of a tuple matches a pattern?	draft
+3589	Composite multiple matches into one?	draft
+3590	Make sure at least one of a few matchers apply?	draft
+3591	Verify that given argument does not match a pattern?	draft
+3592	Use a ternary like operator to conditionally compare the given argument to one of the two existing patterns?	draft
+3593	Cast a matcher to another matcher type?	draft
+3594	Verify that a predicate returns true when given argument is passed into it?	draft
+3596	Use a matcher to redirect results into a listener?	draft
+3597	Verify a value matches a pattern?	draft
+3598	Define a matcher taking no arguments?	draft
+3599	Define a matcher taking argumetns?	draft
+3600	Define a matcher taking a range?	draft
+3601	What are the restrictions of defining a matcher?	draft
+3665	How many parallel programming paradigms exist?	draft
+3667	What are the advantages of preemptive multitasking?	draft
+3668	Use Amdahl's law to measure the speed-up factor of a parallel system?	draft
+3669	Use Gustafson's law to compute the speed-up gained by using multiple processors?	draft
+3681	Construct a thread of execution?	draft
+3682	Check how many threads can run on the host in parallel?	draft
+3672	What are the main characteristics of a daemon?	draft
+3674	What are the major differences between a process and a thread?	draft
+3675	What are the use cases of syncronization primitives?	draft
+3676	What are the characteristics of coroutines?	draft
+3677	What is the life cycle of a thread?	draft
+3678	What are the common synchronization primitives?	draft
+3679	What are the common synchronization failures?	draft
+3633	Install OpenCV from source?	draft
+3634	Use OpenCV in a simple CMake configured project?	draft
+3635	What type is used to store image data?	draft
+3638	What coloring formats are possible to apply on importing images?	draft
+3639	Retrieve the number of rows and columns within a matrix?	draft
+3640	What type is used to contain pixel information?	draft
+3641	Retrieve a pixel from a matrix?	draft
+3642	Display an image in a window?	draft
+3643	Record video feed from a camera?	draft
+3644	What are the basic objects in OpenCV?	draft
+227	When does postgres need the PGDATA directory?	draft
+3645	What type aliases are available for <code>cv::Vec</code> class template?	draft
+3646	What operations does <code>cv::Vec</code> class template support?	draft
+3647	What operations does Scalar type support?	draft
+3648	What operations does Point type support?	draft
+3649	What type aliases are available for Point class template?	draft
+3650	What operations does Size type support?	draft
+3651	Initialize an object of type Rect?	draft
+3652	Initialize an object of type RotatedRect?	draft
+3654	Create a matrix with specific channels?	draft
+3655	How many channel options are available?	draft
+3656	Initialize a matrix with zeros?	draft
+3657	Initialize a matrix with ones?	draft
+3658	Create an eye matrix?	draft
+3659	What operations are supported on Mat type?	draft
+3660	Count non-zero elements in a matrix?	draft
+3661	Calculate mean standard deviation of a matrix?	draft
+3662	Locate minimum and maximum values in a matrix?	draft
+3663	Store matrix data in a persistent storage?	draft
+3664	Read data from a persistent storage?	draft
+3734	Configure a project?	draft
+3735	What directories should be ignored in projects?	draft
+3737	What are the first stages of cmake execution?	draft
+3738	What is the underlying build system?	draft
+5605	Enable compiler warnings?	draft
+3739	What is the incompatibility difference between build systems?	draft
+3740	What is the minimum required commands to build a project?	draft
+3741	What is a policy?	draft
+3742	What is a target?	draft
+3743	What options are available for <code>project()</code> command?	draft
+3745	What is the difference between variables and their CMAKE prefixed counterparts?	draft
+3746	What are the available target types?	draft
+3747	Specify languages features for a single target?	draft
+3748	Explicitly specify which generator should be used to build the project?	draft
+3749	Start over building the binary directory?	draft
+3750	Build a project with single-config generators?	draft
+3751	Build a project with multi-config generators?	draft
+3752	What options are available to add a third-party dependency to a project?	draft
+3753	What are the advantages of <code>FetchContent</code> over <code>add_subdirectory</code>?	draft
+3754	Where the dependencies will be stored by <code>FetchContent</code>?	draft
+3755	What are the disadvantages of using <code>FetchContent</code>?	draft
+3756	Integrate an external library into the project from a remote source?	draft
+3757	Integrate an external library into the project from a local path?	draft
+3758	Add an external library to our project and make the dependency ready to use	draft
+3759	What wrapper can be used to fetch contents with ease?	draft
+3760	Toggle features of an imported external library?	draft
+3761	Make library’s headers visible to clients?	draft
+3762	What does the term generator expressions refer to?	draft
+3763	Why should we specify two interfaces for library headers?	draft
+3764	What is the difference between the two existing build interfaces?	draft
+3765	Specify which subdirectory should be fetched when importing an external library?	draft
+3766	What extra step needs to be done for shared libraries on Windows to be exported?	draft
+3768	What target properties should be avoided when making cross platform projects?	draft
+3769	Why do we need to link targets to a header only library?	draft
+3770	Write a configuration preset?	draft
+3772	What is the best practice in inheritance of presets?	draft
+3773	When do user specified presets become handy?	draft
+3774	Put a condition on a preset?	draft
+3775	Write a build preset?	draft
+3776	Write a workflow preset?	draft
+3777	Specify a separate directory for installation?	draft
+3778	How many ways exist to install a project?	draft
+3779	What are the default configurations of cmake commands when build type is not specified?	draft
+3780	Override the install directory when installing?	draft
+3781	How many search modes exist to find an external library?	draft
+3782	What files will be searched for in the config mode?	draft
+3783	What files will be searched for in the module mode?	draft
+3784	What are the advantages of both search modes?	draft
+3786	What event types exist to trigger workflows?	draft
+3787	What runners are supported?	draft
+3788	Create a job?	draft
+3789	Create multiple jobs running in sequence?	draft
+3790	How many types exist for steps?	draft
+3791	What are the steps properties?	draft
+3792	Write a job to checkout the source repository?	draft
+3793	Write a job to setup nodejs modules?	draft
+3795	Write a job to create a release?	draft
+3796	Write a job to release generated artifacts?	draft
+3798	Write a job to upload artifacts in storage?	draft
+3799	Write a job to download artifacts from storage?	draft
+3800	Write a job to delete artifacts within storage?	draft
+3801	Make job execution conditional?	draft
+3802	Write a job to continue execution even after failure?	draft
+3803	Create an output for a step?	draft
+3804	Create an output for a job?	draft
+3805	Run a job on a matrix of runners?	draft
+3884	What does the body of a coroutine generator look like?	draft
+3885	What is the return type of a coroutine generator?	draft
+3886	What is the responsibility of the promise type in a coroutine?	draft
+3887	What function in a coroutine will be called first by the compiler?	draft
+3888	What function in a coroutine will be called to handle the <code>co_return</code> statement?	draft
+3889	What function in a coroutine will be called to handle when the coroutine reaches an exception point?	draft
+3890	What functions in a coroutine will be called to handle execution flow?	draft
+3892	What is the role of an awaitable in a coroutine code?	draft
+3891	Construct a coroutine by defining its return type outside of the body of the coroutine?	draft
+3893	When do awaitables suspend coroutine code?	draft
+3894	What function does awaitable call to check if it needs to suspend or not?	draft
+3895	What function in an awaitable will be called before function suspension?	draft
+3896	What function in an awaitable will be called before function resumes execution?	draft
+3897	What is the body of an awaitable that always suspends on start up?	draft
+3898	What is the body of a coroutine handle?	draft
+3900	What kind of object does the promise type return to the coroutine?	draft
+3901	What interface should values have in order to be usable by coroutines?	draft
+3939	What are the advantages of using strategies as non-member functions?	draft
+3941	Where are the common use cases of the command pattern?	draft
+3942	What is the structure of the command pattern?	draft
+3943	Use command pattern to decouple invoker and receiver classes?	draft
+3940	What are the use cases of template method pattern?	draft
+1492	What are the responsibilities of BitBake in the Yocto Project?	draft
+5521	Colorize an element?	draft
+3483	What parameters does a mock method take?	draft
+5274	Remove an empty directory?	draft
+5248	Locate the manual pages of a command?	draft
+5616	Specify test launcher?	draft
+5278	Create a directory?	draft
+32	Build and install <i>crosstool-ng</i>?	draft
+3785	What are the building blocks of a workflow?	draft
+3794	Give enough permissions to an action to create a release?	draft
+5192	Permit write access to a job to create releases?	draft
+5193	Permit write access to a job to create pull requests?	draft
+5194	What is the structure of strategy pattern?	draft
+5197	When do we inject the strategy into the context through constructor and when do we use a setter method?	draft
+5199	What is the definition of null object pattern?	draft
+5201	What are the differences between static and dynamic strategy patterns?	draft
+5203	What part of the kernel does SELinux integrate with?	draft
+5205	What are the disadvantages of having fine-grained access control policies in SELinux?	draft
+5207	Get the access control list of a file?	draft
+5209	Check the current SELinux status?	draft
+5211	What is a context in an SELinux policy?	draft
+5213	What is a label in SELinux terminology?	draft
+5219	Take the attributes of processes?	draft
+5215	What makes label-based access control in SELinux more flexible than using path names in other LSM implementations?	draft
+5217	Where are process attributes stored in the system?	draft
+5221	What annotations are available for logs?	draft
+5224	List available jobs inside a workflow locally?	draft
+5226	Validate correctness of a workflow without running any containers?	draft
+5228	Provide a secret to the local runner in order to use as a substitute to GitHub secrets?	draft
+5230	Provide an input to the actions running by local runners?	draft
+5232	Rename the actor on local runners?	draft
+5234	Write an action to run a local container?	draft
+5236	Where are SELinux roles defined?	draft
+5238	Obtain an overview of the SELinux roles?	draft
+5240	What restrictions does SELinux user impose on a Linux user?	draft
+5242	What is the role of sensitivity labels in access control?	draft
+5244	How many confidentiality levels are available in MLS?	draft
+5195	What are the definitions of strategy pattern?	draft
+5198	What is the implementation of non-member strategy pointer?	draft
+5200	Implement the strategy pattern with null object pattern?	draft
+5202	What mechanism does SELinux use to enforce access control?	draft
+5204	Read the list of active LSM modules on a system?	draft
+5206	What are the building blocks of SELinux implementation?	draft
+5208	Set the access control list of a file?	draft
+5210	What are the prerequisites for enabling SELinux on a system?	draft
+5212	How does SELinux identify a process?	draft
+5214	Print the context of your user?	draft
+5216	What are the four components of an SELinux context?	draft
+5218	What each of the attribute files in the process directory represent?	draft
+5220	What does the type component in an SELinux context enforce?	draft
+5222	What utility provides containerized runners?	draft
+5225	Draw the graph of workflows on local runners?	draft
+5227	Run a local workflow each time a modification is made?	draft
+5229	Provide a variable to the local runner in order to use as a substitute to GitHub variables?	draft
+5231	Provide environment variables to the actions running by local runners?	draft
+5233	Disable steps output on local runners?	draft
+5526	Make an element italic?	draft
+5607	Enable clazy for Qt projects?	draft
+5235	What is the role of SELinux roles in access control?	draft
+5237	What roles are available in a default SELinux installation?	draft
+5239	How does SELinux prevent unprivileged access when the Linux user has switched?	draft
+5241	What is the relationship between SELinux users and Linux users?	draft
+5243	What confidentiality model does MLS implement?	draft
+5245	What are the use cases for categories in SELinux?	draft
+5246	How tenants are isolated using categories?	draft
+5249	Locate the binaries of a command?	draft
+5295	Copy a file into another path?	draft
+5250	Locate the binaries of a command with a specific pattern in their name?	draft
+5269	Remove a file with suppressing errors?	draft
+5251	Locate all the binary instances of a command?	draft
+5252	Locate the binaries of a command used inside of an alias?	draft
+5286	Open a manpage in your favorite browser?	draft
+5253	Locate the binaries of a command used inside of a shell function?	draft
+5271	Remove a directly and its contents?	draft
+5254	Locate the binaries of a command excluding directories starting with dot?	draft
+5255	Locate the binaries of a command excluding directories starting with tilde?	draft
+5256	What are the commonly used system monitoring commands?	draft
+5273	Remove a file with receiving a confirmation of the removal?	draft
+5257	Print the path to the working directory of your running shell?	draft
+5258	Print the resolved path to the working directory of your running shell?	draft
+5259	Print the name of the user you are logged in with?	draft
+5275	Remove empty directories and ignore non-empty ones?	draft
+5260	Print the name of your system within a local domain?	draft
+5261	Print the network addresses of your system?	draft
+5287	Locate the path to the manual page files of a command?	draft
+5262	Print the fully qualified domain name on your system?	draft
+5276	Remove nested empty directories?	draft
+5263	Change the name of your system within a local domain?	draft
+5264	Print the currently used kernel release?	draft
+5265	Print the machine architecture of the running system?	draft
+5277	Remove empty directories with removal confirmations?	draft
+5267	Generate a sequence of numbers with specific steps?	draft
+5279	Create nested directories?	draft
+5288	Search for the manual page of a command?	draft
+5280	Create directories with specific permissions?	draft
+5281	Create directories with confirmations after creation?	draft
+5296	Recursively copy files inside a directory?	draft
+5282	Open the manual page of a command?	draft
+5289	Open the manual page of a command in a specific locale?	draft
+5283	Where is the common path to manual page files?	draft
+5284	List available manpage sections of a command?	draft
+5285	Select a specific manpage section of a command?	draft
+5290	Open the manual page of a command with a specific pager?	draft
+5300	Change the working directory of the running shell into root directory?	draft
+5292	Prevent file overwrites when moving?	draft
+5297	Update files when there are differences between source and destination?	draft
+5293	Overwrite files when moving without prompts?	draft
+5294	Interactively move files?	draft
+5298	Change the working directory of the running shell?	draft
+5301	Change the working directory of the running shell to its parent directory?	draft
+5299	Change the working directory of the running shell into home directory?	draft
+5303	List the entries of a directory?	draft
+5302	List entries of the current working directory of the running shell?	draft
+5305	List the entries of a directory sorted by modification time?	draft
+5304	List the entries of a directory with human readable file sizes?	draft
+5306	List the entries of a directory sorted by file sizes?	draft
+5307	List the entries of a directory with directories grouped first?	draft
+5308	Randomly shuffle the lines of a file or input stream?	draft
+5309	Generate a sequence of shuffled numbers?	draft
+5310	Generate a random percentage?	draft
+5311	Generate a stream of randomly shuffled numbers?	draft
+5312	Sort the lines of a file or input stream?	draft
+5313	Reversely sort the lines of a file or input stream?	draft
+5314	Sort numerically the lines of a file or input stream?	draft
+5315	Randomly sort the lines of a file or input stream?	draft
+5316	Sort a column of a file or input stream?	draft
+5317	Unique sort the lines of a file or input stream?	draft
+5318	Search for a pattern in a file or input stream?	draft
+5341	What damages can information disclosure cause and what are the mitigations?	draft
+5319	Use extended regular expressions for searching a pattern in a file or input stream?	draft
+5320	Search for a fixed string in a file or input stream?	draft
+5321	Invert the search results of a pattern in a file or input stream?	draft
+5342	What damages can denial of service cause and what are the mitigations?	draft
+5322	Recursively search for a pattern in a directory?	draft
+5323	Ignore binary files when searching for a pattern?	draft
+5324	Find the files containing a pattern rather than the lines?	draft
+5343	What damages can elevation of privileges cause and what are the mitigations?	draft
+5325	Ignore case sensitivity when searching for a pattern?	draft
+5326	Include line numbers in the search results of a pattern?	draft
+5327	Suppress error messages when searching for a pattern?	draft
+5344	What are the post-exploitation steps?	draft
+5328	Suppress all output and only return the exit status when searching for a pattern?	draft
+5329	Search for a whole word pattern in a file or input stream?	draft
+5330	Search for a pattern that matches the whole line in a file or input stream?	draft
+5345	What are the penetration testing approaches?	draft
+5331	Count the number of matching lines for a pattern in a file or input stream?	draft
+5332	Limit the number of matching lines for a pattern in a file or input stream?	draft
+5333	How does penetration testing methodologies help testers?	draft
+5346	What is the difference between vulnerability assessment and penetration testing?	draft
+5334	What are the common penetration testing methodologies?	draft
+5335	What are the pre-engagement steps before starting penetration tests?	draft
+5336	What are the benefits of using threat modeling in penetration testing?	draft
+5347	What are the phases of exploitation?	draft
+5337	What are the common threat models?	draft
+5338	What damages can spoofing identity threat cause and what are the mitigations?	draft
+5339	What damages can tampering data cause and what are the mitigations?	draft
+5348	Setup the latest Metasploit?	draft
+5340	What damages can repudiation threads cause and what are the mitigations?	draft
+5349	Pass a value as parameter to a thread?	draft
+5350	Pass a reference as parameter to a thread?	draft
+5351	Pass a constant reference as a parameter to a thread?	draft
+5352	Pass a value as parameter to a thread?	draft
+5369	What are the differences between Decorator and Chain of Responsibility pattern?	draft
+5353	Pass a reference as parameter to a thread?	draft
+5354	Pass a constant reference as a parameter to a thread?	draft
+5355	Pass an rvalue reference as a parameter to a thread?	draft
+5356	What are the considerations of returning a value from threads?	draft
+5357	Move the ownership of a thread to another thread object?	draft
+5358	Wait for a thread to complete execution?	draft
+5359	Check if a thread has already joined?	draft
+5361	What specific situation should remind you of using the Command pattern in your program?	draft
+5362	What is the structure of the Command pattern?	draft
+5363	Implement the command pattern?	draft
+5364	What specific situation would remind you of using the Memento pattern in your program?	draft
+5365	What is the structure of the Memento pattern?	draft
+5366	What are the disadvantages of Memento design pattern?	draft
+5367	Implement the Memento pattern?	draft
+5368	What is the structure of Chain of Responsibility pattern?	draft
+5370	Compile an optimized release configuration of a source that includes a header from the source directory and a header from the system and linked to a library?	draft
+5383	Remove empty lines in a file?	draft
+5375	Use extended regular expressions on sed?	draft
+5384	Add a line on top of a file?	draft
+5371	Define a function to evaluate multiplication of a double to a global constant number in compile time?	draft
+5376	Capitalize occurrences of a pattern?	draft
+5377	Combine multiple sed statements?	draft
+5372	Share the instance of an object without losing ownership?	draft
+5388	What are the advantages of using logical backup?	draft
+5373	Replace occurrences of a pattern with a substitute?	draft
+5378	Write changes of sed command inplace?	draft
+5374	Replace occurrences of a pattern with a substitute without case sensitivity?	draft
+5385	Write a line after a pattern match?	draft
+5379	Use sed to print a range of lines?	draft
+5380	Print lines containing occurrences of a pattern?	draft
+5381	Delete lines containing occurrences of a pattern?	draft
+5386	What are the differences between logical backup and physical backup?	draft
+5382	Make a backup of the original file while in a sed command?	draft
+5387	What permissions are required for the user to perform a database backup?	draft
+5391	What are the advantages of physical backup?	draft
+5389	What are the disadvantages of using logical backup?	draft
+5390	What logical backup formats are available in PostgreSQL?	draft
+5392	What are the disadvantages of physical backup?	draft
+5393	Perform a logical backup on a local cluster?	draft
+5394	Perform a logical backup and write the results into a file?	draft
+5395	Perform a backup with verbose output?	draft
+5396	Perform a logical backup remotely on a cluster?	draft
+5397	What is the side effect of removed search path in the backup?	draft
+5398	In what scenarios would you want to use insert instead of copy statements in the backup?	draft
+5399	Perform a logical backup including database creation statement?	draft
+5400	Perform a logical backup including only schema?	draft
+5401	Perform a logical backup excluding schema?	draft
+5402	Perform a logical backup limited to the scope of a table?	draft
+5403	Perform a logical backup excluding a table?	draft
+5404	Perform a logical backup stored in a compressed archive?	draft
+5406	Configure a database to look up for tables within a search path?	draft
+5407	Perform a formated logical backup?	draft
+5408	Perform a faster backup with parallel processes?	draft
+5409	Print the list of content of the backup?	draft
+5410	Restore a database from a formatted backup?	draft
+5411	Restore a database from a formatted backup into a file?	draft
+5412	Perform a backup using list of content?	draft
+5413	Perform a restoration in parallel?	draft
+5414	Perform a backup from the entire cluster?	draft
+5415	Schedule backup?	draft
+1828	Why there is copy options?	draft
+5416	Export contents of a table into a file?	draft
+5268	Remove a file?	draft
+5417	Export contents of a table with CSV format into a file?	draft
+410	Iterate over the entries of a directory?	draft
+5418	Filter contents of a table when exporting to a file?	draft
+1837	Recursively iterate over directories with following symbolic links?	draft
+5419	Import contents of a table from a file?	draft
+1278	How to remove an image in docker?	draft
+5615	Specify linker launcher?	draft
+5420	Filter contents of a table when importing from a file?	draft
+1350	Configure the swarm certificate rotation period?	draft
+5421	Import contents of a table from a program?	draft
+31	What toolchains are available to build cross-toolchains with?	draft
+5422	Export contents of a table into a program?	draft
+38	Get the version and configurations of a native or cross-compiled GCC compiler?	draft
+5423	What is the alternative to the copy command for unprivileged users?	draft
+2667	What are prerequisites for communicating with an embedded device?	draft
+5424	What is the major use case of physical backup?	draft
+2668	How to connect to an embedded device using <code>picocom</code> through <code>/dev/ttyUSB0</code> device driver?	draft
+5425	What are the limitations of performing a physical restoration?	draft
+2682	How to use <code>Crosstool-ng</code> to configure selected architecture specific cross-toolchain?	draft
+5426	What tools can be used to perform a physical backup?	draft
+2694	What command can be used within U-Boot shell to read, write and erase contents to NAND flash?	draft
+5427	What are the prerequisites of performing a physical backup?	draft
+5428	Perform a physical backup?	draft
+1860	What kernel configuration option enables timing information while printing messages from the kernel?	draft
+5429	Verify the integrity of a physical backup?	draft
+90	Solve different relocation addresses of the kernel with multi-platform ARM <code>uImage</code>?	draft
+5430	Restore a physical backup?	draft
+5431	What is the use case of Point in Time Recovery?	draft
+62	Overlay nodes on top of another to create a composite tree in which the outer layers extend or modify the inner ones?	draft
+5432	What are the disadvantages of Point in Time Recovery?	draft
+895	Compile an x64 assembly program?	draft
+902	Debug a compiled program with gdb?	draft
+912	Inspect the breakpoint, stack, threads and other resources of the debugging program in gdb?	draft
+976	Indicate that a literal number is in hexadecimal base in x64 assembly?	draft
+962	What registers are used to read command line arguments from an x64 assembly program?	draft
+2770	What is the objective of <code>io_object</code> in boost?	draft
+2776	Handle exceptional asynchronous control flow in an event processing loop?	draft
+108	Build an executable from C++ source?	draft
+116	How many constants are available in C++?	draft
+1481	What are the main module properties?	draft
+640	Compare two derived objects having a base class?	draft
+641	What is the compatibility defect of comparison operators in C++20?	draft
+2807	What are the common ways of handling return type deduction for function templates having multiple function template parameters?	draft
+1362	Query alignment of object types?	draft
+1396	What types can be used to create a cooked user-defined literal?	draft
+3964	What are the use cases of command pattern?	draft
+1402	How literal operators or literal operator templates can be used to construct a numberic value by its binary representation?	draft
+2450	Where does move semantics apply optimizations compared to prior C++11 standard?	draft
+2456	When do compilers automatically switch to move semantics?	draft
+2459	What is the behavior of a parameter that is declared as an rvalue reference?	draft
+2178	How to move iterators back and forth regardless of their bidirectional support?	draft
+2210	Remove consecutive duplicate values within a sorted range?	draft
+2219	Replace elements for which the given predicate evaluates to true within a range?	draft
+3602	What is the use case of a mutex?	draft
+1765	What are the constituents of a path?	draft
+1766	What path formats are available?	draft
+1768	What are the differences of member and free-standing functions of path?	draft
+1791	Convert directory separators inside a path to the native format?	draft
+67	Use <code>mkimage</code> to create a compressed kernel image from an uncompressed kernel image?	draft
+1907	What is the standard way to return an error in kernel modules?	draft
+1104	How many synchronization mechanisms for accessibility of shared resources are available in the kernel?	draft
+1916	How many synchronization mechanisms for accessibility of shared resources are available in the kernel?	draft
+1109	What are the limitations of locking/unlocking spinlocks in a kernel module?	draft
+1121	Acquire a lock only if it is not already held by another contender?	draft
+1935	What passive waiting mechanisms are implemented in the kernel?	draft
+1942	Convert standard time units to jiffies?	draft
+213	What is the meaning of ACID terminology?	draft
+219	What schema an object in postgres belongs to?	draft
+234	What libraries are required for C++ projects to link to postgres?	draft
+1724	What formats are used to represent debugging symbols for executables?	draft
+5433	What is the process of distributing SELinux policies?	draft
+5434	What languages can be used to write SELinux policies?	draft
+5435	What are the policy files?	draft
+5436	Where SELinux policy modules are usually placed after distribution?	draft
+5437	Where SELinux policy modules are placed after they are activated?	draft
+5438	Figure out which policy is active on a system?	draft
+5439	Where does SELinux look for the configuration for next reboot?	draft
+5440	Check if MLS policy is enabled?	draft
+5441	How many policy stores are available?	draft
+5442	How does SELinux react to new kernel permissions that is not yet known to SELinux?	draft
+5443	Configure how SELinux should react to unknown permissions?	draft
+5444	Check if a type is available?	draft
+1752	Accept connections by listening on a port?	draft
+3882	How does a compiler know if a function is a coroutine?	draft
+3899	What key components in a coroutine interact with each other to make the suspending functions functional?	draft
+5522	Construct a linear gradient?	draft
+5503	Draw a border around an element with double lines?	draft
+5445	What specific scenario would remind you of using the Observer pattern in your program?	draft
+5446	What is the structure of Observer pattern?	draft
+5447	Implement Observer pattern?	draft
+5448	Implement Observer pattern with a connection manager?	draft
+5449	Export the stack usage of a program with GCC?	draft
+5450	Activate stack usage warning when it exceeds a certain threshold?	draft
+5451	What are the use cases of core module?	draft
+5452	What are the use cases of imgcodecs module?	draft
+5453	What are the use cases of videoio module?	draft
+5454	What are the use cases of imgproc and ximgproc module?	draft
+5455	What are the use cases of highgui module?	draft
+5456	What are the use cases of video and videostab modules?	draft
+5457	What are the use cases of calib3d module?	draft
+5458	What are the use cases of features2d, xfeatures2d and bioinspired modules?	draft
+5459	What are the use cases of objdetect and xobjdetect modules?	draft
+5460	What are the use cases of ml module?	draft
+5461	What are the use cases of photo and xphoto modules?	draft
+5462	What are the use cases of shape module?	draft
+5463	What are the use cases of optflow and tracking modules?	draft
+5464	What are the use cases of face and saliency modules?	draft
+5465	What are the use cases of surface_matching module?	draft
+5466	What are the use cases of text module?	draft
+5467	Install opencv with contrib modules?	draft
+5468	Write a CMake listfile to link OpenCV to a program?	draft
+2020	What are the building blocks of the Metadata component in the Poky build system?	draft
+2016	What are the input requirements for the Yocto Project?	draft
+1596	Conditionally append and prepend value to a variable only when target device is Beagle Bone?	draft
+1502	Set up the building environment using <code>oe-init-build-env</code>?	draft
+1522	What are the required variables in the configuration file of a layer?	draft
+1534	What is the preference of bitbake over selecting between multiple versions of the same provider?	draft
+3439	How many assertion variations exist?	draft
+3445	What testing feature can be used to share data between multiple tests?	draft
+3450	What are the advantages of using constructor over <code>SetUp()</code> virtual function?	draft
+1584	Trace the variable changes during execution of a recipe?	draft
+1611	What machine architecture is supported by a standard SDK?	draft
+1617	Build an image using an installed extensible SDK?	draft
+2792	How to build a kernel image using <b>Yocto Poky</b> tools?	draft
+2794	How to build a <code>qemuarm64</code> image with <b>SATO</b> as desktop environment for mobile devices using <b>Yocto Poky</b> tools?	draft
+3670	What is the life cycle of a process?	draft
+23	Specify the life cycle of Embedded Linux projects?	draft
+3671	What are the major Inter Process Communication mechanisms supported by Linux?	draft
+3736	Configure a project from another path?	draft
+3744	What variables will be provided by the <code>project()</code> command?	draft
+3767	Bake the run path into a library where it can be loaded after build and installation?	draft
+1009	How many components does CMake have?	draft
+1010	How many graphical interfaces officially exists for cmake?	draft
+2649	What should be the bare minimum content of a <code>CMakeLists.txt</code> file?	draft
+2658	Use common library object to use static and shared in one go?	draft
+3653	Retrieve the bounding rectangle of a rotated rectangle?	draft
+1254	How to check if docker is connected to server?	draft
+1256	How to run a container from an existing image?	draft
+1271	How to format the output of image lists in docker?	draft
+1274	How to see the build history of an image and its image layers?	draft
+1283	How does default programs are embedded in docker images so that containers know which program to run when they are launched with no arguments?	draft
+1290	What instructions in Dockerfile do create new layers into an image?	draft
+1316	What are the differences of replicated and global docker services?	draft
+18	What image channels are affected by drawing functions?	draft
+510	Convert an image into another image of different type?	draft
+5469	Integrate ftxui library into your project?	draft
+5471	What are the use cases of screen module in ftxui?	draft
+5472	What are the use cases of dom module in ftxui?	draft
+5473	What are the use cases of component module in ftxui?	draft
+5474	Declare a dimension type representing full screen size?	draft
+5478	What color spaces are supported by ftxui?	draft
+5475	Declare a dimension type representing a fixed size?	draft
+5476	Declare a dimension type representing the size of an element?	draft
+5477	Access to the dimensions of a dimension type?	draft
+5487	Register a hyperlink to a pixel?	draft
+5479	Use literals to create a color object?	draft
+5484	Access to a pixel inside a screen?	draft
+5480	What are the properties of a pixel?	draft
+5483	Print an empty screen on the terminal?	draft
+5486	Access characters inside a pixel of a screen?	draft
+5485	Colorize a pixel inside a screen?	draft
+5488	What would happen if we access a pixel outside the bounds of a screen?	draft
+5489	Reset cursor position to the top left corner of the terminal?	draft
+5490	What types does the dom module provide?	draft
+5491	Render an element onto a screen?	draft
+5492	What is the role of a decorator?	draft
+5493	What operator can be used to apply a decorator to an element?	draft
+5496	What is the difference between text and paragraph?	draft
+5498	What are the alignment variations of a paragraph?	draft
+5499	Draw a border around an element?	draft
+5500	Draw a border around an element with sharp edges?	draft
+5501	Draw a border around an element with dashed lines?	draft
+5502	Draw a border around an element with thick lines?	draft
+5504	Draw an invisible border around an element?	draft
+5505	Draw a border around an element with a custom character?	draft
+5506	Draw a border around an element with a header?	draft
+5507	Separate two elements by drawing a line between them?	draft
+5508	Separate two elements with a thick line?	draft
+5509	Separate two elements with a double line?	draft
+5510	Separate two elements with a space?	draft
+5511	Separate two elements with a variable styled line?	draft
+5512	Separate two elements with a custom character?	draft
+5513	Separate two elements with a colorized line?	draft
+5514	Draw a bar representing progress?	draft
+5515	Draw a bar representing progress moving towards the right direction?	draft
+5516	Draw a bar representing progress moving towards the left direction?	draft
+5517	Draw a bar representing progress moving upwards?	draft
+5518	Draw a bar representing progress moving downwards?	draft
+5519	Explicitly specify the direction of a progress bar?	draft
+5523	Define multiple stops for a linear gradient?	draft
+5524	Colorize an element with a linear gradient?	draft
+5528	Invert the color of an element?	draft
+5529	Underline an element?	draft
+5562	Use extended regular expressions on sed?	draft
+5530	Underline an element with double lines?	draft
+5531	Strikethrough an element?	draft
+5532	Make an element blink?	draft
+5563	Capitalize occurrences of a pattern?	draft
+5533	Horizontally align elements?	draft
+5534	Vertically align elements?	draft
+5535	Align elements inside a grid?	draft
+5564	Combine multiple sed statements?	draft
+5536	Fill the space between two aligned elements?	draft
+5537	Make nested layouts?	draft
+5565	Write changes of sed command inplace?	draft
+5539	Draw on a canvas?	draft
+5540	Take input from keyboard?	draft
+5541	Filter input?	draft
+5566	Use sed to print a range of lines?	draft
+5542	Create a menu of selectable items?	draft
+5543	Create a toggle option?	draft
+5544	Create a checkbox?	draft
+5567	Print lines containing occurrences of a pattern?	draft
+5545	Create a radio button?	draft
+5546	Create a dropdown?	draft
+5547	Create a slider?	draft
+5568	Delete lines containing occurrences of a pattern?	draft
+5548	Render the screen with a different function?	draft
+5549	Catch key presses?	draft
+5550	Hide a component based on a predicate?	draft
+5569	Make a backup of the original file while in a sed command?	draft
+5551	What are the use cases of collapsible elements?	draft
+5552	Make an element collapsible?	draft
+5553	What are the use cases of containers?	draft
+5570	Remove empty lines in a file?	draft
+5554	Create a few vertical tabs each containing elements?	draft
+5555	Create a few horizontal tabs each containing elements?	draft
+5556	Split a few elements within resizable areas?	draft
+5571	Add a line on top of a file?	draft
+5557	Handle events other than mouse, keyboard, or window resizing?	draft
+5558	Import ftxui library as modules?	draft
+5559	Toggle processing of piped input?	draft
+5572	Write a line after a pattern match?	draft
+5560	Replace occurrences of a pattern with a substitute?	draft
+3469	What is a cardinality in mock functions?	draft
+5561	Replace occurrences of a pattern with a substitute without case sensitivity?	draft
+3474	Specify the return value of a mock function for indefinite calls?	draft
+5573	In what granularity should we configure targets?	draft
+5574	How properties are affected by CMake commands?	draft
+5575	What properties are available for targets?	draft
+5576	How properties are affected by CMake commands?	draft
+5577	How properties are affected by CMake commands?	draft
+5582	What is the best practice to requiring an optional package?	draft
+5578	What do we need to collect for packaging a project?	draft
+5579	How does the install command populate install directory?	draft
+5580	What are the disadvantages of using fetch content?	draft
+5583	Why build settings and usage requirements should be separated in configurations?	draft
+5581	How dependencies should be linked with targets properly?	draft
+5586	What is the bare minimum CTest configuration file that should exist on the top of the source directory?	draft
+5584	What does CTest offer out of the box other that handling unit tests?	draft
+5585	What is the recommended way of configuring CTest in a project?	draft
+5587	What would be the assumption of users about the project developers when there is a CMakeLists.txt file in the top level directory of a project?	draft
+5588	What would be the assumption of users about the project developers when there is a GitHub workflow in the project?	draft
+5589	What would be the assumption of users about the project developers when there is a CTestConfig.cmake file in the top level directory of a project?	draft
+5590	What should be the goal of project developers when preparing their build system?	draft
+5591	What is the challenge between project maintainers and build pipeline maintainers?	draft
+5592	What is the recommended behavior of the default workflow in projects?	draft
+5593	Why excluding tests from the default build workflow of a project is discouraged?	draft
+5594	Write a CTest configuration that builds your project?	draft
+5595	Take the return value of CTest when updating the repository?	draft
+5596	Use CTest commands to collect the test coverage of a project?	draft
+5597	Use CTest commands to perform memory checks on tests?	draft
+5598	Use CTest commands to sanitize tests?	draft
+3504	What is an assertion matcher?	draft
+5599	Use CTest to build the project in parallel?	draft
+5600	Use CTest to run tests in parallel?	draft
+5601	Use CTest to run memory checks in parallel?	draft
+5602	Use a known number of cores to run tests?	draft
+5603	Acquire all of the system resources for running tests?	draft
+5604	Acquire system resources with fine grained allocations?	draft
+5606	Treat warnings as errors in build piplines?	draft
+5608	Disable clazy warnings for one file?	draft
+5609	Disable individual clazy checks for one file?	draft
+5610	Disable individual clazy checks for one line?	draft
+5611	What linters are supported through target properties?	draft
+5612	Disable linting for a source file?	draft
+5613	What are the use cases of using launchers?	draft
+5617	What is the best approach when CMake and CTest both need to know about build variables?	draft
+5618	What build information is available to CTest?	draft
+5619	What properties are used by CTest to scrap build outputs?	draft
+5620	What environment variables are available for instrumentation?	draft
+5621	Why instrumentation variables should be environment variables?	draft
+5622	What additional build information will be available when using instrumentation?	draft
+5624	Which test properties can be used to attach files into the test?	draft
+5625	What are the disadvantages of building separate small tests?	draft
+5626	Allow CTest to schedule and parallelize tests?	draft
+5627	Write a toolchain file to crosscompile a target?	draft
+5628	Crosscompile with CTest?	draft
+5629	Define tests with crosscompiling in CMake?	draft
+3485	Write an expectation call to a mock method when the method returns a const reference to a string?	draft
+3506	What is the best practice for equality matching using matchers?	draft
+3523	How overloaded functions and function templates should be treated when given as argument to predicate assertions?	draft
+3561	Verify a container that does not provide size method contains an expected number of elements?	draft
+3567	Verify what each element of a container should match with?	draft
+3571	Verify that a container is a superset of given range?	draft
+3573	Verify the size of a container?	draft
+3581	Verify that an object supporting <code>std::get<I>(object)</code> contains elements that match a certain criteria piece-wise?	draft
+675	Constraint a template function with a requirement to not be available if raw pointers are passed?	draft
+5630	Export a package with CPS information?	draft
+5631	What file trees exist in a project?	draft
+5632	How can we describe a source tree of a project in CMake?	draft
+5633	What is the role of base directories inside a file set?	draft
+5634	How would file set description looks like when reduced to only include private header files for a target?	draft
+5635	What are the supported private file sets?	draft
+5636	What is the reason of separating sources into different file sets?	draft
+5637	Why should we never describe build trees in CMake?	draft
+5638	Describe the install tree in CMake?	draft
+5639	What is the use case of component parameter in install command?	draft
+5640	What is the use case of export parameter in install command?	draft
+5641	What are the known paths to install tree?	draft
+5642	What scope is not in the responsibility of developers to manipulate?	draft
+5643	Describe a package containing installed artifacts of the project?	draft
+674	How many ways constraints can be applied to a template?	draft
+2802	How does the compiler deduce the type of function template arguments?	draft
+3666	What is the difference between preemptive and non-preemptive concurrency?	draft
+3937	What are the use cases of strategy pattern?	draft
+3938	What are the advantages of static strategy pattern over dynamic strategy pattern?	draft
+2769	What is the objective of io_context in boost?	draft
 \.
 
 
@@ -21585,7 +21655,6 @@ COPY flashback.progress ("user", card, last_practice, duration, progression) FRO
 2	5218	2025-12-12 23:29:47.090728+01	105	0
 2	5219	2025-12-12 23:31:25.063097+01	98	0
 2	5203	2025-12-13 12:01:12.153996+01	5	1
-2	108	2025-12-22 11:58:54.337866+01	9	0
 2	4133	2025-12-22 11:59:09.632956+01	15	0
 2	111	2025-12-22 11:59:46.707284+01	37	0
 2	116	2025-12-22 11:59:49.829976+01	3	0
@@ -21691,6 +21760,110 @@ COPY flashback.progress ("user", card, last_practice, duration, progression) FRO
 2	3940	2025-12-26 04:13:31.456586+01	4	0
 2	3680	2026-01-06 21:36:37.401266+01	13	0
 2	3681	2026-01-06 21:38:14.903304+01	97	0
+2	5430	2026-02-22 14:41:52.049938+01	116	0
+2	5427	2026-02-22 15:50:52.04425+01	23	0
+2	5428	2026-02-22 15:52:44.102928+01	111	0
+2	5426	2026-02-22 16:17:03.436876+01	149	0
+2	5392	2026-02-22 16:18:58.479222+01	114	0
+2	5429	2026-02-22 16:20:40.745195+01	20	0
+2	5425	2026-02-22 16:21:12.82027+01	31	0
+2	5424	2026-02-22 16:22:41.657108+01	88	0
+2	5403	2026-02-22 16:23:24.864417+01	41	0
+2	5402	2026-02-22 16:25:13.199153+01	52	0
+2	5399	2026-02-22 16:26:08.183311+01	54	0
+2	5401	2026-02-22 16:26:49.545631+01	40	0
+2	5393	2026-02-22 16:27:06.506001+01	16	0
+2	5395	2026-02-22 16:27:12.430291+01	5	0
+2	5404	2026-02-22 16:27:39.905595+01	26	0
+2	5396	2026-02-22 16:27:52.035137+01	11	0
+2	5394	2026-02-22 16:27:58.793214+01	6	0
+2	5397	2026-02-22 16:28:18.305852+01	19	0
+2	5398	2026-02-22 16:29:40.863631+01	82	0
+2	5400	2026-02-22 16:30:11.336668+01	29	0
+2	5405	2026-02-22 16:31:24.066763+01	71	0
+2	5406	2026-02-23 03:25:52.838774+01	64	0
+2	5407	2026-02-23 03:27:34.784191+01	101	0
+2	5408	2026-02-23 03:30:13.270215+01	158	0
+2	5411	2026-02-23 03:30:52.430178+01	38	0
+2	5409	2026-02-23 03:31:21.223012+01	28	0
+2	5412	2026-02-23 03:35:19.140177+01	177	0
+2	5410	2026-02-23 03:35:54.097978+01	34	0
+2	5413	2026-02-23 03:36:31.016308+01	36	0
+2	5414	2026-02-23 03:37:19.194976+01	47	0
+2	5415	2026-02-23 03:38:50.216168+01	90	0
+2	5419	2026-02-23 03:41:03.335679+01	76	0
+2	214	2026-02-23 07:33:03.436224+01	6	1
+2	228	2026-02-23 07:33:23.045385+01	7	1
+2	226	2026-02-23 07:33:38.712539+01	15	1
+2	221	2026-02-23 07:33:59.560577+01	20	1
+2	215	2026-02-23 07:34:32.468919+01	32	1
+2	216	2026-02-23 07:35:18.944342+01	45	1
+2	224	2026-02-23 07:35:25.607388+01	6	1
+2	219	2026-02-23 07:36:41.479055+01	75	1
+2	227	2026-02-23 07:37:33.166934+01	51	1
+2	222	2026-02-23 07:37:38.350544+01	4	1
+2	225	2026-02-23 07:38:52.149399+01	73	1
+2	229	2026-02-23 07:38:57.310957+01	4	1
+2	220	2026-02-23 07:39:07.025461+01	9	1
+2	217	2026-02-23 07:40:17.302639+01	6	1
+2	230	2026-02-23 07:41:36.120628+01	78	1
+2	231	2026-02-23 07:42:13.955438+01	35	1
+2	232	2026-02-23 07:44:09.470067+01	113	1
+2	233	2026-02-23 07:44:52.366783+01	41	1
+2	234	2026-02-23 07:45:17.751417+01	24	1
+2	5386	2026-02-23 07:46:33.164559+01	72	1
+2	5387	2026-02-23 07:47:10.832216+01	33	1
+2	5388	2026-02-23 07:47:20.107679+01	8	1
+2	5389	2026-02-23 07:47:49.866142+01	28	1
+2	5390	2026-02-23 07:48:48.842997+01	39	1
+2	5391	2026-02-23 07:50:01.487601+01	67	1
+2	5422	2026-02-23 03:42:31.136513+01	87	0
+2	5432	2026-02-23 07:30:24.358+01	58	0
+2	5416	2026-02-23 03:43:00.083487+01	28	0
+2	218	2026-02-23 07:33:15.503154+01	11	1
+2	5418	2026-02-23 03:43:53.488745+01	53	0
+2	5420	2026-02-23 03:44:34.167366+01	40	0
+2	5421	2026-02-23 03:45:34.510712+01	60	0
+2	5431	2026-02-23 07:31:50.942114+01	86	0
+2	5423	2026-02-23 03:46:20.579939+01	45	0
+2	213	2026-02-23 07:32:56.616052+01	55	1
+2	5417	2026-02-23 07:29:24.261922+01	27	0
+2	223	2026-02-23 07:40:10.513564+01	62	1
+2	108	2026-02-23 09:27:40.176586+01	53	0
+2	1735	2026-02-20 22:08:54.847962+01	10	0
+2	1736	2026-02-20 22:08:54.847962+01	10	0
+2	1740	2026-02-20 22:08:54.847962+01	10	0
+2	1741	2026-02-20 22:08:54.847962+01	10	0
+2	1742	2026-02-20 22:08:54.847962+01	10	0
+2	1743	2026-02-20 22:08:54.847962+01	10	0
+2	1744	2026-02-20 22:08:54.847962+01	10	0
+2	1745	2026-02-20 22:08:54.847962+01	10	0
+2	1746	2026-02-20 22:08:54.847962+01	10	0
+2	1747	2026-02-20 22:08:54.847962+01	10	0
+2	1750	2026-02-20 22:08:54.847962+01	10	0
+2	1751	2026-02-20 22:08:54.847962+01	10	0
+2	1752	2026-02-20 22:08:54.847962+01	10	0
+2	2774	2026-02-20 22:08:54.847962+01	10	0
+2	2780	2026-02-20 22:08:54.847962+01	10	0
+2	2781	2026-02-20 22:08:54.847962+01	10	0
+2	1734	2026-02-23 10:09:22.378364+01	10	0
+2	1738	2026-02-23 10:09:22.378364+01	10	0
+2	1739	2026-02-23 10:09:22.378364+01	10	0
+2	1748	2026-02-23 10:09:22.378364+01	10	0
+2	1749	2026-02-23 10:09:22.378364+01	10	0
+2	2773	2026-02-23 10:09:22.378364+01	10	0
+2	2775	2026-02-23 10:09:22.378364+01	10	0
+2	2776	2026-02-23 10:09:22.378364+01	10	0
+2	2777	2026-02-23 10:09:22.378364+01	10	0
+2	2778	2026-02-23 10:09:22.378364+01	10	0
+2	2779	2026-02-23 10:09:22.378364+01	10	0
+2	2782	2026-02-23 10:09:22.378364+01	10	0
+2	1733	2026-02-23 23:01:37.137045+01	10	3
+2	2770	2026-02-23 23:01:37.137045+01	10	3
+2	4076	2026-02-23 23:01:37.137045+01	10	3
+2	2769	2026-02-23 23:01:37.137045+01	10	3
+2	2772	2026-02-23 23:32:40.033384+01	10	1
+2	2771	2026-02-23 23:32:40.033384+01	10	1
 \.
 
 
@@ -21980,7 +22153,7 @@ COPY flashback.resources (id, name, type, pattern, link, production, expiration)
 85	Thomas' Calculus	book	chapter	https://www.pearson.com/en-us/subject-catalog/p/thomas-calculus/P200000007103/9780137616077	1766793600	1924560000
 116	OliveStem	channel	playlist	https://www.youtube.com/@olivestemlearning	1766793600	1924560000
 89	Embedded Linux Training Course	slides	chapter	https://bootlin.com/training/embedded-linux/	1766793600	1924560000
-236	Brian's Knowledge in C++	nerve	synapse	\N	1766793600	1924560000
+236	C++	nerve	synapse	\N	1766793600	1924560000
 33	Linux Driver Development for Embedded Processors	book	chapter	https://vdoc.pub/download/linux-driver-development-for-embedded-processors-second-edition-learn-to-develop-linux-embedded-drivers-with-kernel-49-lts-1gf0ri0tddno	1766793600	1924560000
 21	A Common-Sense Guide to Data Structures and Algorithms	book	chapter	https://pragprog.com/titles/jwdsal2/a-common-sense-guide-to-data-structures-and-algorithms-second-edition/	1672531200	1861920000
 228	Advanced ESP32	course	chapter	https://subscription.packtpub.com/video/iot-hardware/9781800202016	1577836800	1861920000
@@ -28213,6 +28386,10 @@ COPY flashback.sections (resource, "position", name, link, state) FROM stdin;
 
 COPY flashback.sessions ("user", token, device, last_usage) FROM stdin;
 2	Txqw8ldUFaI+e9TGfBlP6YxBkn6bgngfQMJITK8DUSQ	b53c3d26-9f71-a69d-d031-c7bf2febd123	2025-12-23 00:00:00+01
+2	kENXFbSZvJrAggEpbDHV0DVnUKDNwYlRsoszdHSYNf4	ea96bd44-1ab3-4c68-9ed3-ab47883e57ef	2026-02-23 01:00:00+01
+2	S+QZFj/aiqeZCU9t68F97mH7tZH9XEySCgQF/8R08pA	0bdb9226-aefa-4351-8d6e-195d6e5ff28f	2026-02-22 01:00:00+01
+2	KHvqvUtrQuNuv1D8yEfHNP9erEx3zsfN4pKEasnauQs	5b33a8c4-d1c2-4e3b-af88-fa12dce84284	2026-02-23 01:00:00+01
+2	z1N4Egb7ZDMyS4LR1cbFr+CuVWwwr39x3BbEUSpYhW0	70c60675-db09-4fc2-bd9a-0e178401f6e7	2026-02-22 01:00:00+01
 \.
 
 
@@ -31493,7 +31670,7 @@ COPY flashback.users (id, name, email, state, verified, joined, hash) FROM stdin
 -- Name: cards_id_seq; Type: SEQUENCE SET; Schema: flashback; Owner: flashback
 --
 
-SELECT pg_catalog.setval('flashback.cards_id_seq', 5644, true);
+SELECT pg_catalog.setval('flashback.cards_id_seq', 5645, true);
 
 
 --
@@ -32071,5 +32248,5 @@ GRANT ALL ON SCHEMA public TO brian;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict B08ZzCIaCxQgNgTSnKBaRZJDuvuaRH8VveFhQJfmOXnralEBqg2QYG0YjBffmWe
+\unrestrict jLpd9OGj9gCG5MPxqmkcitQWqUv09lULMtgbGW1B8OVtgcl4qRdvOh27u4UgVHW
 
