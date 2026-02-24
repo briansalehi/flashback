@@ -689,6 +689,19 @@ function renderBlocks(blocks) {
         blockItem.draggable = true;
         blockItem.dataset.position = block.position;
 
+        // Prevent dragging when user is selecting text or interacting with form elements
+        blockItem.addEventListener('mousedown', (e) => {
+            if (e.target.closest('textarea') ||
+                e.target.closest('input') ||
+                e.target.closest('select') ||
+                e.target.closest('button') ||
+                e.target.closest('.block-edit')) {
+                blockItem.draggable = false;
+            } else {
+                blockItem.draggable = true;
+            }
+        });
+
         const typeName = blockTypes[block.type] || 'text';
 
         let metadataHtml = '';
@@ -748,6 +761,15 @@ function renderBlocks(blocks) {
         let isDragging = false;
 
         blockItem.addEventListener('dragstart', (e) => {
+            // Don't allow dragging if user is interacting with form elements
+            if (e.target.closest('textarea') ||
+                e.target.closest('input') ||
+                e.target.closest('select') ||
+                e.target.closest('.block-edit')) {
+                e.preventDefault();
+                return;
+            }
+
             isDragging = true;
             blockItem.classList.add('dragging');
             e.dataTransfer.effectAllowed = 'move';
@@ -806,7 +828,10 @@ function renderBlocks(blocks) {
                 e.target.closest('input') ||
                 e.target.closest('textarea') ||
                 e.target.closest('select') ||
-                e.target.closest('.block-edit')) {
+                e.target.closest('.block-edit') ||
+                e.target.tagName === 'TEXTAREA' ||
+                e.target.tagName === 'INPUT' ||
+                e.target.tagName === 'SELECT') {
                 return;
             }
 
@@ -839,10 +864,18 @@ function renderBlocks(blocks) {
 
                 blockItem.style.opacity = '0.3';
             }, 500);
-        });
+        }, { passive: true });
 
         blockItem.addEventListener('touchmove', (e) => {
             if (!touchStartElement) return;
+
+            // Don't interfere with text selection in form elements
+            if (e.target.closest('textarea') ||
+                e.target.closest('input') ||
+                e.target.closest('select') ||
+                e.target.closest('.block-edit')) {
+                return;
+            }
 
             // Calculate movement distance
             const deltaX = Math.abs(e.touches[0].clientX - touchStartX);
@@ -886,7 +919,7 @@ function renderBlocks(blocks) {
             } else {
                 touchTargetElement = null;
             }
-        });
+        }, { passive: false });
 
         blockItem.addEventListener('touchend', async (e) => {
             // Clear the long-press timer if it hasn't fired yet
@@ -1076,20 +1109,34 @@ let currentBlocks = [];
 window.editBlock = function(index) {
     const displayDiv = document.getElementById(`block-display-${index}`);
     const editDiv = document.getElementById(`block-edit-${index}`);
+    const blockItem = document.getElementById(`block-${index}`);
 
     if (displayDiv && editDiv) {
         displayDiv.style.display = 'none';
         editDiv.style.display = 'block';
+
+        // Disable dragging when in edit mode
+        if (blockItem) {
+            blockItem.draggable = false;
+            blockItem.style.cursor = 'default';
+        }
     }
 };
 
 window.cancelEditBlock = function(index) {
     const displayDiv = document.getElementById(`block-display-${index}`);
     const editDiv = document.getElementById(`block-edit-${index}`);
+    const blockItem = document.getElementById(`block-${index}`);
 
     if (displayDiv && editDiv) {
         displayDiv.style.display = 'block';
         editDiv.style.display = 'none';
+
+        // Re-enable dragging when exiting edit mode
+        if (blockItem) {
+            blockItem.draggable = true;
+            blockItem.style.cursor = 'grab';
+        }
     }
 };
 
