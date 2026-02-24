@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict jxOX206icOzr7TiopPLNE2iu9bwwb3EUq0WyZIOO3cWPoOgu9ofQ2SOdhUdox9f
+\restrict weOcVNUIZ07DTpYkNL37SxhJNqTHjZ3em8UG32HkjYe0P3lN1Ln9fI4QTSVLXDf
 
 -- Dumped from database version 18.1
 -- Dumped by pg_dump version 18.1
@@ -1369,7 +1369,7 @@ begin
             from topics t
             join topic_cards tc on t.subject = tc.subject and t.level = tc.level and t.position = tc.topic
             left join progress p on p.user = user_id and p.card = tc.card
-            where t.subject = milestone_id and t.level <= cognitive_level and (is_assimilated(user_id, t.subject, t.level, t.position) or now() - coalesce(p.last_practice, long_time_ago) > interval '1 day')
+            where t.subject = milestone_id and t.level <= cognitive_level and (is_assimilated(user_id, t.subject, t.level, t.position) or now() - coalesce(p.last_practice, long_time_ago) > interval '6 hours')
             group by t.subject, t.level, t.position, t.name
         )
         select * from (
@@ -1976,7 +1976,7 @@ begin
     do update set
         duration = time_duration,
         last_practice = now(),
-        progression = case when mode = 'progressive'::practice_mode and now() - progress.last_practice > interval '1 hour' then progress.progression + 1 else progress.progression end
+        progression = case when mode = 'progressive'::practice_mode and now() - progress.last_practice > interval '6 hours' then progress.progression + 1 else progress.progression end
     where progress."user" = user_id and progress.card = card_id;
 end;
 $$;
@@ -4197,6 +4197,7 @@ COPY flashback.blocks (card, "position", content, type, extension, metadata) FRO
 168	1	To figure out the efficiency of Quicksort, first determine the efficiency of a single partition.	text	txt	\N
 1712	2	First, we enabled the testimage support by adding `IMAGE_CLASSES += "testimage"` in `build/conf/local.conf` and made sure to build the `core-image-weston` image.	text	txt	\N
 5444	1	seinfo -t unconfined_t	code	sh	\N
+4372	3	* `std::strong_ordering`\n* `std::weak_ordering`\n* `std::partial_ordering`	text	txt	\N
 137	1	* **Read:** same as arrays, it would take `1` step to read from an array-based set, so it is `O(1)`.\n* **Search:** same as arrays it would take `N` steps to search through an array-based set, so it is `O(N)`.\n* **Insert:** it would take `N` steps to search first and `N` steps to insert into an array in the worst case scenario, so it is `O(N)`.\n* **Delete:** same as arrays it would take `N` steps to delete from an array-based set, so it is `O(N)`.	text	txt	\N
 138	1	In constant time efficiency no matter how many elements exist, the operation always takes one step.	text	txt	\N
 139	1	`O(log N)` means the algorithm takes as many steps as it takes to keep halving the data elements until we remain with `1`.	text	txt	\N
@@ -4442,6 +4443,7 @@ COPY flashback.blocks (card, "position", content, type, extension, metadata) FRO
 198	2	- `std::istream_iterator`\n- `std::ostream_iterator`\n- `std::istreambuf_iterator`\n- `std::ostreambuf_iterator`	text	txt	\N
 208	1	Standard Library containers use value semantics on elements. Thus, when you\nwrite classes that you intend to use with the Standard Library, you need to\nmake sure they are copyable.	text	txt	\N
 183	6	def delete(valueToDelete, node):\n    if node is None:\n        return None\n    elif valueToDelete < node.value:\n        node.leftChild = delete(valueToDelete, node.leftChild)\n        return node\n    elif valueToDelete > node.value:\n        node.rightChild = delete(valueToDelete, node.rightChild)\n        return node\n    elif valueToDelete == node.value:\n        if node.leftChild is None:\n            return node.rightChild\n        elif node.rightChild is None:\n            return node.leftChild\n        else:\n            node.rightChild = lift(node.rightChild, node)\n            return node	text	txt	\N
+4372	4	The type depends on the type returned by the elements’ spaceship operator.	text	txt	\N
 183	7	def lift(node, nodeToDelete):\n    if node.leftChild:\n        node.leftChild = lift(node.leftChild, nodeToDelete)\n        return node\n    else:\n        nodeToDelete.value = node.value\n        return node.rightChild	code	txt	\N
 184	1	1. Call itself recursively on the node's left child. The function will keep getting called until we hit a node that does not have a left child.\n2. Visit a node.\n3. Call itself recursively on the node's right child. The function will keep getting called until we hit a node that does not have a right child.	text	txt	\N
 184	2	def traverse_and_print(node):\n    if node is None:\n        return	text	txt	\N
@@ -4827,6 +4829,8 @@ COPY flashback.blocks (card, "position", content, type, extension, metadata) FRO
 567	4	int main(int argc, char **argv)\n{\nint result = -1;	text	txt	\N
 592	7	if (fclose(fp) == -1)\n{\nperror(NULL);\nreturn 3;\n}\n}	code	txt	\N
 1713	1	The class `image-buildinfo` writes a plain text file containing build information and layers revisions to the target filesystem at `${sysconfdir}/buildinfo` by default.	text	txt	\N
+2792	6	Before building an image, you should edit and configure the `build/local.conf` file and set `MACHINE` variable to whatever target you desire, e.g. qemuarm, qemuarm64, qemux86-64, etc.	text	txt	\N
+2792	7	sed -i '/^MACHINE[ ?=]\\\\+/s/^MACHINE\\\\([ ?=]\\\\+\\\\).*/MACHINE\\\\1"qemuarm64"/' conf/local.conf	code	txt	\N
 402	5	int main()\n{\n    try\n    {\n        std::filesystem::path relative_path{"./lib/../include"};\n        std::filesystem::path base_path{"/usr"};\n        std::filesystem::path canonical_path{std::filesystem::canonical(relative_path, base_path)};\n        std::cout << canonical_path << std::endl;\n    }\n    catch (std::filesystem::filesystem_error const& exp)\n    {\n        std::cerr << exp.what() << std::endl;\n    }\n    catch (std::bad_alloc const& exp)\n    {\n        std::cerr << exp.what() << std::endl;\n    }\n}	code	txt	\N
 403	1	`std::filesystem::canonical()` does what `std::filesystem::absolute()` does,\nbut canonical additionally removes any "." or ".." paths.	text	txt	\N
 403	2	`std::filesystem::absolute()` does not call system calls.	text	txt	\N
@@ -5562,6 +5566,7 @@ COPY flashback.blocks (card, "position", content, type, extension, metadata) FRO
 647	3	auto operator<=>(T const& rhs) const = default;	code	cpp	\N
 647	4	constexpr auto operator<=>(T const& rhs) const noexcept;	code	cpp	\N
 647	5	When declaring the default member `operator<=>`, the following applies for the generated operators:	text	txt	\N
+2792	8	Using `bitbake` utility which was sourced earlier build an image by choice:	text	txt	\N
 647	6	- `noexcept`: if comparing the members never throws.\n- `constexpr`: if comparing the members is possible at compile time.\n- **rewriting**: implicit type conversions for the first operand is supported.\n- `operator==`: defines equality support with `operator==` and `operator!=`.\n- `operator<=>`: defines relational support with `<`, `<=`, `>`, `>=` operators.	text	list	\N
 648	1	To have more control over the generated comparison operators, we can define `operator==` and `operator<=>` ourselves.	text	txt	\N
 648	2	constexpr auto operator==(T const& rhs) const noexcept\n{\n    return value == rhs.value;\n}\n\nconstexpr auto operator<=>(T const& rhs) const noexcept\n{\n    return value <=> rhs.value;\n}	code	cpp	\N
@@ -5861,6 +5866,7 @@ COPY flashback.blocks (card, "position", content, type, extension, metadata) FRO
 803	4	Here, the exception to the rule - that the kernel doesn't interpret the minor\nnumber – is the `misc` class (type character, major `#10`). It uses the minor\nnumbers as second-level majors.	text	txt	\N
 803	5	A common problem is that of the namespace getting exhausted. Within the misc\nclass (`#10`) live a lot of devices and their corresponding drivers. In\neffect, they share the same major number and rely on a unique minor number to\nidentify themselves.	text	txt	\N
 804	1	- The **buses** on the system.\n- The **devices** on them.\n- The **device drivers** that drive the devices.	text	txt	\N
+2792	9	bitbake core-image-minimal	code	txt	\N
 805	1	A fundamental **LDM** tenet is that every single device must reside on a bus.\nUSB devices will be on USB bus, PCI devices on PCI bus, I2C devices on I2C\nbus, and so on. Available buses are available under `/sys/bus` directory.	text	txt	\N
 806	1	Critically, they organize and recognize the devices on them. If a new device\nsurfaces, like a pen drive, the USB bus driver will recognize the fact and\nbind it to its device driver.	text	txt	\N
 807	1	After its corresponding bus driver binds the device to its correct device\ndriver, the kernel driver framework invokes the registered `probe()` method\nof the driver. This probe method now sets up the device, allocating\nresources, IRQs, memory setup, registering it as required, and so on.	text	txt	\N
@@ -6412,6 +6418,7 @@ COPY flashback.blocks (card, "position", content, type, extension, metadata) FRO
 965	8	int main(void)\n{\n    int result = sum(4, 2);\n    printf("%i\\\\n", result);\n}	code	txt	\N
 965	9	gcc -g -o program main.c sum.o\n./program	code	txt	\N
 966	1	There are two types of inline assembly: **basic** and **extended**.	text	txt	\N
+2792	10	There might be dependency packages to run `bitbake` on Arch Linux:	text	txt	\N
 966	2	Compilers will not optimize assembly parts of the program, so using inline assembly is not advices.\nThere will be no error checking on inline assembly code.	text	txt	\N
 967	1	Instructions should be terminated by `;`.\n`-mintel` compiler option is required.\nSwitching to Intel assembly syntax is required as the first argument of `__asm__`.	text	txt	\N
 967	2	int main(void)\n{\n    __asm__(\n        ".intel_syntax noprefix;"\n        "xor rax, rax;"\n    );\n}	code	txt	\N
@@ -7160,6 +7167,7 @@ COPY flashback.blocks (card, "position", content, type, extension, metadata) FRO
 1244	2		code	txt	\N
 1245	1	By explicitly passing a launch policy directing `async()` that it should\ndefinitely start the passed functionality asynchronously the moment it is\ncalled.	text	txt	\N
 1245	2	std::future<long> result = std::async(std::launch::async, do_something);	code	txt	\N
+2792	11	sudo pacman -Ss inetutils net-tools diffstat chrpath rpcscv-proto	code	txt	\N
 1245	3	If the asynchronous call is not possible here, the program will throw a\n`std::system_error` exception with the error code\n`resource_unavailable_try_again`, which is equivalent to the POSIX errno\n`EAGAIN`.	text	txt	\N
 1246	1	With the `std::launch::async` policy, you don't necessarily have to call\n`get()` anymore because, if the life time of the returned future ends, the\nprogram will wait for the function to finish. Thus, if you don't call `get()`,\nleaving the scope of the future object will wait for the background task to\nend. Nevertheless, also calling `get()` here before a program ends makes the\nbehavior clearer.	text	txt	\N
 1246	2	{\n    std::future<void> result = std::async(std::launch::async, do_something);\n    // result's destructor blocks at the end of scope\n}	code	txt	\N
@@ -7302,6 +7310,7 @@ COPY flashback.blocks (card, "position", content, type, extension, metadata) FRO
 1294	2	docker image build --squash --tag container:latest .	code	txt	\N
 1322	2	In *ingress mode* every node gets a mapping and can therefore redirect your request to a node that is running the service.	text	txt	\N
 1323	1	docker service create --name my-service --network my-network --publish published=80,target=80,mode=host --replicas 12	code	txt	\N
+2792	12	An image was built to be run by `runqemu`:	text	txt	\N
 1323	2	Open a web browser and point it to the IP address of any of the nodes in the swarm on port 80 to see the service running.	text	txt	\N
 1324	1	docker service update --image repository/project:v2 --update-parallelism 2 --update-delay 20s my-project\ndocker service inspect --pretty my-project	code	txt	\N
 1325	1	docker service logs my-project	code	txt	\N
@@ -7347,6 +7356,7 @@ COPY flashback.blocks (card, "position", content, type, extension, metadata) FRO
 1709	7	After the build process is over, the image will be available inside the `build/tmp/deploy/images/visionfive/` directory. The file we want to use is `core-image-full-cmdline-visionfive.wic.gz`.	text	txt	\N
 1341	2	The application running on node-1 updates some data in the shared volume.\nHowever, instead of writing the update directly to the volume, it holds it in its local buﬀer for faster recall.\nAt this point, the application in node-1 thinks the data has been written to the volume.\nHowever, before node-1 flushes its buffers and commits the data to the volume, the app on node-2 updates the same data with a diﬀerent value and commits it directly to the volume.\nAt this point, both applications think they’ve updated the data in the volume, but in reality only the application in node-2 has.\nA few seconds later, on node-1 flushes the data to the volume, overwriting the changes made by the application in node-2.\nHowever, the application in node-2 is totally unaware of this! This is one of the ways data corruption happens.\nTo prevent this, you need to write your applications in a way to avoid things like this.	text	txt	\N
 1342	1	Docker Swarm Mode is secure by default. Image vulnerability scanning analyses\nimages, detects known vulnerabilities, and provides detailed reports and\nfixes.	text	txt	\N
+2792	13	runqemu core-image-minimal nographics	code	txt	\N
 1342	2	Scanners work by building a list of all software in an image and then comparing the packages against databases of known vulnerabilities.\nMost vulnerability scanners will rank vulnerabilities and provide advice and help on fixes.	text	txt	\N
 1343	1	**Docker Content Trust (DCT)** lets us sign our own images and verify the\nintegrity and publisher of images we consume.	text	txt	\N
 1344	1	Kernel namespaces are the main technology used to build containers. They\nvirtualise operating system constructs such as process trees and filesystems\nin the same way that hypervisors virtualise physical resources such as CPUS\nand disks. If namespaces are about isolation, control groups (cgroups) are\nabout limits.	text	txt	\N
@@ -7433,6 +7443,7 @@ COPY flashback.blocks (card, "position", content, type, extension, metadata) FRO
 1374	7	namespace correct_implementation\n{\n    #ifndef _lib_version_1\n    inline namespace v1\n    {\n        template<typename T>\n        int test(T value) { return 1; }\n    }\n    #endif	text	txt	\N
 1376	1	* The type of objects without template arguments are not types, but act as a placeholder for a type that activates CTAD. When compiler encouters it, it builds a set of deduction guides which can be complemented by user with user defined deduction rules.\n* CTAD does not occur if the template argument list is present.	text	txt	\N
 1380	1	* A sign, plus (**+**) or minus (**-**) (optional)\n* Prefix **0** to indicate an octal base (optional)\n* Prefix **0x** or **0X** to indicate a hexadecimal base (optional)\n* A sequence of digits	text	txt	\N
+2792	14	Origin: 1.2	text	txt	\N
 1382	1	* Decimal floating-point expression (optional sign, sequence of decimal digits with optional point, optional e or E, followed by exponent with optional sign).\n* Binary floating-point expression (optional sign, 0x or 0X prefix, sequence of hexadecimal digits with optional point, optional p or P, followed by exponent with optional sign).\n* Infinity expression (optional sign followed by case-insensitive INF or INFINITY).\n* A non-number expression (optional sign followed by case-insensitive NAN and possibly other alphanumeric characters).	text	txt	\N
 1375	1	* Only by C++20 structured bindings can include `static` or `thread_local` specifiers in the declaration.\n* Only by C++20 `[[maybe_unused]]` attribute can be used in the declaration.\n* Only by C++20 a lambda can capture structure binding identifiers.	text	txt	\N
 1376	2	std::pair p{42, "demo"};    // std::pair<int, char const*>\nstd::vector v{1, 2};        // std::vector<int>	code	cpp	\N
@@ -7466,6 +7477,7 @@ COPY flashback.blocks (card, "position", content, type, extension, metadata) FRO
 1422	1	Converting from an `std::basic_string_view` to an `std::basic_string` is not possible. You must explicitly construct an `std::basic_string` object from a `std::basic_string_view`.	text	txt	\N
 1423	1	Only class member functions can be `defaulted`.	text	txt	\N
 1715	1	When using the Yocto Project, we usually add many configurations in `build/conf/local.conf`. However, as discussed in the book, this is bad as it is not at source control management and is likely to differ among developers. Using a custom distribution allows consistent use among multiple developers, provides a clear view of the different `DISTRO_FEATURES` we use when compared to our base distribution, and provides a central place where we can have a global view of all the required recipe configurations we need for our product, reducing the number of bbappend files required to configure our recipes (for example, `PACKAGECONFIG:pn-<myrecipe>:append = " myfeature"`)	text	txt	\N
+2793	1	Add the following line to `build/local.conf` file:	text	txt	\N
 1425	1	* **user defined constructor** inhibits **default constructor**: If a user-defined constructor exists, the default constructor is not generated by default.\n* **virtual destructor** inhibits **default constructor**: If a user-defined virtual destructor exists, the default constructor is not generated by default.\n* **user defined move constructor/assignment** inhibits **default copy constructor/assignment**: If a user-defined move constructor or move assignment operator exists, then the copy constructor and copy assignment operator are not generated by default.\n* **user defined copy constructor/assignment, move constructor/assignment, destructor** inhibits **default move constructor/assignment**: If a user-defined copy constructor, move constructor, copy assignment operator, move assignment operator, or destructor exists, then the move constructor and move assignment operator are not generated by default.\n* If a user-defined copy constructor or destructor exists, then the copy assignment operator is generated by default. <span style="color:green">(deprecated)</span>\n* If a user-defined copy assignment operator or destructor exists, then the copy constructor is generated by default. <span style="color:green">(deprecated)</span>	text	txt	\N
 1425	2	The rule of thumb, also known as The Rule of Five, for class special member functions is that if you explicitly define any copy constructor, move constructor, copy assignment operator, move assignment operator, or destructor, then you must either explicitly define or default all of them.	text	txt	\N
 1426	1	Declare the copy constructor and the copy assignment operator as `deleted`.	text	txt	\N
@@ -7493,6 +7505,8 @@ COPY flashback.blocks (card, "position", content, type, extension, metadata) FRO
 1441	2	1. Define an overload with a fixed number of arguments to end compile-time recursion if the semantics of the variadic function template require it.\n2. Define a template parameter pack that is a template parameter that can hold any number of arguments, including zero; these arguments can be either types, non-types, or templates.\n3. Define a function parameter pack to hold any number of function arguments, including zero; the size of the template parameter pack and the corresponding function parameter pack is the same. This size can be determined with the sizeof... operator.\n4. Expand the parameter pack in order to replace it with the actual arguments being supplied.	text	txt	\N
 1441	3	With GCC and Clang, you can use the `__PRETTY_FUNCTION__` macro to print the name and the signature of the function.	text	txt	\N
 1441	4	Make return type `auto` to ensure all of the function template initializations have the same return type, for example, in case of having `std::string` and `char` types in parameter pack.	text	txt	\N
+2793	2	```\nIMAGE_INSTALL_append = " binutils"\n``````	text	txt	\N
+2793	3	bitbake qemuarm64 core-image-minimal\nrunqemu core-image-minimal nographics	code	txt	\N
 1443	1	Fold expressions work with all overloads for the supported **binary operators**, but do not work with **arbitrary binary operators**. It is possible to implement a workaround for that by providing a wrapper type that will hold a value and an overloaded operator for that wrapper type:	text	txt	\N
 1444	1	A higher-order function is a function that takes one or more other functions as arguments and applies them to a range (a list, vector, map, tree, and so on), thus producing either a new range or a value.	text	txt	\N
 1444	2	To implement the map function, you should:	text	txt	\N
@@ -7586,6 +7600,7 @@ COPY flashback.blocks (card, "position", content, type, extension, metadata) FRO
 1495	1	The Yocto Project has a release every six months, in April and October.	text	txt	\N
 1495	2	The support for the stable release is for 7 months, offering 1 month of\noverlapped support for every stable release. The LTS release has a minimal\nsupport period of 2 years, optionally extended. After the official support\nperiod ends, it moves to Community support and finally reaches End Of Life\n(EOL).	text	txt	\N
 1495	3	`Initial Release -> Stable Release -> Community -> End of Life`	text	txt	\N
+2793	4	Origin: 1.2	text	txt	\N
 1496	1	Poky is the default Yocto project reference distribution, which uses OpenEmbedded build system technology.	text	txt	\N
 1496	2	It is composed of a collection of tools, configuration files, and recipe data (known as metadata).	text	txt	\N
 1497	1	The code that is parsed generates and runs tasks, which are a set of steps ordered per the code's dependencies.	text	txt	\N
@@ -8742,6 +8757,7 @@ COPY flashback.blocks (card, "position", content, type, extension, metadata) FRO
 1952	11	sudo unattended-upgrade --dry-run -d	code	txt	\N
 1952	12	8. To manually install the security-related updates without installing non-security updates, just run:	text	txt	\N
 1952	13	sudo unattended-upgrade -d	code	txt	\N
+2794	1	We just need to configure `conf/local.conf` file and add the following line before building an image:	text	txt	\N
 1952	14	Also, if you’re running a non-Ubuntu flavor of Debian, which would include Rasp-bian for the Raspberry Pi, you can give it the same functionality as Ubuntu by installing the unattended-upgrades package. Just run this command:	text	txt	\N
 1952	15	sudo apt install unattended-upgrades	code	txt	\N
 2741	2	root=/dev/mmcblk0p2 rootwait\nconsole=ttyS0	code	txt	\N
@@ -8799,6 +8815,7 @@ COPY flashback.blocks (card, "position", content, type, extension, metadata) FRO
 1961	2	sudo passwd -l root	code	txt	\N
 1962	1	You can either create an entry for an individual user or create a user alias.	text	txt	\N
 1962	2	ADMINS ALL=(ALL) ALL	code	txt	\N
+2794	2	```\necho 'IMAGE_INSTALL_appen = " binutils"' >> conf/local.conf\n``````	text	txt	\N
 1962	3	It’s also possible to add a sudo entry for just a single user, and you might need to do that under very special circumstances.	text	txt	\N
 1962	4	frank ALL=(ALL) ALL	code	txt	\N
 1963	1	You can, for example, create a `BACKUPADMINS` user alias for backup administrators, a `WEBADMINS` user alias for web server administrators, or whatever else you desire:	text	txt	\N
@@ -8910,6 +8927,7 @@ COPY flashback.blocks (card, "position", content, type, extension, metadata) FRO
 1983	2	cd /home\nsudo chmod 700 *	code	txt	\N
 1983	3	To change the default permissions setting for home directories, edit `/etc/login.defs` configuration file and set directive values accordingly:	text	txt	\N
 1983	4	UMASK 077\nHOME_MODE 0750	code	txt	\N
+2794	3	And the follow up all the steps required to build an image using `bitbake`:	text	txt	\N
 1983	5	This includes access permissions for a user’s own personal group, but that’s okay. It still effectively means that only the respective owners of the various home directories can get into them.	text	txt	\N
 1984	1	Debian-based distros have two user creation utilities:	text	txt	\N
 1984	2	* `useradd`\n* `adduser`	text	txt	\N
@@ -9070,8 +9088,6 @@ COPY flashback.blocks (card, "position", content, type, extension, metadata) FRO
 2011	2	cd /usr/share/doc/nftables/examples/	code	txt	\N
 2011	3	Next, we’ll copy the workstation file over to the `/etc` directory, changing its name to `nftables.conf`.	text	txt	\N
 2011	4	sudo cp workstation.nft /etc/nftables.conf	code	txt	\N
-2769	1	The I/O context is a channel that is used to access operating system resources\nand establish communication between our program and the operating system that\nperforms I/O requests.	text	txt	\N
-2770	1	The I/O object has the role of submitting I/O requests. For instance, the\n`tcp::socket` object will provide a socket programming request from our\nprogram to the operating system.	text	txt	\N
 2011	5	* `flush ruleset`: We want to start with a clean slate, so we’ll flush out any rules that may have already been loaded.\n* `table inet filter`: This creates an inet family filter, which works for both IPv4 and IPv6.\n* `chain input`: Within the first pair of curly brackets, we have a chain called input.\n* `type filter hook input priority 0;`: Within the next pair of curly brackets, we define our chain and list the rules. This chain is defined as a filter type. hook input indicates that this chain is meant to process incoming packets. Because this chain has both a hook and a priority, it will accept packets directly from the network stack.	text	txt	\N
 2011	6	Next is the standard connection tracking (ct) rule, which accepts traffic that’s in response to a connection request from this host.	text	txt	\N
 2011	7	* `ct state new`: indicates that the firewall will allow other hosts to initiate connections to our server on these ports.\n* `meta nfproto ipv6`: accepts neighbor discovery packets, allowing IPv6 functionality.\n* `counter drop`: rule at the end silently blocks all other traffic and counts both the number of packets and the number of bytes that it blocks.	text	txt	\N
@@ -9086,6 +9102,7 @@ COPY flashback.blocks (card, "position", content, type, extension, metadata) FRO
 2013	1	To do this, we can edit the file, placing a `drop rule` above the rule that opens port 22.\nThe relevant section of the file will look like this:	text	txt	\N
 2013	2	```\ntcp dport 22\nip saddr { 192.168.0.7, 192.168.0.10 } log prefix "Blocked SSH packets: "\ndrop tcp dport { 22, 53 } ct state new accept\n``````	text	txt	\N
 2013	3	Next, we need to allow the desired types of ICMP packets, like so:	text	txt	\N
+2769	1	The `boost::io_context` is a channel that is used to access operating system resources\nand establish communication between our program and the operating system that\nperforms I/O requests.	text	txt	\N
 2013	4	```\nct state new,related,established icmp type { destination-unreachable, time-exceeded, parameter-problem } accept\nct state established,related,new icmpv6 type { destination-unreachable, time-exceeded, parameter-problem } accept\n``````	text	txt	\N
 2013	5	Finally, we’ll block invalid packets by adding a new prerouting chain to the filter table, like so:	text	txt	\N
 2013	6	```\nchain prerouting {\n    type filter hook prerouting priority 0;\n    ct state invalid counter log prefix "Invalid Packets: " drop tcp flags & (fin|syn|rst|ack) != syn\n    ct state new\n    counter log drop\n}\n``````	text	txt	\N
@@ -11118,22 +11135,6 @@ COPY flashback.blocks (card, "position", content, type, extension, metadata) FRO
 2774	2	The `dispatch()` function can be invoked from the current worker thread, while\nthe `post()` function has to wait until the handler of the worker is complete\nbefore it can be invoked. In other words, the `dispatch()` function's events\ncan be executed from the current worker thread even if there are other pending\nevents queued up, while the `post()` function's events have to wait until the\nhandler completes the execution before being allowed to be executed.	text	txt	\N
 2775	1	Strand is a class in the <code>io_service</code> object that provides handler\nexecution serialization. It can be used to ensure the work we have will be\nexecuted serially.	text	txt	\N
 2775	3	The `boost::asio::io_context::strand::wrap()` function creates a new handler\nfunction object that will automatically pass the wrapped handler to the strand\nobject's dispatch function when it is called.	text	txt	\N
-2792	6	Before building an image, you should edit and configure the `build/local.conf` file and set `MACHINE` variable to whatever target you desire, e.g. qemuarm, qemuarm64, qemux86-64, etc.	text	txt	\N
-2792	7	sed -i '/^MACHINE[ ?=]\\\\+/s/^MACHINE\\\\([ ?=]\\\\+\\\\).*/MACHINE\\\\1"qemuarm64"/' conf/local.conf	code	txt	\N
-2792	8	Using `bitbake` utility which was sourced earlier build an image by choice:	text	txt	\N
-2792	9	bitbake core-image-minimal	code	txt	\N
-2792	10	There might be dependency packages to run `bitbake` on Arch Linux:	text	txt	\N
-2792	11	sudo pacman -Ss inetutils net-tools diffstat chrpath rpcscv-proto	code	txt	\N
-2792	12	An image was built to be run by `runqemu`:	text	txt	\N
-2792	13	runqemu core-image-minimal nographics	code	txt	\N
-2792	14	Origin: 1.2	text	txt	\N
-2793	1	Add the following line to `build/local.conf` file:	text	txt	\N
-2793	2	```\nIMAGE_INSTALL_append = " binutils"\n``````	text	txt	\N
-2793	3	bitbake qemuarm64 core-image-minimal\nrunqemu core-image-minimal nographics	code	txt	\N
-2793	4	Origin: 1.2	text	txt	\N
-2794	1	We just need to configure `conf/local.conf` file and add the following line before building an image:	text	txt	\N
-2794	2	```\necho 'IMAGE_INSTALL_appen = " binutils"' >> conf/local.conf\n``````	text	txt	\N
-2794	3	And the follow up all the steps required to build an image using `bitbake`:	text	txt	\N
 2794	4	git clone git://git.yoctoproject.org/poky\ncd poky\nsource oe-init-build-env\nsed -i '/^MACHINE[ ?=]\\\\+/s/^MACHINE\\\\([ ?=]\\\\+\\\\).*/MACHINE\\\\1"qemuarm64"/' conf/local.conf\nbitbake qemuarm64 core-image-sato\nrunqemu core-image-sato	code	txt	\N
 2794	5	Origin: 1.2	text	txt	\N
 2796	1	Historically, `class` keyword can be used instead of `typename`. However,\nbecause this use of `class` can be misleading, you should prefer the use of\n`typename`. The keyword `struct` cannot be used in place of `typename` when\ndeclaring type parameters.	text	txt	\N
@@ -11853,6 +11854,8 @@ COPY flashback.blocks (card, "position", content, type, extension, metadata) FRO
 4351	4	*Sentinels* follow the same idea. However, they do not need to be of an\n*iterator* type. Instead, they only need to be comparable to an *iterator*.\nThe exclusive end of the range is then the first iterator that compares equal\nto the sentinel.	text	txt	\N
 4351	5	#include <iostream>\n#include <algorithm>\n#include <ranges>\n#include <vector>\n\ntemplate<typename T>\nstruct sentinel\n{\n    using iter_t = typename std::vector<T>::iterator;\n    iter_t begin;\n    std::iter_difference_t<iter_t> count;\n    bool operator==(iter_t const& other) const { return std::distance(begin, other) >= count; }\n};\n\nint main()\n{\n    std::vector<long> numbers{1,2,3,4,5};\n    std::vector<long>::iterator iter = numbers.begin();\n    std::ranges::for_each(iter, sentinel<long>{iter, 3}, [](auto e) { std::cout << e << " "; });\n}	code	cpp	\N
 5559	2	---	text	md	\N
+5196	5	#include <Context.hpp>\n#include <StrategyA.hpp>\n#include <StrategyB.hpp>\n\nint main()\n{\n    std::shared_ptr<Context> context{std::make_shared<Context>()};\n    context->setStrategy(std::move(std::make_unique<StrategyA>()));\n    context->setStrategy(std::move(std::make_unique<StrategyB>()));\n    context->contextInterface();\n}	code	cpp	\N
+2770	1	The `boost::io_object` has the role of submitting I/O requests. For instance, the\n`tcp::socket` object will provide a socket programming request from our\nprogram to the operating system.	text	txt	\N
 3119	1	const GLchar* vertex120 = R"END(\n#version 120\nattribute vec3 position;\nattribute vec3 color;\nvarying vec3 outColor;\nattribute vec2 inUvs;\nvarying vec2 outUvs;\nuniform float time;\nuniform mat4 matrix;\nuniform mat4 projection;\nvoid main()\n{\n    float theta = time;\n    \n    float co = cos(theta);\n    float si = sin(theta);\n    \n    mat4 rotationY = mat4(co, 0, si,  0,\n                          0,  1,  0,  0,\n                          -si,  0, co, 0,\n                          0,  0,  0,  1);\n\n    co = cos(theta/2.);\n    si = sin(theta/2.);\n\n    mat4 rotationX = mat4(1, 0, 0, 0,\n                          0, co, -si, 0,\n                          0, si, co, 0,\n                          0, 0, 0, 1);\n    outUvs = inUvs;\n    outColor = color;\n    gl_Position = projection * matrix * rotationY * rotationX * vec4(position,1.f);\n}\n)END";\n\n// fragment shader source\n\nconst GLchar* raster120 = R"END(\n#version 120\nvarying vec3 outColor;\nvarying vec2 outUvs;\nuniform sampler2D tex;\nuniform float time;\nvoid main()\n{\n    gl_FragColor = vec4(outColor,1.f)/2.f + vec4(texture2D(tex,outUvs))/2.f;\n}\n)END";\n\nGLfloat vertices[] = {\n    -1, -1, +1, // 0\n    -1, +1, +1,\n    +1, +1, +1,\n    +1, -1, +1,\n    -1, -1, -1,\n    -1, +1, -1,\n    +1, +1, -1,\n    +1, -1, -1, //7\n    -1, -1, +1, // "8" - 0\n    -1, +1, +1, // "9" - 1, etc...\n    +1, +1, +1,\n    +1, -1, +1,\n};\n\nGLfloat colors[] = {\n    1, 0, 0, // rgb\n    0, 1, 0,\n    0, 0, 1,\n    1, 0, 1,\n    1, 1, 0,\n    0, 1, 1,\n    0, 1, 0,\n    1, 0, 0,\n    1, 1, 1, // colors for 4 additional verices\n    1, 1, 1,\n    1, 1, 1,\n    1, 1, 1,\n};\n\nGLubyte indices[] = {\n    0,1,\n    1,2,\n    2,3,\n    3,0,\n    0,4,\n    4,5,\n    5,1,\n    1,0,\n    1,5,\n    5,6,\n    6,2,\n    2,1,\n    3,2,\n    2,6,\n    6,7,\n    7,3,\n    7,6,\n    6,5,\n    5,4,\n    4,7,\n    0,3,\n    3,7,\n    7,4,\n    4,0\n};\n\nGLuint verticesBuf;\nglGenBuffers(1, & verticesBuf);\nglBindBuffer(GL_ARRAY_BUFFER, verticesBuf);\nglBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);\n\nGLuint colorsBuf;\nglGenBuffers(1, & colorsBuf);\nglBindBuffer(GL_ARRAY_BUFFER, colorsBuf);\nglBufferData(GL_ARRAY_BUFFER, sizeof(colors), colors, GL_STATIC_DRAW);\n\nGLuint indicesBuf;\nglGenBuffers(1, & indicesBuf);\nglBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indicesBuf);\nglBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);\n\n// ----------------- attributes\n\nGLuint attribPosition;\nattribPosition = glGetAttribLocation(shaderProgram, "position");\nglEnableVertexAttribArray(attribPosition);\nglBindBuffer(GL_ARRAY_BUFFER, verticesBuf);\nglVertexAttribPointer(attribPosition, 3, GL_FLOAT, GL_FALSE, 0, 0);\n\nGLuint attribColor;\nattribColor = glGetAttribLocation(shaderProgram, "color");\nglEnableVertexAttribArray(attribColor);\nglBindBuffer(GL_ARRAY_BUFFER, colorsBuf);\nglVertexAttribPointer(attribColor, 3, GL_FLOAT, GL_FALSE, 0, 0);\n\nGLfloat matrix[] = {\n    0.5, 0,   0,   0,\n    0,   0.5, 0,   0,\n    0,   0,   0.5, 0,\n    0,   0,   0,   1\n};\n\nGLuint attribMatrix;\nattribMatrix = glGetUniformLocation(shaderProgram, "matrix");\nglUniformMatrix4fv(attribMatrix, 1, GL_FALSE, matrix);\n\nGLuint uniformTime;\nuniformTime = glGetUniformLocation(shaderProgram, "time");\n\n// ----------------- texture\n\nbmpread_t bitmap;\nif (!bmpread("texture2.bmp", 0, &bitmap)) {\n    std::cout << "texture loading error";\n    exit(-1);\n}\n\nGLuint texid;\nglGenTextures(1, &texid);\nglActiveTexture(GL_TEXTURE0);\nglBindTexture(GL_TEXTURE_2D, texid);\n\nglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);\nglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);\nglPixelStorei(GL_UNPACK_ALIGNMENT, 1);\n\nglTexImage2D(GL_TEXTURE_2D,0,3,bitmap.width,bitmap.height,0,GL_RGB,GL_UNSIGNED_BYTE,bitmap.data);\n\nGLuint attribTex = glGetAttribLocation(shaderProgram, "tex");\nglUniform1i(attribTex, 0);\n\nGLfloat uvs[] = {\n    0, 0,\n    0, 0,\n    0, 0,\n    0, 0,\n    0, 0,\n    0, 0,\n    0, 0,\n    0, 0,\n    0, 0, // full rect for our additional "overlay" side\n    0, 1,\n    1, 1,\n    1, 0,\n};\n\nGLuint uvsData;\nglGenBuffers(1, &uvsData);\nglBindBuffer(GL_ARRAY_BUFFER, uvsData);\nglBufferData(GL_ARRAY_BUFFER, sizeof(uvs), uvs, GL_STATIC_DRAW);\n\nGLuint attribUvs;\nattribUvs = glGetAttribLocation(shaderProgram, "inUvs");\nglEnableVertexAttribArray(attribUvs);\nglBindBuffer(GL_ARRAY_BUFFER, uvsData);\nglVertexAttribPointer(attribUvs, 2, GL_FLOAT, GL_FALSE, 0, 0);\n\n//glEnable(GL_CULL_FACE); //cw backface culling\n\nglLineWidth(5);\n\nglm::mat4 scaleMatrix = glm::mat4(1.f);\nscaleMatrix = glm::translate(scaleMatrix, glm::vec3(0,0,-2));\n\nglm::mat4 projMatrix = glm::perspective(glm::radians(60.f),1.f,0.f,10.f) * scaleMatrix;\nGLint uniformProj = glGetUniformLocation(shaderProgram, "projection");\nglUniformMatrix4fv(uniformProj, 1, GL_FALSE, glm::value_ptr(projMatrix));	code	cpp	\N
 3120	1	Yocto always builds binary packages.	text	txt	\N
 3121	1	`bitbake` is written in Python and is a task scheduler like `make`.	text	txt	\N
@@ -13128,6 +13131,7 @@ COPY flashback.blocks (card, "position", content, type, extension, metadata) FRO
 3732	1	./config.sh remove --token <token>	code	sh	\N
 3733	1	Create a new workflow `.github/workflows/release.yml` and write a `release` and `push` trigger which will be based on either `tags` or `branches`. Then add a job `publish` and give it permissions to read the repository and write into packages, then checkout the repository, build the project, create a release with `create-release` action, and upload assets using `upload-release-asset` action for every file:	text	txt	\N
 4353	2	#include <algorithm>\n#include <vector>\n\nstd::vector<int> data{ 1, 2, 3, 4, 5, 6, 7, 8, 9 };\n\n// OK for std::copy\n//         [ source range      ]\n// [ destination range ]\nstd::copy(data.begin() + 1, data.end(), data.begin());\n// data == {2, 3, 4, 5, 6, 7, 8, 9, 9}\n\ndata = {1, 2, 3, 4, 5, 6, 7, 8, 9};\n\n// OK for std::copy_backward\n// [ source range      ]\n//         [ destination range ]\nstd::copy_backward(data.begin(), data.begin() + 8, data.end());\n// data == {1, 1, 2, 3, 4, 5, 6, 7, 8}	code	cpp	\N
+4076	1	The `boost::io_service` is a channel that is used to access operating system\nresources and establish communication between our program and the operating\nsystem that performs I/O requests.	text	txt	\N
 3733	2	name: Release\non:\n  release:\n    types: [created]\n  push:\n    tags:\n      - v*\n    branches:\n      - release\njobs:\n  publish:\n    runs-on: ubuntu-latest\n    permissions:\n      contents: read\n      packages: write\n    steps:\n      - name: Checkout\n        uses: actions/checkout@v4\n      - name: Build\n        run: echo "building"\n      - name: Release\n        id: create_release\n        uses: actions/create-release@v1\n        with:\n          tag_name: ${{ github.refname }}\n          release_name: "Release ${{ github.refname }}"\n        body: "Release notes for ${{ github.refname }}"\n        draft: false\n        prerelease: false\n      env:\n        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}\n      - name: Upload\n        uses: actions/upload-release-asset@v1\n        with:\n          upload_url: ${{ steps.create_release.outputs.upload_url }}\n          asset_path: ./package.tar.gz\n          asset_name: package.tar.gz\n          asset_content_type: application/gzip	code	yml	\N
 3733	3	Finally, create a release:	text	txt	\N
 3733	4	gh release create ${{ github.refname }} --generate-notes	code	sh	\N
@@ -13625,6 +13629,10 @@ COPY flashback.blocks (card, "position", content, type, extension, metadata) FRO
 4338	2	#include <chrono>\n#include <thread>\n\nusing namespace std::chrono_literals;\n\nauto tp1 = std::chrono::steady_clock::now();\nstd::this_thread::sleep_for(1ms);\nauto tp2 = std::chrono::steady_clock::now();\n\nauto duration = tp2 - tp1;\nstd::cout << duration << "\\\\n";\n// example output: 1115389ns	code	cpp	\N
 4339	1	#include <chrono>\n#include <thread>\n\nusing namespace std::chrono_literals;\n\nauto tp1 = std::chrono::steady_clock::now();\nstd::this_thread::sleep_for(1ms);\nauto tp2 = std::chrono::steady_clock::now();\n\n// explicit type of duration, base type double, with micro precision\nstd::chrono::duration<double, std::micro> sleep_duration = tp2 - tp1;\nstd::cout << sleep_duration << "\\\\n";\n// example output: 1115.39µs	code	cpp	\N
 4340	1	Duractions can be converted between each other using `duration_cast`.	text	txt	\N
+4372	5	#include <algorithm>\n#include <vector>\n#include <string>\n\nint main()\n{\n    std::vector<long> numbers1{1, 1, 1};\n    std::vector<long> numbers2{1, 2, 3};\n\n    auto cmp1 = std::lexicographical_compare_three_way(numbers1.cbegin(), numbers1.cend(), numbers2.cbegin(), numbers2.cend());\n    // cmp1 = std::strong_ordering::less\n\n    std::vector<std::string> strings1{"Zoe", "Alice"};\n    std::vector<std::string> strings2{"Adam", "Maria"};\n\n    auto cmp2 = std::lexicographical_compare_three_way(strings1.cbegin(), strings1.cend(), strings2.cbegin(), strings2.cend());\n    // cmp2 = std::strong_ordering::greater\n}	code	cpp	\N
+4373	1	The `std::sort` algorithm is the canonical `O(N log N)` sort (typically\nimplemented as *intro-sort*).	text	txt	\N
+4373	2	Due to the `O(N log N)` complexity guarantee, `std::sort` only operates on\n`random_access` ranges. Notably, `std::list` offers a method with an\napproximate `O(N log N)` complexity.	text	txt	\N
+4374	1	| `std::sort` | standard |\n| --- | --- |\n| introduced | C++98 |\n| paralllel | C++17 |\n| constexpr | C++20 |\n| rangified | C++20 |	text	txt	\N
 3965	1	#include <vector>\n#include <ranges>\n#include <string>\n#include <memory>\n#include <iostream>\n#include <iterator>\n\nclass console\n{\nprivate:\n    std::vector<std::string> m_logs;\npublic:\n    void clear() noexcept { m_logs.clear(); }\n    void print() const { std::ranges::copy(m_logs, std::ostream_iterator{std::cout, "\\n"}); }\n    void add(std::string const& log) { m_logs.push_back(log); }\n};\n\nclass basic_console_command\n{\npublic:\n    virtual ~basic_console_command() = default;\n    virtual void execute() = 0;\n};\n\nclass clear_console_command: public basic_console_command\n{\nprivate:\n    console& m_console;\npublic:\n    explicit clear_console_command(console& tty): m_console{tty} { }\n    void execute() override { m_console.clear(); }\n};\n\nclass print_console_command: public basic_console_command\n{\nprivate:\n    console& m_console;\npublic:\n    explicit print_console_command(console& tty): m_console{tty} { }\n    void execute() override { m_console.print(); }\n};\n\nclass add_console_command: public basic_console_command\n{\nprivate:\n    console& m_console;\n    std::string m_value;\npublic:\n    explicit print_console_command(console& tty, std::string const& value): m_console{tty}, m_value{value} { }\n    void execute() override { m_console.add(m_value); }\n};\n\nclass button\n{\nprivate:\n    std::shared_ptr<basic_console_command> m_command;\npublic:\n    explicit button(std::shared_ptr<basic_console_command> command): m_command{command} { }\n    void click() { m_command.execute(); }\n};\n\nint main()\n{\n    console tty{};\n\n    std::shared_ptr<clear_console_command> clear_command{std::make_shared<clear_console_command>(tty)};\n    std::shared_ptr<print_console_command> print_command{std::make_shared<print_console_command>(tty)};\n    std::shared_ptr<add_console_command> add_command{std::make_shared<add_console_command>(tty, "Command Pattern")};\n\n    button clear{clear_command};\n    button print{print_command};\n    button add{add_command};\n}	code	cpp	\N
 3966	1	List of emails in the currently opened mailbox. By default it opens the system mailbox.	text	txt	\N
 3967	1	The pager contains the email content. How much information can be seen depends on configuration.	text	txt	\N
@@ -13838,7 +13846,6 @@ COPY flashback.blocks (card, "position", content, type, extension, metadata) FRO
 4074	1	Data in section `.data` and `.bss` should be aligned on a 16-byte border so\nthat registers can be filled with data once for each block of data.	text	txt	\N
 4075	1	In **NASM** the assembly directive `align 16` and `alignb 16` can be used in\nfront of the data.	text	txt	\N
 4075	2	For **AVX**, data should be aligned on a 32 bytes border and for **AVX-512**,\ndata needs to be aligned on a 64 bytes border.	text	txt	\N
-4076	1	The I/O service is a channel that is used to access operating system\nresources and establish communication between our program and the operating\nsystem that performs I/O requests.	text	txt	\N
 5231	1	act --env name=value ...	code	sh	\N
 4096	1	We can provide a path to the CMake script, which (only) contains a list of\n`set()` commands to specify variables that will be used to initialize an\nempty build tree.	text	txt	\N
 4096	2	cmake -C <initial-cache-script> <path-to-source>	code	txt	\N
@@ -14233,13 +14240,6 @@ COPY flashback.blocks (card, "position", content, type, extension, metadata) FRO
 4371	3	#include <algorithm>\n#include <ranges>\n#include <vector>\n#include <string>\n\nint main()\n{\n    std::vector<long> range1{1, 2, 3};\n    std::vector<long> range2{1, 3};\n    std::vector<long> range3{1, 3, 1};\n\n    bool cmp1 = std::lexicographical_compare(range1.cbegin(), range1.cend(), range2.cbegin(), range2.cend());\n    // same as\n    bool cmp2 = range1 < range2;\n    // cmp1 = cmp2 = true\n\n    bool cmp3 = std::lexicographical_compare(range2.cbegin(), range2.cend(), range3.cbegin(), range3.cend());\n    // same as\n    bool cmp4 = range2 < range3;\n    // cmp3 = cmp4 = true\n\n    std::vector<std::string> range4{"Zoe", "Alice"};\n    std::vector<std::string> range5{"Adam", "Maria"};\n    auto compare_length = [](auto const& l, auto const& r) { return l.length() < r.length(); };\n\n    bool cmp5 = std::ranges::lexicographical_compare(range4, range5, compare_length);\n    // different than\n    bool cmp6 = range1 < range2;\n    // cmp5 = true, cmp6 = false\n}	code	cpp	\N
 4372	1	| `std::lexicographical_compare_three_way` | standard |\n| --- | --- |\n| introduced | C++20 |\n| constexpr | C++20 |\n| paralllel | N/A |\n| rangified | N/A |	text	txt	\N
 4372	2	The `std::lexicographical_compare_three_way` is the spaceship operator\nequivalent to `std::lexicographical_compare`. It returns one of:	text	txt	\N
-4372	3	* `std::strong_ordering`\n* `std::weak_ordering`\n* `std::partial_ordering`	text	txt	\N
-4372	4	The type depends on the type returned by the elements’ spaceship operator.	text	txt	\N
-5196	5	#include <Context.hpp>\n#include <StrategyA.hpp>\n#include <StrategyB.hpp>\n\nint main()\n{\n    std::shared_ptr<Context> context{std::make_shared<Context>()};\n    context->setStrategy(std::move(std::make_unique<StrategyA>()));\n    context->setStrategy(std::move(std::make_unique<StrategyB>()));\n    context->contextInterface();\n}	code	cpp	\N
-4372	5	#include <algorithm>\n#include <vector>\n#include <string>\n\nint main()\n{\n    std::vector<long> numbers1{1, 1, 1};\n    std::vector<long> numbers2{1, 2, 3};\n\n    auto cmp1 = std::lexicographical_compare_three_way(numbers1.cbegin(), numbers1.cend(), numbers2.cbegin(), numbers2.cend());\n    // cmp1 = std::strong_ordering::less\n\n    std::vector<std::string> strings1{"Zoe", "Alice"};\n    std::vector<std::string> strings2{"Adam", "Maria"};\n\n    auto cmp2 = std::lexicographical_compare_three_way(strings1.cbegin(), strings1.cend(), strings2.cbegin(), strings2.cend());\n    // cmp2 = std::strong_ordering::greater\n}	code	cpp	\N
-4373	1	The `std::sort` algorithm is the canonical `O(N log N)` sort (typically\nimplemented as *intro-sort*).	text	txt	\N
-4373	2	Due to the `O(N log N)` complexity guarantee, `std::sort` only operates on\n`random_access` ranges. Notably, `std::list` offers a method with an\napproximate `O(N log N)` complexity.	text	txt	\N
-4374	1	| `std::sort` | standard |\n| --- | --- |\n| introduced | C++98 |\n| paralllel | C++17 |\n| constexpr | C++20 |\n| rangified | C++20 |	text	txt	\N
 4374	2	#include <algorithm>\n#include <ranges>\n#include <vector>\n#include <list>\n\nstruct Account\n{\n    long value() { return value_; }\n    long value_;\n};\n\nint main()\n{\n    std::vector<long> series1{6,2,4,1,5,3};\n    std::sort(series1.begin(), series1.end());\n\n    std::list<long> series2{6,2,4,1,5,3};\n    //std::sort(series2.begin(), series2.end()); // won't compile\n    series2.sort();\n\n    // With C++20, we can take advantage of projections to sort by a method or member\n    std::vector<Account> accounts{{6},{2},{4},{1},{5},{3}};\n    std::ranges::sort(accounts, std::greater<>{}, &Account::value);\n}	code	cpp	\N
 4375	1	The `std::sort` is free to re-arrange equivalent elements, which can be\nundesirable when re-sorting an already sorted range. The `std::stable_sort`\nprovides the additional guarantee of preserving the relative order of equal\nelements.	text	txt	\N
 4375	2	| `std::stable_sort` | standard |\n| --- | --- |\n| introduced | C++98 |\n| paralllel | C++17 |\n| constexpr | N/A |\n| rangified | C++20 |	text	txt	\N
@@ -16069,6 +16069,7 @@ COPY flashback.cards (id, headline, state) FROM stdin;
 249	What is the secondary statement terminator in psql?	draft
 250	What command opens an editor to edit psql query buffer?	draft
 251	What psql command executes sql statements from a file?	draft
+2277	Represent an empty view?	draft
 252	What command gives help information about psql?	draft
 253	What command gives help with the psql commands?	draft
 254	Query the name of current database?	draft
@@ -16768,6 +16769,7 @@ COPY flashback.cards (id, headline, state) FROM stdin;
 1074	Determine whether or not function $T(v_1, v_2) = (v_1-v_2, v_1+v_2)$ when $T: R^2 → R^2$ is a linear transformation?	draft
 1075	Using the fact that linear transformation functions preserve linear combinations, write linear transformation T(v) as linear combination of its basis vectors when T: R^n → R^n?	draft
 1076	Compute $T(2,3)$ supposing $T: R^2 → R^2$ is a linear transformation for which we have its standard basis vector transformations $T(e₁)=(1,1)$ and $T(e₂)=(-1,1)$.	draft
+1243	When does asking for result might cause execution of two threads in sequence?	draft
 1077	Find a general formula for $T(v₁,v₂)$ when $T: R^2 → R^2$ is a linear transformation for which we have its standard basis vector transformations $T(e₁)=(1,1)$ and $T(e₂)=(-1,1)$.	draft
 1078	What method is used to construct a matrix called the standard matrix of $T$ that does the linear transformation by matrix multiplication?	draft
 1079	Find the standard matrix of linear transformation $T(v₁,v₂) = (v₁+2v₂, 3v₁+4v₂)$ when $v₁,v₂ \\in \\mathbb{R}^2$?	draft
@@ -16920,7 +16922,7 @@ COPY flashback.cards (id, headline, state) FROM stdin;
 1240	What are the possible executions when calling a function asynchronously?	draft
 1241	Specialize a future that calls a function with no return value?	draft
 1242	What are the available async policies?	draft
-1243	When does asking for result might cause execution of two threads in sequence?	draft
+2711	Edit an environment variable on U-Boot command line?	draft
 1244	What is the best practice for running functionalities asynchronously?	draft
 1245	What would happen if the system fails to execute functionality after directing async call with async launch policy?	draft
 1246	What happens when the result of functionality is never requested after an async call with async launch policy?	draft
@@ -17815,7 +17817,6 @@ COPY flashback.cards (id, headline, state) FROM stdin;
 2647	Use move semantics to pass future and promise types to two different threads passing value?	draft
 2648	Pass string literals as universal references?	draft
 2763	Where are the process related information on the system?	draft
-2711	Edit an environment variable on U-Boot command line?	draft
 2712	Restart the board with a U-Boot command?	draft
 2713	Where to download the Raspberry Pi bootloader from?	draft
 2714	What files are required to to boot using a Raspberry Pi device?	draft
@@ -18189,6 +18190,7 @@ COPY flashback.cards (id, headline, state) FROM stdin;
 3166	Remove all occurances of a value within a variable using override operators?	draft
 3167	What does the dropbear package do?	draft
 3168	Assign on a variable only for a specific machine?	draft
+2278	Represent a single element view?	draft
 3169	What is the precedence between override assignments and regular assignments?	draft
 3170	Append to a variable only for a specific machine using override variables?	draft
 3171	What is the precedence of override operators?	draft
@@ -18729,7 +18731,6 @@ COPY flashback.cards (id, headline, state) FROM stdin;
 4064	Inspect the command line arguments stored in registers in a GNU debugger?	draft
 4074	How does alignment of data in <code>.data</code> and <code>.bss</code> sections can improve performance of a program?	draft
 4075	How can we align data in <code>.data</code> and <code>.bss</code> sections in specific byte sizes?	draft
-4076	What is the objective of <code>io_service</code> in boost?	draft
 4087	Write a client establishing a synchronous tcp connection to a server?	draft
 4093	Initiate project configuration with cmake?	draft
 4094	Specify the generator used for building the project?	draft
@@ -18815,6 +18816,7 @@ COPY flashback.cards (id, headline, state) FROM stdin;
 4225	How can we have two different bodies of a function with the same signature and let compiler know which is best match?	draft
 4226	In how many ways can we apply a concept as a type constraint on a function template?	draft
 4230	What is the requirements of the type used as class template arguments?	draft
+2770	What is the objective of io_object in boost?	draft
 4239	How does compiler realize which constructor should be used as the result of arguments deduction?	draft
 4244	Use deduction guides for the constructor of a class that takes two iterators to deduce the value type of iterators?	draft
 4247	Iterate over a range without invoking iterator functions?	draft
@@ -18899,6 +18901,7 @@ COPY flashback.cards (id, headline, state) FROM stdin;
 4367	Swap values behind two forward iterators?	draft
 4368	Exchange elements of two non-overlapping ranges?	draft
 4369	Specialize swap for user-defined types?	draft
+4076	What is the objective of io_service in boost?	draft
 4370	What is the minimum requirement for a type to be comparable for sorting algorithms?	draft
 4371	Compare if one range is lexicographically less than another?	draft
 4372	Compare if one range is lexicographically less than another using spaceship operator?	draft
@@ -19983,8 +19986,6 @@ COPY flashback.cards (id, headline, state) FROM stdin;
 2273	Adapt a view into a range with a begin and end iterator of matching types for non-range versions of algorithms?	draft
 2275	Split a single range into a view over sub-ranges? (incomplete)	draft
 2276	Flatten a splited view of a range?	draft
-2277	Represent an empty view?	draft
-2278	Represent a single element view?	draft
 2279	Represent a view of the generated sequence formed by repeatedly incrementing an initial value?	draft
 2280	Represent a view obtained by successively applying the istream input iterator?	draft
 2281	Where the Qt installer can be found?	draft
@@ -20679,7 +20680,6 @@ COPY flashback.cards (id, headline, state) FROM stdin;
 912	Inspect the breakpoint, stack, threads and other resources of the debugging program in gdb?	draft
 976	Indicate that a literal number is in hexadecimal base in x64 assembly?	draft
 962	What registers are used to read command line arguments from an x64 assembly program?	draft
-2770	What is the objective of <code>io_object</code> in boost?	draft
 2776	Handle exceptional asynchronous control flow in an event processing loop?	draft
 108	Build an executable from C++ source?	draft
 116	How many constants are available in C++?	draft
@@ -21827,6 +21827,11 @@ COPY flashback.progress ("user", card, last_practice, duration, progression) FRO
 2	108	2026-02-23 08:27:40.176586+00	53	0
 2	111	2026-02-23 11:37:17.915876+00	110	0
 2	215	2026-02-23 11:44:45.329946+00	5	2
+2	1733	2026-02-24 08:20:10.200285+00	18	0
+2	2769	2026-02-24 08:20:19.774314+00	8	0
+2	2770	2026-02-24 08:20:59.883298+00	39	0
+2	4076	2026-02-24 08:21:26.245101+00	25	0
+2	2771	2026-02-24 08:21:43.473536+00	9	0
 \.
 
 
@@ -28349,11 +28354,11 @@ COPY flashback.sections (resource, "position", name, link, state) FROM stdin;
 
 COPY flashback.sessions ("user", token, device, last_usage) FROM stdin;
 2	Txqw8ldUFaI+e9TGfBlP6YxBkn6bgngfQMJITK8DUSQ	b53c3d26-9f71-a69d-d031-c7bf2febd123	2025-12-22 23:00:00+00
-2	kENXFbSZvJrAggEpbDHV0DVnUKDNwYlRsoszdHSYNf4	ea96bd44-1ab3-4c68-9ed3-ab47883e57ef	2026-02-23 00:00:00+00
 2	S+QZFj/aiqeZCU9t68F97mH7tZH9XEySCgQF/8R08pA	0bdb9226-aefa-4351-8d6e-195d6e5ff28f	2026-02-22 00:00:00+00
-2	z1N4Egb7ZDMyS4LR1cbFr+CuVWwwr39x3BbEUSpYhW0	70c60675-db09-4fc2-bd9a-0e178401f6e7	2026-02-22 00:00:00+00
 2	KHvqvUtrQuNuv1D8yEfHNP9erEx3zsfN4pKEasnauQs	5b33a8c4-d1c2-4e3b-af88-fa12dce84284	2026-02-23 00:00:00+00
 6	6iF44Iw2Y/NIvt+c1TVX3ReZJDsfJynkhR22sxGymJg	0b0f1bd6-8e6b-4ce9-aa4a-61b54e7a9bfb	2026-02-24 00:00:00+00
+2	z1N4Egb7ZDMyS4LR1cbFr+CuVWwwr39x3BbEUSpYhW0	70c60675-db09-4fc2-bd9a-0e178401f6e7	2026-02-24 00:00:00+00
+2	kENXFbSZvJrAggEpbDHV0DVnUKDNwYlRsoszdHSYNf4	ea96bd44-1ab3-4c68-9ed3-ab47883e57ef	2026-02-24 00:00:00+00
 \.
 
 
@@ -32213,5 +32218,5 @@ GRANT ALL ON SCHEMA public TO brian;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict jxOX206icOzr7TiopPLNE2iu9bwwb3EUq0WyZIOO3cWPoOgu9ofQ2SOdhUdox9f
+\unrestrict weOcVNUIZ07DTpYkNL37SxhJNqTHjZ3em8UG32HkjYe0P3lN1Ln9fI4QTSVLXDf
 
