@@ -2,10 +2,10 @@
 -- PostgreSQL database dump
 --
 
-\restrict jLpd9OGj9gCG5MPxqmkcitQWqUv09lULMtgbGW1B8OVtgcl4qRdvOh27u4UgVHW
+\restrict jxOX206icOzr7TiopPLNE2iu9bwwb3EUq0WyZIOO3cWPoOgu9ofQ2SOdhUdox9f
 
 -- Dumped from database version 18.1
--- Dumped by pg_dump version 18.0
+-- Dumped by pg_dump version 18.1
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -3669,7 +3669,6 @@ COPY flashback.assessments (topic, card, subject, level) FROM stdin;
 9	5371	6	surface
 15	5372	6	surface
 8	5372	6	surface
-1	5645	3	surface
 \.
 
 
@@ -4139,7 +4138,6 @@ COPY flashback.blocks (card, "position", content, type, extension, metadata) FRO
 114	1	auto flag = true; // bool	code	txt	\N
 115	1	typedef unsigned long positive_t;	code	txt	\N
 116	1	- Literal constants\n- Constants defined by `const`\n- Constant expressions defined by `constexpr`\n- Immediate functions marked by `consteval`\n- Enumerations\n- Scoped Enumerations\n- Preprocessor macro `#define`	text	txt	\N
-117	1	const double pi = 22.0 / 7;	code	txt	\N
 120	1	An enumeration comprises a set of constants called enumerators.	text	txt	\N
 120	2	enum class directions\n{\n    north,\n    east,\n    south,\n    west\n};	code	txt	\N
 121	1	#include <string>\n#include <format>	text	txt	\N
@@ -4163,6 +4161,7 @@ COPY flashback.blocks (card, "position", content, type, extension, metadata) FRO
 126	2	constexpr auto use_string()\n{\n    std::string buffer{"sample"};\n    return buffer.size();\n}	text	txt	\N
 126	3	constexpr auto use_vector()\n{\n    std::vector<int> buffer{1,2,3,4,5};\n    return std::accumulate(buffer.begin(), buffer.end(), 0);\n}	code	txt	\N
 127	1	- Read\n- Search\n- Insert\n- Delete	text	txt	\N
+117	1	const double pi = 22.0 / 7;	code	cpp	\N
 128	1	We can measure the speed of an operation in terms of how many computational steps it takes.	text	txt	\N
 129	1	**Read:** Computers read an array in just one step.	text	txt	\N
 129	2	**Search:** To Search for a value within an array, computers have no choice but to inspect each cell one at a time.\nThis algorithm is called **linear search**.	text	txt	\N
@@ -4443,7 +4442,6 @@ COPY flashback.blocks (card, "position", content, type, extension, metadata) FRO
 198	2	- `std::istream_iterator`\n- `std::ostream_iterator`\n- `std::istreambuf_iterator`\n- `std::ostreambuf_iterator`	text	txt	\N
 208	1	Standard Library containers use value semantics on elements. Thus, when you\nwrite classes that you intend to use with the Standard Library, you need to\nmake sure they are copyable.	text	txt	\N
 183	6	def delete(valueToDelete, node):\n    if node is None:\n        return None\n    elif valueToDelete < node.value:\n        node.leftChild = delete(valueToDelete, node.leftChild)\n        return node\n    elif valueToDelete > node.value:\n        node.rightChild = delete(valueToDelete, node.rightChild)\n        return node\n    elif valueToDelete == node.value:\n        if node.leftChild is None:\n            return node.rightChild\n        elif node.rightChild is None:\n            return node.leftChild\n        else:\n            node.rightChild = lift(node.rightChild, node)\n            return node	text	txt	\N
-4373	1	The `std::sort` algorithm is the canonical `O(N log N)` sort (typically\nimplemented as *intro-sort*).	text	txt	\N
 183	7	def lift(node, nodeToDelete):\n    if node.leftChild:\n        node.leftChild = lift(node.leftChild, nodeToDelete)\n        return node\n    else:\n        nodeToDelete.value = node.value\n        return node.rightChild	code	txt	\N
 184	1	1. Call itself recursively on the node's left child. The function will keep getting called until we hit a node that does not have a left child.\n2. Visit a node.\n3. Call itself recursively on the node's right child. The function will keep getting called until we hit a node that does not have a right child.	text	txt	\N
 184	2	def traverse_and_print(node):\n    if node is None:\n        return	text	txt	\N
@@ -4829,8 +4827,6 @@ COPY flashback.blocks (card, "position", content, type, extension, metadata) FRO
 567	4	int main(int argc, char **argv)\n{\nint result = -1;	text	txt	\N
 592	7	if (fclose(fp) == -1)\n{\nperror(NULL);\nreturn 3;\n}\n}	code	txt	\N
 1713	1	The class `image-buildinfo` writes a plain text file containing build information and layers revisions to the target filesystem at `${sysconfdir}/buildinfo` by default.	text	txt	\N
-2792	6	Before building an image, you should edit and configure the `build/local.conf` file and set `MACHINE` variable to whatever target you desire, e.g. qemuarm, qemuarm64, qemux86-64, etc.	text	txt	\N
-2792	7	sed -i '/^MACHINE[ ?=]\\\\+/s/^MACHINE\\\\([ ?=]\\\\+\\\\).*/MACHINE\\\\1"qemuarm64"/' conf/local.conf	code	txt	\N
 402	5	int main()\n{\n    try\n    {\n        std::filesystem::path relative_path{"./lib/../include"};\n        std::filesystem::path base_path{"/usr"};\n        std::filesystem::path canonical_path{std::filesystem::canonical(relative_path, base_path)};\n        std::cout << canonical_path << std::endl;\n    }\n    catch (std::filesystem::filesystem_error const& exp)\n    {\n        std::cerr << exp.what() << std::endl;\n    }\n    catch (std::bad_alloc const& exp)\n    {\n        std::cerr << exp.what() << std::endl;\n    }\n}	code	txt	\N
 403	1	`std::filesystem::canonical()` does what `std::filesystem::absolute()` does,\nbut canonical additionally removes any "." or ".." paths.	text	txt	\N
 403	2	`std::filesystem::absolute()` does not call system calls.	text	txt	\N
@@ -5566,7 +5562,6 @@ COPY flashback.blocks (card, "position", content, type, extension, metadata) FRO
 647	3	auto operator<=>(T const& rhs) const = default;	code	cpp	\N
 647	4	constexpr auto operator<=>(T const& rhs) const noexcept;	code	cpp	\N
 647	5	When declaring the default member `operator<=>`, the following applies for the generated operators:	text	txt	\N
-2792	8	Using `bitbake` utility which was sourced earlier build an image by choice:	text	txt	\N
 647	6	- `noexcept`: if comparing the members never throws.\n- `constexpr`: if comparing the members is possible at compile time.\n- **rewriting**: implicit type conversions for the first operand is supported.\n- `operator==`: defines equality support with `operator==` and `operator!=`.\n- `operator<=>`: defines relational support with `<`, `<=`, `>`, `>=` operators.	text	list	\N
 648	1	To have more control over the generated comparison operators, we can define `operator==` and `operator<=>` ourselves.	text	txt	\N
 648	2	constexpr auto operator==(T const& rhs) const noexcept\n{\n    return value == rhs.value;\n}\n\nconstexpr auto operator<=>(T const& rhs) const noexcept\n{\n    return value <=> rhs.value;\n}	code	cpp	\N
@@ -5866,7 +5861,6 @@ COPY flashback.blocks (card, "position", content, type, extension, metadata) FRO
 803	4	Here, the exception to the rule - that the kernel doesn't interpret the minor\nnumber – is the `misc` class (type character, major `#10`). It uses the minor\nnumbers as second-level majors.	text	txt	\N
 803	5	A common problem is that of the namespace getting exhausted. Within the misc\nclass (`#10`) live a lot of devices and their corresponding drivers. In\neffect, they share the same major number and rely on a unique minor number to\nidentify themselves.	text	txt	\N
 804	1	- The **buses** on the system.\n- The **devices** on them.\n- The **device drivers** that drive the devices.	text	txt	\N
-2792	9	bitbake core-image-minimal	code	txt	\N
 805	1	A fundamental **LDM** tenet is that every single device must reside on a bus.\nUSB devices will be on USB bus, PCI devices on PCI bus, I2C devices on I2C\nbus, and so on. Available buses are available under `/sys/bus` directory.	text	txt	\N
 806	1	Critically, they organize and recognize the devices on them. If a new device\nsurfaces, like a pen drive, the USB bus driver will recognize the fact and\nbind it to its device driver.	text	txt	\N
 807	1	After its corresponding bus driver binds the device to its correct device\ndriver, the kernel driver framework invokes the registered `probe()` method\nof the driver. This probe method now sets up the device, allocating\nresources, IRQs, memory setup, registering it as required, and so on.	text	txt	\N
@@ -6418,7 +6412,6 @@ COPY flashback.blocks (card, "position", content, type, extension, metadata) FRO
 965	8	int main(void)\n{\n    int result = sum(4, 2);\n    printf("%i\\\\n", result);\n}	code	txt	\N
 965	9	gcc -g -o program main.c sum.o\n./program	code	txt	\N
 966	1	There are two types of inline assembly: **basic** and **extended**.	text	txt	\N
-2792	10	There might be dependency packages to run `bitbake` on Arch Linux:	text	txt	\N
 966	2	Compilers will not optimize assembly parts of the program, so using inline assembly is not advices.\nThere will be no error checking on inline assembly code.	text	txt	\N
 967	1	Instructions should be terminated by `;`.\n`-mintel` compiler option is required.\nSwitching to Intel assembly syntax is required as the first argument of `__asm__`.	text	txt	\N
 967	2	int main(void)\n{\n    __asm__(\n        ".intel_syntax noprefix;"\n        "xor rax, rax;"\n    );\n}	code	txt	\N
@@ -7167,7 +7160,6 @@ COPY flashback.blocks (card, "position", content, type, extension, metadata) FRO
 1244	2		code	txt	\N
 1245	1	By explicitly passing a launch policy directing `async()` that it should\ndefinitely start the passed functionality asynchronously the moment it is\ncalled.	text	txt	\N
 1245	2	std::future<long> result = std::async(std::launch::async, do_something);	code	txt	\N
-2792	11	sudo pacman -Ss inetutils net-tools diffstat chrpath rpcscv-proto	code	txt	\N
 1245	3	If the asynchronous call is not possible here, the program will throw a\n`std::system_error` exception with the error code\n`resource_unavailable_try_again`, which is equivalent to the POSIX errno\n`EAGAIN`.	text	txt	\N
 1246	1	With the `std::launch::async` policy, you don't necessarily have to call\n`get()` anymore because, if the life time of the returned future ends, the\nprogram will wait for the function to finish. Thus, if you don't call `get()`,\nleaving the scope of the future object will wait for the background task to\nend. Nevertheless, also calling `get()` here before a program ends makes the\nbehavior clearer.	text	txt	\N
 1246	2	{\n    std::future<void> result = std::async(std::launch::async, do_something);\n    // result's destructor blocks at the end of scope\n}	code	txt	\N
@@ -7310,7 +7302,6 @@ COPY flashback.blocks (card, "position", content, type, extension, metadata) FRO
 1294	2	docker image build --squash --tag container:latest .	code	txt	\N
 1322	2	In *ingress mode* every node gets a mapping and can therefore redirect your request to a node that is running the service.	text	txt	\N
 1323	1	docker service create --name my-service --network my-network --publish published=80,target=80,mode=host --replicas 12	code	txt	\N
-2792	12	An image was built to be run by `runqemu`:	text	txt	\N
 1323	2	Open a web browser and point it to the IP address of any of the nodes in the swarm on port 80 to see the service running.	text	txt	\N
 1324	1	docker service update --image repository/project:v2 --update-parallelism 2 --update-delay 20s my-project\ndocker service inspect --pretty my-project	code	txt	\N
 1325	1	docker service logs my-project	code	txt	\N
@@ -7356,7 +7347,6 @@ COPY flashback.blocks (card, "position", content, type, extension, metadata) FRO
 1709	7	After the build process is over, the image will be available inside the `build/tmp/deploy/images/visionfive/` directory. The file we want to use is `core-image-full-cmdline-visionfive.wic.gz`.	text	txt	\N
 1341	2	The application running on node-1 updates some data in the shared volume.\nHowever, instead of writing the update directly to the volume, it holds it in its local buﬀer for faster recall.\nAt this point, the application in node-1 thinks the data has been written to the volume.\nHowever, before node-1 flushes its buffers and commits the data to the volume, the app on node-2 updates the same data with a diﬀerent value and commits it directly to the volume.\nAt this point, both applications think they’ve updated the data in the volume, but in reality only the application in node-2 has.\nA few seconds later, on node-1 flushes the data to the volume, overwriting the changes made by the application in node-2.\nHowever, the application in node-2 is totally unaware of this! This is one of the ways data corruption happens.\nTo prevent this, you need to write your applications in a way to avoid things like this.	text	txt	\N
 1342	1	Docker Swarm Mode is secure by default. Image vulnerability scanning analyses\nimages, detects known vulnerabilities, and provides detailed reports and\nfixes.	text	txt	\N
-2792	13	runqemu core-image-minimal nographics	code	txt	\N
 1342	2	Scanners work by building a list of all software in an image and then comparing the packages against databases of known vulnerabilities.\nMost vulnerability scanners will rank vulnerabilities and provide advice and help on fixes.	text	txt	\N
 1343	1	**Docker Content Trust (DCT)** lets us sign our own images and verify the\nintegrity and publisher of images we consume.	text	txt	\N
 1344	1	Kernel namespaces are the main technology used to build containers. They\nvirtualise operating system constructs such as process trees and filesystems\nin the same way that hypervisors virtualise physical resources such as CPUS\nand disks. If namespaces are about isolation, control groups (cgroups) are\nabout limits.	text	txt	\N
@@ -7443,7 +7433,6 @@ COPY flashback.blocks (card, "position", content, type, extension, metadata) FRO
 1374	7	namespace correct_implementation\n{\n    #ifndef _lib_version_1\n    inline namespace v1\n    {\n        template<typename T>\n        int test(T value) { return 1; }\n    }\n    #endif	text	txt	\N
 1376	1	* The type of objects without template arguments are not types, but act as a placeholder for a type that activates CTAD. When compiler encouters it, it builds a set of deduction guides which can be complemented by user with user defined deduction rules.\n* CTAD does not occur if the template argument list is present.	text	txt	\N
 1380	1	* A sign, plus (**+**) or minus (**-**) (optional)\n* Prefix **0** to indicate an octal base (optional)\n* Prefix **0x** or **0X** to indicate a hexadecimal base (optional)\n* A sequence of digits	text	txt	\N
-2792	14	Origin: 1.2	text	txt	\N
 1382	1	* Decimal floating-point expression (optional sign, sequence of decimal digits with optional point, optional e or E, followed by exponent with optional sign).\n* Binary floating-point expression (optional sign, 0x or 0X prefix, sequence of hexadecimal digits with optional point, optional p or P, followed by exponent with optional sign).\n* Infinity expression (optional sign followed by case-insensitive INF or INFINITY).\n* A non-number expression (optional sign followed by case-insensitive NAN and possibly other alphanumeric characters).	text	txt	\N
 1375	1	* Only by C++20 structured bindings can include `static` or `thread_local` specifiers in the declaration.\n* Only by C++20 `[[maybe_unused]]` attribute can be used in the declaration.\n* Only by C++20 a lambda can capture structure binding identifiers.	text	txt	\N
 1376	2	std::pair p{42, "demo"};    // std::pair<int, char const*>\nstd::vector v{1, 2};        // std::vector<int>	code	cpp	\N
@@ -7477,7 +7466,6 @@ COPY flashback.blocks (card, "position", content, type, extension, metadata) FRO
 1422	1	Converting from an `std::basic_string_view` to an `std::basic_string` is not possible. You must explicitly construct an `std::basic_string` object from a `std::basic_string_view`.	text	txt	\N
 1423	1	Only class member functions can be `defaulted`.	text	txt	\N
 1715	1	When using the Yocto Project, we usually add many configurations in `build/conf/local.conf`. However, as discussed in the book, this is bad as it is not at source control management and is likely to differ among developers. Using a custom distribution allows consistent use among multiple developers, provides a clear view of the different `DISTRO_FEATURES` we use when compared to our base distribution, and provides a central place where we can have a global view of all the required recipe configurations we need for our product, reducing the number of bbappend files required to configure our recipes (for example, `PACKAGECONFIG:pn-<myrecipe>:append = " myfeature"`)	text	txt	\N
-2793	1	Add the following line to `build/local.conf` file:	text	txt	\N
 1425	1	* **user defined constructor** inhibits **default constructor**: If a user-defined constructor exists, the default constructor is not generated by default.\n* **virtual destructor** inhibits **default constructor**: If a user-defined virtual destructor exists, the default constructor is not generated by default.\n* **user defined move constructor/assignment** inhibits **default copy constructor/assignment**: If a user-defined move constructor or move assignment operator exists, then the copy constructor and copy assignment operator are not generated by default.\n* **user defined copy constructor/assignment, move constructor/assignment, destructor** inhibits **default move constructor/assignment**: If a user-defined copy constructor, move constructor, copy assignment operator, move assignment operator, or destructor exists, then the move constructor and move assignment operator are not generated by default.\n* If a user-defined copy constructor or destructor exists, then the copy assignment operator is generated by default. <span style="color:green">(deprecated)</span>\n* If a user-defined copy assignment operator or destructor exists, then the copy constructor is generated by default. <span style="color:green">(deprecated)</span>	text	txt	\N
 1425	2	The rule of thumb, also known as The Rule of Five, for class special member functions is that if you explicitly define any copy constructor, move constructor, copy assignment operator, move assignment operator, or destructor, then you must either explicitly define or default all of them.	text	txt	\N
 1426	1	Declare the copy constructor and the copy assignment operator as `deleted`.	text	txt	\N
@@ -7505,8 +7493,6 @@ COPY flashback.blocks (card, "position", content, type, extension, metadata) FRO
 1441	2	1. Define an overload with a fixed number of arguments to end compile-time recursion if the semantics of the variadic function template require it.\n2. Define a template parameter pack that is a template parameter that can hold any number of arguments, including zero; these arguments can be either types, non-types, or templates.\n3. Define a function parameter pack to hold any number of function arguments, including zero; the size of the template parameter pack and the corresponding function parameter pack is the same. This size can be determined with the sizeof... operator.\n4. Expand the parameter pack in order to replace it with the actual arguments being supplied.	text	txt	\N
 1441	3	With GCC and Clang, you can use the `__PRETTY_FUNCTION__` macro to print the name and the signature of the function.	text	txt	\N
 1441	4	Make return type `auto` to ensure all of the function template initializations have the same return type, for example, in case of having `std::string` and `char` types in parameter pack.	text	txt	\N
-2793	2	```\nIMAGE_INSTALL_append = " binutils"\n``````	text	txt	\N
-2793	3	bitbake qemuarm64 core-image-minimal\nrunqemu core-image-minimal nographics	code	txt	\N
 1443	1	Fold expressions work with all overloads for the supported **binary operators**, but do not work with **arbitrary binary operators**. It is possible to implement a workaround for that by providing a wrapper type that will hold a value and an overloaded operator for that wrapper type:	text	txt	\N
 1444	1	A higher-order function is a function that takes one or more other functions as arguments and applies them to a range (a list, vector, map, tree, and so on), thus producing either a new range or a value.	text	txt	\N
 1444	2	To implement the map function, you should:	text	txt	\N
@@ -7600,7 +7586,6 @@ COPY flashback.blocks (card, "position", content, type, extension, metadata) FRO
 1495	1	The Yocto Project has a release every six months, in April and October.	text	txt	\N
 1495	2	The support for the stable release is for 7 months, offering 1 month of\noverlapped support for every stable release. The LTS release has a minimal\nsupport period of 2 years, optionally extended. After the official support\nperiod ends, it moves to Community support and finally reaches End Of Life\n(EOL).	text	txt	\N
 1495	3	`Initial Release -> Stable Release -> Community -> End of Life`	text	txt	\N
-2793	4	Origin: 1.2	text	txt	\N
 1496	1	Poky is the default Yocto project reference distribution, which uses OpenEmbedded build system technology.	text	txt	\N
 1496	2	It is composed of a collection of tools, configuration files, and recipe data (known as metadata).	text	txt	\N
 1497	1	The code that is parsed generates and runs tasks, which are a set of steps ordered per the code's dependencies.	text	txt	\N
@@ -8757,7 +8742,6 @@ COPY flashback.blocks (card, "position", content, type, extension, metadata) FRO
 1952	11	sudo unattended-upgrade --dry-run -d	code	txt	\N
 1952	12	8. To manually install the security-related updates without installing non-security updates, just run:	text	txt	\N
 1952	13	sudo unattended-upgrade -d	code	txt	\N
-2794	1	We just need to configure `conf/local.conf` file and add the following line before building an image:	text	txt	\N
 1952	14	Also, if you’re running a non-Ubuntu flavor of Debian, which would include Rasp-bian for the Raspberry Pi, you can give it the same functionality as Ubuntu by installing the unattended-upgrades package. Just run this command:	text	txt	\N
 1952	15	sudo apt install unattended-upgrades	code	txt	\N
 2741	2	root=/dev/mmcblk0p2 rootwait\nconsole=ttyS0	code	txt	\N
@@ -8815,7 +8799,6 @@ COPY flashback.blocks (card, "position", content, type, extension, metadata) FRO
 1961	2	sudo passwd -l root	code	txt	\N
 1962	1	You can either create an entry for an individual user or create a user alias.	text	txt	\N
 1962	2	ADMINS ALL=(ALL) ALL	code	txt	\N
-2794	2	```\necho 'IMAGE_INSTALL_appen = " binutils"' >> conf/local.conf\n``````	text	txt	\N
 1962	3	It’s also possible to add a sudo entry for just a single user, and you might need to do that under very special circumstances.	text	txt	\N
 1962	4	frank ALL=(ALL) ALL	code	txt	\N
 1963	1	You can, for example, create a `BACKUPADMINS` user alias for backup administrators, a `WEBADMINS` user alias for web server administrators, or whatever else you desire:	text	txt	\N
@@ -8927,7 +8910,6 @@ COPY flashback.blocks (card, "position", content, type, extension, metadata) FRO
 1983	2	cd /home\nsudo chmod 700 *	code	txt	\N
 1983	3	To change the default permissions setting for home directories, edit `/etc/login.defs` configuration file and set directive values accordingly:	text	txt	\N
 1983	4	UMASK 077\nHOME_MODE 0750	code	txt	\N
-2794	3	And the follow up all the steps required to build an image using `bitbake`:	text	txt	\N
 1983	5	This includes access permissions for a user’s own personal group, but that’s okay. It still effectively means that only the respective owners of the various home directories can get into them.	text	txt	\N
 1984	1	Debian-based distros have two user creation utilities:	text	txt	\N
 1984	2	* `useradd`\n* `adduser`	text	txt	\N
@@ -11136,6 +11118,22 @@ COPY flashback.blocks (card, "position", content, type, extension, metadata) FRO
 2774	2	The `dispatch()` function can be invoked from the current worker thread, while\nthe `post()` function has to wait until the handler of the worker is complete\nbefore it can be invoked. In other words, the `dispatch()` function's events\ncan be executed from the current worker thread even if there are other pending\nevents queued up, while the `post()` function's events have to wait until the\nhandler completes the execution before being allowed to be executed.	text	txt	\N
 2775	1	Strand is a class in the <code>io_service</code> object that provides handler\nexecution serialization. It can be used to ensure the work we have will be\nexecuted serially.	text	txt	\N
 2775	3	The `boost::asio::io_context::strand::wrap()` function creates a new handler\nfunction object that will automatically pass the wrapped handler to the strand\nobject's dispatch function when it is called.	text	txt	\N
+2792	6	Before building an image, you should edit and configure the `build/local.conf` file and set `MACHINE` variable to whatever target you desire, e.g. qemuarm, qemuarm64, qemux86-64, etc.	text	txt	\N
+2792	7	sed -i '/^MACHINE[ ?=]\\\\+/s/^MACHINE\\\\([ ?=]\\\\+\\\\).*/MACHINE\\\\1"qemuarm64"/' conf/local.conf	code	txt	\N
+2792	8	Using `bitbake` utility which was sourced earlier build an image by choice:	text	txt	\N
+2792	9	bitbake core-image-minimal	code	txt	\N
+2792	10	There might be dependency packages to run `bitbake` on Arch Linux:	text	txt	\N
+2792	11	sudo pacman -Ss inetutils net-tools diffstat chrpath rpcscv-proto	code	txt	\N
+2792	12	An image was built to be run by `runqemu`:	text	txt	\N
+2792	13	runqemu core-image-minimal nographics	code	txt	\N
+2792	14	Origin: 1.2	text	txt	\N
+2793	1	Add the following line to `build/local.conf` file:	text	txt	\N
+2793	2	```\nIMAGE_INSTALL_append = " binutils"\n``````	text	txt	\N
+2793	3	bitbake qemuarm64 core-image-minimal\nrunqemu core-image-minimal nographics	code	txt	\N
+2793	4	Origin: 1.2	text	txt	\N
+2794	1	We just need to configure `conf/local.conf` file and add the following line before building an image:	text	txt	\N
+2794	2	```\necho 'IMAGE_INSTALL_appen = " binutils"' >> conf/local.conf\n``````	text	txt	\N
+2794	3	And the follow up all the steps required to build an image using `bitbake`:	text	txt	\N
 2794	4	git clone git://git.yoctoproject.org/poky\ncd poky\nsource oe-init-build-env\nsed -i '/^MACHINE[ ?=]\\\\+/s/^MACHINE\\\\([ ?=]\\\\+\\\\).*/MACHINE\\\\1"qemuarm64"/' conf/local.conf\nbitbake qemuarm64 core-image-sato\nrunqemu core-image-sato	code	txt	\N
 2794	5	Origin: 1.2	text	txt	\N
 2796	1	Historically, `class` keyword can be used instead of `typename`. However,\nbecause this use of `class` can be misleading, you should prefer the use of\n`typename`. The keyword `struct` cannot be used in place of `typename` when\ndeclaring type parameters.	text	txt	\N
@@ -11855,8 +11853,6 @@ COPY flashback.blocks (card, "position", content, type, extension, metadata) FRO
 4351	4	*Sentinels* follow the same idea. However, they do not need to be of an\n*iterator* type. Instead, they only need to be comparable to an *iterator*.\nThe exclusive end of the range is then the first iterator that compares equal\nto the sentinel.	text	txt	\N
 4351	5	#include <iostream>\n#include <algorithm>\n#include <ranges>\n#include <vector>\n\ntemplate<typename T>\nstruct sentinel\n{\n    using iter_t = typename std::vector<T>::iterator;\n    iter_t begin;\n    std::iter_difference_t<iter_t> count;\n    bool operator==(iter_t const& other) const { return std::distance(begin, other) >= count; }\n};\n\nint main()\n{\n    std::vector<long> numbers{1,2,3,4,5};\n    std::vector<long>::iterator iter = numbers.begin();\n    std::ranges::for_each(iter, sentinel<long>{iter, 3}, [](auto e) { std::cout << e << " "; });\n}	code	cpp	\N
 5559	2	---	text	md	\N
-4373	2	Due to the `O(N log N)` complexity guarantee, `std::sort` only operates on\n`random_access` ranges. Notably, `std::list` offers a method with an\napproximate `O(N log N)` complexity.	text	txt	\N
-4374	1	| `std::sort` | standard |\n| --- | --- |\n| introduced | C++98 |\n| paralllel | C++17 |\n| constexpr | C++20 |\n| rangified | C++20 |	text	txt	\N
 3119	1	const GLchar* vertex120 = R"END(\n#version 120\nattribute vec3 position;\nattribute vec3 color;\nvarying vec3 outColor;\nattribute vec2 inUvs;\nvarying vec2 outUvs;\nuniform float time;\nuniform mat4 matrix;\nuniform mat4 projection;\nvoid main()\n{\n    float theta = time;\n    \n    float co = cos(theta);\n    float si = sin(theta);\n    \n    mat4 rotationY = mat4(co, 0, si,  0,\n                          0,  1,  0,  0,\n                          -si,  0, co, 0,\n                          0,  0,  0,  1);\n\n    co = cos(theta/2.);\n    si = sin(theta/2.);\n\n    mat4 rotationX = mat4(1, 0, 0, 0,\n                          0, co, -si, 0,\n                          0, si, co, 0,\n                          0, 0, 0, 1);\n    outUvs = inUvs;\n    outColor = color;\n    gl_Position = projection * matrix * rotationY * rotationX * vec4(position,1.f);\n}\n)END";\n\n// fragment shader source\n\nconst GLchar* raster120 = R"END(\n#version 120\nvarying vec3 outColor;\nvarying vec2 outUvs;\nuniform sampler2D tex;\nuniform float time;\nvoid main()\n{\n    gl_FragColor = vec4(outColor,1.f)/2.f + vec4(texture2D(tex,outUvs))/2.f;\n}\n)END";\n\nGLfloat vertices[] = {\n    -1, -1, +1, // 0\n    -1, +1, +1,\n    +1, +1, +1,\n    +1, -1, +1,\n    -1, -1, -1,\n    -1, +1, -1,\n    +1, +1, -1,\n    +1, -1, -1, //7\n    -1, -1, +1, // "8" - 0\n    -1, +1, +1, // "9" - 1, etc...\n    +1, +1, +1,\n    +1, -1, +1,\n};\n\nGLfloat colors[] = {\n    1, 0, 0, // rgb\n    0, 1, 0,\n    0, 0, 1,\n    1, 0, 1,\n    1, 1, 0,\n    0, 1, 1,\n    0, 1, 0,\n    1, 0, 0,\n    1, 1, 1, // colors for 4 additional verices\n    1, 1, 1,\n    1, 1, 1,\n    1, 1, 1,\n};\n\nGLubyte indices[] = {\n    0,1,\n    1,2,\n    2,3,\n    3,0,\n    0,4,\n    4,5,\n    5,1,\n    1,0,\n    1,5,\n    5,6,\n    6,2,\n    2,1,\n    3,2,\n    2,6,\n    6,7,\n    7,3,\n    7,6,\n    6,5,\n    5,4,\n    4,7,\n    0,3,\n    3,7,\n    7,4,\n    4,0\n};\n\nGLuint verticesBuf;\nglGenBuffers(1, & verticesBuf);\nglBindBuffer(GL_ARRAY_BUFFER, verticesBuf);\nglBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);\n\nGLuint colorsBuf;\nglGenBuffers(1, & colorsBuf);\nglBindBuffer(GL_ARRAY_BUFFER, colorsBuf);\nglBufferData(GL_ARRAY_BUFFER, sizeof(colors), colors, GL_STATIC_DRAW);\n\nGLuint indicesBuf;\nglGenBuffers(1, & indicesBuf);\nglBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indicesBuf);\nglBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);\n\n// ----------------- attributes\n\nGLuint attribPosition;\nattribPosition = glGetAttribLocation(shaderProgram, "position");\nglEnableVertexAttribArray(attribPosition);\nglBindBuffer(GL_ARRAY_BUFFER, verticesBuf);\nglVertexAttribPointer(attribPosition, 3, GL_FLOAT, GL_FALSE, 0, 0);\n\nGLuint attribColor;\nattribColor = glGetAttribLocation(shaderProgram, "color");\nglEnableVertexAttribArray(attribColor);\nglBindBuffer(GL_ARRAY_BUFFER, colorsBuf);\nglVertexAttribPointer(attribColor, 3, GL_FLOAT, GL_FALSE, 0, 0);\n\nGLfloat matrix[] = {\n    0.5, 0,   0,   0,\n    0,   0.5, 0,   0,\n    0,   0,   0.5, 0,\n    0,   0,   0,   1\n};\n\nGLuint attribMatrix;\nattribMatrix = glGetUniformLocation(shaderProgram, "matrix");\nglUniformMatrix4fv(attribMatrix, 1, GL_FALSE, matrix);\n\nGLuint uniformTime;\nuniformTime = glGetUniformLocation(shaderProgram, "time");\n\n// ----------------- texture\n\nbmpread_t bitmap;\nif (!bmpread("texture2.bmp", 0, &bitmap)) {\n    std::cout << "texture loading error";\n    exit(-1);\n}\n\nGLuint texid;\nglGenTextures(1, &texid);\nglActiveTexture(GL_TEXTURE0);\nglBindTexture(GL_TEXTURE_2D, texid);\n\nglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);\nglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);\nglPixelStorei(GL_UNPACK_ALIGNMENT, 1);\n\nglTexImage2D(GL_TEXTURE_2D,0,3,bitmap.width,bitmap.height,0,GL_RGB,GL_UNSIGNED_BYTE,bitmap.data);\n\nGLuint attribTex = glGetAttribLocation(shaderProgram, "tex");\nglUniform1i(attribTex, 0);\n\nGLfloat uvs[] = {\n    0, 0,\n    0, 0,\n    0, 0,\n    0, 0,\n    0, 0,\n    0, 0,\n    0, 0,\n    0, 0,\n    0, 0, // full rect for our additional "overlay" side\n    0, 1,\n    1, 1,\n    1, 0,\n};\n\nGLuint uvsData;\nglGenBuffers(1, &uvsData);\nglBindBuffer(GL_ARRAY_BUFFER, uvsData);\nglBufferData(GL_ARRAY_BUFFER, sizeof(uvs), uvs, GL_STATIC_DRAW);\n\nGLuint attribUvs;\nattribUvs = glGetAttribLocation(shaderProgram, "inUvs");\nglEnableVertexAttribArray(attribUvs);\nglBindBuffer(GL_ARRAY_BUFFER, uvsData);\nglVertexAttribPointer(attribUvs, 2, GL_FLOAT, GL_FALSE, 0, 0);\n\n//glEnable(GL_CULL_FACE); //cw backface culling\n\nglLineWidth(5);\n\nglm::mat4 scaleMatrix = glm::mat4(1.f);\nscaleMatrix = glm::translate(scaleMatrix, glm::vec3(0,0,-2));\n\nglm::mat4 projMatrix = glm::perspective(glm::radians(60.f),1.f,0.f,10.f) * scaleMatrix;\nGLint uniformProj = glGetUniformLocation(shaderProgram, "projection");\nglUniformMatrix4fv(uniformProj, 1, GL_FALSE, glm::value_ptr(projMatrix));	code	cpp	\N
 3120	1	Yocto always builds binary packages.	text	txt	\N
 3121	1	`bitbake` is written in Python and is a task scheduler like `make`.	text	txt	\N
@@ -13629,10 +13625,6 @@ COPY flashback.blocks (card, "position", content, type, extension, metadata) FRO
 4338	2	#include <chrono>\n#include <thread>\n\nusing namespace std::chrono_literals;\n\nauto tp1 = std::chrono::steady_clock::now();\nstd::this_thread::sleep_for(1ms);\nauto tp2 = std::chrono::steady_clock::now();\n\nauto duration = tp2 - tp1;\nstd::cout << duration << "\\\\n";\n// example output: 1115389ns	code	cpp	\N
 4339	1	#include <chrono>\n#include <thread>\n\nusing namespace std::chrono_literals;\n\nauto tp1 = std::chrono::steady_clock::now();\nstd::this_thread::sleep_for(1ms);\nauto tp2 = std::chrono::steady_clock::now();\n\n// explicit type of duration, base type double, with micro precision\nstd::chrono::duration<double, std::micro> sleep_duration = tp2 - tp1;\nstd::cout << sleep_duration << "\\\\n";\n// example output: 1115.39µs	code	cpp	\N
 4340	1	Duractions can be converted between each other using `duration_cast`.	text	txt	\N
-4371	3	#include <algorithm>\n#include <ranges>\n#include <vector>\n#include <string>\n\nint main()\n{\n    std::vector<long> range1{1, 2, 3};\n    std::vector<long> range2{1, 3};\n    std::vector<long> range3{1, 3, 1};\n\n    bool cmp1 = std::lexicographical_compare(range1.cbegin(), range1.cend(), range2.cbegin(), range2.cend());\n    // same as\n    bool cmp2 = range1 < range2;\n    // cmp1 = cmp2 = true\n\n    bool cmp3 = std::lexicographical_compare(range2.cbegin(), range2.cend(), range3.cbegin(), range3.cend());\n    // same as\n    bool cmp4 = range2 < range3;\n    // cmp3 = cmp4 = true\n\n    std::vector<std::string> range4{"Zoe", "Alice"};\n    std::vector<std::string> range5{"Adam", "Maria"};\n    auto compare_length = [](auto const& l, auto const& r) { return l.length() < r.length(); };\n\n    bool cmp5 = std::ranges::lexicographical_compare(range4, range5, compare_length);\n    // different than\n    bool cmp6 = range1 < range2;\n    // cmp5 = true, cmp6 = false\n}	code	cpp	\N
-4372	1	| `std::lexicographical_compare_three_way` | standard |\n| --- | --- |\n| introduced | C++20 |\n| constexpr | C++20 |\n| paralllel | N/A |\n| rangified | N/A |	text	txt	\N
-4372	2	The `std::lexicographical_compare_three_way` is the spaceship operator\nequivalent to `std::lexicographical_compare`. It returns one of:	text	txt	\N
-4372	3	* `std::strong_ordering`\n* `std::weak_ordering`\n* `std::partial_ordering`	text	txt	\N
 3965	1	#include <vector>\n#include <ranges>\n#include <string>\n#include <memory>\n#include <iostream>\n#include <iterator>\n\nclass console\n{\nprivate:\n    std::vector<std::string> m_logs;\npublic:\n    void clear() noexcept { m_logs.clear(); }\n    void print() const { std::ranges::copy(m_logs, std::ostream_iterator{std::cout, "\\n"}); }\n    void add(std::string const& log) { m_logs.push_back(log); }\n};\n\nclass basic_console_command\n{\npublic:\n    virtual ~basic_console_command() = default;\n    virtual void execute() = 0;\n};\n\nclass clear_console_command: public basic_console_command\n{\nprivate:\n    console& m_console;\npublic:\n    explicit clear_console_command(console& tty): m_console{tty} { }\n    void execute() override { m_console.clear(); }\n};\n\nclass print_console_command: public basic_console_command\n{\nprivate:\n    console& m_console;\npublic:\n    explicit print_console_command(console& tty): m_console{tty} { }\n    void execute() override { m_console.print(); }\n};\n\nclass add_console_command: public basic_console_command\n{\nprivate:\n    console& m_console;\n    std::string m_value;\npublic:\n    explicit print_console_command(console& tty, std::string const& value): m_console{tty}, m_value{value} { }\n    void execute() override { m_console.add(m_value); }\n};\n\nclass button\n{\nprivate:\n    std::shared_ptr<basic_console_command> m_command;\npublic:\n    explicit button(std::shared_ptr<basic_console_command> command): m_command{command} { }\n    void click() { m_command.execute(); }\n};\n\nint main()\n{\n    console tty{};\n\n    std::shared_ptr<clear_console_command> clear_command{std::make_shared<clear_console_command>(tty)};\n    std::shared_ptr<print_console_command> print_command{std::make_shared<print_console_command>(tty)};\n    std::shared_ptr<add_console_command> add_command{std::make_shared<add_console_command>(tty, "Command Pattern")};\n\n    button clear{clear_command};\n    button print{print_command};\n    button add{add_command};\n}	code	cpp	\N
 3966	1	List of emails in the currently opened mailbox. By default it opens the system mailbox.	text	txt	\N
 3967	1	The pager contains the email content. How much information can be seen depends on configuration.	text	txt	\N
@@ -13667,7 +13659,6 @@ COPY flashback.blocks (card, "position", content, type, extension, metadata) FRO
 3979	1	Ensure a class only has one instance, and provide a global point of access to it.	text	txt	\N
 3979	2	The class is responsible for its own instance. Direct construction of the object is prohibited. It contains a method to construct and return a single instance.	text	txt	\N
 3979	3	Singleton {\n    + static createInstance(): unique_instance\n    + SingletonOperation()\n    + GetSingletonData()\n    - static unique_instance\n    - singleton_data\n}	code	uml	\N
-4372	4	The type depends on the type returned by the elements’ spaceship operator.	text	txt	\N
 3980	1	class Singleton\n{\nprivate:\n    Singleton() = default;\n    static Singleton m_instance;\n\npublic:\n    static Singleton& createInstance();\n    void doSomething();\n    void doSomethingElse();\n};	code	cpp	\N
 3980	2	#include "singleton.hpp"\n\nSingleton Singleton::m_instance;\n\nSingleton& Singleton::createInstance()\n{\n    return m_instance;\n}\n\nvoid Singleton::doSomething()\n{\n}\n\nvoid Singleton::doSomethingElse()\n{\n}	code	cpp	\N
 3980	3	#include "singleton.hpp"\n\nint main()\n{\n    Singleton& singleton = Singleton::createInstance();\n    singleton.doSomething();\n}	code	cpp	\N
@@ -13941,14 +13932,13 @@ COPY flashback.blocks (card, "position", content, type, extension, metadata) FRO
 4133	2	- Fundamental types have their semantics defined in the C++ standard.\n- Default initializing a variable of a fundamental type does not perform any\n  initialization.\n- Arguments to operators for fundamental types are prvalues.	text	txt	\N
 4133	3	#include <string>\n\nint v; // left uninitialized\n\n// Only well-defined since C++17\nint x = 1;\n(x = 2) = x; // x == 1\n\n// right side evalutes: 1 (prvalue)\n// left side evaluates: ref to x (x==2)\n// assignment evaluates: ref to x (x==1)\n\nstd::string y = "a";\n(y = "b") = y; // y == "b"\n\n// right side evaluates: ref to y\n// left side evalutes: ref y (y=="b")\n// assignment evaluates: ref to y (y=="b")	code	cpp	\N
 4137	1	* direct initialization initializes an object from an explicit set of\n  constructor arguments.\n* copy initialization initializes an object from another object.\n* brace initialization prevents narrowing conversion of data types.\n* all elements of list initialization should be of the same type.	text	txt	\N
-4137	2	#include <iostream>\n#include <initializer_list>\n#include <string>\n#include <vector>\n#include <map>\n\nvoid func(int const a, int const b, int const c)\n{\n    std::cout << a << b << c << '\\\\n';\n}\n\nvoid func(std::initializer_list<int> const list)\n{\n    for (auto const& e: list)\n        std::cout << e;\n    std::cout << '\\\\n';\n}\n\nint main()\n{\n    std::string s1("text"); // direct initialization\n    std::string s2 = "text"; // copy initialization\n    std::string s3{"text"}; // direct list-initialization\n    std::string s4 = {"text"}; // copy list-initialization\n\n    std::vector<int> v{1, 2, 3};\n    std::map<int, std::string> m{{1, "one"}, {2, "two"}};\n\n    func({1, 2, 3}); // call std::initializer_list<int> overload\n\n    std::vector v1{4}; // size = 1\n    std::vector v2(4); // size = 4\n\n    auto a = {42}; // std::initializer_list<int>\n    auto b{42}; // int\n    auto c = {4, 2}; //std::initializer_list<int>\n    auto d{4, 2}; // error, too many elements	code	cpp	\N
-4138	1	Before C++ direct list initialization deduced as `std::initializer_list<int>`\nbut since C++17 it is as `int`.	text	txt	\N
 4138	2	auto x { 42 };\n// before C++17: std::initializer_list<int>\n// since C++17: int	code	cpp	\N
 4139	1	Aggregate types can be initialized using special aggregate initialization.\nThis initializes members in their declaration order. Members that are not\nexplicitly initialized and do not have a default member initializer are\ninitialized using empty copy-list-initialization (i.e. `T x={}`).	text	txt	\N
 4139	2	#include <string>\n#include <vector>\n\nstruct Data\n{\n    int x;\n    double y;\n    std::string label = "Hello World!"; // only permitted since C++14\n    std::vector<int> arr;\n};\n\nstruct X\n{\n    int a;\n    int b;\n};\n\nstruct Y\n{\n    X x;\n    X y;\n};\n\n// Initialization is done in declaration order:\nData a = {10, 2.3};\n// a.x == 10, a.y == 2.3\n// a.label == "Hello World!", a.arr == std::vector<int>{}\n\n// Nested brackets can be omitted:\nY b = { 10, 20, 30 };\n// b.x == {10, 20}, b.y == {30, int{} == 0}	code	cpp	\N
 4140	1	C++20 introduced designated initializers for aggregate initialization. This\nallows for better control over which elements of the aggregate will be\nexplicitly initialized.	text	txt	\N
 4140	2	#include <string>\n\nstruct Data {\n    int a;\n    double b;\n    std::string c;\n};\n\nData x = { .b = 2.4 };\n// x == { 0, 2.4, "" }\n\n// Typical use case with default-heavy aggregate:\nstruct Configuration {\n    enum class options { enabled, disabled };\n    struct Coords { int x; int y; };\n\n    options used_option = options::enabled;\n    std::string label = "default label";\n    Coords coords = { 10, 20 };\n};\n\nConfiguration config = { .label = "some label" };\n// config == {options::enabled, "some label", {10, 20}};\n\n// A clunky but functional option for named agruments in C++\nstruct Arg { const std::string& label; int64_t id; };\nvoid some_func(Arg arg) {}\n\nsome_func({.label = config.label, .id = 42});	code	cpp	\N
 5145	1	import QtQuick	text	txt	\N
+4138	1	Before C++17 direct list initialization deduced as `std::initializer_list<int>`\nbut since C++17 it is as `int`.	text	txt	\N
 4145	1	if (std::is_constant_evaluated())\n{\n    /* A */\n}\nelse\n{\n    /* B */\n}	code	cpp	\N
 5232	1	act -a <name>\nact --actor <name>	code	sh	\N
 4146	1	- `if consteval` is part of the core language, so no header needed\n- `if consteval` cannot be used wrong, but `is_constant_evaluated()` can:	text	txt	\N
@@ -14009,7 +13999,6 @@ COPY flashback.blocks (card, "position", content, type, extension, metadata) FRO
 4176	13	- are `noexcept` if comparing the members never throws\n- are `constexpr` if comparing the members is possible at compile time\n- implicit type conversions for the first operand are also supported if a\n  corresponding implicit type conversion is defined\n- may warn if the result of a comparison is not used (compiler dependent)	text	txt	\N
 4177	1	If the `operator <=>` for `x <= y` does not find a matching definition of\n`operator <=`, it might be rewritten as `(x <=> y) <= 0` or even `0 <= (y <=>\nx)`. By this rewriting, the `operator <=>` performs a three-way comparison,\nwhich yields a value that can be compared with 0:	text	txt	\N
 4177	2	- If the value of `x <=> y` compares equal to 0, `x` and `y` are equal or equivalent.\n- If the value of `x <=> y` compares less than 0, `x` is less than `y`.\n- If the value of `x <=> y` compares greater than 0, `x` is greater than `y`.	text	txt	\N
-5196	5	#include <Context.hpp>\n#include <StrategyA.hpp>\n#include <StrategyB.hpp>\n\nint main()\n{\n    std::shared_ptr<Context> context{std::make_shared<Context>()};\n    context->setStrategy(std::move(std::make_unique<StrategyA>()));\n    context->setStrategy(std::move(std::make_unique<StrategyB>()));\n    context->contextInterface();\n}	code	cpp	\N
 4174	1	#include <variant>\n#include <string>\n#include <iostream>\n\nstd::variant<int, double, std::string> v;\n\ntemplate<typename ...Ts>\nstruct overloaded : Ts...\n{\n    using Ts::operator()...;\n};\n\nv = 3.14;\n\nstd::visit(overloaded{\n    [](int& x) {\n        std::cout << "int: " << x << '\\n';\n    },\n    [](double& x) {\n        std::cout << "double: " << x << '\\n';\n    },\n    [](std::string& x) {\n        std::cout << "std::string: " << x << '\\n';\n    }\n}, v);\n// prints "double: 3.14"	code	cpp	\N
 4177	3	The return type of `operator <=>` is not an integral value. The return type\nis a type that signals the comparison category, which could be the *strong\nordering*, *weak ordering*, or *partial ordering*. These types support the\ncomparison with 0 to deal with the result.	text	txt	\N
 4177	4	You have to include a specific header file to deal with the result of\n`operator <=>`.	text	txt	\N
@@ -14241,7 +14230,16 @@ COPY flashback.blocks (card, "position", content, type, extension, metadata) FRO
 4370	5	The type returned for the spaceship operator is the common comparison\ncategory type for the bases and members, one of:	text	txt	\N
 4370	6	* `std::strong_ordering`\n* `std::weak_ordering`\n* `std::partial_ordering`	text	txt	\N
 4371	1	Lexicographical `strict_weak_ordering` for ranges is exposed through the\n`std::lexicographical_compare` algorithm.	text	txt	\N
+4371	3	#include <algorithm>\n#include <ranges>\n#include <vector>\n#include <string>\n\nint main()\n{\n    std::vector<long> range1{1, 2, 3};\n    std::vector<long> range2{1, 3};\n    std::vector<long> range3{1, 3, 1};\n\n    bool cmp1 = std::lexicographical_compare(range1.cbegin(), range1.cend(), range2.cbegin(), range2.cend());\n    // same as\n    bool cmp2 = range1 < range2;\n    // cmp1 = cmp2 = true\n\n    bool cmp3 = std::lexicographical_compare(range2.cbegin(), range2.cend(), range3.cbegin(), range3.cend());\n    // same as\n    bool cmp4 = range2 < range3;\n    // cmp3 = cmp4 = true\n\n    std::vector<std::string> range4{"Zoe", "Alice"};\n    std::vector<std::string> range5{"Adam", "Maria"};\n    auto compare_length = [](auto const& l, auto const& r) { return l.length() < r.length(); };\n\n    bool cmp5 = std::ranges::lexicographical_compare(range4, range5, compare_length);\n    // different than\n    bool cmp6 = range1 < range2;\n    // cmp5 = true, cmp6 = false\n}	code	cpp	\N
+4372	1	| `std::lexicographical_compare_three_way` | standard |\n| --- | --- |\n| introduced | C++20 |\n| constexpr | C++20 |\n| paralllel | N/A |\n| rangified | N/A |	text	txt	\N
+4372	2	The `std::lexicographical_compare_three_way` is the spaceship operator\nequivalent to `std::lexicographical_compare`. It returns one of:	text	txt	\N
+4372	3	* `std::strong_ordering`\n* `std::weak_ordering`\n* `std::partial_ordering`	text	txt	\N
+4372	4	The type depends on the type returned by the elements’ spaceship operator.	text	txt	\N
+5196	5	#include <Context.hpp>\n#include <StrategyA.hpp>\n#include <StrategyB.hpp>\n\nint main()\n{\n    std::shared_ptr<Context> context{std::make_shared<Context>()};\n    context->setStrategy(std::move(std::make_unique<StrategyA>()));\n    context->setStrategy(std::move(std::make_unique<StrategyB>()));\n    context->contextInterface();\n}	code	cpp	\N
 4372	5	#include <algorithm>\n#include <vector>\n#include <string>\n\nint main()\n{\n    std::vector<long> numbers1{1, 1, 1};\n    std::vector<long> numbers2{1, 2, 3};\n\n    auto cmp1 = std::lexicographical_compare_three_way(numbers1.cbegin(), numbers1.cend(), numbers2.cbegin(), numbers2.cend());\n    // cmp1 = std::strong_ordering::less\n\n    std::vector<std::string> strings1{"Zoe", "Alice"};\n    std::vector<std::string> strings2{"Adam", "Maria"};\n\n    auto cmp2 = std::lexicographical_compare_three_way(strings1.cbegin(), strings1.cend(), strings2.cbegin(), strings2.cend());\n    // cmp2 = std::strong_ordering::greater\n}	code	cpp	\N
+4373	1	The `std::sort` algorithm is the canonical `O(N log N)` sort (typically\nimplemented as *intro-sort*).	text	txt	\N
+4373	2	Due to the `O(N log N)` complexity guarantee, `std::sort` only operates on\n`random_access` ranges. Notably, `std::list` offers a method with an\napproximate `O(N log N)` complexity.	text	txt	\N
+4374	1	| `std::sort` | standard |\n| --- | --- |\n| introduced | C++98 |\n| paralllel | C++17 |\n| constexpr | C++20 |\n| rangified | C++20 |	text	txt	\N
 4374	2	#include <algorithm>\n#include <ranges>\n#include <vector>\n#include <list>\n\nstruct Account\n{\n    long value() { return value_; }\n    long value_;\n};\n\nint main()\n{\n    std::vector<long> series1{6,2,4,1,5,3};\n    std::sort(series1.begin(), series1.end());\n\n    std::list<long> series2{6,2,4,1,5,3};\n    //std::sort(series2.begin(), series2.end()); // won't compile\n    series2.sort();\n\n    // With C++20, we can take advantage of projections to sort by a method or member\n    std::vector<Account> accounts{{6},{2},{4},{1},{5},{3}};\n    std::ranges::sort(accounts, std::greater<>{}, &Account::value);\n}	code	cpp	\N
 4375	1	The `std::sort` is free to re-arrange equivalent elements, which can be\nundesirable when re-sorting an already sorted range. The `std::stable_sort`\nprovides the additional guarantee of preserving the relative order of equal\nelements.	text	txt	\N
 4375	2	| `std::stable_sort` | standard |\n| --- | --- |\n| introduced | C++98 |\n| paralllel | C++17 |\n| constexpr | N/A |\n| rangified | C++20 |	text	txt	\N
@@ -14459,6 +14457,7 @@ COPY flashback.blocks (card, "position", content, type, extension, metadata) FRO
 4588	6	*video.hpp*\n#pragma once\n\n#include <chrono>\n\nnamespace dp\n{\nstruct video\n{\n    virtual std::chrono::seconds length() const noexcept = 0;\n};\n} // dp	code	cpp	\N
 4588	7	*video_stream.hpp*\n#pragma once\n\n#include <memory>\n\nnamespace dp\n{\nclass video;\n\nclass video_stream\n{\npublic:\n    virtual std::shared_ptr<video> record(char const type[4]) = 0;\n};\n}	code	cpp	\N
 4589	1	With builder pattern, we can build a product one component at a time.	text	txt	\N
+4137	2	#include <iostream>\n#include <initializer_list>\n#include <string>\n#include <vector>\n#include <map>\n\nvoid func(int const a, int const b, int const c)\n{\n    std::cout << a << b << c << '\\n';\n}\n\nvoid func(std::initializer_list<int> const list)\n{\n    for (auto const& e: list)\n        std::cout << e;\n    std::cout << '\\n';\n}\n\nint main()\n{\n    std::string s1("text");    // direct initialization\n    std::string s2 = "text";   // copy initialization\n    std::string s3{"text"};    // direct list-initialization\n    std::string s4 = {"text"}; // copy list-initialization\n\n    std::vector<int> v{1, 2, 3};\n    std::map<int, std::string> m{{1, "one"}, {2, "two"}};\n\n    func({1, 2, 3});   // call std::initializer_list<int> overload\n\n    std::vector v1{4}; // size = 1\n    std::vector v2(4); // size = 4\n\n    auto a = {42};     // std::initializer_list<int>\n    auto b{42};        // int\n    auto c = {4, 2};   // std::initializer_list<int>\n    auto d{4, 2};      // error, too many elements	code	cpp	\N
 4590	1	@startuml\nabstract practice {\n    # question(): string\n    # answer(): string\n    # origins(): string[]\n    # references(): string[]\n    # hash(): string\n}\n\nclass markdown_practice {\n    - question: string\n    - answer: string\n    - origins: string[]\n    - references: string[]\n    - id: hash\n    # question(): string\n    # answer(): string\n    # origins(): string[]\n    # references(): string[]\n    # hash(): string\n}\n\npractice <|-- markdown_practice\n\nclass html_practice {\n    - question: string\n    - answer: string\n    - origins: string[]\n    - references: string[]\n    - id: hash\n    # question(): string\n    # answer(): string\n    # origins(): string[]\n    # references(): string[]\n    # hash(): string\n}\n\npractice <|-- html_practice\n\nabstract builder {\n    # create_title(string): void\n    # write_answer(string): void\n    # list_origins(string[]): void\n    # list_references(string[]): void\n    # get_practice(): practice*\n}\n\npractice ..right..> builder\n\nclass markdown_builder {\n    # create_title(string): void\n    # write_answer(string): void\n    # list_origins(string[]): void\n    # list_references(string[]): void\n    # get_practice(): markdown_practice*\n}\n\nbuilder <|-- markdown_builder\n\nclass html_builder {\n    # create_title(string): void\n    # write_answer(string): void\n    # list_origins(string[]): void\n    # list_references(string[]): void\n    # get_practice(): html_practice*\n}\n\nbuilder <|-- html_builder\n\nclass director {\n    + html_practice(): html_practice*\n    + markdown_practice(): markdown_practice*\n}\n\nmarkdown_builder ..> director\nhtml_builder ..> director\n@enduml	code	plantuml	\N
 4594	1	Checking docker version should retrieve both client and server versions.	text	txt	\N
 4594	2	docker version	code	txt	\N
@@ -15154,6 +15153,7 @@ COPY flashback.blocks (card, "position", content, type, extension, metadata) FRO
 1488	8	*sample-core.cppm*\nexport module sample.core;\n\nexport constexpr double fraction{7 / 5};	code	cpp	\N
 1488	9	*sample-details.cppm*\nmodule sample.details;\n\nimport sample.core;\n\nconstexpr double power{fraction * fraction};	code	cpp	\N
 1488	10	*sample.cppm*\nexport module sample;\n\nexport import sample.core;	code	cpp	\N
+111	1	#include <iostream>\n\nint global_number = 42;\n\nint function()\n{\n    int local_number = 77;\n    return local_number;\n}\n\nint main()\n{\n    std::cout << function() << '\\n';\n    std::cout << global_number << '\\n';\n    return 0;\n}	code	cpp	\N
 1402	1	namespace binary\n{\n    using numeric = unsigned int;\n\n    inline namespace binary_literals\n    {\n        namespace binary_internals\n        {\n            template<typename T, char... bits>\n            struct bit_seq;\n\n            template<typename T, '0', char... bits>\n            struct bit_seq\n            {\n                static constexpr T value { bit_seq<T, bits...>::value };\n            };\n\n            template<typename T, '1', char... bits>\n            struct bit_seq\n            {\n                static constexpr T value {\n                    bit_seq<T, bits...>::value | static_cast<T>(1 << sizeof...(bits))\n                };\n            };\n\n            template<typename T>\n            struct bit_seq<T>\n            {\n                static constexpr T value{0};\n            };\n        }\n\n        template <char... bits>\n        constexpr numeric operator ""_byte()\n        {\n            static_assert(sizeof...(bits) <= 32, "binary literals only holds 32 bits");\n\n            return binary_internals::bit_seq<numeric, bits...>::value;\n        }\n    }\n}	code	cpp	\N
 1403	1	#include <string>\n\nusing namespace std::string_literals;\n\nauto filename { R"(C:\\\\Users\\\\Brian\\\\Documents\\\\)"s };\nauto pattern { R"((\\\\w[\\\\w\\\\d]*)=(\\\\d+))"s };	code	cpp	\N
 1404	1	#include <string>\n\nusing namespace std::string_literals;\n\nauto s1{ R"(text)"s }; // std::string\nauto s2{ LR"(text)"s }; // std::wstring\nauto s3{ u8R"(text)"s }; // std::u8string\nauto s3{ uR"(text)"s }; // std::u16string\nauto s4{ UR"(text)"s }; // std::u32string\n\nusing namespace std::string_view_literals;\n\nauto s5{ R"text"sv }; // std::string_view	code	cpp	\N
@@ -15840,7 +15840,6 @@ COPY flashback.blocks (card, "position", content, type, extension, metadata) FRO
 679	2	template<typename T>\nconcept is_pointer = std::is_pointer_v<T>;\n\ntemplate <is_pointer T>\nauto print(T value)\n{\n    std::cout << value << '\\\\n';\n}	code	cpp	\N
 681	2	template<typename T>\nconcept is_pointer = std::is_pointer_v<T>;\n\ntemplate<typename L, typename R>\nconcept is_comparable_with = std::totally_ordered_with<L, R>;\n\nauto get_max(is_point auto a, is_pointer auto b)\nrequires is_comparable_with<decltype(*a), decltype(*b)>\n{\n    return get_max(*a, *b);\n}	code	cpp	\N
 685	1	template<typename T>\nconcept is_pointer = requires(T p) {\n    *p;\n    p == nullptr;\n    (p < p) -> std::same_as<bool>;\n};\n\ntemplate<typename T>\nrequires is_pointer<T>\nvoid print(T value)\n{\n    std::cout << *value << '\\\\n';\n}\n\ntemplate<typename T>\nrequires requires(T p) { *p; }\nvoid print(T value)\n{\n    std::cout << *value << '\\\\n';\n}	code	cpp	\N
-111	1	#include <iostream>\n\nint global_number = 42;\n\nint function()\n{\n    int local_number = 77;\n    return local_number;\n}\n\nint main()\n{\n    std::cout << function() << '\\\\n';\n    std::cout << global_number << '\\\\n';\n    return 0;\n}	code	cpp	\N
 110	1	void do_something();\n\nint main()\n{\n    do_something();\n}\n\nvoid do_something()\n{\n}	code	cpp	\N
 119	1	consteval double divide(double a, double b)\n{\n    return a / b;\n}\n\nconsteval double get_pi()\n{\n    return divide(22.0, 7); // OK\n}\n\ndouble dividen{22.0}, divisor{7.0};\ndivide(dividen, divisor); // ERROR: non-const arguments to consteval	code	cpp	\N
 109	1	#include <iostream>\n\nint main()\n{\n    using std::cout;\n    using std::endl;\n\n    cout << 42 << endl;\n}	code	cpp	\N
@@ -15908,20 +15907,13 @@ COPY flashback.blocks (card, "position", content, type, extension, metadata) FRO
 --
 
 COPY flashback.cards (id, headline, state) FROM stdin;
-5645	Is it working?	draft
-447	Create a tab:	draft
 772	Drop an index?	draft
 320	Update values of a table?	draft
 321	Delete rows from a table?	draft
-2750	Insert modules?	draft
-3292	Remove a layer?	draft
-3955	Create job summaries?	draft
 710	Delete all rows of a table?	draft
 3021	Install an export file?	draft
 3256	Extend a task?	draft
-916	Enable TUI in gdb:	draft
 3288	Include another layer?	draft
-1806	Rename a file?	draft
 1064	Compute the length of a vector?	draft
 2946	Reverse the elements of a list?	draft
 25	Specify hardware requirements for Embedded Linux?	draft
@@ -15958,33 +15950,14 @@ COPY flashback.cards (id, headline, state) FROM stdin;
 85	Identify which kernel version and kernel release do we have in kernel source tree?	draft
 86	By which configuration option can kernel release be appended with release information?	draft
 87	How does the <code>Kbuild</code> work with configuration options to properly build kernel?	draft
+88	By assuming to have a complete <code>.config</code> file in the kernel source, what are the required environment variables to be given to <code>make</code> to build the kernel?	draft
 89	Which kernel target should be used to generate kernel image?	draft
 91	What are the build artifacts of <code>Kbuild</code>?	draft
-319	Copy a table?	draft
-2310	What is a task?	draft
-612	Create a PTY:	draft
-613	Disable echo on PTY:	draft
-614	Get terminal size:	draft
-5614	Specify compiler launcher?	draft
-3076		draft
-3234	What are the default tasks?	draft
-3316	What is the advanced metadata?	draft
-3399	Generate an SDK for an image?	draft
-3703	What data types are available in YAML?	draft
-3984	Calculate the midpoint between two values?	draft
-4817	Examine a memory address or register?	draft
-1830	Remove a file?	draft
-3637	Write an image to file?	draft
-1025	Reference a variable?	draft
-1026	Reference two nested variables?	draft
-1027	How many scopes exist?	draft
-294	What is a schema?	draft
-113	Initialize a variable without narrowing?	draft
-88	By assuming to have a complete <code>.config</code> file in the kernel source, what are the required environment variables to be given to <code>make</code> to build the kernel?	draft
 92	Make debug symbols available in the <code>vmlinux</code> kernel image?	draft
 95	How many cleaning <code>make</code> targets are available?	draft
 100	Assuming kernel image and device tree blobs are built and put on the microSD already, what are the required boot instructions on Raspberry Pi 4?	draft
 106	What are the required procedures to port Linux to a new board?	draft
+113	Initialize a variable without narrowing?	draft
 114	Initialize variables with automatic type deduction?	draft
 120	Declare a type containing limited constants?	draft
 121	Generate a string formatted with an integral value?	draft
@@ -16059,11 +16032,9 @@ COPY flashback.cards (id, headline, state) FROM stdin;
 190	What is a complete tree?	draft
 191	What are the standard iterators?	draft
 192	What iterator types are publically provided by standard data structures?	draft
-311	Select data from a table out of order?	draft
 193	What non-member functions are provided by standard to return supported iterators?	draft
 194	What is the advantage of having argument dependent lookup supported?	draft
 195	When does a function supports argument dependent lookup?	draft
-411	Start learning about Vim:	draft
 196	Compute the distance between two iterators of a container?	draft
 197	What iterator type traits are supported by the standard?	draft
 198	What stream iterators are provided by the standard?	draft
@@ -16098,7 +16069,6 @@ COPY flashback.cards (id, headline, state) FROM stdin;
 249	What is the secondary statement terminator in psql?	draft
 250	What command opens an editor to edit psql query buffer?	draft
 251	What psql command executes sql statements from a file?	draft
-2277	Represent an empty view?	draft
 252	What command gives help information about psql?	draft
 253	What command gives help with the psql commands?	draft
 254	Query the name of current database?	draft
@@ -16156,6 +16126,7 @@ COPY flashback.cards (id, headline, state) FROM stdin;
 308	Get the object ID of a table on storage?	draft
 309	How many ways are possible to insert into data a table?	draft
 310	Insert data into a table with value expressions?	draft
+311	Select data from a table out of order?	draft
 312	Order the output of a select query?	draft
 313	Insert multiple rows into a table in one insertion?	draft
 314	Filter select query results?	draft
@@ -16163,6 +16134,7 @@ COPY flashback.cards (id, headline, state) FROM stdin;
 316	Write an order by clause with column positions?	draft
 317	Sort result set by putting null values on top?	draft
 318	Sort result set by putting null values at the bottom?	draft
+319	Copy a table?	draft
 322	Filter the resultset by arithmetic conditions?	draft
 323	Filter the resultset to only records with a substring?	draft
 324	Use case-insensitive filtering to match a substring?	draft
@@ -16251,6 +16223,7 @@ COPY flashback.cards (id, headline, state) FROM stdin;
 407	Make the type checking of a file cheaper by not calling system calls?	draft
 408	Check if the permission of a file includes user, group, and others access?	draft
 409	Get the size of a regular file?	draft
+411	Start learning about Vim:	draft
 412	Start reading Vim reference manual:	draft
 413	Also read the quick reference:	draft
 414	Then study the Vim's user manual to learn essential commands:	draft
@@ -16286,6 +16259,7 @@ COPY flashback.cards (id, headline, state) FROM stdin;
 444	Enter into Command-line mode:	draft
 445	Edit a file after entering into Vim:	draft
 446	Write file contents into file:	draft
+447	Create a tab:	draft
 448	Split window:	draft
 449	Inspect the list of Ex commands:	draft
 450	Inspect the differences of Vi and Vim:	draft
@@ -16342,6 +16316,7 @@ COPY flashback.cards (id, headline, state) FROM stdin;
 521	How to restrict SSH connections only to a certain address family?	draft
 522	What modules is used to enfore users from following strict password policies?	draft
 523	How to use <b>Pluggable Authentication Modules (PAM)</b> to implement password policies and enforce users to follow strict rules for setting their passwords?	draft
+612	Create a PTY:	draft
 524	How to restrict SSH access to only users in <i>sshusers</i> group on a remote server?	draft
 525	What is the name of firewall mechanism used in the Linux kernel and what is the common firewall interface used to interact with it?	draft
 526	How to get all the zones from firewalld?	draft
@@ -16430,6 +16405,8 @@ COPY flashback.cards (id, headline, state) FROM stdin;
 609	Install a dynamic library on system:	draft
 610	Inspect terminal information:	draft
 611	Check if process connected to terminal:	draft
+613	Disable echo on PTY:	draft
+614	Get terminal size:	draft
 615	Send signals to a process given by user:	draft
 616	Create a pipe between a parent and a forked child process:	draft
 617	Create a message sender and receiver using FIFO:	draft
@@ -16594,12 +16571,10 @@ COPY flashback.cards (id, headline, state) FROM stdin;
 791	What is the advantage of dynamic loading functionality in <code>eBPF</code>?	draft
 792	How efficient is loading <code>eBPF</code> programs?	draft
 793	How to load a simple <code>eBPF</code> code in python's BCC library as a simplified example?	draft
-2022	How to create a thread?	draft
 794	What capabilities are required for eBPF programs to run?	draft
 795	Where does the <code>eBPF</code> trace printing function write output?	draft
 796	What is the convenient alternative to trace output by <code>bpf_trace_printk</code> helper function?	draft
 797	What is an <code>eBPF</code> map?	draft
-881	Make sure the kernel configuration has security options enabled?	draft
 798	What mechanisms are required for user space applications to gain access to the underlying device drivers within the kernel?	draft
 799	How does <b>Linux Device Model</b> expose device driver details to user space?	draft
 800	What inode attributes are used to distinguish between device files?	draft
@@ -16683,6 +16658,8 @@ COPY flashback.cards (id, headline, state) FROM stdin;
 878	What component turns configs into header files to be used by kernel build system?	draft
 879	Check the difference of two kernel configuration files?	draft
 880	Toggle individual kernel configuration options without interacting with user interfaces?	draft
+881	Make sure the kernel configuration has security options enabled?	draft
+5614	Specify compiler launcher?	draft
 882	Enable GCC arch specific security features?	draft
 883	Enable availability of kernel headers 	draft
 884	Enable BPF Type Format metadata to enable kernel debugging information generation?	draft
@@ -16762,12 +16739,10 @@ COPY flashback.cards (id, headline, state) FROM stdin;
 1043	What is the result of addition of two vectors $v = (v₁, v₂)$ and $w = (w₁, w₂)$?	draft
 1044	What is the geometric representation of addition of two vectors $v$ and $w$?	draft
 1045	What are the properties of vector addition?	draft
-2434	Animate an object to fade away?	draft
 1046	Practice: Compute the following vector sums $(2, 5, −1) + (1, −1, 2)$ and $(1, 2) + (3, 1) + (2, -1)$?	draft
 1047	What is the result of multiplication of scalar $c$ to vector $v = (v₁, v₂)$?	draft
 1048	What are the properties of scalar to vector multiplication?	draft
 1049	Practice: Solve the following equations $x − (3 , 2 , 1) = (1 , 2 , 3) − 3x$ and $x + 2(v + w) = −v − 3(x − w)$ for the vector $x$?	draft
-1749	Bind a TCP acceptor to a port?	draft
 1050	What is the result of subtraction of vector $v = (v₁, v₂)$ to vector $w = (w₁, w₂)$?	draft
 1051	What is the geometric representation of subtraction of two vectors $v$ and $w$?	draft
 1052	What are linear combinations of vectors $v_1 , v_2 , ... , v_k$?	draft
@@ -16793,7 +16768,6 @@ COPY flashback.cards (id, headline, state) FROM stdin;
 1074	Determine whether or not function $T(v_1, v_2) = (v_1-v_2, v_1+v_2)$ when $T: R^2 → R^2$ is a linear transformation?	draft
 1075	Using the fact that linear transformation functions preserve linear combinations, write linear transformation T(v) as linear combination of its basis vectors when T: R^n → R^n?	draft
 1076	Compute $T(2,3)$ supposing $T: R^2 → R^2$ is a linear transformation for which we have its standard basis vector transformations $T(e₁)=(1,1)$ and $T(e₂)=(-1,1)$.	draft
-1243	When does asking for result might cause execution of two threads in sequence?	draft
 1077	Find a general formula for $T(v₁,v₂)$ when $T: R^2 → R^2$ is a linear transformation for which we have its standard basis vector transformations $T(e₁)=(1,1)$ and $T(e₂)=(-1,1)$.	draft
 1078	What method is used to construct a matrix called the standard matrix of $T$ that does the linear transformation by matrix multiplication?	draft
 1079	Find the standard matrix of linear transformation $T(v₁,v₂) = (v₁+2v₂, 3v₁+4v₂)$ when $v₁,v₂ \\in \\mathbb{R}^2$?	draft
@@ -16827,13 +16801,11 @@ COPY flashback.cards (id, headline, state) FROM stdin;
 1124	What is the granularity of synchronization operations in the kernel?	draft
 1125	What locking types are available in the kernel?	draft
 1126	What conditional variable types are available in the kernel?	draft
-5405	Restore a plain text backup?	draft
 1127	What are the use cases of conditional variables in the kernel?	draft
 1128	What does the locking mechanism in the kernel depend on?	draft
 1129	What is a simple workaround for a system to ensure atomicity of synchronization operations?	draft
 1130	How does spinlocks operate?	draft
 1131	How does preemption toggle in a CPU?	draft
-1674	What are the parsing order of configuration files in a layer?	draft
 1132	Why does changing of preemption status depends on atomic operations?	draft
 1133	Create and initialize a spinlock using macro?	draft
 1134	Dynamically create and initialize a spinlock?	draft
@@ -16914,12 +16886,10 @@ COPY flashback.cards (id, headline, state) FROM stdin;
 1208	How to construct a <code>std::pair</code> using its move constructor or move assignment operator?	draft
 4156	What C++ entities can be exported as module interface?	draft
 1209	How <code>std::make\\_pair</code> can be used to create a <code>std::pair</code>?	draft
-287	Connect to a postgres instance?	draft
 1210	How member variables of <code>std::pair</code> struct can be accessed?	draft
 1211	What comparison operators does the <code>std::pair</code> support?	draft
 1212	How two <code>std::pair</code> objects can be swapped?	draft
 1213	Which containers use <code>std::pair</code> to manage their elements?	draft
-1750	Bind a UDP acceptor to a port?	draft
 4249	Evaluate alignment of structures considering the size of their members?	draft
 1214	How to construct parameter types of a <code>std::pair</code> piecewise by using tuples as its parameters?	draft
 1215	How a <code>std::tuple</code> can be constructed?	draft
@@ -16950,7 +16920,7 @@ COPY flashback.cards (id, headline, state) FROM stdin;
 1240	What are the possible executions when calling a function asynchronously?	draft
 1241	Specialize a future that calls a function with no return value?	draft
 1242	What are the available async policies?	draft
-2711	Edit an environment variable on U-Boot command line?	draft
+1243	When does asking for result might cause execution of two threads in sequence?	draft
 1244	What is the best practice for running functionalities asynchronously?	draft
 1245	What would happen if the system fails to execute functionality after directing async call with async launch policy?	draft
 1246	What happens when the result of functionality is never requested after an async call with async launch policy?	draft
@@ -17129,12 +17099,11 @@ COPY flashback.cards (id, headline, state) FROM stdin;
 1667	Add partitions to an image?	draft
 1668	When do we have to create a distribution?	draft
 1669	What are the use cases of distributions?	draft
-495	Install OpenCV library?	draft
 1670	Create a new distribution to replace wayland by frame buffer?	draft
 1671	What variable defines the features used in a distro?	draft
 1672	What distro features are available?	draft
 1673	What are the differences of machine features and distro features?	draft
-5360	Create a daemon thread?	draft
+1674	What are the parsing order of configuration files in a layer?	draft
 1675	What are the scope of configuration and recipe variables?	draft
 1676	What is the best practice to change a preexisting recipe?	draft
 1677	Change a preexisting recipe?	draft
@@ -17286,12 +17255,12 @@ COPY flashback.cards (id, headline, state) FROM stdin;
 2014	How to IPv4 rules with IPv6 rules in the same <code>nftables</code> configuration file?	draft
 2015	How to stop an attack in progress quickly without bringing down the system?	draft
 2018	What is the Yocto Project's reference build system?	draft
+2022	How to create a thread?	draft
 2023	How to launch a thread using callable objects?	draft
 2024	How to wait for a thread to complete?	draft
 2025	Join threads on normal and exceptional exists:	draft
 2026	Use RAII idiom to handle joining threads:	draft
 2027	How to run threads in background?	draft
-3797	Write a job to cache a step?	draft
 2028	How to pass arguments to a thread?	draft
 2029	How to transfer ownership of a thread?	draft
 2030	Choosing number of threads at runtime:	draft
@@ -17360,10 +17329,8 @@ COPY flashback.cards (id, headline, state) FROM stdin;
 2093	How integer options can be used in <code>/etc/sudoers</code> file?	draft
 2094	How string options can be used in <code>/etc/sudoers</code> file?	draft
 2095	How list options can be written in <code>/etc/sudoers</code> file?	draft
-2433	Animate an object rotating horizontally?	draft
 2096	How to set <code>sudo</code> options for specific users in <code>/etc/sudoers</code> file?	draft
 2097	How to limit <code>sudo</code> default options per host or host alias in <code>/etc/sudoers</code> file?	draft
-2247	Selectively copy elements for which the predicate returns false?	draft
 2098	How to limit <code>sudo</code> default options per command or command alias in <code>/etc/sudoers</code> file?	draft
 2099	How to limit <code>sudo</code> default options per run-as in <code>/etc/sudoers</code> file?	draft
 2100	How to limit the times users attempt incorrect passwords in <code>/etc/sudoers</code> file?	draft
@@ -17491,6 +17458,7 @@ COPY flashback.cards (id, headline, state) FROM stdin;
 2244	Copy and move a non-overlapping and overlapping ranges in the opposite direction?	draft
 2245	Copy only a limited elements of a non-overlapping and overlapping ranges?	draft
 2246	Selectively copy elements for which the predicate returns true?	draft
+2247	Selectively copy elements for which the predicate returns false?	draft
 2248	Selectively copy elements that do not match the provided value?	draft
 2249	Copy a random selection N elements from the source range to the destination range utilising the provided random number generator?	draft
 2250	Replace elements in a range matching a value?	draft
@@ -17534,6 +17502,7 @@ COPY flashback.cards (id, headline, state) FROM stdin;
 2307	What is a thread-local data?	draft
 2308	What is a condition variable?	draft
 2309	What are the use cases of condition variables?	draft
+2310	What is a task?	draft
 2311	What objects can be transferred in the communication channel made by a task?	draft
 2312	What are the execution policies?	draft
 2313	What are the advantages of using jthread?	draft
@@ -17578,7 +17547,6 @@ COPY flashback.cards (id, headline, state) FROM stdin;
 2351	What is the difference between atomic boolean and atomic flag?	draft
 2352	Use an atomic boolean to protect a shared value in a critical section using C++11 fundamental atomic interface?	draft
 2353	What is the difference between the way atomic boolean and condition variable query the atomic value?	draft
-2437	What are the possible ways of applying animations?	draft
 2354	Use an atomic boolean to protect a shared value in a critical section using C++20 fundamental atomic interface?	draft
 2355	What is the functionality of <code>compare_exchange_strong</code> in a fundamental atomic interface?	draft
 2356	Why does <code>compare_exchange_weak</code> exists in the fundamental atomic interface?	draft
@@ -17658,9 +17626,11 @@ COPY flashback.cards (id, headline, state) FROM stdin;
 2430	Record user key presses?	draft
 2431	How to precompile QML to avoid the initial startup penalty induced by the initial parsing?	draft
 2432	Where do animations apply?	draft
+2433	Animate an object rotating horizontally?	draft
+2434	Animate an object to fade away?	draft
 2435	How many types of animation elements exist?	draft
 2436	What action elements are used to change a property or to run a script during an ongoing animation?	draft
-3713	Create a variable?	draft
+2437	What are the possible ways of applying animations?	draft
 2438	Enable wrapping on Text elements?	draft
 2439	How many easing curves are available for animations?	draft
 2440	Animate an object moving horizontally with an easing curve?	draft
@@ -17736,7 +17706,6 @@ COPY flashback.cards (id, headline, state) FROM stdin;
 2538	What is the deduced type of a universal reference?	draft
 2539	Check for constness of an argument?	draft
 2540	Divide the execution of a function based on constness of its argument?	draft
-3771	What are the macros?	draft
 2541	Check whether the passed argument of an object is an lvalue or an rvalue?	draft
 2542	Restrict a universal reference to a specifc type?	draft
 2543	What corner cases exist that rvalue references might look like universal references?	draft
@@ -17816,7 +17785,6 @@ COPY flashback.cards (id, headline, state) FROM stdin;
 2617	How does <code>std::optional</code> take advantage of move semantics?	draft
 2618	What methods in <code>std::optional</code> overload with move semantics?	draft
 2619	When does using a <code>std::shared_ptr</code> become expensive?	draft
-4968	Define a spinlock?	draft
 2620	How does move semantics optimize the iteration over a collection of shared pointers?	draft
 2621	How does <code>std::unique_ptr</code> take advantage of move semantics?	draft
 2622	How do IOStream objects take advantage of move semantics?	draft
@@ -17847,6 +17815,7 @@ COPY flashback.cards (id, headline, state) FROM stdin;
 2647	Use move semantics to pass future and promise types to two different threads passing value?	draft
 2648	Pass string literals as universal references?	draft
 2763	Where are the process related information on the system?	draft
+2711	Edit an environment variable on U-Boot command line?	draft
 2712	Restart the board with a U-Boot command?	draft
 2713	Where to download the Raspberry Pi bootloader from?	draft
 2714	What files are required to to boot using a Raspberry Pi device?	draft
@@ -17879,6 +17848,7 @@ COPY flashback.cards (id, headline, state) FROM stdin;
 2747	Where is the device node representing kernel log buffer?	draft
 2748	Print the information about a module?	draft
 2749	List kernel modules?	draft
+2750	Insert modules?	draft
 2751	Which tool loads kernel modules while also loading their dependencies?	draft
 2752	Pass parameters to a module through modprobe configuration?	draft
 2753	Pass parameters to a module through kernel parameters?	draft
@@ -17901,7 +17871,6 @@ COPY flashback.cards (id, headline, state) FROM stdin;
 2840	What is the relation between objects of a class instantiated by different nontype template parameter values?	draft
 2935	Find an element within a list?	draft
 2841	What is the use case of nontype class template parameters with default values?	draft
-5063	Where does the kernel log?	draft
 2842	How many stages does CMake have to build a project?	draft
 2843	What file does CMake use as cache in configuration stage?	draft
 2844	What are the crucial CMake commands needed in every project?	draft
@@ -18127,6 +18096,7 @@ COPY flashback.cards (id, headline, state) FROM stdin;
 3073	Reset model view matrix to identity matrix?	draft
 3074	Scale down a circle to look smaller?	draft
 3075	Store and restore matrix state before and after translations?	draft
+3076		draft
 3077		draft
 3078	Rotate a two dimensional circles rotating around z axis?	draft
 3079	What structure is used instead of a vertex due to performance reasons?	draft
@@ -18219,7 +18189,6 @@ COPY flashback.cards (id, headline, state) FROM stdin;
 3166	Remove all occurances of a value within a variable using override operators?	draft
 3167	What does the dropbear package do?	draft
 3168	Assign on a variable only for a specific machine?	draft
-2278	Represent a single element view?	draft
 3169	What is the precedence between override assignments and regular assignments?	draft
 3170	Append to a variable only for a specific machine using override variables?	draft
 3171	What is the precedence of override operators?	draft
@@ -18285,6 +18254,7 @@ COPY flashback.cards (id, headline, state) FROM stdin;
 3231	What variable defines runtime dependencies of a recipe?	draft
 3232	Reflect the dependency of a recipe on a specific version of another recipe?	draft
 3233	Inspect the dependencies of an image?	draft
+3234	What are the default tasks?	draft
 3235	Get a list of existing tasks from a recipe?	draft
 3236	What variable defines the location of generated objects during build?	draft
 3237	What variable defines the location where files are installed?	draft
@@ -18340,6 +18310,7 @@ COPY flashback.cards (id, headline, state) FROM stdin;
 3289	What tool is used to inspect layers?	draft
 3290	Get a list of layers?	draft
 3291	Add an existing layer?	draft
+3292	Remove a layer?	draft
 3293	What layers provide board support?	draft
 3294	What layers provide application support?	draft
 3295	Create a new layer?	draft
@@ -18364,6 +18335,7 @@ COPY flashback.cards (id, headline, state) FROM stdin;
 3313	What configuration variable is used in UBoot recipe as the make target used to build the bootloader?	draft
 3314	In how many ways the kernel can be built with yocto?	draft
 3315	Use <code>linux-yocto</code> to build a specific kernel in an image?	draft
+3316	What is the advanced metadata?	draft
 3317	What is a Kernel Metadata?	draft
 3318	Write a simple kernel metadata specifying a configuration and a patch?	draft
 3319	What is advantage of creating a distribution layer?	draft
@@ -18446,6 +18418,7 @@ COPY flashback.cards (id, headline, state) FROM stdin;
 3396	Where will be the generated generic SDK stored?	draft
 3397	What SDK can be used to develop applications running on a target?	draft
 3398	What task is responsible for generating an SDK?	draft
+3399	Generate an SDK for an image?	draft
 3400	What configuration variables control what will be installed in an SDK?	draft
 3401	Install an SDK?	draft
 3402	Use an installed SDK?	draft
@@ -18536,6 +18509,7 @@ COPY flashback.cards (id, headline, state) FROM stdin;
 3700	What is the comment character in YAML syntax?	draft
 3701	What is the syntax of assigning a value in YAML?	draft
 3702	What characters can be used to surround a string value in YAML?	draft
+3703	What data types are available in YAML?	draft
 3704	How can we use JSON syntax in YAML?	draft
 3705	What triggers are available in GitHub workflows?	draft
 3706	How do webhook triggers function?	draft
@@ -18544,6 +18518,7 @@ COPY flashback.cards (id, headline, state) FROM stdin;
 3710	What characters are acceptable in secret names?	draft
 3711	What expression expands to the secret value?	draft
 3712	Create a secret?	draft
+3713	Create a variable?	draft
 3714	How many ways are possible to pass values when creating variables?	draft
 3715	What are the use cases of environments?	draft
 3716	Specify an environment in a job?	draft
@@ -18690,6 +18665,7 @@ COPY flashback.cards (id, headline, state) FROM stdin;
 3954	Use environment variables to pass values to subsequent steps?	draft
 5272	Remove a file interactively?	draft
 3883	What is the signature of a coroutine generator function?	draft
+3955	Create job summaries?	draft
 3956	How many context levels exist?	draft
 3957	In what context level secrets and variables exist?	draft
 3958	Set secrets and variables?	draft
@@ -18717,6 +18693,7 @@ COPY flashback.cards (id, headline, state) FROM stdin;
 3981	What is the difference between ordinary programs and system programs?	draft
 3982	Find the minimum and maximum value in a series of values?	draft
 3983	What overloads of min and max functions are available?	draft
+3984	Calculate the midpoint between two values?	draft
 3985	Calculate the interpolation of two numbers?	draft
 3986	Safely compare two integral values?	draft
 3987	Mark an object as no longer needed while passed as an argument?	draft
@@ -18726,7 +18703,6 @@ COPY flashback.cards (id, headline, state) FROM stdin;
 3990	Swap the value of two objects?	draft
 3991	Bind arguments to an arbitrary position?	draft
 4172	Retreive value of the active type within a variant?	draft
-1024	Clear a variable?	draft
 3992	What is the difference between <code>std::function()</code> and <code>std::bind()</code>	draft
 3993	Construct a pair of two objects?	draft
 3994	Get either of the two elements of a pair?	draft
@@ -19153,6 +19129,7 @@ COPY flashback.cards (id, headline, state) FROM stdin;
 4813	Manually write the content of a file in which breakpoints were saved?	draft
 4814	Watch changes of a variable only when a criteria is met?	draft
 4815	Track a particular location in memory rather than the value of an expression?	draft
+4817	Examine a memory address or register?	draft
 4818	Get information of threads?	draft
 4819	List the innermost or outermost frames of backtrace?	draft
 4820	Where the coredumps are stored?	draft
@@ -19255,6 +19232,8 @@ COPY flashback.cards (id, headline, state) FROM stdin;
 4948	Compile a device tree source?	draft
 4964	Configure udev in order to give devices another name?	draft
 4967	What is the mechanism of a spinlock on processors?	draft
+4968	Define a spinlock?	draft
+5063	Where does the kernel log?	draft
 5064	Where is the tracing directory usually mounted?	draft
 5065	What is the common method to write a document as a beginner?	draft
 5066	What is the best practice in naming tex files?	draft
@@ -19424,6 +19403,9 @@ COPY flashback.cards (id, headline, state) FROM stdin;
 231	How to add systemd support to postgres installation?	draft
 232	Build postgres using pgenv?	draft
 233	Connect to a postgres instance?	draft
+5405	Restore a plain text backup?	draft
+287	Connect to a postgres instance?	draft
+495	Install OpenCV library?	draft
 496	Include OpenCV headers in source file?	draft
 497	Print the size of a matrix?	draft
 498	Open an image from file?	draft
@@ -19465,6 +19447,7 @@ COPY flashback.cards (id, headline, state) FROM stdin;
 913	Manipulate breakpoints in gdb?	draft
 914	Change executation of the debugging program in gdb?	draft
 915	Print variables through debugging session?	draft
+916	Enable TUI in gdb:	draft
 926	Read the ELF header of an executable object?	draft
 927	Read symbols of an executable object?	draft
 225	What does PGDATA contain?	draft
@@ -19530,6 +19513,10 @@ COPY flashback.cards (id, headline, state) FROM stdin;
 1021	What variable holds project description?	draft
 1022	What variables hold project version information?	draft
 1023	Declare and initialize a variable?	draft
+1024	Clear a variable?	draft
+1025	Reference a variable?	draft
+1026	Reference two nested variables?	draft
+1027	How many scopes exist?	draft
 1028	Make variable visible to its parent scope?	draft
 5247	Locate the files of a command?	draft
 1106	How does spinlocks operate on a CPU?	draft
@@ -19713,7 +19700,6 @@ COPY flashback.cards (id, headline, state) FROM stdin;
 1555	What directory is modified in each step of the build process?	draft
 1556	What is the structure of work directory?	draft
 1557	Reduce disk usage after each recipe compilation by removing artifacts?	draft
-1751	Connect socket to a server address?	draft
 1559	What is the general approach to fix broken builds when a missing header or link failure happens?	draft
 1558	Where is the list of sysroot providers?	draft
 1560	What package formats are available to poky?	draft
@@ -19808,6 +19794,10 @@ COPY flashback.cards (id, headline, state) FROM stdin;
 1746	Create an active socket?	draft
 1747	Create a passive socket?	draft
 1748	Resolve a DNS name?	draft
+1749	Bind a TCP acceptor to a port?	draft
+1750	Bind a UDP acceptor to a port?	draft
+1751	Connect socket to a server address?	draft
+5360	Create a daemon thread?	draft
 1767	What are the properties of a normalized path?	draft
 1769	How many error handling approaches are available on filesystem library?	draft
 1770	Handle a filesystem operation error with exceptions?	draft
@@ -19843,6 +19833,7 @@ COPY flashback.cards (id, headline, state) FROM stdin;
 1803	Get the number of hard links to a file?	draft
 1804	Get the last time a file was written into?	draft
 1805	Yield information about the disk space available at a given path?	draft
+1806	Rename a file?	draft
 1807	Change the timepoint of the last write access of a file?	draft
 1808	Replace the permissions of a file?	draft
 1809	Resize a regular file?	draft
@@ -19865,6 +19856,7 @@ COPY flashback.cards (id, headline, state) FROM stdin;
 1826	Copy from a file of any type?	draft
 1827	Copy from a regular file?	draft
 1829	Copy a symbolic link?	draft
+1830	Remove a file?	draft
 1831	Recursively remove a directory and all of its contents?	draft
 1832	Yield the file an existing symbolic link refers to?	draft
 1833	Yield the absolute path of an existing path?	draft
@@ -19910,6 +19902,7 @@ COPY flashback.cards (id, headline, state) FROM stdin;
 1882	What is the real underlying macro provided by the kernel to add an entry to the <code>.modinfo</code> section?	draft
 1883	What utility dumps the <code>.modinfo</code> section of kernel modules?	draft
 2274	Represent the view of all the elements of a range?	draft
+3637	Write an image to file?	draft
 1884	What are the differences of <code>EXPORT_SYMBOL</code> and <code>EXPORT_SYMBOL_GPL</code> macros exporting symbols based on license?	draft
 1885	What is the <b>out-of-tree</b> kernel module building?	draft
 1886	What is the <b>built-in</b> kernel module building?	draft
@@ -19976,7 +19969,6 @@ COPY flashback.cards (id, headline, state) FROM stdin;
 2225	Check whether two ranges have the same content but not necessarily the same order of elements?	draft
 2234	Indicate if all of the elements within a range evaluate to true for a predicate?	draft
 5497	Create a paragraph?	draft
-3673	What are the steps into creating a daemon?	draft
 2235	Indicate if at least one element within a range evaluates to true for a predicate?	draft
 2236	Indicate if no elements within a range evaluates to true for a predicate?	draft
 2264	Produce the view of Nth elements from a range of tuple-like elements?	draft
@@ -19991,6 +19983,8 @@ COPY flashback.cards (id, headline, state) FROM stdin;
 2273	Adapt a view into a range with a begin and end iterator of matching types for non-range versions of algorithms?	draft
 2275	Split a single range into a view over sub-ranges? (incomplete)	draft
 2276	Flatten a splited view of a range?	draft
+2277	Represent an empty view?	draft
+2278	Represent a single element view?	draft
 2279	Represent a view of the generated sequence formed by repeatedly incrementing an initial value?	draft
 2280	Represent a view obtained by successively applying the istream input iterator?	draft
 2281	Where the Qt installer can be found?	draft
@@ -20297,6 +20291,7 @@ COPY flashback.cards (id, headline, state) FROM stdin;
 3681	Construct a thread of execution?	draft
 3682	Check how many threads can run on the host in parallel?	draft
 3672	What are the main characteristics of a daemon?	draft
+3673	What are the steps into creating a daemon?	draft
 3674	What are the major differences between a process and a thread?	draft
 3675	What are the use cases of syncronization primitives?	draft
 3676	What are the characteristics of coroutines?	draft
@@ -20368,6 +20363,7 @@ COPY flashback.cards (id, headline, state) FROM stdin;
 3768	What target properties should be avoided when making cross platform projects?	draft
 3769	Why do we need to link targets to a header only library?	draft
 3770	Write a configuration preset?	draft
+3771	What are the macros?	draft
 3772	What is the best practice in inheritance of presets?	draft
 3773	When do user specified presets become handy?	draft
 3774	Put a condition on a preset?	draft
@@ -20391,6 +20387,7 @@ COPY flashback.cards (id, headline, state) FROM stdin;
 3793	Write a job to setup nodejs modules?	draft
 3795	Write a job to create a release?	draft
 3796	Write a job to release generated artifacts?	draft
+3797	Write a job to cache a step?	draft
 3798	Write a job to upload artifacts in storage?	draft
 3799	Write a job to download artifacts from storage?	draft
 3800	Write a job to delete artifacts within storage?	draft
@@ -20714,6 +20711,7 @@ COPY flashback.cards (id, headline, state) FROM stdin;
 1935	What passive waiting mechanisms are implemented in the kernel?	draft
 1942	Convert standard time units to jiffies?	draft
 213	What is the meaning of ACID terminology?	draft
+294	What is a schema?	draft
 219	What schema an object in postgres belongs to?	draft
 234	What libraries are required for C++ projects to link to postgres?	draft
 1724	What formats are used to represent debugging symbols for executables?	draft
@@ -20733,7 +20731,6 @@ COPY flashback.cards (id, headline, state) FROM stdin;
 3882	How does a compiler know if a function is a coroutine?	draft
 3899	What key components in a coroutine interact with each other to make the suspending functions functional?	draft
 5522	Construct a linear gradient?	draft
-5503	Draw a border around an element with double lines?	draft
 5445	What specific scenario would remind you of using the Observer pattern in your program?	draft
 5446	What is the structure of Observer pattern?	draft
 5447	Implement Observer pattern?	draft
@@ -20820,6 +20817,7 @@ COPY flashback.cards (id, headline, state) FROM stdin;
 5500	Draw a border around an element with sharp edges?	draft
 5501	Draw a border around an element with dashed lines?	draft
 5502	Draw a border around an element with thick lines?	draft
+5503	Draw a border around an element with double lines?	draft
 5504	Draw an invisible border around an element?	draft
 5505	Draw a border around an element with a custom character?	draft
 5506	Draw a border around an element with a header?	draft
@@ -20986,7 +20984,6 @@ COPY flashback.milestones (subject, roadmap, level, "position") FROM stdin;
 66	2	origin	11
 67	2	origin	12
 68	2	origin	13
-69	2	origin	14
 70	2	origin	15
 71	2	origin	16
 72	2	origin	17
@@ -21507,363 +21504,329 @@ COPY flashback.producers (resource, provider) FROM stdin;
 --
 
 COPY flashback.progress ("user", card, last_practice, duration, progression) FROM stdin;
-2	117	2025-12-10 12:40:30.714517+01	3	0
-2	4137	2025-12-10 12:41:23.434107+01	53	0
-2	4138	2025-12-10 12:42:19.952968+01	56	0
-2	4139	2025-12-10 12:49:00.534666+01	400	0
-2	4140	2025-12-10 13:09:28.659015+01	118	0
-2	110	2025-12-10 13:09:52.703735+01	24	0
-2	118	2025-12-10 13:10:11.242611+01	19	0
-2	119	2025-12-10 13:11:23.307698+01	72	0
-2	4144	2025-12-10 13:13:42.813413+01	139	0
-2	4145	2025-12-10 13:13:56.826333+01	14	0
-2	4146	2025-12-10 13:14:28.435344+01	32	0
-2	4147	2025-12-10 13:16:12.667727+01	104	0
-2	109	2025-12-10 13:16:36.326456+01	24	0
-2	4149	2025-12-10 13:17:31.712993+01	55	0
-2	4150	2025-12-10 13:19:15.905831+01	104	0
-2	4151	2025-12-10 13:22:57.498301+01	222	0
-2	4152	2025-12-10 13:23:08.327246+01	11	0
-2	1481	2025-12-10 13:24:29.269667+01	81	0
-2	4154	2025-12-10 13:25:31.045994+01	11	0
-2	1484	2025-12-10 13:28:49.057145+01	198	0
-2	4156	2025-12-10 13:32:16.049402+01	207	0
-2	4157	2025-12-10 13:35:49.696408+01	213	0
-2	1483	2025-12-10 13:46:18.710693+01	629	0
-2	1485	2025-12-10 13:46:54.891907+01	36	0
-2	1486	2025-12-10 14:09:45.160596+01	305	0
-2	1487	2025-12-10 14:21:11.834213+01	194	0
-2	1488	2025-12-10 14:21:19.95822+01	8	0
-2	4163	2025-12-10 15:13:07.919855+01	215	0
-2	2813	2025-12-10 15:13:36.826759+01	29	0
-2	4165	2025-12-10 15:22:37.675126+01	60	0
-2	115	2025-12-10 15:23:37.917122+01	60	0
-2	4167	2025-12-10 15:23:53.54188+01	16	0
-2	4168	2025-12-10 15:24:17.91975+01	24	0
-2	4169	2025-12-10 15:27:13.965257+01	176	0
-2	4170	2025-12-10 15:27:54.932291+01	40	0
-2	4171	2025-12-10 15:27:56.470603+01	2	0
-2	4172	2025-12-10 16:49:21.0529+01	15	0
-2	4173	2025-12-10 16:49:53.166162+01	8	0
-2	4174	2025-12-10 16:50:55.351773+01	62	0
-2	4175	2025-12-10 16:59:46.842257+01	238	0
-2	4176	2025-12-11 07:18:32.595484+01	685	0
-2	4177	2025-12-11 07:26:04.469865+01	452	0
-2	4178	2025-12-11 07:32:51.708971+01	407	0
-2	2819	2025-12-11 11:28:08.892154+01	207	0
-2	2820	2025-12-11 11:30:00.040865+01	112	0
-2	4223	2025-12-11 11:33:07.574006+01	9	0
-2	674	2025-12-11 11:33:32.063308+01	25	0
-2	4179	2025-12-11 07:44:06.444797+01	71	0
-2	640	2025-12-11 07:55:10.073957+01	664	0
-2	641	2025-12-11 08:06:02.301717+01	652	0
-2	4182	2025-12-11 08:06:25.074768+01	23	0
-2	4183	2025-12-11 08:09:32.709832+01	187	0
-2	4184	2025-12-11 08:09:40.939945+01	8	0
-2	4185	2025-12-11 08:09:57.912909+01	17	0
-2	4186	2025-12-11 08:23:37.323892+01	820	0
-2	4187	2025-12-11 08:24:07.985339+01	30	0
-2	4188	2025-12-11 08:24:59.06633+01	51	0
-2	678	2025-12-11 13:29:46.041553+01	81	0
-2	679	2025-12-11 13:30:00.729071+01	14	0
-2	680	2025-12-11 13:31:27.436418+01	87	0
-2	681	2025-12-11 13:31:39.47169+01	12	0
-2	4189	2025-12-11 08:38:20.550499+01	16	0
-2	4190	2025-12-11 08:38:23.836811+01	3	0
-2	4191	2025-12-11 08:42:00.898171+01	217	0
-2	2795	2025-12-11 08:50:03.507254+01	400	0
-2	2796	2025-12-11 08:50:13.584819+01	10	0
-2	683	2025-12-11 14:08:10.410612+01	25	0
-2	684	2025-12-11 14:08:18.865078+01	8	0
-2	2797	2025-12-11 08:52:28.52182+01	25	0
-2	2798	2025-12-11 08:52:49.671284+01	21	0
-2	2799	2025-12-11 08:57:07.444662+01	237	0
-2	2800	2025-12-11 09:00:58.694545+01	231	0
-2	4198	2025-12-11 09:01:09.882808+01	11	0
-2	2801	2025-12-11 09:06:17.8296+01	308	0
-2	685	2025-12-11 14:08:32.184624+01	14	0
-2	4224	2025-12-11 14:08:40.900114+01	8	0
-2	4225	2025-12-11 14:14:22.214039+01	342	0
-2	4226	2025-12-11 14:37:25.195227+01	34	0
-2	2802	2025-12-11 09:10:35.297401+01	44	0
-2	2803	2025-12-11 09:15:31.028988+01	296	0
-2	2804	2025-12-11 09:16:38.113933+01	67	0
-2	2805	2025-12-11 09:18:17.712329+01	99	0
-2	2807	2025-12-11 09:18:44.104027+01	6	0
-2	2806	2025-12-11 09:18:55.633603+01	11	0
-2	2808	2025-12-11 09:51:35.969626+01	128	0
-2	4207	2025-12-11 09:52:47.402748+01	71	0
-2	4208	2025-12-11 09:58:26.705524+01	339	0
-2	4209	2025-12-11 10:01:02.486315+01	156	0
-2	4210	2025-12-11 10:39:31.595043+01	68	0
-2	4211	2025-12-11 10:47:43.368183+01	492	0
-2	676	2025-12-11 14:41:57.419323+01	272	0
-2	675	2025-12-11 14:42:13.517858+01	16	0
-2	2809	2025-12-11 10:50:07.111676+01	42	0
-2	677	2025-12-11 14:42:19.782184+01	6	0
-2	2810	2025-12-11 10:51:32.314348+01	8	0
-2	682	2025-12-11 14:43:47.81286+01	88	0
-2	2811	2025-12-11 10:54:00.649522+01	13	0
-2	2812	2025-12-11 10:54:47.808715+01	47	0
-2	2814	2025-12-11 11:06:47.098362+01	441	0
-2	2815	2025-12-11 11:09:16.827455+01	149	0
-2	2821	2025-12-11 14:50:12.374199+01	4	0
-2	2816	2025-12-11 11:15:48.122597+01	316	0
-2	2817	2025-12-11 11:20:02.197101+01	254	0
-2	2818	2025-12-11 11:23:27.632541+01	174	0
-2	2822	2025-12-11 14:51:07.251509+01	3	0
-2	2823	2025-12-11 14:53:07.605135+01	120	0
-2	4230	2025-12-11 14:53:27.878405+01	20	0
-2	2824	2025-12-11 14:55:28.941307+01	121	0
-2	2825	2025-12-11 14:59:14.488161+01	134	0
-2	2826	2025-12-11 15:01:43.941185+01	6	0
-2	2827	2025-12-11 15:07:35.463832+01	352	0
-2	2828	2025-12-11 15:10:14.817967+01	159	0
-2	2830	2025-12-11 15:13:35.578784+01	18	0
-2	2829	2025-12-11 15:19:22.562916+01	347	0
-2	2831	2025-12-12 18:51:36.376569+01	16	0
-2	9	2025-12-12 19:21:40.739539+01	570	0
-2	3635	2025-12-12 19:23:25.210058+01	105	0
-2	3640	2025-12-12 19:23:52.044126+01	27	0
-2	3644	2025-12-12 19:24:00.479843+01	8	0
-2	5087	2025-12-12 20:14:37.92278+01	11	0
-2	5088	2025-12-12 20:14:51.290676+01	14	0
-2	5089	2025-12-12 20:15:22.403425+01	31	0
-2	5090	2025-12-12 20:16:37.260949+01	40	0
-2	5091	2025-12-12 20:17:10.130168+01	33	0
-2	5092	2025-12-12 20:17:21.492452+01	11	0
-2	5093	2025-12-12 20:19:27.327282+01	126	0
-2	5094	2025-12-12 20:19:33.432348+01	6	0
-2	5095	2025-12-12 20:19:45.141201+01	12	0
-2	5096	2025-12-12 20:20:06.738071+01	21	0
-2	5097	2025-12-12 20:21:57.096575+01	111	0
-2	5098	2025-12-12 20:22:09.121013+01	12	0
-2	5204	2025-12-12 20:25:00.509992+01	45	0
-2	5205	2025-12-12 20:26:10.860272+01	70	0
-2	5206	2025-12-12 20:27:08.648523+01	58	0
-2	5207	2025-12-12 20:28:07.483619+01	59	0
-2	5208	2025-12-12 20:28:31.954002+01	24	0
-2	5209	2025-12-12 20:39:01.512673+01	629	0
-2	5210	2025-12-12 20:43:36.117408+01	275	0
-2	5211	2025-12-12 20:47:31.741815+01	235	0
-2	5212	2025-12-12 20:48:09.305826+01	38	0
-2	5213	2025-12-12 20:48:56.723944+01	47	0
-2	5214	2025-12-12 20:53:09.380701+01	253	0
-2	5215	2025-12-12 23:22:47.749667+01	230	0
-2	5216	2025-12-12 23:23:10.210242+01	23	0
-2	5217	2025-12-12 23:28:02.221547+01	292	0
-2	5218	2025-12-12 23:29:47.090728+01	105	0
-2	5219	2025-12-12 23:31:25.063097+01	98	0
-2	5203	2025-12-13 12:01:12.153996+01	5	1
-2	4133	2025-12-22 11:59:09.632956+01	15	0
-2	111	2025-12-22 11:59:46.707284+01	37	0
-2	116	2025-12-22 11:59:49.829976+01	3	0
-2	5220	2025-12-12 23:32:15.62245+01	50	0
-2	5235	2025-12-12 23:34:17.721769+01	122	0
-2	5236	2025-12-12 23:35:14.772153+01	57	0
-2	5237	2025-12-13 08:05:13.076193+01	644	0
-2	5238	2025-12-13 08:12:27.268837+01	434	0
-2	5239	2025-12-13 08:14:25.291621+01	118	0
-2	5240	2025-12-13 08:16:46.246076+01	141	0
-2	5241	2025-12-13 08:17:18.649881+01	32	0
-2	5242	2025-12-13 08:23:42.726624+01	384	0
-2	5243	2025-12-13 08:25:18.283389+01	96	0
-2	5244	2025-12-13 08:28:02.673675+01	164	0
-2	5245	2025-12-13 08:34:46.056611+01	404	0
-2	5246	2025-12-13 08:35:27.989759+01	41	0
-2	5433	2025-12-13 08:43:00.050702+01	452	0
-2	5434	2025-12-13 08:43:28.739466+01	28	0
-2	5435	2025-12-13 08:46:00.438025+01	152	0
-2	5436	2025-12-13 08:46:21.24156+01	21	0
-2	5437	2025-12-13 08:47:13.938692+01	52	0
-2	5438	2025-12-13 09:17:57.565331+01	77	0
-2	5439	2025-12-13 11:48:25.442366+01	92	0
-2	5440	2025-12-13 11:51:47.281022+01	202	0
-2	5441	2025-12-13 11:52:13.217178+01	26	0
-2	5442	2025-12-13 11:52:55.327784+01	42	0
-2	5443	2025-12-13 12:00:36.250172+01	6	0
-2	5444	2025-12-13 12:00:49.144241+01	13	0
-2	5202	2025-12-13 12:01:07.565129+01	12	1
-2	3439	2025-12-13 14:18:12.384282+01	5	0
-2	3440	2025-12-13 14:18:15.968993+01	3	0
-2	3441	2025-12-13 14:18:22.034365+01	7	0
-2	3458	2025-12-13 14:18:25.544245+01	3	0
-2	3442	2025-12-13 14:18:29.924023+01	4	0
-2	3443	2025-12-13 14:18:34.279819+01	5	0
-2	3444	2025-12-13 14:19:24.870266+01	50	0
-2	4239	2025-12-13 14:31:07.221782+01	4	0
-2	2832	2025-12-13 14:32:41.153739+01	3	0
-2	3683	2025-12-24 02:38:38.338948+01	4	0
-2	2833	2025-12-13 14:36:17.114874+01	3	0
-2	2834	2025-12-13 14:42:08.186176+01	351	0
-2	2835	2025-12-13 14:44:15.153334+01	5	0
-2	3682	2025-12-24 02:38:41.64059+01	3	0
-2	4244	2025-12-13 14:47:47.409495+01	3	0
-2	2836	2025-12-13 14:49:04.321943+01	3	0
-2	2837	2025-12-13 14:53:27.678704+01	263	0
-2	4247	2025-12-13 14:55:35.202809+01	128	0
-2	3445	2025-12-13 16:22:53.618662+01	8	0
-2	3446	2025-12-13 16:23:11.632054+01	18	0
-2	3447	2025-12-13 16:23:15.79778+01	4	0
-2	3448	2025-12-13 16:23:19.168449+01	4	0
-2	3449	2025-12-13 16:25:52.390778+01	153	0
-2	3450	2025-12-13 16:26:12.205771+01	20	0
-2	3451	2025-12-13 16:26:25.88065+01	13	0
-2	3452	2025-12-13 16:27:57.299379+01	92	0
-2	3453	2025-12-13 16:29:22.006316+01	85	0
-2	3457	2025-12-13 16:29:25.012615+01	3	0
-2	3454	2025-12-13 16:29:34.19085+01	9	0
-2	3455	2025-12-13 16:29:42.81108+01	8	0
-2	3456	2025-12-13 16:29:46.304786+01	4	0
-2	3459	2025-12-13 16:30:19.319209+01	33	0
-2	3460	2025-12-13 16:30:29.293167+01	10	0
-2	3461	2025-12-13 16:30:37.368498+01	8	0
-2	3463	2025-12-13 16:31:53.20626+01	53	0
-2	3462	2025-12-13 16:31:59.080145+01	6	0
-2	3483	2025-12-13 16:40:40.737293+01	3	0
-2	3464	2025-12-17 14:17:26.089455+01	3	0
-2	3465	2025-12-17 14:17:31.12832+01	5	0
-2	3466	2025-12-17 14:17:35.395545+01	4	0
-2	3467	2025-12-17 14:17:39.030887+01	4	0
-2	3468	2025-12-17 14:19:47.583572+01	128	0
-2	3469	2025-12-17 14:19:53.745262+01	6	0
-2	3470	2025-12-17 14:19:57.245419+01	4	0
-2	3471	2025-12-17 14:20:00.215705+01	3	0
-2	3472	2025-12-17 14:20:05.940812+01	5	0
-2	3473	2025-12-17 14:20:57.668824+01	52	0
-2	3474	2025-12-17 14:21:09.003712+01	11	0
-2	3475	2025-12-17 14:21:13.35087+01	4	0
-2	3476	2025-12-17 14:21:19.845071+01	6	0
-2	3477	2025-12-17 14:21:31.009133+01	11	0
-2	3478	2025-12-17 14:21:57.869091+01	26	0
-2	3937	2025-12-26 04:08:56.210064+01	4	0
-2	3938	2025-12-26 04:09:16.290933+01	3	0
-2	3939	2025-12-26 04:09:35.143709+01	3	0
-2	3665	2025-12-24 02:12:52.122439+01	4	0
-2	3666	2025-12-24 02:12:55.807213+01	3	0
-2	3667	2025-12-24 02:13:18.54954+01	7	0
-2	3668	2025-12-24 02:14:45.269419+01	30	0
-2	3669	2025-12-24 02:14:52.617954+01	7	0
-2	3670	2025-12-24 02:15:05.665995+01	13	0
-2	3671	2025-12-24 02:17:07.66791+01	122	0
-2	3672	2025-12-24 02:17:14.472342+01	7	0
-2	3673	2025-12-24 02:22:10.700447+01	296	0
-2	3674	2025-12-24 02:22:29.680678+01	19	0
-2	3675	2025-12-24 02:23:53.863462+01	84	0
-2	3676	2025-12-24 02:24:26.67106+01	33	0
-2	3677	2025-12-24 02:24:34.853472+01	8	0
-2	3941	2025-12-26 04:10:39.571065+01	3	0
-2	3942	2025-12-26 04:11:05.304298+01	3	0
-2	3678	2025-12-24 02:36:36.570213+01	3	0
-2	3679	2025-12-24 02:36:58.367134+01	22	0
-2	3943	2025-12-26 04:11:24.81081+01	3	0
-2	3940	2025-12-26 04:13:31.456586+01	4	0
-2	3680	2026-01-06 21:36:37.401266+01	13	0
-2	3681	2026-01-06 21:38:14.903304+01	97	0
-2	5430	2026-02-22 14:41:52.049938+01	116	0
-2	5427	2026-02-22 15:50:52.04425+01	23	0
-2	5428	2026-02-22 15:52:44.102928+01	111	0
-2	5426	2026-02-22 16:17:03.436876+01	149	0
-2	5392	2026-02-22 16:18:58.479222+01	114	0
-2	5429	2026-02-22 16:20:40.745195+01	20	0
-2	5425	2026-02-22 16:21:12.82027+01	31	0
-2	5424	2026-02-22 16:22:41.657108+01	88	0
-2	5403	2026-02-22 16:23:24.864417+01	41	0
-2	5402	2026-02-22 16:25:13.199153+01	52	0
-2	5399	2026-02-22 16:26:08.183311+01	54	0
-2	5401	2026-02-22 16:26:49.545631+01	40	0
-2	5393	2026-02-22 16:27:06.506001+01	16	0
-2	5395	2026-02-22 16:27:12.430291+01	5	0
-2	5404	2026-02-22 16:27:39.905595+01	26	0
-2	5396	2026-02-22 16:27:52.035137+01	11	0
-2	5394	2026-02-22 16:27:58.793214+01	6	0
-2	5397	2026-02-22 16:28:18.305852+01	19	0
-2	5398	2026-02-22 16:29:40.863631+01	82	0
-2	5400	2026-02-22 16:30:11.336668+01	29	0
-2	5405	2026-02-22 16:31:24.066763+01	71	0
-2	5406	2026-02-23 03:25:52.838774+01	64	0
-2	5407	2026-02-23 03:27:34.784191+01	101	0
-2	5408	2026-02-23 03:30:13.270215+01	158	0
-2	5411	2026-02-23 03:30:52.430178+01	38	0
-2	5409	2026-02-23 03:31:21.223012+01	28	0
-2	5412	2026-02-23 03:35:19.140177+01	177	0
-2	5410	2026-02-23 03:35:54.097978+01	34	0
-2	5413	2026-02-23 03:36:31.016308+01	36	0
-2	5414	2026-02-23 03:37:19.194976+01	47	0
-2	5415	2026-02-23 03:38:50.216168+01	90	0
-2	5419	2026-02-23 03:41:03.335679+01	76	0
-2	214	2026-02-23 07:33:03.436224+01	6	1
-2	228	2026-02-23 07:33:23.045385+01	7	1
-2	226	2026-02-23 07:33:38.712539+01	15	1
-2	221	2026-02-23 07:33:59.560577+01	20	1
-2	215	2026-02-23 07:34:32.468919+01	32	1
-2	216	2026-02-23 07:35:18.944342+01	45	1
-2	224	2026-02-23 07:35:25.607388+01	6	1
-2	219	2026-02-23 07:36:41.479055+01	75	1
-2	227	2026-02-23 07:37:33.166934+01	51	1
-2	222	2026-02-23 07:37:38.350544+01	4	1
-2	225	2026-02-23 07:38:52.149399+01	73	1
-2	229	2026-02-23 07:38:57.310957+01	4	1
-2	220	2026-02-23 07:39:07.025461+01	9	1
-2	217	2026-02-23 07:40:17.302639+01	6	1
-2	230	2026-02-23 07:41:36.120628+01	78	1
-2	231	2026-02-23 07:42:13.955438+01	35	1
-2	232	2026-02-23 07:44:09.470067+01	113	1
-2	233	2026-02-23 07:44:52.366783+01	41	1
-2	234	2026-02-23 07:45:17.751417+01	24	1
-2	5386	2026-02-23 07:46:33.164559+01	72	1
-2	5387	2026-02-23 07:47:10.832216+01	33	1
-2	5388	2026-02-23 07:47:20.107679+01	8	1
-2	5389	2026-02-23 07:47:49.866142+01	28	1
-2	5390	2026-02-23 07:48:48.842997+01	39	1
-2	5391	2026-02-23 07:50:01.487601+01	67	1
-2	5422	2026-02-23 03:42:31.136513+01	87	0
-2	5432	2026-02-23 07:30:24.358+01	58	0
-2	5416	2026-02-23 03:43:00.083487+01	28	0
-2	218	2026-02-23 07:33:15.503154+01	11	1
-2	5418	2026-02-23 03:43:53.488745+01	53	0
-2	5420	2026-02-23 03:44:34.167366+01	40	0
-2	5421	2026-02-23 03:45:34.510712+01	60	0
-2	5431	2026-02-23 07:31:50.942114+01	86	0
-2	5423	2026-02-23 03:46:20.579939+01	45	0
-2	213	2026-02-23 07:32:56.616052+01	55	1
-2	5417	2026-02-23 07:29:24.261922+01	27	0
-2	223	2026-02-23 07:40:10.513564+01	62	1
-2	108	2026-02-23 09:27:40.176586+01	53	0
-2	1735	2026-02-20 22:08:54.847962+01	10	0
-2	1736	2026-02-20 22:08:54.847962+01	10	0
-2	1740	2026-02-20 22:08:54.847962+01	10	0
-2	1741	2026-02-20 22:08:54.847962+01	10	0
-2	1742	2026-02-20 22:08:54.847962+01	10	0
-2	1743	2026-02-20 22:08:54.847962+01	10	0
-2	1744	2026-02-20 22:08:54.847962+01	10	0
-2	1745	2026-02-20 22:08:54.847962+01	10	0
-2	1746	2026-02-20 22:08:54.847962+01	10	0
-2	1747	2026-02-20 22:08:54.847962+01	10	0
-2	1750	2026-02-20 22:08:54.847962+01	10	0
-2	1751	2026-02-20 22:08:54.847962+01	10	0
-2	1752	2026-02-20 22:08:54.847962+01	10	0
-2	2774	2026-02-20 22:08:54.847962+01	10	0
-2	2780	2026-02-20 22:08:54.847962+01	10	0
-2	2781	2026-02-20 22:08:54.847962+01	10	0
-2	1734	2026-02-23 10:09:22.378364+01	10	0
-2	1738	2026-02-23 10:09:22.378364+01	10	0
-2	1739	2026-02-23 10:09:22.378364+01	10	0
-2	1748	2026-02-23 10:09:22.378364+01	10	0
-2	1749	2026-02-23 10:09:22.378364+01	10	0
-2	2773	2026-02-23 10:09:22.378364+01	10	0
-2	2775	2026-02-23 10:09:22.378364+01	10	0
-2	2776	2026-02-23 10:09:22.378364+01	10	0
-2	2777	2026-02-23 10:09:22.378364+01	10	0
-2	2778	2026-02-23 10:09:22.378364+01	10	0
-2	2779	2026-02-23 10:09:22.378364+01	10	0
-2	2782	2026-02-23 10:09:22.378364+01	10	0
-2	1733	2026-02-23 23:01:37.137045+01	10	3
-2	2770	2026-02-23 23:01:37.137045+01	10	3
-2	4076	2026-02-23 23:01:37.137045+01	10	3
-2	2769	2026-02-23 23:01:37.137045+01	10	3
-2	2772	2026-02-23 23:32:40.033384+01	10	1
-2	2771	2026-02-23 23:32:40.033384+01	10	1
+2	4139	2025-12-10 11:49:00.534666+00	400	0
+2	4140	2025-12-10 12:09:28.659015+00	118	0
+2	110	2025-12-10 12:09:52.703735+00	24	0
+2	118	2025-12-10 12:10:11.242611+00	19	0
+2	119	2025-12-10 12:11:23.307698+00	72	0
+2	4144	2025-12-10 12:13:42.813413+00	139	0
+2	4145	2025-12-10 12:13:56.826333+00	14	0
+2	4146	2025-12-10 12:14:28.435344+00	32	0
+2	4147	2025-12-10 12:16:12.667727+00	104	0
+2	109	2025-12-10 12:16:36.326456+00	24	0
+2	4149	2025-12-10 12:17:31.712993+00	55	0
+2	4150	2025-12-10 12:19:15.905831+00	104	0
+2	4151	2025-12-10 12:22:57.498301+00	222	0
+2	4152	2025-12-10 12:23:08.327246+00	11	0
+2	1481	2025-12-10 12:24:29.269667+00	81	0
+2	4154	2025-12-10 12:25:31.045994+00	11	0
+2	1484	2025-12-10 12:28:49.057145+00	198	0
+2	4156	2025-12-10 12:32:16.049402+00	207	0
+2	4157	2025-12-10 12:35:49.696408+00	213	0
+2	1483	2025-12-10 12:46:18.710693+00	629	0
+2	1485	2025-12-10 12:46:54.891907+00	36	0
+2	1486	2025-12-10 13:09:45.160596+00	305	0
+2	1487	2025-12-10 13:21:11.834213+00	194	0
+2	1488	2025-12-10 13:21:19.95822+00	8	0
+2	4163	2025-12-10 14:13:07.919855+00	215	0
+2	2813	2025-12-10 14:13:36.826759+00	29	0
+2	4165	2025-12-10 14:22:37.675126+00	60	0
+2	115	2025-12-10 14:23:37.917122+00	60	0
+2	4167	2025-12-10 14:23:53.54188+00	16	0
+2	4168	2025-12-10 14:24:17.91975+00	24	0
+2	4169	2025-12-10 14:27:13.965257+00	176	0
+2	4170	2025-12-10 14:27:54.932291+00	40	0
+2	4171	2025-12-10 14:27:56.470603+00	2	0
+2	4172	2025-12-10 15:49:21.0529+00	15	0
+2	4173	2025-12-10 15:49:53.166162+00	8	0
+2	4174	2025-12-10 15:50:55.351773+00	62	0
+2	4175	2025-12-10 15:59:46.842257+00	238	0
+2	4176	2025-12-11 06:18:32.595484+00	685	0
+2	4177	2025-12-11 06:26:04.469865+00	452	0
+2	4178	2025-12-11 06:32:51.708971+00	407	0
+2	2819	2025-12-11 10:28:08.892154+00	207	0
+2	2820	2025-12-11 10:30:00.040865+00	112	0
+2	4223	2025-12-11 10:33:07.574006+00	9	0
+2	674	2025-12-11 10:33:32.063308+00	25	0
+2	4179	2025-12-11 06:44:06.444797+00	71	0
+2	640	2025-12-11 06:55:10.073957+00	664	0
+2	641	2025-12-11 07:06:02.301717+00	652	0
+2	4182	2025-12-11 07:06:25.074768+00	23	0
+2	4183	2025-12-11 07:09:32.709832+00	187	0
+2	4184	2025-12-11 07:09:40.939945+00	8	0
+2	4185	2025-12-11 07:09:57.912909+00	17	0
+2	4186	2025-12-11 07:23:37.323892+00	820	0
+2	4187	2025-12-11 07:24:07.985339+00	30	0
+2	4188	2025-12-11 07:24:59.06633+00	51	0
+2	678	2025-12-11 12:29:46.041553+00	81	0
+2	679	2025-12-11 12:30:00.729071+00	14	0
+2	680	2025-12-11 12:31:27.436418+00	87	0
+2	681	2025-12-11 12:31:39.47169+00	12	0
+2	4189	2025-12-11 07:38:20.550499+00	16	0
+2	4190	2025-12-11 07:38:23.836811+00	3	0
+2	4191	2025-12-11 07:42:00.898171+00	217	0
+2	2795	2025-12-11 07:50:03.507254+00	400	0
+2	2796	2025-12-11 07:50:13.584819+00	10	0
+2	683	2025-12-11 13:08:10.410612+00	25	0
+2	684	2025-12-11 13:08:18.865078+00	8	0
+2	2797	2025-12-11 07:52:28.52182+00	25	0
+2	2798	2025-12-11 07:52:49.671284+00	21	0
+2	2799	2025-12-11 07:57:07.444662+00	237	0
+2	2800	2025-12-11 08:00:58.694545+00	231	0
+2	4198	2025-12-11 08:01:09.882808+00	11	0
+2	2801	2025-12-11 08:06:17.8296+00	308	0
+2	685	2025-12-11 13:08:32.184624+00	14	0
+2	4224	2025-12-11 13:08:40.900114+00	8	0
+2	4225	2025-12-11 13:14:22.214039+00	342	0
+2	4226	2025-12-11 13:37:25.195227+00	34	0
+2	2802	2025-12-11 08:10:35.297401+00	44	0
+2	2803	2025-12-11 08:15:31.028988+00	296	0
+2	2804	2025-12-11 08:16:38.113933+00	67	0
+2	2805	2025-12-11 08:18:17.712329+00	99	0
+2	2807	2025-12-11 08:18:44.104027+00	6	0
+2	2806	2025-12-11 08:18:55.633603+00	11	0
+2	2808	2025-12-11 08:51:35.969626+00	128	0
+2	4207	2025-12-11 08:52:47.402748+00	71	0
+2	4208	2025-12-11 08:58:26.705524+00	339	0
+2	4209	2025-12-11 09:01:02.486315+00	156	0
+2	4210	2025-12-11 09:39:31.595043+00	68	0
+2	4211	2025-12-11 09:47:43.368183+00	492	0
+2	676	2025-12-11 13:41:57.419323+00	272	0
+2	675	2025-12-11 13:42:13.517858+00	16	0
+2	2809	2025-12-11 09:50:07.111676+00	42	0
+2	677	2025-12-11 13:42:19.782184+00	6	0
+2	2810	2025-12-11 09:51:32.314348+00	8	0
+2	682	2025-12-11 13:43:47.81286+00	88	0
+2	2811	2025-12-11 09:54:00.649522+00	13	0
+2	2812	2025-12-11 09:54:47.808715+00	47	0
+2	2814	2025-12-11 10:06:47.098362+00	441	0
+2	2815	2025-12-11 10:09:16.827455+00	149	0
+2	2821	2025-12-11 13:50:12.374199+00	4	0
+2	2816	2025-12-11 10:15:48.122597+00	316	0
+2	2817	2025-12-11 10:20:02.197101+00	254	0
+2	2818	2025-12-11 10:23:27.632541+00	174	0
+2	2822	2025-12-11 13:51:07.251509+00	3	0
+2	2823	2025-12-11 13:53:07.605135+00	120	0
+2	4230	2025-12-11 13:53:27.878405+00	20	0
+2	2824	2025-12-11 13:55:28.941307+00	121	0
+2	2825	2025-12-11 13:59:14.488161+00	134	0
+2	2826	2025-12-11 14:01:43.941185+00	6	0
+2	2827	2025-12-11 14:07:35.463832+00	352	0
+2	2828	2025-12-11 14:10:14.817967+00	159	0
+2	2830	2025-12-11 14:13:35.578784+00	18	0
+2	2829	2025-12-11 14:19:22.562916+00	347	0
+2	2831	2025-12-12 17:51:36.376569+00	16	0
+2	9	2025-12-12 18:21:40.739539+00	570	0
+2	3635	2025-12-12 18:23:25.210058+00	105	0
+2	3640	2025-12-12 18:23:52.044126+00	27	0
+2	3644	2025-12-12 18:24:00.479843+00	8	0
+2	5087	2025-12-12 19:14:37.92278+00	11	0
+2	5088	2025-12-12 19:14:51.290676+00	14	0
+2	5089	2025-12-12 19:15:22.403425+00	31	0
+2	5090	2025-12-12 19:16:37.260949+00	40	0
+2	5091	2025-12-12 19:17:10.130168+00	33	0
+2	5092	2025-12-12 19:17:21.492452+00	11	0
+2	5093	2025-12-12 19:19:27.327282+00	126	0
+2	5094	2025-12-12 19:19:33.432348+00	6	0
+2	5095	2025-12-12 19:19:45.141201+00	12	0
+2	5096	2025-12-12 19:20:06.738071+00	21	0
+2	5097	2025-12-12 19:21:57.096575+00	111	0
+2	5098	2025-12-12 19:22:09.121013+00	12	0
+2	5204	2025-12-12 19:25:00.509992+00	45	0
+2	5205	2025-12-12 19:26:10.860272+00	70	0
+2	5206	2025-12-12 19:27:08.648523+00	58	0
+2	5207	2025-12-12 19:28:07.483619+00	59	0
+2	5208	2025-12-12 19:28:31.954002+00	24	0
+2	5209	2025-12-12 19:39:01.512673+00	629	0
+2	5210	2025-12-12 19:43:36.117408+00	275	0
+2	5211	2025-12-12 19:47:31.741815+00	235	0
+2	5212	2025-12-12 19:48:09.305826+00	38	0
+2	5213	2025-12-12 19:48:56.723944+00	47	0
+2	5214	2025-12-12 19:53:09.380701+00	253	0
+2	5215	2025-12-12 22:22:47.749667+00	230	0
+2	5216	2025-12-12 22:23:10.210242+00	23	0
+2	5217	2025-12-12 22:28:02.221547+00	292	0
+2	5218	2025-12-12 22:29:47.090728+00	105	0
+2	5219	2025-12-12 22:31:25.063097+00	98	0
+2	5203	2025-12-13 11:01:12.153996+00	5	1
+2	5220	2025-12-12 22:32:15.62245+00	50	0
+2	5235	2025-12-12 22:34:17.721769+00	122	0
+2	5236	2025-12-12 22:35:14.772153+00	57	0
+2	5237	2025-12-13 07:05:13.076193+00	644	0
+2	5238	2025-12-13 07:12:27.268837+00	434	0
+2	4133	2026-02-23 11:35:27.292696+00	163	0
+2	116	2026-02-23 11:37:24.460151+00	6	0
+2	117	2026-02-23 11:37:57.656713+00	32	0
+2	4137	2026-02-23 11:41:53.282673+00	235	0
+2	4138	2026-02-23 11:42:38.537898+00	44	0
+2	5239	2025-12-13 07:14:25.291621+00	118	0
+2	5240	2025-12-13 07:16:46.246076+00	141	0
+2	5241	2025-12-13 07:17:18.649881+00	32	0
+2	5242	2025-12-13 07:23:42.726624+00	384	0
+2	5243	2025-12-13 07:25:18.283389+00	96	0
+2	5244	2025-12-13 07:28:02.673675+00	164	0
+2	5245	2025-12-13 07:34:46.056611+00	404	0
+2	5246	2025-12-13 07:35:27.989759+00	41	0
+2	5433	2025-12-13 07:43:00.050702+00	452	0
+2	5434	2025-12-13 07:43:28.739466+00	28	0
+2	5435	2025-12-13 07:46:00.438025+00	152	0
+2	5436	2025-12-13 07:46:21.24156+00	21	0
+2	5437	2025-12-13 07:47:13.938692+00	52	0
+2	5438	2025-12-13 08:17:57.565331+00	77	0
+2	5439	2025-12-13 10:48:25.442366+00	92	0
+2	5440	2025-12-13 10:51:47.281022+00	202	0
+2	5441	2025-12-13 10:52:13.217178+00	26	0
+2	5442	2025-12-13 10:52:55.327784+00	42	0
+2	5443	2025-12-13 11:00:36.250172+00	6	0
+2	5444	2025-12-13 11:00:49.144241+00	13	0
+2	5202	2025-12-13 11:01:07.565129+00	12	1
+2	3439	2025-12-13 13:18:12.384282+00	5	0
+2	3440	2025-12-13 13:18:15.968993+00	3	0
+2	3441	2025-12-13 13:18:22.034365+00	7	0
+2	3458	2025-12-13 13:18:25.544245+00	3	0
+2	3442	2025-12-13 13:18:29.924023+00	4	0
+2	3443	2025-12-13 13:18:34.279819+00	5	0
+2	3444	2025-12-13 13:19:24.870266+00	50	0
+2	4239	2025-12-13 13:31:07.221782+00	4	0
+2	2832	2025-12-13 13:32:41.153739+00	3	0
+2	3683	2025-12-24 01:38:38.338948+00	4	0
+2	2833	2025-12-13 13:36:17.114874+00	3	0
+2	2834	2025-12-13 13:42:08.186176+00	351	0
+2	2835	2025-12-13 13:44:15.153334+00	5	0
+2	3682	2025-12-24 01:38:41.64059+00	3	0
+2	4244	2025-12-13 13:47:47.409495+00	3	0
+2	2836	2025-12-13 13:49:04.321943+00	3	0
+2	2837	2025-12-13 13:53:27.678704+00	263	0
+2	4247	2025-12-13 13:55:35.202809+00	128	0
+2	3445	2025-12-13 15:22:53.618662+00	8	0
+2	3446	2025-12-13 15:23:11.632054+00	18	0
+2	3447	2025-12-13 15:23:15.79778+00	4	0
+2	3448	2025-12-13 15:23:19.168449+00	4	0
+2	3449	2025-12-13 15:25:52.390778+00	153	0
+2	3450	2025-12-13 15:26:12.205771+00	20	0
+2	3451	2025-12-13 15:26:25.88065+00	13	0
+2	3452	2025-12-13 15:27:57.299379+00	92	0
+2	3453	2025-12-13 15:29:22.006316+00	85	0
+2	3457	2025-12-13 15:29:25.012615+00	3	0
+2	3454	2025-12-13 15:29:34.19085+00	9	0
+2	3455	2025-12-13 15:29:42.81108+00	8	0
+2	3456	2025-12-13 15:29:46.304786+00	4	0
+2	3459	2025-12-13 15:30:19.319209+00	33	0
+2	3460	2025-12-13 15:30:29.293167+00	10	0
+2	3461	2025-12-13 15:30:37.368498+00	8	0
+2	3463	2025-12-13 15:31:53.20626+00	53	0
+2	3462	2025-12-13 15:31:59.080145+00	6	0
+2	3483	2025-12-13 15:40:40.737293+00	3	0
+2	3464	2025-12-17 13:17:26.089455+00	3	0
+2	3465	2025-12-17 13:17:31.12832+00	5	0
+2	3466	2025-12-17 13:17:35.395545+00	4	0
+2	3467	2025-12-17 13:17:39.030887+00	4	0
+2	3468	2025-12-17 13:19:47.583572+00	128	0
+2	3469	2025-12-17 13:19:53.745262+00	6	0
+2	3470	2025-12-17 13:19:57.245419+00	4	0
+2	3471	2025-12-17 13:20:00.215705+00	3	0
+2	3472	2025-12-17 13:20:05.940812+00	5	0
+2	3473	2025-12-17 13:20:57.668824+00	52	0
+2	3474	2025-12-17 13:21:09.003712+00	11	0
+2	3475	2025-12-17 13:21:13.35087+00	4	0
+2	3476	2025-12-17 13:21:19.845071+00	6	0
+2	3477	2025-12-17 13:21:31.009133+00	11	0
+2	3478	2025-12-17 13:21:57.869091+00	26	0
+2	3937	2025-12-26 03:08:56.210064+00	4	0
+2	3938	2025-12-26 03:09:16.290933+00	3	0
+2	3939	2025-12-26 03:09:35.143709+00	3	0
+2	3665	2025-12-24 01:12:52.122439+00	4	0
+2	3666	2025-12-24 01:12:55.807213+00	3	0
+2	3667	2025-12-24 01:13:18.54954+00	7	0
+2	3668	2025-12-24 01:14:45.269419+00	30	0
+2	3669	2025-12-24 01:14:52.617954+00	7	0
+2	3670	2025-12-24 01:15:05.665995+00	13	0
+2	3671	2025-12-24 01:17:07.66791+00	122	0
+2	3672	2025-12-24 01:17:14.472342+00	7	0
+2	3673	2025-12-24 01:22:10.700447+00	296	0
+2	3674	2025-12-24 01:22:29.680678+00	19	0
+2	3675	2025-12-24 01:23:53.863462+00	84	0
+2	3676	2025-12-24 01:24:26.67106+00	33	0
+2	3677	2025-12-24 01:24:34.853472+00	8	0
+2	3941	2025-12-26 03:10:39.571065+00	3	0
+2	3942	2025-12-26 03:11:05.304298+00	3	0
+2	3678	2025-12-24 01:36:36.570213+00	3	0
+2	3679	2025-12-24 01:36:58.367134+00	22	0
+2	3943	2025-12-26 03:11:24.81081+00	3	0
+2	3940	2025-12-26 03:13:31.456586+00	4	0
+2	3680	2026-01-06 20:36:37.401266+00	13	0
+2	3681	2026-01-06 20:38:14.903304+00	97	0
+2	5430	2026-02-22 13:41:52.049938+00	116	0
+2	5427	2026-02-22 14:50:52.04425+00	23	0
+2	5428	2026-02-22 14:52:44.102928+00	111	0
+2	5426	2026-02-22 15:17:03.436876+00	149	0
+2	5392	2026-02-22 15:18:58.479222+00	114	0
+2	5429	2026-02-22 15:20:40.745195+00	20	0
+2	5425	2026-02-22 15:21:12.82027+00	31	0
+2	5424	2026-02-22 15:22:41.657108+00	88	0
+2	5403	2026-02-22 15:23:24.864417+00	41	0
+2	5402	2026-02-22 15:25:13.199153+00	52	0
+2	5399	2026-02-22 15:26:08.183311+00	54	0
+2	5401	2026-02-22 15:26:49.545631+00	40	0
+2	5393	2026-02-22 15:27:06.506001+00	16	0
+2	5395	2026-02-22 15:27:12.430291+00	5	0
+2	5404	2026-02-22 15:27:39.905595+00	26	0
+2	5396	2026-02-22 15:27:52.035137+00	11	0
+2	5394	2026-02-22 15:27:58.793214+00	6	0
+2	5397	2026-02-22 15:28:18.305852+00	19	0
+2	5398	2026-02-22 15:29:40.863631+00	82	0
+2	5400	2026-02-22 15:30:11.336668+00	29	0
+2	5405	2026-02-22 15:31:24.066763+00	71	0
+2	5406	2026-02-23 02:25:52.838774+00	64	0
+2	5407	2026-02-23 02:27:34.784191+00	101	0
+2	5408	2026-02-23 02:30:13.270215+00	158	0
+2	5411	2026-02-23 02:30:52.430178+00	38	0
+2	5409	2026-02-23 02:31:21.223012+00	28	0
+2	5412	2026-02-23 02:35:19.140177+00	177	0
+2	5410	2026-02-23 02:35:54.097978+00	34	0
+2	5413	2026-02-23 02:36:31.016308+00	36	0
+2	5414	2026-02-23 02:37:19.194976+00	47	0
+2	5415	2026-02-23 02:38:50.216168+00	90	0
+2	5419	2026-02-23 02:41:03.335679+00	76	0
+2	214	2026-02-23 06:33:03.436224+00	6	1
+2	228	2026-02-23 06:33:23.045385+00	7	1
+2	226	2026-02-23 06:33:38.712539+00	15	1
+2	221	2026-02-23 06:33:59.560577+00	20	1
+2	216	2026-02-23 11:44:51.173669+00	5	2
+2	224	2026-02-23 06:35:25.607388+00	6	1
+2	219	2026-02-23 06:36:41.479055+00	75	1
+2	227	2026-02-23 06:37:33.166934+00	51	1
+2	222	2026-02-23 06:37:38.350544+00	4	1
+2	225	2026-02-23 06:38:52.149399+00	73	1
+2	229	2026-02-23 06:38:57.310957+00	4	1
+2	220	2026-02-23 06:39:07.025461+00	9	1
+2	217	2026-02-23 06:40:17.302639+00	6	1
+2	230	2026-02-23 06:41:36.120628+00	78	1
+2	231	2026-02-23 06:42:13.955438+00	35	1
+2	232	2026-02-23 06:44:09.470067+00	113	1
+2	233	2026-02-23 06:44:52.366783+00	41	1
+2	234	2026-02-23 06:45:17.751417+00	24	1
+2	5386	2026-02-23 06:46:33.164559+00	72	1
+2	5387	2026-02-23 06:47:10.832216+00	33	1
+2	5388	2026-02-23 06:47:20.107679+00	8	1
+2	5389	2026-02-23 06:47:49.866142+00	28	1
+2	5390	2026-02-23 06:48:48.842997+00	39	1
+2	5391	2026-02-23 06:50:01.487601+00	67	1
+2	5422	2026-02-23 02:42:31.136513+00	87	0
+2	5432	2026-02-23 06:30:24.358+00	58	0
+2	5416	2026-02-23 02:43:00.083487+00	28	0
+2	218	2026-02-23 06:33:15.503154+00	11	1
+2	5418	2026-02-23 02:43:53.488745+00	53	0
+2	5420	2026-02-23 02:44:34.167366+00	40	0
+2	5421	2026-02-23 02:45:34.510712+00	60	0
+2	5431	2026-02-23 06:31:50.942114+00	86	0
+2	5423	2026-02-23 02:46:20.579939+00	45	0
+2	213	2026-02-23 11:44:36.402453+00	4	2
+2	5417	2026-02-23 06:29:24.261922+00	27	0
+2	223	2026-02-23 06:40:10.513564+00	62	1
+2	108	2026-02-23 08:27:40.176586+00	53	0
+2	111	2026-02-23 11:37:17.915876+00	110	0
+2	215	2026-02-23 11:44:45.329946+00	5	2
 \.
 
 
@@ -28385,11 +28348,12 @@ COPY flashback.sections (resource, "position", name, link, state) FROM stdin;
 --
 
 COPY flashback.sessions ("user", token, device, last_usage) FROM stdin;
-2	Txqw8ldUFaI+e9TGfBlP6YxBkn6bgngfQMJITK8DUSQ	b53c3d26-9f71-a69d-d031-c7bf2febd123	2025-12-23 00:00:00+01
-2	kENXFbSZvJrAggEpbDHV0DVnUKDNwYlRsoszdHSYNf4	ea96bd44-1ab3-4c68-9ed3-ab47883e57ef	2026-02-23 01:00:00+01
-2	S+QZFj/aiqeZCU9t68F97mH7tZH9XEySCgQF/8R08pA	0bdb9226-aefa-4351-8d6e-195d6e5ff28f	2026-02-22 01:00:00+01
-2	KHvqvUtrQuNuv1D8yEfHNP9erEx3zsfN4pKEasnauQs	5b33a8c4-d1c2-4e3b-af88-fa12dce84284	2026-02-23 01:00:00+01
-2	z1N4Egb7ZDMyS4LR1cbFr+CuVWwwr39x3BbEUSpYhW0	70c60675-db09-4fc2-bd9a-0e178401f6e7	2026-02-22 01:00:00+01
+2	Txqw8ldUFaI+e9TGfBlP6YxBkn6bgngfQMJITK8DUSQ	b53c3d26-9f71-a69d-d031-c7bf2febd123	2025-12-22 23:00:00+00
+2	kENXFbSZvJrAggEpbDHV0DVnUKDNwYlRsoszdHSYNf4	ea96bd44-1ab3-4c68-9ed3-ab47883e57ef	2026-02-23 00:00:00+00
+2	S+QZFj/aiqeZCU9t68F97mH7tZH9XEySCgQF/8R08pA	0bdb9226-aefa-4351-8d6e-195d6e5ff28f	2026-02-22 00:00:00+00
+2	z1N4Egb7ZDMyS4LR1cbFr+CuVWwwr39x3BbEUSpYhW0	70c60675-db09-4fc2-bd9a-0e178401f6e7	2026-02-22 00:00:00+00
+2	KHvqvUtrQuNuv1D8yEfHNP9erEx3zsfN4pKEasnauQs	5b33a8c4-d1c2-4e3b-af88-fa12dce84284	2026-02-23 00:00:00+00
+6	6iF44Iw2Y/NIvt+c1TVX3ReZJDsfJynkhR22sxGymJg	0b0f1bd6-8e6b-4ce9-aa4a-61b54e7a9bfb	2026-02-24 00:00:00+00
 \.
 
 
@@ -31662,7 +31626,8 @@ COPY flashback.topics ("position", name, subject, level) FROM stdin;
 --
 
 COPY flashback.users (id, name, email, state, verified, joined, hash) FROM stdin;
-2	Brian Salehi	briansalehi@proton.me	active	f	2025-07-29 12:17:34.738918+02	$argon2id$v=19$m=262144,t=3,p=1$fqiJerPBCLb2TEdTbGv8BQ$M0j9j6ojyIjD9yZ4+lBBNR/WAiWpImUcEcUhCL3u9gc
+2	Brian Salehi	briansalehi@proton.me	active	f	2025-07-29 10:17:34.738918+00	$argon2id$v=19$m=262144,t=3,p=1$fqiJerPBCLb2TEdTbGv8BQ$M0j9j6ojyIjD9yZ4+lBBNR/WAiWpImUcEcUhCL3u9gc
+6	Saba	sabazared@gmail.com	active	f	2026-02-23 12:56:36.359183+00	$argon2id$v=19$m=262144,t=3,p=1$ZBBVKKy/P6YEC+Jd+B/HLg$vEGIBL8fjNAv+NqgV6uanfQj0QDuBdiHhlSG0qqEpQE
 \.
 
 
@@ -31670,7 +31635,7 @@ COPY flashback.users (id, name, email, state, verified, joined, hash) FROM stdin
 -- Name: cards_id_seq; Type: SEQUENCE SET; Schema: flashback; Owner: flashback
 --
 
-SELECT pg_catalog.setval('flashback.cards_id_seq', 5645, true);
+SELECT pg_catalog.setval('flashback.cards_id_seq', 5644, true);
 
 
 --
@@ -31698,7 +31663,7 @@ SELECT pg_catalog.setval('flashback.resources_id_seq', 236, true);
 -- Name: roadmaps_id_seq; Type: SEQUENCE SET; Schema: flashback; Owner: flashback
 --
 
-SELECT pg_catalog.setval('flashback.roadmaps_id_seq', 3, true);
+SELECT pg_catalog.setval('flashback.roadmaps_id_seq', 4, true);
 
 
 --
@@ -31712,7 +31677,7 @@ SELECT pg_catalog.setval('flashback.subjects_id_seq', 77, true);
 -- Name: users_id_seq; Type: SEQUENCE SET; Schema: flashback; Owner: flashback
 --
 
-SELECT pg_catalog.setval('flashback.users_id_seq', 5, true);
+SELECT pg_catalog.setval('flashback.users_id_seq', 6, true);
 
 
 --
@@ -32248,5 +32213,5 @@ GRANT ALL ON SCHEMA public TO brian;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict jLpd9OGj9gCG5MPxqmkcitQWqUv09lULMtgbGW1B8OVtgcl4qRdvOh27u4UgVHW
+\unrestrict jxOX206icOzr7TiopPLNE2iu9bwwb3EUq0WyZIOO3cWPoOgu9ofQ2SOdhUdox9f
 
