@@ -53,6 +53,20 @@ window.addEventListener('DOMContentLoaded', () => {
     document.getElementById('section-name').textContent = sectionName || 'Section';
     document.title = `${sectionName || 'Section'} - Flashback`;
 
+    // Reveal edit/remove on title click
+    const sectionTitle = document.getElementById('section-name');
+    if (sectionTitle) {
+        sectionTitle.setAttribute('tabindex', '0');
+        const editBtn = document.getElementById('edit-section-btn');
+        const removeBtn = document.getElementById('remove-section-btn');
+        const reveal = () => {
+            if (editBtn) editBtn.style.display = 'inline-block';
+            if (removeBtn) removeBtn.style.display = 'inline-block';
+        };
+        sectionTitle.addEventListener('click', reveal);
+        sectionTitle.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); reveal(); }});
+    }
+
     // Display breadcrumb
     displayBreadcrumb();
 

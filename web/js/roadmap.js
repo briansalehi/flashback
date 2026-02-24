@@ -11,6 +11,21 @@ window.addEventListener('DOMContentLoaded', () => {
         return;
     }
 
+    // Set roadmap title and reveal actions on title click
+    const roadmapTitle = document.getElementById('roadmap-name');
+    if (roadmapTitle) {
+        roadmapTitle.textContent = roadmapName || 'Roadmap';
+        roadmapTitle.setAttribute('tabindex', '0');
+        const renameBtn = document.getElementById('rename-roadmap-btn');
+        const removeBtn = document.getElementById('remove-roadmap-btn');
+        const reveal = () => {
+            if (renameBtn) renameBtn.style.display = 'inline-block';
+            if (removeBtn) removeBtn.style.display = 'inline-block';
+        };
+        roadmapTitle.addEventListener('click', reveal);
+        roadmapTitle.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); reveal(); }});
+    }
+
     const signoutBtn = document.getElementById('signout-btn');
     if (signoutBtn) {
         signoutBtn.addEventListener('click', async (e) => {
@@ -331,9 +346,6 @@ async function loadMilestones() {
         document.getElementById('roadmap-name').textContent = roadmapName;
         document.title = `${roadmapName || 'Roadmap'} - Flashback`;
 
-        // Show rename and remove buttons
-        UI.toggleElement('rename-roadmap-btn', true);
-        UI.toggleElement('remove-roadmap-btn', true);
 
         UI.toggleElement('loading', false);
 

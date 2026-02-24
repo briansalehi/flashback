@@ -17,6 +17,26 @@ window.addEventListener('DOMContentLoaded', () => {
     document.getElementById('subject-name').textContent = subjectName || 'Subject';
     document.title = `${subjectName || 'Subject'} - Flashback`;
 
+    // Ensure action buttons are hidden by default (defensive in case of prior states/styles)
+    const initRenameBtn = document.getElementById('rename-subject-btn');
+    const initRemoveBtn = document.getElementById('remove-subject-btn');
+    if (initRenameBtn) initRenameBtn.style.display = 'none';
+    if (initRemoveBtn) initRemoveBtn.style.display = 'none';
+
+    // Reveal edit/remove on title click
+    const subjectTitle = document.getElementById('subject-name');
+    if (subjectTitle) {
+        subjectTitle.setAttribute('tabindex', '0');
+        const renameBtn = document.getElementById('rename-subject-btn');
+        const removeBtn = document.getElementById('remove-subject-btn');
+        const reveal = () => {
+            if (renameBtn) renameBtn.style.display = 'inline-block';
+            if (removeBtn) removeBtn.style.display = 'inline-block';
+        };
+        subjectTitle.addEventListener('click', reveal);
+        subjectTitle.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); reveal(); }});
+    }
+
     // Display breadcrumb
     displayBreadcrumb(roadmapId);
 

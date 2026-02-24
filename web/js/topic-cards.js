@@ -123,6 +123,20 @@ window.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // Reveal edit/remove on title click
+    const topicTitle = document.getElementById('topic-name');
+    if (topicTitle) {
+        topicTitle.setAttribute('tabindex', '0');
+        const editBtn = document.getElementById('edit-topic-btn');
+        const removeBtn = document.getElementById('remove-topic-btn');
+        const reveal = () => {
+            if (editBtn) editBtn.style.display = 'inline-block';
+            if (removeBtn) removeBtn.style.display = 'inline-block';
+        };
+        topicTitle.addEventListener('click', reveal);
+        topicTitle.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); reveal(); }});
+    }
+
     // Edit topic handlers
     const editTopicBtn = document.getElementById('edit-topic-btn');
     if (editTopicBtn) {

@@ -65,6 +65,30 @@
     --container-xl: 1200px;
 }
 
+/* Editable title affordance */
+.editable-title {
+    cursor: pointer;
+    position: relative;
+}
+.editable-title:hover,
+.editable-title:focus {
+    text-decoration: underline dotted rgba(255,255,255,0.25);
+    text-underline-offset: 3px;
+}
+.editable-title::after {
+    content: '\270E'; /* pencil */
+    position: relative;
+    display: inline-block;
+    margin-left: 0.5rem;
+    font-size: 0.9rem;
+    opacity: 0.0;
+    transition: opacity var(--transition-fast);
+}
+.editable-title:hover::after,
+.editable-title:focus-visible::after {
+    opacity: 0.5;
+}
+
 /* ============================================
    GLOBAL RESET & BASE STYLES
    ============================================ */

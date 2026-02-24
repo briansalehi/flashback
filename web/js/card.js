@@ -106,25 +106,44 @@ window.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Setup mark as reviewed button
+    // Setup mark as reviewed button (attach handler only; reveal on title click)
     const markReviewedBtn = document.getElementById('mark-reviewed-btn');
-    if (markReviewedBtn && state !== 1) { // Show only if not already reviewed (state 1)
-        markReviewedBtn.style.display = 'inline-block';
+    if (markReviewedBtn) {
+        // Ensure hidden by default, will be revealed on headline interaction
+        markReviewedBtn.style.display = 'none';
         markReviewedBtn.addEventListener('click', async (e) => {
             e.preventDefault();
             await markCardAsReviewed();
         });
     }
 
+    // Also defensively hide Edit and Remove until revealed
+    const editBtnInit = document.getElementById('edit-headline-btn');
+    if (editBtnInit) editBtnInit.style.display = 'none';
+    const removeBtnInit = document.getElementById('remove-card-btn');
+    if (removeBtnInit) removeBtnInit.style.display = 'none';
+
+    // Reveal header actions on headline click
+    const headlineEl = document.getElementById('card-headline');
+    if (headlineEl) {
+        headlineEl.setAttribute('tabindex', '0');
+        const editBtn = document.getElementById('edit-headline-btn');
+        const removeBtn = document.getElementById('remove-card-btn');
+        const reveal = () => {
+            if (editBtn) editBtn.style.display = 'inline-block';
+            if (removeBtn) removeBtn.style.display = 'inline-block';
+            if (markReviewedBtn && state !== 1) markReviewedBtn.style.display = 'inline-block';
+        };
+        headlineEl.addEventListener('click', reveal);
+        headlineEl.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); reveal(); }});
+    }
+
     // Setup edit headline functionality
     setupEditHeadline();
 
-    // Setup remove card button - show everywhere
+    // Setup remove card button (attach handler only; reveal on title click)
     const removeCardBtn = document.getElementById('remove-card-btn');
-
-    // Always show remove button
     if (removeCardBtn) {
-        removeCardBtn.style.display = 'inline-block';
         removeCardBtn.addEventListener('click', (e) => {
             e.preventDefault();
             openRemoveCardModal();

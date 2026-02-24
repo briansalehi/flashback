@@ -17,6 +17,12 @@ window.addEventListener('DOMContentLoaded', () => {
     document.getElementById('resource-name').textContent = resourceName || 'Resource';
     document.title = `${resourceName || 'Resource'} - Flashback`;
 
+    // Ensure action buttons are hidden by default (defensive)
+    const initEditBtn = document.getElementById('edit-resource-btn');
+    const initRemoveBtn = document.getElementById('remove-resource-btn');
+    if (initEditBtn) initEditBtn.style.display = 'none';
+    if (initRemoveBtn) initRemoveBtn.style.display = 'none';
+
     // Store current resource data from URL params
     currentResourceData = {
         id: resourceId,
@@ -38,6 +44,20 @@ window.addEventListener('DOMContentLoaded', () => {
             await client.signOut();
             window.location.href = '/index.html';
         });
+    }
+
+    // Reveal edit/remove on title click
+    const resourceTitle = document.getElementById('resource-name');
+    if (resourceTitle) {
+        resourceTitle.setAttribute('tabindex', '0');
+        const editBtn = document.getElementById('edit-resource-btn');
+        const removeBtn = document.getElementById('remove-resource-btn');
+        const reveal = () => {
+            if (editBtn) editBtn.style.display = 'inline-block';
+            if (removeBtn) removeBtn.style.display = 'inline-block';
+        };
+        resourceTitle.addEventListener('click', reveal);
+        resourceTitle.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); reveal(); }});
     }
 
     const addSectionBtn = document.getElementById('add-section-btn');
