@@ -144,19 +144,19 @@
           style="color: var(--text-primary); font-size: 1.5rem; font-weight: 600; margin: 0; margin-bottom: 1rem;">
         <!-- Breadcrumb will be inserted here -->
       </h2>
-      <div style="display: flex; justify-content: space-between; align-items: center;">
-        <div style="display: flex; align-items: center; gap: 1rem;">
-          <h1 id="section-name">Loading...</h1>
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; flex-wrap: wrap;">
+        <div style="display: flex; align-items: center; gap: 1rem; flex: 1; min-width: 200px;">
+          <h1 id="section-name" style="margin: 0;">Loading...</h1>
           <span id="section-state-badge"></span>
         </div>
-        <div style="display: flex; gap: 0.5rem;">
-          <button id="mark-section-reviewed-btn" class="btn btn-secondary" style="display: none;">
+        <div style="display: flex; gap: 0.5rem; flex-shrink: 0; flex-wrap: wrap;">
+          <button id="mark-section-reviewed-btn" class="btn btn-secondary" style="display: none; padding: 0.5rem 1rem; white-space: nowrap;">
             Mark as Reviewed
           </button>
-          <button id="edit-section-btn" class="btn btn-secondary">
+          <button id="edit-section-btn" class="btn btn-secondary" style="padding: 0.5rem 1rem; white-space: nowrap;">
             Edit
           </button>
-          <button id="remove-section-btn" class="btn btn-danger">
+          <button id="remove-section-btn" class="btn btn-secondary" style="background-color: #dc3545; color: white; padding: 0.5rem 1rem; font-size: 0.875rem; white-space: nowrap;">
             Remove Section
           </button>
         </div>

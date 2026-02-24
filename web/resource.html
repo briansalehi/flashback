@@ -233,11 +233,11 @@
           style="color: var(--text-primary); font-size: 1.5rem; font-weight: 600; margin: 0; margin-bottom: 1rem;">
         <!-- Breadcrumb will be inserted here -->
       </h2>
-      <div style="display: flex; justify-content: space-between; align-items: center;">
-        <h1 id="resource-name">Loading...</h1>
-        <div style="display: flex; gap: 1rem;">
-          <button id="edit-resource-btn" class="btn btn-secondary">Edit Resource</button>
-          <button id="remove-resource-btn" class="btn btn-danger">Remove Resource</button>
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; flex-wrap: wrap;">
+        <h1 id="resource-name" style="flex: 1; min-width: 200px; margin: 0;">Loading...</h1>
+        <div style="display: flex; gap: 0.5rem; flex-shrink: 0;">
+          <button id="edit-resource-btn" class="btn btn-secondary" style="padding: 0.5rem 1rem; white-space: nowrap;">Edit Resource</button>
+          <button id="remove-resource-btn" class="btn btn-secondary" style="background-color: #dc3545; color: white; padding: 0.5rem 1rem; font-size: 0.875rem; white-space: nowrap;">Remove Resource</button>
         </div>
       </div>
     </div>

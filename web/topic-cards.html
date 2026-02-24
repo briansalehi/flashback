@@ -118,17 +118,17 @@
           style="color: var(--text-primary); font-size: 1.5rem; font-weight: 600; margin: 0; margin-bottom: 1rem;">
         <!-- Breadcrumb will be inserted here -->
       </h2>
-      <div style="display: flex; justify-content: space-between; align-items: center; gap: 1rem;">
-        <div style="flex: 1;">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; flex-wrap: wrap;">
+        <div style="flex: 1; min-width: 200px;">
           <h1 id="topic-name" style="margin-bottom: 0.25rem;">Loading...</h1>
           <span id="topic-level-badge"
                 style="display: inline-block; padding: 0.25rem 0.75rem; background-color: var(--accent-light); color: var(--accent-color); border-radius: 12px; font-size: 0.875rem; font-weight: 500;"></span>
         </div>
-        <div style="display: flex; gap: 0.5rem;">
-          <button id="edit-topic-btn" class="btn btn-secondary" style="padding: 0.5rem 1rem;">
+        <div style="display: flex; gap: 0.5rem; flex-shrink: 0;">
+          <button id="edit-topic-btn" class="btn btn-secondary" style="padding: 0.5rem 1rem; white-space: nowrap;">
             Edit
           </button>
-          <button id="remove-topic-btn" class="btn btn-danger" style="padding: 0.5rem 1rem;">
+          <button id="remove-topic-btn" class="btn btn-secondary" style="background-color: #dc3545; color: white; padding: 0.5rem 1rem; font-size: 0.875rem; white-space: nowrap;">
             Remove Topic
           </button>
         </div>
