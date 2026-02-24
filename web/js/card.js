@@ -713,13 +713,43 @@ function addPracticeNavigation(cardIndex, totalCards) {
     infoText.style.color = 'var(--text-muted)';
 
     const buttonContainer = document.createElement('div');
-    buttonContainer.style.cssText = 'display: flex; gap: 1rem;';
+    buttonContainer.style.cssText = 'display: flex; gap: 0.5rem; flex-wrap: wrap; justify-content: flex-end;';
 
     // Check if there's a next card or topic
     const practiceState = JSON.parse(sessionStorage.getItem('practiceState') || '{}');
     const hasNextCard = cardIndex + 1 < totalCards;
     const hasNextTopic = practiceState.topics && practiceState.currentTopicIndex < practiceState.topics.length - 1;
 
+    // Check if there's a previous card or topic
+    const hasPrevCard = cardIndex > 0;
+    const hasPrevTopic = practiceState.topics && practiceState.currentTopicIndex > 0;
+
+    // Previous buttons
+    if (hasPrevTopic && cardIndex === 0) {
+        const prevTopicBtn = document.createElement('button');
+        prevTopicBtn.textContent = 'Previous Topic';
+        prevTopicBtn.className = 'btn btn-secondary';
+        prevTopicBtn.style.cssText = 'padding: 0.5rem 1rem; white-space: nowrap;';
+        prevTopicBtn.addEventListener('click', async () => {
+            await recordProgressAndNavigate(async () => {
+                await loadPreviousTopic();
+            });
+        });
+        buttonContainer.appendChild(prevTopicBtn);
+    } else if (hasPrevCard) {
+        const prevBtn = document.createElement('button');
+        prevBtn.textContent = 'Previous Card';
+        prevBtn.className = 'btn btn-secondary';
+        prevBtn.style.cssText = 'padding: 0.5rem 1rem; white-space: nowrap;';
+        prevBtn.addEventListener('click', async () => {
+            await recordProgressAndNavigate(async () => {
+                await loadPreviousCard(cardIndex, totalCards);
+            });
+        });
+        buttonContainer.appendChild(prevBtn);
+    }
+
+    // Next buttons
     if (hasNextCard) {
         // Show "Next Card" button that records progress and navigates
         const nextBtn = document.createElement('button');
@@ -771,6 +801,86 @@ function addPracticeNavigation(cardIndex, totalCards) {
     navContainer.appendChild(infoText);
     navContainer.appendChild(buttonContainer);
     contentDiv.appendChild(navContainer);
+}
+
+// Load previous card in current topic
+async function loadPreviousCard(currentIndex, totalCards) {
+    const practiceState = JSON.parse(sessionStorage.getItem('practiceState') || '{}');
+    if (!practiceState.topics || !practiceState.currentCards) {
+        UI.showError('Practice state lost');
+        return;
+    }
+
+    const prevIndex = currentIndex - 1;
+    const prevCard = practiceState.currentCards[prevIndex];
+
+    if (!prevCard) {
+        UI.showError('No previous card found');
+        return;
+    }
+
+    const roadmapId = UI.getUrlParam('roadmapId') || '';
+    const roadmapName = UI.getUrlParam('roadmapName') || '';
+    const subjectId = UI.getUrlParam('subjectId') || '';
+    const subjectName = UI.getUrlParam('subjectName') || '';
+    const topicName = UI.getUrlParam('topicName') || '';
+    const milestoneId = UI.getUrlParam('milestoneId') || '';
+    const milestoneLevel = UI.getUrlParam('milestoneLevel') || '';
+    window.location.href = `card.html?cardId=${prevCard.id}&headline=${encodeURIComponent(prevCard.headline)}&state=${prevCard.state}&cardIndex=${prevIndex}&totalCards=${totalCards}&roadmapId=${roadmapId}&roadmapName=${encodeURIComponent(roadmapName)}&subjectId=${subjectId}&subjectName=${encodeURIComponent(subjectName)}&topicName=${encodeURIComponent(topicName)}&milestoneId=${milestoneId}&milestoneLevel=${milestoneLevel}`;
+}
+
+// Load previous topic
+async function loadPreviousTopic() {
+    const practiceState = JSON.parse(sessionStorage.getItem('practiceState') || '{}');
+    if (!practiceState.topics) {
+        window.location.href = '/home.html';
+        return;
+    }
+
+    const prevTopicIndex = practiceState.currentTopicIndex - 1;
+    if (prevTopicIndex < 0) {
+        return;
+    }
+
+    // Load previous topic
+    const prevTopic = practiceState.topics[prevTopicIndex];
+
+    try {
+        const cards = await client.getPracticeCards(
+            practiceState.roadmapId,
+            practiceState.subjectId,
+            prevTopic.level,
+            prevTopic.position
+        );
+
+        if (cards.length === 0) {
+            UI.showError('No cards in previous topic, skipping...');
+            practiceState.currentTopicIndex = prevTopicIndex;
+            sessionStorage.setItem('practiceState', JSON.stringify(practiceState));
+            await loadPreviousTopic();
+            return;
+        }
+
+        // Update practice state
+        practiceState.currentTopicIndex = prevTopicIndex;
+        practiceState.currentCards = cards;
+        sessionStorage.setItem('practiceState', JSON.stringify(practiceState));
+
+        // Navigate to last card of previous topic
+        const roadmapId = UI.getUrlParam('roadmapId') || practiceState.roadmapId || '';
+        const roadmapName = UI.getUrlParam('roadmapName') || '';
+        const subjectId = UI.getUrlParam('subjectId') || practiceState.subjectId || '';
+        const subjectName = UI.getUrlParam('subjectName') || '';
+        const milestoneId = UI.getUrlParam('milestoneId') || '';
+        const milestoneLevel = UI.getUrlParam('milestoneLevel') || '';
+        const lastCardIndex = cards.length - 1;
+        const lastCard = cards[lastCardIndex];
+        
+        window.location.href = `card.html?cardId=${lastCard.id}&headline=${encodeURIComponent(lastCard.headline)}&state=${lastCard.state}&cardIndex=${lastCardIndex}&totalCards=${cards.length}&roadmapId=${roadmapId}&roadmapName=${encodeURIComponent(roadmapName)}&subjectId=${subjectId}&subjectName=${encodeURIComponent(subjectName)}&topicName=${encodeURIComponent(prevTopic.name)}&milestoneId=${milestoneId}&milestoneLevel=${milestoneLevel}`;
+    } catch (err) {
+        console.error('Failed to load previous topic:', err);
+        UI.showError('Failed to load previous topic');
+    }
 }
 
 // Load next card in current topic
