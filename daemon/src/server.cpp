@@ -3062,7 +3062,7 @@ grpc::Status server::GetPracticeCards(grpc::ServerContext* context, GetPracticeC
             {
                 *response->add_card() = card;
             }
-            std::clog << std::format("client {} collected {} practice cards\n", request->user().token(), response->card_size());
+            std::clog << std::format("client {} collected {} practice cards from topic {} in milestone {} with level {}\n", request->user().token(), response->card_size(), request->topic().position(), request->subject().id(), database::level_to_string(request->topic().level()));
             status = grpc::Status{grpc::StatusCode::OK, {}};
         }
     }
@@ -3104,7 +3104,7 @@ grpc::Status server::GetPracticeTopics(grpc::ServerContext* context, GetPractice
             {
                 *response->add_topic() = topic;
             }
-            std::clog << std::format("client {} collected {} practice topics\n", request->user().token(), response->topic_size());
+            std::clog << std::format("client {} collected {} practice topics from {}\n", request->user().token(), response->topic_size(), request->milestone().id());
             status = grpc::Status{grpc::StatusCode::OK, {}};
         }
     }
