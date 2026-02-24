@@ -262,7 +262,7 @@ function displayContextBreadcrumb(subjectName, topicName, resourceName, sectionN
     const roadmapName = UI.getUrlParam('roadmapName') || '';
     const subjectId = UI.getUrlParam('subjectId') || '';
     const localSubjectName = UI.getUrlParam('subjectName') || subjectName || '';
-    const milestoneLevel = UI.getUrlParam('milestoneLevel') || '';
+    const milestoneLevel = UI.getUrlParam('milestoneLevel') || UI.getUrlParam('topicLevel') || UI.getUrlParam('level') || '0';
 
     if (subjectName && topicName) {
         // Get subject and roadmap info from practice state or URL
@@ -549,7 +549,8 @@ function buildTopicCardUrl(card) {
     const topicPosition = UI.getUrlParam('topicPosition') || '';
     const topicLevel = UI.getUrlParam('topicLevel') || '';
     const topicName = UI.getUrlParam('topicName') || UI.getUrlParam('name') || '';
-    return `card.html?cardId=${card.id}&headline=${encodeURIComponent(card.headline)}&state=${card.state}&practiceMode=selective&roadmapId=${roadmapId}&roadmapName=${encodeURIComponent(roadmapName)}&subjectId=${subjectId}&subjectName=${encodeURIComponent(subjectName)}&topicPosition=${topicPosition}&topicLevel=${topicLevel}&topicName=${encodeURIComponent(topicName)}`;
+    const milestoneLevel = UI.getUrlParam('milestoneLevel') || topicLevel || UI.getUrlParam('level') || '0';
+    return `card.html?cardId=${card.id}&headline=${encodeURIComponent(card.headline)}&state=${card.state}&practiceMode=selective&roadmapId=${roadmapId}&roadmapName=${encodeURIComponent(roadmapName)}&subjectId=${subjectId}&subjectName=${encodeURIComponent(subjectName)}&topicPosition=${topicPosition}&topicLevel=${topicLevel}&topicName=${encodeURIComponent(topicName)}&milestoneLevel=${milestoneLevel}`;
 }
 
 function buildSectionCardUrl(card) {
