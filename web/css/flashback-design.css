@@ -9,6 +9,11 @@
     --color-text-muted: #8a8a8a;
     --color-text-secondary: #b0b0b0;
 
+    /* Surfaces (Dark theme cards/backgrounds) */
+    --bg-primary: rgba(255, 255, 255, 0.06);      /* Card surface */
+    --bg-secondary: rgba(255, 255, 255, 0.03);    /* Subtle surface */
+    --border-color: rgba(255, 255, 255, 0.12);    /* Card borders */
+
     /* Gradients */
     --gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     --gradient-primary-hover: linear-gradient(135deg, #7c8ff0 0%, #8a5bb8 100%);
@@ -1192,13 +1197,15 @@ a:hover {
 
 .item-block {
     border: 1px solid var(--border-color);
-    border-radius: var(--radius-lg);
+    border-radius: var(--radius-xl);
     background: var(--bg-primary);
-    transition: transform var(--transition-base), box-shadow var(--transition-base), border-color var(--transition-fast);
+    box-shadow: var(--shadow-sm); /* always slightly elevated */
+    transition: transform var(--transition-base), box-shadow var(--transition-base), border-color var(--transition-fast), background var(--transition-fast);
 }
 .item-block:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-sm);
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-md);
+    background: rgba(255, 255, 255, 0.08);
     border-color: rgba(118, 75, 162, 0.6);
 }
 .item-title {

@@ -418,12 +418,12 @@
         <!-- Breadcrumb will be inserted here -->
       </h2>
       <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; flex-wrap: wrap;">
-        <h1 id="subject-name" class="editable-title" title="Click to edit actions" style="margin-bottom: 0; flex: 1; min-width: 200px;">Loading...</h1>
+        <h1 id="subject-name" class="editable-title" title="Click to edit actions" style="flex: 1; min-width: 200px;">Loading...</h1>
         <div style="display: flex; gap: 0.5rem; flex-shrink: 0;">
           <button id="rename-subject-btn" class="btn btn-secondary" style="display: none; padding: 0.5rem 1rem; white-space: nowrap;">
             Rename
           </button>
-          <button id="remove-subject-btn" class="btn btn-secondary" style="display: none; background-color: #dc3545; color: white; padding: 0.5rem 1rem; font-size: 0.875rem; white-space: nowrap;">
+          <button id="remove-subject-btn" class="btn btn-secondary" style="display: none; background-color: #dc3545; color: white; padding: 0.5rem 1rem; white-space: nowrap;">
             Remove Subject
           </button>
         </div>
@@ -431,7 +431,7 @@
     </div>
 
     <!-- Rename Subject Modal -->
-    <div id="rename-subject-modal" class="card" style="display: none; max-width: 500px; margin-bottom: 2rem;">
+    <div id="rename-subject-modal" class="card" style="display: none; max-width: 500px; margin-bottom: 1rem;">
       <div class="card-header">
         <h3 class="card-title">Rename Subject</h3>
       </div>
@@ -447,10 +447,10 @@
           >
         </div>
         <div style="display: flex; gap: 1rem; margin-top: 2rem;">
-          <button type="submit" id="save-rename-subject-btn" class="btn btn-primary">
+          <button type="submit" id="save-rename-subject-btn" class="btn btn-primary" style=" padding: 0.75rem 1rem; white-space: nowrap;">
             Save
           </button>
-          <button type="button" id="cancel-rename-subject-btn" class="btn btn-secondary">
+          <button type="button" id="cancel-rename-subject-btn" class="btn btn-secondary" style=" padding: 0.75rem 1rem; white-space: nowrap;">
             Cancel
           </button>
         </div>
@@ -458,7 +458,7 @@
     </div>
 
     <!-- Remove Subject Modal -->
-    <div id="remove-subject-modal" class="card" style="display: none; max-width: 500px; margin-bottom: 2rem;">
+    <div id="remove-subject-modal" class="card" style="display: none; max-width: 500px; margin-bottom: 1rem;">
       <div class="card-header">
         <h3 class="card-title">Remove Subject</h3>
       </div>
@@ -468,10 +468,10 @@
           and cards will be removed.
         </p>
         <div style="display: flex; gap: 1rem;">
-          <button id="confirm-remove-subject-btn" class="btn btn-danger">
+          <button id="confirm-remove-subject-btn" class="btn btn-danger" style=" padding: 0.75rem 1rem; white-space: nowrap;">
             Yes, Remove Subject
           </button>
-          <button id="cancel-remove-subject-btn" class="btn btn-secondary">
+          <button id="cancel-remove-subject-btn" class="btn btn-secondary" style=" padding: 0.75rem 1rem; white-space: nowrap;">
             Cancel
           </button>
         </div>
@@ -480,7 +480,7 @@
 
     <!-- Tabs and Practice Button -->
     <div class="tabs-container">
-      <div style="display: flex; margin-bottom: 0.5rem; margin-top: 1rem; padding: 0.75rem 1rem; white-space: nowrap;">
+      <div style="display: flex; margin-bottom: 0.5rem; padding: 0.75rem 1rem; white-space: nowrap;">
         <button id="start-practice-btn" class="btn btn-primary">
           Start Practice
         </button>
