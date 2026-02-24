@@ -316,6 +316,67 @@
       <div id="blocks-list">
         <!-- blocks will be inserted here -->
       </div>
+
+      <button id="add-block-btn" class="btn btn-primary btn-full" style="margin-top: 2rem;">
+        + Add Block
+      </button>
+
+      <div id="add-block-form" class="card" style="display: none; max-width: 700px; margin-top: 2rem;">
+        <div class="card-header">
+          <h3 class="card-title">Add Block</h3>
+        </div>
+
+        <form id="block-form">
+          <div class="form-group">
+            <label class="form-label" for="block-type">Block Type</label>
+            <select id="block-type" class="form-input" required>
+              <option value="0">Text</option>
+              <option value="1">Code</option>
+              <option value="2">Image</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="block-extension">Extension (optional)</label>
+            <input
+              type="text"
+              id="block-extension"
+              class="form-input"
+              placeholder="e.g., js, py, jpg"
+            >
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="block-metadata">Metadata (optional)</label>
+            <input
+              type="text"
+              id="block-metadata"
+              class="form-input"
+              placeholder="Additional information about the block"
+            >
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="block-content">Content</label>
+            <textarea
+              id="block-content"
+              class="form-input"
+              rows="10"
+              placeholder="Enter block content here..."
+              required
+            ></textarea>
+          </div>
+
+          <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+            <button type="submit" id="save-block-btn" class="btn btn-primary">
+              Save Block
+            </button>
+            <button type="button" id="cancel-block-btn" class="btn btn-secondary">
+              Cancel
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
 
     <div id="empty-state" style="display: none; text-align: center; padding: 4rem 2rem;">

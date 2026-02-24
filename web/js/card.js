@@ -173,6 +173,63 @@ window.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // Setup add block button
+    const addBlockBtn = document.getElementById('add-block-btn');
+    if (addBlockBtn) {
+        addBlockBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            UI.toggleElement('add-block-form', true);
+            setTimeout(() => {
+                const contentInput = document.getElementById('block-content');
+                if (contentInput) {
+                    contentInput.focus();
+                }
+            }, 100);
+        });
+    }
+
+    const cancelBlockBtn = document.getElementById('cancel-block-btn');
+    if (cancelBlockBtn) {
+        cancelBlockBtn.addEventListener('click', () => {
+            UI.toggleElement('add-block-form', false);
+            UI.clearForm('block-form');
+        });
+    }
+
+    const blockForm = document.getElementById('block-form');
+    if (blockForm) {
+        blockForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const blockType = parseInt(document.getElementById('block-type').value);
+            const blockExtension = document.getElementById('block-extension').value.trim();
+            const blockMetadata = document.getElementById('block-metadata').value.trim();
+            const blockContent = document.getElementById('block-content').value.trim();
+
+            if (!blockContent) {
+                UI.showError('Please enter block content');
+                return;
+            }
+
+            UI.hideMessage('error-message');
+            UI.setButtonLoading('save-block-btn', true);
+
+            try {
+                await client.createBlock(cardId, blockType, blockExtension, blockContent, blockMetadata);
+
+                UI.toggleElement('add-block-form', false);
+                UI.clearForm('block-form');
+                UI.setButtonLoading('save-block-btn', false);
+
+                loadBlocks();
+            } catch (err) {
+                console.error('Add block failed:', err);
+                UI.showError(err.message || 'Failed to add block');
+                UI.setButtonLoading('save-block-btn', false);
+            }
+        });
+    }
+
     loadBlocks();
 });
 
