@@ -85,23 +85,24 @@
 
       .level-option label {
           display: block;
-          padding: 0.75rem;
+          padding: 0.5rem;
           text-align: center;
-          border: 2px solid var(--border-color);
-          border-radius: 4px;
+          border: 1px solid var(--border-color);
+          border-radius: var(--radius-md);
           cursor: pointer;
-          transition: all 0.2s;
+          transition: all var(--transition-fast);
           font-weight: 500;
+          font-size: var(--font-size-sm);
       }
 
       .level-option input[type="radio"]:checked + label {
-          border-color: var(--accent-color);
-          background-color: var(--accent-light);
-          color: var(--accent-color);
+          border-color: var(--color-primary-start);
+          background-color: rgba(102, 126, 234, 0.1);
+          color: white;
       }
 
       .level-option label:hover {
-          border-color: var(--accent-color);
+          border-color: var(--color-primary-start);
       }
 
       .level-description {
@@ -451,7 +452,7 @@
       </div>
     </div>
 
-    <button id="create-milestone-btn" class="btn btn-primary btn-full" style="margin-top: 2rem;">
+    <button id="create-milestone-btn" class="btn btn-primary btn-full" style="margin-top: 2rem; padding: 0.75rem 1rem; white-space: nowrap;">
       + Add Subject to Roadmap
     </button>
 

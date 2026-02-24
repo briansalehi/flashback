@@ -319,6 +319,8 @@ function renderSections(sections) {
     sortedSections.forEach((section, index) => {
         const sectionItem = document.createElement('div');
         sectionItem.className = 'item-block';
+        sectionItem.style.minHeight = 'auto';
+        sectionItem.style.padding = '1rem 1.25rem';
         sectionItem.draggable = true;
         sectionItem.dataset.position = section.position;
 
@@ -347,10 +349,10 @@ function renderSections(sections) {
             <div style="width: 100%;">
                 <div class="item-header">
                     <div style="display: flex; align-items: center; gap: var(--space-md); flex: 1;">
-                        <span class="item-badge">${index + 1}</span>
-                        <h3 class="item-title" style="margin: 0;">${UI.escapeHtml(section.name)}</h3>
+                        <span class="item-badge" style="font-size: var(--font-size-sm); padding: 0.12rem 0.5rem; min-width: 22px; text-align: center;">${index + 1}</span>
+                        <h3 class="item-title" style="margin: 0; font-size: var(--font-size-lg); font-weight: 600;">${UI.escapeHtml(section.name)}</h3>
                     </div>
-                    <span class="item-badge" style="background: ${stateColor.bg}; color: ${stateColor.color}; text-transform: capitalize;">${UI.escapeHtml(stateName)}</span>
+                    <span class="item-badge" style="background: ${stateColor.bg}; color: ${stateColor.color}; text-transform: capitalize; font-size: var(--font-size-sm); padding: 0.2rem 0.6rem; border-radius: var(--radius-full);">${UI.escapeHtml(stateName)}</span>
                 </div>
                 ${linkHtml}
             </div>

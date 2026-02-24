@@ -1165,3 +1165,21 @@ a:hover {
         padding: var(--space-2xl);
     }
 }
+
+.item-block {
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    background: var(--bg-primary);
+    transition: transform var(--transition-base), box-shadow var(--transition-base), border-color var(--transition-fast);
+}
+.item-block:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-sm);
+    border-color: rgba(118, 75, 162, 0.6);
+}
+.item-title {
+    line-height: 1.35;
+}
+.item-badge {
+    border-radius: var(--radius-full);
+}

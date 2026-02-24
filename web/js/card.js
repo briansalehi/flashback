@@ -429,6 +429,7 @@ function addStudyNavigation() {
     readBtn.textContent = 'Read';
     readBtn.id = 'record-progress-btn';
     readBtn.className = 'btn btn-primary';
+    readBtn.style.cssText = 'padding: 0.5rem 1rem; white-space: nowrap;';
     readBtn.addEventListener('click', async () => {
         await recordProgress();
     });
@@ -546,106 +547,118 @@ async function addSelectiveNavigation({ contextType, cards, currentIndex }) {
 
     const isTopic = contextType === 'topic';
 
-    // Prev Card
-    if (currentIndex > 0) {
-        const prevBtn = document.createElement('button');
-        prevBtn.textContent = 'Previous Card';
-        prevBtn.className = 'btn btn-secondary';
-        prevBtn.addEventListener('click', async () => {
-            await recordStudyAndNavigate(async () => {
-                const prevCard = cards[currentIndex - 1];
-                const url = isTopic ? buildTopicCardUrl(prevCard) : buildSectionCardUrl(prevCard);
-                window.location.href = url;
-            });
+    const addNavButton = (label, isPrimary, onClick) => {
+        const btn = document.createElement('button');
+        btn.textContent = label;
+        btn.className = 'btn btn-secondary';
+        btn.style.cssText = 'padding: 0.5rem 1rem; white-space: nowrap;';
+        if (isPrimary) {
+            btn.className = 'btn btn-primary';
+            btn.style.cssText = 'padding: 0.5rem 1rem; white-space: nowrap;';
+        } else {
+            btn.className = 'btn btn-secondary';
+            btn.style.cssText = 'padding: 0.5rem 1rem; white-space: nowrap;';
+        }
+        btn.addEventListener('click', async () => {
+            await recordStudyAndNavigate(onClick);
         });
-        buttonContainer.appendChild(prevBtn);
-    }
+        buttonContainer.appendChild(btn);
+    };
 
-    // Next Card
-    if (currentIndex + 1 < cards.length) {
-        const nextBtn = document.createElement('button');
-        nextBtn.textContent = 'Next Card';
-        nextBtn.className = 'btn btn-primary';
-        nextBtn.addEventListener('click', async () => {
-            await recordStudyAndNavigate(async () => {
-                const nextCard = cards[currentIndex + 1];
-                const url = isTopic ? buildTopicCardUrl(nextCard) : buildSectionCardUrl(nextCard);
-                window.location.href = url;
-            });
-        });
-        buttonContainer.appendChild(nextBtn);
-    }
+    // Helper for navigation
+    const navigateToCard = (card) => {
+        const url = isTopic ? buildTopicCardUrl(card) : buildSectionCardUrl(card);
+        window.location.href = url;
+    };
 
-    // Separator
-    const sep = document.createElement('span');
-    sep.style.cssText = 'width: 1px; height: 24px; background: var(--border-color); margin: 0 0.5rem; display: inline-block;';
-    buttonContainer.appendChild(sep);
+    try {
+        if (isTopic) {
+            const subjectId = parseInt(UI.getUrlParam('subjectId'));
+            const topicLevel = parseInt(UI.getUrlParam('topicLevel'));
+            const topicPosition = parseInt(UI.getUrlParam('topicPosition'));
+            const roadmapId = UI.getUrlParam('roadmapId') || '';
+            const roadmapName = UI.getUrlParam('roadmapName') || '';
+            const subjectName = UI.getUrlParam('subjectName') || '';
+            const milestoneLevel = UI.getUrlParam('milestoneLevel') || topicLevel;
 
-    // Prev/Next Topic or Chapter (Section)
-    if (isTopic) {
-        // Compute prev/next topic based on position
-        const subjectId = parseInt(UI.getUrlParam('subjectId'));
-        const topicLevel = parseInt(UI.getUrlParam('topicLevel'));
-        const topicPosition = parseInt(UI.getUrlParam('topicPosition'));
-        try {
             const topics = await client.getTopics(subjectId, topicLevel);
             const sorted = topics.slice().sort((a, b) => a.position - b.position);
             const tIndex = sorted.findIndex(t => t.position === topicPosition);
-            const addTopicNav = (label, target) => {
-                const btn = document.createElement('button');
-                btn.textContent = label;
-                btn.className = 'btn btn-secondary';
-                btn.addEventListener('click', async () => {
-                    await recordStudyAndNavigate(async () => {
-                        const roadmapId = UI.getUrlParam('roadmapId') || '';
-                        const roadmapName = UI.getUrlParam('roadmapName') || '';
-                        const subjectName = UI.getUrlParam('subjectName') || '';
-                        const milestoneLevel = UI.getUrlParam('milestoneLevel') || topicLevel;
-                        const url = `topic-cards.html?subjectId=${subjectId}&subjectName=${encodeURIComponent(subjectName)}&roadmapId=${roadmapId}&roadmapName=${encodeURIComponent(roadmapName)}&topicPosition=${target.position}&topicLevel=${target.level}&name=${encodeURIComponent(target.name)}&milestoneLevel=${milestoneLevel}`;
-                        window.location.href = url;
-                    });
+
+            // Previous: Show Previous Topic only if at the first card of current topic
+            if (currentIndex === 0 && tIndex > 0) {
+                const prevTopic = sorted[tIndex - 1];
+                addNavButton('Previous Topic', false, async () => {
+                    window.location.href = `topic-cards.html?subjectId=${subjectId}&subjectName=${encodeURIComponent(subjectName)}&roadmapId=${roadmapId}&roadmapName=${encodeURIComponent(roadmapName)}&topicPosition=${prevTopic.position}&topicLevel=${prevTopic.level}&name=${encodeURIComponent(prevTopic.name)}&milestoneLevel=${milestoneLevel}`;
                 });
-                buttonContainer.appendChild(btn);
-            };
-            if (tIndex > 0) addTopicNav('Previous Topic', sorted[tIndex - 1]);
-            if (tIndex + 1 < sorted.length) addTopicNav('Next Topic', sorted[tIndex + 1]);
-        } catch (e) {
-            console.error('Failed to build topic navigation:', e);
-        }
-    } else {
-        // Section (Chapter) navigation
-        const resourceId = parseInt(UI.getUrlParam('resourceId'));
-        const sectionPosition = parseInt(UI.getUrlParam('sectionPosition'));
-        try {
+            } else if (currentIndex > 0) {
+                addNavButton('Previous Card', false, async () => {
+                    navigateToCard(cards[currentIndex - 1]);
+                });
+            }
+
+            // Next: Show Next Topic only if at the last card of current topic
+            if (currentIndex === cards.length - 1 && tIndex + 1 < sorted.length) {
+                const nextTopic = sorted[tIndex + 1];
+                addNavButton('Next Topic', true, async () => {
+                    window.location.href = `topic-cards.html?subjectId=${subjectId}&subjectName=${encodeURIComponent(subjectName)}&roadmapId=${roadmapId}&roadmapName=${encodeURIComponent(roadmapName)}&topicPosition=${nextTopic.position}&topicLevel=${nextTopic.level}&name=${encodeURIComponent(nextTopic.name)}&milestoneLevel=${milestoneLevel}`;
+                });
+            } else if (currentIndex + 1 < cards.length) {
+                addNavButton('Next Card', true, async () => {
+                    navigateToCard(cards[currentIndex + 1]);
+                });
+            }
+        } else {
+            // Section (Chapter) context
+            const resourceId = parseInt(UI.getUrlParam('resourceId'));
+            const sectionPosition = parseInt(UI.getUrlParam('sectionPosition'));
+            const resourceName = UI.getUrlParam('resourceName') || '';
+            const resourceType = UI.getUrlParam('resourceType') || '0';
+            const resourcePattern = UI.getUrlParam('resourcePattern') || '0';
+            const resourceLink = UI.getUrlParam('resourceLink') || '';
+            const resourceProduction = UI.getUrlParam('resourceProduction') || '0';
+            const resourceExpiration = UI.getUrlParam('resourceExpiration') || '0';
+            const subjectId = UI.getUrlParam('subjectId') || '';
+            const subjectName = UI.getUrlParam('subjectName') || '';
+            const roadmapId = UI.getUrlParam('roadmapId') || '';
+            const roadmapName = UI.getUrlParam('roadmapName') || '';
+
             const sections = await client.getSections(resourceId);
             const sorted = sections.slice().sort((a, b) => a.position - b.position);
             const sIndex = sorted.findIndex(s => s.position === sectionPosition);
-            const addSectionNav = (label, target) => {
-                const btn = document.createElement('button');
-                btn.textContent = label;
-                btn.className = 'btn btn-secondary';
-                btn.addEventListener('click', async () => {
-                    await recordStudyAndNavigate(async () => {
-                        const resourceName = UI.getUrlParam('resourceName') || '';
-                        const resourceType = UI.getUrlParam('resourceType') || '0';
-                        const resourcePattern = UI.getUrlParam('resourcePattern') || '0';
-                        const resourceLink = UI.getUrlParam('resourceLink') || '';
-                        const resourceProduction = UI.getUrlParam('resourceProduction') || '0';
-                        const resourceExpiration = UI.getUrlParam('resourceExpiration') || '0';
-                        const subjectId = UI.getUrlParam('subjectId') || '';
-                        const subjectName = UI.getUrlParam('subjectName') || '';
-                        const roadmapId = UI.getUrlParam('roadmapId') || '';
-                        const roadmapName = UI.getUrlParam('roadmapName') || '';
-                        const url = `section-cards.html?resourceId=${resourceId}&sectionPosition=${target.position}&name=${encodeURIComponent(target.name)}&resourceName=${encodeURIComponent(resourceName)}&resourceType=${resourceType}&resourcePattern=${resourcePattern}&resourceLink=${encodeURIComponent(resourceLink)}&resourceProduction=${resourceProduction}&resourceExpiration=${resourceExpiration}&subjectId=${subjectId}&subjectName=${encodeURIComponent(subjectName)}&roadmapId=${roadmapId}&roadmapName=${encodeURIComponent(roadmapName)}`;
-                        window.location.href = url;
-                    });
+
+            // Previous: Show Previous Chapter only if at the first card of current section
+            if (currentIndex === 0 && sIndex > 0) {
+                const prevSection = sorted[sIndex - 1];
+                addNavButton('Previous Chapter', false, async () => {
+                    window.location.href = `section-cards.html?resourceId=${resourceId}&sectionPosition=${prevSection.position}&name=${encodeURIComponent(prevSection.name)}&resourceName=${encodeURIComponent(resourceName)}&resourceType=${resourceType}&resourcePattern=${resourcePattern}&resourceLink=${encodeURIComponent(resourceLink)}&resourceProduction=${resourceProduction}&resourceExpiration=${resourceExpiration}&subjectId=${subjectId}&subjectName=${encodeURIComponent(subjectName)}&roadmapId=${roadmapId}&roadmapName=${encodeURIComponent(roadmapName)}`;
                 });
-                buttonContainer.appendChild(btn);
-            };
-            if (sIndex > 0) addSectionNav('Previous Chapter', sorted[sIndex - 1]);
-            if (sIndex + 1 < sorted.length) addSectionNav('Next Chapter', sorted[sIndex + 1]);
-        } catch (e) {
-            console.error('Failed to build section navigation:', e);
+            } else if (currentIndex > 0) {
+                addNavButton('Previous Card', false, async () => {
+                    navigateToCard(cards[currentIndex - 1]);
+                });
+            }
+
+            // Next: Show Next Chapter only if at the last card of current section
+            if (currentIndex === cards.length - 1 && sIndex + 1 < sorted.length) {
+                const nextSection = sorted[sIndex + 1];
+                addNavButton('Next Chapter', true, async () => {
+                    window.location.href = `section-cards.html?resourceId=${resourceId}&sectionPosition=${nextSection.position}&name=${encodeURIComponent(nextSection.name)}&resourceName=${encodeURIComponent(resourceName)}&resourceType=${resourceType}&resourcePattern=${resourcePattern}&resourceLink=${encodeURIComponent(resourceLink)}&resourceProduction=${resourceProduction}&resourceExpiration=${resourceExpiration}&subjectId=${subjectId}&subjectName=${encodeURIComponent(subjectName)}&roadmapId=${roadmapId}&roadmapName=${encodeURIComponent(roadmapName)}`;
+                });
+            } else if (currentIndex + 1 < cards.length) {
+                addNavButton('Next Card', true, async () => {
+                    navigateToCard(cards[currentIndex + 1]);
+                });
+            }
+        }
+    } catch (e) {
+        console.error('Failed to build selective navigation:', e);
+        // Fallback to minimal card navigation if topics/sections fetch fails
+        if (currentIndex > 0) {
+            addNavButton('Previous Card', false, async () => navigateToCard(cards[currentIndex - 1]));
+        }
+        if (currentIndex + 1 < cards.length) {
+            addNavButton('Next Card', true, async () => navigateToCard(cards[currentIndex + 1]));
         }
     }
 
@@ -678,6 +691,7 @@ function addPracticeNavigation(cardIndex, totalCards) {
         const nextBtn = document.createElement('button');
         nextBtn.textContent = 'Next Card';
         nextBtn.className = 'btn btn-primary';
+        nextBtn.style.cssText = 'padding: 0.5rem 1rem; white-space: nowrap;';
         nextBtn.addEventListener('click', async () => {
             await recordProgressAndNavigate(async () => {
                 await loadNextCard(cardIndex, totalCards);
@@ -689,6 +703,7 @@ function addPracticeNavigation(cardIndex, totalCards) {
         const nextTopicBtn = document.createElement('button');
         nextTopicBtn.textContent = 'Next Topic';
         nextTopicBtn.className = 'btn btn-primary';
+        nextTopicBtn.style.cssText = 'padding: 0.5rem 1rem; white-space: nowrap;';
         nextTopicBtn.addEventListener('click', async () => {
             await recordProgressAndNavigate(async () => {
                 await loadNextTopic();
@@ -700,7 +715,8 @@ function addPracticeNavigation(cardIndex, totalCards) {
         const finishBtn = document.createElement('button');
         finishBtn.textContent = 'Finish Practice';
         finishBtn.id = 'record-progress-btn';
-        finishBtn.className = 'btn btn-accent';
+        finishBtn.className = 'btn btn-primary';
+        finishBtn.style.cssText = 'padding: 0.5rem 1rem; white-space: nowrap;';
         finishBtn.addEventListener('click', async () => {
             await recordProgressAndNavigate(async () => {
                 // Finish practice and go back to roadmap
