@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict weOcVNUIZ07DTpYkNL37SxhJNqTHjZ3em8UG32HkjYe0P3lN1Ln9fI4QTSVLXDf
+\restrict TvMCvc0bPsBE6TWxh6cFfA38Ghhky31mVAbBBUizsoxGhQ0X9MlFqfFmWeGGyQy
 
 -- Dumped from database version 18.1
 -- Dumped by pg_dump version 18.1
@@ -4140,29 +4140,16 @@ COPY flashback.blocks (card, "position", content, type, extension, metadata) FRO
 116	1	- Literal constants\n- Constants defined by `const`\n- Constant expressions defined by `constexpr`\n- Immediate functions marked by `consteval`\n- Enumerations\n- Scoped Enumerations\n- Preprocessor macro `#define`	text	txt	\N
 120	1	An enumeration comprises a set of constants called enumerators.	text	txt	\N
 120	2	enum class directions\n{\n    north,\n    east,\n    south,\n    west\n};	code	txt	\N
-121	1	#include <string>\n#include <format>	text	txt	\N
-121	2	int main()\n{\n    std::string date = std::format("{}/{}/{}", 2023, 10, 1);\n}	code	txt	\N
-122	1	#include <string>\n#include <format>	text	txt	\N
-122	2	int main()\n{\n    std::string date = std::format("{0}/{1}/{2}", 2023, 10, 1);\n}	code	txt	\N
-123	1	#include <string>\n#include <format>	text	txt	\N
-123	2	int main()\n{\n    std::string date = std::format("{:.^15}", "message");\n}	code	txt	\N
-124	1	#include <string>\n#include <format>\n#include <cstdio>	text	txt	\N
-124	2	template<typename... Args>\nvoid print(std::string_view const fmt_str, Args&&... args)\n{\n    auto fmt_args{std::make_format_args(args...)};\n    std::string out{vformat(fmt_str, fmt_args)};\n    fputs(out.c_str(), stdout);\n}	text	txt	\N
-124	3	int main()\n{\n    print("message\\\\n");\n}	code	txt	\N
-125	1	#include <string>\n#include <string_view>\n#include <format>\n#include <cstdio>	text	txt	\N
-125	2	class Data\n{\n    std::string buffer;\n};	text	txt	\N
 159	4	factorial(1) returns 1	text	txt	\N
 118	1	constexpr double get_pi()\n{\nreturn 22.0 / 7;\n}	code	cpp	\N
-125	3	template <>\nstruct std::formatter<Data>\n{\n    template<typename Context>\n    constexpr auto parse(Context& ctx)\n    {\n        return ctx.begin();\n    }	text	txt	\N
-125	4	    template<typename Format>\n    auto format(Data const& d, Format& ctx)\n    {\n        return formal_to(ctx.out(), "{}", d.buffer);\n    }\n};	text	txt	\N
-125	5	template<typename... Args>\nvoid print(std::string_view const fmt_str, Args&&... args)\n{\n    auto fmt_args{std::make_format_args(args...)};\n    std::string out{vformat(fmt_str, fmt_args)};\n    fputs(out.c_str(), stdout);\n}	text	txt	\N
-125	6	int main()\n{\n    Data data;\n    print("{}", data);\n}	code	txt	\N
 126	1	C++20 allows the use of constexpr in several new contexts.	text	txt	\N
 126	2	constexpr auto use_string()\n{\n    std::string buffer{"sample"};\n    return buffer.size();\n}	text	txt	\N
 126	3	constexpr auto use_vector()\n{\n    std::vector<int> buffer{1,2,3,4,5};\n    return std::accumulate(buffer.begin(), buffer.end(), 0);\n}	code	txt	\N
 127	1	- Read\n- Search\n- Insert\n- Delete	text	txt	\N
 117	1	const double pi = 22.0 / 7;	code	cpp	\N
 128	1	We can measure the speed of an operation in terms of how many computational steps it takes.	text	txt	\N
+122	1	#include <string>\n#include <format>\n\nint main()\n{\n    std::string date = std::format("{0}/{1}/{2}", 2023, 10, 1);\n}	code	cpp	\N
+123	1	#include <string>\n#include <format>\n\nint main()\n{\n    std::string date = std::format("{:.^15}", "message");\n}	code	cpp	\N
 129	1	**Read:** Computers read an array in just one step.	text	txt	\N
 129	2	**Search:** To Search for a value within an array, computers have no choice but to inspect each cell one at a time.\nThis algorithm is called **linear search**.	text	txt	\N
 129	3	**Insert:** Inserting data in an array can take N+1 steps for an array containing N elements.\nThis is because in the worst case scenario we need to shift all N elements over, and then finally execute the insertion step.	text	txt	\N
@@ -13955,6 +13942,8 @@ COPY flashback.blocks (card, "position", content, type, extension, metadata) FRO
 4340	2	#include <chrono>\n#include <thread>\n\nusing namespace std::chrono_literals;\n\nauto tp1 = std::chrono::steady_clock::now();\nstd::this_thread::sleep_for(1ms);\nauto tp2 = std::chrono::steady_clock::now();\n\nauto micro = std::chrono::duration_cast<std::chrono::microseconds>(tp2 - tp1);\nstd::cout << micro << "\\\\n";\n// example output: 1115µs	code	cpp	\N
 4341	1	#include <chrono>\n\nbool system_is_steady = std::chrono::system_clock::is_steady;	code	cpp	\N
 4342	1	#include <chrono>\n\nauto resolution = std::chrono::system_clock::duration{1};	code	cpp	\N
+121	1	#include <string>\n#include <format>\n\nint main()\n{\n    std::string date = std::format("{}/{}/{}", 2023, 10, 1);\n}	code	cpp	\N
+124	1	#include <string>\n#include <format>\n#include <cstdio>\n\ntemplate<typename... Args>\nvoid print(std::string_view const fmt_str, Args&&... args)\n{\n    auto fmt_args{std::make_format_args(args...)};\n    std::string out{vformat(fmt_str, fmt_args)};\n    fputs(out.c_str(), stdout);\n}\n\nint main()\n{\n    print("message\\n");\n}	code	cpp	\N
 4147	2	#include <memory>\n\nstruct Data{};\n\n// Function returning a unique_ptr handing off ownership to caller.\nstd::unique_ptr<Data> producer() { return std::make_unique<Data>(); }\n\n// Function accepting a unique_ptr taking over ownership.\nvoid consumer(std::unique_ptr<Data> data) {}\n\n// Helps with Single Reponsibility Principle\n// by separating resource management from logic\nstruct Holder {\n    Holder() : data_{std::make_unique<Data>()} {}\n    // implicitly defaulted move constructor && move assignment\n    // implicitly deleted copy constructor && copy assignment\nprivate:\n    std::unique_ptr<Data> data_;\n};\n\n// shared_ptr has a fast constructor from unique_ptr\nstd::shared_ptr<Data> sptr = producer();\n\n// Even in cases when manual resource management is required,\n// a unique_ptr on the interface might be preferable:\nvoid manual_handler(std::unique_ptr<Data> ptr) {\n    Data* raw = ptr.release();\n    // manual resource management\n}	code	cpp	\N
 4149	1	Unnamed namespaces as well as all namespaces declared directly or indirectly\nwithin an unnamed namespace have internal linkage, which means that any name\nthat is declared within an unnamed namespace has internal linkage.	text	txt	\N
 4149	2	namespace\n{\n    void f() { } // ::(unique)::f\n}\n\nf(); // OK\n\nnamespace A\n{\n    void f() { } // A::f\n}\n\nusing namespace A;\n\nf(); // Error: ::(unique)::f and A::f both in scope	code	cpp	\N
@@ -15899,6 +15888,7 @@ COPY flashback.blocks (card, "position", content, type, extension, metadata) FRO
 2830	4	Since C++14, the standard library uses this technique to define shortcuts for\nall type traits in the standard library that yield a type:	text	txt	\N
 2830	2	struct Matrix\n{\n    using iterator = ...;\n};\n\ntemplate<typename T>\nusing MatrixIterator = typename Matrix<T>::iterator;	code	cpp	\N
 2830	5	std::add_const_t<T> // C++14 abbreviate equivalent to std::add_const<T>::type available since C++11\nstd::enable_if_v<T> // C++14 abbreviate equivalent to std::enable_if<T>::value available since C++11	code	cpp	\N
+125	1	#include <string>\n#include <string_view>\n#include <format>\n#include <cstdio>\n\nclass Data\n{\n    std::string buffer;\n};\n\ntemplate <>\nstruct std::formatter<Data>\n{\n    template<typename Context>\n    constexpr auto parse(Context& ctx)\n    {\n        return ctx.begin();\n    }\n\n    template<typename Format>\n    auto format(Data const& d, Format& ctx)\n    {\n        return formal_to(ctx.out(), "{}", d.buffer);\n    }\n};\n\ntemplate<typename... Args>\nvoid print(std::string_view const fmt_str, Args&&... args)\n{\n    auto fmt_args{std::make_format_args(args...)};\n    std::string out{vformat(fmt_str, fmt_args)};\n    fputs(out.c_str(), stdout);\n}\n\nint main()\n{\n    Data data;\n    print("{}", data);\n}	code	cpp	\N
 \.
 
 
@@ -15963,7 +15953,6 @@ COPY flashback.cards (id, headline, state) FROM stdin;
 121	Generate a string formatted with an integral value?	draft
 122	Specify the order of replacement values in a formatted string?	draft
 123	Align values to left, center, and right in a formatted string?	draft
-124	Implement a simple <code>print()</code> function taking format parameters?	draft
 125	Enable formatting for user defined types?	draft
 126	Evaluate string and vector operations at compile time?	draft
 127	What are the main data structure operations?	draft
@@ -20963,6 +20952,7 @@ COPY flashback.cards (id, headline, state) FROM stdin;
 3937	What are the use cases of strategy pattern?	draft
 3938	What are the advantages of static strategy pattern over dynamic strategy pattern?	draft
 2769	What is the objective of io_context in boost?	draft
+124	Implement a simple print function taking format parameters?	draft
 \.
 
 
@@ -28602,6 +28592,11 @@ COPY flashback.shelves (resource, subject) FROM stdin;
 --
 
 COPY flashback.studies ("user", card, last_study, duration) FROM stdin;
+2	121	2026-02-24 11:27:22.161871+00	85
+2	123	2026-02-24 11:31:03.414482+00	57
+2	122	2026-02-24 11:31:11.437244+00	4
+2	124	2026-02-24 11:33:05.816688+00	104
+2	125	2026-02-24 11:34:35.075304+00	74
 \.
 
 
@@ -32218,5 +32213,5 @@ GRANT ALL ON SCHEMA public TO brian;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict weOcVNUIZ07DTpYkNL37SxhJNqTHjZ3em8UG32HkjYe0P3lN1Ln9fI4QTSVLXDf
+\unrestrict TvMCvc0bPsBE6TWxh6cFfA38Ghhky31mVAbBBUizsoxGhQ0X9MlFqfFmWeGGyQy
 
