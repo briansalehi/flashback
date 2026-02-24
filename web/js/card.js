@@ -245,10 +245,10 @@ function displayContextBreadcrumb(subjectName, topicName, resourceName, sectionN
         // Get subject and roadmap info from practice state or URL
         const practiceState = JSON.parse(sessionStorage.getItem('practiceState') || '{}');
 
-        // Get topic info
+        // Get topic info - prefer URL params over practice state to avoid using card position
         const currentTopic = practiceState.topics ? practiceState.topics[practiceState.currentTopicIndex] : null;
-        const topicLevel = currentTopic ? currentTopic.level : '';
-        const topicPosition = currentTopic ? currentTopic.position : '';
+        const topicLevel = UI.getUrlParam('topicLevel') || (currentTopic ? currentTopic.level : '');
+        const topicPosition = UI.getUrlParam('topicPosition') || (currentTopic ? currentTopic.position : '');
 
         let breadcrumbParts = [];
 
@@ -262,7 +262,7 @@ function displayContextBreadcrumb(subjectName, topicName, resourceName, sectionN
         }
 
         if (subjectId && topicLevel !== '' && topicPosition !== '' && topicName) {
-            const topicLink = `topic-cards.html?subjectId=${subjectId}&topicPosition=${topicPosition}&topicLevel=${topicLevel}&name=${encodeURIComponent(topicName)}&subjectName=${encodeURIComponent(subjectName)}&roadmapId=${roadmapId}&roadmapName=${encodeURIComponent(roadmapName)}`;
+            const topicLink = `topic-cards.html?subjectId=${subjectId}&topicPosition=${topicPosition}&topicLevel=${topicLevel}&name=${encodeURIComponent(topicName)}&subjectName=${encodeURIComponent(subjectName)}&roadmapId=${roadmapId}&roadmapName=${encodeURIComponent(roadmapName)}&milestoneLevel=${milestoneLevel}`;
             breadcrumbParts.push(`<a href="${topicLink}" style="color: var(--text-primary); text-decoration: none;">${UI.escapeHtml(topicName)}</a>`);
         }
 
@@ -288,7 +288,7 @@ function displayContextBreadcrumb(subjectName, topicName, resourceName, sectionN
 
         if (topicPosition !== '' && topicLevel !== '' && localTopicName) {
             // Coming from topic-cards
-            const topicLink = `topic-cards.html?subjectId=${subjectId}&topicPosition=${topicPosition}&topicLevel=${topicLevel}&name=${encodeURIComponent(localTopicName)}&subjectName=${encodeURIComponent(localSubjectName)}&roadmapId=${roadmapId}&roadmapName=${encodeURIComponent(roadmapName)}`;
+            const topicLink = `topic-cards.html?subjectId=${subjectId}&topicPosition=${topicPosition}&topicLevel=${topicLevel}&name=${encodeURIComponent(localTopicName)}&subjectName=${encodeURIComponent(localSubjectName)}&roadmapId=${roadmapId}&roadmapName=${encodeURIComponent(roadmapName)}&milestoneLevel=${milestoneLevel}`;
             breadcrumbParts.push(`<a href="${topicLink}" style="color: var(--text-primary); text-decoration: none;">${UI.escapeHtml(localTopicName)}</a>`);
         } else if (resourceName && sectionName) {
             // Coming from section-cards

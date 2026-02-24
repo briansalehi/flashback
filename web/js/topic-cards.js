@@ -276,6 +276,52 @@ window.addEventListener('DOMContentLoaded', () => {
     }
 
     loadCards();
+    loadAssessments();
+
+    // Add Assessment button
+    document.getElementById('add-assessment-btn').addEventListener('click', () => {
+        UI.toggleElement('add-assessment-form', true);
+        document.getElementById('assessment-headline').focus();
+    });
+
+    // Cancel Assessment button
+    document.getElementById('cancel-assessment-btn').addEventListener('click', () => {
+        UI.toggleElement('add-assessment-form', false);
+        UI.clearForm('assessment-form');
+    });
+
+    // Assessment Form Submit
+    document.getElementById('assessment-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const headline = document.getElementById('assessment-headline').value.trim();
+
+        if (!headline) {
+            UI.showError('Please provide a headline');
+            return;
+        }
+
+        UI.setButtonLoading('save-assessment-btn', true);
+
+        try {
+            // First create a card
+            const card = await client.createCard(headline);
+
+            // Then create an assessment using the card ID
+            await client.createAssessment(card.id, subjectId, topicLevel, topicPosition);
+
+            UI.showSuccess('Assessment added successfully');
+            UI.toggleElement('add-assessment-form', false);
+            UI.clearForm('assessment-form');
+            UI.setButtonLoading('save-assessment-btn', false);
+
+            loadAssessments();
+        } catch (err) {
+            console.error('Add assessment failed:', err);
+            UI.showError(err.message || 'Failed to add assessment');
+            UI.setButtonLoading('save-assessment-btn', false);
+        }
+    });
 });
 
 async function loadCards() {
@@ -342,9 +388,9 @@ function renderCards(cards) {
                 <div style="display: flex; align-items: center; gap: var(--space-sm); flex: 1; cursor: pointer;" data-card-id="${card.id}" data-card-headline="${UI.escapeHtml(card.headline)}" data-card-state="${card.state}" class="card-link">
                     <h3 class="item-title" style="margin: 0; font-size: var(--font-size-base);">${UI.escapeHtml(card.headline)}</h3>
                 </div>
-                <div style="display: flex; gap: var(--space-xs); align-items: center;">
+                <div style="display: flex; gap: 0.5rem; align-items: center;">
                     <span class="item-badge" style="background: ${stateColor.bg}; color: ${stateColor.color}; text-transform: capitalize; font-size: var(--font-size-xs);">${UI.escapeHtml(stateName)}</span>
-                    <button class="btn btn-sm btn-secondary" onclick="handleMoveCard(${card.id}, '${UI.escapeHtml(card.headline).replace(/'/g, "\\'")}')">
+                    <button class="btn btn-secondary" style="padding: 0.5rem 1rem; white-space: nowrap;" onclick="handleMoveCard(${card.id}, '${UI.escapeHtml(card.headline).replace(/'/g, "\\'")}')">
                         Move
                     </button>
                 </div>
@@ -492,3 +538,106 @@ async function moveCardToTopic(targetTopic) {
         UI.showError('Failed to move card: ' + (err.message || 'Unknown error'));
     }
 }
+
+async function loadAssessments() {
+    const subjectId = parseInt(UI.getUrlParam('subjectId'));
+    const topicPosition = parseInt(UI.getUrlParam('topicPosition'));
+    const topicLevel = parseInt(UI.getUrlParam('topicLevel'));
+
+    UI.toggleElement('assessments-loading', true);
+    UI.toggleElement('assessments-list', false);
+    UI.toggleElement('assessments-empty-state', false);
+
+    try {
+        const assessments = await client.getAssessments(subjectId, topicLevel, topicPosition);
+
+        UI.toggleElement('assessments-loading', false);
+
+        if (!assessments || assessments.length === 0) {
+            UI.toggleElement('assessments-empty-state', true);
+        } else {
+            UI.toggleElement('assessments-list', true);
+            renderAssessments(assessments);
+        }
+    } catch (err) {
+        console.error('Loading assessments failed:', err);
+        UI.showError('Failed to load assessments');
+        UI.toggleElement('assessments-loading', false);
+    }
+}
+
+function renderAssessments(assessments) {
+    const container = document.getElementById('assessments-list');
+    container.innerHTML = '';
+
+    const stateNames = ['draft', 'reviewed', 'completed', 'approved', 'released', 'rejected'];
+    const roadmapId = UI.getUrlParam('roadmapId') || '';
+    const roadmapName = UI.getUrlParam('roadmapName') || '';
+    const subjectId = UI.getUrlParam('subjectId') || '';
+    const subjectName = UI.getUrlParam('subjectName') || '';
+    const topicName = UI.getUrlParam('name') || '';
+    const topicPosition = UI.getUrlParam('topicPosition') || '';
+    const topicLevel = UI.getUrlParam('topicLevel') || '';
+    const milestoneLevel = UI.getUrlParam('milestoneLevel') || topicLevel;
+
+    assessments.forEach(card => {
+        const cardItem = document.createElement('div');
+        cardItem.className = 'item-block';
+        cardItem.style.minHeight = 'auto';
+        cardItem.style.padding = 'var(--space-md) var(--space-lg)';
+
+        const stateName = stateNames[card.state] || 'draft';
+
+        // State badge colors
+        const stateColors = {
+            'draft': { bg: 'rgba(158, 158, 158, 0.2)', color: '#9e9e9e' },
+            'reviewed': { bg: 'rgba(33, 150, 243, 0.2)', color: '#2196f3' },
+            'completed': { bg: 'rgba(76, 175, 80, 0.2)', color: '#4caf50' },
+            'approved': { bg: 'rgba(255, 152, 0, 0.2)', color: '#ff9800' },
+            'released': { bg: 'rgba(3, 169, 244, 0.2)', color: '#03a9f4' },
+            'rejected': { bg: 'rgba(244, 67, 54, 0.2)', color: '#f44336' }
+        };
+        const stateColor = stateColors[stateName] || stateColors['draft'];
+
+        cardItem.innerHTML = `
+            <div class="item-header" style="margin-bottom: 0;">
+                <div style="display: flex; align-items: center; gap: var(--space-sm); flex: 1; cursor: pointer;" data-card-id="${card.id}" data-card-headline="${UI.escapeHtml(card.headline)}" data-card-state="${card.state}" class="assessment-link">
+                    <h3 class="item-title" style="margin: 0; font-size: var(--font-size-base);">${UI.escapeHtml(card.headline)}</h3>
+                </div>
+                <div style="display: flex; gap: 0.5rem; align-items: center;">
+                    <span class="item-badge" style="background: ${stateColor.bg}; color: ${stateColor.color}; text-transform: capitalize; font-size: var(--font-size-xs);">${UI.escapeHtml(stateName)}</span>
+                    <button class="btn btn-secondary" style="background-color: #dc3545; color: white; padding: 0.5rem 1rem; font-size: 0.875rem; white-space: nowrap;" onclick="handleDiminishAssessment(${card.id}, '${UI.escapeHtml(card.headline).replace(/'/g, "\\'")}')">
+                        Diminish
+                    </button>
+                </div>
+            </div>
+        `;
+
+        const assessmentLink = cardItem.querySelector('.assessment-link');
+        assessmentLink.addEventListener('click', () => {
+            window.location.href = `card.html?cardId=${card.id}&headline=${encodeURIComponent(card.headline)}&state=${card.state}&topicPosition=${topicPosition}&topicLevel=${topicLevel}&topicName=${encodeURIComponent(topicName)}&subjectId=${subjectId}&subjectName=${encodeURIComponent(subjectName)}&roadmapId=${roadmapId}&roadmapName=${encodeURIComponent(roadmapName)}&milestoneLevel=${milestoneLevel}`;
+        });
+
+        container.appendChild(cardItem);
+    });
+}
+
+// Global handler for diminish assessment
+window.handleDiminishAssessment = async function(cardId, cardHeadline) {
+    if (!confirm(`Are you sure you want to diminish the assessment "${cardHeadline}"? This will remove it from this topic.`)) {
+        return;
+    }
+
+    const subjectId = parseInt(UI.getUrlParam('subjectId'));
+    const topicPosition = parseInt(UI.getUrlParam('topicPosition'));
+    const topicLevel = parseInt(UI.getUrlParam('topicLevel'));
+
+    try {
+        await client.diminishAssessment(cardId, subjectId, topicLevel, topicPosition);
+        UI.showSuccess('Assessment diminished successfully');
+        loadAssessments();
+    } catch (err) {
+        console.error('Failed to diminish assessment:', err);
+        UI.showError('Failed to diminish assessment: ' + (err.message || 'Unknown error'));
+    }
+};

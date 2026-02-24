@@ -551,6 +551,7 @@ class FlashbackClient {
             request.setCard(card);
             request.setUser(user);
 
+            console.log(`Creating card:`, headline);
             this.client.createCard(request, this.getMetadata(), (err, response) => {
                 if (err) {
                     console.error("CreateCard error:", err);
@@ -1829,12 +1830,7 @@ class FlashbackClient {
                     console.error("CreateAssessment error:", err);
                     reject(this.handleError(err));
                 } else {
-                    const card = response.getCard();
-                    resolve({
-                        id: card.id(),
-                        headline: card.getHeadline(),
-                        state: card.getState()
-                    });
+                    resolve();
                 }
             });
         });
@@ -1858,13 +1854,13 @@ class FlashbackClient {
                     console.error("GetAssessments error:", err);
                     reject(this.handleError(err));
                 } else {
-                    const assessment = response.getAssessment();
-                    resolve({
-                        id: assessment.getId(),
-                        headline: assessment.getHeadline(),
-                        state: assessment.getState(),
+                    console.log(response.getAssessmentList());
+                    resolve(response.getAssessmentList().map(assessment => ({
+                        id: assessment.getCard().getId(),
+                        headline: assessment.getCard().getHeadline(),
+                        state: assessment.getCard().getState(),
                         assimilations: assessment.getAssimilations()
-                    });
+                    })));
                 }
             });
         });
