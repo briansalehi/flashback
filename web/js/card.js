@@ -118,12 +118,11 @@ window.addEventListener('DOMContentLoaded', () => {
     // Setup edit headline functionality
     setupEditHeadline();
 
-    // Setup remove card button - show for section cards only
-    const resourceId = UI.getUrlParam('resourceId');
-    const sectionPosition = UI.getUrlParam('sectionPosition');
+    // Setup remove card button - show everywhere
     const removeCardBtn = document.getElementById('remove-card-btn');
 
-    if (removeCardBtn && resourceId && sectionPosition !== '') {
+    // Always show remove button
+    if (removeCardBtn) {
         removeCardBtn.style.display = 'inline-block';
         removeCardBtn.addEventListener('click', (e) => {
             e.preventDefault();
@@ -1382,6 +1381,13 @@ async function confirmRemoveCard() {
     const cardId = parseInt(UI.getUrlParam('cardId'));
     const resourceId = UI.getUrlParam('resourceId');
     const sectionPosition = UI.getUrlParam('sectionPosition');
+    const topicPosition = UI.getUrlParam('topicPosition');
+    const topicLevel = UI.getUrlParam('topicLevel');
+    const subjectId = UI.getUrlParam('subjectId') || '';
+    const subjectName = UI.getUrlParam('subjectName') || '';
+    const topicName = UI.getUrlParam('topicName') || '';
+    const roadmapId = UI.getUrlParam('roadmapId') || '';
+    const roadmapName = UI.getUrlParam('roadmapName') || '';
 
     if (!cardId) {
         UI.showError('Invalid card ID');
@@ -1393,20 +1399,28 @@ async function confirmRemoveCard() {
     try {
         await client.removeCard(cardId);
 
-        // Navigate back to section cards page
-        const resourceName = UI.getUrlParam('resourceName') || '';
-        const sectionName = UI.getUrlParam('sectionName') || '';
-        const resourceType = UI.getUrlParam('resourceType') || '0';
-        const resourcePattern = UI.getUrlParam('resourcePattern') || '0';
-        const resourceLink = UI.getUrlParam('resourceLink') || '';
-        const resourceProduction = UI.getUrlParam('resourceProduction') || '0';
-        const resourceExpiration = UI.getUrlParam('resourceExpiration') || '0';
-        const subjectId = UI.getUrlParam('subjectId') || '';
-        const subjectName = UI.getUrlParam('subjectName') || '';
-        const roadmapId = UI.getUrlParam('roadmapId') || '';
-        const roadmapName = UI.getUrlParam('roadmapName') || '';
+        // Navigate back to the appropriate page
+        if (resourceId && sectionPosition !== '') {
+            // Navigate back to section cards page
+            const resourceName = UI.getUrlParam('resourceName') || '';
+            const sectionName = UI.getUrlParam('sectionName') || '';
+            const resourceType = UI.getUrlParam('resourceType') || '0';
+            const resourcePattern = UI.getUrlParam('resourcePattern') || '0';
+            const resourceLink = UI.getUrlParam('resourceLink') || '';
+            const resourceProduction = UI.getUrlParam('resourceProduction') || '0';
+            const resourceExpiration = UI.getUrlParam('resourceExpiration') || '0';
 
-        window.location.href = `section-cards.html?resourceId=${resourceId}&sectionPosition=${sectionPosition}&name=${encodeURIComponent(sectionName)}&resourceName=${encodeURIComponent(resourceName)}&resourceType=${resourceType}&resourcePattern=${resourcePattern}&resourceLink=${encodeURIComponent(resourceLink)}&resourceProduction=${resourceProduction}&resourceExpiration=${resourceExpiration}&subjectId=${subjectId}&subjectName=${encodeURIComponent(subjectName)}&roadmapId=${roadmapId}&roadmapName=${encodeURIComponent(roadmapName)}`;
+            window.location.href = `section-cards.html?resourceId=${resourceId}&sectionPosition=${sectionPosition}&name=${encodeURIComponent(sectionName)}&resourceName=${encodeURIComponent(resourceName)}&resourceType=${resourceType}&resourcePattern=${resourcePattern}&resourceLink=${encodeURIComponent(resourceLink)}&resourceProduction=${resourceProduction}&resourceExpiration=${resourceExpiration}&subjectId=${subjectId}&subjectName=${encodeURIComponent(subjectName)}&roadmapId=${roadmapId}&roadmapName=${encodeURIComponent(roadmapName)}`;
+        } else if (topicPosition !== '' && topicLevel !== '') {
+            // Navigate back to topic cards page
+            window.location.href = `topic-cards.html?subjectId=${subjectId}&topicPosition=${topicPosition}&topicLevel=${topicLevel}&name=${encodeURIComponent(topicName)}&subjectName=${encodeURIComponent(subjectName)}&roadmapId=${roadmapId}&roadmapName=${encodeURIComponent(roadmapName)}`;
+        } else if (subjectId) {
+            // If accessed directly or from subject practice, go back to subject page
+            window.location.href = `subject.html?id=${subjectId}&name=${encodeURIComponent(subjectName)}&roadmapId=${roadmapId}&roadmapName=${encodeURIComponent(roadmapName)}`;
+        } else {
+            // Fallback to home
+            window.location.href = '/home.html';
+        }
     } catch (err) {
         console.error('Failed to remove card:', err);
         UI.showError('Failed to remove card: ' + (err.message || 'Unknown error'));

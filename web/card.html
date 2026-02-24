@@ -290,11 +290,17 @@
     </div>
 
     <div id="card-content" class="blocks-container" style="display: none;">
-      <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
-        <h1 id="card-headline" class="card-headline-display" style="margin-bottom: 0;"></h1>
-        <button id="edit-headline-btn" class="btn btn-secondary" style="padding: 0.5rem 1rem;">
-          Edit
-        </button>
+      <div style="display: flex; align-items: flex-start; gap: 1rem; margin-bottom: 1rem; flex-wrap: wrap;">
+        <h1 id="card-headline" class="card-headline-display" style="margin-bottom: 0; flex: 1; min-width: 200px;"></h1>
+        <div style="display: flex; gap: 0.5rem; flex-shrink: 0;">
+          <button id="edit-headline-btn" class="btn btn-secondary" style="padding: 0.5rem 1rem; white-space: nowrap;">
+            Edit
+          </button>
+          <button id="remove-card-btn" class="btn btn-secondary"
+                  style="display: none; background-color: #dc3545; color: white; padding: 0.5rem 1rem; font-size: 0.875rem; white-space: nowrap;">
+            Remove Card
+          </button>
+        </div>
       </div>
       <div id="edit-headline-form" style="display: none; margin-bottom: 1rem;">
         <input type="text" id="headline-input" class="form-input" style="width: 100%; margin-bottom: 0.5rem;"/>
@@ -308,18 +314,15 @@
         <button id="mark-reviewed-btn" class="btn btn-secondary" style="display: none;">
           Mark as Reviewed
         </button>
-        <button id="remove-card-btn" class="btn btn-secondary"
-                style="display: none; background-color: #c62828; color: white;">
-          Remove Card
-        </button>
       </div>
+
+      <button id="add-block-btn" class="btn btn-primary btn-full" style="margin-bottom: 2rem; margin-top: 1rem;">
+        + Add Block
+      </button>
+
       <div id="blocks-list">
         <!-- blocks will be inserted here -->
       </div>
-
-      <button id="add-block-btn" class="btn btn-primary btn-full" style="margin-top: 2rem;">
-        + Add Block
-      </button>
 
       <div id="add-block-form" class="card" style="display: none; max-width: 700px; margin-top: 2rem;">
         <div class="card-header">
@@ -339,31 +342,31 @@
           <div class="form-group">
             <label class="form-label" for="block-extension">Extension (optional)</label>
             <input
-              type="text"
-              id="block-extension"
-              class="form-input"
-              placeholder="e.g., js, py, jpg"
+                type="text"
+                id="block-extension"
+                class="form-input"
+                placeholder="e.g., js, py, jpg"
             >
           </div>
 
           <div class="form-group">
             <label class="form-label" for="block-metadata">Metadata (optional)</label>
             <input
-              type="text"
-              id="block-metadata"
-              class="form-input"
-              placeholder="Additional information about the block"
+                type="text"
+                id="block-metadata"
+                class="form-input"
+                placeholder="Additional information about the block"
             >
           </div>
 
           <div class="form-group">
             <label class="form-label" for="block-content">Content</label>
             <textarea
-              id="block-content"
-              class="form-input"
-              rows="10"
-              placeholder="Enter block content here..."
-              required
+                id="block-content"
+                class="form-input"
+                rows="10"
+                placeholder="Enter block content here..."
+                required
             ></textarea>
           </div>
 
