@@ -364,11 +364,6 @@ async function recordProgress(hideAfterSuccess = true) {
     const cardId = parseInt(UI.getUrlParam('cardId'));
     const duration = Math.floor((Date.now() - cardStartTime) / 1000); // Convert to seconds
 
-    if (duration < 3) {
-        UI.showError('Please read the card for at least 3 seconds');
-        return;
-    }
-
     // Check if this is from a resource/section (study mode)
     const resourceId = UI.getUrlParam('resourceId');
     const sectionPosition = UI.getUrlParam('sectionPosition');
