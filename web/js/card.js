@@ -510,11 +510,30 @@ async function recordStudyAndNavigate(nextAction) {
             const cardId = parseInt(UI.getUrlParam('cardId'));
             const duration = Math.floor((Date.now() - cardStartTime) / 1000);
             if (!isNaN(cardId) && duration >= 3) {
-                await client.study(cardId, duration);
+                // Determine context: topic (makeProgress) vs section (study)
+                const subjectId = parseInt(UI.getUrlParam('subjectId'));
+                const topicPosition = parseInt(UI.getUrlParam('topicPosition'));
+                const topicLevel = parseInt(UI.getUrlParam('topicLevel'));
+                const resourceId = parseInt(UI.getUrlParam('resourceId'));
+                const sectionPosition = parseInt(UI.getUrlParam('sectionPosition'));
+
+                if (!isNaN(subjectId) && !isNaN(topicPosition) && !isNaN(topicLevel)) {
+                    // Topic context → makeProgress
+                    const milestoneLevelParam = UI.getUrlParam('milestoneLevel');
+                    const milestoneLevel = !isNaN(parseInt(milestoneLevelParam)) ? parseInt(milestoneLevelParam) : topicLevel;
+                    const milestoneId = subjectId; // In selective topic context, subjectId maps to milestone/subject id
+                    await client.makeProgress(cardId, duration, milestoneId, milestoneLevel);
+                } else if (!isNaN(resourceId) && !isNaN(sectionPosition)) {
+                    // Section (chapter) context → study
+                    await client.study(cardId, duration);
+                } else {
+                    // Fallback when context is unknown → study
+                    await client.study(cardId, duration);
+                }
             }
         }
     } catch (e) {
-        console.error('Selective navigation study record failed:', e);
+        console.error('Selective navigation record failed:', e);
         // Continue navigation regardless
     } finally {
         cardStartTime = null;
