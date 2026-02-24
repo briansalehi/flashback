@@ -851,6 +851,7 @@ function renderResources(resources) {
 async function startPracticeMode() {
     const subjectId = UI.getUrlParam('id');
     const roadmapId = UI.getUrlParam('roadmapId');
+    const level = UI.getUrlParam('level');
 
     if (!roadmapId || !subjectId) {
         UI.showError('Missing roadmap or subject information');
@@ -860,7 +861,7 @@ async function startPracticeMode() {
     UI.setButtonLoading('start-practice-btn', true);
 
     try {
-        const topics = await client.getPracticeTopics(parseInt(roadmapId), parseInt(subjectId));
+        const topics = await client.getPracticeTopics(parseInt(roadmapId), parseInt(subjectId), level);
 
         if (topics.length === 0) {
             UI.showError('No topics available for practice');
@@ -872,6 +873,7 @@ async function startPracticeMode() {
         sessionStorage.setItem('practiceState', JSON.stringify({
             roadmapId: parseInt(roadmapId),
             subjectId: parseInt(subjectId),
+            milestoneLevel: level,
             topics: topics,
             currentTopicIndex: 0,
             practiceMode: 'aggressive'

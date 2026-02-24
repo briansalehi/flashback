@@ -44,7 +44,6 @@ window.addEventListener('DOMContentLoaded', () => {
     const cardId = parseInt(UI.getUrlParam('cardId'));
     const headline = UI.getUrlParam('headline');
     const state = parseInt(UI.getUrlParam('state')) || 0;
-    const practiceMode = UI.getUrlParam('practiceMode');
     const cardIndex = parseInt(UI.getUrlParam('cardIndex'));
     const totalCards = parseInt(UI.getUrlParam('totalCards'));
     const subjectName = UI.getUrlParam('subjectName');
@@ -61,7 +60,7 @@ window.addEventListener('DOMContentLoaded', () => {
     cardStartTime = Date.now();
 
     // Show context breadcrumb
-    displayContextBreadcrumb(practiceMode, subjectName, topicName, resourceName, sectionName);
+    displayContextBreadcrumb(subjectName, topicName, resourceName, sectionName);
 
     document.getElementById('card-headline').textContent = headline || 'Card';
     document.title = `${headline || 'Card'} - Flashback`;
@@ -85,8 +84,8 @@ window.addEventListener('DOMContentLoaded', () => {
     }
 
     // Add navigation buttons for practice mode
-    if (practiceMode && !isNaN(cardIndex) && !isNaN(totalCards)) {
-        addPracticeNavigation(practiceMode, cardIndex, totalCards);
+    if (!isNaN(cardIndex) && !isNaN(totalCards)) {
+        addPracticeNavigation(cardIndex, totalCards);
     } else {
         // Add "Read" button for study mode (viewing from resource/section)
         addStudyNavigation();
@@ -94,16 +93,14 @@ window.addEventListener('DOMContentLoaded', () => {
 
     // Track when user navigates away from card
     // Intercept link clicks to properly record progress before navigation
-    if (practiceMode) {
-        document.addEventListener('click', async (e) => {
-            const link = e.target.closest('a');
-            if (link && link.href && cardStartTime) {
-                e.preventDefault();
-                await handleCardExit();
-                window.location.href = link.href;
-            }
-        });
-    }
+    document.addEventListener('click', async (e) => {
+        const link = e.target.closest('a');
+        if (link && link.href && cardStartTime) {
+            e.preventDefault();
+            await handleCardExit();
+            window.location.href = link.href;
+        }
+    });
 
     // Setup mark as reviewed button
     const markReviewedBtn = document.getElementById('mark-reviewed-btn');
@@ -233,7 +230,7 @@ window.addEventListener('DOMContentLoaded', () => {
 });
 
 // Display context breadcrumb (subject/topic or resource/section)
-function displayContextBreadcrumb(practiceMode, subjectName, topicName, resourceName, sectionName) {
+function displayContextBreadcrumb(subjectName, topicName, resourceName, sectionName) {
     const breadcrumb = document.getElementById('context-breadcrumb');
     if (!breadcrumb) return;
 
@@ -242,8 +239,9 @@ function displayContextBreadcrumb(practiceMode, subjectName, topicName, resource
     const roadmapName = UI.getUrlParam('roadmapName') || '';
     const subjectId = UI.getUrlParam('subjectId') || '';
     const localSubjectName = UI.getUrlParam('subjectName') || subjectName || '';
+    const milestoneLevel = UI.getUrlParam('milestoneLevel') || '';
 
-    if (practiceMode === 'aggressive' && subjectName && topicName) {
+    if (subjectName && topicName) {
         // Get subject and roadmap info from practice state or URL
         const practiceState = JSON.parse(sessionStorage.getItem('practiceState') || '{}');
 
@@ -259,7 +257,7 @@ function displayContextBreadcrumb(practiceMode, subjectName, topicName, resource
         }
 
         if (subjectId && subjectName) {
-            const subjectLink = `subject.html?id=${subjectId}&name=${encodeURIComponent(subjectName)}&roadmapId=${roadmapId}&roadmapName=${encodeURIComponent(roadmapName)}`;
+            const subjectLink = `subject.html?id=${subjectId}&name=${encodeURIComponent(subjectName)}&roadmapId=${roadmapId}&roadmapName=${encodeURIComponent(roadmapName)}&level=${milestoneLevel}`;
             breadcrumbParts.push(`<a href="${subjectLink}" style="color: var(--text-primary); text-decoration: none;">${UI.escapeHtml(subjectName)}</a>`);
         }
 
@@ -269,7 +267,7 @@ function displayContextBreadcrumb(practiceMode, subjectName, topicName, resource
         }
 
         contextHtml = breadcrumbParts.join(' → ');
-    } else if (practiceMode === 'selective') {
+    } else {
         let breadcrumbParts = [];
 
         // Always add roadmap if available
@@ -279,7 +277,7 @@ function displayContextBreadcrumb(practiceMode, subjectName, topicName, resource
 
         // Always add subject if available
         if (subjectId && localSubjectName) {
-            const subjectLink = `subject.html?id=${subjectId}&name=${encodeURIComponent(localSubjectName)}&roadmapId=${roadmapId}&roadmapName=${encodeURIComponent(roadmapName)}`;
+            const subjectLink = `subject.html?id=${subjectId}&name=${encodeURIComponent(localSubjectName)}&roadmapId=${roadmapId}&roadmapName=${encodeURIComponent(roadmapName)}&level=${milestoneLevel}`;
             breadcrumbParts.push(`<a href="${subjectLink}" style="color: var(--text-primary); text-decoration: none;">${UI.escapeHtml(localSubjectName)}</a>`);
         }
 
@@ -394,11 +392,15 @@ async function recordProgressAndNavigate(nextAction) {
 
         try {
             if (milestoneId && milestoneLevel !== undefined) {
-                console.log(`making progress on card ${cardId} in ${duration} seconds with milestone ${milestoneId}, level ${milestoneLevel}`);
-                await client.makeProgress(cardId, duration, parseInt(milestoneId), parseInt(milestoneLevel));
+                const parsedMilestoneId = parseInt(milestoneId);
+                const parsedMilestoneLevel = parseInt(milestoneLevel);
+
+                if (!isNaN(parsedMilestoneId) && !isNaN(parsedMilestoneLevel)) {
+                    await client.makeProgress(cardId, duration, parsedMilestoneId, parsedMilestoneLevel);
+                }
             }
         } catch (err) {
-            console.error('Failed to record progress:', err);
+            console.error(`Failed to record progress in ${duration}:`, err);
         }
     }
 
@@ -433,7 +435,7 @@ function addStudyNavigation() {
 }
 
 // Add navigation for practice mode
-function addPracticeNavigation(practiceMode, cardIndex, totalCards) {
+function addPracticeNavigation(cardIndex, totalCards) {
     const contentDiv = document.getElementById('card-content');
     if (!contentDiv) return;
 
@@ -450,8 +452,7 @@ function addPracticeNavigation(practiceMode, cardIndex, totalCards) {
     // Check if there's a next card or topic
     const practiceState = JSON.parse(sessionStorage.getItem('practiceState') || '{}');
     const hasNextCard = cardIndex + 1 < totalCards;
-    const hasNextTopic = practiceState.topics &&
-                         practiceState.currentTopicIndex < practiceState.topics.length - 1;
+    const hasNextTopic = practiceState.topics && practiceState.currentTopicIndex < practiceState.topics.length - 1;
 
     if (hasNextCard) {
         // Show "Next Card" button that records progress and navigates
@@ -460,7 +461,7 @@ function addPracticeNavigation(practiceMode, cardIndex, totalCards) {
         nextBtn.className = 'btn btn-primary';
         nextBtn.addEventListener('click', async () => {
             await recordProgressAndNavigate(async () => {
-                await loadNextCard(practiceMode, cardIndex, totalCards);
+                await loadNextCard(cardIndex, totalCards);
             });
         });
         buttonContainer.appendChild(nextBtn);
@@ -471,7 +472,7 @@ function addPracticeNavigation(practiceMode, cardIndex, totalCards) {
         nextTopicBtn.className = 'btn btn-primary';
         nextTopicBtn.addEventListener('click', async () => {
             await recordProgressAndNavigate(async () => {
-                await loadNextTopic(practiceMode);
+                await loadNextTopic();
             });
         });
         buttonContainer.appendChild(nextTopicBtn);
@@ -504,7 +505,7 @@ function addPracticeNavigation(practiceMode, cardIndex, totalCards) {
 }
 
 // Load next card in current topic
-async function loadNextCard(practiceMode, currentIndex, totalCards) {
+async function loadNextCard(currentIndex, totalCards) {
     const practiceState = JSON.parse(sessionStorage.getItem('practiceState') || '{}');
     if (!practiceState.topics || !practiceState.currentCards) {
         UI.showError('Practice state lost');
@@ -526,11 +527,11 @@ async function loadNextCard(practiceMode, currentIndex, totalCards) {
     const topicName = UI.getUrlParam('topicName') || '';
     const milestoneId = UI.getUrlParam('milestoneId') || '';
     const milestoneLevel = UI.getUrlParam('milestoneLevel') || '';
-    window.location.href = `card.html?cardId=${nextCard.id}&headline=${encodeURIComponent(nextCard.headline)}&state=${nextCard.state}&practiceMode=${practiceMode}&cardIndex=${nextIndex}&totalCards=${totalCards}&roadmapId=${roadmapId}&roadmapName=${encodeURIComponent(roadmapName)}&subjectId=${subjectId}&subjectName=${encodeURIComponent(subjectName)}&topicName=${encodeURIComponent(topicName)}&milestoneId=${milestoneId}&milestoneLevel=${milestoneLevel}`;
+    window.location.href = `card.html?cardId=${nextCard.id}&headline=${encodeURIComponent(nextCard.headline)}&state=${nextCard.state}&cardIndex=${nextIndex}&totalCards=${totalCards}&roadmapId=${roadmapId}&roadmapName=${encodeURIComponent(roadmapName)}&subjectId=${subjectId}&subjectName=${encodeURIComponent(subjectName)}&topicName=${encodeURIComponent(topicName)}&milestoneId=${milestoneId}&milestoneLevel=${milestoneLevel}`;
 }
 
 // Load next topic or finish practice
-async function loadNextTopic(practiceMode) {
+async function loadNextTopic() {
     const practiceState = JSON.parse(sessionStorage.getItem('practiceState') || '{}');
     if (!practiceState.topics) {
         window.location.href = '/home.html';
@@ -543,7 +544,7 @@ async function loadNextTopic(practiceMode) {
         // All topics completed
         sessionStorage.removeItem('practiceState');
         alert('Practice session completed!');
-        window.location.href = `/subject.html?id=${practiceState.subjectId}&roadmapId=${practiceState.roadmapId}`;
+        window.location.href = `/subject.html?id=${practiceState.subjectId}&roadmapId=${practiceState.roadmapId}&level=${practiceState.milestoneLevel || ''}`;
         return;
     }
 
@@ -562,7 +563,7 @@ async function loadNextTopic(practiceMode) {
             UI.showError('No cards in next topic, skipping...');
             practiceState.currentTopicIndex = nextTopicIndex;
             sessionStorage.setItem('practiceState', JSON.stringify(practiceState));
-            await loadNextTopic(practiceMode);
+            await loadNextTopic();
             return;
         }
 
@@ -578,7 +579,7 @@ async function loadNextTopic(practiceMode) {
         const subjectName = UI.getUrlParam('subjectName') || '';
         const milestoneId = UI.getUrlParam('milestoneId') || '';
         const milestoneLevel = UI.getUrlParam('milestoneLevel') || '';
-        window.location.href = `card.html?cardId=${cards[0].id}&headline=${encodeURIComponent(cards[0].headline)}&state=${cards[0].state}&practiceMode=${practiceMode}&cardIndex=0&totalCards=${cards.length}&roadmapId=${roadmapId}&roadmapName=${encodeURIComponent(roadmapName)}&subjectId=${subjectId}&subjectName=${encodeURIComponent(subjectName)}&topicName=${encodeURIComponent(nextTopic.name)}&milestoneId=${milestoneId}&milestoneLevel=${milestoneLevel}`;
+        window.location.href = `card.html?cardId=${cards[0].id}&headline=${encodeURIComponent(cards[0].headline)}&state=${cards[0].state}&cardIndex=0&totalCards=${cards.length}&roadmapId=${roadmapId}&roadmapName=${encodeURIComponent(roadmapName)}&subjectId=${subjectId}&subjectName=${encodeURIComponent(subjectName)}&topicName=${encodeURIComponent(nextTopic.name)}&milestoneId=${milestoneId}&milestoneLevel=${milestoneLevel}`;
     } catch (err) {
         console.error('Failed to load next topic:', err);
         UI.showError('Failed to load next topic');
@@ -1388,6 +1389,7 @@ async function confirmRemoveCard() {
     const topicName = UI.getUrlParam('topicName') || '';
     const roadmapId = UI.getUrlParam('roadmapId') || '';
     const roadmapName = UI.getUrlParam('roadmapName') || '';
+    const milestoneLevel = UI.getUrlParam('milestoneLevel') || '';
 
     if (!cardId) {
         UI.showError('Invalid card ID');
@@ -1416,7 +1418,7 @@ async function confirmRemoveCard() {
             window.location.href = `topic-cards.html?subjectId=${subjectId}&topicPosition=${topicPosition}&topicLevel=${topicLevel}&name=${encodeURIComponent(topicName)}&subjectName=${encodeURIComponent(subjectName)}&roadmapId=${roadmapId}&roadmapName=${encodeURIComponent(roadmapName)}`;
         } else if (subjectId) {
             // If accessed directly or from subject practice, go back to subject page
-            window.location.href = `subject.html?id=${subjectId}&name=${encodeURIComponent(subjectName)}&roadmapId=${roadmapId}&roadmapName=${encodeURIComponent(roadmapName)}`;
+            window.location.href = `subject.html?id=${subjectId}&name=${encodeURIComponent(subjectName)}&roadmapId=${roadmapId}&roadmapName=${encodeURIComponent(roadmapName)}&level=${milestoneLevel}`;
         } else {
             // Fallback to home
             window.location.href = '/home.html';

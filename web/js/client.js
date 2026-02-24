@@ -807,11 +807,21 @@ class FlashbackClient {
             milestone.setLevel(milestoneLevel);
             request.setMilestone(milestone);
             request.setDuration(duration);
+            console.error(`MakeProgress in ${duration}`);
 
             this.client.makeProgress(request, this.getMetadata(), (err) => {
                 if (err) {
-                    console.error("MakeProgress error:", err);
-                    reject(this.handleError(err));
+                    switch (err)
+                    {
+                        case 3:
+                            reject("invalid argument");
+                            console.error("MakeProgress error: invalid argument, ", err);
+                            break;
+                        default:
+                            reject(this.handleError(err));
+                            console.error("MakeProgress error:", err);
+                            break;
+                    }
                 } else {
                     resolve();
                 }
