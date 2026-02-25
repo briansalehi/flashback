@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict MfCXpf19lP7pL4jiU4jXRv2UlMbXXCoJT0OKjLvKHrO4KuS9pK0ZGADbHqOfwOC
+\restrict c4wAHmfi5fRsz9BFRdE7a7SQPcTuYy59OtfCcCuJA1iOoe5vl7KOAiErpOP0Voc
 
 -- Dumped from database version 18.1
 -- Dumped by pg_dump version 18.1
@@ -7552,7 +7552,6 @@ COPY flashback.blocks (card, "position", content, type, extension, metadata) FRO
 1484	1	- The **global module fragment**, introduced with a `module;` statement. This\n  part is optional and, if present, may only contain preprocessor directives.\n  Everything that is added here is said to belong to the *global module*,\n  which is the collection of all the global module fragments and all\n  translation units that are not modules.	text	txt	\N
 2726	1	* `make install`\n* `make modules_install`\n* `make headers_install`\n* `make dtb_install`	text	txt	\N
 2727	1	make install	code	txt	\N
-4156	2	- have a name\n- have external linkage	text	txt	\N
 1484	2	- The **module declaration**, which is a required statement of the form\n  `export module name;`.\n- The **module preamble**, which is optional, and may only contain import\n  declarations.\n- The **module purview**, which is the content of the unit, starting with the\n  module declaration and extending to the end of the module unit.	text	txt	\N
 1485	1	The source code of a module may become large and difficult to maintain.\nMoreover, a module may be composed of logically separate parts. To help with\nscenarios like that, modules support composition from parts called\n**partitions**.	text	txt	\N
 1485	2	Although module partitions are distinct files, they are not available as\nseparate modules or submodules to translation units using a module. They are\nexported together as a single, aggregated module.	text	txt	\N
@@ -7647,7 +7646,6 @@ COPY flashback.blocks (card, "position", content, type, extension, metadata) FRO
 1533	1	The `virtual/` namespace is the convention adopted when we have a set of commonly overriden providers.	text	txt	\N
 1533	2	PREFERRED_PROVIDER_virtual/kernel = "linux-custom"	code	bb	\N
 1534	1	Bitbake uses the highest version by default.	text	txt	\N
-4156	3	Names of namespaces containing export declarations are implicitly exported as\nwell.	text	txt	\N
 2364	3	\\{(x, f(x)) | x \\in D\\}	code	tex	\N
 1510	2	conf/local.conf	code	sh	\N
 1535	1	We can force bitbake to use a different version by using `PREFERRED_VERSION` keyword. This is common in BSPs where vendors may use specific versions for a specific board.	text	txt	\N
@@ -9027,8 +9025,6 @@ COPY flashback.blocks (card, "position", content, type, extension, metadata) FRO
 2004	1	While blocking certain types of ICMP packets is good, blocking all ICMP packets is bad.\nThe harsh reality is that certain types of ICMP messages are necessary for the proper functionality of the network.\nSince the drop all that’s not allowed rule that we’ll eventually create also blocks ICMP packets, we’ll need to create some rules that allow the types of ICMP messages that we have to have.	text	txt	\N
 2768	1	If your program is compiled with the GNU Compiler Collection (GCC), using the\n`-g3` and `-gdwarf-2` options, GDB understands references to C preprocessor\nmacros.	text	txt	\N
 5522	4	#include <ftxui/dom/elements.hpp>\n\nint main()\n{\n    ftxui::LinearGradient gradient{0.5, ftxui::Color::Black, ftxui::Color::Red};\n}	code	cpp	\N
-2773	2	Any thread calling `io_service::run()` function will block execution and wait\nfor tasks to be enqueued, or finish existing tasks. Best practice is to attach\n`io_service` to slave threads so that they wait for tasks to be given and\nexecute them while master threads assign new tasks to them.	text	txt	\N
-2774	1	The `dispatch()` function requests the service to run its works right away\nwithout queueing up.	text	txt	\N
 2004	3	* `-m conntrack`: Use the conntrack module to allow packets that are in a certain state. This time, though, instead of just allowing packets from a host to which our server has been connected (`ESTABLISHED`,`RELATED`), we’re also allowing `NEW` packets that other hosts are sending to our server.\n* `-p icmp`: This refers to the ICMP protocol.\n* `--icmp-type`: There are quite a few types of ICMP messages:\n    + **type 3**: These are the **“destination unreachable”** messages. Not only can they tell your server that it can’t reach a certain host, but they can also tell it why. For example, if the server has sent out a packet that’s too large for a network switch to handle, the switch will send back an ICMP message that tells the server to fragment that large packet. Without ICMP, the server would have connectivity problems every time it tries to send out a large packet that needs to be broken up into fragments.\n    + **type 11**: **Time-exceeded** messages let your server know that a packet that it has sent out has either exceeded its **Time-to-Live (TTL)** value before it could reach its destination, or that a fragmented packet couldn’t be reassembled before the **TTL** expiration date.\n    + **type 12**: **Parameter problem** messages indicate that the server had sent a packet with a bad IP header. In other words, the IP header is either missing an option flag or it’s of an invalid length.\n    + **type 0** and **type 8**: These are the infamous ping packets. Actually, type 8 is the **echo request** packet that you would send out to ping a host, while type 0 is the **echo reply** that the host would return to let you know that it’s alive. Of course, allowing ping packets to get through could be a big help when troubleshooting network problems. If that scenario ever comes up, you could just add a couple of iptables rules to temporarily allow pings.\n    + **type 5**: Now, we have the infamous **redirect messages**. Allowing these could be handy if you have a router that can suggest more efficient paths for the server to use, but hackers can also use them to redirect you to someplace that you don’t want to go. So, just block them.	text	txt	\N
 2005	2	To create a `DROP` rule at the end of the `INPUT` chain, use this command:	text	txt	\N
 2006	1	There are several ways to do this, but the simplest way to do this on an Ubuntu machine is to install the `iptables-persistent` package:	text	txt	\N
@@ -9041,6 +9037,7 @@ COPY flashback.blocks (card, "position", content, type, extension, metadata) FRO
 2008	4	To see packats counter on the target machine run:	text	txt	\N
 2008	5	sudo iptables -t mangle -L PREROUTING -v	code	txt	\N
 230	2	git clone https://github.com/postgresql/postgresql\ncd postgresql\ngit checkout <latest>\n./configure --prefix=$HOME/.local\nmake\nmake install	code	sh	\N
+2774	1	The `boost::asio::dispatch()` function requests the context to run its works right away without queueing up.	text	txt	\N
 2008	6	The fact that all 1,000 scanned ports show as `open|filtered` means that the scan was blocked, and that Nmap can’t determine the true state of the ports.\nWe can view the result to see which rule did the blocking.\nHere, you can see that the first rule — the `INVALID` rule — blocked 2,000 packets and 80,000 bytes.	text	txt	\N
 2008	7	Now, let’s zero out the counter so that we can do another scan:	text	txt	\N
 2008	8	sudo iptables -t mangle -Z PREROUTING	code	txt	\N
@@ -9932,6 +9929,7 @@ COPY flashback.blocks (card, "position", content, type, extension, metadata) FRO
 2263	1	#include <iostream>\n#include <iterator>\n#include <algorithm>\n#include <ranges>\n#include <string>\n#include <vector>\n#include <map>	text	txt	\N
 2263	2	int main()\n{\n    std::map<long, std::string> map{ {0, "first"}, {1, "second"}, {2, "third"} };	text	txt	\N
 2263	3	    std::ranges::copy(std::views::keys(map), std::ostream_iterator<long>(std::cout, " "));\n    // 0 1 2	text	txt	\N
+4156	2	Names of namespaces containing export declarations are implicitly exported as\nwell.	text	txt	\N
 2263	4	    std::ranges::copy(std::views::values(map), std::ostream_iterator<long>(std::cout, " "));\n    // first second third\n}	code	txt	\N
 2264	1	#include <iostream>\n#include <iterator>p\n#include <algorithm>\n#include <ranges>\n#include <string>\n#include <vector>\n#include <tuple>	text	txt	\N
 2264	2	int main()\n{\n    std::vector<std::tuple<long, std::string, long>> range{ {0, "John", 4}, {1, "Laura", 5}, {2, "Alice", 5} };	text	txt	\N
@@ -10905,7 +10903,6 @@ COPY flashback.blocks (card, "position", content, type, extension, metadata) FRO
 5216	3	The `type` component can also be referred to as `domain` when it is used for processes.	text	md	\N
 2561	4	1. Emplace Functions: you can pass multiple arguments to initialize a new\n   element directly in the container to save a copy or move.	text	txt	\N
 2561	5	Functions like `emplace_back()` use perfect forwarding to avoid creating\ncopies of the passed arguments.	text	txt	\N
-2772	1	The `poll()` function will run the `io_service` object's event processing loop\nwithout blocking the execution of the thread. This will run the handlers until\nthere are no more ready handlers remaining or until the `io_service` object\nhas been stopped.	text	txt	\N
 2561	6	template<typename T, typename Allocator = allocator<T>>\nclass vector\n{\npublic:\n    template<typename... Args>\n    constexpr T& emplace_back(Args&&... args)\n    {\n        ...\n        // call the constructor with the perfectly forwarded arguments:\n        place_element_in_memory(T(std::forward<Args>(args)...));\n        ...\n    }\n};	code	txt	\N
 2562	1	`std::array<>` is the only container that does not allocate memory on the\nheap. Therefore, we cannot implement move operations in a way that they move\npointers to internal memory. As a consequence, std::array<> has a couple of\ndifferent guarantees:	text	txt	\N
 2562	2	- The move constructor has linear complexity because it has to move element\n  by element.\n- The move assignment operator might always throw because it has to move\n  assign element by element.	text	txt	\N
@@ -11111,9 +11108,8 @@ COPY flashback.blocks (card, "position", content, type, extension, metadata) FRO
 2760	4	In kernel config, use `CONFIG_INITRAMFS_SOURCE=/srv/nfs4/root/initramfs.cpio`.	text	txt	\N
 2761	1	The `devtmpfs` virtual filesystem can be mounted on `/dev` and contains all\nthe devices registered to kernel frameworks. The `CONFIG_DEVTMPFS_MOUNT`\nkernel configuration option makes the kernel mount it automatically at boot\ntime, except when booting on an initramfs.	text	txt	\N
 2762	1	mount -t proc nodev /proc	code	txt	\N
-2774	2	The `dispatch()` function can be invoked from the current worker thread, while\nthe `post()` function has to wait until the handler of the worker is complete\nbefore it can be invoked. In other words, the `dispatch()` function's events\ncan be executed from the current worker thread even if there are other pending\nevents queued up, while the `post()` function's events have to wait until the\nhandler completes the execution before being allowed to be executed.	text	txt	\N
-2775	1	Strand is a class in the <code>io_service</code> object that provides handler\nexecution serialization. It can be used to ensure the work we have will be\nexecuted serially.	text	txt	\N
 2775	3	The `boost::asio::io_context::strand::wrap()` function creates a new handler\nfunction object that will automatically pass the wrapped handler to the strand\nobject's dispatch function when it is called.	text	txt	\N
+2775	1	`boost::asio::io_context::strand` is a class that provides handler execution serialization. It can be used to ensure the work we have will be executed serially.	text	txt	\N
 2794	4	git clone git://git.yoctoproject.org/poky\ncd poky\nsource oe-init-build-env\nsed -i '/^MACHINE[ ?=]\\\\+/s/^MACHINE\\\\([ ?=]\\\\+\\\\).*/MACHINE\\\\1"qemuarm64"/' conf/local.conf\nbitbake qemuarm64 core-image-sato\nrunqemu core-image-sato	code	txt	\N
 2794	5	Origin: 1.2	text	txt	\N
 2796	1	Historically, `class` keyword can be used instead of `typename`. However,\nbecause this use of `class` can be misleading, you should prefer the use of\n`typename`. The keyword `struct` cannot be used in place of `typename` when\ndeclaring type parameters.	text	txt	\N
@@ -13830,7 +13826,6 @@ COPY flashback.blocks (card, "position", content, type, extension, metadata) FRO
 4096	2	cmake -C <initial-cache-script> <path-to-source>	code	txt	\N
 4097	1	The initialization and modification of existing cache variables can be done\nin command line, as follows:	text	txt	\N
 4097	2	cmake -D <var>[:<type>]=<value> <path-to-source>	code	txt	\N
-4156	1	Entities can be exported only when:	text	txt	\N
 3716	2	name: Initial Workflow\non:\n  workflow_dispatch:\njobs:\n  second_job:\n    runs-on: ubuntu-latest\n    env:\n      GITHUB_TOKEN: ${{ secrets.github_token }}\n    steps:\n      - run: tree	code	yml	\N
 4087	1		code	txt	\N
 4093	1	cmake -S ./project -B ./build	code	txt	\N
@@ -13943,11 +13938,6 @@ COPY flashback.blocks (card, "position", content, type, extension, metadata) FRO
 4150	2	template <int const& Size>\nclass test {};\n\nstatic int Size1 = 10; // internal linkage due static\n\nnamespace\n{\n    int Size2 = 10; // internal linkage due unnamed namespace\n}\n\ntest<Size1> t1; // error only on VC++\ntest<Size2> t2; // okay	code	cpp	\N
 5493	1	#include <ftxui/dom/elements.hpp>\n\nconstexpr auto content{"Flashback, for experts like you."};\n\nint main()\n{\n    ftxui::Element modifiedText{ftxui::text(content) | ftxui::bold};\n}	code	cpp	\N
 4151	1	Members of an inline namespace are treated as if they are members of the\nenclosing namespace. This property is transitive: if a namespace N contains\nan inline namespace M, which in turn contains an inline namespace O, then the\nmembers of O can be used as though they were members of M or N.	text	txt	\N
-4151	2	Common use cases of inline namespaces are:	text	txt	\N
-4151	3	* Specialization of a template is required to be done in the same namespace\n  where the template was declared.\n* Define the content of the library inside a namespace\n* Define each version of the library or parts of it inside an inner inline\n  namespace\n* Use preprocessor macros to enable a particular version of the library	text	txt	\N
-4151	4	namespace incorrect_implementation\n{\n    namespace v1\n    {\n        template<typename T>\n        int test(T value) { return 1; }\n    }\n\n    namespace v2\n    {\n        template<typename T>\n        int test(T value) { return 2; }\n    }\n\n    #ifndef _lib_version_1\n        using namespace v1;\n    #endif\n\n    #ifndef _lib_version_2\n        using namespace v2;\n    #endif\n}\n\nnamespace broken_client_code\n{\n    // okay\n    auto x = incorrect_implementation::test(42);\n\n    struct foo { int a; };\n\n    // breaks\n    namespace incorrect_implementation\n    {\n        template <>\n        int test(foo value) { return value.a; }\n    }\n\n    // won't compile\n    auto y = incorrect_implementation::test(foor{42});\n\n    // library leaks implementation details\n    namespace incorrect_implementation\n    {\n        namespace version_2\n        {\n            template<>\n            int test(foo value) { return value.a; }\n        }\n    }\n\n    // okay, but client needs to be aware of implementation details\n    auto y = incorrect_implementation::test(foor{42});\n}\n\nnamespace correct_implementation\n{\n    #ifndef _lib_version_1\n    inline namespace v1\n    {\n        template<typename T>\n        int test(T value) { return 1; }\n    }\n    #endif\n\n    #ifndef _lib_version_2\n    inline namespace v2\n    {\n        template<typename T>\n        int test(T value) { return 2; }\n    }\n    #endif\n}\n\nnamespace working_client_code\n{\n    // okay\n    auto x = correct_implementation::test(42);\n\n    struct foo { int a; };\n\n    namespace correct_implementation\n    {\n        template <>\n        int test(foo value) { return value.a; }\n    }\n\n    // okay\n    auto y = correct_implementation::test(foor{42});\n}	code	cpp	\N
-4152	1	// before C++17\nnamespace A\n{\n    namespace B\n    {\n        namespace C\n        {\n            /* ... */\n        }\n    }\n}\n\n// since C++16\nnamespace A::B::C\n{\n    /* ... */\n};	code	cpp	\N
-4154	1	import std;\n\nint main()\n{\n    std::cout << std::format("{}\\\\n", "modules are working");\n}	code	cpp	\N
 4154	2	Headers can also be imported:	text	txt	\N
 4154	3	import std;\nimport "geometry.hpp"	code	cpp	\N
 4163	5	#include <string>\n#include <vector>\n#include <memory>\n\nint main()\n{\n    auto i = 42; // int\n    auto d = 42.5; // double\n    auto c = "text"; // char const*\n    auto z = {1, 2, 3}; // std::initializer_list<int>\n\n    auto b = new char[10]{0}; // char*\n    auto s = std::string{"text"}; // std::string\n    auto v = std::vector<int>{1, 2, 3}; // std::vector<int>\n    auto p = std::make_shared<int>(42); // std::shared_ptr<int>\n\n    auto upper = [](char const c) { return toupper(c); };\n    auto add = [](auto const a, auto const b) { return a + b; };\n\n    template<typename F, typename F>\n    auto apply(F&& f, T value)\n    {\n        return f(value);\n    }\n}\n\nclass foo\n{\n    int _x;\npublic:\n    foo(int const x = 0): _x{x} {}\n    int& get() { return _x; }\n};\n\ndecltype(auto) proxy_gen(foo& f) { return f.get(); }\n// ^__ decltype() preserves cv-ref qualification of return type	code	cpp	\N
@@ -13959,6 +13949,8 @@ COPY flashback.blocks (card, "position", content, type, extension, metadata) FRO
 4168	3	Values of scoped enumerations do not convert implicitly to int.	text	txt	\N
 4168	4	enum class status: unsigned int; // forward declared\n\nstatus do_something(); // function declaration/prototype\n\nenum class status : unsigned int\n{\n    success = 0,\n    failed = 1,\n    unknown = 0xffff0000U\n};\n\nstatus do_something() { return status::success; }	code	cpp	\N
 4169	1	#include <string>\n\nenum class status : unsigned int\n{\n    success = 0,\n    failure = 1,\n    unknown = 0xffff0000U\n};\n\nstd::string_view to_string(status const s)\n{\n    switch (s)\n    {\n        using enum status;\n        case success: return "success";\n        case failure: return "failure";\n        case unknown: return "unknown";\n    }\n}	code	cpp	\N
+4152	1	// before C++17\nnamespace A\n{\n    namespace B\n    {\n        namespace C\n        {\n            /* ... */\n        }\n    }\n}\n\n// since C++17\nnamespace A::B::C\n{\n    /* ... */\n};	code	cpp	\N
+4154	1	import std;\n\nint main()\n{\n    std::cout << std::format("{}\\n", "modules are working");\n}	code	cpp	\N
 4170	1	`std::variant` is the C++17 type-safe alternative to union which supports\nnon-trivial custom types.	text	txt	\N
 4170	2	Variant is never empty. Without arguments, it default constructs the first\ntype.	text	txt	\N
 4170	3	#include <variant>\n#include <string>\n\nstd::variant<int, double, std::string> v{"some characters"};\nbool x = std::holds_alternative<std::string>(v);\n// x == true	code	cpp	\N
@@ -14191,6 +14183,7 @@ COPY flashback.blocks (card, "position", content, type, extension, metadata) FRO
 4362	4	#include <algorithm>\n#include <ranges>\n#include <vector>\n\nint main()\n{\n    std::vector<long> numbers{1, 2, 3, 4, 5};\n    long sum{};\n\n    sum = std::for_each(numbers.begin(), numbers.end(), sum_predicate<long>{});\n    // sum == 15, using a unary predicate\n\n    std::for_each(numbers.begin(), numbers.end(), [&sum](auto v) { sum += v; });\n    // sum == 30, using a lambda\n\n    std::ranges::for_each(numbers, [&sum](auto v) { count++; sum += v; });\n    // sum == 45, using ranges\n\n    for (auto v: numbers) { sum += v; }\n    // sum == 60, using range-based for\n}	code	cpp	\N
 4362	5	#include <algorithm>\n#include <vector>\n\nint main()\n{\n    std::vector<int> data{1, 2, 3, 4, 5};\n\n    std::for_each(data.begin(), data.end(), [i = 5](int& v) mutable { v += i--; });\n    // data == {6, 6, 6, 6, 6}\n}	code	cpp	\N
 4362	6	#include <algorithm>\n#include <execution>\n#include <vector>\n\nint main()\n{\n    struct Custom {};\n    void process(Custom&) {}\n    std::vector<Custom> rng(10, Custom{});\n\n    // parallel execution C++17\n    std::for_each(std::execution::par_unseq, // parallel, in any order\n            rng.begin(), rng.end(), // all elements\n            process // invoke process on each element\n            );\n}	code	cpp	\N
+2771	3	The `boost::asio::io_context::work` class is responsible for telling the\n`io_service` object when the work starts and when it has finished. It will\nmake sure that the `boost::asio::io_context::run()` function will not exit during the time\nthe work is underway. Also, it will make sure that the `boost::asio::io_context::run()`\nfunction exits when there is no unfinished work remaining.	text	txt	\N
 4362	7	#include <algorithm>\n#include <vector>\n#include <optional>\n\nint main()\n{\n    std::vector<std::optional<int>> opt{{},2,{},4,{}};\n    // range version with projection C++20\n\n    std::ranges::for_each(opt,\n        [](int v) {\n            // iterate over projected values\n            // {0, 2, 0, 4, 0}\n        },\n        [](std::optional<int>& v){\n            // projection that will return\n            // the contained value or zero\n            return v.value_or(0);\n        }\n    );\n}	code	cpp	\N
 4363	1	As long as the operations are independent, there is no need for\nsynchronization primitives.	text	txt	\N
 4363	2	#include <algorithm>\n#include <execution>\n#include <ranges>\n#include <vector>\n\nstruct work\n{\n    void expensive_operation() { /* ... */ }\n};\n\nint main()\n{\n    std::vector<work> work_pool{work{}, work{}, work{}};\n    std::for_each(std::execution::par_unseq, work_pool.begin(), work_pool.end(), [](work& w) { w.expensive_operation(); });\n}	code	cpp	\N
@@ -14280,6 +14273,7 @@ COPY flashback.blocks (card, "position", content, type, extension, metadata) FRO
 5469	3	cmake_minimum_required(VERSION 4.0)\nproject(Example VERSION 1.0 LANGUAGES CXX)\n\ninclude(FetchContent)\n\nFetchContent_Declare(ftxui\n    GIT_REPOSITORY https://github.com/ArthurSonzogni/FTXUI\n    GIT_TAG v5.0.0\n)\nFetchContent_MakeAvailable(ftxui)\n\nadd_executable(program main.cpp)\ntarget_link_libraries(program PRIVATE ftxui::component ftxui::dom ftxui::screen)	code	cmake	\N
 4415	1	#include <string>\n\ntemplate<typename CharT>\nusing tstring = std::basic_string<CharT, std::char_traits<CharT>, std::allocator<CharT>>;\n\ntemplate<typename CharT>\ninline tstring<CharT> reverse(tstring<CharT> text)\n{\n    std::reverse(std::begin(text), std::end(text));\n    return text;\n}\n\ntemplate<typename CharT>\ninline tstring<CharT> reverse(tstring<CharT>&& text)\n{\n    std::reverse(std::begin(text), std::end(text));\n    return text;\n}	code	cpp	\N
 5197	1	When the strategy should only be set once and not change during the lifetime of the context object, we inject the strategy through the constructor. Otherwise, we use a setter method to set or change the strategy anytime.	text	md	\N
+2772	1	The `poll()` function will run the `boost::asio::io_context` object's event processing loop\nwithout blocking the execution of the thread. This will run the handlers until\nthere are no more ready handlers remaining or until the `boost::asio::io_context` object\nhas been stopped.	text	txt	\N
 4416	1	#include <string>\n#include <utility>\n\ntemplate<typename CharT>\nusing tstring = std::basic_string<CharT, std::char_traits<CharT>, std::allocator<CharT>>;\n\ntemplate<typename CharT>\ninline tstring<CharT> trim(tstring<CharT> const& text)\n{\n    tstring<CharT>::size first{text.find_first_not_of(' ')};\n    tstring<CharT>::size last{text.find_last_not_of(' ')};\n    return text.substr(first, (last - first + 1));\n}	code	cpp	\N
 4417	1	#include <string>\n#include <algorithm>\n\ntemplate<typename CharT>\nusing tstring = std::basic_string<CharT, std::char_traits<CharT>, std::allocator<CharT>>;\n\ntemplate<typename CharT>\ninline tstring<CharT> remove(tstring<CharT> text, CharT const character)\n{\n    auto last = std::remove_if(std::begin(text), std::end(text), [character](CharT const c) { return c == character; });\n    text.erase(last, std::end(text));\n    return text;\n}	code	cpp	\N
 4418	1	#include <string>\n#include <sstream>\n#include <vector>\n\ntemplate<typename CharT>\nusing tstring = std::basic_string<CharT, std::char_traits<CharT>, std::allocator<CharT>>;\n\ntemplate<typename CharT>\nusing tstringstream = std::basic_stringstream<CharT, std::char_traits<CharT>, std::allocator<CharT>>;\n\ntemplate<typename CharT>\ninline std::vector<tstring<CharT>> split(tstring<CharT> text, CharT const delimiter)\n{\n    auto sstream = tstringstream<CharT>{text};\n    auto tokens = std::vector<tstring<CharT>>{};\n    auto token = tstring<CharT>{};\n\n    while (std::getline(sstream, token, delimiter))\n    {\n        if (!token.empty())\n            tokens.push_back(token);\n    }\n\n    return tokens;\n}	code	cpp	\N
@@ -14338,6 +14332,7 @@ COPY flashback.blocks (card, "position", content, type, extension, metadata) FRO
 5469	4	#include <ftxui/component.hpp>\n#include <ftxui/dom.hpp>\n#include <ftxui/screen.hpp>\n\nint main()\n{\n}	code	cpp	\N
 5480	1	Each cell in the screen grid is a `ftxui::Pixel`, which holds a `character` of type `std::string` containing a Unicode codepoint, color properties `foreground_color` and `background_color` of type `ftxui::Color`, and a bitfield of characteristics like `blink`, `bold`, `dim`, `inverted`, `underlined`, `underlined_double`, and `strikethrough`.	text	md	\N
 5527	1	#include <ftxui/dom/elements.hpp>\n\nint main()\n{\n    ftxui::Element text{ftxui::text("Flashback, for experts like you")};\n    ftxui::dim(text);\n}	code	cpp	\N
+4151	2	Common use cases of inline namespaces are:\n\n* Specialization of a template is required to be done in the same namespace\n  where the template was declared.\n* Define the content of the library inside a namespace\n* Define each version of the library or parts of it inside an inner inline\n  namespace\n* Use preprocessor macros to enable a particular version of the library	text	txt	\N
 4466	2	#include <filesystem>\n#include <fstream>\n#include <thread>\n#include <chrono>\n\nint main(int argc, char** argv)\n{\n    std::stop_source worker_controller{};\n\n    std::jthread worker{\n        [](std::stop_token const& caller_token, std::filesystem::path file_path)\n        {\n            bool readable{};\n            std::ifstream file_stream{file_path};\n\n            if (file_stream.is_open())\n                readable = true;\n\n            std::stop_callback close_stream{caller_token, [&]{ readable = false; }};\n            while (readable)\n            {\n                /* do something with the file */\n            }\n\n            file_stream.close();\n        }, worker_controller.get_token(), argv[0]\n    };\n\n    worker.detach();\n    std::this_thread::sleep_for(std::chrono::seconds{5});\n    worker_controller.request_stop();\n    std::this_thread::sleep_for(std::chrono::seconds{5});\n}	code	cpp	\N
 4467	1	#include <thread>\n#include <vector>\n\nvoid task() { }\n\nint main()\n{\n    unsigned int const min_threads = 2;\n    unsigned int const hw_threads = std::thread::hardware_concurrency();\n    unsigned int const num_threads = hw_threads ? hw_threads : min_threads;\n\n    std::vector<std::thread> threads(num_threads-1); // count main thread as well\n\n    for (std::thread& t: threads)\n        t = std::thread{task};\n\n    for (std::thread& t: threads)\n        t.join();\n}	code	cpp	\N
 4468	1	#include <thread>\n#include <iostream>\n\nint main()\n{\n    std::thread::id main_thread_id = std::this_thread::get_id();\n    std::cout << main_thread_id << std::endl;\n}	code	cpp	\N
@@ -15009,26 +15004,24 @@ COPY flashback.blocks (card, "position", content, type, extension, metadata) FRO
 2175	2	#include <algorithm>\n#include <execution>\n#include <atomic>\n#include <vector>\n\nint main()\n{\n    std::atomic<std::size_t> count{};\n    std::atomic<long> sum{};\n    std::vector<long> numbers{1, 2, 3, 4, 5};\n    std::for_each(std::execution::par_unseq, numbers.begin(), numbers.end(), [&](auto const& e){ count++; sum += e; });\n    // count: 5, sum: 15\n}	code	cpp	\N
 2176	1	#include <algorithm>\n#include <ranges>\n#include <vector>\n\nint main()\n{\n    std::size_t count{};\n    long sum{};\n    std::vector<long> numbers{1, 2, 3, 4, 5};\n    std::ranges::for_each(numbers, [&](auto const& e){ count++; sum += e; });\n    // count: 5, sum: 15\n}	code	cpp	\N
 2177	3	#include <iostream>\n#include <algorithm>\n#include <vector>\n\nint main()\n{\n    std::vector<int> numbers{1,2,3,4,5};\n\n    auto iter1 = numbers.begin();\n    auto iter2 = numbers.end();\n\n    std::for_each(iter1, iter2, [](auto e) { std::cout << e << " "; });\n}	code	cpp	\N
+2773	2	Any thread calling `boost::asio::io_context::run()` function will block execution and wait\nfor tasks to be enqueued, or finish existing tasks. Best practice is to attach\n`boost::asio::io_context` to slave threads so that they wait for tasks to be given and\nexecute them while master threads assign new tasks to them.	text	txt	\N
 2177	5	#include <iostream>\n#include <algorithm>\n#include <ranges>\n#include <vector>\n\ntemplate<typename T>\nstruct sentinel\n{\n    using iter_t = typename std::vector<T>::iterator;\n    iter_t begin;\n    std::iter_difference_t<iter_t> count;\n    bool operator==(iter_t const& other) const { return std::distance(begin, other) >= count; }\n};\n\nint main()\n{\n    std::vector<long> numbers{1,2,3,4,5};\n    std::vector<long>::iterator iter = numbers.begin();\n    std::ranges::for_each(iter, sentinel<long>{iter, 3}, [](auto e) { std::cout << e << " "; });\n}	code	cpp	\N
 2178	1	#include <algorithm>\n#include <vector>\n#include <list>\n\nint main()\n{\n    std::vector<long> random_access{1,2,3,4,5};\n    std::list<long> bidirectional{1,2,3,4,5};\n\n    auto random_access_iterator = random_access.begin();\n    random_access_iterator += 3; // OK\n    random_access_iterator++; // OK\n    ssize_t random_difference = random_access_iterator - random_access.begin(); // OK: 4\n\n    auto bidirectional_iterator = bidirectional.begin();\n    //bidirectional_iterator += 5; // ERROR\n    std::advance(bidirectional_iterator, 3); // OK\n    bidirectional_iterator++; // OK, all iterators provide advance operation\n    //ssize_t bidirectional_difference = bidirectional_iterator - bidirectional.begin(); // ERROR\n    ssize_t bidirectional_difference = std::distance(bidirectional.begin(), bidirectional_iterator); // OK: 4\n}	code	cpp	\N
 2180	1	#include <algorithm>\n#include <ranges>\n#include <vector>\n\nint main()\n{\n    std::vector<long> numbers{1,2,3,4,5};\n\n    auto last_sorted = std::is_sorted_until(numbers.begin(), numbers.end());\n\n    for (auto iter = numbers.begin(); iter != last_sorted; ++iter)\n        continue;\n\n    for (auto v: std::ranges::subrange(numbers.begin(), last_sorted))\n        continue;\n}	code	cpp	\N
 2179	2	#include <algorithm>\n#include <ranges>\n#include <vector>\n\nint main()\n{\n    std::vector<long> in{1,2,3,4,5,6,7,8,9,10};\n    std::vector<long> out(10, 0);\n\n    std::copy(in.begin(), in.end(), out.begin());\n    // output range is implied as: std::next(out.begin(), std::distance(in.begin(), in.end()));\n}	code	cpp	\N
 2181	3	#include <algorithm>\n#include <vector>\n\nint main()\n{\n    std::vector<long> numbers{1,2,3,4,5};\n    std::size_t sum{};\n    std::for_each(numbers.begin(), numbers.end(), [&sum](auto const e) { sum += e; });\n    for (auto e: numbers) { sum += e; }\n}	code	cpp	\N
-2771	1	Running the `io_service` object's event processing loop will block the\nexecution of the thread and will run ready handlers until there are no more\nready handlers remaining or until the `io_service` object has been stopped.	text	txt	\N
-2771	3	The `boost::asio::io_service::work` class is responsible for telling the\n`io_service` object when the work starts and when it has finished. It will\nmake sure that the `io_service::run()` function will not exit during the time\nthe work is underway. Also, it will make sure that the `io_service::run()`\nfunction exits when there is no unfinished work remaining.	text	txt	\N
-2771	2	#include <iostream>\n#include <boost/asio.hpp>\n\nint main()\n{\n    boost::asio::io_service service;\n    boost::asio::io_service::work work{service};\n    service.run();\n    // will not be reached: blocking service\n}	code	cpp	\N
-2772	2	#include <iostream>\n#include <boost/asio.hpp>\n\nint main()\n{\n    boost::asio::io_service service;\n    boost::asio::io_service::work work{service};\n    service.poll();\n    // will be reached: non-blocking service\n}	code	cpp	\N
-2773	3	#include <thread>\n#include <chrono>\n#include <functional>\n#include <boost/asio.hpp>\n\nvoid finish_tasks(boost::asio::io_service& service)\n{\n    service.run();\n}\n\nvoid some_work(std::size_t s)\n{\n    std::this_thread::sleep_for(std::chrono::seconds(s));\n}\n\nint main()\n{\n    boost::asio::io_service service;\n    std::thread worker{finish_tasks, std::ref(service)};\n    service.post(std::bind(some_work, 2));\n    worker.join();\n}	code	cpp	\N
-2774	3	#include <thread>\n#include <chrono>\n#include <functional>\n#include <boost/asio.hpp>\n\nvoid some_work(std::size_t s)\n{\n    std::this_thread::sleep_for(std::chrono::seconds(s));\n}\n\nvoid finish_tasks(boost::asio::io_service& service)\n{\n    service.run();\n}\n\nint main()\n{\n    boost::asio::io_service service;\n    std::thread worker{finish_tasks, std::ref(service)};\n    boost::asio::dispatch(service, std::bind(some_work, 2));\n    worker.join();\n    service.stop();\n}	code	cpp	\N
-2775	2	#include <thread>\n#include <chrono>\n#include <functional>\n#include <boost/asio.hpp>\n\nvoid some_work(std::size_t s)\n{\n    std::this_thread::sleep_for(std::chrono::seconds(s));\n}\n\nvoid finish_tasks(boost::asio::io_service& service)\n{\n    service.run();\n}\n\nint main()\n{\n    boost::asio::io_context service;\n    boost::asio::io_context::strand strand{service};\n    std::thread worker{finish_tasks, std::ref(service)};\n    strand.post(std::bind(some_work, 2));\n    service.post(strand.wrap(std::bind(some_work, 2)));\n    worker.join();\n    service.stop();\n}	code	cpp	\N
 4144	3	consteval int f(int i) { return i; }\n\nconstexpr int g(int i)\n{\n    if consteval\n    {\n        return f(i) + 1; // immediate function context\n    }\n    else\n    {\n        return 42;\n    }\n}\n\nconsteval int h(int i)\n{\n    return f(i) + 1; // immediate function context\n}	code	cpp	\N
 5254	1	which --skip-dot <command>	code	sh	\N
 5387	3	There are two predefined roles, `pg_read_all_data` and `pg_write_all_data`, that can be granted to the user who performs restore.	text	md	\N
-2776	1	#include <thread>\n#include <mutex>\n#include <iostream>\n#include <exception>\n#include <boost/asio.hpp>\n\nstd::mutex ostream_lock;\n\nvoid some_work()\n{\n    throw std::runtime_error("i/o failure");\n}\n\nvoid finish_tasks(boost::asio::io_service& service)\n{\n    try\n    {\n        service.run();\n    }\n    catch (std::runtime_error const& exp)\n    {\n        std::lock_guard<std::mutex> lock{ostream_lock};\n        std::cerr << exp.what() << "\\\\n";\n    }\n}\n\nint main()\n{\n    boost::asio::io_context service;\n    std::thread worker{finish_tasks, std::ref(service)};\n    service.post(some_work);\n    service.post(some_work); // no more io context to dispatch\n    worker.join();\n    service.stop();\n}	code	cpp	\N
 1438	1	#include <iostream>\n\nstruct base\n{\n    static void show() { std::cout << "base\\\\n"; }\n};\n\n// pre-c++20\nauto tshow = [](auto x)\n{\n    using T = std::decay_t<decltype(x)>;\n\n    T other;   // create instance\n    T::show(); // call static method\n};\n\n// post-c++20\nauto generic_show = []<typename T>(T const& x)\n{\n    T other;   // create instance\n    T::show(); // call static method\n};\n\nint main()\n{\n    base object;\n\n    tshow(object);\n    generic_show(object);\n}	code	cpp	\N
 1439	1	template<typename ...T>\nvoid do_something(T&& ...args) { /* ... */ }\n\nauto forward_something = [](auto&& ...args)\n{\n    return do_something(std::forward<decltype(args)>(args)...);\n};\n\nauto generic_forward = []<typename ...T>(T&& ...args)\n{\n    return do_something(std::forward<T>(args)...);\n};	code	cpp	\N
 1440	4	#include <functional>\n\nvoid sample()\n{\n    std::function<int(int const)> lfib = [&lfib](int const n)\n    {\n        return n <= 2 ? 1 : lfib(n - 1) + lfib(n - 2);\n    };\n\n    auto f10 = lfib(10);\n}	code	cpp	\N
-2777	1	#include <thread>\n#include <chrono>\n#include <boost/asio.hpp>\n\nvoid some_work()\n{\n    std::this_thread::sleep_for(std::chrono::seconds(2));\n}\n\nvoid finish_tasks(boost::asio::io_service& service)\n{\n    service.run();\n}\n\nvoid timer_handler(boost::system::error_code const&)\n{\n}\n\nint main()\n{\n    boost::asio::io_context service;\n    boost::asio::io_context::strand strand{service};\n    std::thread worker{finish_tasks, std::ref(service)};\n    service.post(some_work);\n\n    boost::asio::deadline_timer timer{service};\n    timer.expires_from_now(boost::posix_time::seconds(1));\n    timer.async_wait(strand.wrap(timer_handler));\n\n    worker.join();\n    service.stop();\n}	code	cpp	\N
+2771	1	Running the `boost::asio::io_context` object's event processing loop will block the\nexecution of the thread and will run ready handlers until there are no more\nready handlers remaining or until the `boost::asio::io_context` object has been stopped.	text	txt	\N
+2771	2	#include <boost/asio.hpp>\n\nint main()\n{\n    boost::asio::io_context context;\n    boost::asio::io_context::work work{context};\n    context.run();\n    // will not be reached: blocking service\n}	code	cpp	\N
+2772	2	#include <boost/asio.hpp>\n\nint main()\n{\n    boost::asio::io_context context;\n    boost::asio::io_context::work work{context};\n    context.poll();\n    // will be reached: non-blocking service\n}	code	cpp	\N
+2773	3	#include <thread>\n#include <chrono>\n#include <functional>\n#include <boost/asio.hpp>\n\nvoid finish_tasks(boost::asio::io_context& context)\n{\n    context.run();\n}\n\nvoid some_work(std::size_t s)\n{\n    std::this_thread::sleep_for(std::chrono::seconds(s));\n}\n\nint main()\n{\n    boost::asio::io_context context;\n    std::thread worker{finish_tasks, std::ref(context)};\n    context.post(std::bind(some_work, 2));\n    worker.join();\n}	code	cpp	\N
+2775	2	#include <thread>\n#include <chrono>\n#include <boost/asio.hpp>\n\nvoid wait_for(std::chrono::seconds const s)\n{\n    std::this_thread::sleep_for(s);\n}\n\nint main()\n{\n    boost::asio::io_context context{};\n    boost::asio::io_context::strand strand{context};\n    boost::asio::executor_work_guard guard{boost::asio::make_work_guard(context)};\n    std::jthread worker{[&context] { context.run(); }};\n    strand.dispatch([] { wait_for(std::chrono::seconds{1}); });\n    strand.dispatch([] { wait_for(std::chrono::seconds{1}); });\n    strand.dispatch([] { wait_for(std::chrono::seconds{1}); });\n    guard.reset();\n}	code	cpp	\N
+2774	3	#include <thread>\n#include <chrono>\n#include <boost/asio.hpp>\n\nvoid wait_for(std::chrono::seconds const s)\n{\n    std::this_thread::sleep_for(s);\n}\n\nint main()\n{\n    boost::asio::io_context context{};\n    boost::asio::executor_work_guard guard{boost::asio::make_work_guard(context)};\n    std::jthread worker{[&context] { context.run(); }};\n    context.dispatch([] { wait_for(std::chrono::seconds{1}); });\n    context.dispatch([] { wait_for(std::chrono::seconds{1}); });\n    context.dispatch([] { wait_for(std::chrono::seconds{1}); });\n    guard.reset();\n}	code	cpp	\N
 2778	1	#include <thread>\n#include <string>\n#include <boost/asio.hpp>\n\nvoid initialize_service(boost::asio::io_context& service)\n{\n    service.run();\n}\n\nint main()\n{\n    boost::asio::io_context service;\n    boost::asio::io_context::strand strand{service};\n\n    std::thread worker{initialize_service, std::ref(service)};\n\n    boost::asio::ip::tcp::socket socket{service};\n    boost::asio::ip::tcp::resolver resolver{service};\n    boost::asio::ip::tcp::resolver::query query{"127.0.0.1", std::to_string(9090)};\n    boost::asio::ip::tcp::resolver::iterator iterator = resolver.resolve(query);\n    boost::asio::ip::tcp::endpoint endpoint = *iterator;\n\n    socket.connect(endpoint);\n    socket.shutdown(boost::asio::ip::tcp::socket::shutdown_both);\n    socket.close();\n\n    worker.join();\n    service.stop();\n}	code	cpp	\N
 2779	1	#include <thread>\n#include <iostream>\n#include <functional>\n#include <boost/asio.hpp>\n\nvoid connection_worker(boost::asio::io_context& context)\n{\n    context.run();\n}\n\nvoid on_connect(boost::asio::ip::tcp::endpoint const& endpoint)\n{\n    std::cout << "connected to " << endpoint.address().to_string() << std::endl;\n}\n\nint main()\n{\n    boost::asio::io_context context{};\n    boost::asio::io_context::strand strand{context};\n    std::thread worker{connection_worker, std::ref(context)};\n\n    boost::asio::ip::tcp::socket socket{context};\n    boost::asio::ip::tcp::resolver resolver{context};\n\n    boost::asio::ip::tcp::resolver::query query{"127.0.0.1", "9000"};\n    boost::asio::ip::tcp::resolver::iterator endpoints = resolver.resolve(query);\n\n    boost::asio::ip::tcp::endpoint endpoint = *endpoints;\n    socket.async_connect(endpoint, std::bind(on_connect, std::ref(endpoint)));\n\n    socket.shutdown(boost::asio::ip::tcp::socket::shutdown_both);\n    socket.close();\n    worker.join();\n    context.stop();\n}	code	cpp	\N
 5528	1	#include <ftxui/dom/elements.hpp>\n\nint main()\n{\n    ftxui::Element text{ftxui::text("Flashback, for experts like you")};\n    ftxui::invert(text);\n}	code	cpp	\N
@@ -15881,6 +15874,12 @@ COPY flashback.blocks (card, "position", content, type, extension, metadata) FRO
 2830	2	struct Matrix\n{\n    using iterator = ...;\n};\n\ntemplate<typename T>\nusing MatrixIterator = typename Matrix<T>::iterator;	code	cpp	\N
 2830	5	std::add_const_t<T> // C++14 abbreviate equivalent to std::add_const<T>::type available since C++11\nstd::enable_if_v<T> // C++14 abbreviate equivalent to std::enable_if<T>::value available since C++11	code	cpp	\N
 125	1	#include <string>\n#include <string_view>\n#include <format>\n#include <cstdio>\n\nclass Data\n{\n    std::string buffer;\n};\n\ntemplate <>\nstruct std::formatter<Data>\n{\n    template<typename Context>\n    constexpr auto parse(Context& ctx)\n    {\n        return ctx.begin();\n    }\n\n    template<typename Format>\n    auto format(Data const& d, Format& ctx)\n    {\n        return formal_to(ctx.out(), "{}", d.buffer);\n    }\n};\n\ntemplate<typename... Args>\nvoid print(std::string_view const fmt_str, Args&&... args)\n{\n    auto fmt_args{std::make_format_args(args...)};\n    std::string out{vformat(fmt_str, fmt_args)};\n    fputs(out.c_str(), stdout);\n}\n\nint main()\n{\n    Data data;\n    print("{}", data);\n}	code	cpp	\N
+4151	3	namespace incorrect_implementation\n{\n    namespace v1\n    {\n        template<typename T>\n        int test(T value) { return 1; }\n    }\n\n    namespace v2\n    {\n        template<typename T>\n        int test(T value) { return 2; }\n    }\n\n    #ifndef _lib_version_1\n        using namespace v1;\n    #endif\n\n    #ifndef _lib_version_2\n        using namespace v2;\n    #endif\n}\n\nnamespace broken_client_code\n{\n    // okay\n    auto x = incorrect_implementation::test(42);\n\n    struct foo { int a; };\n\n    // breaks\n    namespace incorrect_implementation\n    {\n        template <>\n        int test(foo value) { return value.a; }\n    }\n\n    // won't compile\n    auto y = incorrect_implementation::test(foor{42});\n\n    // library leaks implementation details\n    namespace incorrect_implementation\n    {\n        namespace version_2\n        {\n            template<>\n            int test(foo value) { return value.a; }\n        }\n    }\n\n    // okay, but client needs to be aware of implementation details\n    auto y = incorrect_implementation::test(foor{42});\n}\n\nnamespace correct_implementation\n{\n    #ifndef _lib_version_1\n    inline namespace v1\n    {\n        template<typename T>\n        int test(T value) { return 1; }\n    }\n    #endif\n\n    #ifndef _lib_version_2\n    inline namespace v2\n    {\n        template<typename T>\n        int test(T value) { return 2; }\n    }\n    #endif\n}\n\nnamespace working_client_code\n{\n    // okay\n    auto x = correct_implementation::test(42);\n\n    struct foo { int a; };\n\n    namespace correct_implementation\n    {\n        template <>\n        int test(foo value) { return value.a; }\n    }\n\n    // okay\n    auto y = correct_implementation::test(foor{42});\n}	code	cpp	\N
+4156	1	Entities can be exported only when they:\n\n- have a name\n- have external linkage	text	txt	\N
+2774	2	The `boost::asio::dispatch()` function can be invoked from the current worker thread, while the `boost::asio::post()` function has to wait until the handler of the worker is complete before it can be invoked. In other words, the `boost::asio::dispatch()` function's events can be executed from the current worker thread even if there are other pending events queued up, while the `boost::asio::post()` function's events have to wait until the handler completes the execution before being allowed to be executed.	text	txt	\N
+2776	1	#include <thread>\n#include <mutex>\n#include <iostream>\n#include <exception>\n#include <boost/asio.hpp>\n\nstd::mutex ostream_lock;\n\nvoid some_work()\n{\n    throw std::runtime_error("i/o failure");\n}\n\nvoid finish_tasks(boost::asio::io_context& context)\n{\n    try\n    {\n        context.run();\n    }\n    catch (std::runtime_error const& exp)\n    {\n        std::lock_guard<std::mutex> lock{ostream_lock};\n        std::cerr << exp.what() << "\\n";\n    }\n}\n\nint main()\n{\n    boost::asio::io_context context;\n    std::jthread worker{finish_tasks, std::ref(context)};\n    context.post(some_work);\n    context.post(some_work); // no more io context to dispatch\n    context.stop();\n}	code	cpp	\N
+2777	1	#include <thread>\n#include <chrono>\n#include <boost/asio.hpp>\n\nvoid some_work()\n{\n    std::this_thread::sleep_for(std::chrono::seconds(2));\n}\n\nvoid finish_tasks(boost::asio::io_context& context)\n{\n    context.run();\n}\n\nvoid timer_handler(boost::system::error_code const&)\n{\n}\n\nint main()\n{\n    boost::asio::io_context context;\n    boost::asio::io_context::strand strand{context};\n    std::jthread worker{finish_tasks, std::ref(context)};\n    context.post(some_work);\n\n    boost::asio::deadline_timer timer{context};\n    timer.expires_from_now(boost::posix_time::seconds(1));\n    timer.async_wait(strand.wrap(timer_handler));\n}	code	cpp	\N
+5645	1	#include <thread>\n#include <chrono>\n#include <boost/asio.hpp>\n\nvoid wait_for(std::chrono::seconds const s)\n{\n    std::this_thread::sleep_for(s);\n}\n\nint main()\n{\n    boost::asio::io_context context{};\n    boost::asio::io_context::strand strand{context};\n    boost::asio::executor_work_guard guard{boost::asio::make_work_guard(context)};\n    std::jthread worker{[&context] { context.run(); }}; // without work guard the context would have stopped due to no existing tasks\n    strand.dispatch([] { wait_for(std::chrono::seconds{1}); });\n    strand.dispatch([] { wait_for(std::chrono::seconds{1}); });\n    strand.dispatch([] { wait_for(std::chrono::seconds{1}); });\n    guard.reset(); // now that context has tasks the guard can go off\n}	code	cpp	
 \.
 
 
@@ -18758,8 +18757,6 @@ COPY flashback.cards (id, headline, state) FROM stdin;
 4139	What are the possible ways of initializing aggregate objects?	draft
 4140	What object types are able to initialize specific members explicitly?	draft
 4144	What conditional statement can be used to separate a function into compiletime and runtime evaluation?	draft
-4145	What is the equivalent form of <code>if consteval</code> prior standard 23?	draft
-4146	What are the advantages of using <code>if consteval</code> compared to <code>std::is_constant_evaluated()</code>?	draft
 4147	Transfer ownership of a pointer without making a copy of it?	draft
 4149	Declare an object with internal linkage without being static?	draft
 4150	Initialize a non-type template argument with an object of internal linkage?	draft
@@ -18798,6 +18795,7 @@ COPY flashback.cards (id, headline, state) FROM stdin;
 4226	In how many ways can we apply a concept as a type constraint on a function template?	draft
 4230	What is the requirements of the type used as class template arguments?	draft
 2770	What is the objective of io_object in boost?	draft
+4146	What are the advantages of using if consteval compared to std::is_constant_evaluated()?	draft
 4239	How does compiler realize which constructor should be used as the result of arguments deduction?	draft
 4244	Use deduction guides for the constructor of a class that takes two iterators to deduce the value type of iterators?	draft
 4247	Iterate over a range without invoking iterator functions?	draft
@@ -20945,6 +20943,8 @@ COPY flashback.cards (id, headline, state) FROM stdin;
 3938	What are the advantages of static strategy pattern over dynamic strategy pattern?	draft
 2769	What is the objective of io_context in boost?	draft
 124	Implement a simple print function taking format parameters?	draft
+4145	What is the equivalent form of if consteval prior C++23?	draft
+5645	Use work guard to prevent an io_context object from stopping before tasks are dispatched?	draft
 \.
 
 
@@ -21042,6 +21042,7 @@ COPY flashback.milestones (subject, roadmap, level, "position") FROM stdin;
 29	3	depth	9
 27	3	origin	8
 13	3	origin	3
+78	5	depth	1
 \.
 
 
@@ -21051,6 +21052,7 @@ COPY flashback.milestones (subject, roadmap, level, "position") FROM stdin;
 
 COPY flashback.nerves ("user", resource, subject) FROM stdin;
 2	236	6
+2	237	3
 \.
 
 
@@ -21486,25 +21488,6 @@ COPY flashback.producers (resource, provider) FROM stdin;
 --
 
 COPY flashback.progress ("user", card, last_practice, duration, progression) FROM stdin;
-2	4139	2025-12-10 11:49:00.534666+00	400	0
-2	4140	2025-12-10 12:09:28.659015+00	118	0
-2	110	2025-12-10 12:09:52.703735+00	24	0
-2	118	2025-12-10 12:10:11.242611+00	19	0
-2	119	2025-12-10 12:11:23.307698+00	72	0
-2	4144	2025-12-10 12:13:42.813413+00	139	0
-2	4145	2025-12-10 12:13:56.826333+00	14	0
-2	4146	2025-12-10 12:14:28.435344+00	32	0
-2	4147	2025-12-10 12:16:12.667727+00	104	0
-2	109	2025-12-10 12:16:36.326456+00	24	0
-2	4149	2025-12-10 12:17:31.712993+00	55	0
-2	4150	2025-12-10 12:19:15.905831+00	104	0
-2	4151	2025-12-10 12:22:57.498301+00	222	0
-2	4152	2025-12-10 12:23:08.327246+00	11	0
-2	1481	2025-12-10 12:24:29.269667+00	81	0
-2	4154	2025-12-10 12:25:31.045994+00	11	0
-2	1484	2025-12-10 12:28:49.057145+00	198	0
-2	4156	2025-12-10 12:32:16.049402+00	207	0
-2	4157	2025-12-10 12:35:49.696408+00	213	0
 2	1483	2025-12-10 12:46:18.710693+00	629	0
 2	1485	2025-12-10 12:46:54.891907+00	36	0
 2	1486	2025-12-10 13:09:45.160596+00	305	0
@@ -21643,6 +21626,22 @@ COPY flashback.progress ("user", card, last_practice, duration, progression) FRO
 2	4138	2026-02-23 11:42:38.537898+00	44	0
 2	5239	2025-12-13 07:14:25.291621+00	118	0
 2	5240	2025-12-13 07:16:46.246076+00	141	0
+2	4140	2026-02-24 16:48:23.759648+00	110	0
+2	118	2026-02-24 16:49:50.772598+00	8	0
+2	119	2026-02-24 16:50:09.664378+00	18	0
+2	4144	2026-02-24 16:50:50.631552+00	40	0
+2	4145	2026-02-24 16:52:01.11981+00	69	0
+2	4146	2026-02-24 16:53:28.514193+00	86	0
+2	4147	2026-02-24 16:54:53.276709+00	84	0
+2	109	2026-02-24 16:55:23.94372+00	29	0
+2	4149	2026-02-24 16:57:15.763786+00	111	0
+2	4150	2026-02-24 17:06:20.604741+00	544	0
+2	4151	2026-02-25 06:09:47.514186+00	111	0
+2	1481	2026-02-25 06:11:17.035693+00	50	0
+2	1484	2026-02-25 06:13:30.721136+00	132	0
+2	4154	2026-02-25 06:14:20.839522+00	47	0
+2	4156	2026-02-25 06:15:42.968424+00	80	0
+2	4157	2026-02-25 06:16:40.945922+00	36	0
 2	5241	2025-12-13 07:17:18.649881+00	32	0
 2	5242	2025-12-13 07:23:42.726624+00	384	0
 2	5243	2025-12-13 07:25:18.283389+00	96	0
@@ -21803,7 +21802,6 @@ COPY flashback.progress ("user", card, last_practice, duration, progression) FRO
 2	5421	2026-02-23 02:45:34.510712+00	60	0
 2	5431	2026-02-23 06:31:50.942114+00	86	0
 2	5423	2026-02-23 02:46:20.579939+00	45	0
-2	213	2026-02-23 11:44:36.402453+00	4	2
 2	5417	2026-02-23 06:29:24.261922+00	27	0
 2	223	2026-02-23 06:40:10.513564+00	62	1
 2	108	2026-02-23 08:27:40.176586+00	53	0
@@ -21813,7 +21811,17 @@ COPY flashback.progress ("user", card, last_practice, duration, progression) FRO
 2	2769	2026-02-24 08:20:19.774314+00	8	0
 2	2770	2026-02-24 08:20:59.883298+00	39	0
 2	4076	2026-02-24 08:21:26.245101+00	25	0
-2	2771	2026-02-24 08:21:43.473536+00	9	0
+2	213	2026-02-24 15:20:13.929608+00	4	2
+2	4139	2026-02-24 16:46:33.088019+00	592	0
+2	110	2026-02-24 16:49:41.30636+00	76	0
+2	4152	2026-02-25 06:10:26.242099+00	22	0
+2	2771	2026-02-25 10:11:10.801559+00	453	0
+2	2772	2026-02-25 10:12:25.358498+00	74	0
+2	2773	2026-02-25 10:21:47.059893+00	561	0
+2	2774	2026-02-25 11:26:01.060983+00	45	0
+2	2775	2026-02-25 11:28:57.901831+00	176	0
+2	2776	2026-02-25 14:08:26.214131+00	878	0
+2	2777	2026-02-25 14:17:55.040474+00	567	0
 \.
 
 
@@ -22107,6 +22115,7 @@ COPY flashback.resources (id, name, type, pattern, link, production, expiration)
 33	Linux Driver Development for Embedded Processors	book	chapter	https://vdoc.pub/download/linux-driver-development-for-embedded-processors-second-edition-learn-to-develop-linux-embedded-drivers-with-kernel-49-lts-1gf0ri0tddno	1766793600	1924560000
 21	A Common-Sense Guide to Data Structures and Algorithms	book	chapter	https://pragprog.com/titles/jwdsal2/a-common-sense-guide-to-data-structures-and-algorithms-second-edition/	1672531200	1861920000
 228	Advanced ESP32	course	chapter	https://subscription.packtpub.com/video/iot-hardware/9781800202016	1577836800	1861920000
+237	Boost	nerve	synapse	\N	1772029128	1988150400
 \.
 
 
@@ -22126,6 +22135,7 @@ COPY flashback.roadmaps (id, name, "user") FROM stdin;
 2	String Theory Physicist	2
 1	Embedded Linux Software Engineer	2
 3	Linux Administrator	2
+5	German Language	6
 \.
 
 
@@ -26484,6 +26494,7 @@ COPY flashback.section_cards (resource, section, card, "position") FROM stdin;
 106	2	3663	31
 106	2	3664	32
 69	3	2021	1
+237	1	5645	1
 \.
 
 
@@ -28144,6 +28155,7 @@ COPY flashback.sections (resource, "position", name, link, state) FROM stdin;
 128	5	\N	\N	draft
 128	6	\N	\N	draft
 128	7	\N	\N	draft
+237	1	Asio	\N	draft
 116	1	Algorithms and Data Structures Made Easy	https://youtube.com/playlist?list=PL2EF13wm-hWBZxHel48KrVo-R-fG_rpm7	draft
 128	8	\N	\N	draft
 128	9	\N	\N	draft
@@ -28337,10 +28349,10 @@ COPY flashback.sections (resource, "position", name, link, state) FROM stdin;
 COPY flashback.sessions ("user", token, device, last_usage) FROM stdin;
 2	Txqw8ldUFaI+e9TGfBlP6YxBkn6bgngfQMJITK8DUSQ	b53c3d26-9f71-a69d-d031-c7bf2febd123	2025-12-22 23:00:00+00
 2	S+QZFj/aiqeZCU9t68F97mH7tZH9XEySCgQF/8R08pA	0bdb9226-aefa-4351-8d6e-195d6e5ff28f	2026-02-22 00:00:00+00
-6	6iF44Iw2Y/NIvt+c1TVX3ReZJDsfJynkhR22sxGymJg	0b0f1bd6-8e6b-4ce9-aa4a-61b54e7a9bfb	2026-02-24 00:00:00+00
-2	KHvqvUtrQuNuv1D8yEfHNP9erEx3zsfN4pKEasnauQs	5b33a8c4-d1c2-4e3b-af88-fa12dce84284	2026-02-24 00:00:00+00
-2	kENXFbSZvJrAggEpbDHV0DVnUKDNwYlRsoszdHSYNf4	ea96bd44-1ab3-4c68-9ed3-ab47883e57ef	2026-02-24 00:00:00+00
-2	z1N4Egb7ZDMyS4LR1cbFr+CuVWwwr39x3BbEUSpYhW0	70c60675-db09-4fc2-bd9a-0e178401f6e7	2026-02-24 00:00:00+00
+2	z1N4Egb7ZDMyS4LR1cbFr+CuVWwwr39x3BbEUSpYhW0	70c60675-db09-4fc2-bd9a-0e178401f6e7	2026-02-25 00:00:00+00
+6	6iF44Iw2Y/NIvt+c1TVX3ReZJDsfJynkhR22sxGymJg	0b0f1bd6-8e6b-4ce9-aa4a-61b54e7a9bfb	2026-02-25 00:00:00+00
+2	kENXFbSZvJrAggEpbDHV0DVnUKDNwYlRsoszdHSYNf4	ea96bd44-1ab3-4c68-9ed3-ab47883e57ef	2026-02-25 00:00:00+00
+2	KHvqvUtrQuNuv1D8yEfHNP9erEx3zsfN4pKEasnauQs	5b33a8c4-d1c2-4e3b-af88-fa12dce84284	2026-02-25 00:00:00+00
 \.
 
 
@@ -28576,6 +28588,7 @@ COPY flashback.shelves (resource, subject) FROM stdin;
 235	45
 229	45
 236	6
+237	3
 \.
 
 
@@ -28673,6 +28686,7 @@ COPY flashback.subjects (id, name) FROM stdin;
 75	Superstring Theory
 76	Mirror Symmetry
 77	Gauge/Gravity Duality
+78	B2 Level
 \.
 
 
@@ -31610,6 +31624,7 @@ COPY flashback.topics ("position", name, subject, level) FROM stdin;
 2	Hotspot	17	surface
 1	CA Private Key	16	surface
 2	CA Certificate	16	surface
+1	Redewendung	78	depth
 \.
 
 
@@ -31627,7 +31642,7 @@ COPY flashback.users (id, name, email, state, verified, joined, hash) FROM stdin
 -- Name: cards_id_seq; Type: SEQUENCE SET; Schema: flashback; Owner: flashback
 --
 
-SELECT pg_catalog.setval('flashback.cards_id_seq', 5644, true);
+SELECT pg_catalog.setval('flashback.cards_id_seq', 5645, true);
 
 
 --
@@ -31648,21 +31663,21 @@ SELECT pg_catalog.setval('flashback.providers_id_seq', 35, true);
 -- Name: resources_id_seq; Type: SEQUENCE SET; Schema: flashback; Owner: flashback
 --
 
-SELECT pg_catalog.setval('flashback.resources_id_seq', 236, true);
+SELECT pg_catalog.setval('flashback.resources_id_seq', 237, true);
 
 
 --
 -- Name: roadmaps_id_seq; Type: SEQUENCE SET; Schema: flashback; Owner: flashback
 --
 
-SELECT pg_catalog.setval('flashback.roadmaps_id_seq', 4, true);
+SELECT pg_catalog.setval('flashback.roadmaps_id_seq', 5, true);
 
 
 --
 -- Name: subjects_id_seq; Type: SEQUENCE SET; Schema: flashback; Owner: flashback
 --
 
-SELECT pg_catalog.setval('flashback.subjects_id_seq', 77, true);
+SELECT pg_catalog.setval('flashback.subjects_id_seq', 78, true);
 
 
 --
@@ -32205,5 +32220,5 @@ GRANT ALL ON SCHEMA public TO brian;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict MfCXpf19lP7pL4jiU4jXRv2UlMbXXCoJT0OKjLvKHrO4KuS9pK0ZGADbHqOfwOC
+\unrestrict c4wAHmfi5fRsz9BFRdE7a7SQPcTuYy59OtfCcCuJA1iOoe5vl7KOAiErpOP0Voc
 
