@@ -60,69 +60,6 @@ window.addEventListener('DOMContentLoaded', () => {
     // Display breadcrumb
     displayBreadcrumb();
 
-    const signoutBtn = document.getElementById('signout-btn');
-    if (signoutBtn) {
-        signoutBtn.addEventListener('click', async (e) => {
-            e.preventDefault();
-            await client.signOut();
-            window.location.href = '/index.html';
-        });
-    }
-
-    const addCardBtn = document.getElementById('add-card-btn');
-    if (addCardBtn) {
-        addCardBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            UI.toggleElement('add-card-form', true);
-            setTimeout(() => {
-                const headlineInput = document.getElementById('card-headline');
-                if (headlineInput) {
-                    headlineInput.focus();
-                }
-            }, 100);
-        });
-    }
-
-    const cancelCardBtn = document.getElementById('cancel-card-btn');
-    if (cancelCardBtn) {
-        cancelCardBtn.addEventListener('click', () => {
-            UI.toggleElement('add-card-form', false);
-            UI.clearForm('card-form');
-        });
-    }
-
-    const cardForm = document.getElementById('card-form');
-    if (cardForm) {
-        cardForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-
-            const headline = document.getElementById('card-headline').value.trim();
-
-            if (!headline) {
-                UI.showError('Please enter a card headline');
-                return;
-            }
-
-            UI.hideMessage('error-message');
-            UI.setButtonLoading('save-card-btn', true);
-
-            try {
-                const card = await client.createCard(headline);
-                await client.addCardToTopic(card.id, subjectId, topicPosition);
-
-                UI.toggleElement('add-card-form', false);
-                UI.clearForm('card-form');
-                UI.setButtonLoading('save-card-btn', false);
-
-                loadCards();
-            } catch (err) {
-                console.error('Add card failed:', err);
-                UI.showError(err.message || 'Failed to add card');
-                UI.setButtonLoading('save-card-btn', false);
-            }
-        });
-    }
-
     // Reveal edit/remove on title click
     const topicTitle = document.getElementById('topic-name');
     if (topicTitle) {

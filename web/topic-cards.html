@@ -192,47 +192,6 @@
       <p class="text-muted mt-md">Loading cards...</p>
     </div>
 
-    <button id="add-card-btn" class="btn btn-primary btn-full" style="margin-top: 1rem; margin-bottom: 2rem; padding: 0.75rem 1rem; white-space: nowrap;">
-      + Add Card
-    </button>
-
-    <div id="add-card-form" class="card" style="display: none; max-width: 700px;">
-      <div class="card-header">
-        <h3 class="card-title">Add Card</h3>
-      </div>
-
-      <form id="card-form">
-        <div class="form-group">
-          <label class="form-label" for="card-headline">Headline (in question form)</label>
-          <input
-              type="text"
-              id="card-headline"
-              class="form-input"
-              placeholder="e.g., What is gradient descent?"
-              required
-          >
-        </div>
-
-        <div style="display: flex; gap: 1rem; margin-top: 2rem;">
-          <button type="submit" id="save-card-btn" class="btn btn-primary">
-            Save Card
-          </button>
-          <button type="button" id="cancel-card-btn" class="btn btn-secondary">
-            Cancel
-          </button>
-        </div>
-      </form>
-    </div>
-
-    <div id="cards-list">
-      <!-- cards will be inserted here -->
-    </div>
-
-    <div id="empty-state" style="display: none; text-align: center; padding: 4rem 2rem;">
-      <h3 style="color: var(--text-muted);">No cards yet</h3>
-      <p class="text-muted">Add your first card to this topic!</p>
-    </div>
-
     <!-- Assessments Section -->
     <div style="margin-top: 4rem; border-top: 2px solid var(--border-color); padding-top: 2rem;">
       <h2 style="font-size: 1.5rem; font-weight: 700; color: var(--text-primary); margin-bottom: 1.5rem;">Assessments</h2>

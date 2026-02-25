@@ -2816,6 +2816,11 @@ grpc::Status server::AddCardToTopic(grpc::ServerContext* context, AddCardToTopic
             status = grpc::Status{grpc::StatusCode::OK, {}};
         }
     }
+    catch (pqxx::unique_violation const& exp)
+    {
+        std::cerr << std::format("client {}: attempted to add card {} to topic {} of level {} in subject {} but it already exists\n", request->user().token(), request->card().id(), request->topic().position(), database::level_to_string(request->topic().level()), request->subject().id());
+        status = grpc::Status{grpc::StatusCode::ALREADY_EXISTS, "card already exists in this topic"};
+    }
     catch (client_exception const& exp)
     {
         std::cerr << std::format("client {}: {}\n", request->user().token(), exp.what());

@@ -313,6 +313,28 @@
         </div>
       </div>
     </div>
+
+    <!-- Assign to Topic Modal -->
+    <div id="assign-topic-modal" class="card" style="display: none; max-width: 600px; margin-bottom: 2rem;">
+      <div class="card-header">
+        <h3 class="card-title">Assign Card to Topic</h3>
+      </div>
+      <div style="padding: 1rem 0;">
+        <p style="color: var(--text-muted); margin-bottom: 1rem;">
+          Assigning: <strong id="assigning-card-headline"></strong>
+        </p>
+        <div id="topics-loading" style="display: none; text-align: center; padding: 1rem;">
+          <div class="loading" style="width: 24px; height: 24px; border-width: 3px; margin: 0 auto;"></div>
+          <p class="text-muted" style="margin-top: 0.5rem; font-size: 0.875rem;">Loading topics...</p>
+        </div>
+        <div id="topics-by-level" style="max-height: 400px; overflow-y: auto; margin-top: 1rem;">
+          <!-- topics will be inserted here -->
+        </div>
+        <div style="display: flex; gap: 1rem; justify-content: flex-end; margin-top: 1.5rem;">
+          <button type="button" onclick="closeAssignTopicModal()" class="btn btn-secondary">Cancel</button>
+        </div>
+      </div>
+    </div>
   </div>
 </main>
 

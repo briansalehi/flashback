@@ -635,8 +635,16 @@ class FlashbackClient {
 
             this.client.getSectionCards(request, this.getMetadata(), (err, response) => {
                 if (err) {
-                    console.error("GetSectionCards error:", err);
-                    reject(this.handleError(err));
+                    switch (err)
+                    {
+                        case 6:
+                            reject("Card already exists in this topic");
+                            break;
+                        default:
+                            console.error("GetSectionCards error:", err);
+                            reject(this.handleError(err));
+                            break;
+                    }
                 } else {
                     resolve(response.getCardList().map(card => ({
                         id: card.getId(),

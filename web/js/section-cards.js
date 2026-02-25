@@ -373,6 +373,9 @@ function renderCards(cards) {
                 </div>
                 <div style="display: flex; gap: 0.5rem; align-items: center;">
                     <span class="item-badge" style="background: ${stateColor.bg}; color: ${stateColor.color}; text-transform: capitalize; font-size: var(--font-size-sm); padding: 0.2rem 0.6rem; border-radius: var(--radius-full);">${UI.escapeHtml(stateName)}</span>
+                    <button class="btn btn-secondary" style="padding: 0.35rem 0.9rem; white-space: nowrap; font-size: var(--font-size-sm);" onclick="handleAssignToTopic(${card.id}, '${UI.escapeHtml(card.headline).replace(/'/g, "\\'")}')">
+                        Assign
+                    </button>
                     <button class="btn btn-secondary" style="padding: 0.35rem 0.9rem; white-space: nowrap; font-size: var(--font-size-sm);" onclick="handleMoveCard(${card.id}, '${UI.escapeHtml(card.headline).replace(/'/g, "\\'")}')">
                         Move
                     </button>
@@ -429,6 +432,110 @@ function displayBreadcrumb() {
 // Global state for move card modal
 let currentMovingCardId = null;
 let currentMovingCardHeadline = null;
+
+let currentAssigningCardId = null;
+let currentAssigningCardHeadline = null;
+
+window.handleAssignToTopic = async function(cardId, cardHeadline) {
+    currentAssigningCardId = cardId;
+    currentAssigningCardHeadline = cardHeadline;
+
+    const modal = document.getElementById('assign-topic-modal');
+    modal.style.display = 'block';
+    document.getElementById('assigning-card-headline').textContent = cardHeadline;
+    document.getElementById('topics-loading').style.display = 'block';
+    document.getElementById('topics-by-level').innerHTML = '';
+
+    const subjectId = UI.getUrlParam('subjectId');
+
+    try {
+        const allTopics = [];
+        for (let level = 0; level <= 2; level++) {
+            const levelTopics = await client.getTopics(subjectId, level);
+            allTopics.push(...levelTopics);
+        }
+
+        document.getElementById('topics-loading').style.display = 'none';
+
+        if (allTopics.length === 0) {
+            document.getElementById('topics-by-level').innerHTML = '<p class="text-muted">No topics available in this subject.</p>';
+        } else {
+            renderTopicsForAssignment(allTopics);
+        }
+
+        setTimeout(() => {
+            modal.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 100);
+    } catch (err) {
+        console.error('Failed to load topics:', err);
+        document.getElementById('topics-loading').style.display = 'none';
+        UI.showError('Failed to load topics: ' + (err.message || 'Unknown error'));
+    }
+};
+
+function renderTopicsForAssignment(topics) {
+    const container = document.getElementById('topics-by-level');
+    container.innerHTML = '';
+
+    const levelNames = ['Surface', 'Depth', 'Origin'];
+    
+    // Group by level
+    const grouped = topics.reduce((acc, topic) => {
+        if (!acc[topic.level]) acc[topic.level] = [];
+        acc[topic.level].push(topic);
+        return acc;
+    }, {});
+
+    // For each level, sort and render
+    for (let level = 0; level <= 2; level++) {
+        if (grouped[level] && grouped[level].length > 0) {
+            const levelDiv = document.createElement('div');
+            levelDiv.style.marginBottom = '1.5rem';
+            
+            const levelHeader = document.createElement('h4');
+            levelHeader.textContent = levelNames[level];
+            levelHeader.style.borderBottom = '1px solid var(--border-color)';
+            levelHeader.style.paddingBottom = '0.5rem';
+            levelHeader.style.marginBottom = '0.75rem';
+            levelDiv.appendChild(levelHeader);
+
+            // Sort by position
+            grouped[level].sort((a, b) => a.position - b.position);
+
+            grouped[level].forEach(topic => {
+                const topicItem = document.createElement('div');
+                topicItem.className = 'section-list-item';
+                topicItem.innerHTML = `
+                    <div style="font-weight: 600;">${UI.escapeHtml(topic.name)}</div>
+                    <div style="font-size: 0.875rem; color: var(--text-muted);">Position: ${topic.position}</div>
+                `;
+                topicItem.addEventListener('click', () => assignCardToTopic(topic));
+                levelDiv.appendChild(topicItem);
+            });
+
+            container.appendChild(levelDiv);
+        }
+    }
+}
+
+async function assignCardToTopic(topic) {
+    const subjectId = UI.getUrlParam('subjectId');
+    
+    try {
+        await client.addCardToTopic(currentAssigningCardId, subjectId, topic.position, topic.level);
+        closeAssignTopicModal();
+        UI.showSuccess(`Card assigned to topic "${topic.name}" successfully`);
+    } catch (err) {
+        console.error('Failed to assign card to topic:', err);
+        UI.showError('Failed to assign card to topic: ' + (err.message || 'Unknown error'));
+    }
+}
+
+function closeAssignTopicModal() {
+    document.getElementById('assign-topic-modal').style.display = 'none';
+    currentAssigningCardId = null;
+    currentAssigningCardHeadline = null;
+}
 
 window.handleMoveCard = function(cardId, cardHeadline) {
     currentMovingCardId = cardId;
