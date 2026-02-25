@@ -338,9 +338,7 @@ function renderSections(sections) {
 
     sortedSections.forEach((section, index) => {
         const sectionItem = document.createElement('div');
-        sectionItem.className = 'item-block';
-        sectionItem.style.minHeight = 'auto';
-        sectionItem.style.padding = '1rem 1.25rem';
+        sectionItem.className = 'item-block compact';
         sectionItem.draggable = true;
         sectionItem.dataset.position = section.position;
 
@@ -357,24 +355,24 @@ function renderSections(sections) {
         let linkHtml = '';
         if (section.link) {
             linkHtml = `
-                <div class="item-content">
-                    <a href="${UI.escapeHtml(section.link)}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">
-                        ${UI.escapeHtml(section.link)}
-                    </a>
-                </div>
+                <a href="${UI.escapeHtml(section.link)}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()" class="external-link-icon" title="Open Link" style="display: flex; align-items: center; justify-content: center; width: 24px; height: 24px; border-radius: 50%; background: rgba(255,255,255,0.05); transition: background 0.2s;">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                </a>
             `;
         }
 
         sectionItem.innerHTML = `
-            <div style="width: 100%;">
-                <div class="item-header">
-                    <div style="display: flex; align-items: center; gap: var(--space-md); flex: 1;">
-                        <span class="item-badge" style="font-size: var(--font-size-sm); padding: 0.12rem 0.5rem; min-width: 22px; text-align: center;">${index + 1}</span>
-                        <h3 class="item-title" style="margin: 0; font-size: var(--font-size-lg); font-weight: 600;">${UI.escapeHtml(section.name)}</h3>
+            <div style="width: 100%; display: flex; flex-direction: column; gap: 0.25rem;">
+                <div class="item-header" style="margin-bottom: 0; align-items: center;">
+                    <div style="display: flex; align-items: center; gap: var(--space-xs); flex: 1; cursor: pointer;">
+                        <span class="item-badge" style="font-size: 10px; height: 18px; min-width: 18px; padding: 0 4px; text-align: center;">${index + 1}</span>
+                        <h3 class="item-title" style="margin: 0; font-size: var(--font-size-base);">${UI.escapeHtml(section.name)}</h3>
                     </div>
-                    <span class="item-badge" style="background: ${stateColor.bg}; color: ${stateColor.color}; text-transform: capitalize; font-size: var(--font-size-sm); padding: 0.2rem 0.6rem; border-radius: var(--radius-full);">${UI.escapeHtml(stateName)}</span>
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <span class="item-badge" style="background: ${stateColor.bg}; color: ${stateColor.color}; text-transform: capitalize; font-size: 10px; height: 18px; min-width: auto; padding: 0 6px;">${UI.escapeHtml(stateName)}</span>
+                        ${linkHtml}
+                    </div>
                 </div>
-                ${linkHtml}
             </div>
         `;
 

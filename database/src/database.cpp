@@ -558,6 +558,20 @@ void database::merge_resources(uint64_t const source_id, uint64_t const target_i
     exec("call merge_resources($1, $2)", source_id, target_id);
 }
 
+Subject database::get_related_subject(uint64_t resource_id) const
+{
+    Subject subject{};
+
+    if (pqxx::result const& result{query("select id, name from get_related_subjects($1)", resource_id)}; result.size() == 1)
+    {
+        pqxx::row const& row{result.at(0)};
+        subject.set_id(row.at("id").as<uint64_t>());
+        subject.set_name(row.at("name").as<std::string>());
+    }
+
+    return subject;
+}
+
 Section database::create_section(uint64_t const resource_id, uint64_t const position, std::string name, std::string link) const
 {
     Section section{};

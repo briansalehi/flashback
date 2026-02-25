@@ -1211,6 +1211,12 @@ a:hover {
 .item-title {
     line-height: 1.35;
 }
-.item-badge {
-    border-radius: var(--radius-full);
+.item-block.compact {
+    padding: var(--space-md) var(--space-lg);
+    min-height: auto;
+}
+
+.external-link-icon:hover {
+    background: rgba(255,255,255,0.15) !important;
+    color: var(--color-primary-start);
 }

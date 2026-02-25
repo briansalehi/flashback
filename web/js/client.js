@@ -82,6 +82,9 @@ class FlashbackClient {
             this.token = '';
             window.location.href = '/home.html';
         }
+        if (err.code === 6 || err.code === 3 || err.code === grpc.status.ALREADY_EXISTS) {
+            err.message = "Card already exists in this topic";
+        }
         return err;
     }
 
@@ -635,16 +638,8 @@ class FlashbackClient {
 
             this.client.getSectionCards(request, this.getMetadata(), (err, response) => {
                 if (err) {
-                    switch (err)
-                    {
-                        case 6:
-                            reject("Card already exists in this topic");
-                            break;
-                        default:
-                            console.error("GetSectionCards error:", err);
-                            reject(this.handleError(err));
-                            break;
-                    }
+                    console.error("GetSectionCards error:", err);
+                    reject(this.handleError(err));
                 } else {
                     resolve(response.getCardList().map(card => ({
                         id: card.getId(),
@@ -946,14 +941,18 @@ class FlashbackClient {
                     console.error("GetNerves error:", err);
                     reject(this.handleError(err));
                 } else {
-                    resolve(response.getResourcesList().map(resource => ({
-                        id: resource.getId(),
-                        name: resource.getName(),
-                        type: resource.getType(),
-                        pattern: resource.getPattern(),
-                        production: resource.getProduction(),
-                        expiration: resource.getExpiration(),
-                        link: resource.getLink()
+                    resolve(response.getNerveList().map(nerve => ({
+                        id: nerve.getResource().getId(),
+                        name: nerve.getResource().getName(),
+                        type: nerve.getResource().getType(),
+                        pattern: nerve.getResource().getPattern(),
+                        production: nerve.getResource().getProduction(),
+                        expiration: nerve.getResource().getExpiration(),
+                        link: nerve.getResource().getLink(),
+                        subject: {
+                            id: nerve.getSubject().getId(),
+                            name: nerve.getSubject().getName()
+                        }
                     })));
                 }
             });

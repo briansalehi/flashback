@@ -287,7 +287,7 @@ message CreateNerveRequest { User user = 1; Subject subject = 2; Resource resour
 message CreateNerveResponse { Resource resource = 1; }
 
 message GetNervesRequest { User user = 1; }
-message GetNervesResponse { repeated Resource resources = 1; }
+message GetNervesResponse { repeated Nerve nerve = 1; }
 
 message EstimateCardTimeRequest { User user = 1; }
 message EstimateCardTimeResponse { }

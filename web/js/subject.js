@@ -503,19 +503,17 @@ function renderTopics(topics, maxLevel) {
 
             sortedTopics.forEach((topic, index) => {
                 const topicItem = document.createElement('div');
-                topicItem.className = 'item-block';
-                topicItem.style.minHeight = 'auto';
-                topicItem.style.padding = '1rem 1.25rem';
+                topicItem.className = 'item-block compact';
                 topicItem.draggable = true;
                 topicItem.dataset.position = topic.position;
                 topicItem.dataset.level = topic.level;
                 topicItem.innerHTML = `
-                    <div class=\"item-header\" style=\"margin-bottom: 0;\">
-                        <div style=\"display: flex; align-items: center; gap: 0.75rem; flex: 1;\">
-                            <span class=\"item-badge\" style=\"font-size: var(--font-size-sm); padding: 0.12rem 0.5rem; min-width: 22px; text-align: center;\">${index + 1}</span>
-                            <h3 class=\"item-title\" style=\"margin: 0; font-size: var(--font-size-lg); font-weight: 600;\">${UI.escapeHtml(topic.name)}</h3>
+                    <div class="item-header" style="margin-bottom: 0; align-items: center;">
+                        <div style="display: flex; align-items: center; gap: var(--space-xs); flex: 1;">
+                            <span class="item-badge" style="font-size: 10px; height: 18px; min-width: 18px; padding: 0 4px; text-align: center;">${index + 1}</span>
+                            <h3 class="item-title" style="margin: 0; font-size: var(--font-size-base);">${UI.escapeHtml(topic.name)}</h3>
                         </div>
-                        <span class=\"item-badge\" style=\"background: rgba(102, 126, 234, 0.2); color: var(--color-primary-start); font-size: var(--font-size-sm); padding: 0.2rem 0.6rem; border-radius: var(--radius-full);\">${UI.escapeHtml(levelInfo[level].name)}</span>
+                        <span class="item-badge" style="background: rgba(102, 126, 234, 0.2); color: var(--color-primary-start); font-size: 10px; height: 18px; min-width: auto; padding: 0 6px;">${UI.escapeHtml(levelInfo[level].name)}</span>
                     </div>
                 `;
 
@@ -797,9 +795,7 @@ function renderResources(resources) {
 
     resources.forEach(resource => {
         const resourceItem = document.createElement('div');
-        resourceItem.className = 'item-block';
-        resourceItem.style.minHeight = 'auto';
-        resourceItem.style.padding = '1rem 1.25rem';
+        resourceItem.className = 'item-block compact';
 
         // Convert epoch seconds to readable dates
         const productionDate = resource.production ? new Date(resource.production * 1000).toLocaleDateString() : 'N/A';
@@ -809,30 +805,26 @@ function renderResources(resources) {
         const patternName = patternNames[resource.pattern] || 'Unknown';
 
         resourceItem.innerHTML = `
-            <div style="width: 100%;">
-                <div class="item-header" data-resource-id="${resource.id}" style="cursor: pointer; margin-bottom: 0;">
-                    <div style="display: flex; align-items: center; gap: 0.75rem; flex: 1;">
-                        <h3 class="item-title" style="margin: 0; font-size: var(--font-size-lg); font-weight: 600;">${UI.escapeHtml(resource.name)}</h3>
+            <div style="width: 100%; display: flex; flex-direction: column; gap: 0.25rem;">
+                <div class="item-header" style="margin-bottom: 0; align-items: center;">
+                    <div style="display: flex; align-items: center; gap: var(--space-xs); flex: 1; cursor: pointer;" data-resource-id="${resource.id}">
+                        <h3 class="item-title" style="margin: 0; font-size: var(--font-size-base);">${UI.escapeHtml(resource.name)}</h3>
                     </div>
-                    <div style="display: flex; gap: var(--space-xs); align-items: center;">
-                        <span class="item-badge" style="font-size: var(--font-size-sm); padding: 0.2rem 0.6rem; border-radius: var(--radius-full);">${UI.escapeHtml(typeName)}</span>
-                        <span class="item-badge" style="background: rgba(102, 126, 234, 0.2); color: var(--color-primary-start); font-size: var(--font-size-sm); padding: 0.2rem 0.6rem; border-radius: var(--radius-full);">${UI.escapeHtml(patternName)}</span>
+                    <div style="display: flex; gap: var(--space-xs); align-items: center; flex-shrink: 0;">
+                        <span class="item-badge" style="font-size: 10px; height: 18px; min-width: auto; padding: 0 6px;">${UI.escapeHtml(typeName)}</span>
+                        <span class="item-badge" style="background: rgba(102, 126, 234, 0.2); color: var(--color-primary-start); font-size: 10px; height: 18px; min-width: auto; padding: 0 6px;">${UI.escapeHtml(patternName)}</span>
+                        <a href="${UI.escapeHtml(resource.link)}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()" class="external-link-icon" title="Open Link" style="margin-left: var(--space-xs); display: flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 50%; background: rgba(255,255,255,0.05); transition: background 0.2s;">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                        </a>
+                        <button class="btn btn-secondary drop-resource-btn" data-resource-id="${resource.id}" style="background-color: #dc3545; color: white; padding: 0.2rem 0.6rem; font-size: 10px; height: 22px; min-width: auto; white-space: nowrap; border: none; margin-left: 0.25rem;">Drop</button>
                     </div>
                 </div>
-                <div class="item-content" data-resource-id="${resource.id}" style="cursor: pointer; padding-top: 0.5rem;">
-                    <a href="${UI.escapeHtml(resource.link)}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()" style="font-size: var(--font-size-sm);">
-                        ${UI.escapeHtml(resource.link)}
-                    </a>
-                </div>
-                <div class="item-footer" style="padding-top: 0.5rem; margin-top: 0.5rem;">
-                    <div class="item-meta" style="font-size: var(--font-size-xs);">
+                <div class="item-footer" style="margin-top: 0; padding-top: 0.25rem; border-top: none; justify-content: flex-start; gap: var(--space-md); opacity: 0.8; align-items: center;">
+                    <div class="item-meta" style="font-size: 11px;">
                         <span>📅 ${UI.escapeHtml(productionDate)}</span>
                     </div>
-                    <div class="item-meta" style="font-size: var(--font-size-xs);">
+                    <div class="item-meta" style="font-size: 11px;">
                         <span>⏰ ${UI.escapeHtml(expirationDate)}</span>
-                    </div>
-                    <div class="item-actions">
-                        <button class="item-action-btn drop-resource-btn" data-resource-id="${resource.id}" style="color: #f44336; border-color: rgba(244, 67, 54, 0.3); font-size: var(--font-size-xs); padding: 0.2rem 0.5rem;">Drop</button>
                     </div>
                 </div>
             </div>

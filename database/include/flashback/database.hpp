@@ -69,6 +69,7 @@ public:
     void rename_resource(uint64_t resource_id, std::string name) const override;
     void remove_resource(uint64_t resource_id) const override;
     void merge_resources(uint64_t source_id, uint64_t target_id) const override;
+    Subject get_related_subject(uint64_t resource_id) const override;
 
     // sections
     [[nodiscard]] Section create_section(uint64_t resource_id, uint64_t position, std::string name, std::string link) const override;

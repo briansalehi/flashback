@@ -370,24 +370,22 @@ function renderMilestones(milestones) {
 
     milestones.forEach((milestone, index) => {
         const milestoneCard = document.createElement('div');
-        milestoneCard.className = 'item-block';
-        milestoneCard.style.minHeight = 'auto';
-        milestoneCard.style.padding = '1rem 1.25rem';
+        milestoneCard.className = 'item-block compact';
         milestoneCard.draggable = true;
         milestoneCard.dataset.position = milestone.position;
         milestoneCard.innerHTML = `
-            <div class="item-header" style="margin-bottom: 0;">
-                <div style="display: flex; align-items: center; gap: 0.75rem; flex: 1; cursor: pointer;" class="milestone-link">
-                    <span class="item-badge" style="font-size: var(--font-size-sm); padding: 0.12rem 0.5rem; min-width: 22px; text-align: center;">${index + 1}</span>
-                    <h3 class="item-title" style="margin: 0; font-size: var(--font-size-lg); font-weight: 600;">${UI.escapeHtml(milestone.name)}</h3>
+            <div class="item-header" style="margin-bottom: 0; align-items: center;">
+                <div style="display: flex; align-items: center; gap: var(--space-xs); flex: 1; cursor: pointer;" class="milestone-link">
+                    <span class="item-badge" style="font-size: 10px; height: 18px; min-width: 18px; padding: 0 4px; text-align: center;">${index + 1}</span>
+                    <h3 class="item-title" style="margin: 0; font-size: var(--font-size-base);">${UI.escapeHtml(milestone.name)}</h3>
                 </div>
                 <div style="display: flex; align-items: center; gap: 0.5rem;">
-                    <select class="milestone-level-selector btn btn-sm" data-id="${milestone.id}" data-current-level="${milestone.level}" title="Change level" style="cursor: pointer; padding: 0.25rem 0.5rem; font-size: var(--font-size-sm); background: rgba(255, 255, 255, 0.05); border: 1px solid var(--border-color); border-radius: var(--radius-sm);">
+                    <select class="milestone-level-selector" data-id="${milestone.id}" data-current-level="${milestone.level}" title="Change level" style="cursor: pointer; padding: 0.1rem 0.4rem; font-size: 10px; background: rgba(255, 255, 255, 0.05); border: 1px solid var(--border-color); border-radius: var(--radius-sm); color: var(--color-text-primary); outline: none;">
                         <option value="0" ${milestone.level === 0 ? 'selected' : ''}>Surface</option>
                         <option value="1" ${milestone.level === 1 ? 'selected' : ''}>Depth</option>
                         <option value="2" ${milestone.level === 2 ? 'selected' : ''}>Origin</option>
                     </select>
-                    <button class="item-action-btn" data-id="${milestone.id}" title="Remove milestone" style="color: #f44336; border-color: rgba(244, 67, 54, 0.3); width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; padding: 0;">×</button>
+                    <button class="item-action-btn" data-id="${milestone.id}" title="Remove milestone" style="color: #f44336; border-color: rgba(244, 67, 54, 0.3); width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: 1rem; padding: 0; background: none; cursor: pointer;">×</button>
                 </div>
             </div>
         `;

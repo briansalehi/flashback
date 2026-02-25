@@ -236,12 +236,12 @@ function renderRoadmaps(roadmaps) {
     roadmaps.forEach(roadmap => {
         const roadmapEl = document.createElement('a');
         roadmapEl.href = `roadmap.html?id=${roadmap.id}&name=${encodeURIComponent(roadmap.name)}`;
-        roadmapEl.className = 'item-block';
+        roadmapEl.className = 'item-block compact';
         roadmapEl.style.textDecoration = 'none';
 
         roadmapEl.innerHTML = `
-            <div class="item-header">
-                <h3 class="item-title">${UI.escapeHtml(roadmap.name)}</h3>
+            <div class="item-header" style="margin-bottom: 0;">
+                <h3 class="item-title" style="font-size: var(--font-size-base);">${UI.escapeHtml(roadmap.name)}</h3>
             </div>
         `;
 
@@ -261,9 +261,8 @@ function renderStudyingResources(resources) {
 
     sortedResources.forEach(resource => {
         const resourceItem = document.createElement('div');
-        resourceItem.className = 'item-block';
+        resourceItem.className = 'item-block compact';
 
-        // Convert epoch seconds to readable dates
         const productionDate = resource.production ? new Date(resource.production * 1000).toLocaleDateString() : 'N/A';
         const expirationDate = resource.expiration ? new Date(resource.expiration * 1000).toLocaleDateString() : 'N/A';
 
@@ -271,33 +270,30 @@ function renderStudyingResources(resources) {
         const patternName = patternNames[resource.pattern] || 'Unknown';
 
         resourceItem.innerHTML = `
-            <div style="width: 100%;">
-                <div class="item-header">
-                    <div style="display: flex; align-items: center; gap: var(--space-sm); flex: 1;">
-                        <h3 class="item-title" style="margin: 0;">${UI.escapeHtml(resource.name)}</h3>
+            <div style="width: 100%; display: flex; flex-direction: column; gap: 0.25rem;">
+                <div class="item-header" style="margin-bottom: 0; align-items: center;">
+                    <div style="display: flex; align-items: center; gap: var(--space-xs); flex: 1;">
+                        <h3 class="item-title" style="margin: 0; font-size: var(--font-size-base);">${UI.escapeHtml(resource.name)}</h3>
                     </div>
-                    <div style="display: flex; gap: var(--space-xs); align-items: center;">
-                        <span class="item-badge" style="font-size: var(--font-size-xs);">${UI.escapeHtml(typeName)}</span>
-                        <span class="item-badge" style="background: rgba(102, 126, 234, 0.2); color: var(--color-primary-start); font-size: var(--font-size-xs);">${UI.escapeHtml(patternName)}</span>
+                    <div style="display: flex; gap: var(--space-xs); align-items: center; flex-shrink: 0;">
+                        <span class="item-badge" style="font-size: 10px; height: 18px; min-width: auto; padding: 0 6px;">${UI.escapeHtml(typeName)}</span>
+                        <span class="item-badge" style="background: rgba(102, 126, 234, 0.2); color: var(--color-primary-start); font-size: 10px; height: 18px; min-width: auto; padding: 0 6px;">${UI.escapeHtml(patternName)}</span>
+                        <a href="${UI.escapeHtml(resource.link)}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()" class="external-link-icon" title="Open Link" style="margin-left: var(--space-xs); display: flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 50%; background: rgba(255,255,255,0.05); transition: background 0.2s;">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                        </a>
                     </div>
                 </div>
-                <div class="item-content">
-                    <a href="${UI.escapeHtml(resource.link)}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">
-                        ${UI.escapeHtml(resource.link)}
-                    </a>
-                </div>
-                <div class="item-footer">
-                    <div class="item-meta">
+                <div class="item-footer" style="margin-top: 0; padding-top: 0.25rem; border-top: none; justify-content: flex-start; gap: var(--space-md); opacity: 0.8;">
+                    <div class="item-meta" style="font-size: 11px;">
                         <span>📅 ${UI.escapeHtml(productionDate)}</span>
                     </div>
-                    <div class="item-meta">
+                    <div class="item-meta" style="font-size: 11px;">
                         <span>⏰ ${UI.escapeHtml(expirationDate)}</span>
                     </div>
                 </div>
             </div>
         `;
 
-        // Make the whole resource item clickable to go to resource page (sections)
         resourceItem.addEventListener('click', () => {
             window.location.href = `resource.html?id=${resource.id}&name=${encodeURIComponent(resource.name)}&type=${resource.type}&pattern=${resource.pattern}&link=${encodeURIComponent(resource.link)}&production=${resource.production}&expiration=${resource.expiration}`;
         });
@@ -336,7 +332,7 @@ function renderNerves(nerves) {
 
     nerves.forEach(nerve => {
         const nerveItem = document.createElement('div');
-        nerveItem.className = 'item-block';
+        nerveItem.className = 'item-block compact';
 
         // Convert epoch seconds to readable dates
         const productionDate = nerve.production ? new Date(nerve.production * 1000).toLocaleDateString() : 'N/A';
@@ -345,27 +341,37 @@ function renderNerves(nerves) {
         const typeName = 'Knowledge';
         const patternName = 'Memories';
 
+        // Subject is single now
+        const subjectId = nerve.subject ? nerve.subject.id : '';
+        const subjectName = nerve.subject ? nerve.subject.name : '';
+
+        // Single subject badge (if available)
+        const subjectBadgeHtml = subjectId ? `
+            <span class="item-badge" style="background: rgba(76, 175, 80, 0.1); color: #388e3c; font-size: 10px; height: 18px; min-width: auto; padding: 0 6px;">
+                ${UI.escapeHtml(subjectName)}
+            </span>
+        ` : '';
+
         nerveItem.innerHTML = `
-            <div style="width: 100%;">
-                <div class="item-header">
-                    <div style="display: flex; align-items: center; gap: var(--space-sm); flex: 1;">
-                        <h3 class="item-title" style="margin: 0;">${UI.escapeHtml(nerve.name)}</h3>
+            <div style="width: 100%; display: flex; flex-direction: column; gap: 0.25rem;">
+                <div class="item-header" style="margin-bottom: 0; align-items: center;">
+                    <div style="display: flex; align-items: center; gap: var(--space-xs); flex: 1;">
+                        <h3 class="item-title" style="margin: 0; font-size: var(--font-size-base);">${UI.escapeHtml(nerve.name)}</h3>
                     </div>
-                    <div style="display: flex; gap: var(--space-xs); align-items: center;">
-                        <span class="item-badge" style="font-size: var(--font-size-xs);">${UI.escapeHtml(typeName)}</span>
-                        <span class="item-badge" style="background: rgba(102, 126, 234, 0.2); color: var(--color-primary-start); font-size: var(--font-size-xs);">${UI.escapeHtml(patternName)}</span>
+                    <div style="display: flex; gap: var(--space-xs); align-items: center; flex-shrink: 0;">
+                        ${subjectBadgeHtml}
+                        <span class="item-badge" style="font-size: 10px; height: 18px; min-width: auto; padding: 0 6px;">${UI.escapeHtml(typeName)}</span>
+                        <span class="item-badge" style="background: rgba(102, 126, 234, 0.2); color: var(--color-primary-start); font-size: 10px; height: 18px; min-width: auto; padding: 0 6px;">${UI.escapeHtml(patternName)}</span>
+                        <a href="${UI.escapeHtml(nerve.link)}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()" class="external-link-icon" title="Open Link" style="margin-left: var(--space-xs); display: flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 50%; background: rgba(255,255,255,0.05); transition: background 0.2s;">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                        </a>
                     </div>
                 </div>
-                <div class="item-content">
-                    <a href="${UI.escapeHtml(nerve.link)}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">
-                        ${UI.escapeHtml(nerve.link)}
-                    </a>
-                </div>
-                <div class="item-footer">
-                    <div class="item-meta">
+                <div class="item-footer" style="margin-top: 0; padding-top: 0.25rem; border-top: none; justify-content: flex-start; gap: var(--space-md); opacity: 0.8;">
+                    <div class="item-meta" style="font-size: 11px;">
                         <span>📅 ${UI.escapeHtml(productionDate)}</span>
                     </div>
-                    <div class="item-meta">
+                    <div class="item-meta" style="font-size: 11px;">
                         <span>⏰ ${UI.escapeHtml(expirationDate)}</span>
                     </div>
                 </div>
@@ -374,7 +380,7 @@ function renderNerves(nerves) {
 
         // Make the whole nerve item clickable to go to resource page (sections/synapses)
         nerveItem.addEventListener('click', () => {
-            window.location.href = `resource.html?id=${nerve.id}&name=${encodeURIComponent(nerve.name)}&type=${nerve.type}&pattern=${nerve.pattern}&link=${encodeURIComponent(nerve.link)}&production=${nerve.production}&expiration=${nerve.expiration}`;
+            window.location.href = `resource.html?id=${nerve.id}&name=${encodeURIComponent(nerve.name)}&type=${nerve.type}&pattern=${nerve.pattern}&link=${encodeURIComponent(nerve.link)}&production=${nerve.production}&expiration=${nerve.expiration}&subjectId=${subjectId}&subjectName=${encodeURIComponent(subjectName)}`;
         });
 
         container.appendChild(nerveItem);
