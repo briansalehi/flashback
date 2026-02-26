@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict 0z5mane1Qx5xLfzgK0XVxCgWMB4T84mtWziDNE9BDegd276he7jr5vbqm4oMmVQ
+\restrict Law9u9XVN0qD0xHHIYTvh62WCrUujw7fsqljwR4T2tAwl1DzwUMlZooLoM7UReZ
 
 -- Dumped from database version 18.1
 -- Dumped by pg_dump version 18.0
@@ -1089,7 +1089,7 @@ begin
 
     return query
     select ta.id, ta.state, ta.headline, count(*) filter (where ac.assimilated) as assimilations
-    from get_topic_assessments(user_id, subject_id, topic_position, topic_level) ta
+    from get_topic_assessments(user_id, subject_id, topic_level, topic_position) ta
     cross join lateral get_assimilation_coverage(user_id, subject_id, ta.id) as ac
     group by ta.id, ta.state, ta.headline;
 end; $$;
@@ -1268,19 +1268,25 @@ CREATE FUNCTION flashback.get_practice_cards(user_id integer, roadmap_id integer
 declare cognitive_level expertise_level;
 declare last_acceptable_read timestamp with time zone = now() - interval '7 days';
 declare long_time_ago timestamp with time zone = now() - interval '100 days';
+declare mode practice_mode;
 begin
     cognitive_level := get_user_cognitive_level(user_id, roadmap_id, subject_id);
+    mode := get_practice_mode(user_id, subject_id, cognitive_level);
 
-    return query
-    select c.id, c.state, c.headline
-    from topic_cards tc
-    join cards c on c.id = tc.card
-    left join progress p on p.user = user_id and p.card = tc.card
-    where tc.subject = subject_id and tc.level <= cognitive_level and tc.level = topic_level and tc.topic = topic_position
-    and (
-        get_practice_mode(user_id, subject_id, cognitive_level) <> 'aggressive'::practice_mode
-        or coalesce(p.last_practice, long_time_ago) < last_acceptable_read
-    );
+    if mode = 'progressive'::practice_mode and is_assimilated(user_id, subject_id, topic_level, topic_position) then
+        return query
+        select a.id, a.state, a.headline
+        from get_assessments(user_id, subject_id, topic_level, topic_position) a
+        order by a.assimilations desc
+        limit 1;
+    else
+        return query
+        select c.id, c.state, c.headline
+        from topic_cards tc
+        join cards c on c.id = tc.card
+        left join progress p on p.user = user_id and p.card = tc.card
+        where tc.subject = subject_id and tc.level <= cognitive_level and tc.level = topic_level and tc.topic = topic_position;
+    end if;
 end; $$;
 
 
@@ -1308,7 +1314,7 @@ begin
         into most_recent_practice, last_recent_practice, unread_cards
     from topic_cards tc
     left join progress p on p.user = user_id and p.card = tc.card
-    where tc.subject = subject_id and tc.level <= topic_level;
+    where tc.subject = subject_id and tc.level = topic_level;
 
     -- unread cards immediately result in aggressive mode
     -- consequently, users in progressive mode will temporarily switch to aggressive when a new card is available
@@ -1336,25 +1342,78 @@ ALTER FUNCTION flashback.get_practice_mode(user_id integer, subject_id integer, 
 CREATE FUNCTION flashback.get_practice_topics(user_id integer, roadmap_id integer, milestone_id integer, milestone_level flashback.expertise_level) RETURNS TABLE("position" integer, name flashback.citext, level flashback.expertise_level)
     LANGUAGE plpgsql
     AS $$
+declare long_time_ago timestamp = now() - interval '100 days';
+declare last_acceptable_read timestamp = now() - interval '7 days';
+declare cognitive_level expertise_level;
+declare mode practice_mode;
 begin
-    return query
-    with base as (
-        select  t.position,
-                t.name,
-                t.level,
-                is_assimilated(user_id, t.subject, t.level, t.position) as assimilated,
-                (select a.id from get_assessment_coverage(t.subject, t.position, t.level) a order by a.coverage desc limit 1) as assessment
-        from topics t
-        where t.subject = milestone_id and t.level <= get_user_cognitive_level(user_id, roadmap_id, milestone_id)
-    )
-    select * from (
-        select distinct on (assessment) b."position", b.name, b.level
-        from base b
-        where coalesce(assimilated, false) and assessment is not null
-        order by assessment, position desc
-    )
-    union all
-    select b.position, b.name, b.level from base b where not coalesce(assimilated, false) or assessment is null order by position;
+    cognitive_level := get_user_cognitive_level(user_id, roadmap_id, milestone_id);
+    mode := get_practice_mode(user_id, milestone_id, cognitive_level);
+
+    if mode = 'progressive'::practice_mode then
+        return query
+        with base as (
+            select  t.position,
+                    t.name,
+                    t.level,
+                    is_assimilated(user_id, t.subject, t.level, t.position) as assimilated,
+                    (select a.id from get_assessment_coverage(t.subject, t.position, t.level) a order by a.coverage desc limit 1) as assessment
+            from topics t
+            join topic_cards tc on t.subject = tc.subject and t.level = tc.level and t.position = tc.topic
+            left join progress p on p.user = user_id and p.card = tc.card
+            where t.subject = milestone_id and t.level <= cognitive_level and (is_assimilated(user_id, t.subject, t.level, t.position) or now() - coalesce(p.last_practice, long_time_ago) > interval '6 hours')
+            group by t.subject, t.level, t.position, t.name
+        )
+        select * from (
+            select distinct on (assessment) b."position", b.name, b.level
+            from base b
+            where coalesce(assimilated, false) and assessment is not null
+            order by assessment, position desc
+        )
+        union all
+        select b.position, b.name, b.level from base b where not coalesce(assimilated, false) or assessment is null order by position;
+    else
+        return query
+        with base as (
+            select  t.position,
+                    t.name,
+                    t.level,
+                    is_assimilated(user_id, t.subject, t.level, t.position) as assimilated,
+                    (select a.id from get_assessment_coverage(t.subject, t.position, t.level) a order by a.coverage desc limit 1) as assessment
+            from topics t
+            join topic_cards tc on t.subject = tc.subject and t.level = tc.level and t.position = tc.topic
+            left join progress p on p.user = user_id and p.card = tc.card
+            where t.subject = milestone_id and t.level <= cognitive_level and coalesce(p.last_practice, long_time_ago) < last_acceptable_read
+            group by t.subject, t.level, t.position, t.name
+        )
+        select * from (
+            select distinct on (assessment) b."position", b.name, b.level
+            from base b
+            where coalesce(assimilated, false) and assessment is not null
+            order by assessment, position desc
+        )
+        union all
+        select b.position, b.name, b.level from base b where not coalesce(assimilated, false) or assessment is null order by position;
+    end if;
+
+--    return query
+--    with base as (
+--        select  t.position,
+--                t.name,
+--                t.level,
+--                is_assimilated(user_id, t.subject, t.level, t.position) as assimilated,
+--                (select a.id from get_assessment_coverage(t.subject, t.position, t.level) a order by a.coverage desc limit 1) as assessment
+--        from topics t
+--        where t.subject = milestone_id and t.level <= get_user_cognitive_level(user_id, roadmap_id, milestone_id)
+--    )
+--    select * from (
+--        select distinct on (assessment) b."position", b.name, b.level
+--        from base b
+--        where coalesce(assimilated, false) and assessment is not null
+--        order by assessment, position desc
+--    )
+--    union all
+--    select b.position, b.name, b.level from base b where not coalesce(assimilated, false) or assessment is null order by position;
 end;
 $$;
 
@@ -1380,6 +1439,17 @@ end; $$;
 
 
 ALTER FUNCTION flashback.get_progress_weight(user_id integer) OWNER TO flashback;
+
+--
+-- Name: get_related_subjects(integer); Type: FUNCTION; Schema: flashback; Owner: flashback
+--
+
+CREATE FUNCTION flashback.get_related_subjects(resource_id integer) RETURNS TABLE(id integer, name flashback.citext)
+    LANGUAGE plpgsql
+    AS $$ begin return query select s.id, s.name from shelves h join subjects s on s.id = h.subject where h.resource = resource_id; end; $$;
+
+
+ALTER FUNCTION flashback.get_related_subjects(resource_id integer) OWNER TO flashback;
 
 --
 -- Name: get_requirements(integer, integer, flashback.expertise_level); Type: FUNCTION; Schema: flashback; Owner: flashback
@@ -1483,11 +1553,15 @@ ALTER FUNCTION flashback.get_section(resource_id integer, section_position integ
 -- Name: get_section_cards(integer, integer); Type: FUNCTION; Schema: flashback; Owner: flashback
 --
 
-CREATE FUNCTION flashback.get_section_cards(resource_id integer, section_position integer) RETURNS TABLE(id integer, state flashback.card_state, headline flashback.citext)
+CREATE FUNCTION flashback.get_section_cards(resource_id integer, section_position integer) RETURNS TABLE(id integer, state flashback.card_state, headline flashback.citext, is_assignable boolean)
     LANGUAGE plpgsql
     AS $$
 begin
-    return query select c.id, c.state, c.headline from section_cards sc join cards c on c.id = sc.card where sc.resource = resource_id and sc.section = section_position;
+    return query select c.id, c.state, c.headline, (tc.card is null)
+    from section_cards sc
+    join cards c on c.id = sc.card
+    left join topic_cards tc on tc.card = sc.card
+    where sc.resource = resource_id and sc.section = section_position;
 end;
 $$;
 
@@ -1620,22 +1694,22 @@ end; $$;
 ALTER FUNCTION flashback.get_topic(subject_id integer, topic_level flashback.expertise_level, topic_position integer) OWNER TO flashback;
 
 --
--- Name: get_topic_assessments(integer, integer, integer, flashback.expertise_level); Type: FUNCTION; Schema: flashback; Owner: flashback
+-- Name: get_topic_assessments(integer, integer, flashback.expertise_level, integer); Type: FUNCTION; Schema: flashback; Owner: flashback
 --
 
-CREATE FUNCTION flashback.get_topic_assessments(user_id integer, subject_id integer, topic_position integer, max_level flashback.expertise_level) RETURNS TABLE(id integer, state flashback.card_state, headline flashback.citext, level flashback.expertise_level)
+CREATE FUNCTION flashback.get_topic_assessments(user_id integer, subject_id integer, topic_level flashback.expertise_level, topic_position integer) RETURNS TABLE(id integer, state flashback.card_state, headline flashback.citext)
     LANGUAGE plpgsql
     AS $$
 begin
     return query
-    select c.id, c.state, c.headline, a.level
+    select c.id, c.state, c.headline
     from assessments a
     join cards c on c.id = a.card
-    where a.subject = subject_id and a.topic = topic_position and a.level <= max_level;
+    where a.subject = subject_id and a.topic = topic_position and a.level = topic_level;
 end; $$;
 
 
-ALTER FUNCTION flashback.get_topic_assessments(user_id integer, subject_id integer, topic_position integer, max_level flashback.expertise_level) OWNER TO flashback;
+ALTER FUNCTION flashback.get_topic_assessments(user_id integer, subject_id integer, topic_level flashback.expertise_level, topic_position integer) OWNER TO flashback;
 
 --
 -- Name: get_topic_cards(integer, integer, flashback.expertise_level); Type: FUNCTION; Schema: flashback; Owner: flashback
@@ -1909,7 +1983,7 @@ begin
     do update set
         duration = time_duration,
         last_practice = now(),
-        progression = case when mode = 'progressive'::practice_mode and now() - progress.last_practice > interval '1 hour' then progress.progression + 1 else progress.progression end
+        progression = case when mode = 'progressive'::practice_mode and now() - progress.last_practice > interval '6 hours' then progress.progression + 1 else progress.progression end
     where progress."user" = user_id and progress.card = card_id;
 end;
 $$;
@@ -4122,5 +4196,5 @@ GRANT ALL ON SCHEMA public TO brian;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict 0z5mane1Qx5xLfzgK0XVxCgWMB4T84mtWziDNE9BDegd276he7jr5vbqm4oMmVQ
+\unrestrict Law9u9XVN0qD0xHHIYTvh62WCrUujw7fsqljwR4T2tAwl1DzwUMlZooLoM7UReZ
 
