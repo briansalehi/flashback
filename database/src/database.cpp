@@ -949,7 +949,7 @@ std::vector<SectionCard> database::get_section_cards(uint64_t const resource_id,
 {
     std::vector<SectionCard> cards{};
 
-    for (pqxx::result const result{query("select id, state, headline from get_section_cards($1, $2)", resource_id, sections_position)}; pqxx::row const& row: result)
+    for (pqxx::result const result{query("select id, state, headline, is_assignable from get_section_cards($1, $2)", resource_id, sections_position)}; pqxx::row const& row: result)
     {
         SectionCard section_card{};
         Card card{};

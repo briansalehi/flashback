@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict NPSTK4e0NPC71XUMFcFOe2wPIbZZ9JnOWIgStEtTRRWz7OxAjn2BglWeVOuFhcz
+\restrict MqlqWU8xC7UxaRYLdwdacP76JIFHbJgLHI98ZeAkNQoSEuFrRmfLfxxm3maYh77
 
 -- Dumped from database version 18.1
 -- Dumped by pg_dump version 18.1
@@ -1553,11 +1553,15 @@ ALTER FUNCTION flashback.get_section(resource_id integer, section_position integ
 -- Name: get_section_cards(integer, integer); Type: FUNCTION; Schema: flashback; Owner: flashback
 --
 
-CREATE FUNCTION flashback.get_section_cards(resource_id integer, section_position integer) RETURNS TABLE(id integer, state flashback.card_state, headline flashback.citext)
+CREATE FUNCTION flashback.get_section_cards(resource_id integer, section_position integer) RETURNS TABLE(id integer, state flashback.card_state, headline flashback.citext, is_assignable boolean)
     LANGUAGE plpgsql
     AS $$
 begin
-    return query select c.id, c.state, c.headline from section_cards sc join cards c on c.id = sc.card where sc.resource = resource_id and sc.section = section_position;
+    return query select c.id, c.state, c.headline, (tc.card is null)
+    from section_cards sc
+    join cards c on c.id = sc.card
+    left join topic_cards tc on tc.card = sc.card
+    where sc.resource = resource_id and sc.section = section_position;
 end;
 $$;
 
@@ -28996,8 +29000,8 @@ COPY flashback.sessions ("user", token, device, last_usage) FROM stdin;
 2	S+QZFj/aiqeZCU9t68F97mH7tZH9XEySCgQF/8R08pA	0bdb9226-aefa-4351-8d6e-195d6e5ff28f	2026-02-22 00:00:00+00
 6	6iF44Iw2Y/NIvt+c1TVX3ReZJDsfJynkhR22sxGymJg	0b0f1bd6-8e6b-4ce9-aa4a-61b54e7a9bfb	2026-02-25 00:00:00+00
 2	kENXFbSZvJrAggEpbDHV0DVnUKDNwYlRsoszdHSYNf4	ea96bd44-1ab3-4c68-9ed3-ab47883e57ef	2026-02-25 00:00:00+00
-2	z1N4Egb7ZDMyS4LR1cbFr+CuVWwwr39x3BbEUSpYhW0	70c60675-db09-4fc2-bd9a-0e178401f6e7	2026-02-25 00:00:00+00
-2	KHvqvUtrQuNuv1D8yEfHNP9erEx3zsfN4pKEasnauQs	5b33a8c4-d1c2-4e3b-af88-fa12dce84284	2026-02-25 00:00:00+00
+2	z1N4Egb7ZDMyS4LR1cbFr+CuVWwwr39x3BbEUSpYhW0	70c60675-db09-4fc2-bd9a-0e178401f6e7	2026-02-26 00:00:00+00
+2	KHvqvUtrQuNuv1D8yEfHNP9erEx3zsfN4pKEasnauQs	5b33a8c4-d1c2-4e3b-af88-fa12dce84284	2026-02-26 00:00:00+00
 \.
 
 
@@ -32879,5 +32883,5 @@ GRANT ALL ON SCHEMA public TO brian;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict NPSTK4e0NPC71XUMFcFOe2wPIbZZ9JnOWIgStEtTRRWz7OxAjn2BglWeVOuFhcz
+\unrestrict MqlqWU8xC7UxaRYLdwdacP76JIFHbJgLHI98ZeAkNQoSEuFrRmfLfxxm3maYh77
 
