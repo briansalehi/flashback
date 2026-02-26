@@ -82,7 +82,7 @@ class FlashbackClient {
             this.token = '';
             window.location.href = '/home.html';
         }
-        if (err.code === 6 || err.code === 3 || err.code === grpc.status.ALREADY_EXISTS) {
+        if (err.code === 6 || err.code === 3) {
             err.message = "Card already exists in this topic";
         }
         return err;
