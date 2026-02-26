@@ -641,10 +641,11 @@ class FlashbackClient {
                     console.error("GetSectionCards error:", err);
                     reject(this.handleError(err));
                 } else {
-                    resolve(response.getCardList().map(card => ({
-                        id: card.getId(),
-                        headline: card.getHeadline(),
-                        state: card.getState()
+                    resolve(response.getCardList().map(sectionCard => ({
+                        id: sectionCard.getCard().getId(),
+                        headline: sectionCard.getCard().getHeadline(),
+                        state: sectionCard.getCard().getState(),
+                        isAssignable: sectionCard.getIsAssignable()
                     })));
                 }
             });

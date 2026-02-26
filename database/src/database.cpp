@@ -945,17 +945,20 @@ void database::move_card_to_topic(uint64_t const card_id, uint64_t const subject
          level_to_string(target_level));
 }
 
-std::vector<Card> database::get_section_cards(uint64_t const resource_id, uint64_t const sections_position) const
+std::vector<SectionCard> database::get_section_cards(uint64_t const resource_id, uint64_t const sections_position) const
 {
-    std::vector<Card> cards{};
+    std::vector<SectionCard> cards{};
 
     for (pqxx::result const result{query("select id, state, headline from get_section_cards($1, $2)", resource_id, sections_position)}; pqxx::row const& row: result)
     {
+        SectionCard section_card{};
         Card card{};
         card.set_id(row.at("id").as<uint64_t>());
         card.set_state(to_card_state(row.at("state").as<std::string>()));
         card.set_headline(row.at("headline").as<std::string>());
-        cards.push_back(card);
+        *section_card.mutable_card() = card;
+        section_card.set_is_assignable(row.at("is_assignable").as<bool>());
+        cards.push_back(section_card);
     }
 
     return cards;

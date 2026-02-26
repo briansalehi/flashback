@@ -293,7 +293,7 @@ message EstimateCardTimeRequest { User user = 1; }
 message EstimateCardTimeResponse { }
 
 message GetSectionCardsRequest { User user = 1; Resource resource = 2; Section section = 3; }
-message GetSectionCardsResponse { repeated Card card = 1; }
+message GetSectionCardsResponse { repeated SectionCard card = 1; }
 
 message GetTopicCardsRequest { User user = 1; Subject subject = 2; Topic topic = 3; }
 message GetTopicCardsResponse { repeated Card card = 1; }

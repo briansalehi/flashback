@@ -3815,9 +3815,9 @@ grpc::Status server::GetSectionCards(grpc::ServerContext* context, flashback::Ge
         }
         else
         {
-            for (Card const& card: m_database->get_section_cards(request->resource().id(), request->section().position()))
+            for (SectionCard const& section_card: m_database->get_section_cards(request->resource().id(), request->section().position()))
             {
-                *response->add_card() = card;
+                *response->add_card() = section_card;
             }
             std::clog << std::format("client {} collected {} cards from section {}:{}\n", request->user().token(), response->card_size(), request->resource().id(), request->section().position());
             status = grpc::Status{grpc::StatusCode::OK, {}};

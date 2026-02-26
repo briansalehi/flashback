@@ -122,7 +122,7 @@ public:
     void move_card_to_section(uint64_t card_id, uint64_t resource_id, uint64_t section_position, uint64_t target_section_position) const override;
     void move_card_to_topic(uint64_t card_id, uint64_t subject_id, uint64_t topic_position, expertise_level topic_level, uint64_t target_subject, uint64_t target_position,
                             expertise_level target_level) const override;
-    [[nodiscard]] std::vector<Card> get_section_cards(uint64_t resource_id, uint64_t sections_position) const override;
+    [[nodiscard]] std::vector<SectionCard> get_section_cards(uint64_t resource_id, uint64_t sections_position) const override;
     [[nodiscard]] std::vector<Card> get_topic_cards(uint64_t subject_id, uint64_t topic_position, expertise_level topic_level) const override;
 
     // blocks
