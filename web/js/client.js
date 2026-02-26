@@ -554,7 +554,6 @@ class FlashbackClient {
             request.setCard(card);
             request.setUser(user);
 
-            console.log(`Creating card:`, headline);
             this.client.createCard(request, this.getMetadata(), (err, response) => {
                 if (err) {
                     console.error("CreateCard error:", err);
@@ -1862,7 +1861,6 @@ class FlashbackClient {
                     console.error("GetAssessments error:", err);
                     reject(this.handleError(err));
                 } else {
-                    console.log(response.getAssessmentList());
                     resolve(response.getAssessmentList().map(assessment => ({
                         id: assessment.getCard().getId(),
                         headline: assessment.getCard().getHeadline(),
