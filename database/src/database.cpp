@@ -99,6 +99,16 @@ uint64_t database::create_user(std::string_view name, std::string_view email, st
     return user_id;
 }
 
+void database::verify_user(uint64_t user_id) const
+{
+    exec("call verify_user($1)", user_id);
+}
+
+void database::set_verification(uint64_t user_id, uint64_t code) const
+{
+    exec("call set_verification($1, $2)", user_id, code);
+}
+
 void database::reset_password(uint64_t const user_id, std::string_view hash) const
 {
     exec("call reset_password($1, $2)", user_id, hash);
@@ -130,6 +140,7 @@ std::unique_ptr<User> database::get_user(std::string_view email) const
         user->set_email(result.at("email").as<std::string>());
         user->set_verified(result.at("verified").as<bool>());
         user->set_joined(result.at("joined").as<uint64_t>());
+        user->set_verification(result.at("verification").as<uint64_t>());
 
         if (!result.at("hash").is_null()) user->set_hash(result.at("hash").as<std::string>());
 

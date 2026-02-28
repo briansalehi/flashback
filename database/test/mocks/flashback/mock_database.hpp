@@ -10,6 +10,8 @@ class mock_database final: public basic_database
 {
 public:
     MOCK_METHOD(void, rename_user, (uint64_t, std::string_view), (const, override));
+    MOCK_METHOD(void, verify_user, (uint64_t), (const, override));
+    MOCK_METHOD(void, set_verification, (uint64_t), (const, override));
     MOCK_METHOD(void, change_user_email, (uint64_t, std::string_view), (const, override));
     MOCK_METHOD(void, make_progress, (uint64_t, uint64_t, expertise_level, uint64_t, uint64_t), (const, override));
     MOCK_METHOD(std::vector<Topic>, get_practice_topics, (uint64_t, uint64_t, uint64_t, expertise_level), (const, override));

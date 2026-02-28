@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict OBwvPSTmjqijQ74c0jFQMSbwLCiw9jQYNbmdiXes3cK7EMfTMpFyTtNfiiCyI32
+\restrict dNsQgCxbbyNhwDHjc3nqfRL4Rcftuig11xxKLvQlmWxpRuitaOstbn0zoxvpnjg
 
 -- Dumped from database version 18.1
 -- Dumped by pg_dump version 18.0
@@ -1816,12 +1816,12 @@ ALTER FUNCTION flashback.get_unshelved_resources() OWNER TO flashback;
 -- Name: get_user(character varying); Type: FUNCTION; Schema: flashback; Owner: flashback
 --
 
-CREATE FUNCTION flashback.get_user(user_email character varying) RETURNS TABLE(id integer, name character varying, email character varying, hash character varying, state flashback.user_state, verified boolean, joined integer, token character varying, device character varying)
+CREATE FUNCTION flashback.get_user(user_email character varying) RETURNS TABLE(id integer, name character varying, email character varying, hash character varying, state flashback.user_state, verified boolean, joined integer, token character varying, device character varying, verification integer)
     LANGUAGE plpgsql
     AS $$
 begin
     return query
-    select u.id, u.name, u.email, u.hash, u.state, u.verified, u.joined, null::character varying, null::character varying
+    select u.id, u.name, u.email, u.hash, u.state, u.verified, u.joined, null::character varying, null::character varying, coalesce(u.verification, 0)
     from users u
     where u.email = user_email;
 end; $$;
@@ -1833,7 +1833,7 @@ ALTER FUNCTION flashback.get_user(user_email character varying) OWNER TO flashba
 -- Name: get_user(character varying, character varying); Type: FUNCTION; Schema: flashback; Owner: flashback
 --
 
-CREATE FUNCTION flashback.get_user(user_token character varying, user_device character varying) RETURNS TABLE(id integer, name character varying, email character varying, hash character varying, state flashback.user_state, verified boolean, joined integer, token character varying, device character varying)
+CREATE FUNCTION flashback.get_user(user_token character varying, user_device character varying) RETURNS TABLE(id integer, name character varying, email character varying, hash character varying, state flashback.user_state, verified boolean, joined integer, token character varying, device character varying, verification integer)
     LANGUAGE plpgsql
     AS $$
 begin
@@ -1842,7 +1842,7 @@ begin
     end if;
 
     return query
-    select u.id, u.name, u.email, u.hash, u.state, u.verified, u.joined, s.token, s.device
+    select u.id, u.name, u.email, u.hash, u.state, u.verified, u.joined, s.token, s.device, coalesce(u.verification, 0)
     from users u
     join sessions s on s."user" = u.id and s.token = user_token and s.device = user_device;
 end; $$;
@@ -2765,15 +2765,15 @@ ALTER PROCEDURE flashback.rename_topic(IN subject_id integer, IN topic_level fla
 -- Name: rename_user(integer, character varying); Type: PROCEDURE; Schema: flashback; Owner: flashback
 --
 
-CREATE PROCEDURE flashback.rename_user(IN id integer, IN name character varying)
+CREATE PROCEDURE flashback.rename_user(IN user_id integer, IN user_name character varying)
     LANGUAGE plpgsql
     AS $$
 begin
-    update users set name = user_name where users.id = edit_users_name.id;
+    update users set name = user_name where users.id = user_id;
 end; $$;
 
 
-ALTER PROCEDURE flashback.rename_user(IN id integer, IN name character varying) OWNER TO flashback;
+ALTER PROCEDURE flashback.rename_user(IN user_id integer, IN user_name character varying) OWNER TO flashback;
 
 --
 -- Name: reorder_block(integer, integer, integer); Type: PROCEDURE; Schema: flashback; Owner: flashback
@@ -3128,6 +3128,22 @@ end; $$;
 ALTER FUNCTION flashback.search_topics(subject_id integer, topic_level flashback.expertise_level, search_pattern character varying) OWNER TO flashback;
 
 --
+-- Name: set_verification(integer, integer); Type: PROCEDURE; Schema: flashback; Owner: flashback
+--
+
+CREATE PROCEDURE flashback.set_verification(IN user_id integer, IN user_code integer)
+    LANGUAGE plpgsql
+    AS $$
+begin
+    update users set verification = user_code where id = user_id;
+end;
+
+$$;
+
+
+ALTER PROCEDURE flashback.set_verification(IN user_id integer, IN user_code integer) OWNER TO flashback;
+
+--
 -- Name: split_block(integer, integer); Type: FUNCTION; Schema: flashback; Owner: flashback
 --
 
@@ -3245,6 +3261,20 @@ CREATE FUNCTION flashback.user_is_verified(email character varying) RETURNS bool
 
 
 ALTER FUNCTION flashback.user_is_verified(email character varying) OWNER TO flashback;
+
+--
+-- Name: verify_user(integer); Type: PROCEDURE; Schema: flashback; Owner: flashback
+--
+
+CREATE PROCEDURE flashback.verify_user(IN user_id integer)
+    LANGUAGE plpgsql
+    AS $$
+begin
+    update users set verified = true where users.id = user_id;
+end; $$;
+
+
+ALTER PROCEDURE flashback.verify_user(IN user_id integer) OWNER TO flashback;
 
 SET default_tablespace = '';
 
@@ -3644,7 +3674,8 @@ CREATE TABLE flashback.users (
     state flashback.user_state DEFAULT 'active'::flashback.user_state NOT NULL,
     verified boolean DEFAULT false NOT NULL,
     hash character varying(98),
-    joined integer DEFAULT 0 NOT NULL
+    joined integer DEFAULT 0 NOT NULL,
+    verification integer
 );
 
 
@@ -4197,5 +4228,5 @@ GRANT ALL ON SCHEMA public TO brian;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict OBwvPSTmjqijQ74c0jFQMSbwLCiw9jQYNbmdiXes3cK7EMfTMpFyTtNfiiCyI32
+\unrestrict dNsQgCxbbyNhwDHjc3nqfRL4Rcftuig11xxKLvQlmWxpRuitaOstbn0zoxvpnjg
 

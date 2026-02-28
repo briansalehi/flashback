@@ -25,7 +25,8 @@ public:
     virtual void revoke_sessions_except(uint64_t user_id, std::string_view token) const = 0;
     virtual void rename_user(uint64_t user_id, std::string_view name) const = 0;
     virtual void change_user_email(uint64_t user_id, std::string_view email) const = 0;
-    //verify_user
+    virtual void verify_user(uint64_t user_id) const = 0;
+    virtual void set_verification(uint64_t user_id, uint64_t code) const = 0;
     //suspend_user
     //ban_user
     //unlock_user

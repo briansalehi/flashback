@@ -22,6 +22,8 @@ public:
     // users
     [[nodiscard]] bool create_session(uint64_t user_id, std::string_view token, std::string_view device) const override;
     [[nodiscard]] uint64_t create_user(std::string_view name, std::string_view email, std::string_view hash) const override;
+    void verify_user(uint64_t user_id) const override;
+    void set_verification(uint64_t user_id, uint64_t code) const override;
     void reset_password(uint64_t user_id, std::string_view hash) const override;
     [[nodiscard]] bool user_exists(std::string_view email) const override;
     [[nodiscard]] std::unique_ptr<User> get_user(std::string_view email) const override;
