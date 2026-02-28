@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict ie4Cx33rdIfow4gHgIGNLOJPi8LKCwZDqO4bwkorR1BqZNU2NgYDr1n91QkHg9H
+\restrict GY7Y3pkC6cbgKxpfjdB0F4XkhguxhVsHavPd8bNC1eSVBx43tkwdieDQlaOipy6
 
 -- Dumped from database version 18.1
 -- Dumped by pg_dump version 18.0
@@ -1816,7 +1816,7 @@ ALTER FUNCTION flashback.get_unshelved_resources() OWNER TO flashback;
 -- Name: get_user(character varying); Type: FUNCTION; Schema: flashback; Owner: flashback
 --
 
-CREATE FUNCTION flashback.get_user(user_email character varying) RETURNS TABLE(id integer, name character varying, email character varying, hash character varying, state flashback.user_state, verified boolean, joined timestamp with time zone, token character varying, device character varying)
+CREATE FUNCTION flashback.get_user(user_email character varying) RETURNS TABLE(id integer, name character varying, email character varying, hash character varying, state flashback.user_state, verified boolean, joined integer, token character varying, device character varying)
     LANGUAGE plpgsql
     AS $$
 begin
@@ -1833,7 +1833,7 @@ ALTER FUNCTION flashback.get_user(user_email character varying) OWNER TO flashba
 -- Name: get_user(character varying, character varying); Type: FUNCTION; Schema: flashback; Owner: flashback
 --
 
-CREATE FUNCTION flashback.get_user(user_token character varying, user_device character varying) RETURNS TABLE(id integer, name character varying, email character varying, hash character varying, state flashback.user_state, verified boolean, joined timestamp with time zone, token character varying, device character varying)
+CREATE FUNCTION flashback.get_user(user_token character varying, user_device character varying) RETURNS TABLE(id integer, name character varying, email character varying, hash character varying, state flashback.user_state, verified boolean, joined integer, token character varying, device character varying)
     LANGUAGE plpgsql
     AS $$
 begin
@@ -3640,8 +3640,8 @@ CREATE TABLE flashback.users (
     email character varying(150) NOT NULL,
     state flashback.user_state DEFAULT 'active'::flashback.user_state NOT NULL,
     verified boolean DEFAULT false NOT NULL,
-    joined timestamp with time zone DEFAULT now() NOT NULL,
-    hash character varying(98)
+    hash character varying(98),
+    joined integer DEFAULT 0 NOT NULL
 );
 
 
@@ -4194,5 +4194,5 @@ GRANT ALL ON SCHEMA public TO brian;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict ie4Cx33rdIfow4gHgIGNLOJPi8LKCwZDqO4bwkorR1BqZNU2NgYDr1n91QkHg9H
+\unrestrict GY7Y3pkC6cbgKxpfjdB0F4XkhguxhVsHavPd8bNC1eSVBx43tkwdieDQlaOipy6
 
