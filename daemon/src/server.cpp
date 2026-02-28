@@ -319,7 +319,7 @@ grpc::Status server::SendVerification(grpc::ServerContext* context, SendVerifica
     }
     catch (client_exception const& exp)
     {
-        std::cerr << std::format("client {}: {}", request->user().token(), exp.what());
+        std::cerr << std::format("client {}: {}\n", request->user().token(), exp.what());
         status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, exp.what()};
     }
     catch (pqxx::unique_violation const& exp)
@@ -4162,7 +4162,7 @@ bool server::send_verification_email(std::string email, uint64_t const code)
     CURL* curl = curl_easy_init();
     if (!curl) return false;
 
-    std::clog << std::format("server: sending verification code to {}", email);
+    std::clog << std::format("server: sending verification code to {}\n", email);
 
     std::string json =
         R"({"from": "noreply@flashback.eu.com",)"
