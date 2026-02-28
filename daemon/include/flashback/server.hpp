@@ -147,6 +147,8 @@ public:
     grpc::Status GetProgressWeight(grpc::ServerContext* context, GetProgressWeightRequest const* request, GetProgressWeightResponse* response) override;
 
 protected:
+    [[nodiscard]] static size_t write_callback(void* contents, size_t size, size_t nmemb, std::string* response);
+    [[nodiscard]] bool send_verification_email(const std::string& toEmail, const std::string& code);
     [[nodiscard]] static std::string calculate_hash(std::string_view password);
     [[nodiscard]] static bool password_is_valid(std::string_view lhs, std::string_view rhs);
     [[nodiscard]] static std::string generate_token();

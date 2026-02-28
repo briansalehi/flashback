@@ -4138,6 +4138,46 @@ grpc::Status server::GetProgressWeight(grpc::ServerContext* context, GetProgress
     return status;
 }
 
+size_t server::write_callback(void* contents, size_t size, size_t nmemb, std::string* response)
+{
+    response->append(static_cast<char*>(contents), size * nmemb);
+    return size * nmemb;
+}
+
+bool server::send_verification_email(const std::string& email, const std::string& code)
+{
+    CURL* curl = curl_easy_init();
+    if (!curl) return false;
+
+    std::string json =
+        R"({"from": "noreply@flashback.eu.com",)"
+        R"("to": ")" + email + R"(",)"
+        R"("subject": "Flashback Verification Code",)"
+        R"("html": "<h3>Flashback</h3><p>Your verification code is <strong>)" + code + R"(</strong></p>"})";
+
+    std::string response;
+
+    struct curl_slist* headers = nullptr;
+    headers = curl_slist_append(headers, std::format("Authorization: Bearer {}", std::getenv("EMAIL_API_TOKEN")).c_str());
+    headers = curl_slist_append(headers, "Content-Type: application/json");
+
+    curl_easy_setopt(curl, CURLOPT_URL, "https://api.resend.com/emails");
+    curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+    curl_easy_setopt(curl, CURLOPT_POSTFIELDS, json.c_str());
+    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_callback);
+    curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
+
+    CURLcode res = curl_easy_perform(curl);
+
+    long httpCode = 0;
+    curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &httpCode);
+
+    curl_slist_free_all(headers);
+    curl_easy_cleanup(curl);
+
+    return res == CURLE_OK && httpCode == 200;
+}
+
 std::string server::calculate_hash(std::string_view password)
 {
     char buffer[crypto_pwhash_STRBYTES];
