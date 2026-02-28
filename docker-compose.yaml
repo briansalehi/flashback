@@ -22,6 +22,7 @@ services:
     container_name: flashbackd
     environment:
       DATABASE_HOST: postgres
+      EMAIL_API_TOKEN: ${EMAIL_API_TOKEN}
     volumes:
       - .:/src:Z
       - web-content:/var/www/html:z

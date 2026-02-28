@@ -6,6 +6,7 @@
 *.lock
 *.keystore
 *build*/
+.env
 .idea/
 _CPack_Packages/
 node_modules/

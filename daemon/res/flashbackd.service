@@ -6,6 +6,7 @@ Requires=network.target postgresql.service
 [Service]
 Type=simple
 Restart=on-failure
+EnvironmentFile=/usr/local/share/flashbackd/env
 ExecStartPre=/usr/bin/bash -c 'until pg_isready; do sleep 1; done'
 ExecStart=/usr/local/bin/flashbackd
 
