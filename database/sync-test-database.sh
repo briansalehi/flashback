@@ -7,20 +7,20 @@ then
     echo -e "\e[1;2;33mrun again as postgres user!\e[0m" >&2
 fi
 
-if [ $# -eq 1 ] && [ -d "$1" ] && [ -f "$1/flashback.sql" ]
+if [ $# -eq 1 ] && [ -d "$1" ] && [ -f "$1/schema.sql" ]
 then
     base_dir="$1"
-elif [ -f $(dirname "$0")/flashback.sql ]
+elif [ -f $(dirname "$0")/schema.sql ]
 then
     base_dir="$(dirname "$0")"
-elif [ -f /opt/flashback.sql ]
+elif [ -f /opt/schema.sql ]
 then
     base_dir=/opt
-elif [ -f flashback.sql ]
+elif [ -f schema.sql ]
 then
     base_dir="."
 else
-    echo -e "\e[1;2;31mspecify the directory containing flashback.sql\e[0m"
+    echo -e "\e[1;2;31mspecify the directory containing schema.sql\e[0m"
     exit 2
 fi
 

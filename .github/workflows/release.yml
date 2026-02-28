@@ -5,7 +5,9 @@ permissions:
 on:
   push:
     branches:
-      - release
+      - release/*
+    tags:
+      - v*
   workflow_dispatch:
 jobs:
   common:
