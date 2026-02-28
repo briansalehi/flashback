@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict GY7Y3pkC6cbgKxpfjdB0F4XkhguxhVsHavPd8bNC1eSVBx43tkwdieDQlaOipy6
+\restrict OBwvPSTmjqijQ74c0jFQMSbwLCiw9jQYNbmdiXes3cK7EMfTMpFyTtNfiiCyI32
 
 -- Dumped from database version 18.1
 -- Dumped by pg_dump version 18.0
@@ -2767,7 +2767,10 @@ ALTER PROCEDURE flashback.rename_topic(IN subject_id integer, IN topic_level fla
 
 CREATE PROCEDURE flashback.rename_user(IN id integer, IN name character varying)
     LANGUAGE plpgsql
-    AS $$ begin update users set name = edit_users_name.name where users.id = edit_users_name.id; end; $$;
+    AS $$
+begin
+    update users set name = user_name where users.id = edit_users_name.id;
+end; $$;
 
 
 ALTER PROCEDURE flashback.rename_user(IN id integer, IN name character varying) OWNER TO flashback;
@@ -4194,5 +4197,5 @@ GRANT ALL ON SCHEMA public TO brian;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict GY7Y3pkC6cbgKxpfjdB0F4XkhguxhVsHavPd8bNC1eSVBx43tkwdieDQlaOipy6
+\unrestrict OBwvPSTmjqijQ74c0jFQMSbwLCiw9jQYNbmdiXes3cK7EMfTMpFyTtNfiiCyI32
 
