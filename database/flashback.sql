@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict MqlqWU8xC7UxaRYLdwdacP76JIFHbJgLHI98ZeAkNQoSEuFrRmfLfxxm3maYh77
+\restrict RZLYr425egQiixMpU2S6Wh3KeguY4q0TL3E8VcaaZdwYqWGRUDBEyIhbbB9Lfvy
 
 -- Dumped from database version 18.1
 -- Dumped by pg_dump version 18.1
@@ -1283,7 +1283,7 @@ begin
         return query
         select c.id, c.state, c.headline
         from topic_cards tc
-        join cards c on c.id = tc.card
+        join cards c on c.id = tc.card and c.state in ('reviewed'::card_state, 'completed'::card_state, 'approved'::card_state, 'released'::card_state)
         left join progress p on p.user = user_id and p.card = tc.card
         where tc.subject = subject_id and tc.level <= cognitive_level and tc.level = topic_level and tc.topic = topic_position;
     end if;
@@ -1360,7 +1360,8 @@ begin
                     (select a.id from get_assessment_coverage(t.subject, t.position, t.level) a order by a.coverage desc limit 1) as assessment
             from topics t
             join topic_cards tc on t.subject = tc.subject and t.level = tc.level and t.position = tc.topic
-            left join progress p on p.user = user_id and p.card = tc.card
+            join cards c on c.id = tc.card and c.state in ('reviewed'::card_state, 'completed'::card_state, 'approved'::card_state, 'released'::card_state)
+            left join progress p on p.user = user_id and p.card = tc.card and p.card = c.id
             where t.subject = milestone_id and t.level <= cognitive_level and (is_assimilated(user_id, t.subject, t.level, t.position) or now() - coalesce(p.last_practice, long_time_ago) > interval '6 hours')
             group by t.subject, t.level, t.position, t.name
         )
@@ -1382,7 +1383,8 @@ begin
                     (select a.id from get_assessment_coverage(t.subject, t.position, t.level) a order by a.coverage desc limit 1) as assessment
             from topics t
             join topic_cards tc on t.subject = tc.subject and t.level = tc.level and t.position = tc.topic
-            left join progress p on p.user = user_id and p.card = tc.card
+            join cards c on c.id = tc.card and c.state in ('reviewed'::card_state, 'completed'::card_state, 'approved'::card_state, 'released'::card_state)
+            left join progress p on p.user = user_id and p.card = tc.card and p.card = c.id
             where t.subject = milestone_id and t.level <= cognitive_level and coalesce(p.last_practice, long_time_ago) < last_acceptable_read
             group by t.subject, t.level, t.position, t.name
         )
@@ -1395,25 +1397,6 @@ begin
         union all
         select b.position, b.name, b.level from base b where not coalesce(assimilated, false) or assessment is null order by position;
     end if;
-
---    return query
---    with base as (
---        select  t.position,
---                t.name,
---                t.level,
---                is_assimilated(user_id, t.subject, t.level, t.position) as assimilated,
---                (select a.id from get_assessment_coverage(t.subject, t.position, t.level) a order by a.coverage desc limit 1) as assessment
---        from topics t
---        where t.subject = milestone_id and t.level <= get_user_cognitive_level(user_id, roadmap_id, milestone_id)
---    )
---    select * from (
---        select distinct on (assessment) b."position", b.name, b.level
---        from base b
---        where coalesce(assimilated, false) and assessment is not null
---        order by assessment, position desc
---    )
---    union all
---    select b.position, b.name, b.level from base b where not coalesce(assimilated, false) or assessment is null order by position;
 end;
 $$;
 
@@ -2616,7 +2599,7 @@ CREATE PROCEDURE flashback.remove_section(IN resource_id integer, IN section_pos
     LANGUAGE plpgsql
     AS $$
 begin
-    if not exists (select 1 from section_cards where resource = resource_id) then
+    if not exists (select 1 from section_cards where resource = resource_id and section = section_position) then
         delete from sections where resource = resource_id and position = section_position;
     end if;
 end;
@@ -8087,9 +8070,6 @@ COPY flashback.blocks (card, "position", content, type, extension, metadata) FRO
 1735	2	The client application uses an endpoint to designate a particular server\napplication it wants to communicate with.	text	txt	\N
 1740	1	A pair of values consisting of an IP address and a protocol port number that uniquely identifies a particular application running on a particular host in a computer network is called an endpoint.	text	txt	\N
 1741	1	The IP address can be represented as a string containing an address in dot-decimal notation also known as IPv4, or in hexadecimal notation also known as IPv6, or a string containing a DNS name.	text	txt	\N
-1741	2	Domain name example: boost.org	text	txt	\N
-1741	3	Ipv6 example: FE36::0404:C3FA;EF1E:3829	text	txt	\N
-1741	4	IPv4 example: 192.168.1.112	text	txt	\N
 1742	1	#include <boost/asio.hpp>\n\nboost::asio::ip::address server_address{boost::asio::ip::address::from_string("127.0.0.1")};\nboost::asio::ip::tcp::endpoint tcp_endpoint{address, 8000};\nboost::asio::ip::udp::endpoint udp_endpoint{address, 8000};	code	cpp	\N
 1743	1	#include <boost/asio.hpp>\n\nboost::asio::ip::address local_address{boost::asio::ip::address_v6::any()};\nboost::asio::ip::tcp::endpoint tcp_endpoint{address, 8000};\nboost::asio::ip::udp::endpoint udp_endpoint{address, 8000};	code	cpp	\N
 1744	1	`address` class can hold both IPv4 and IPv6 addresses.	text	txt	\N
@@ -8099,16 +8079,11 @@ COPY flashback.blocks (card, "position", content, type, extension, metadata) FRO
 1745	1	An active socket is intended to be used to send and receive data to and from a remote application or to initiate a connection establishment process with it.	text	txt	\N
 1745	2	Passive socket is intended to be used to passively wait for incoming connection requests from remote applications.	text	txt	\N
 2753	1	usb-storage.delay_use=0	code	txt	\N
-1746	1	#include <boost/asio.hpp>\n\nboost::asio::ip::address address{boost::asio::ip::address::from_string("127.0.0.1")};\nboost::asio::ip::tcp::endpoint endpoint{address, 8000};\nboost::asio::io_service io_service{};\nboost::asio::ip::tcp protocol{boost::asio::ip::tcp::v6()};\nboost::asio::ip::tcp::socket socket(io_service);\n\nsocket.open(protocol);\nsocket.close();	code	cpp	\N
 1833	3	`canonical()` function follows symbolic links.\nThe file must already exist for this function to work.	text	txt	\N
 1737	1	Basically, there are two types of sockets. A socket intended to be used to\nsend and receive data to and from a remote application or to initiate a\nconnection establishment process with it is called an active socket, whereas\na passive socket is the one used to passively wait for incoming connection\nrequests from remote applications.	text	txt	\N
-1738	1	1. Create an instance of the `boost::asio::io_service` class or use the one\n   that has been created earlier.\n2. Create an object of the class that represents the transport layer protocol\n   (TCP or UDP) and the version of the underlying IP protocol (IPv4 or IPv6)\n   over which the socket is intended to communicate.\n3. Create an object representing a socket corresponding to the required\n   protocol type. Pass the object of `boost::asio::io_service` class to the\n   socket's constructor.\n4. Call the socket's `open()` method, passing the object representing the\n   protocol created in step 2 as an argument.	text	txt	\N
-1738	3	The `boost::asio::ip::tcp::socket` constructor throws an exception of the\ntype `boost::system::system_error` if it fails.	text	txt	\N
+1738	4	The `boost::asio::ip::tcp::socket` constructor throws an exception of the\ntype `boost::system::system_error` if it fails.	text	txt	\N
+1746	1	#include <boost/asio.hpp>\n\nboost::asio::ip::address address{boost::asio::ip::address::from_string("127.0.0.1")};\nboost::asio::ip::tcp::endpoint endpoint{address, 8000};\nboost::asio::io_context io_context{};\nboost::asio::ip::tcp protocol{boost::asio::ip::tcp::v6()};\nboost::asio::ip::tcp::socket socket(io_context);\n\nsocket.open(protocol);\nsocket.close();	code	cpp	\N
 1739	1	A passive socket or acceptor socket is a type of socket that is used to wait\nfor connection establishment requests from remote applications that\ncommunicate over the TCP protocol.	text	txt	\N
-1739	2	This definition has two important implications:	text	txt	\N
-1739	3	- Passive sockets are used only in server applications or hybrid applications\n  that may play both roles of the client and server.\n- Passive sockets are defined only for the TCP protocol. As the UDP protocol\n  doesn't imply connection establishment, there is no need for a passive\n  socket when communication is performed over UDP.	text	txt	\N
-1739	4	To create an acceptor socket:	text	txt	\N
-1739	5	1. Create an instance of the `boost::asio::io_service` class or use the one\nthat has been created earlier.\n2. Create an object of the `boost::asio::ip::tcp` class that represents the TCP\nprotocol and the required version of the underlying IP protocol (IPv4 or\nIPv6).\n3. Create an object of the `boost::asio::ip::tcp::acceptor` class representing\nan acceptor socket, passing the object of the `boost::asio::io_service`\nclass to its constructor.\n4. Call the acceptor socket's `open()` method, passing the object representing\nthe protocol created in step 2 as an argument.	text	txt	\N
 1747	1	#include <boost/asio.hpp>\nboost::asio::io_context context{};\nboost::asio::ip::tcp protocol{boost::asio::ip::tcp::v6()};\nboost::asio::ip::tcp::acceptor socket{context, protocol};	code	cpp	\N
 1748	1	#include <ranges>\n#include <vector>\n#include <print>\n#include <boost/asio.hpp>\n\nint main()\n{\n    boost::asio::io_context context{};\n    boost::asio::ip::tcp::resolver::query query{"flashback.eu.com", "80", boost::asio::ip::tcp::resolver::query::numeric_service};\n    boost::asio::ip::tcp::resolver resolver{context};\n    std::vector<boost::asio::ip::tcp::endpoint> endpoints{resolver.resolve(query), {}};\n    auto print_endpoint = [](boost::asio::ip::tcp::endpoint const& e) { std::println("[{}]:{}", e.address().to_string(), e.port()); };\n    std::ranges::for_each(endpoints, print_endpoint);\n}	code	cpp	\N
 1749	1	#include <boost/asio.hpp>\n#include <iostream>\n\nint main()\n{\n    boost::asio::ip::port_type port{9000};\n    boost::asio::ip::address address{boost::asio::ip::address_v6::any()};\n    boost::asio::ip::tcp::endpoint endpoint{address, port};\n\n    boost::io_context context{};\n\n    boost::asio::ip::tcp::acceptor acceptor{context, endpoint.protocol()};\n\n    try\n    {\n        acceptor.bind(endpoint);\n    }\n    catch (boost::system::system_error const& exp)\n    {\n        std::cerr << exp.what() << std::endl;\n    }\n}	code	cpp	\N
@@ -8144,6 +8119,7 @@ COPY flashback.blocks (card, "position", content, type, extension, metadata) FRO
 1760	1	Since C++17 the need to specify template arguments explicitly to class templates is relaxed.	text	txt	\N
 1760	2	std::complex<double> c{4.2, 5.1}; // prior to C++17	code	cpp	\N
 1760	3	std::complex c{4.2, 5.1}; // since C++17	code	cpp	\N
+1739	2	This definition has two important implications:\n\n- Passive sockets are used only in server applications or hybrid applications\n  that may play both roles of the client and server.\n- Passive sockets are defined only for the TCP protocol. As the UDP protocol\n  doesn't imply connection establishment, there is no need for a passive\n  socket when communication is performed over UDP.	text	txt	\N
 1761	1	Template parameters have to be unambiguously deducible.	text	txt	\N
 1761	2	std::complex c{3, 4.2}; // ERROR: attempts int and double as T	code	cpp	\N
 1762	1		code	txt	\N
@@ -10053,7 +10029,6 @@ COPY flashback.blocks (card, "position", content, type, extension, metadata) FRO
 2304	1	By following the RAII idiom, mutexes should be encapsulated in a lock to be released automatically.	text	txt	\N
 2304	2	std::mutex exclusive_data{};\nstd::lock<std::mutex> lock{exclusive_data};	code	cpp	\N
 2305	1	`std::lock_guard` and `std::scoped_lock` for the simple, `std::unique_lock`, and `std::shared_lock` for the advanced use cases.	text	txt	\N
-2306	1	Using a constant expression, a static variable with block scope, or using the functino `std::call_once` in combination with the flag `std::once_flag`.	text	txt	\N
 2306	2	If the shared data is read-only, it's sufficient to initialize it with simple thread-safety mechanisms.	text	txt	\N
 2307	1	std::thread_local<std::string> content{};	code	cpp	\N
 2307	2	Declaring a variable as thread-local ensures that each thread gets its own copy. Therefore, there is no shared data.	text	txt	\N
@@ -11348,6 +11323,7 @@ COPY flashback.blocks (card, "position", content, type, extension, metadata) FRO
 2894	2	cmake -P <name>.cmake	code	cmake	\N
 3841	1	/etc/default/grub	code	sh	\N
 3841	2	/etc/grub.d/	code	sh	\N
+5647	2	@media (min-width: 1200px) {\n    :root {\n        --content-width: 1100px;\n    }\n}	code	css	_static/custom.css
 2895	1	When running scripts, CMake won't execute any of the usual stages and it won't use the cache since there is no concept of source tree or build tree in scripts.	text	txt	\N
 2895	2	It is recommended to call the `cmake_minimum_required()` command at the beginning of every script to specify which policies should be applied to subsequent commands in the project.	text	txt	\N
 2895	3	cmake_minimum_required(VERSION 3.30)\nmessage(STATUS "Running a script")\nfile(WRITE sample.txt "A script made this file")	code	cmake	\N
@@ -11677,6 +11653,7 @@ COPY flashback.blocks (card, "position", content, type, extension, metadata) FRO
 3028	3	CMake will locate this file as `<config>-version.cmake` or `<Config>Version.cmake`.	text	txt	\N
 3028	4	Use `CMakePackageConfigHelpers` module to generate package version file:	text	txt	\N
 3028	5	write_basic_package_version_file(<filename> [VERSION <version>] COMPATIBILITY <AnyNewerVersion|SameMajorVersion|SameMinorVersion|ExactVersion> [ARCH_INDEPENDENT])	code	cmake	\N
+5647	1	html_static_path = ['_static']\n\nhtml_css_files = ['custom.css']	code	py	conf.py
 3028	6	write_basic_package_version_file(${CMAKE_CURRENT_BINARY_DIR}/CalcConfigVersion.cmake COMPATIBILITY SameMajorVersion)\ninstall(FILES CalcConfigVersion.cmake ${CMAKE_CURRENT_BINARY_DIR]/CalcConfigVersion.cmake DESTINATION ${CMAKE_INSTALL_LIBDIR}/calc/cmake)	code	cmake	\N
 3029	1	install(TARGETS calc EXPORT CalcTargets ARCHIVE COMPONENT lib FILE_SET HEADERS COMPONENT headers)\ninstall(EXPORT CalcTargets DESTINATION ${CMAKE_INSTALL_LIBDIR}/calc/cmake NAMESPACE Calc:: COMPONENT lib)	code	cmake	\N
 3029	2	find_package(Calc 1.0.0 COMPONENTS lib headers REQUIRED)	code	cmake	\N
@@ -11845,7 +11822,7 @@ COPY flashback.blocks (card, "position", content, type, extension, metadata) FRO
 4351	5	#include <iostream>\n#include <algorithm>\n#include <ranges>\n#include <vector>\n\ntemplate<typename T>\nstruct sentinel\n{\n    using iter_t = typename std::vector<T>::iterator;\n    iter_t begin;\n    std::iter_difference_t<iter_t> count;\n    bool operator==(iter_t const& other) const { return std::distance(begin, other) >= count; }\n};\n\nint main()\n{\n    std::vector<long> numbers{1,2,3,4,5};\n    std::vector<long>::iterator iter = numbers.begin();\n    std::ranges::for_each(iter, sentinel<long>{iter, 3}, [](auto e) { std::cout << e << " "; });\n}	code	cpp	\N
 5559	2	---	text	md	\N
 5196	5	#include <Context.hpp>\n#include <StrategyA.hpp>\n#include <StrategyB.hpp>\n\nint main()\n{\n    std::shared_ptr<Context> context{std::make_shared<Context>()};\n    context->setStrategy(std::move(std::make_unique<StrategyA>()));\n    context->setStrategy(std::move(std::make_unique<StrategyB>()));\n    context->contextInterface();\n}	code	cpp	\N
-2770	1	The `boost::io_object` has the role of submitting I/O requests. For instance, the\n`tcp::socket` object will provide a socket programming request from our\nprogram to the operating system.	text	txt	\N
+5646	1	extension = ['sphinxcontrib-plantuml']\n\nplantuml = 'plantuml'\n\nplantuml_output_format = 'svg'	code	py	conf.py
 3119	1	const GLchar* vertex120 = R"END(\n#version 120\nattribute vec3 position;\nattribute vec3 color;\nvarying vec3 outColor;\nattribute vec2 inUvs;\nvarying vec2 outUvs;\nuniform float time;\nuniform mat4 matrix;\nuniform mat4 projection;\nvoid main()\n{\n    float theta = time;\n    \n    float co = cos(theta);\n    float si = sin(theta);\n    \n    mat4 rotationY = mat4(co, 0, si,  0,\n                          0,  1,  0,  0,\n                          -si,  0, co, 0,\n                          0,  0,  0,  1);\n\n    co = cos(theta/2.);\n    si = sin(theta/2.);\n\n    mat4 rotationX = mat4(1, 0, 0, 0,\n                          0, co, -si, 0,\n                          0, si, co, 0,\n                          0, 0, 0, 1);\n    outUvs = inUvs;\n    outColor = color;\n    gl_Position = projection * matrix * rotationY * rotationX * vec4(position,1.f);\n}\n)END";\n\n// fragment shader source\n\nconst GLchar* raster120 = R"END(\n#version 120\nvarying vec3 outColor;\nvarying vec2 outUvs;\nuniform sampler2D tex;\nuniform float time;\nvoid main()\n{\n    gl_FragColor = vec4(outColor,1.f)/2.f + vec4(texture2D(tex,outUvs))/2.f;\n}\n)END";\n\nGLfloat vertices[] = {\n    -1, -1, +1, // 0\n    -1, +1, +1,\n    +1, +1, +1,\n    +1, -1, +1,\n    -1, -1, -1,\n    -1, +1, -1,\n    +1, +1, -1,\n    +1, -1, -1, //7\n    -1, -1, +1, // "8" - 0\n    -1, +1, +1, // "9" - 1, etc...\n    +1, +1, +1,\n    +1, -1, +1,\n};\n\nGLfloat colors[] = {\n    1, 0, 0, // rgb\n    0, 1, 0,\n    0, 0, 1,\n    1, 0, 1,\n    1, 1, 0,\n    0, 1, 1,\n    0, 1, 0,\n    1, 0, 0,\n    1, 1, 1, // colors for 4 additional verices\n    1, 1, 1,\n    1, 1, 1,\n    1, 1, 1,\n};\n\nGLubyte indices[] = {\n    0,1,\n    1,2,\n    2,3,\n    3,0,\n    0,4,\n    4,5,\n    5,1,\n    1,0,\n    1,5,\n    5,6,\n    6,2,\n    2,1,\n    3,2,\n    2,6,\n    6,7,\n    7,3,\n    7,6,\n    6,5,\n    5,4,\n    4,7,\n    0,3,\n    3,7,\n    7,4,\n    4,0\n};\n\nGLuint verticesBuf;\nglGenBuffers(1, & verticesBuf);\nglBindBuffer(GL_ARRAY_BUFFER, verticesBuf);\nglBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);\n\nGLuint colorsBuf;\nglGenBuffers(1, & colorsBuf);\nglBindBuffer(GL_ARRAY_BUFFER, colorsBuf);\nglBufferData(GL_ARRAY_BUFFER, sizeof(colors), colors, GL_STATIC_DRAW);\n\nGLuint indicesBuf;\nglGenBuffers(1, & indicesBuf);\nglBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indicesBuf);\nglBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);\n\n// ----------------- attributes\n\nGLuint attribPosition;\nattribPosition = glGetAttribLocation(shaderProgram, "position");\nglEnableVertexAttribArray(attribPosition);\nglBindBuffer(GL_ARRAY_BUFFER, verticesBuf);\nglVertexAttribPointer(attribPosition, 3, GL_FLOAT, GL_FALSE, 0, 0);\n\nGLuint attribColor;\nattribColor = glGetAttribLocation(shaderProgram, "color");\nglEnableVertexAttribArray(attribColor);\nglBindBuffer(GL_ARRAY_BUFFER, colorsBuf);\nglVertexAttribPointer(attribColor, 3, GL_FLOAT, GL_FALSE, 0, 0);\n\nGLfloat matrix[] = {\n    0.5, 0,   0,   0,\n    0,   0.5, 0,   0,\n    0,   0,   0.5, 0,\n    0,   0,   0,   1\n};\n\nGLuint attribMatrix;\nattribMatrix = glGetUniformLocation(shaderProgram, "matrix");\nglUniformMatrix4fv(attribMatrix, 1, GL_FALSE, matrix);\n\nGLuint uniformTime;\nuniformTime = glGetUniformLocation(shaderProgram, "time");\n\n// ----------------- texture\n\nbmpread_t bitmap;\nif (!bmpread("texture2.bmp", 0, &bitmap)) {\n    std::cout << "texture loading error";\n    exit(-1);\n}\n\nGLuint texid;\nglGenTextures(1, &texid);\nglActiveTexture(GL_TEXTURE0);\nglBindTexture(GL_TEXTURE_2D, texid);\n\nglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);\nglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);\nglPixelStorei(GL_UNPACK_ALIGNMENT, 1);\n\nglTexImage2D(GL_TEXTURE_2D,0,3,bitmap.width,bitmap.height,0,GL_RGB,GL_UNSIGNED_BYTE,bitmap.data);\n\nGLuint attribTex = glGetAttribLocation(shaderProgram, "tex");\nglUniform1i(attribTex, 0);\n\nGLfloat uvs[] = {\n    0, 0,\n    0, 0,\n    0, 0,\n    0, 0,\n    0, 0,\n    0, 0,\n    0, 0,\n    0, 0,\n    0, 0, // full rect for our additional "overlay" side\n    0, 1,\n    1, 1,\n    1, 0,\n};\n\nGLuint uvsData;\nglGenBuffers(1, &uvsData);\nglBindBuffer(GL_ARRAY_BUFFER, uvsData);\nglBufferData(GL_ARRAY_BUFFER, sizeof(uvs), uvs, GL_STATIC_DRAW);\n\nGLuint attribUvs;\nattribUvs = glGetAttribLocation(shaderProgram, "inUvs");\nglEnableVertexAttribArray(attribUvs);\nglBindBuffer(GL_ARRAY_BUFFER, uvsData);\nglVertexAttribPointer(attribUvs, 2, GL_FLOAT, GL_FALSE, 0, 0);\n\n//glEnable(GL_CULL_FACE); //cw backface culling\n\nglLineWidth(5);\n\nglm::mat4 scaleMatrix = glm::mat4(1.f);\nscaleMatrix = glm::translate(scaleMatrix, glm::vec3(0,0,-2));\n\nglm::mat4 projMatrix = glm::perspective(glm::radians(60.f),1.f,0.f,10.f) * scaleMatrix;\nGLint uniformProj = glGetUniformLocation(shaderProgram, "projection");\nglUniformMatrix4fv(uniformProj, 1, GL_FALSE, glm::value_ptr(projMatrix));	code	cpp	\N
 3120	1	Yocto always builds binary packages.	text	txt	\N
 3121	1	`bitbake` is written in Python and is a task scheduler like `make`.	text	txt	\N
@@ -13121,7 +13098,7 @@ COPY flashback.blocks (card, "position", content, type, extension, metadata) FRO
 3732	1	./config.sh remove --token <token>	code	sh	\N
 3733	1	Create a new workflow `.github/workflows/release.yml` and write a `release` and `push` trigger which will be based on either `tags` or `branches`. Then add a job `publish` and give it permissions to read the repository and write into packages, then checkout the repository, build the project, create a release with `create-release` action, and upload assets using `upload-release-asset` action for every file:	text	txt	\N
 4353	2	#include <algorithm>\n#include <vector>\n\nstd::vector<int> data{ 1, 2, 3, 4, 5, 6, 7, 8, 9 };\n\n// OK for std::copy\n//         [ source range      ]\n// [ destination range ]\nstd::copy(data.begin() + 1, data.end(), data.begin());\n// data == {2, 3, 4, 5, 6, 7, 8, 9, 9}\n\ndata = {1, 2, 3, 4, 5, 6, 7, 8, 9};\n\n// OK for std::copy_backward\n// [ source range      ]\n//         [ destination range ]\nstd::copy_backward(data.begin(), data.begin() + 8, data.end());\n// data == {1, 1, 2, 3, 4, 5, 6, 7, 8}	code	cpp	\N
-4076	1	The `boost::io_service` is a channel that is used to access operating system\nresources and establish communication between our program and the operating\nsystem that performs I/O requests.	text	txt	\N
+1741	4	boost.org	text	txt	Domain name
 3733	2	name: Release\non:\n  release:\n    types: [created]\n  push:\n    tags:\n      - v*\n    branches:\n      - release\njobs:\n  publish:\n    runs-on: ubuntu-latest\n    permissions:\n      contents: read\n      packages: write\n    steps:\n      - name: Checkout\n        uses: actions/checkout@v4\n      - name: Build\n        run: echo "building"\n      - name: Release\n        id: create_release\n        uses: actions/create-release@v1\n        with:\n          tag_name: ${{ github.refname }}\n          release_name: "Release ${{ github.refname }}"\n        body: "Release notes for ${{ github.refname }}"\n        draft: false\n        prerelease: false\n      env:\n        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}\n      - name: Upload\n        uses: actions/upload-release-asset@v1\n        with:\n          upload_url: ${{ steps.create_release.outputs.upload_url }}\n          asset_path: ./package.tar.gz\n          asset_name: package.tar.gz\n          asset_content_type: application/gzip	code	yml	\N
 3733	3	Finally, create a release:	text	txt	\N
 3733	4	gh release create ${{ github.refname }} --generate-notes	code	sh	\N
@@ -13234,28 +13211,22 @@ COPY flashback.blocks (card, "position", content, type, extension, metadata) FRO
 3782	1	Config mode is the mode to use when the dependency has itself been built and installed using CMake. As part of the install process, either `<package>-config.cmake` or `<Package>Config.cmake` will be created by CMake. This file includes the location of built artifacts, include paths and etc. to import and use the library.	text	txt	\N
 3783	1	CMake looks for a file called `Find<Package>.cmake` in several locations. Manual locations can be added to `CMAKE_MODULE_PATH` to make them visible to CMake.	text	txt	\N
 3784	1	`Find<Package>.cmake` files are hand crafted and hard to write. But modules are helpful when we want to import a project that is not built by CMake.	text	txt	\N
-3785	1	- Events: causes that trigger workflows\n- Jobs: sequence of tasks that could run in parallel or sequentially\n- Steps: individual tasks running in sequence	text	txt	\N
 3786	1	- Code events: `push`, `pull_request`, `pull_request_review`\n- Issue events: `issues`, `issue_comment`, `milestone`\n- Scheduled events: `schedule`\n- Manual events: `workflow_dispatch`\n- Repository events: `repository`, `team`, `organization`\n- External events: `repository_dispatch`, `workflow_run`, `page_build`, `registry_package`	text	txt	\N
 3787	1	- `ubuntu-latest`\n- `macos-latest`\n- `windows-latest`\n- `self-hosted`	text	txt	\N
-3788	1		text	txt	\N
-3788	2	name: Workflow\non: [push, workflow_dispatch]\njobs:\n  build:\n    runs-on: ubuntu-latest\n    steps:\n      # ...	code	yml	\N
-3789	1	Jobs within a workflow run in parallel by default to speed up the overall execution time of the workflow. However, we can define dependencies between jobs using the `needs` keyword:	text	txt	\N
 3789	2	name: Workflow\non: [push, workflow_dispatch]\njobs:\n  build:\n    runs-on: ubuntu-latest\n    steps:\n      # ...\n  test:\n    runs-on: ubuntu-latest\n    needs: build\n    steps:\n      # ...\n  deploy:\n    runs-on: ubuntu-latest\n    needs: test\n    steps:\n      # ...	code	yml	\N
 5455	2	One of the important use cases are to showing the images and drawing shapes on them.	text	md	\N
 3790	1	- Shell commands: running directly on runners\n- Built-in actions: provided by GitHub to do specific workflow actions\n- Community and third-party actions: simplifies common tasks provided by the community	text	txt	\N
-3791	1	- `name`: optional name for each step to be displayed in logs\n- `run`: the command to execute when step type is a shell command\n- `uses`: the action identifier to use when step type is a built-in action\n- `with`: set of input parameters to pass to the action in key-value pairs\n- `if`: a conditional expression that determines whether the step should be executed	text	txt	\N
 3791	2	name: Workflow\non: [push, workflow_dispatch]\njobs:\n  checkout:\n    runs-on: ubuntu-latest\n    steps:\n      - name: Checkout\n        uses: actions/checkout@v4\n  build:\n    runs-on: ubuntu-latest\n    needs: checkout\n    steps:\n      - name: Configure\n        run: cmake -S project -B build -D CMAKE_BUILD_TYPE=Release\n      - name: Build\n        run: cmake --build build --parallel\n  test:\n    runs-on: ubuntu-latest\n    needs: build\n    steps:\n      - name: Test\n        run: ctest --testdir build\n  deploy:\n    runs-on: ubuntu-latest\n    needs: build\n    steps:\n      - name: Deploy\n        run: cpack -G "DEB;RPM" --config build/CPackConfig.cmake\n  docs:\n    runs-on: ubuntu-latest\n    needs: build\n    steps:\n      - name: Generate Documentation\n        if: github.ref_name == 'release'\n        run: ctest --testdir build	code	yml	\N
 3792	1	GitHub Actions does not checkout the source repository by default, by doing so is as easy as using `checkout` action:	text	txt	\N
 3792	2	name: Workflow\non: [push, workflow_dispatch]\njobs:\n  checkout:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v4	code	yml	\N
 5483	2	Alternatively, we can print a `ftxui::Screen` object as follows:	text	md	\N
+3785	1	- Events: the causes that trigger workflows\n- Jobs: sequence of tasks that could run in parallel or sequentially\n- Steps: individual tasks running in sequence	text	txt	\N
 3793	1	name: Workflow\non: [push, workflow_dispatch]\njobs:\n  setup-node:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/setup-node@v4\n        with:\n          node-version: latest	code	yml	\N
 3794	1	name: Workflow\npermissions:\n  contents: write\non:\n  tags:\n    - v*\njobs:\n  release:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/create-release@v4\n        env:\n          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}\n        with:\n          tag_name: ${{ github.ref_name }}\n          release_name: "Release ${{ github.ref_name }}"\n          body: "Release notes for ${{ github.ref_name }}"\n          draft: false\n          prerelease: false	code	yml	\N
 5075	1	\\\\textit{Italic text}	code	txt	\N
 3795	1	The `GITHUB_TOKEN` is provided by GitHub Actions, we do not need to create one.	text	txt	\N
 3795	2	name: Workflow\non: [push, workflow_dispatch]\npermissions:\n  contents: write\njobs:\n  release:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/create-release@v1\n        with:\n          tag_name: ${{ github.ref_name }}\n          release_name: "Release ${{ github.ref_name }}"\n          body: "Release notes for ${{ github.refname }}"\n          prerelease: false\n          draft: false\n        env:\n          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}	code	yml	\N
 3796	1	The `GITHUB_TOKEN` is provided by GitHub Actions, we do not need to create one.	text	txt	\N
-3796	2	name: Workflow\non: [push, workflow_dispatch]\npermissions:\n  contents: write\njobs:\n  deploy:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/create-release@v1\n        with:\n          tag_name: ${{ github.ref_name }}\n          release_name: "Release ${{ github.ref_name }}"\n          body: "Release notes for ${{ github.refname }}"\n          prerelease: false\n          draft: false\n        env:\n          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}\n      - uses: actions/upload-release-asset@v1\n        with:\n          upload_url: ${{ steps.create-release.outputs.upload_url\n          asset_path: ${{ env.package-path }}\n          asset_name: ${{ env.package-name }}\n          asset_content_type: ${{ env.package-type }}\n        env:\n          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}	code	yml	\N
-3797	1	We can for example cache the npm build steps by hashing `package.json` file.	text	txt	\N
 3797	2	name: Workflow\non: [push, workflow_dispatch]\njobs:\n  cache:\n    runs-on: ubuntu-latest\n    steps:\n      - name: Save Cache\n        uses: actions/cache@v2\n        with:\n          path: ~/.npm\n          key: ${{ runner.os }}-cache-${{ hashFiles('**/package-lock.json') }}\n      - name: Restore Cache\n        uses: actions/cache@v2\n        with:\n          path: ~/.npm\n          restore-key: |\n            ${{ runner.os }}-npm-\n          key: ${{ runner.os }}-npm-${{ hashFiles('**/package-lock.json') }}	code	yml	\N
 3798	1	name: Workflow\non: [push, workflow_dispatch]\njobs:\n  upload:\n    runs-on: ubuntu-latest\n    needs: build\n    steps:\n      - uses: actions/upload-artifact@v4\n        with:\n          name: artifacts\n          path: build/\n          retention-days: 1	code	yml	\N
 3799	1	name: Workflow\non: [push, workflow_dispatch]\njobs:\n  download:\n    runs-on: ubuntu-latest\n    needs: build\n    steps:\n      - uses: actions/download-artifact@v4\n        with:\n          name: artifacts\n          path: assets/\n        run: ls assets/	code	yml	\N
@@ -13263,12 +13234,8 @@ COPY flashback.blocks (card, "position", content, type, extension, metadata) FRO
 3801	1	name: Workflow\non: [push, workflow_dispatch]\njobs:\n  conditional:\n    runs-on: ubuntu-latest\n    if: github.event_name == 'push'\n    steps:\n      - uses: actions/checkout@v4	code	yml	\N
 5222	2	git clone https://github.com/nektos/act.git /usr/local/src\ncd /usr/local/src/act\n./install\nsudo cp /usr/local/src/act/bin/act /usr/local/bin/act	code	sh	\N
 3802	1	name: Workflow\non: [push, workflow_dispatch]\njobs:\n  immortal:\n    runs-on: ubuntu-latest\n    steps:\n      - id: test\n        run: ./build/test-program\n        continue-on-failure: true\n      - if: steps.test.outcome == 'failure'\n        run: echo "Test Failed"	code	yml	\N
-3803	1		text	txt	\N
-3803	2	name: Workflow\non: [push, workflow_dispatch]\njobs:\n  output:\n    runs-on: ubuntu-latest\n    steps:\n      - id: generate-random\n        run: echo "number=$(echo $RANDOM)" >> "$GITHUB_OUTPUT"\n      - run: echo "number: ${{ steps.generate-random.outputs.number }}"	code	yml	\N
 3804	1	To have outputs for a job, we need to define it at the job level.	text	txt	\N
 3804	2	name: Workflow\non: [push, workflow_dispatch]\njobs:\n  producer:\n    runs-on: ubuntu-latest\n    outputs:\n      number: ${{ steps.generate-random.outputs.number }}\n    steps:\n      - id: generate-random\n        run: echo "number=$(echo $RANDOM)" >> "$GITHUB_OUTPUT"\n  consumer:\n    runs-on: ubuntu-latest\n    needs: producer\n    steps:\n      - run: echo "number: ${{ needs.producer.outputs.number }}"	code	yml	\N
-3805	1		text	txt	\N
-3805	2	name: Workflow\non: [push, workflow_dispatch]\njobs:\n  build:\n    strategy:\n      matrix:\n        os: [ubuntu-latest, windows-latest, macos-latest]\n        node: [14, 16]\n    runs-on: ${{ matrix.os }}\n    steps:\n      - uses: actions/checkout@v4\n      - id: cache\n        uses: actions/cache@v2\n        with:\n          path: ~/.npm\n          key: ${{ runner.os }}-npm-${{ matrix.node }}-${{ hashFile('**/package-lock.json') }}	code	yml	\N
 4348	2	// C++17\nusing file_time_type = std::chrono::time_point</*trivial-clock*/>;	code	cpp	\N
 3806	1	In the past, PostgreSQL supported an instance-wide configuration variable called `old_snapshot_threshold`.	text	txt	\N
 3806	2	The community has removed this feature and introduced a new variable called `transaction_timeout`, which can be set per session.	text	txt	\N
@@ -13286,6 +13253,9 @@ COPY flashback.blocks (card, "position", content, type, extension, metadata) FRO
 3810	3	CREATE TABLE user_logins (\n    id serial,\n    who text\n);	code	sql	\N
 5483	3	std::cout << screen.ToString();	code	cpp	\N
 5564	1	sed -e '<command>' -e '<command>' ... <file>	code	sh	\N
+3797	1	We can for example cache the npm build steps by hashing `package-lock.json` file.	text	txt	\N
+3803	1	name: Workflow\non: [push, workflow_dispatch]\njobs:\n  output:\n    runs-on: ubuntu-latest\n    steps:\n      - id: generate-random\n        run: echo "number=$(echo $RANDOM)" >> "$GITHUB_OUTPUT"\n      - run: echo "number: ${{ steps.generate-random.outputs.number }}"	code	yml	\N
+3805	1	name: Workflow\non: [push, workflow_dispatch]\njobs:\n  build:\n    strategy:\n      matrix:\n        os: [ubuntu-latest, windows-latest, macos-latest]\n        node: [14, 16]\n    runs-on: ${{ matrix.os }}\n    steps:\n      - uses: actions/checkout@v4\n      - id: cache\n        uses: actions/cache@v2\n        with:\n          path: ~/.npm\n          key: ${{ runner.os }}-npm-${{ matrix.node }}-${{ hashFile('**/package-lock.json') }}	code	yml	\N
 3810	4	CREATE FUNCTION on_login_proc()\nRETURNS event_trigger AS\n$$\nBEGIN\n    INSERT INTO user_logins (who)\n    VALUES (SESSION_USER);\n    RAISE NOTICE 'User logged in';\nEND;\n$$ LANGUAGE plpgsql;	code	sql	\N
 3810	5	The return value of this function is a special data type specifically designed for this purpose.	text	txt	\N
 3810	6	Then we create the event itself:	text	txt	\N
@@ -13623,6 +13593,8 @@ COPY flashback.blocks (card, "position", content, type, extension, metadata) FRO
 4373	1	The `std::sort` algorithm is the canonical `O(N log N)` sort (typically\nimplemented as *intro-sort*).	text	txt	\N
 4373	2	Due to the `O(N log N)` complexity guarantee, `std::sort` only operates on\n`random_access` ranges. Notably, `std::list` offers a method with an\napproximate `O(N log N)` complexity.	text	txt	\N
 4374	1	| `std::sort` | standard |\n| --- | --- |\n| introduced | C++98 |\n| paralllel | C++17 |\n| constexpr | C++20 |\n| rangified | C++20 |	text	txt	\N
+1741	2	192.168.1.112	text	txt	IPv4
+1741	3	FE36::0404:C3FA;EF1E:3829	text	txt	IPv6
 3965	1	#include <vector>\n#include <ranges>\n#include <string>\n#include <memory>\n#include <iostream>\n#include <iterator>\n\nclass console\n{\nprivate:\n    std::vector<std::string> m_logs;\npublic:\n    void clear() noexcept { m_logs.clear(); }\n    void print() const { std::ranges::copy(m_logs, std::ostream_iterator{std::cout, "\\n"}); }\n    void add(std::string const& log) { m_logs.push_back(log); }\n};\n\nclass basic_console_command\n{\npublic:\n    virtual ~basic_console_command() = default;\n    virtual void execute() = 0;\n};\n\nclass clear_console_command: public basic_console_command\n{\nprivate:\n    console& m_console;\npublic:\n    explicit clear_console_command(console& tty): m_console{tty} { }\n    void execute() override { m_console.clear(); }\n};\n\nclass print_console_command: public basic_console_command\n{\nprivate:\n    console& m_console;\npublic:\n    explicit print_console_command(console& tty): m_console{tty} { }\n    void execute() override { m_console.print(); }\n};\n\nclass add_console_command: public basic_console_command\n{\nprivate:\n    console& m_console;\n    std::string m_value;\npublic:\n    explicit print_console_command(console& tty, std::string const& value): m_console{tty}, m_value{value} { }\n    void execute() override { m_console.add(m_value); }\n};\n\nclass button\n{\nprivate:\n    std::shared_ptr<basic_console_command> m_command;\npublic:\n    explicit button(std::shared_ptr<basic_console_command> command): m_command{command} { }\n    void click() { m_command.execute(); }\n};\n\nint main()\n{\n    console tty{};\n\n    std::shared_ptr<clear_console_command> clear_command{std::make_shared<clear_console_command>(tty)};\n    std::shared_ptr<print_console_command> print_command{std::make_shared<print_console_command>(tty)};\n    std::shared_ptr<add_console_command> add_command{std::make_shared<add_console_command>(tty, "Command Pattern")};\n\n    button clear{clear_command};\n    button print{print_command};\n    button add{add_command};\n}	code	cpp	\N
 3966	1	List of emails in the currently opened mailbox. By default it opens the system mailbox.	text	txt	\N
 3967	1	The pager contains the email content. How much information can be seen depends on configuration.	text	txt	\N
@@ -14061,7 +14033,6 @@ COPY flashback.blocks (card, "position", content, type, extension, metadata) FRO
 4244	1	The type of objects without template arguments are not types, but act as a\nplaceholder for a type that activates CTAD. When compiler encouters it, it\nbuilds a set of deduction guides which can be complemented by user with user\ndefined deduction rules.	text	txt	\N
 4244	2	**CTAD** does not occur if the template argument list is present.	text	txt	\N
 4244	3	std::pair p{42, "demo"};    // std::pair<int, char const*>\nstd::vector v{1, 2};        // std::vector<int>\n\n// declaration of the template\ntemplate<typename T>\nstruct container\n{\n    container(T t) {}\n\n    template<typename Iter>\n    container(Iter beg, Iter end);\n};\n\n// additional deduction guide\ntemplate<typename Iter>\ncontainer(Iter b, Iter e) -> container<typename std::iterator_traits<Iter>::value_type>;\n\n// use cases\ncontainer c(7); // OK: deduces container<int> using an implicitly-generated guide\nstd::vector<double> v = {/* ... */};\nauto d = container(v.begin(), v.end()); // OK: deduces container<double>\ncontainer e{5, 6}; // Error: there is no std::iterator_traits<int>::value_type	code	cpp	\N
-5192	1	name: Custom Workflow\non:\n  workflow_dispatch:\nsteps:\n  release:\n    runs-on: ubuntu-latest\n    env:\n      GITHUB_TOKEN: ${{ secrets.github_token }}\n    permissions:\n      contents: write\n    steps:\n      - name: Create release\n        uses: actions/create-release@v2\n        with:\n          draft: false\n          prerelease: false\n          release_name: "${{ github.ref_name }}"\n          tag_name: "${{ github.ref_name }}"\n          body: "Program ${{ github.ref_name }}"	code	yml	\N
 5272	2	rm -i <file>	code	sh	\N
 4247	1	#include <vector>\n#include <map>\n\nstd::vector<int> get_numbers()\n{\n    return std::vector<int>{1, 2, 3, 4, 5};\n}\n\nstd::map<int, double> get_doubles()\n{\n    return std::map<int, double>{\n        {0, 0.0},\n        {1, 1.1},\n        {2, 2.2}\n    };\n}\n\nint main()\n{\n    auto numbers = std::vector<int>{1, 2, 3, 4, 5};\n    auto copies = std::vector<int>(numbers.size() * 4);\n\n    for (int element: numbers)\n        copies.push_back(element);\n\n    for (int& element: numbers)\n        copies.push_back(element);\n\n    for (auto&& element: get_numbers())\n        copies.push_back(element);\n\n    for (auto&& [key, value]: get_doubles())\n        copies.push_back(key);\n}	code	cpp	\N
 5147	1	import QtQuick	text	txt	\N
@@ -14198,7 +14169,6 @@ COPY flashback.blocks (card, "position", content, type, extension, metadata) FRO
 4362	4	#include <algorithm>\n#include <ranges>\n#include <vector>\n\nint main()\n{\n    std::vector<long> numbers{1, 2, 3, 4, 5};\n    long sum{};\n\n    sum = std::for_each(numbers.begin(), numbers.end(), sum_predicate<long>{});\n    // sum == 15, using a unary predicate\n\n    std::for_each(numbers.begin(), numbers.end(), [&sum](auto v) { sum += v; });\n    // sum == 30, using a lambda\n\n    std::ranges::for_each(numbers, [&sum](auto v) { count++; sum += v; });\n    // sum == 45, using ranges\n\n    for (auto v: numbers) { sum += v; }\n    // sum == 60, using range-based for\n}	code	cpp	\N
 4362	5	#include <algorithm>\n#include <vector>\n\nint main()\n{\n    std::vector<int> data{1, 2, 3, 4, 5};\n\n    std::for_each(data.begin(), data.end(), [i = 5](int& v) mutable { v += i--; });\n    // data == {6, 6, 6, 6, 6}\n}	code	cpp	\N
 4362	6	#include <algorithm>\n#include <execution>\n#include <vector>\n\nint main()\n{\n    struct Custom {};\n    void process(Custom&) {}\n    std::vector<Custom> rng(10, Custom{});\n\n    // parallel execution C++17\n    std::for_each(std::execution::par_unseq, // parallel, in any order\n            rng.begin(), rng.end(), // all elements\n            process // invoke process on each element\n            );\n}	code	cpp	\N
-2771	3	The `boost::asio::io_context::work` class is responsible for telling the\n`io_service` object when the work starts and when it has finished. It will\nmake sure that the `boost::asio::io_context::run()` function will not exit during the time\nthe work is underway. Also, it will make sure that the `boost::asio::io_context::run()`\nfunction exits when there is no unfinished work remaining.	text	txt	\N
 4362	7	#include <algorithm>\n#include <vector>\n#include <optional>\n\nint main()\n{\n    std::vector<std::optional<int>> opt{{},2,{},4,{}};\n    // range version with projection C++20\n\n    std::ranges::for_each(opt,\n        [](int v) {\n            // iterate over projected values\n            // {0, 2, 0, 4, 0}\n        },\n        [](std::optional<int>& v){\n            // projection that will return\n            // the contained value or zero\n            return v.value_or(0);\n        }\n    );\n}	code	cpp	\N
 4363	1	As long as the operations are independent, there is no need for\nsynchronization primitives.	text	txt	\N
 4363	2	#include <algorithm>\n#include <execution>\n#include <ranges>\n#include <vector>\n\nstruct work\n{\n    void expensive_operation() { /* ... */ }\n};\n\nint main()\n{\n    std::vector<work> work_pool{work{}, work{}, work{}};\n    std::for_each(std::execution::par_unseq, work_pool.begin(), work_pool.end(), [](work& w) { w.expensive_operation(); });\n}	code	cpp	\N
@@ -14288,7 +14258,6 @@ COPY flashback.blocks (card, "position", content, type, extension, metadata) FRO
 5469	3	cmake_minimum_required(VERSION 4.0)\nproject(Example VERSION 1.0 LANGUAGES CXX)\n\ninclude(FetchContent)\n\nFetchContent_Declare(ftxui\n    GIT_REPOSITORY https://github.com/ArthurSonzogni/FTXUI\n    GIT_TAG v5.0.0\n)\nFetchContent_MakeAvailable(ftxui)\n\nadd_executable(program main.cpp)\ntarget_link_libraries(program PRIVATE ftxui::component ftxui::dom ftxui::screen)	code	cmake	\N
 4415	1	#include <string>\n\ntemplate<typename CharT>\nusing tstring = std::basic_string<CharT, std::char_traits<CharT>, std::allocator<CharT>>;\n\ntemplate<typename CharT>\ninline tstring<CharT> reverse(tstring<CharT> text)\n{\n    std::reverse(std::begin(text), std::end(text));\n    return text;\n}\n\ntemplate<typename CharT>\ninline tstring<CharT> reverse(tstring<CharT>&& text)\n{\n    std::reverse(std::begin(text), std::end(text));\n    return text;\n}	code	cpp	\N
 5197	1	When the strategy should only be set once and not change during the lifetime of the context object, we inject the strategy through the constructor. Otherwise, we use a setter method to set or change the strategy anytime.	text	md	\N
-2772	1	The `poll()` function will run the `boost::asio::io_context` object's event processing loop\nwithout blocking the execution of the thread. This will run the handlers until\nthere are no more ready handlers remaining or until the `boost::asio::io_context` object\nhas been stopped.	text	txt	\N
 4416	1	#include <string>\n#include <utility>\n\ntemplate<typename CharT>\nusing tstring = std::basic_string<CharT, std::char_traits<CharT>, std::allocator<CharT>>;\n\ntemplate<typename CharT>\ninline tstring<CharT> trim(tstring<CharT> const& text)\n{\n    tstring<CharT>::size first{text.find_first_not_of(' ')};\n    tstring<CharT>::size last{text.find_last_not_of(' ')};\n    return text.substr(first, (last - first + 1));\n}	code	cpp	\N
 4417	1	#include <string>\n#include <algorithm>\n\ntemplate<typename CharT>\nusing tstring = std::basic_string<CharT, std::char_traits<CharT>, std::allocator<CharT>>;\n\ntemplate<typename CharT>\ninline tstring<CharT> remove(tstring<CharT> text, CharT const character)\n{\n    auto last = std::remove_if(std::begin(text), std::end(text), [character](CharT const c) { return c == character; });\n    text.erase(last, std::end(text));\n    return text;\n}	code	cpp	\N
 4418	1	#include <string>\n#include <sstream>\n#include <vector>\n\ntemplate<typename CharT>\nusing tstring = std::basic_string<CharT, std::char_traits<CharT>, std::allocator<CharT>>;\n\ntemplate<typename CharT>\nusing tstringstream = std::basic_stringstream<CharT, std::char_traits<CharT>, std::allocator<CharT>>;\n\ntemplate<typename CharT>\ninline std::vector<tstring<CharT>> split(tstring<CharT> text, CharT const delimiter)\n{\n    auto sstream = tstringstream<CharT>{text};\n    auto tokens = std::vector<tstring<CharT>>{};\n    auto token = tstring<CharT>{};\n\n    while (std::getline(sstream, token, delimiter))\n    {\n        if (!token.empty())\n            tokens.push_back(token);\n    }\n\n    return tokens;\n}	code	cpp	\N
@@ -15019,7 +14988,6 @@ COPY flashback.blocks (card, "position", content, type, extension, metadata) FRO
 2175	2	#include <algorithm>\n#include <execution>\n#include <atomic>\n#include <vector>\n\nint main()\n{\n    std::atomic<std::size_t> count{};\n    std::atomic<long> sum{};\n    std::vector<long> numbers{1, 2, 3, 4, 5};\n    std::for_each(std::execution::par_unseq, numbers.begin(), numbers.end(), [&](auto const& e){ count++; sum += e; });\n    // count: 5, sum: 15\n}	code	cpp	\N
 2176	1	#include <algorithm>\n#include <ranges>\n#include <vector>\n\nint main()\n{\n    std::size_t count{};\n    long sum{};\n    std::vector<long> numbers{1, 2, 3, 4, 5};\n    std::ranges::for_each(numbers, [&](auto const& e){ count++; sum += e; });\n    // count: 5, sum: 15\n}	code	cpp	\N
 2177	3	#include <iostream>\n#include <algorithm>\n#include <vector>\n\nint main()\n{\n    std::vector<int> numbers{1,2,3,4,5};\n\n    auto iter1 = numbers.begin();\n    auto iter2 = numbers.end();\n\n    std::for_each(iter1, iter2, [](auto e) { std::cout << e << " "; });\n}	code	cpp	\N
-2773	2	Any thread calling `boost::asio::io_context::run()` function will block execution and wait\nfor tasks to be enqueued, or finish existing tasks. Best practice is to attach\n`boost::asio::io_context` to slave threads so that they wait for tasks to be given and\nexecute them while master threads assign new tasks to them.	text	txt	\N
 2177	5	#include <iostream>\n#include <algorithm>\n#include <ranges>\n#include <vector>\n\ntemplate<typename T>\nstruct sentinel\n{\n    using iter_t = typename std::vector<T>::iterator;\n    iter_t begin;\n    std::iter_difference_t<iter_t> count;\n    bool operator==(iter_t const& other) const { return std::distance(begin, other) >= count; }\n};\n\nint main()\n{\n    std::vector<long> numbers{1,2,3,4,5};\n    std::vector<long>::iterator iter = numbers.begin();\n    std::ranges::for_each(iter, sentinel<long>{iter, 3}, [](auto e) { std::cout << e << " "; });\n}	code	cpp	\N
 2178	1	#include <algorithm>\n#include <vector>\n#include <list>\n\nint main()\n{\n    std::vector<long> random_access{1,2,3,4,5};\n    std::list<long> bidirectional{1,2,3,4,5};\n\n    auto random_access_iterator = random_access.begin();\n    random_access_iterator += 3; // OK\n    random_access_iterator++; // OK\n    ssize_t random_difference = random_access_iterator - random_access.begin(); // OK: 4\n\n    auto bidirectional_iterator = bidirectional.begin();\n    //bidirectional_iterator += 5; // ERROR\n    std::advance(bidirectional_iterator, 3); // OK\n    bidirectional_iterator++; // OK, all iterators provide advance operation\n    //ssize_t bidirectional_difference = bidirectional_iterator - bidirectional.begin(); // ERROR\n    ssize_t bidirectional_difference = std::distance(bidirectional.begin(), bidirectional_iterator); // OK: 4\n}	code	cpp	\N
 2180	1	#include <algorithm>\n#include <ranges>\n#include <vector>\n\nint main()\n{\n    std::vector<long> numbers{1,2,3,4,5};\n\n    auto last_sorted = std::is_sorted_until(numbers.begin(), numbers.end());\n\n    for (auto iter = numbers.begin(); iter != last_sorted; ++iter)\n        continue;\n\n    for (auto v: std::ranges::subrange(numbers.begin(), last_sorted))\n        continue;\n}	code	cpp	\N
@@ -15031,25 +14999,25 @@ COPY flashback.blocks (card, "position", content, type, extension, metadata) FRO
 1438	1	#include <iostream>\n\nstruct base\n{\n    static void show() { std::cout << "base\\\\n"; }\n};\n\n// pre-c++20\nauto tshow = [](auto x)\n{\n    using T = std::decay_t<decltype(x)>;\n\n    T other;   // create instance\n    T::show(); // call static method\n};\n\n// post-c++20\nauto generic_show = []<typename T>(T const& x)\n{\n    T other;   // create instance\n    T::show(); // call static method\n};\n\nint main()\n{\n    base object;\n\n    tshow(object);\n    generic_show(object);\n}	code	cpp	\N
 1439	1	template<typename ...T>\nvoid do_something(T&& ...args) { /* ... */ }\n\nauto forward_something = [](auto&& ...args)\n{\n    return do_something(std::forward<decltype(args)>(args)...);\n};\n\nauto generic_forward = []<typename ...T>(T&& ...args)\n{\n    return do_something(std::forward<T>(args)...);\n};	code	cpp	\N
 1440	4	#include <functional>\n\nvoid sample()\n{\n    std::function<int(int const)> lfib = [&lfib](int const n)\n    {\n        return n <= 2 ? 1 : lfib(n - 1) + lfib(n - 2);\n    };\n\n    auto f10 = lfib(10);\n}	code	cpp	\N
-2771	1	Running the `boost::asio::io_context` object's event processing loop will block the\nexecution of the thread and will run ready handlers until there are no more\nready handlers remaining or until the `boost::asio::io_context` object has been stopped.	text	txt	\N
-2771	2	#include <boost/asio.hpp>\n\nint main()\n{\n    boost::asio::io_context context;\n    boost::asio::io_context::work work{context};\n    context.run();\n    // will not be reached: blocking service\n}	code	cpp	\N
-2772	2	#include <boost/asio.hpp>\n\nint main()\n{\n    boost::asio::io_context context;\n    boost::asio::io_context::work work{context};\n    context.poll();\n    // will be reached: non-blocking service\n}	code	cpp	\N
+2772	2	#include <boost/asio.hpp>\n\nint main()\n{\n    boost::asio::io_context context;\n    boost::asio::io_context::work work{context};\n    context.poll(); // returns immediately\n}	code	cpp	\N
 2773	3	#include <thread>\n#include <chrono>\n#include <functional>\n#include <boost/asio.hpp>\n\nvoid finish_tasks(boost::asio::io_context& context)\n{\n    context.run();\n}\n\nvoid some_work(std::size_t s)\n{\n    std::this_thread::sleep_for(std::chrono::seconds(s));\n}\n\nint main()\n{\n    boost::asio::io_context context;\n    std::thread worker{finish_tasks, std::ref(context)};\n    context.post(std::bind(some_work, 2));\n    worker.join();\n}	code	cpp	\N
 2775	2	#include <thread>\n#include <chrono>\n#include <boost/asio.hpp>\n\nvoid wait_for(std::chrono::seconds const s)\n{\n    std::this_thread::sleep_for(s);\n}\n\nint main()\n{\n    boost::asio::io_context context{};\n    boost::asio::io_context::strand strand{context};\n    boost::asio::executor_work_guard guard{boost::asio::make_work_guard(context)};\n    std::jthread worker{[&context] { context.run(); }};\n    strand.dispatch([] { wait_for(std::chrono::seconds{1}); });\n    strand.dispatch([] { wait_for(std::chrono::seconds{1}); });\n    strand.dispatch([] { wait_for(std::chrono::seconds{1}); });\n    guard.reset();\n}	code	cpp	\N
 2774	3	#include <thread>\n#include <chrono>\n#include <boost/asio.hpp>\n\nvoid wait_for(std::chrono::seconds const s)\n{\n    std::this_thread::sleep_for(s);\n}\n\nint main()\n{\n    boost::asio::io_context context{};\n    boost::asio::executor_work_guard guard{boost::asio::make_work_guard(context)};\n    std::jthread worker{[&context] { context.run(); }};\n    context.dispatch([] { wait_for(std::chrono::seconds{1}); });\n    context.dispatch([] { wait_for(std::chrono::seconds{1}); });\n    context.dispatch([] { wait_for(std::chrono::seconds{1}); });\n    guard.reset();\n}	code	cpp	\N
-2778	1	#include <thread>\n#include <string>\n#include <boost/asio.hpp>\n\nvoid initialize_service(boost::asio::io_context& service)\n{\n    service.run();\n}\n\nint main()\n{\n    boost::asio::io_context service;\n    boost::asio::io_context::strand strand{service};\n\n    std::thread worker{initialize_service, std::ref(service)};\n\n    boost::asio::ip::tcp::socket socket{service};\n    boost::asio::ip::tcp::resolver resolver{service};\n    boost::asio::ip::tcp::resolver::query query{"127.0.0.1", std::to_string(9090)};\n    boost::asio::ip::tcp::resolver::iterator iterator = resolver.resolve(query);\n    boost::asio::ip::tcp::endpoint endpoint = *iterator;\n\n    socket.connect(endpoint);\n    socket.shutdown(boost::asio::ip::tcp::socket::shutdown_both);\n    socket.close();\n\n    worker.join();\n    service.stop();\n}	code	cpp	\N
-2779	1	#include <thread>\n#include <iostream>\n#include <functional>\n#include <boost/asio.hpp>\n\nvoid connection_worker(boost::asio::io_context& context)\n{\n    context.run();\n}\n\nvoid on_connect(boost::asio::ip::tcp::endpoint const& endpoint)\n{\n    std::cout << "connected to " << endpoint.address().to_string() << std::endl;\n}\n\nint main()\n{\n    boost::asio::io_context context{};\n    boost::asio::io_context::strand strand{context};\n    std::thread worker{connection_worker, std::ref(context)};\n\n    boost::asio::ip::tcp::socket socket{context};\n    boost::asio::ip::tcp::resolver resolver{context};\n\n    boost::asio::ip::tcp::resolver::query query{"127.0.0.1", "9000"};\n    boost::asio::ip::tcp::resolver::iterator endpoints = resolver.resolve(query);\n\n    boost::asio::ip::tcp::endpoint endpoint = *endpoints;\n    socket.async_connect(endpoint, std::bind(on_connect, std::ref(endpoint)));\n\n    socket.shutdown(boost::asio::ip::tcp::socket::shutdown_both);\n    socket.close();\n    worker.join();\n    context.stop();\n}	code	cpp	\N
+1738	1	In Boost.Asio, opening a socket means associating it with full set of\nparameters describing a specific protocol over which the socket is intended\nto be communicating. When the Boost.Asio socket object is provided with these\nparameters, it has enough information to allocate a real socket object of the\nunderlying operating system.	text	txt	\N
+1738	3	#include <boost/asio.hpp>\n\nint main()\n{\n    boost::asio::io_context context;\n    boost::asio::ip::tcp::socket sockets{context};\n    boost::asio::ip::tcp protocol{boost::asio::ip::tcp::v4()};\n    socket.open(protocol);\n    socket.close();\n}	code	cpp	\N
+2771	5	#include <boost/asio.hpp>\n\nint main()\n{\n    boost::asio::io_context context{};\n    boost::asio::io_context::work work{context};\n    context.run(); // blocks execution\n}	code	cpp	\N
+2771	1	Running the `boost::asio::io_context` event loop blocks the calling thread and continuously executes ready handlers until either no handlers remain or the `boost::asio::io_context` has been explicitly stopped by `boost::asio::io_context::stop()`.	text	txt	\N
 5528	1	#include <ftxui/dom/elements.hpp>\n\nint main()\n{\n    ftxui::Element text{ftxui::text("Flashback, for experts like you")};\n    ftxui::invert(text);\n}	code	cpp	\N
 1449	1	#include <functional>\n\nint add(int const a, int const b) { return a + b; }\n\nstruct base\n{\n    int x = 0;\n\n    void add(int const n) { x += n; }\n};\n\nint main()\n{\n    // free function\n    int r1 = std::invoke(add, 1, 2);\n\n    // free function through pointer to function\n    int r2 = std::invoke(&add, 1, 2);\n\n    // member functions through pointer to member function\n    base object;\n    std::invoke(&base::add, object, 3);\n\n    // data members\n    int r3 = std::invoke(&base::x, object);\n\n    // function objects\n    int r4 = std::invoke(std::plus<>(), std::invoke(&base::x, object), 3);\n\n    // lambda expressions\n    auto lambda = [](auto a, auto b) { return a + b; }\n    int r5 = std::invoke(lambda, 1, 2);\n}	code	cpp	\N
 2834	4	template<typename T>\nclass Stack\n{\nprivate:\n    std::vector<T> container;\n\npublic:\n    Stack(T value): container({std::move(value)}) { }\n    // initialize stack with one element by value to decay on class template argument deduction\n};	code	cpp	\N
 2837	4	ValueWithComment(char const*, char const*) -> ValueWithComment<std::string>;\n\nValueWithComment vc = {"secret", "my secret message"}; // ValueWithComment<std::string> deduced	code	cpp	\N
 3452	2	GoogleTest assertion macros might throw exceptions. Therefore, they should not be used in destructors.	text	txt	\N
-2780	1	#include <iostream>\n#include <thread>\n#include <string>\n#include <functional>\n#include <boost/asio.hpp>\n\nstatic constexpr auto port{8888};\nstatic constexpr auto address{"127.0.0.1"};\n\nvoid connection_worker(boost::asio::io_context& context)\n{\n    context.run();\n}\n\nint main()\n{\n    boost::asio::io_context context{};\n    boost::asio::io_context::strand strand{context};\n    boost::asio::ip::tcp::socket socket{context};\n    boost::asio::ip::tcp::resolver resolver{context};\n    boost::asio::ip::tcp::acceptor acceptor{context};\n\n    std::thread worker(connection_worker, std::ref(context));\n\n    boost::asio::ip::tcp::resolver::query query{address, std::to_string(port)};\n    boost::asio::ip::tcp::resolver::iterator iterator{resolver.resolve(query)};\n    boost::asio::ip::tcp::endpoint endpoint{*iterator};\n\n    acceptor.open(endpoint.protocol());\n    acceptor.set_option(boost::asio::ip::tcp::acceptor::reuse_address(true));\n    acceptor.bind(endpoint);\n    acceptor.listen(boost::asio::socket_base::max_connections);\n\n    boost::asio::ip::address local_addr{endpoint.address()};\n    boost::asio::ip::port_type local_port{port};\n    std::clog << "listening " << local_addr << ":" << local_port << std::endl;\n\n    acceptor.accept(socket);\n\n    boost::asio::ip::tcp::endpoint client{socket.remote_endpoint()};\n    boost::asio::ip::address client_addr{client.address()};\n    boost::asio::ip::port_type client_port{client.port()};\n    std::clog << "client " << client_addr << ":" << client_port << std::endl;\n\n    acceptor.close();\n    socket.shutdown(boost::asio::ip::tcp::socket::shutdown_both);\n    socket.close();\n    context.stop();\n    worker.join();\n}	code	cpp	\N
 5461	1	Computational photography is an advanced processing technique to improve image quality captured by cameras. The common use case is to capture the same scene at multiple exposures, register those images with each other and blend them nicely to create a high dynamic range image.	text	md	\N
 1359	2	#include <iostream>\n#include <initializer_list>\n#include <string>\n#include <vector>\n#include <map>\n\nvoid func(int const a, int const b, int const c)\n{\n    std::cout << a << b << c << '\\\\n';\n}\n\nvoid func(std::initializer_list<int> const list)\n{\n    for (auto const& e: list)\n        std::cout << e;\n    std::cout << '\\\\n';\n}\n\nint main()\n{\n    std::string s1("text"); // direct initialization\n    std::string s2 = "text"; // copy initialization\n    std::string s3{"text"}; // direct list-initialization\n    std::string s4 = {"text"}; // copy list-initialization\n\n    std::vector<int> v{1, 2, 3};\n    std::map<int, std::string> m{{1, "one"}, {2, "two"}};\n\n    func({1, 2, 3}); // call std::initializer_list<int> overload\n\n    std::vector v1{4}; // size = 1\n    std::vector v2(4); // size = 4\n\n    auto a = {42}; // std::initializer_list<int>\n    auto b{42}; // int\n    auto c = {4, 2}; //std::initializer_list<int>\n    auto d{4, 2}; // error, too many elements	code	cpp	\N
 5202	2	Users and processes do not have permission to change the security rules, so they cannot work around the access control rules.	text	md	\N
 1360	1	struct base\n{\n    // default member initialization\n    const int height = 14;\n    const int width = 80;\n\n    v_align valign = v_align::middle;\n    h_align halign = h_align::left;\n\n    std::string text;\n\n    // constructor initialization list\n    base(std::string const& t): text{t}\n    {}\n\n    base(std::string const& t, v_align const va, h_align const ha): text{t}, valign{va}, halign{ha}\n    {}\n};	code	cpp	\N
-2781	1	#include <iostream>\n#include <memory>\n#include <thread>\n#include <string>\n#include <functional>\n#include <boost/asio.hpp>\n\nstatic constexpr auto port{8888};\nstatic constexpr auto address{"127.0.0.1"};\n\nvoid connection_worker(boost::asio::io_context& context)\n{\n    context.run();\n}\n\nvoid on_accept(boost::asio::ip::tcp::socket& socket, std::shared_ptr<boost::asio::io_context::work> work)\n{\n    boost::asio::ip::tcp::endpoint client{socket.remote_endpoint()};\n    boost::asio::ip::address client_addr{client.address()};\n    boost::asio::ip::port_type client_port{client.port()};\n    std::clog << "client " << client_addr << ":" << client_port << std::endl;\n\n    socket.shutdown(boost::asio::ip::tcp::socket::shutdown_both);\n    socket.close();\n    work.reset();\n}\n\nint main()\n{\n    boost::asio::io_context context{};\n    boost::asio::io_context::strand strand{context};\n    auto work{std::make_shared<boost::asio::io_context::work>(context)};\n    boost::asio::ip::tcp::socket socket{context};\n    boost::asio::ip::tcp::resolver resolver{context};\n    boost::asio::ip::tcp::acceptor acceptor{context};\n\n    std::thread worker(connection_worker, std::ref(context));\n\n    boost::asio::ip::tcp::resolver::query query{address, std::to_string(port)};\n    boost::asio::ip::tcp::resolver::iterator iterator{resolver.resolve(query)};\n    boost::asio::ip::tcp::endpoint endpoint{*iterator};\n\n    acceptor.open(endpoint.protocol());\n    acceptor.set_option(boost::asio::ip::tcp::acceptor::reuse_address(true));\n    acceptor.bind(endpoint);\n    acceptor.listen(boost::asio::socket_base::max_connections);\n\n    boost::asio::ip::address local_addr{endpoint.address()};\n    boost::asio::ip::port_type local_port{port};\n    std::clog << "listening " << local_addr << ":" << local_port << std::endl;\n\n    acceptor.async_accept(socket, std::bind(on_accept, std::ref(socket), std::move(work)));\n\n    worker.join();\n    acceptor.close();\n    context.stop();\n}	code	cpp	\N
+2778	1	#include <thread>\n#include <string>\n#include <boost/asio.hpp>\n\nvoid initialize_service(boost::asio::io_context& context)\n{\n    context.run();\n}\n\nint main()\n{\n    boost::asio::io_context context;\n    boost::asio::io_context::strand strand{context};\n\n    std::jthread worker{initialize_service, std::ref(context)};\n\n    boost::asio::ip::tcp::socket socket{context};\n    boost::asio::ip::tcp::resolver resolver{context};\n    boost::asio::ip::tcp::resolver::query query{"127.0.0.1", std::to_string(9090)};\n    boost::asio::ip::tcp::resolver::iterator iterator = resolver.resolve(query);\n    boost::asio::ip::tcp::endpoint endpoint = *iterator;\n\n    socket.connect(endpoint);\n    socket.shutdown(boost::asio::ip::tcp::socket::shutdown_both);\n    socket.close();\n}	code	cpp	\N
+2779	1	#include <thread>\n#include <iostream>\n#include <functional>\n#include <boost/asio.hpp>\n\nvoid connection_worker(boost::asio::io_context& context)\n{\n    context.run();\n}\n\nvoid on_connect(boost::asio::ip::tcp::endpoint const& endpoint)\n{\n    std::cout << "connected to " << endpoint.address().to_string() << std::endl;\n}\n\nint main()\n{\n    boost::asio::io_context context{};\n    boost::asio::io_context::strand strand{context};\n    std::thread worker{connection_worker, std::ref(context)};\n\n    boost::asio::ip::tcp::socket socket{context};\n    boost::asio::ip::tcp::resolver resolver{context};\n\n    boost::asio::ip::tcp::resolver::query query{"127.0.0.1", "9000"};\n    boost::asio::ip::tcp::resolver::iterator endpoints = resolver.resolve(query);\n\n    boost::asio::ip::tcp::endpoint endpoint = *endpoints;\n    socket.async_connect(endpoint, std::bind(on_connect, std::ref(endpoint)));\n\n    socket.shutdown(boost::asio::ip::tcp::socket::shutdown_both);\n    socket.close();\n    worker.join();\n}	code	cpp	\N
 5187	1	A GPU core is capable of performing arithmetic and logica operations, such as calculations, but it cannot be used for program control.	text	txt	\N
 5188	1	A **stream multiprocessor** is responsible for controlling instruction execution among many cores. A streaming multiprocessor has one control unit that works with many processing cores, whiel a CPU core has one control unit for each processing core.	text	txt	\N
 5189	1	1. Shared memory is the cache L1 inside each streaming multiprocessors\n2. Registers are specific to each core\n3. Control unit managing execution of all cores inside the streaming multiprocessor\n4. CUDA cores\n5. High speed interconnection between the memory and stream multiprocessors	text	txt	\N
@@ -15186,6 +15154,7 @@ COPY flashback.blocks (card, "position", content, type, extension, metadata) FRO
 1501	2	git clone https://github.com/yoctoproject/poky	code	sh	\N
 1447	1	#include <algorithm>\n#include <cmath>\n\ntemplate<typename F, typename R, typename T>\nconstexpr T folding(F&& callable, R&& range, T init)\n{\n    return std::accumulate(std::begin(range), std::end(range), std::move(init), std::forward<F>(callable));\n}\n\nint main()\n{\n    std::vector<int> numbers{0,1,2,3,4,5,6,7,8,9};\n    int sum = folding(std::plus<>(), numbers, 0);\n}	code	cpp	\N
 1448	1	#include <algorithm>\n#include <string>\n#include <map>\n\ntemplate<typename F, typename R, typename T>\nconstexpr T folding(F&& callable, R&& range, T init)\n{\n    return std::accumulate(std::begin(range), std::end(range), std::move(init), std::forward<F>(callable));\n}\n\nint main()\n{\n    std::map<std::string, int> occurances{{"one", 1}, {"two", 2}, {"three", 3}};\n    auto counter = [](int const s, std::pair<std::string, int> const kvpair) { return s + kvpair.second; };\n    int sum = folding(counter, occurances, 0);\n}	code	cpp	\N
+2770	1	The `boost::asio::basic_io_object` in `boost/asio/basic_io_object.hpp` header has the role of submitting I/O requests. For instance, the `boost::asio::ip::tcp::socket` object will provide a socket programming request from our program to the operating system.	text	txt	\N
 1450	1	#include <functional>\n#include <tuple>\n\nnamespace details\n{\n    template<typename F, typename P, std::size_t ...I>\n    auto apply(F&& callable, T&& parameter, std::index_sequence<I...>)\n    {\n        return std::invoke(std::forward<F>(callable), std::get<I>(std::forward<P>(paramter))...);\n    }\n}\n\ntemplate<typename F, typename P>\nauto apply(F&& callable, P&& parameter)\n{\n    return details::apply(std::forward<F>(callable), std::forward<P>(parameter), std::make_index_sequence<std::tuple_size_v<std::decay_t<P>>>{});\n}\n\nint add(int const a, int const b) { return a + b; }\n\nstruct base\n{\n    int x = 0;\n\n    void add(int const n) { x += n; }\n};\n\nint main()\n{\n    // direct call\n    int r1 = add(1, 2);\n\n    // call through function pointer\n    int(*fadd)(int const, int const) = &add;\n    int r2 = fadd(1, 2);\n\n    // direct member function call\n    base object;\n    object.add(3);\n    int r3 = object.x;\n\n    // member function call through function pointer\n    void(base::*fadd)(int const) = &base::add;\n    (object.*fadd)(3);\n    int r4 = object.x;\n}	code	cpp	\N
 1452	1	#include <iostream>\n\nvoid show_compiler()\n{\n#if defined _MSC_VER_\n    std::cout << "Visual C++\\\\n";\n#elif defined __clang__\n    std::cout << "Clang\\\\n";\n#elif defined __GNUG__\n    std::cout << "GCC\\\\n";\n#else\n    std::cout << "Unknown compiler\\\\n";\n#endif\n}	code	cpp	\N
 1453	1	void show_architecture()\n{\n#if defined _MSC_VER\n\n#if defined _M_X64\n    std::cout << "AMD64\\\\n";\n#elif defined _M_IX86\n    std::cout << "INTEL x86\\\\n";\n#elif defined _M_ARM\n    std::cout << "ARM\\\\n";\n#else\n    std::cout << "unknown\\\\n";\n#endif\n\n#elif defined __clang__ || __GNUG__\n\n#if defined __amd64__\n    std::cout << "AMD64\\\\n";\n#elif defined __i386__\n    std::cout << "INTEL x86\\\\n";\n#elif defined __arm__\n    std::cout << "ARM\\\\n";\n#else\n    std::cout << "unknown\\\\n";\n#endif\n\n#else\n    #error Unknown compiler\n#endif\n}	code	cpp	\N
@@ -15537,9 +15506,6 @@ COPY flashback.blocks (card, "position", content, type, extension, metadata) FRO
 1736	2	The IP-protocol-version-agnostic class `asio::ip::address` does not provide\nthe `any()` method. The server application must explicitly specify whether it\nwants to receive requests either on IPv4 or on IPv6 addresses by using the\nobject returned by the `any()` method of either the `asio::ip::address_v4` or\n`asio::ip::address_v6` class correspondingly.	text	txt	\N
 1736	1	#include <boost/asio.hpp>\n\nint main()\n{\n    unsigned short port{8080};\n    auto address{boost::asio::ip::address_v6::any()};\n    boost::asio::ip::tcp::endpoint endpoint{address, port};\n}	code	cpp	\N
 1737	2	#include <boost/asio.hpp>\n\nboost::asio::ip::tcp::socket{}; // active socket\nboost::asio::ip::tcp::acceptor{}; // passive socket	code	cpp	\N
-1738	4	In Boost.Asio, opening a socket means associating it with full set of\nparameters describing a specific protocol over which the socket is intended\nto be communicating. When the Boost.Asio socket object is provided with these\nparameters, it has enough information to allocate a real socket object of the\nunderlying operating system.	text	txt	\N
-1738	2	#include <boost/asio.hpp>\n\nint main()\n{\n    boost::asio::io_context service;\n    boost::asio::ip::tcp::socket socket{service};\n    boost::asio::ip::tcp protocol{boost::asio::ip::tcp::v4()};\n    socket.open(protocol);\n    socket.close();\n}	code	cpp	\N
-1739	6	#include <boost/asio.hpp>\n\nint main()\n{\n    boost::asio::io_context service;\n    boost::asio::ip::tcp::acceptor acceptor{service};\n    boost::asio::ip::tcp protocol{boost::asio::ip::tcp::v6()};\n    acceptor.open(protocol);\n    acceptor.close();\n}	code	cpp	\N
 1735	6	#include <string>\n#include <boost/asio.hpp>\n\nint main()\n{\n    boost::asio::ip::address address{boost::asio::ip::address::from_string("localhost")};\n    boost::asio::ip::port_type port{80};\n    boost::asio::ip::tcp::endpoint endpoint{address, port};\n}	code	cpp	\N
 5445	1	When a change to an object requires changing other objects as well, but we don't know how many objects need to be changed.	text	md	\N
 5446	1	abstract Subject {\n  # {abstract} attach(observer: Observer*)\n  # {abstract} detach(observer: Observer*)\n  # {abstract} notify()\n}\nnote left: notify() {\\n  for (auto observer: observers)\\n    observer->update();\\n}\n\nabstract Observer {\n  # update(): void\n}\n\nclass ConcreteSubject {\n  - property\n  + attach(observer: Observer*)\n  + detach(observer: Observer*)\n  + notify()\n}\n\nclass ConcreteObserver {\n  - subject: Subject*\n  + update(): void\n}\nnote bottom: update() {\\n  auto property = subject->getProperty();\\n}\n\nSubject <|-- ConcreteSubject\nObserver <|-- ConcreteObserver\nSubject "1" o. "n" Observer\nSubject ..o ConcreteObserver	code	plantuml	\N
@@ -15558,6 +15524,9 @@ COPY flashback.blocks (card, "position", content, type, extension, metadata) FRO
 5448	5	#pragma once\n\n#include <memory>\n#include <unordered_map>\n#include <list>\n\nclass Notifier;\nclass Observer;\n\nclass ConnectionManager\n{\npublic:\n    void connect(std::shared_ptr<Notifier> notifier, std::shared_ptr<Observer> observer);\n    void disconnect(std::shared_ptr<Notifier> notifier, std::shared_ptr<Observer> observer);\n    void notify(std::shared_ptr<Notifier> notifier);\nprivate:\n    std::unordered_map<std::shared_ptr<Notifier>, std::list<std::shared_ptr<Observer>>> m_notifiers;\n};	code	hpp	\N
 5448	6	#include <ConnectionManager.hpp>\n#include <Notifier.hpp>\n#include <Observer.hpp>\n\nvoid ConnectionManager::connect(std::shared_ptr<Notifier> notifier, std::shared_ptr<Observer> observer)\n{\n    m_notifiers[notifier].push_back(observer);\n}\n\nvoid ConnectionManager::disconnect(std::shared_ptr<Notifier> notifier, std::shared_ptr<Observer> observer)\n{\n    m_notifiers[notifier].remove(observer);\n}\n\nvoid ConnectionManager::notify(std::shared_ptr<Notifier> notifier)\n{\n    for (std::shared_ptr<Observer> observer: m_notifiers[notifier])\n    {\n        observer->update(notifier);\n    }\n}	code	cpp	\N
 5448	7	#pragma once\n\n#include <memory>\n#include <Observer.hpp>\n\nclass Notifier;\n\nclass ConcreteObserver: public Observer\n{\npublic:\n    void update(std::weak_ptr<Notifier> notifier) override;\n};	code	hpp	\N
+1739	4	#include <boost/asio.hpp>\n\nint main()\n{\n    boost::asio::io_context context;\n    boost::asio::ip::tcp::acceptor acceptor{context};\n    boost::asio::ip::tcp protocol{boost::asio::ip::tcp::v6()};\n    acceptor.open(protocol);\n    acceptor.close();\n}	code	cpp	\N
+2772	1	The `boost::asio::io_context::poll()` function runs the event loop in a non-blocking manner, executing all ready handlers until none remain or until the context has been explicitly stopped via `boost::asio::io_context::stop()`.	text	txt	\N
+2772	3	Unlike `run()`, tasks must be dispatched before calling `poll()`, since it does not block, any tasks posted after `poll()` returns will never be executed.	text	txt	\N
 5448	8	#include <print>\n#include <ConcreteObserver.hpp>\n#include <ConcreteNotifier.hpp>\n\nvoid ConcreteObserver::update(std::weak_ptr<Notifier> notifier)\n{\n    if (std::shared_ptr<Notifier> n{notifier.lock()})\n    {\n        if (std::shared_ptr<ConcreteNotifier> c{std::dynamic_pointer_cast<ConcreteNotifier>(n)})\n        {\n            std::println("ConcreteObserver: {}", c->getValue());\n        }\n    }\n}	code	cpp	\N
 5448	9	#include <ConnectionManager.hpp>\n#include <ConcreteNotifier.hpp>\n#include <ConcreteObserver.hpp>\n\nint main()\n{\n    std::shared_ptr<ConnectionManager> manager{std::make_shared<ConnectionManager>()};\n    std::shared_ptr<ConcreteNotifier> notifier{std::make_shared<ConcreteNotifier>(manager)};\n    std::shared_ptr<ConcreteObserver> observer{std::make_shared<ConcreteObserver>()};\n\n    manager->connect(notifier, observer);\n\n    notifier->setValue("something changed"); // registered observers will be notified\n}	code	cpp	\N
 5465	1	`surface_matching` module provides 3D object recognition algorithms and pose estimation algorithms to process 2D images with depth information.	text	md	\N
@@ -15638,6 +15607,7 @@ COPY flashback.blocks (card, "position", content, type, extension, metadata) FRO
 5505	2	#include <ftxui/screen/screen.hpp>\n#include <ftxui/dom/elements.hpp>\n\nconstexpr auto content{"Flashback, for experts like you."};\n\nint main()\n{\n    ftxui::Pixel borderStyle{};\n    borderStyle.character = "x";\n    ftxui::Element paragraph{ftxui::paragraph(content) | ftxui::borderWith(borderStyle)};\n    ftxui::Screen screen{ftxui::Screen::Create(ftxui::Dimension::Fit(paragraph))};\n    ftxui::Render(screen, paragraph);\n    screen.Print();\n}	code	cpp	\N
 5507	3	#include <ftxui/screen/screen.hpp>\n#include <ftxui/dom/elements.hpp>\n\nint main()\n{\n    ftxui::Element group{\n        ftxui::border(\n            ftxui::hbox(\n                ftxui::text("Left"),\n                ftxui::separator(),\n                ftxui::text("Right")\n            )\n        )\n    };\n    ftxui::Screen screen(ftxui::Screen::Create(ftxui::Dimension::Full(), ftxui::Dimension::Fit(group)));\n    ftxui::Render(screen, group);\n    screen.Print();\n}	code	cpp	\N
 5508	1	#include <ftxui/screen/screen.hpp>\n#include <ftxui/dom/elements.hpp>\n\nint main()\n{\n    ftxui::Element group{\n        ftxui::border(\n            ftxui::hbox(\n                ftxui::text("Left"),\n                ftxui::separatorHeavy(),\n                ftxui::text("Right")\n            )\n        )\n    };\n    ftxui::Screen screen(ftxui::Screen::Create(ftxui::Dimension::Full(), ftxui::Dimension::Fit(group)));\n    ftxui::Render(screen, group);\n    screen.Print();\n}	code	cpp	\N
+2773	2	Any thread calling `boost::asio::io_context::run()` function will block execution and wait for tasks to be enqueued, or finish existing tasks. Best practice is to attach `boost::asio::io_context` to slave threads so that they wait for tasks to be given and execute them while master threads assign new tasks to them.	text	txt	\N
 5509	1	#include <ftxui/screen/screen.hpp>\n#include <ftxui/dom/elements.hpp>\n\nint main()\n{\n    ftxui::Element group{\n        ftxui::border(\n            ftxui::hbox(\n                ftxui::text("Left"),\n                ftxui::separatorDouble(),\n                ftxui::text("Right")\n            )\n        )\n    };\n    ftxui::Screen screen(ftxui::Screen::Create(ftxui::Dimension::Full(), ftxui::Dimension::Fit(group)));\n    ftxui::Render(screen, group);\n    screen.Print();\n}	code	cpp	\N
 5510	1	#include <ftxui/screen/screen.hpp>\n#include <ftxui/dom/elements.hpp>\n\nint main()\n{\n    ftxui::Element group{\n        ftxui::border(\n            ftxui::hbox(\n                ftxui::text("Left"),\n                ftxui::separatorEmpty(),\n                ftxui::text("Right")\n            )\n        )\n    };\n    ftxui::Screen screen(ftxui::Screen::Create(ftxui::Dimension::Full(), ftxui::Dimension::Fit(group)));\n    ftxui::Render(screen, group);\n    screen.Print();\n}	code	cpp	\N
 5511	1	#include <ftxui/screen/screen.hpp>\n#include <ftxui/dom/elements.hpp>\n\nint main()\n{\n    ftxui::Element group{\n        ftxui::border(\n            ftxui::hbox(\n                ftxui::text("Left"),\n                ftxui::separatorStyled(ftxui::BorderStyle{ftxui::ROUND}),\n                ftxui::text("Right")\n            )\n        )\n    };\n    ftxui::Screen screen(ftxui::Screen::Create(ftxui::Dimension::Full(), ftxui::Dimension::Fit(group)));\n    ftxui::Render(screen, group);\n    screen.Print();\n}	code	cpp	\N
@@ -15872,6 +15842,7 @@ COPY flashback.blocks (card, "position", content, type, extension, metadata) FRO
 2817	2	template<typename T1, typename T2>\nauto max(T1 a, T2 b);\n\ntemplate<typename RT, typename T1, typename T2>\nRT max(T1 a, T2 b);\n\nmax(4, 7.2);  // calls first overload\n::max<long double>(4, 7.2); // calls second overload\n::max<int>(4, 7.2); // ERROR: both function templates match	code	cpp	\N
 2816	9	max<double>(7, 42);   // calls max<double> no argument deduction\n::max('a', 42.7);   // calls the nontemplate for two ints	code	cpp	\N
 2818	2	#include <cstring>\n#include <string>\n\ntemplate<typename T>\nT max(T a, T b)\n{\n    return b < a ? a : b;\n}\n\ntemplate<typename T>\nT* max(T* a, T* b)\n{\n    return *b < *a ? a : b;\n}\n\nchar const* max(char const* a, char const* b)\n{\n    return std::strcmp(b, a) < 0 ? a : b;\n}\n\nint i{7}, j{42};\nint *p1 = &i, *p2 = &j;\n\nmax(i, j);   // calls max() for two int\n::max(std::string{"mathematics"}, std::string{"math"}); // calls max() for std::string\n::max(p1, p2);  // calls max<int>() for two pointers\n::max("mathematics", "math");   // calls max() for two C-strings	code	cpp	\N
+5648	1	`boost::asio::io_context::run()` blocks the calling thread and keeps processing handlers until there's nothing left to do or until `boost::asio::io_context::stop()` is called. It's ideal when we want a dedicated thread whose only job is process async events.	text	md	
 2819	3	#include <cstring>\n\ntemplate<typename T>\nT const& max(T const& a, T const& b)\n{\n    return b < a ? a : b;\n}\n\nchar const* max(char const* a, char const* b)\n{\n    return std::strcmp(b, a) < 0 ? a : b;\n}\n\ntemplate<typename T>\nT const& max(T const& a, T const& b, T const& c)\n{\n    return max(max(a, b), c); // error if max(a,b) uses call-by-value\n}\n\nmax(7, 42, 68);   // OK\n\nchar const* s1 = "A";\nchar const* s2 = "B";\nchar const* s3 = "C";\n::max(s1, s2, s3);  // runtime error	code	cpp	\N
 2820	2	template<typename T>\nT max (T a, T b)\n{\n    return b < a ? a : b;\n}\n\ntemplate<typename T>\nT max (T a, T b, T c)\n{\n    return max (max(a,b), c);\n    // calls template max<int> not overload\n}\n\n// declaration comes too late\nint max (int a, int b)\n{\n    std::cout << "max(int,int) \\\\n";\n    return b < a ? a : b;\n}	code	cpp	\N
 674	1	- Using `requires` clause after template arguments\n- Using `requires` clause after argument list\n- Using concepts\n- Using `requires` expression	text	txt	\N
@@ -15891,10 +15862,22 @@ COPY flashback.blocks (card, "position", content, type, extension, metadata) FRO
 125	1	#include <string>\n#include <string_view>\n#include <format>\n#include <cstdio>\n\nclass Data\n{\n    std::string buffer;\n};\n\ntemplate <>\nstruct std::formatter<Data>\n{\n    template<typename Context>\n    constexpr auto parse(Context& ctx)\n    {\n        return ctx.begin();\n    }\n\n    template<typename Format>\n    auto format(Data const& d, Format& ctx)\n    {\n        return formal_to(ctx.out(), "{}", d.buffer);\n    }\n};\n\ntemplate<typename... Args>\nvoid print(std::string_view const fmt_str, Args&&... args)\n{\n    auto fmt_args{std::make_format_args(args...)};\n    std::string out{vformat(fmt_str, fmt_args)};\n    fputs(out.c_str(), stdout);\n}\n\nint main()\n{\n    Data data;\n    print("{}", data);\n}	code	cpp	\N
 4151	3	namespace incorrect_implementation\n{\n    namespace v1\n    {\n        template<typename T>\n        int test(T value) { return 1; }\n    }\n\n    namespace v2\n    {\n        template<typename T>\n        int test(T value) { return 2; }\n    }\n\n    #ifndef _lib_version_1\n        using namespace v1;\n    #endif\n\n    #ifndef _lib_version_2\n        using namespace v2;\n    #endif\n}\n\nnamespace broken_client_code\n{\n    // okay\n    auto x = incorrect_implementation::test(42);\n\n    struct foo { int a; };\n\n    // breaks\n    namespace incorrect_implementation\n    {\n        template <>\n        int test(foo value) { return value.a; }\n    }\n\n    // won't compile\n    auto y = incorrect_implementation::test(foor{42});\n\n    // library leaks implementation details\n    namespace incorrect_implementation\n    {\n        namespace version_2\n        {\n            template<>\n            int test(foo value) { return value.a; }\n        }\n    }\n\n    // okay, but client needs to be aware of implementation details\n    auto y = incorrect_implementation::test(foor{42});\n}\n\nnamespace correct_implementation\n{\n    #ifndef _lib_version_1\n    inline namespace v1\n    {\n        template<typename T>\n        int test(T value) { return 1; }\n    }\n    #endif\n\n    #ifndef _lib_version_2\n    inline namespace v2\n    {\n        template<typename T>\n        int test(T value) { return 2; }\n    }\n    #endif\n}\n\nnamespace working_client_code\n{\n    // okay\n    auto x = correct_implementation::test(42);\n\n    struct foo { int a; };\n\n    namespace correct_implementation\n    {\n        template <>\n        int test(foo value) { return value.a; }\n    }\n\n    // okay\n    auto y = correct_implementation::test(foor{42});\n}	code	cpp	\N
 4156	1	Entities can be exported only when they:\n\n- have a name\n- have external linkage	text	txt	\N
+2306	1	There are three ways to declare a variable to be initialized while multiple threads can read it:\n\n- Using constant expression\n- Using static variable with block scope\n- Using the function `std::call_once` in combination with the flag `std::once_flag`	text	txt	\N
 2774	2	The `boost::asio::dispatch()` function can be invoked from the current worker thread, while the `boost::asio::post()` function has to wait until the handler of the worker is complete before it can be invoked. In other words, the `boost::asio::dispatch()` function's events can be executed from the current worker thread even if there are other pending events queued up, while the `boost::asio::post()` function's events have to wait until the handler completes the execution before being allowed to be executed.	text	txt	\N
+5645	1	#include <thread>\n#include <chrono>\n#include <boost/asio.hpp>\n\nvoid wait_for(std::chrono::seconds const s)\n{\n    std::this_thread::sleep_for(s);\n}\n\nint main()\n{\n    boost::asio::io_context context{};\n    boost::asio::executor_work_guard guard{boost::asio::make_work_guard(context)};\n    std::jthread worker{[&context] { context.run(); }};\n    context.dispatch([] { wait_for(std::chrono::seconds{1}); });\n    context.dispatch([] { wait_for(std::chrono::seconds{1}); });\n    context.dispatch([] { wait_for(std::chrono::seconds{1}); });\n    guard.reset(); // now that context has tasks the guard can go off\n}	code	cpp	
 2776	1	#include <thread>\n#include <mutex>\n#include <iostream>\n#include <exception>\n#include <boost/asio.hpp>\n\nstd::mutex ostream_lock;\n\nvoid some_work()\n{\n    throw std::runtime_error("i/o failure");\n}\n\nvoid finish_tasks(boost::asio::io_context& context)\n{\n    try\n    {\n        context.run();\n    }\n    catch (std::runtime_error const& exp)\n    {\n        std::lock_guard<std::mutex> lock{ostream_lock};\n        std::cerr << exp.what() << "\\n";\n    }\n}\n\nint main()\n{\n    boost::asio::io_context context;\n    std::jthread worker{finish_tasks, std::ref(context)};\n    context.post(some_work);\n    context.post(some_work); // no more io context to dispatch\n    context.stop();\n}	code	cpp	\N
 2777	1	#include <thread>\n#include <chrono>\n#include <boost/asio.hpp>\n\nvoid some_work()\n{\n    std::this_thread::sleep_for(std::chrono::seconds(2));\n}\n\nvoid finish_tasks(boost::asio::io_context& context)\n{\n    context.run();\n}\n\nvoid timer_handler(boost::system::error_code const&)\n{\n}\n\nint main()\n{\n    boost::asio::io_context context;\n    boost::asio::io_context::strand strand{context};\n    std::jthread worker{finish_tasks, std::ref(context)};\n    context.post(some_work);\n\n    boost::asio::deadline_timer timer{context};\n    timer.expires_from_now(boost::posix_time::seconds(1));\n    timer.async_wait(strand.wrap(timer_handler));\n}	code	cpp	\N
-5645	1	#include <thread>\n#include <chrono>\n#include <boost/asio.hpp>\n\nvoid wait_for(std::chrono::seconds const s)\n{\n    std::this_thread::sleep_for(s);\n}\n\nint main()\n{\n    boost::asio::io_context context{};\n    boost::asio::io_context::strand strand{context};\n    boost::asio::executor_work_guard guard{boost::asio::make_work_guard(context)};\n    std::jthread worker{[&context] { context.run(); }}; // without work guard the context would have stopped due to no existing tasks\n    strand.dispatch([] { wait_for(std::chrono::seconds{1}); });\n    strand.dispatch([] { wait_for(std::chrono::seconds{1}); });\n    strand.dispatch([] { wait_for(std::chrono::seconds{1}); });\n    guard.reset(); // now that context has tasks the guard can go off\n}	code	cpp	
+1738	2	1. Create an instance of the `boost::asio::io_context` class or use the one\n   that has been created earlier.\n2. Create an object of the class that represents the transport layer protocol\n   (TCP or UDP) and the version of the underlying IP protocol (IPv4 or IPv6)\n   over which the socket is intended to communicate.\n3. Create an object representing a socket corresponding to the required\n   protocol type. Pass the object of `boost::asio::io_context` class to the\n   socket's constructor.\n4. Call the socket's `open()` method, passing the object representing the\n   protocol created in step 2 as an argument.	text	txt	\N
+1739	3	1. Create an instance of the `boost::asio::io_context` class or use the one\nthat has been created earlier.\n2. Create an object of the `boost::asio::ip::tcp` class that represents the TCP\nprotocol and the required version of the underlying IP protocol (IPv4 or\nIPv6).\n3. Create an object of the `boost::asio::ip::tcp::acceptor` class representing\nan acceptor socket, passing the object of the `boost::asio::io_context`\nclass to its constructor.\n4. Call the acceptor socket's `open()` method, passing the object representing\nthe protocol created in step 2 as an argument.	text	txt	\N
+2780	1	#include <iostream>\n#include <thread>\n#include <string>\n#include <functional>\n#include <boost/asio.hpp>\n\nstatic constexpr auto port{8888};\nstatic constexpr auto address{"127.0.0.1"};\n\nvoid connection_worker(boost::asio::io_context& context)\n{\n    context.run();\n}\n\nint main()\n{\n    boost::asio::io_context context{};\n    boost::asio::io_context::strand strand{context};\n    boost::asio::ip::tcp::socket socket{context};\n    boost::asio::ip::tcp::resolver resolver{context};\n    boost::asio::ip::tcp::acceptor acceptor{context};\n\n    std::jthread worker(connection_worker, std::ref(context));\n\n    boost::asio::ip::tcp::resolver::query query{address, std::to_string(port)};\n    boost::asio::ip::tcp::resolver::iterator iterator{resolver.resolve(query)};\n    boost::asio::ip::tcp::endpoint endpoint{*iterator};\n\n    acceptor.open(endpoint.protocol());\n    acceptor.set_option(boost::asio::ip::tcp::acceptor::reuse_address(true));\n    acceptor.bind(endpoint);\n    acceptor.listen(boost::asio::socket_base::max_connections);\n\n    boost::asio::ip::address local_addr{endpoint.address()};\n    boost::asio::ip::port_type local_port{port};\n    std::clog << "listening " << local_addr << ":" << local_port << std::endl;\n\n    acceptor.accept(socket);\n\n    boost::asio::ip::tcp::endpoint client{socket.remote_endpoint()};\n    boost::asio::ip::address client_addr{client.address()};\n    boost::asio::ip::port_type client_port{client.port()};\n    std::clog << "client " << client_addr << ":" << client_port << std::endl;\n\n    acceptor.close();\n    socket.shutdown(boost::asio::ip::tcp::socket::shutdown_both);\n    socket.close();\n}	code	cpp	\N
+2781	1	#include <iostream>\n#include <memory>\n#include <thread>\n#include <string>\n#include <functional>\n#include <boost/asio.hpp>\n\nstatic constexpr auto port{8888};\nstatic constexpr auto address{"127.0.0.1"};\n\nvoid connection_worker(boost::asio::io_context& context)\n{\n    context.run();\n}\n\nvoid on_accept(boost::asio::ip::tcp::socket& socket, std::shared_ptr<boost::asio::io_context::work> work)\n{\n    boost::asio::ip::tcp::endpoint client{socket.remote_endpoint()};\n    boost::asio::ip::address client_addr{client.address()};\n    boost::asio::ip::port_type client_port{client.port()};\n    std::clog << "client " << client_addr << ":" << client_port << std::endl;\n\n    socket.shutdown(boost::asio::ip::tcp::socket::shutdown_both);\n    socket.close();\n    work.reset();\n}\n\nint main()\n{\n    boost::asio::io_context context{};\n    boost::asio::io_context::strand strand{context};\n    auto work{std::make_shared<boost::asio::io_context::work>(context)};\n    boost::asio::ip::tcp::socket socket{context};\n    boost::asio::ip::tcp::resolver resolver{context};\n    boost::asio::ip::tcp::acceptor acceptor{context};\n\n    std::jthread worker(connection_worker, std::ref(context));\n\n    boost::asio::ip::tcp::resolver::query query{address, std::to_string(port)};\n    boost::asio::ip::tcp::resolver::iterator iterator{resolver.resolve(query)};\n    boost::asio::ip::tcp::endpoint endpoint{*iterator};\n\n    acceptor.open(endpoint.protocol());\n    acceptor.set_option(boost::asio::ip::tcp::acceptor::reuse_address(true));\n    acceptor.bind(endpoint);\n    acceptor.listen(boost::asio::socket_base::max_connections);\n\n    boost::asio::ip::address local_addr{endpoint.address()};\n    boost::asio::ip::port_type local_port{port};\n    std::clog << "listening " << local_addr << ":" << local_port << std::endl;\n\n    acceptor.async_accept(socket, std::bind(on_accept, std::ref(socket), std::move(work)));\n\n    worker.join();\n    acceptor.close();\n}	code	cpp	\N
+3788	1	name: Workflow\non: [push, workflow_dispatch]\njobs:\n  build: # job name\n    runs-on: ubuntu-latest\n    steps:\n      # ...	code	yml	\N
+3789	1	Jobs within a workflow run in parallel by default to speed up the overall execution time of the workflow. However, we can define dependencies between jobs using the `needs` keyword.	text	txt	\N
+5192	1	name: Custom Workflow\npermissions:\n  contents:\n    - write\non:\n  workflow_dispatch:\nsteps:\n  release:\n    runs-on: ubuntu-latest\n    env:\n      GITHUB_TOKEN: ${{ secrets.github_token }}\n    steps:\n      - name: Create release\n        uses: actions/create-release@v2\n        with:\n          draft: false\n          prerelease: false\n          release_name: "${{ github.ref_name }}"\n          tag_name: "${{ github.ref_name }}"\n          body: "Program ${{ github.ref_name }}"	code	yml	\N
+2771	4	By calling `boost::asio::io_context::run()`, the current thread blocks until all pending tasks have completed. If no tasks are queued, `context.run()` returns immediately and the program exits. To prevent this, a dummy task can be used to keep the context alive while waiting for real tasks to be dispatched.\n\nThe `boost::asio::io_context::work` class serves this purpose. It accepts a `boost::asio::io_context` instance in its constructor and keeps the context running as long as the work object remains alive.	text	txt	\N
+2771	2	#include <boost/asio.hpp>\n\nint main()\n{\n    boost::asio::io_context context{};\n    context.run(); // returns immediately\n}	code	cpp	
+3796	2	name: Workflow\non: [push, workflow_dispatch]\npermissions:\n  contents: write\njobs:\n  deploy:\n    runs-on: ubuntu-latest\n    steps:\n      - id: create-release\n        uses: actions/create-release@v1\n        with:\n          tag_name: ${{ github.ref_name }}\n          release_name: "Release ${{ github.ref_name }}"\n          body: "Release notes for ${{ github.refname }}"\n          prerelease: false\n          draft: false\n        env:\n          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}\n      - uses: actions/upload-release-asset@v1\n        with:\n          upload_url: ${{ steps.create-release.outputs.upload_url\n          asset_path: packages\n          asset_name: project.tar.xz\n          asset_content_type: tar.xz\n        env:\n          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}	code	yml	\N
+3791	1	- `id`: an identifier to make references from other jobs\n- `name`: optional name for each step to be displayed in logs\n- `run`: the command to execute when step type is a shell command\n- `uses`: the action identifier to use when step type is a built-in action\n- `with`: set of input parameters to pass to the action in key-value pairs\n- `env`: environment variables available in the step\n- `if`: a conditional expression that determines whether the step should be executed\n- `continue-on-failure`: boolean value mostly used with conditions	text	txt	\N
 \.
 
 
@@ -17495,7 +17478,6 @@ COPY flashback.cards (id, headline, state) FROM stdin;
 2303	How a mutex locks access to a shared data?	draft
 2304	What is the basic use case of a lock?	draft
 2305	What locks exist in C++?	draft
-2306	How many ways exist to initialize a read-only variable accessible to multiple threads?	draft
 2307	What is a thread-local data?	draft
 2308	What is a condition variable?	draft
 2309	What are the use cases of condition variables?	draft
@@ -18809,9 +18791,7 @@ COPY flashback.cards (id, headline, state) FROM stdin;
 4225	How can we have two different bodies of a function with the same signature and let compiler know which is best match?	draft
 4226	In how many ways can we apply a concept as a type constraint on a function template?	draft
 4230	What is the requirements of the type used as class template arguments?	draft
-2770	What is the objective of io_object in boost?	draft
 4146	What are the advantages of using if consteval compared to std::is_constant_evaluated()?	draft
-4076	What is the objective of io_context in boost?	draft
 4239	How does compiler realize which constructor should be used as the result of arguments deduction?	draft
 4244	Use deduction guides for the constructor of a class that takes two iterators to deduce the value type of iterators?	draft
 4247	Iterate over a range without invoking iterator functions?	draft
@@ -18896,6 +18876,7 @@ COPY flashback.cards (id, headline, state) FROM stdin;
 4367	Swap values behind two forward iterators?	draft
 4368	Exchange elements of two non-overlapping ranges?	draft
 4369	Specialize swap for user-defined types?	draft
+5646	Add PlantUML diagram support?	draft
 4370	What is the minimum requirement for a type to be comparable for sorting algorithms?	draft
 4371	Compare if one range is lexicographically less than another?	draft
 4372	Compare if one range is lexicographically less than another using spaceship operator?	draft
@@ -19353,7 +19334,6 @@ COPY flashback.cards (id, headline, state) FROM stdin;
 9	What are the basic data types in OpenCV?	draft
 10	What operations are supported by <code>cv::Point<></code> template class?	draft
 11	What operations are supported by <code>cv::Scalar</code> class?	draft
-12	What operations are supported by <code>cv::Size</code> class?	draft
 13	What operations are supported by <code>cv::Rect</code> class?	draft
 14	What operations are supported by <code>cv::RotatedRect</code> class?	draft
 15	What operations are supported by <code>cv::Matx</code> template class?	draft
@@ -19777,7 +19757,6 @@ COPY flashback.cards (id, headline, state) FROM stdin;
 1731	What address do relocation offsets are pointing to in relocation table of an object file?	draft
 1732	List all the available sections in an object file?	draft
 1734	Represent the IP address and port of an endpoint?	draft
-1733	What sockets API does the Asio library use to implement networking?	draft
 1735	Create an endpoint to designate the address of a network node?	draft
 1736	Create an endpoint in the server to designate addresses on which the server wants to listen?	draft
 1738	Create an active socket in client code?	draft
@@ -20071,8 +20050,6 @@ COPY flashback.cards (id, headline, state) FROM stdin;
 2715	How to list all available processors available to QEMU?	draft
 2716	How to use <code>qemu-system-arm</code> command to boot into <code>u-boot</code>?	draft
 2717	How to create a patch?	draft
-2771	Start an event processing loop on a worker thread?	draft
-2772	Start an event processing loop without blocking thread execution?	draft
 2773	Start an event processing loop to run queued tasks?	draft
 2774	Start an event processing loop to run tasks out of queue?	draft
 2775	Serialize concurrent execution of an event processing loop?	draft
@@ -20372,31 +20349,29 @@ COPY flashback.cards (id, headline, state) FROM stdin;
 3782	What files will be searched for in the config mode?	draft
 3783	What files will be searched for in the module mode?	draft
 3784	What are the advantages of both search modes?	draft
-3786	What event types exist to trigger workflows?	draft
-3787	What runners are supported?	draft
-3788	Create a job?	draft
-3789	Create multiple jobs running in sequence?	draft
-3790	How many types exist for steps?	draft
-3791	What are the steps properties?	draft
-3792	Write a job to checkout the source repository?	draft
-3793	Write a job to setup nodejs modules?	draft
-3795	Write a job to create a release?	draft
-3796	Write a job to release generated artifacts?	draft
-3797	Write a job to cache a step?	draft
-3798	Write a job to upload artifacts in storage?	draft
-3799	Write a job to download artifacts from storage?	draft
-3800	Write a job to delete artifacts within storage?	draft
-3801	Make job execution conditional?	draft
-3802	Write a job to continue execution even after failure?	draft
-3803	Create an output for a step?	draft
-3804	Create an output for a job?	draft
-3805	Run a job on a matrix of runners?	draft
 3884	What does the body of a coroutine generator look like?	draft
 3885	What is the return type of a coroutine generator?	draft
 3886	What is the responsibility of the promise type in a coroutine?	draft
 3887	What function in a coroutine will be called first by the compiler?	draft
 3888	What function in a coroutine will be called to handle the <code>co_return</code> statement?	draft
 3889	What function in a coroutine will be called to handle when the coroutine reaches an exception point?	draft
+3787	What runners are supported?	reviewed
+3788	Create a job?	reviewed
+3789	Create multiple jobs running in sequence?	reviewed
+3790	How many types exist for steps?	reviewed
+3791	What are the steps properties?	reviewed
+3793	Write a job to setup nodejs modules?	reviewed
+3795	Write a job to create a release?	reviewed
+3796	Write a job to release generated artifacts?	reviewed
+3797	Write a job to cache a step?	reviewed
+3798	Write a job to upload artifacts in storage?	reviewed
+3799	Write a job to download artifacts from storage?	reviewed
+3800	Write a job to delete artifacts within storage?	reviewed
+3801	Make job execution conditional?	reviewed
+3802	Write a job to continue execution even after failure?	reviewed
+3803	Create an output for a step?	reviewed
+3804	Create an output for a job?	reviewed
+3805	Run a job on a matrix of runners?	reviewed
 3890	What functions in a coroutine will be called to handle execution flow?	draft
 3892	What is the role of an awaitable in a coroutine code?	draft
 3891	Construct a coroutine by defining its return type outside of the body of the coroutine?	draft
@@ -20421,8 +20396,6 @@ COPY flashback.cards (id, headline, state) FROM stdin;
 5616	Specify test launcher?	draft
 5278	Create a directory?	draft
 32	Build and install <i>crosstool-ng</i>?	draft
-3785	What are the building blocks of a workflow?	draft
-3794	Give enough permissions to an action to create a release?	draft
 5192	Permit write access to a job to create releases?	draft
 5193	Permit write access to a job to create pull requests?	draft
 5194	What is the structure of strategy pattern?	draft
@@ -20485,6 +20458,7 @@ COPY flashback.cards (id, headline, state) FROM stdin;
 5251	Locate all the binary instances of a command?	draft
 5252	Locate the binaries of a command used inside of an alias?	draft
 5286	Open a manpage in your favorite browser?	draft
+3794	Give enough permissions to an action to create a release?	reviewed
 5253	Locate the binaries of a command used inside of a shell function?	draft
 5271	Remove a directly and its contents?	draft
 5254	Locate the binaries of a command excluding directories starting with dot?	draft
@@ -20956,10 +20930,21 @@ COPY flashback.cards (id, headline, state) FROM stdin;
 3666	What is the difference between preemptive and non-preemptive concurrency?	draft
 3937	What are the use cases of strategy pattern?	draft
 3938	What are the advantages of static strategy pattern over dynamic strategy pattern?	draft
-2769	What is the objective of io_context in boost?	draft
 124	Implement a simple print function taking format parameters?	draft
 4145	What is the equivalent form of if consteval prior C++23?	draft
-5645	Use work guard to prevent an io_context object from stopping before tasks are dispatched?	draft
+5647	Apply custom CSS directives into pages?	draft
+1733	What sockets API does the Asio library use to implement networking?	reviewed
+2769	What is the objective of io_context in boost?	reviewed
+2770	What is the objective of basic_io_object in boost?	reviewed
+2771	Start an event processing loop on a worker thread?	reviewed
+2772	Start an event processing loop without blocking thread execution?	reviewed
+5645	Use work guard to prevent an io_context object from stopping before tasks are dispatched?	reviewed
+5648	What are the scenarios of blocking and non-blocking event loops?	draft
+2306	Initialize a read-only variable accessible to multiple threads?	reviewed
+3785	What are the building blocks of a workflow?	reviewed
+3786	What event types exist to trigger workflows?	reviewed
+3792	Write a job to checkout the source repository?	reviewed
+12	What operations are supported by cv::Size class?	draft
 \.
 
 
@@ -20989,13 +20974,24 @@ COPY flashback.milestones (subject, roadmap, level, "position") FROM stdin;
 75	2	origin	20
 76	2	origin	21
 77	2	origin	22
+59	3	origin	1
+23	3	depth	2
+10	3	depth	4
+50	3	surface	5
+43	3	origin	13
+45	3	origin	12
+58	3	origin	11
+7	3	origin	6
+36	3	origin	7
+40	3	depth	10
+29	3	depth	9
+27	3	origin	8
+13	3	origin	3
+78	5	depth	1
 55	1	depth	52
 56	1	origin	53
 57	1	origin	54
 59	1	origin	55
-6	1	origin	1
-3	1	origin	2
-4	1	origin	3
 5	1	depth	4
 1	1	depth	5
 8	1	origin	6
@@ -21044,20 +21040,9 @@ COPY flashback.milestones (subject, roadmap, level, "position") FROM stdin;
 12	1	surface	50
 40	1	depth	51
 58	1	origin	21
-59	3	origin	1
-23	3	depth	2
-10	3	depth	4
-50	3	surface	5
-43	3	origin	13
-45	3	origin	12
-58	3	origin	11
-7	3	origin	6
-36	3	origin	7
-40	3	depth	10
-29	3	depth	9
-27	3	origin	8
-13	3	origin	3
-78	5	depth	1
+6	1	origin	2
+3	1	origin	3
+4	1	origin	1
 \.
 
 
@@ -21082,6 +21067,7 @@ COPY flashback.nerves ("user", resource, subject) FROM stdin;
 2	249	19
 2	250	21
 2	251	22
+2	253	40
 \.
 
 
@@ -21836,21 +21822,52 @@ COPY flashback.progress ("user", card, last_practice, duration, progression) FRO
 2	108	2026-02-23 08:27:40.176586+00	53	0
 2	111	2026-02-23 11:37:17.915876+00	110	0
 2	215	2026-02-23 11:44:45.329946+00	5	2
-2	1733	2026-02-24 08:20:10.200285+00	18	0
-2	2769	2026-02-24 08:20:19.774314+00	8	0
-2	2770	2026-02-24 08:20:59.883298+00	39	0
-2	4076	2026-02-24 08:21:26.245101+00	25	0
 2	213	2026-02-24 15:20:13.929608+00	4	2
 2	4139	2026-02-24 16:46:33.088019+00	592	0
 2	110	2026-02-24 16:49:41.30636+00	76	0
 2	4152	2026-02-25 06:10:26.242099+00	22	0
-2	2771	2026-02-25 10:11:10.801559+00	453	0
-2	2772	2026-02-25 10:12:25.358498+00	74	0
 2	2773	2026-02-25 10:21:47.059893+00	561	0
 2	2774	2026-02-25 11:26:01.060983+00	45	0
 2	2775	2026-02-25 11:28:57.901831+00	176	0
 2	2776	2026-02-25 14:08:26.214131+00	878	0
 2	2777	2026-02-25 14:17:55.040474+00	567	0
+2	1734	2026-02-26 18:29:44.435676+00	108	0
+2	1735	2026-02-26 18:36:16.666836+00	391	0
+2	1736	2026-02-26 18:36:54.670471+00	37	0
+2	1740	2026-02-26 18:39:48.228719+00	173	0
+2	1741	2026-02-26 18:41:22.01082+00	93	0
+2	1742	2026-02-26 18:41:36.942148+00	14	0
+2	1743	2026-02-26 18:43:48.202015+00	131	0
+2	1744	2026-02-26 18:44:08.256161+00	19	0
+2	1738	2026-02-26 18:53:57.14227+00	227	0
+2	1745	2026-02-26 18:54:10.393544+00	12	0
+2	1746	2026-02-26 18:55:16.537287+00	65	0
+2	1739	2026-02-26 19:16:56.902911+00	157	0
+2	1747	2026-02-26 19:19:17.474449+00	140	0
+2	1749	2026-02-26 19:19:41.536728+00	23	0
+2	1750	2026-02-26 19:19:57.765852+00	15	0
+2	1751	2026-02-26 19:20:10.060809+00	12	0
+2	1752	2026-02-26 19:26:18.360996+00	368	0
+2	1748	2026-02-26 19:35:54.84006+00	576	0
+2	2778	2026-02-26 19:38:55.965164+00	180	0
+2	2780	2026-02-26 19:43:18.630573+00	262	0
+2	2781	2026-02-26 19:48:34.454448+00	222	0
+2	2779	2026-02-26 19:51:59.073138+00	204	0
+2	2782	2026-02-26 20:04:56.12301+00	654	0
+2	1733	2026-02-27 07:37:34.502+00	63	0
+2	2769	2026-02-27 07:39:07.31756+00	92	0
+2	2770	2026-02-27 07:44:28.421008+00	320	0
+2	2772	2026-02-27 08:43:50.112796+00	49	1
+2	5645	2026-02-27 08:46:20.585153+00	150	1
+2	2771	2026-02-27 08:46:31.956836+00	9	1
+2	3785	2026-02-27 20:31:47.836112+00	41	0
+2	3786	2026-02-27 20:32:14.904378+00	26	0
+2	3788	2026-02-27 20:33:54.033083+00	19	0
+2	3790	2026-02-27 20:35:56.42994+00	12	0
+2	3791	2026-02-27 20:38:25.965275+00	131	0
+2	3792	2026-02-27 20:44:58.58902+00	66	0
+2	3793	2026-02-27 20:46:33.164542+00	94	0
+2	3794	2026-02-27 20:49:08.174148+00	32	0
 \.
 
 
@@ -22159,6 +22176,8 @@ COPY flashback.resources (id, name, type, pattern, link, production, expiration)
 249	Qt	nerve	synapse	\N	1772033429	1956528000
 250	Tmux	nerve	synapse	\N	1772033441	1956528000
 251	Valgrind	nerve	synapse	\N	1772033454	2051222400
+252	Sphinx Documentation	website	page	https://www.sphinx-doc.org	1577836800	2051222400
+253	Sphinx	nerve	synapse	\N	1772091218	1893456000
 \.
 
 
@@ -22179,6 +22198,7 @@ COPY flashback.roadmaps (id, name, "user") FROM stdin;
 1	Embedded Linux Software Engineer	2
 3	Linux Administrator	2
 5	German Language	6
+6	Ethical Hacker	2
 \.
 
 
@@ -27127,7 +27147,9 @@ COPY flashback.section_cards (resource, section, card, "position") FROM stdin;
 251	1	5184	5
 251	1	5185	6
 251	1	5186	7
-237	2	4076	2
+253	1	5646	1
+253	1	5647	2
+237	2	5648	2
 \.
 
 
@@ -28431,9 +28453,6 @@ COPY flashback.sections (resource, "position", name, link, state) FROM stdin;
 92	9	\N	\N	draft
 92	10	\N	\N	draft
 92	11	\N	\N	draft
-93	1	\N	\N	draft
-93	2	\N	\N	draft
-93	3	\N	\N	draft
 93	4	\N	\N	draft
 93	5	\N	\N	draft
 93	6	\N	\N	draft
@@ -28607,6 +28626,8 @@ COPY flashback.sections (resource, "position", name, link, state) FROM stdin;
 110	7	\N	\N	draft
 110	8	\N	\N	draft
 110	9	\N	\N	draft
+93	2	\N	\N	reviewed
+93	3	\N	\N	reviewed
 110	10	\N	\N	draft
 100	3	Mocking for Dummies	\N	draft
 100	5	Mocking Cheat Sheet	\N	draft
@@ -28973,7 +28994,6 @@ COPY flashback.sections (resource, "position", name, link, state) FROM stdin;
 69	4	Chapter 4	\N	draft
 236	1	Mixed	\N	draft
 238	1	Mixed	\N	draft
-237	1	Mixed	\N	draft
 237	2	Asio	\N	draft
 239	1	Mixed	\N	draft
 240	1	Mixed	\N	draft
@@ -28988,6 +29008,8 @@ COPY flashback.sections (resource, "position", name, link, state) FROM stdin;
 249	1	Mixed	\N	draft
 250	1	Mixed	\N	draft
 251	1	Mixed	\N	draft
+253	1	Configuration	\N	draft
+93	1	\N	\N	reviewed
 \.
 
 
@@ -28997,11 +29019,11 @@ COPY flashback.sections (resource, "position", name, link, state) FROM stdin;
 
 COPY flashback.sessions ("user", token, device, last_usage) FROM stdin;
 2	Txqw8ldUFaI+e9TGfBlP6YxBkn6bgngfQMJITK8DUSQ	b53c3d26-9f71-a69d-d031-c7bf2febd123	2025-12-22 23:00:00+00
-2	S+QZFj/aiqeZCU9t68F97mH7tZH9XEySCgQF/8R08pA	0bdb9226-aefa-4351-8d6e-195d6e5ff28f	2026-02-22 00:00:00+00
 6	6iF44Iw2Y/NIvt+c1TVX3ReZJDsfJynkhR22sxGymJg	0b0f1bd6-8e6b-4ce9-aa4a-61b54e7a9bfb	2026-02-25 00:00:00+00
-2	kENXFbSZvJrAggEpbDHV0DVnUKDNwYlRsoszdHSYNf4	ea96bd44-1ab3-4c68-9ed3-ab47883e57ef	2026-02-25 00:00:00+00
-2	z1N4Egb7ZDMyS4LR1cbFr+CuVWwwr39x3BbEUSpYhW0	70c60675-db09-4fc2-bd9a-0e178401f6e7	2026-02-26 00:00:00+00
-2	KHvqvUtrQuNuv1D8yEfHNP9erEx3zsfN4pKEasnauQs	5b33a8c4-d1c2-4e3b-af88-fa12dce84284	2026-02-26 00:00:00+00
+2	KHvqvUtrQuNuv1D8yEfHNP9erEx3zsfN4pKEasnauQs	5b33a8c4-d1c2-4e3b-af88-fa12dce84284	2026-02-27 00:00:00+00
+2	kENXFbSZvJrAggEpbDHV0DVnUKDNwYlRsoszdHSYNf4	ea96bd44-1ab3-4c68-9ed3-ab47883e57ef	2026-02-27 00:00:00+00
+2	S+QZFj/aiqeZCU9t68F97mH7tZH9XEySCgQF/8R08pA	0bdb9226-aefa-4351-8d6e-195d6e5ff28f	2026-02-27 00:00:00+00
+2	z1N4Egb7ZDMyS4LR1cbFr+CuVWwwr39x3BbEUSpYhW0	70c60675-db09-4fc2-bd9a-0e178401f6e7	2026-02-27 00:00:00+00
 \.
 
 
@@ -29252,6 +29274,8 @@ COPY flashback.shelves (resource, subject) FROM stdin;
 249	19
 250	21
 251	22
+252	40
+253	40
 \.
 
 
@@ -29265,6 +29289,14 @@ COPY flashback.studies ("user", card, last_study, duration) FROM stdin;
 2	122	2026-02-24 11:31:11.437244+00	4
 2	124	2026-02-24 11:33:05.816688+00	104
 2	125	2026-02-24 11:34:35.075304+00	74
+2	3798	2026-02-27 21:01:52.390784+00	46
+2	3799	2026-02-27 21:07:51.326982+00	358
+2	3800	2026-02-27 21:08:46.689576+00	55
+2	3801	2026-02-27 21:11:13.614457+00	146
+2	3802	2026-02-27 21:11:48.863316+00	35
+2	3803	2026-02-27 21:14:30.974626+00	37
+2	3804	2026-02-27 21:17:01.772072+00	150
+2	3805	2026-02-27 21:18:23.250083+00	81
 \.
 
 
@@ -29467,7 +29499,6 @@ COPY flashback.topic_cards (topic, card, "position", subject, level) FROM stdin;
 26	979	3	2	surface
 26	980	4	2	surface
 26	981	5	2	surface
-1	2770	2	3	surface
 2	2771	1	3	surface
 2	2772	2	3	surface
 3	2773	1	3	surface
@@ -30171,29 +30202,8 @@ COPY flashback.topic_cards (topic, card, "position", subject, level) FROM stdin;
 10	69	4	8	surface
 10	70	5	8	surface
 10	71	6	8	surface
-14	3802	1	27	surface
-15	3803	1	27	surface
-15	3804	2	27	surface
-16	3805	1	27	surface
 1	3785	1	27	surface
 1	3786	2	27	surface
-2	3787	1	27	surface
-3	3788	1	27	surface
-3	3789	2	27	surface
-4	3790	1	27	surface
-4	3791	2	27	surface
-5	3792	1	27	surface
-6	3793	1	27	surface
-7	3794	1	27	surface
-7	3795	2	27	surface
-8	3796	1	27	surface
-9	3797	1	27	surface
-10	3798	1	27	surface
-11	3799	1	27	surface
-12	3800	1	27	surface
-13	3801	1	27	surface
-17	5192	1	27	surface
-17	5193	2	27	surface
 140	3680	5	6	surface
 214	3938	7	6	surface
 13	2716	2	8	surface
@@ -30245,23 +30255,9 @@ COPY flashback.topic_cards (topic, card, "position", subject, level) FROM stdin;
 219	5363	3	6	surface
 220	5364	1	6	surface
 220	5365	2	6	surface
-18	5221	1	27	surface
-19	5223	2	27	surface
-19	5225	4	27	surface
-19	5227	6	27	surface
-19	5229	8	27	surface
-19	5231	10	27	surface
-19	5233	12	27	surface
-19	5222	1	27	surface
-19	5224	3	27	surface
-19	5226	5	27	surface
-19	5228	7	27	surface
-19	5230	9	27	surface
 215	5200	2	6	surface
 216	5201	1	6	surface
 217	5356	1	6	surface
-19	5232	11	27	surface
-20	5234	1	27	surface
 149	3682	3	6	surface
 214	3939	8	6	surface
 220	5366	3	6	surface
@@ -30300,6 +30296,7 @@ COPY flashback.topic_cards (topic, card, "position", subject, level) FROM stdin;
 6	5388	1	18	surface
 6	5389	2	18	surface
 6	5390	3	18	surface
+2	3788	1	27	surface
 7	5391	1	18	surface
 7	5392	2	18	surface
 8	5393	1	18	surface
@@ -30390,8 +30387,6 @@ COPY flashback.topic_cards (topic, card, "position", subject, level) FROM stdin;
 2	219	6	18	surface
 3	232	3	18	surface
 1	1725	9	20	surface
-1	2769	1	3	surface
-1	1733	3	3	surface
 7	1734	1	3	surface
 7	1735	2	3	surface
 7	1736	3	3	surface
@@ -31599,13 +31594,50 @@ COPY flashback.topic_cards (topic, card, "position", subject, level) FROM stdin;
 214	5197	4	6	surface
 214	5198	5	6	surface
 215	5199	1	6	surface
-1	4076	4	3	surface
 2	5114	1	17	surface
 1	5108	1	16	surface
 2	5109	1	16	surface
 2	5110	2	16	surface
 2	5111	3	16	surface
 2	5112	4	16	surface
+2	5645	3	3	surface
+1	2769	1	3	surface
+1	2770	2	3	surface
+1	1733	3	3	surface
+2	3789	2	27	surface
+2	3787	3	27	surface
+3	3790	1	27	surface
+3	3791	2	27	surface
+4	3792	1	27	surface
+4	3793	2	27	surface
+5	3794	1	27	surface
+5	3795	2	27	surface
+26	3797	1	27	surface
+27	3798	1	27	surface
+28	3799	1	27	surface
+29	3800	1	27	surface
+30	3801	1	27	surface
+31	3802	1	27	surface
+32	3803	1	27	surface
+32	3804	2	27	surface
+33	3805	1	27	surface
+34	5192	1	27	surface
+34	5193	2	27	surface
+35	5221	1	27	surface
+36	5222	1	27	surface
+36	5223	2	27	surface
+36	5224	3	27	surface
+36	5225	4	27	surface
+36	5226	5	27	surface
+36	5227	6	27	surface
+36	5228	7	27	surface
+36	5229	8	27	surface
+36	5230	9	27	surface
+36	5231	10	27	surface
+36	5232	11	27	surface
+36	5233	12	27	surface
+37	5234	1	27	surface
+7	3796	1	27	surface
 \.
 
 
@@ -31935,27 +31967,7 @@ COPY flashback.topics ("position", name, subject, level) FROM stdin;
 20	Poky	8	surface
 21	Image Creation	8	surface
 12	Device Tree Specification	8	surface
-1	Workflow Structure	27	surface
-2	Runner	27	surface
-3	Jobs	27	surface
-4	Steps	27	surface
-5	Checkout	27	surface
-6	Node Setup	27	surface
-7	Creating A Release	27	surface
-8	Uploading Release Assets	27	surface
-9	Storing Cache	27	surface
-10	Storing Artifacts	27	surface
-11	Restoring Artifacts	27	surface
-12	Deleting Stored Artifacts	27	surface
-13	Job Conditions	27	surface
-14	Job Failure	27	surface
-15	Outputs	27	surface
-16	Runner Matrix	27	surface
-17	Permissions	27	surface
 7	Rectangle Class Template	15	surface
-18	Log Annotations	27	surface
-19	Running Workflows Locally	27	surface
-20	Creating Actions	27	surface
 2	Ethical Hacking	45	surface
 3	Penetration Testing	45	surface
 9	Locating Tools	13	surface
@@ -31981,7 +31993,6 @@ COPY flashback.topics ("position", name, subject, level) FROM stdin;
 15	Copying Data	18	surface
 16	Point in Time Recovery	18	surface
 2	Fundamental Data Types	6	surface
-1	Asynchronous IO Context	3	surface
 2	Asynchronous Event Processing Loop	3	surface
 3	Queueing Asynchronous Tasks	3	surface
 4	Serializing Event Processing Loop	3	surface
@@ -32018,6 +32029,7 @@ COPY flashback.topics ("position", name, subject, level) FROM stdin;
 12	Troubleshoot Build	26	surface
 13	Build Process	26	surface
 14	Configure Build	26	surface
+1	Workflow Structure	27	surface
 15	Package Format	26	surface
 16	Installation Script	26	surface
 17	Shared State Cache	26	surface
@@ -32288,6 +32300,24 @@ COPY flashback.topics ("position", name, subject, level) FROM stdin;
 1	CA Private Key	16	surface
 2	CA Certificate	16	surface
 1	Redewendung	78	depth
+1	IO Context	3	surface
+2	Jobs	27	surface
+3	Steps	27	surface
+4	Actions	27	surface
+26	Storing Cache	27	surface
+27	Storing Artifacts	27	surface
+28	Restoring Artifacts	27	surface
+29	Deleting Stored Artifacts	27	surface
+30	Job Conditions	27	surface
+31	Job Failure	27	surface
+32	Outputs	27	surface
+33	Runner Matrix	27	surface
+34	Permissions	27	surface
+35	Log Annotations	27	surface
+36	Running Workflows Locally	27	surface
+37	Creating Actions	27	surface
+5	Create Release	27	surface
+7	Upload Release Assets	27	surface
 \.
 
 
@@ -32305,7 +32335,7 @@ COPY flashback.users (id, name, email, state, verified, joined, hash) FROM stdin
 -- Name: cards_id_seq; Type: SEQUENCE SET; Schema: flashback; Owner: flashback
 --
 
-SELECT pg_catalog.setval('flashback.cards_id_seq', 5645, true);
+SELECT pg_catalog.setval('flashback.cards_id_seq', 5648, true);
 
 
 --
@@ -32326,14 +32356,14 @@ SELECT pg_catalog.setval('flashback.providers_id_seq', 35, true);
 -- Name: resources_id_seq; Type: SEQUENCE SET; Schema: flashback; Owner: flashback
 --
 
-SELECT pg_catalog.setval('flashback.resources_id_seq', 251, true);
+SELECT pg_catalog.setval('flashback.resources_id_seq', 253, true);
 
 
 --
 -- Name: roadmaps_id_seq; Type: SEQUENCE SET; Schema: flashback; Owner: flashback
 --
 
-SELECT pg_catalog.setval('flashback.roadmaps_id_seq', 5, true);
+SELECT pg_catalog.setval('flashback.roadmaps_id_seq', 6, true);
 
 
 --
@@ -32883,5 +32913,5 @@ GRANT ALL ON SCHEMA public TO brian;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict MqlqWU8xC7UxaRYLdwdacP76JIFHbJgLHI98ZeAkNQoSEuFrRmfLfxxm3maYh77
+\unrestrict RZLYr425egQiixMpU2S6Wh3KeguY4q0TL3E8VcaaZdwYqWGRUDBEyIhbbB9Lfvy
 

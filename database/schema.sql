@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict Law9u9XVN0qD0xHHIYTvh62WCrUujw7fsqljwR4T2tAwl1DzwUMlZooLoM7UReZ
+\restrict VWZ4PXZTQCjsWpTPV7b76X2xrQ64grvZZsdIdaIyPAgzg8YNM2oekWVEcbz9pO3
 
 -- Dumped from database version 18.1
 -- Dumped by pg_dump version 18.0
@@ -1283,7 +1283,7 @@ begin
         return query
         select c.id, c.state, c.headline
         from topic_cards tc
-        join cards c on c.id = tc.card
+        join cards c on c.id = tc.card and c.state in ('reviewed'::card_state, 'completed'::card_state, 'approved'::card_state, 'released'::card_state)
         left join progress p on p.user = user_id and p.card = tc.card
         where tc.subject = subject_id and tc.level <= cognitive_level and tc.level = topic_level and tc.topic = topic_position;
     end if;
@@ -1360,7 +1360,8 @@ begin
                     (select a.id from get_assessment_coverage(t.subject, t.position, t.level) a order by a.coverage desc limit 1) as assessment
             from topics t
             join topic_cards tc on t.subject = tc.subject and t.level = tc.level and t.position = tc.topic
-            left join progress p on p.user = user_id and p.card = tc.card
+            join cards c on c.id = tc.card and c.state in ('reviewed'::card_state, 'completed'::card_state, 'approved'::card_state, 'released'::card_state)
+            left join progress p on p.user = user_id and p.card = tc.card and p.card = c.id
             where t.subject = milestone_id and t.level <= cognitive_level and (is_assimilated(user_id, t.subject, t.level, t.position) or now() - coalesce(p.last_practice, long_time_ago) > interval '6 hours')
             group by t.subject, t.level, t.position, t.name
         )
@@ -1382,7 +1383,8 @@ begin
                     (select a.id from get_assessment_coverage(t.subject, t.position, t.level) a order by a.coverage desc limit 1) as assessment
             from topics t
             join topic_cards tc on t.subject = tc.subject and t.level = tc.level and t.position = tc.topic
-            left join progress p on p.user = user_id and p.card = tc.card
+            join cards c on c.id = tc.card and c.state in ('reviewed'::card_state, 'completed'::card_state, 'approved'::card_state, 'released'::card_state)
+            left join progress p on p.user = user_id and p.card = tc.card and p.card = c.id
             where t.subject = milestone_id and t.level <= cognitive_level and coalesce(p.last_practice, long_time_ago) < last_acceptable_read
             group by t.subject, t.level, t.position, t.name
         )
@@ -1395,25 +1397,6 @@ begin
         union all
         select b.position, b.name, b.level from base b where not coalesce(assimilated, false) or assessment is null order by position;
     end if;
-
---    return query
---    with base as (
---        select  t.position,
---                t.name,
---                t.level,
---                is_assimilated(user_id, t.subject, t.level, t.position) as assimilated,
---                (select a.id from get_assessment_coverage(t.subject, t.position, t.level) a order by a.coverage desc limit 1) as assessment
---        from topics t
---        where t.subject = milestone_id and t.level <= get_user_cognitive_level(user_id, roadmap_id, milestone_id)
---    )
---    select * from (
---        select distinct on (assessment) b."position", b.name, b.level
---        from base b
---        where coalesce(assimilated, false) and assessment is not null
---        order by assessment, position desc
---    )
---    union all
---    select b.position, b.name, b.level from base b where not coalesce(assimilated, false) or assessment is null order by position;
 end;
 $$;
 
@@ -2616,7 +2599,7 @@ CREATE PROCEDURE flashback.remove_section(IN resource_id integer, IN section_pos
     LANGUAGE plpgsql
     AS $$
 begin
-    if not exists (select 1 from section_cards where resource = resource_id) then
+    if not exists (select 1 from section_cards where resource = resource_id and section = section_position) then
         delete from sections where resource = resource_id and position = section_position;
     end if;
 end;
@@ -4196,5 +4179,5 @@ GRANT ALL ON SCHEMA public TO brian;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict Law9u9XVN0qD0xHHIYTvh62WCrUujw7fsqljwR4T2tAwl1DzwUMlZooLoM7UReZ
+\unrestrict VWZ4PXZTQCjsWpTPV7b76X2xrQ64grvZZsdIdaIyPAgzg8YNM2oekWVEcbz9pO3
 

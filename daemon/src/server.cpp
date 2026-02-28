@@ -2342,8 +2342,9 @@ grpc::Status server::SearchTopics(grpc::ServerContext* context, SearchTopicsRequ
                 TopicSearchResult result{};
                 *result.mutable_topic() = topic;
                 result.set_position(position);
+                *response->add_results() = result;
             }
-            std::clog << std::format("client {} collected {} topics by searching {}\n", request->user().token(), response->results_size(), request->search_token());
+            std::clog << std::format("client {} collected {} topics by searching {} in subject {} in level {}\n", request->user().token(), response->results_size(), request->search_token(), request->subject().id(), database::level_to_string(request->level()));
             status = grpc::Status{grpc::StatusCode::OK, {}};
         }
     }
