@@ -82,9 +82,6 @@ class FlashbackClient {
             this.token = '';
             window.location.href = '/home.html';
         }
-        if (err.code === 6 || err.code === 3) {
-            err.message = "Card already exists in this topic";
-        }
         return err;
     }
 
@@ -1996,7 +1993,7 @@ class FlashbackClient {
             request.setUser(user);
             request.setCode(code);
 
-            this.client.verifyuser(request, this.getMetadata(), (err) => {
+            this.client.verifyUser(request, this.getMetadata(), (err) => {
                 if (err) {
                     console.error("VerifyUser error:", err);
                     reject(this.handleError(err));

@@ -297,6 +297,8 @@ grpc::Status server::SendVerification(grpc::ServerContext* context, SendVerifica
             std::clog << std::format("client {} sent verification request\n", request->user().token());
 
             uint64_t code = generate_code();
+            std::shared_ptr<User> const user{m_database->get_user(request->user().token(), request->user().device())};
+            m_database->set_verification(user->id(), code);
 
             std::clog << std::format("server generated code {} for verification\n", code);
             status = grpc::Status{grpc::StatusCode::OK, {}};
@@ -332,6 +334,7 @@ grpc::Status server::VerifyUser(grpc::ServerContext* context, VerifyUserRequest 
             if (user->verification() == request->code())
             {
                 m_database->verify_user(request->user().id());
+                m_database->set_verification(request->user().id(), 0);
                 status = grpc::Status{grpc::StatusCode::OK, {}};
             }
             else
