@@ -4157,12 +4157,12 @@ size_t server::write_callback(void* contents, size_t size, size_t nmemb, std::st
     return size * nmemb;
 }
 
-bool server::send_verification_email(std::string const& email, uint64_t const code)
+bool server::send_verification_email(std::string email, uint64_t const code)
 {
     CURL* curl = curl_easy_init();
     if (!curl) return false;
 
-    std::clog << std::format("server: {}\n", "sending verification code to {}", email);
+    std::clog << std::format("server: sending verification code to {}", email);
 
     std::string json =
         R"({"from": "noreply@flashback.eu.com",)"
