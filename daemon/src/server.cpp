@@ -345,7 +345,7 @@ grpc::Status server::VerifyUser(grpc::ServerContext* context, VerifyUserRequest 
             std::shared_ptr<User> const user{m_database->get_user(request->user().token(), request->user().device())};
             if (user->verification() == request->code())
             {
-                std::clog << std::format("client {} verified their email address {} with {}\n", request->user().token(), request->user().email(), request->code(), user->verification());
+                std::clog << std::format("client {} verified their email address {} with {}\n", request->user().token(), user->email(), user->verification());
                 m_database->verify_user(request->user().id());
                 m_database->set_verification(request->user().id(), 0);
                 status = grpc::Status{grpc::StatusCode::OK, {}};
