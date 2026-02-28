@@ -4149,6 +4149,8 @@ bool server::send_verification_email(const std::string& email, const std::string
     CURL* curl = curl_easy_init();
     if (!curl) return false;
 
+    std::clog << std::format("server: {}\n", "sending verification code to {}", email);
+
     std::string json =
         R"({"from": "noreply@flashback.eu.com",)"
         R"("to": ")" + email + R"(",)"
