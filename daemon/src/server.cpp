@@ -301,7 +301,15 @@ grpc::Status server::SendVerification(grpc::ServerContext* context, SendVerifica
             m_database->set_verification(user->id(), code);
 
             std::clog << std::format("server generated code {} for verification\n", code);
-            status = grpc::Status{grpc::StatusCode::OK, {}};
+            if (send_verification_email(user->email(), code))
+            {
+                status = grpc::Status{grpc::StatusCode::OK, {}};
+            }
+            else
+            {
+                status = grpc::Status{grpc::StatusCode::INTERNAL, "failed to send verification email"};
+                std::cerr << std::format("server: failed to send verification code to {}\n", user->email());
+            }
         }
     }
     catch (client_exception const& exp)
@@ -4144,7 +4152,7 @@ size_t server::write_callback(void* contents, size_t size, size_t nmemb, std::st
     return size * nmemb;
 }
 
-bool server::send_verification_email(const std::string& email, const std::string& code)
+bool server::send_verification_email(std::string const& email, uint64_t const code)
 {
     CURL* curl = curl_easy_init();
     if (!curl) return false;
@@ -4155,7 +4163,7 @@ bool server::send_verification_email(const std::string& email, const std::string
         R"({"from": "noreply@flashback.eu.com",)"
         R"("to": ")" + email + R"(",)"
         R"("subject": "Flashback Verification Code",)"
-        R"("html": "<h3>Flashback</h3><p>Your verification code is <strong>)" + code + R"(</strong></p>"})";
+        R"("html": "<h3>Flashback</h3><p>Your verification code is <strong>)" + std::to_string(code) + R"(</strong></p>"})";
 
     std::string response;
 
