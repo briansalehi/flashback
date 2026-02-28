@@ -301,7 +301,12 @@ grpc::Status server::SendVerification(grpc::ServerContext* context, SendVerifica
             m_database->set_verification(user->id(), code);
 
             std::clog << std::format("server generated code {} for verification\n", code);
-            if (send_verification_email(user->email(), code))
+            if (user->email().empty())
+            {
+                status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid user email"};
+                std::cerr << std::format("server: failed to send verification code to invalid email from user {}\n", user->id());
+            }
+            else if (send_verification_email(user->email(), code))
             {
                 status = grpc::Status{grpc::StatusCode::OK, {}};
             }
