@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict VWZ4PXZTQCjsWpTPV7b76X2xrQ64grvZZsdIdaIyPAgzg8YNM2oekWVEcbz9pO3
+\restrict ie4Cx33rdIfow4gHgIGNLOJPi8LKCwZDqO4bwkorR1BqZNU2NgYDr1n91QkHg9H
 
 -- Dumped from database version 18.1
 -- Dumped by pg_dump version 18.0
@@ -442,6 +442,21 @@ end; $$;
 
 
 ALTER PROCEDURE flashback.change_topic_level(IN subject_id integer, IN topic_position integer, IN topic_level flashback.expertise_level, IN target_level flashback.expertise_level) OWNER TO flashback;
+
+--
+-- Name: change_user_email(integer, character varying); Type: PROCEDURE; Schema: flashback; Owner: flashback
+--
+
+CREATE PROCEDURE flashback.change_user_email(IN user_id integer, IN user_email character varying)
+    LANGUAGE plpgsql
+    AS $$
+begin
+    update users set email = user_email where users.id = user_id;
+end;
+$$;
+
+
+ALTER PROCEDURE flashback.change_user_email(IN user_id integer, IN user_email character varying) OWNER TO flashback;
 
 --
 -- Name: change_users_hash(integer, character varying); Type: PROCEDURE; Schema: flashback; Owner: flashback
@@ -4179,5 +4194,5 @@ GRANT ALL ON SCHEMA public TO brian;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict VWZ4PXZTQCjsWpTPV7b76X2xrQ64grvZZsdIdaIyPAgzg8YNM2oekWVEcbz9pO3
+\unrestrict ie4Cx33rdIfow4gHgIGNLOJPi8LKCwZDqO4bwkorR1BqZNU2NgYDr1n91QkHg9H
 

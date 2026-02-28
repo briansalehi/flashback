@@ -6822,3 +6822,11 @@ TEST_F(test_database, get_block)
     EXPECT_THAT(block.metadata(), Eq(metadata));
     EXPECT_THAT(block.content(), Eq(content));
 }
+
+TEST_F(test_database, rename_user)
+{
+}
+
+TEST_F(test_database, change_user_email)
+{
+}

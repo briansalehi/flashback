@@ -75,7 +75,7 @@ grpc::Status server::SignIn(grpc::ServerContext* context, const SignInRequest* r
 
 grpc::Status server::SignOut(grpc::ServerContext* context, const SignOutRequest* request, SignOutResponse* response)
 {
-    grpc::Status status{grpc::Status{grpc::StatusCode::INTERNAL, {}}};
+    grpc::Status status{grpc::StatusCode::INTERNAL, {}};
 
     try
     {
@@ -85,6 +85,49 @@ grpc::Status server::SignOut(grpc::ServerContext* context, const SignOutRequest*
             std::shared_ptr<User> const user{m_database->get_user(request->user().token(), request->user().device())};
             m_database->revoke_session(user->id(), request->user().token());
             status = grpc::Status{grpc::StatusCode::OK, {}};
+        }
+        else
+        {
+            status = grpc::Status{grpc::StatusCode::UNAUTHENTICATED, "invalid user"};
+        }
+    }
+    catch (client_exception const& exp)
+    {
+        status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, exp.what()};
+        std::cerr << std::format("client {}: {}\n", request->user().token(), exp.what());
+    }
+    catch (std::exception const& exp)
+    {
+        std::cerr << std::format("server: {}\n", exp.what());
+    }
+
+    return status;
+}
+
+grpc::Status server::GetUser(grpc::ServerContext* context, GetUserRequest const* request, GetUserResponse* response)
+{
+    grpc::Status status{grpc::StatusCode::INTERNAL, {}};
+
+    try
+    {
+        if (request->has_user())
+        {
+            std::clog << std::format("client {} retrieved user information\n", request->user().token());
+
+            if (std::unique_ptr<User> user = m_database->get_user(request->user().token(), request->user().device()))
+            {
+                user->clear_password();
+                user->clear_hash();
+                user->clear_device();
+                user->clear_id();
+                user->clear_state();
+                response->set_allocated_user(user.release());
+                status = grpc::Status{grpc::StatusCode::OK, {}};
+            }
+            else
+            {
+                status = grpc::Status{grpc::StatusCode::UNAUTHENTICATED, "invalid user"};
+            }
         }
         else
         {
@@ -191,10 +234,52 @@ grpc::Status server::ResetPassword(grpc::ServerContext* context, ResetPasswordRe
 
 grpc::Status server::EditUser(grpc::ServerContext* context, EditUserRequest const* request, EditUserResponse* response)
 {
-    // name, email
-    std::clog << std::format("client {} edited their email\n", request->user().token());
-    std::clog << std::format("client {} edited their name\n", request->user().token());
-    return grpc::Status::OK;
+    grpc::Status status{grpc::StatusCode::INTERNAL, {}};
+
+    try
+    {
+        if (!request->has_user() || !session_is_valid(request->user()))
+        {
+            status = grpc::Status{grpc::StatusCode::UNAUTHENTICATED, "invalid user"};
+        }
+        else if (request->user().name().empty())
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "empty name not allowed"};
+        }
+        else if (request->user().email().empty())
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "empty email not allowed"};
+        }
+        else
+        {
+            std::shared_ptr<User> const user{m_database->get_user(request->user().token(), request->user().device())};
+
+            if (user->name() != request->user().name())
+            {
+                std::clog << std::format("client {} edited their name\n", request->user().token());
+                m_database->rename_user(user->id(), request->user().name());
+            }
+
+            if (user->email() != request->user().email())
+            {
+                std::clog << std::format("client {} edited their email\n", request->user().token());
+                m_database->change_user_email(user->id(), request->user().email());
+            }
+
+            status = grpc::Status{grpc::StatusCode::OK, {}};
+        }
+    }
+    catch (client_exception const& exp)
+    {
+        std::cerr << std::format("client {}: {}", request->user().token(), exp.what());
+        status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, exp.what()};
+    }
+    catch (pqxx::unique_violation const& exp)
+    {
+        std::cerr << std::format("server: {}\n", exp.what());
+    }
+
+    return status;
 }
 
 grpc::Status server::VerifySession(grpc::ServerContext* context, VerifySessionRequest const* request, VerifySessionResponse* response)

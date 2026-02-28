@@ -11,6 +11,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const editUserForm = document.getElementById('edit-user-form');
     const userNameInput = document.getElementById('user-name');
     const userEmailInput = document.getElementById('user-email');
+    const userJoinedInput = document.getElementById('user-joined');
     const saveUserBtn = document.getElementById('save-user-btn');
     const resetPasswordBtn = document.getElementById('reset-password-btn');
     const signoutBtn = document.getElementById('signout-btn');
@@ -37,6 +38,24 @@ document.addEventListener('DOMContentLoaded', () => {
         successMessage.style.display = 'none';
         errorMessage.style.display = 'none';
     }
+
+    async function loadUser() {
+        try {
+            const user = await client.getUser();
+            userNameInput.value = user.name || '';
+            userEmailInput.value = user.email || '';
+            if (user.joined !== undefined && user.joined !== null) {
+                userJoinedInput.value = UI.formatISODate(user.joined * 1000);
+            } else {
+                userJoinedInput.value = '';
+            }
+        } catch (err) {
+            console.error('Load user error:', err);
+            showError('Failed to load user information.');
+        }
+    }
+
+    loadUser();
 
     // Handle Edit User Form submission
     editUserForm.addEventListener('submit', async (e) => {

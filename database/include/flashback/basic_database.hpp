@@ -23,8 +23,8 @@ public:
     [[nodiscard]] virtual std::unique_ptr<User> get_user(std::string_view token, std::string_view device) const = 0;
     virtual void revoke_session(uint64_t user_id, std::string_view token) const = 0;
     virtual void revoke_sessions_except(uint64_t user_id, std::string_view token) const = 0;
-    //rename_user
-    //change_user_email
+    virtual void rename_user(uint64_t user_id, std::string_view name) const = 0;
+    virtual void change_user_email(uint64_t user_id, std::string_view email) const = 0;
     //verify_user
     //suspend_user
     //ban_user

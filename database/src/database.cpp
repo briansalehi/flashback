@@ -204,6 +204,16 @@ void database::revoke_sessions_except(uint64_t const user_id, std::string_view t
     exec("call revoke_sessions_except($1, $2)", user_id, token);
 }
 
+void database::rename_user(uint64_t user_id, std::string_view name) const
+{
+    exec("call rename_user($1, $2)", user_id, name);
+}
+
+void database::change_user_email(uint64_t user_id, std::string_view email) const
+{
+    exec("call change_user_email($1, $2)", user_id, email);
+}
+
 Roadmap database::create_roadmap(uint64_t const user_id, std::string name) const
 {
     if (name.empty())

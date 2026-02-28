@@ -14,6 +14,7 @@ public:
     ~server() override = default;
 
     // entry page
+    grpc::Status GetUser(grpc::ServerContext* context, GetUserRequest const* request, GetUserResponse* response) override;
     grpc::Status SignUp(grpc::ServerContext* context, SignUpRequest const* request, SignUpResponse* response) override;
     grpc::Status SignIn(grpc::ServerContext* context, SignInRequest const* request, SignInResponse* response) override;
     grpc::Status SignOut(grpc::ServerContext* context, SignOutRequest const* request, SignOutResponse* response) override;

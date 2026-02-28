@@ -119,6 +119,28 @@ class FlashbackClient {
         });
     }
 
+    async getUser() {
+        return new Promise((resolve, reject) => {
+            const request = new proto.flashback.GetUserRequest();
+            const user = this.getAuthenticatedUser();
+            request.setUser(user);
+
+            this.client.getUser(request, {}, (err, response) => {
+                if (err) {
+                    console.error('GetUser error:', err);
+                    reject(err);
+                } else {
+                    resolve({
+                        email: response.getUser().getEmail(),
+                        name: response.getUser().getName(),
+                        joined: response.getUser().getJoined(),
+                        isVerified: response.getUser().getVerified()
+                    });
+                }
+            });
+        });
+    }
+
     async signIn(email, password) {
         await this.waitForReady();
 

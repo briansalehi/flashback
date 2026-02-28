@@ -5,6 +5,7 @@ package flashback;
 import "requests.proto";
 
 service Server {
+    rpc GetUser(GetUserRequest) returns (GetUserResponse);
     rpc SignIn(SignInRequest) returns (SignInResponse);
     rpc SignOut(SignOutRequest) returns (SignOutResponse);
     rpc SignUp(SignUpRequest) returns (SignUpResponse);

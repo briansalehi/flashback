@@ -50,6 +50,12 @@ const UI = {
         });
     },
     
+    formatISODate(date) {
+        if (!date) return '';
+        const d = date instanceof Date ? date : new Date(date);
+        return d.toISOString().split('T')[0];
+    },
+    
     calculateProgress(completed, total) {
         if (total === 0) return 0;
         return Math.round((completed / total) * 100);

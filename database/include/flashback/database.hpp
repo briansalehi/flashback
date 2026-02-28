@@ -28,6 +28,8 @@ public:
     [[nodiscard]] std::unique_ptr<User> get_user(std::string_view token, std::string_view device) const override;
     void revoke_session(uint64_t user_id, std::string_view token) const override;
     void revoke_sessions_except(uint64_t user_id, std::string_view token) const override;
+    void rename_user(uint64_t user_id, std::string_view name) const override;
+    void change_user_email(uint64_t user_id, std::string_view email) const override;
 
     // roadmaps
     [[nodiscard]] Roadmap create_roadmap(uint64_t user_id, std::string name) const override;
