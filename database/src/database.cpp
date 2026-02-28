@@ -129,21 +129,13 @@ std::unique_ptr<User> database::get_user(std::string_view email) const
         user->set_name(result.at("name").as<std::string>());
         user->set_email(result.at("email").as<std::string>());
         user->set_verified(result.at("verified").as<bool>());
+        user->set_joined(result.at("joined").as<uint64_t>());
 
         if (!result.at("hash").is_null()) user->set_hash(result.at("hash").as<std::string>());
 
         if (!result.at("token").is_null()) user->set_token(result.at("token").as<std::string>());
 
         if (!result.at("device").is_null()) user->set_device(result.at("device").as<std::string>());
-
-        std::tm tm{};
-        std::istringstream stream{result.at("joined").as<std::string>()};
-
-        stream >> std::get_time(&tm, "%Y-%m-%d");
-        time_t const epoch{std::mktime(&tm)};
-
-        auto timestamp{std::chrono::system_clock::from_time_t(epoch).time_since_epoch().count()};
-        user->set_joined(timestamp);
 
         if (std::string const state_str{result.at("state").as<std::string>()}; state_str == "active") user->set_state(User::active);
         else if (state_str == "inactive") user->set_state(User::inactive);
@@ -168,21 +160,13 @@ std::unique_ptr<User> database::get_user(std::string_view token, std::string_vie
         user->set_name(result.at("name").as<std::string>());
         user->set_email(result.at("email").as<std::string>());
         user->set_verified(result.at("verified").as<bool>());
+        user->set_joined(result.at("joined").as<uint64_t>());
 
         if (!result.at("hash").is_null()) user->set_hash(result.at("hash").as<std::string>());
 
         if (!result.at("token").is_null()) user->set_token(result.at("token").as<std::string>());
 
         if (!result.at("device").is_null()) user->set_device(result.at("device").as<std::string>());
-
-        std::tm tm{};
-        std::istringstream stream{result.at("joined").as<std::string>()};
-
-        stream >> std::get_time(&tm, "%Y-%m-%d");
-        time_t const epoch{std::mktime(&tm)};
-
-        auto timestamp{std::chrono::system_clock::from_time_t(epoch).time_since_epoch().count()};
-        user->set_joined(timestamp);
 
         if (std::string const state_str{result.at("state").as<std::string>()}; state_str == "active") user->set_state(User::active);
         else if (state_str == "inactive") user->set_state(User::inactive);
