@@ -61,6 +61,7 @@ message User {
     uint64 joined = 8;
     string device = 9;
     string hash = 10;
+    uint64 verification = 11;
 }
 
 message Weight { Resource resource = 1; uint64 percentage = 2; }

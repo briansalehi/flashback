@@ -18,8 +18,8 @@ public:
     grpc::Status SignUp(grpc::ServerContext* context, SignUpRequest const* request, SignUpResponse* response) override;
     grpc::Status SignIn(grpc::ServerContext* context, SignInRequest const* request, SignInResponse* response) override;
     grpc::Status SignOut(grpc::ServerContext* context, SignOutRequest const* request, SignOutResponse* response) override;
-    grpc::Status VerifySession(grpc::ServerContext* context, VerifySessionRequest const* request, VerifySessionResponse* response) override;
-    // grpc::Status VerifyUser(grpc::ServerContext* context, VerifyUserRequest const* request, VerifyUserResponse* response) override;
+    grpc::Status SendVerification(grpc::ServerContext* context, SendVerificationRequest const* request, SendVerificationResponse* response) override;
+    grpc::Status VerifyUser(grpc::ServerContext* context, VerifyUserRequest const* request, VerifyUserResponse* response) override;
 
     // accounts page
     grpc::Status ResetPassword(grpc::ServerContext* context, ResetPasswordRequest const* request, ResetPasswordResponse* response) override;
@@ -150,6 +150,7 @@ protected:
     [[nodiscard]] static std::string calculate_hash(std::string_view password);
     [[nodiscard]] static bool password_is_valid(std::string_view lhs, std::string_view rhs);
     [[nodiscard]] static std::string generate_token();
+    [[nodiscard]] static uint64_t generate_code();
     [[nodiscard]] bool session_is_valid(User const& user) const;
 
     std::shared_ptr<basic_database> m_database;

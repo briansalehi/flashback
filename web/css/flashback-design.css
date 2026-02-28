@@ -797,6 +797,44 @@ a:hover {
     border-color: var(--color-primary-start);
 }
 
+/* Account Page Styles */
+.account-card .form-input[readonly] {
+    background: transparent;
+    border-color: transparent;
+    padding-left: 0;
+    font-weight: 500;
+    cursor: default;
+}
+    
+.account-card .form-input[readonly]:focus {
+    box-shadow: none;
+}
+
+.account-card .form-label {
+    color: var(--color-primary-start);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-size: 0.75rem;
+    margin-bottom: 0.25rem;
+}
+
+#verification-badge {
+    transition: all var(--transition-base);
+    font-weight: 700;
+}
+
+#verification-code:focus {
+    letter-spacing: 0.5em; /* maintain letter spacing on focus */
+}
+
+#send-verification-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    background: var(--bg-secondary);
+    border-color: var(--border-color);
+}
+
 @media (min-width: 768px) {
     .item-block {
         padding: var(--space-xl);

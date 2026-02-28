@@ -282,19 +282,75 @@ grpc::Status server::EditUser(grpc::ServerContext* context, EditUserRequest cons
     return status;
 }
 
-grpc::Status server::VerifySession(grpc::ServerContext* context, VerifySessionRequest const* request, VerifySessionResponse* response)
+grpc::Status server::SendVerification(grpc::ServerContext* context, SendVerificationRequest const* request, SendVerificationResponse* response)
 {
+    grpc::Status status{grpc::StatusCode::INTERNAL, {}};
+
     try
     {
-        std::clog << std::format("client {} validated their account\n", request->user().token());
-        response->set_valid(request->has_user() && session_is_valid(request->user()));
+        if (!request->has_user() || !session_is_valid(request->user()))
+        {
+            status = grpc::Status{grpc::StatusCode::UNAUTHENTICATED, "invalid user"};
+        }
+        else
+        {
+            std::clog << std::format("client {} sent verification request\n", request->user().token());
+
+            uint64_t code = generate_code();
+
+            std::clog << std::format("server generated code {} for verification\n", code);
+            status = grpc::Status{grpc::StatusCode::OK, {}};
+        }
     }
-    catch (std::exception const& exp)
+    catch (client_exception const& exp)
     {
-        response->set_valid(false);
+        std::cerr << std::format("client {}: {}", request->user().token(), exp.what());
+        status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, exp.what()};
+    }
+    catch (pqxx::unique_violation const& exp)
+    {
+        std::cerr << std::format("server: {}\n", exp.what());
     }
 
-    return grpc::Status::OK;
+    return status;
+}
+
+grpc::Status server::VerifyUser(grpc::ServerContext* context, VerifyUserRequest const* request, VerifyUserResponse* response)
+{
+    grpc::Status status{grpc::StatusCode::INTERNAL, {}};
+
+    try
+    {
+        if (!request->has_user() || !session_is_valid(request->user()))
+        {
+            status = grpc::Status{grpc::StatusCode::UNAUTHENTICATED, "invalid user"};
+        }
+        else
+        {
+            std::shared_ptr<User> const user{m_database->get_user(request->user().token(), request->user().device())};
+            std::clog << std::format("client {} attempted to verify their email with code {} against {}\n", request->user().token(), request->code(), user->verification());
+            if (user->verification() == request->code())
+            {
+                m_database->verify_user(request->user().id());
+                status = grpc::Status{grpc::StatusCode::OK, {}};
+            }
+            else
+            {
+                status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid code"};
+            }
+        }
+    }
+    catch (client_exception const& exp)
+    {
+        std::cerr << std::format("client {}: {}", request->user().token(), exp.what());
+        status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, exp.what()};
+    }
+    catch (pqxx::unique_violation const& exp)
+    {
+        std::cerr << std::format("server: {}\n", exp.what());
+    }
+
+    return status;
 }
 
 grpc::Status server::CreateRoadmap(grpc::ServerContext* context, CreateRoadmapRequest const* request, CreateRoadmapResponse* response)
@@ -4094,6 +4150,12 @@ std::string server::calculate_hash(std::string_view password)
 bool server::password_is_valid(std::string_view hash, std::string_view password)
 {
     return crypto_pwhash_str_verify(hash.data(), password.data(), password.size()) == 0;
+}
+
+uint64_t server::generate_code()
+{
+    uint32_t random_value = randombytes_uniform(900000);
+    return 100000 + random_value;
 }
 
 std::string server::generate_token()

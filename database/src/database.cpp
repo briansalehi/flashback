@@ -172,6 +172,7 @@ std::unique_ptr<User> database::get_user(std::string_view token, std::string_vie
         user->set_email(result.at("email").as<std::string>());
         user->set_verified(result.at("verified").as<bool>());
         user->set_joined(result.at("joined").as<uint64_t>());
+        user->set_verification(result.at("verification").as<uint64_t>());
 
         if (!result.at("hash").is_null()) user->set_hash(result.at("hash").as<std::string>());
 

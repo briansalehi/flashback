@@ -9,8 +9,8 @@ service Server {
     rpc SignIn(SignInRequest) returns (SignInResponse);
     rpc SignOut(SignOutRequest) returns (SignOutResponse);
     rpc SignUp(SignUpRequest) returns (SignUpResponse);
-    rpc VerifySession(VerifySessionRequest) returns (VerifySessionResponse);
-    //rpc VerifyUser(VerifyUserRequest) returns (VerifyUserResponse);
+    rpc SendVerification(SendVerificationRequest) returns (SendVerificationResponse);
+    rpc VerifyUser(VerifyUserRequest) returns (VerifyUserResponse);
     rpc ResetPassword(ResetPasswordRequest) returns (ResetPasswordResponse);
     rpc EditUser(EditUserRequest) returns (EditUserResponse);
     rpc CreateRoadmap(CreateRoadmapRequest) returns (CreateRoadmapResponse);
