@@ -34,7 +34,7 @@ target_sources(flashbackd PRIVATE src/main.cpp)
 target_link_libraries(flashbackd PRIVATE flashbackd-internals)
 
 install(TARGETS flashbackd RUNTIME COMPONENT flashbackd)
-install(FILES res/flashbackd.service COMPONENT flashbackd DESTINATION ${CMAKE_INSTALL_LIBDIR}/lib/systemd/system)
+install(FILES res/flashbackd.service COMPONENT flashbackd DESTINATION ${CMAKE_INSTALL_PREFIX}/lib/systemd/system)
 
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "${PROJECT_DESCRIPTION}")
 string(TOLOWER "${CMAKE_SYSTEM_NAME}" CPACK_SYSTEM_NAME)
