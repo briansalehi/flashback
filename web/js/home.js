@@ -341,12 +341,10 @@ function renderNerves(nerves) {
         const typeName = 'Knowledge';
         const patternName = 'Memories';
 
-        // Subject is single now
         const milestoneId = nerve.milestone ? nerve.milestone.id : '';
         const milestoneName = nerve.milestone ? nerve.milestone.name : '';
-        const subjectLevel = nerve.milestone ? nerve.milestone.level : '';
+        const milestoneLevel = nerve.milestone ? nerve.milestone.level : '';
 
-        // Single subject badge (if available)
         const subjectBadgeHtml = milestoneId ? `
             <span class="item-badge" style="background: rgba(76, 175, 80, 0.1); color: #388e3c; font-size: 10px; height: 18px; min-width: auto; padding: 0 6px;">
                 ${UI.escapeHtml(milestoneName)}
