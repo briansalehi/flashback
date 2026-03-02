@@ -960,6 +960,12 @@ class FlashbackClient {
             const user = this.getAuthenticatedUser();
             request.setUser(user);
 
+            if (!this.client || typeof this.client.getNerves !== 'function') {
+                console.error("gRPC client not initialized or getNerves method missing");
+                reject(new Error("Client error"));
+                return;
+            }
+
             this.client.getNerves(request, this.getMetadata(), (err, response) => {
                 if (err) {
                     console.error("GetNerves error:", err);
