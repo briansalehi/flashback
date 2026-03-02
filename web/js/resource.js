@@ -288,7 +288,8 @@ window.addEventListener('DOMContentLoaded', () => {
                     const subjectName = UI.getUrlParam('subjectName') || '';
                     const roadmapId = UI.getUrlParam('roadmapId') || '';
                     const roadmapName = UI.getUrlParam('roadmapName') || '';
-                    window.location.href = `subject.html?id=${subjectId}&name=${encodeURIComponent(subjectName)}&roadmapId=${roadmapId}&roadmapName=${encodeURIComponent(roadmapName)}`;
+                    const level = UI.getUrlParam('level') || '';
+                    window.location.href = `subject.html?id=${subjectId}&name=${encodeURIComponent(subjectName)}&roadmapId=${roadmapId}&roadmapName=${encodeURIComponent(roadmapName)}&level=${level}`;
                 } else {
                     window.location.href = '/home.html';
                 }
@@ -620,6 +621,7 @@ function displayBreadcrumb() {
     const subjectName = UI.getUrlParam('subjectName');
     const roadmapId = UI.getUrlParam('roadmapId');
     const roadmapName = UI.getUrlParam('roadmapName');
+    const level = UI.getUrlParam('level');
 
     let breadcrumbHtml = '';
 
@@ -629,7 +631,7 @@ function displayBreadcrumb() {
 
     if (subjectId && subjectName) {
         if (breadcrumbHtml) breadcrumbHtml += ' → ';
-        breadcrumbHtml += `<a href="subject.html?id=${subjectId}&name=${encodeURIComponent(subjectName)}&roadmapId=${roadmapId || ''}&roadmapName=${encodeURIComponent(roadmapName || '')}" style="color: var(--text-primary); text-decoration: none;">${UI.escapeHtml(subjectName)}</a>`;
+        breadcrumbHtml += `<a href="subject.html?id=${subjectId}&name=${encodeURIComponent(subjectName)}&roadmapId=${roadmapId || ''}&roadmapName=${encodeURIComponent(roadmapName || '')}&level=${level}" style="color: var(--text-primary); text-decoration: none;">${UI.escapeHtml(subjectName)}</a>`;
     }
 
     if (breadcrumbHtml) {
