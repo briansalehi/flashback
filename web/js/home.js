@@ -269,6 +269,10 @@ function renderStudyingResources(resources) {
         const typeName = typeNames[resource.type] || 'Unknown';
         const patternName = patternNames[resource.pattern] || 'Unknown';
 
+        const milestoneId = resource.milestone.id || '';
+        const milestoneName = resource.milestone.name || '';
+        const milestoneLevel = resource.milestone.level || '';
+
         resourceItem.innerHTML = `
             <div style="width: 100%; display: flex; flex-direction: column; gap: 0.25rem;">
                 <div class="item-header" style="margin-bottom: 0; align-items: center;">
@@ -295,7 +299,7 @@ function renderStudyingResources(resources) {
         `;
 
         resourceItem.addEventListener('click', () => {
-            window.location.href = `resource.html?id=${resource.id}&name=${encodeURIComponent(resource.name)}&type=${resource.type}&pattern=${resource.pattern}&link=${encodeURIComponent(resource.link)}&production=${resource.production}&expiration=${resource.expiration}`;
+            window.location.href = `resource.html?id=${resource.id}&name=${encodeURIComponent(resource.name)}&type=${resource.type}&pattern=${resource.pattern}&link=${encodeURIComponent(resource.link)}&production=${resource.production}&expiration=${resource.expiration}&subjectId=${milestoneId}&subjectName=${milestoneName}&level=${milestoneLevel}`;
         });
 
         container.appendChild(resourceItem);
@@ -377,9 +381,8 @@ function renderNerves(nerves) {
             </div>
         `;
 
-        // Make the whole nerve item clickable to go to resource page (sections/synapses)
         nerveItem.addEventListener('click', () => {
-            window.location.href = `resource.html?id=${nerve.id}&name=${encodeURIComponent(nerve.name)}&type=${nerve.type}&pattern=${nerve.pattern}&link=${encodeURIComponent(nerve.link)}&production=${nerve.production}&expiration=${nerve.expiration}&milestoneId=${subjectId}&milestoneName=${encodeURIComponent(subjectName)}&level=${milestoneLevel}`;
+            window.location.href = `resource.html?id=${nerve.id}&name=${encodeURIComponent(nerve.name)}&type=${nerve.type}&pattern=${nerve.pattern}&link=${encodeURIComponent(nerve.link)}&production=${nerve.production}&expiration=${nerve.expiration}&subjectId=${subjectId}&subjectName=${encodeURIComponent(subjectName)}&level=${milestoneLevel}`;
         });
 
         container.appendChild(nerveItem);

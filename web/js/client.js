@@ -557,7 +557,12 @@ class FlashbackClient {
                         production: study.getResource().getProduction(),
                         expiration: study.getResource().getExpiration(),
                         link: study.getResource().getLink(),
-                        order: study.getOrder()
+                        order: study.getOrder(),
+                        milestone: {
+                            id: study.getMilestone().getId(),
+                            name: study.getMilestone().getName(),
+                            level: study.getMilestone().getLevel()
+                        }
                     })));
                 }
             });

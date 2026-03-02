@@ -452,8 +452,10 @@ grpc::Status server::GetStudyResources(grpc::ServerContext* context, GetStudyRes
             std::shared_ptr<User> const user{m_database->get_user(request->user().token(), request->user().device())};
             for (auto const& [position, resource]: m_database->get_study_resources(user->id()))
             {
+                Milestone const milestone = m_database->get_related_milestone(user->id(), resource.id());
                 StudyResource* study{response->add_study()};
                 *study->mutable_resource() = resource;
+                *study->mutable_milestone() = milestone;
                 study->set_order(position);
             }
             std::clog << std::format("client {} collected {} study resources\n", user->token(), response->study_size());
