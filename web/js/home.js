@@ -342,13 +342,14 @@ function renderNerves(nerves) {
         const patternName = 'Memories';
 
         // Subject is single now
-        const subjectId = nerve.subject ? nerve.subject.id : '';
-        const subjectName = nerve.subject ? nerve.subject.name : '';
+        const milestoneId = nerve.milestone ? nerve.milestone.id : '';
+        const milestoneName = nerve.milestone ? nerve.milestone.name : '';
+        const subjectLevel = nerve.milestone ? nerve.milestone.level : '';
 
         // Single subject badge (if available)
-        const subjectBadgeHtml = subjectId ? `
+        const subjectBadgeHtml = milestoneId ? `
             <span class="item-badge" style="background: rgba(76, 175, 80, 0.1); color: #388e3c; font-size: 10px; height: 18px; min-width: auto; padding: 0 6px;">
-                ${UI.escapeHtml(subjectName)}
+                ${UI.escapeHtml(milestoneName)}
             </span>
         ` : '';
 
@@ -380,7 +381,7 @@ function renderNerves(nerves) {
 
         // Make the whole nerve item clickable to go to resource page (sections/synapses)
         nerveItem.addEventListener('click', () => {
-            window.location.href = `resource.html?id=${nerve.id}&name=${encodeURIComponent(nerve.name)}&type=${nerve.type}&pattern=${nerve.pattern}&link=${encodeURIComponent(nerve.link)}&production=${nerve.production}&expiration=${nerve.expiration}&subjectId=${subjectId}&subjectName=${encodeURIComponent(subjectName)}`;
+            window.location.href = `resource.html?id=${nerve.id}&name=${encodeURIComponent(nerve.name)}&type=${nerve.type}&pattern=${nerve.pattern}&link=${encodeURIComponent(nerve.link)}&production=${nerve.production}&expiration=${nerve.expiration}&milestoneId=${subjectId}&milestoneName=${encodeURIComponent(subjectName)}&level=${milestoneLevel}`;
         });
 
         container.appendChild(nerveItem);

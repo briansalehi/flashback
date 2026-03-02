@@ -1621,9 +1621,10 @@ grpc::Status server::GetNerves(grpc::ServerContext* context, GetNervesRequest co
             std::shared_ptr<User> const user{m_database->get_user(request->user().token(), request->user().device())};
             for (auto const& resource: m_database->get_nerves(user->id()))
             {
+                Milestone const milestone = m_database->get_related_milestone(user->id(), resource.id());
                 Nerve* nerve = response->add_nerve();
                 *nerve->mutable_resource() = resource;
-                *nerve->mutable_subject() = m_database->get_related_subject(resource.id());
+                *nerve->mutable_milestone() = milestone;
             }
             std::clog << std::format("client {} collected {} nerves\n", request->user().token(), response->nerve_size());
             status = grpc::Status{grpc::StatusCode::OK, {}};

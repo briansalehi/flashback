@@ -71,7 +71,7 @@ public:
     MOCK_METHOD(void, rename_resource, (uint64_t, std::string), (const, override));
     MOCK_METHOD(void, remove_resource, (uint64_t), (const, override));
     MOCK_METHOD(void, merge_resources, (uint64_t, uint64_t), (const, override));
-    MOCK_METHOD(Subject, get_related_subject, (uint64_t), (const, override));
+    MOCK_METHOD(Milestone, get_related_milestone, (uint64_t, uint64_t), (const, override));
 
     // providers
     MOCK_METHOD(Provider, create_provider, (std::string), (const, override));

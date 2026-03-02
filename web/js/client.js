@@ -968,9 +968,10 @@ class FlashbackClient {
                         production: nerve.getResource().getProduction(),
                         expiration: nerve.getResource().getExpiration(),
                         link: nerve.getResource().getLink(),
-                        subject: {
-                            id: nerve.getSubject().getId(),
-                            name: nerve.getSubject().getName()
+                        milestone: {
+                            id: nerve.getMilestone().getId(),
+                            name: nerve.getMilestone().getName(),
+                            level: nerve.getMilestone().getLevel()
                         }
                     })));
                 }

@@ -86,7 +86,7 @@ public:
     virtual void remove_resource(uint64_t resource_id) const = 0;
     virtual void merge_resources(uint64_t source_id, uint64_t target_id) const = 0;
     [[nodiscard]] virtual Resource get_resource(uint64_t resource_id) const = 0;
-    virtual Subject get_related_subject(uint64_t resource_id) const = 0;
+    virtual Milestone get_related_milestone(uint64_t user_id, uint64_t resource_id) const = 0;
 
     // providers
     [[nodiscard]] virtual Provider create_provider(std::string name) const = 0;
