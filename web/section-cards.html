@@ -323,6 +323,30 @@
         <p style="color: var(--text-muted); margin-bottom: 1rem;">
           Assigning: <strong id="assigning-card-headline"></strong>
         </p>
+        <div class="form-group">
+          <label class="form-label" for="subject-search-input">Search for subject</label>
+          <input
+              type="text"
+              id="subject-search-input"
+              class="form-input"
+              placeholder="Type to search subjects..."
+              autocomplete="off"
+          >
+        </div>
+        <div id="subject-search-loading" style="display: none; text-align: center; padding: 1rem;">
+          <div class="loading" style="width: 24px; height: 24px; border-width: 3px; margin: 0 auto;"></div>
+          <p class="text-muted" style="margin-top: 0.5rem; font-size: 0.875rem;">Searching subjects...</p>
+        </div>
+        <div id="subject-search-results" style="margin-top: 1rem; display: none;">
+          <h4 style="font-size: 0.9rem; font-weight: 600; margin-bottom: 0.5rem;">Select subject:</h4>
+          <div id="subjects-list" style="max-height: 200px; overflow-y: auto;">
+            <!-- subjects will be inserted here -->
+          </div>
+        </div>
+        <div id="subject-search-empty"
+             style="display: none; text-align: center; padding: 1rem; color: var(--text-muted); font-size: 0.875rem;">
+          No subjects found
+        </div>
         <div id="topics-loading" style="display: none; text-align: center; padding: 1rem;">
           <div class="loading" style="width: 24px; height: 24px; border-width: 3px; margin: 0 auto;"></div>
           <p class="text-muted" style="margin-top: 0.5rem; font-size: 0.875rem;">Loading topics...</p>
