@@ -269,9 +269,9 @@ function renderStudyingResources(resources) {
         const typeName = typeNames[resource.type] || 'Unknown';
         const patternName = patternNames[resource.pattern] || 'Unknown';
 
-        const milestoneId = resource.milestone.id || '';
-        const milestoneName = resource.milestone.name || '';
-        const milestoneLevel = resource.milestone.level || '';
+        const subjectId = resource.milestone.id || '';
+        const subjectName = resource.milestone.name || '';
+        const level = resource.milestone.level || '';
 
         resourceItem.innerHTML = `
             <div style="width: 100%; display: flex; flex-direction: column; gap: 0.25rem;">
@@ -299,7 +299,7 @@ function renderStudyingResources(resources) {
         `;
 
         resourceItem.addEventListener('click', () => {
-            window.location.href = `resource.html?id=${resource.id}&name=${encodeURIComponent(resource.name)}&type=${resource.type}&pattern=${resource.pattern}&link=${encodeURIComponent(resource.link)}&production=${resource.production}&expiration=${resource.expiration}&subjectId=${milestoneId}&subjectName=${milestoneName}&level=${milestoneLevel}`;
+            window.location.href = `resource.html?id=${resource.id}&name=${encodeURIComponent(resource.name)}&type=${resource.type}&pattern=${resource.pattern}&link=${encodeURIComponent(resource.link)}&production=${resource.production}&expiration=${resource.expiration}&subjectId=${subjectId}&subjectName=${subjectName}&level=${level}`;
         });
 
         container.appendChild(resourceItem);
@@ -345,13 +345,13 @@ function renderNerves(nerves) {
         const typeName = 'Knowledge';
         const patternName = 'Memories';
 
-        const milestoneId = nerve.milestone ? nerve.milestone.id : '';
-        const milestoneName = nerve.milestone ? nerve.milestone.name : '';
-        const milestoneLevel = nerve.milestone ? nerve.milestone.level : '';
+        const subjectId = nerve.milestone ? nerve.milestone.id : '';
+        const subjectName = nerve.milestone ? nerve.milestone.name : '';
+        const level = nerve.milestone ? nerve.milestone.level : '';
 
-        const subjectBadgeHtml = milestoneId ? `
+        const subjectBadgeHtml = subjectId ? `
             <span class="item-badge" style="background: rgba(76, 175, 80, 0.1); color: #388e3c; font-size: 10px; height: 18px; min-width: auto; padding: 0 6px;">
-                ${UI.escapeHtml(milestoneName)}
+                ${UI.escapeHtml(subjectName)}
             </span>
         ` : '';
 
@@ -382,7 +382,7 @@ function renderNerves(nerves) {
         `;
 
         nerveItem.addEventListener('click', () => {
-            window.location.href = `resource.html?id=${nerve.id}&name=${encodeURIComponent(nerve.name)}&type=${nerve.type}&pattern=${nerve.pattern}&link=${encodeURIComponent(nerve.link)}&production=${nerve.production}&expiration=${nerve.expiration}&subjectId=${subjectId}&subjectName=${encodeURIComponent(subjectName)}&level=${milestoneLevel}`;
+            window.location.href = `resource.html?id=${nerve.id}&name=${encodeURIComponent(nerve.name)}&type=${nerve.type}&pattern=${nerve.pattern}&link=${encodeURIComponent(nerve.link)}&production=${nerve.production}&expiration=${nerve.expiration}&subjectId=${subjectId}&subjectName=${encodeURIComponent(subjectName)}&level=${level}`;
         });
 
         container.appendChild(nerveItem);

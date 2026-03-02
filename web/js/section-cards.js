@@ -506,23 +506,15 @@ async function loadTopicsForSubject(subjectId) {
     
     try {
         const allTopics = [];
-        const levelParam = UI.getUrlParam('level');
-        const milestoneLevel = levelParam !== null ? parseInt(levelParam) : null;
-
-        if (milestoneLevel !== null && !isNaN(milestoneLevel)) {
-            const levelTopics = await client.getTopics(subjectId, milestoneLevel);
+        for (let level = 0; level <= 2; level++) {
+            const levelTopics = await client.getTopics(subjectId, level);
             allTopics.push(...levelTopics);
-        } else {
-            for (let level = 0; level <= 2; level++) {
-                const levelTopics = await client.getTopics(subjectId, level);
-                allTopics.push(...levelTopics);
-            }
         }
 
         document.getElementById('topics-loading').style.display = 'none';
 
         if (allTopics.length === 0) {
-            document.getElementById('topics-by-level').innerHTML = `<p class="text-muted">No topics available in this subject${milestoneLevel !== null ? ' for the current milestone level' : ''}.</p>`;
+            document.getElementById('topics-by-level').innerHTML = '<p class="text-muted">No topics available in this subject.</p>';
         } else {
             renderTopicsForAssignment(allTopics);
         }
@@ -563,7 +555,7 @@ function displaySubjectResults(subjects) {
 
     subjects.forEach(subject => {
         const item = document.createElement('div');
-        item.className = 'section-list-item';
+        item.className = 'subject-result-item';
 
         let highlightedName = UI.escapeHtml(subject.name);
         if (searchTerm) {
@@ -571,7 +563,10 @@ function displaySubjectResults(subjects) {
             highlightedName = highlightedName.replace(regex, '<mark style="background-color: #fff59d; padding: 0 2px; border-radius: 2px;">$1</mark>');
         }
 
-        item.innerHTML = `<div style="font-weight: 600;">${highlightedName}</div>`;
+        item.innerHTML = `
+            <div style="font-weight: 600; color: var(--primary-dark);">${highlightedName}</div>
+            <div style="font-size: 0.75rem; color: var(--text-muted); background: var(--background); padding: 0.1rem 0.4rem; border-radius: 4px;">Subject</div>
+        `;
         item.addEventListener('click', async () => {
             currentSelectedSubjectId = subject.id;
             document.getElementById('subject-search-results').style.display = 'none';
@@ -600,13 +595,13 @@ function renderTopicsForAssignment(topics) {
     for (let level = 0; level <= 2; level++) {
         if (grouped[level] && grouped[level].length > 0) {
             const levelDiv = document.createElement('div');
-            levelDiv.style.marginBottom = '1.5rem';
+            levelDiv.className = 'topic-level-group';
             
-            const levelHeader = document.createElement('h4');
-            levelHeader.textContent = levelNames[level];
-            levelHeader.style.borderBottom = '1px solid var(--border-color)';
-            levelHeader.style.paddingBottom = '0.5rem';
-            levelHeader.style.marginBottom = '0.75rem';
+            const levelHeader = document.createElement('div');
+            levelHeader.className = 'topic-level-header';
+            levelHeader.innerHTML = `
+                <span class="level-badge level-badge-${level}">${levelNames[level]}</span>
+            `;
             levelDiv.appendChild(levelHeader);
 
             // Sort by position
@@ -614,10 +609,10 @@ function renderTopicsForAssignment(topics) {
 
             grouped[level].forEach(topic => {
                 const topicItem = document.createElement('div');
-                topicItem.className = 'section-list-item';
+                topicItem.className = 'topic-item';
                 topicItem.innerHTML = `
-                    <div style="font-weight: 600;">${UI.escapeHtml(topic.name)}</div>
-                    <div style="font-size: 0.875rem; color: var(--text-muted);">Position: ${topic.position}</div>
+                    <div class="topic-item-name">${UI.escapeHtml(topic.name)}</div>
+                    <div class="topic-item-meta">Pos: ${topic.position}</div>
                 `;
                 topicItem.addEventListener('click', () => assignCardToTopic(topic));
                 levelDiv.appendChild(topicItem);
