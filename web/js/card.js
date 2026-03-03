@@ -20,7 +20,13 @@ async function markCardAsReviewed() {
         if (stateElement) {
             stateElement.textContent = 'reviewed';
             stateElement.className = 'card-state-display reviewed';
+            stateElement.style.display = 'inline-block';
         }
+
+        // Update URL state parameter to 1 (reviewed)
+        const url = new URL(window.location.href);
+        url.searchParams.set('state', '1');
+        window.history.replaceState({}, '', url);
 
         // Hide the button
         if (markReviewedBtn) {
@@ -71,6 +77,7 @@ window.addEventListener('DOMContentLoaded', () => {
     if (stateElement) {
         stateElement.textContent = stateName;
         stateElement.className = `card-state-display ${stateName}`;
+        stateElement.style.display = 'inline-block';
     }
 
     const signoutBtn = document.getElementById('signout-btn');

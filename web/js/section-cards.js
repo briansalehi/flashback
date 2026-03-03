@@ -20,6 +20,11 @@ async function markSectionAsReviewed() {
             stateBadge.className = 'section-state reviewed';
         }
 
+        // Update URL state parameter to 1 (reviewed)
+        const url = new URL(window.location.href);
+        url.searchParams.set('sectionState', '1');
+        window.history.replaceState({}, '', url);
+
         // Hide the button
         if (markSectionReviewedBtn) {
             markSectionReviewedBtn.style.display = 'none';
