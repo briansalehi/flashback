@@ -263,6 +263,7 @@ function displayContextBreadcrumb(subjectName, topicName, resourceName, sectionN
     const subjectId = UI.getUrlParam('subjectId') || '';
     const localSubjectName = UI.getUrlParam('subjectName') || subjectName || '';
     const milestoneLevel = UI.getUrlParam('milestoneLevel') || UI.getUrlParam('topicLevel') || UI.getUrlParam('level') || '0';
+    const currentTab = UI.getUrlParam('tab') || (resourceName ? 'resources' : 'topics');
 
     if (subjectName && topicName) {
         // Get subject and roadmap info from practice state or URL
@@ -280,7 +281,7 @@ function displayContextBreadcrumb(subjectName, topicName, resourceName, sectionN
         }
 
         if (subjectId && subjectName) {
-            const subjectLink = `subject.html?id=${subjectId}&name=${encodeURIComponent(subjectName)}&roadmapId=${roadmapId}&roadmapName=${encodeURIComponent(roadmapName)}&level=${milestoneLevel}`;
+            const subjectLink = `subject.html?id=${subjectId}&name=${encodeURIComponent(subjectName)}&roadmapId=${roadmapId}&roadmapName=${encodeURIComponent(roadmapName)}&level=${milestoneLevel}&tab=${currentTab}`;
             breadcrumbParts.push(`<a href="${subjectLink}" style="color: var(--text-primary); text-decoration: none;">${UI.escapeHtml(subjectName)}</a>`);
         }
 
@@ -300,7 +301,7 @@ function displayContextBreadcrumb(subjectName, topicName, resourceName, sectionN
 
         // Always add subject if available
         if (subjectId && localSubjectName) {
-            const subjectLink = `subject.html?id=${subjectId}&name=${encodeURIComponent(localSubjectName)}&roadmapId=${roadmapId}&roadmapName=${encodeURIComponent(roadmapName)}&level=${milestoneLevel}`;
+            const subjectLink = `subject.html?id=${subjectId}&name=${encodeURIComponent(localSubjectName)}&roadmapId=${roadmapId}&roadmapName=${encodeURIComponent(roadmapName)}&level=${milestoneLevel}&tab=${currentTab}`;
             breadcrumbParts.push(`<a href="${subjectLink}" style="color: var(--text-primary); text-decoration: none;">${UI.escapeHtml(localSubjectName)}</a>`);
         }
 
@@ -324,7 +325,7 @@ function displayContextBreadcrumb(subjectName, topicName, resourceName, sectionN
                 const resourceLink = UI.getUrlParam('resourceLink') || '';
                 const resourceProduction = UI.getUrlParam('resourceProduction') || '0';
                 const resourceExpiration = UI.getUrlParam('resourceExpiration') || '0';
-                const resLink = `resource.html?id=${resourceId}&name=${encodeURIComponent(resourceName)}&type=${resourceType}&pattern=${resourcePattern}&link=${encodeURIComponent(resourceLink)}&production=${resourceProduction}&expiration=${resourceExpiration}&subjectId=${subjectId}&subjectName=${encodeURIComponent(localSubjectName)}&roadmapId=${roadmapId}&roadmapName=${encodeURIComponent(roadmapName)}`;
+                const resLink = `resource.html?id=${resourceId}&name=${encodeURIComponent(resourceName)}&type=${resourceType}&pattern=${resourcePattern}&link=${encodeURIComponent(resourceLink)}&production=${resourceProduction}&expiration=${resourceExpiration}&subjectId=${subjectId}&subjectName=${encodeURIComponent(localSubjectName)}&roadmapId=${roadmapId}&roadmapName=${encodeURIComponent(roadmapName)}&level=${milestoneLevel}&tab=${currentTab}`;
                 breadcrumbParts.push(`<a href="${resLink}" style="color: var(--text-primary); text-decoration: none;">${UI.escapeHtml(resourceName)}</a>`);
             }
 
@@ -334,7 +335,7 @@ function displayContextBreadcrumb(subjectName, topicName, resourceName, sectionN
                 const resourceLink = UI.getUrlParam('resourceLink') || '';
                 const resourceProduction = UI.getUrlParam('resourceProduction') || '0';
                 const resourceExpiration = UI.getUrlParam('resourceExpiration') || '0';
-                const sectionLink = `section-cards.html?resourceId=${resourceId}&sectionPosition=${sectionPosition}&name=${encodeURIComponent(sectionName)}&resourceName=${encodeURIComponent(resourceName)}&resourceType=${resourceType}&resourcePattern=${resourcePattern}&resourceLink=${encodeURIComponent(resourceLink)}&resourceProduction=${resourceProduction}&resourceExpiration=${resourceExpiration}&subjectId=${subjectId}&subjectName=${encodeURIComponent(localSubjectName)}&roadmapId=${roadmapId}&roadmapName=${encodeURIComponent(roadmapName)}`;
+                const sectionLink = `section-cards.html?resourceId=${resourceId}&sectionPosition=${sectionPosition}&name=${encodeURIComponent(sectionName)}&resourceName=${encodeURIComponent(resourceName)}&resourceType=${resourceType}&resourcePattern=${resourcePattern}&resourceLink=${encodeURIComponent(resourceLink)}&resourceProduction=${resourceProduction}&resourceExpiration=${resourceExpiration}&subjectId=${subjectId}&subjectName=${encodeURIComponent(localSubjectName)}&roadmapId=${roadmapId}&roadmapName=${encodeURIComponent(roadmapName)}&level=${milestoneLevel}&tab=${currentTab}`;
                 breadcrumbParts.push(`<a href="${sectionLink}" style="color: var(--text-primary); text-decoration: none;">${UI.escapeHtml(sectionName)}</a>`);
             }
         }
@@ -923,7 +924,8 @@ async function loadNextTopic() {
         // All topics completed
         sessionStorage.removeItem('practiceState');
         alert('Practice session completed!');
-        window.location.href = `/subject.html?id=${practiceState.subjectId}&roadmapId=${practiceState.roadmapId}&level=${practiceState.milestoneLevel || ''}`;
+        const currentTab = UI.getUrlParam('tab') || 'topics';
+        window.location.href = `/subject.html?id=${practiceState.subjectId}&roadmapId=${practiceState.roadmapId}&level=${practiceState.milestoneLevel || ''}&tab=${currentTab}`;
         return;
     }
 
@@ -1797,7 +1799,8 @@ async function confirmRemoveCard() {
             window.location.href = `topic-cards.html?subjectId=${subjectId}&topicPosition=${topicPosition}&topicLevel=${topicLevel}&name=${encodeURIComponent(topicName)}&subjectName=${encodeURIComponent(subjectName)}&roadmapId=${roadmapId}&roadmapName=${encodeURIComponent(roadmapName)}`;
         } else if (subjectId) {
             // If accessed directly or from subject practice, go back to subject page
-            window.location.href = `subject.html?id=${subjectId}&name=${encodeURIComponent(subjectName)}&roadmapId=${roadmapId}&roadmapName=${encodeURIComponent(roadmapName)}&level=${milestoneLevel}`;
+            const currentTab = UI.getUrlParam('tab') || (topicPosition !== '' && topicLevel !== '' ? 'topics' : (resourceId && sectionPosition !== '' ? 'resources' : 'topics'));
+            window.location.href = `subject.html?id=${subjectId}&name=${encodeURIComponent(subjectName)}&roadmapId=${roadmapId}&roadmapName=${encodeURIComponent(roadmapName)}&level=${milestoneLevel}&tab=${currentTab}`;
         } else {
             // Fallback to home
             window.location.href = '/home.html';

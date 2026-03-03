@@ -186,28 +186,60 @@ window.addEventListener('DOMContentLoaded', () => {
     const tabs = document.querySelectorAll('.tab');
     const tabContents = document.querySelectorAll('.tab-content');
 
+    function activateTab(targetTab, updateUrl = true) {
+        // Update active tab
+        tabs.forEach(tab => {
+            if (tab.dataset.tab === targetTab) {
+                tab.classList.add('active');
+            } else {
+                tab.classList.remove('active');
+            }
+        });
+
+        // Update active content
+        tabContents.forEach(content => {
+            if (content.id === `${targetTab}-content`) {
+                content.classList.add('active');
+            } else {
+                content.classList.remove('active');
+            }
+        });
+
+        // Toggle "Add Topic" button visibility (only show on Topics tab)
+        const addTopicBtn = document.getElementById('add-topic-btn');
+        if (addTopicBtn) {
+            addTopicBtn.style.display = (targetTab === 'topics') ? 'block' : 'none';
+        }
+
+        // Update URL if requested
+        const currentUrl = new URL(window.location.href);
+        if (updateUrl) {
+            currentUrl.searchParams.set('tab', targetTab);
+            window.history.replaceState({}, '', currentUrl.toString());
+        }
+
+        // Update navigation links to include current tab
+        updateChildNavigationLinks(targetTab);
+
+        // Load data when switching tabs
+        if (targetTab === 'topics' && !topicsLoaded) {
+            loadTopics();
+        } else if (targetTab === 'assessments' && !assessmentsLoaded) {
+            loadAssessments();
+        } else if (targetTab === 'resources' && !resourcesLoaded) {
+            loadResources();
+        }
+    }
+
+    function updateChildNavigationLinks(currentTab) {
+        // This function will be called whenever the tab changes to update any static links 
+        // that might be on the page, although most are dynamic.
+        // For now, we'll rely on dynamic generation in render functions.
+    }
+
     tabs.forEach(tab => {
         tab.addEventListener('click', () => {
-            const targetTab = tab.dataset.tab;
-
-            // Update active tab
-            tabs.forEach(t => t.classList.remove('active'));
-            tab.classList.add('active');
-
-            // Update active content
-            tabContents.forEach(content => {
-                content.classList.remove('active');
-            });
-            document.getElementById(`${targetTab}-content`).classList.add('active');
-
-            // Load data when switching tabs
-            if (targetTab === 'topics' && !topicsLoaded) {
-                loadTopics();
-            } else if (targetTab === 'assessments' && !assessmentsLoaded) {
-                loadAssessments();
-            } else if (targetTab === 'resources' && !resourcesLoaded) {
-                loadResources();
-            }
+            activateTab(tab.dataset.tab);
         });
     });
 
@@ -423,11 +455,13 @@ window.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Load topics initially (since topics tab is active by default)
+    // Load active tab (from URL or default to topics)
     let topicsLoaded = false;
     let assessmentsLoaded = false;
     let resourcesLoaded = false;
-    loadTopics();
+
+    const initialTab = UI.getUrlParam('tab') || 'topics';
+    activateTab(initialTab, false);
 });
 
 async function loadTopics() {
@@ -527,7 +561,8 @@ function renderTopics(topics, maxLevel) {
                         const roadmapId = UI.getUrlParam('roadmapId');
                         const roadmapName = UI.getUrlParam('roadmapName');
                         const milestoneLevel = UI.getUrlParam('level') || '0';
-                        window.location.href = `topic-cards.html?subjectId=${subjectId}&topicPosition=${topic.position}&topicLevel=${topic.level}&name=${encodeURIComponent(topic.name)}&subjectName=${encodeURIComponent(subjectName || '')}&roadmapId=${roadmapId || ''}&roadmapName=${encodeURIComponent(roadmapName || '')}&milestoneLevel=${milestoneLevel}`;
+                        const currentTab = UI.getUrlParam('tab') || 'topics';
+                        window.location.href = `topic-cards.html?subjectId=${subjectId}&topicPosition=${topic.position}&topicLevel=${topic.level}&name=${encodeURIComponent(topic.name)}&subjectName=${encodeURIComponent(subjectName || '')}&roadmapId=${roadmapId || ''}&roadmapName=${encodeURIComponent(roadmapName || '')}&milestoneLevel=${milestoneLevel}&tab=${currentTab}`;
                     }
                 });
 
@@ -839,7 +874,9 @@ function renderResources(resources) {
                     const subjectName = UI.getUrlParam('name');
                     const roadmapId = UI.getUrlParam('roadmapId');
                     const roadmapName = UI.getUrlParam('roadmapName');
-                    window.location.href = `resource.html?id=${resource.id}&name=${encodeURIComponent(resource.name)}&type=${resource.type}&pattern=${resource.pattern}&link=${encodeURIComponent(resource.link)}&production=${resource.production}&expiration=${resource.expiration}&subjectId=${subjectId || ''}&subjectName=${encodeURIComponent(subjectName || '')}&roadmapId=${roadmapId || ''}&roadmapName=${encodeURIComponent(roadmapName || '')}`;
+                    const currentTab = UI.getUrlParam('tab') || 'topics';
+                    const level = UI.getUrlParam('level') || '0';
+                    window.location.href = `resource.html?id=${resource.id}&name=${encodeURIComponent(resource.name)}&type=${resource.type}&pattern=${resource.pattern}&link=${encodeURIComponent(resource.link)}&production=${resource.production}&expiration=${resource.expiration}&subjectId=${subjectId || ''}&subjectName=${encodeURIComponent(subjectName || '')}&roadmapId=${roadmapId || ''}&roadmapName=${encodeURIComponent(roadmapName || '')}&level=${level}&tab=${currentTab}`;
                 });
             }
         });

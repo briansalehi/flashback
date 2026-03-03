@@ -20,7 +20,8 @@ function displayBreadcrumb() {
         if (breadcrumbHtml) breadcrumbHtml += ' → ';
         const topicLevel = UI.getUrlParam('topicLevel') || '0';
         const milestoneLevel = UI.getUrlParam('milestoneLevel') || topicLevel;
-        breadcrumbHtml += `<a href="subject.html?id=${subjectId}&name=${encodeURIComponent(subjectName)}&roadmapId=${roadmapId || ''}&roadmapName=${encodeURIComponent(roadmapName || '')}&level=${milestoneLevel}" style="color: var(--text-primary); text-decoration: none;">${UI.escapeHtml(subjectName)}</a>`;
+        const currentTab = UI.getUrlParam('tab') || 'topics';
+        breadcrumbHtml += `<a href="subject.html?id=${subjectId}&name=${encodeURIComponent(subjectName)}&roadmapId=${roadmapId || ''}&roadmapName=${encodeURIComponent(roadmapName || '')}&level=${milestoneLevel}&tab=${currentTab}" style="color: var(--text-primary); text-decoration: none;">${UI.escapeHtml(subjectName)}</a>`;
     }
 
     if (breadcrumbHtml) {
@@ -175,9 +176,10 @@ window.addEventListener('DOMContentLoaded', () => {
                 const subjectName = UI.getUrlParam('subjectName') || '';
                 const roadmapId = UI.getUrlParam('roadmapId') || '';
                 const roadmapName = UI.getUrlParam('roadmapName') || '';
+                const currentTab = UI.getUrlParam('tab') || 'topics';
                 // Pass the milestone level so subject page knows which levels to display
                 const milestoneLevel = UI.getUrlParam('milestoneLevel') || topicLevel;
-                window.location.href = `subject.html?id=${subjectId}&name=${encodeURIComponent(subjectName)}&roadmapId=${roadmapId}&roadmapName=${encodeURIComponent(roadmapName)}&level=${milestoneLevel}`;
+                window.location.href = `subject.html?id=${subjectId}&name=${encodeURIComponent(subjectName)}&roadmapId=${roadmapId}&roadmapName=${encodeURIComponent(roadmapName)}&level=${milestoneLevel}&tab=${currentTab}`;
             } catch (err) {
                 console.error('Remove topic failed:', err);
                 UI.showError(err.message || 'Failed to remove topic');

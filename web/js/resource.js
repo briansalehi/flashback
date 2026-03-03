@@ -289,7 +289,8 @@ window.addEventListener('DOMContentLoaded', () => {
                     const roadmapId = UI.getUrlParam('roadmapId') || '';
                     const roadmapName = UI.getUrlParam('roadmapName') || '';
                     const level = UI.getUrlParam('level') || '';
-                    window.location.href = `subject.html?id=${subjectId}&name=${encodeURIComponent(subjectName)}&roadmapId=${roadmapId}&roadmapName=${encodeURIComponent(roadmapName)}&level=${level}`;
+                    const currentTab = UI.getUrlParam('tab') || 'resources';
+                    window.location.href = `subject.html?id=${subjectId}&name=${encodeURIComponent(subjectName)}&roadmapId=${roadmapId}&roadmapName=${encodeURIComponent(roadmapName)}&level=${level}&tab=${currentTab}`;
                 } else {
                     window.location.href = '/home.html';
                 }
@@ -398,7 +399,8 @@ function renderSections(sections) {
                 const roadmapId = UI.getUrlParam('roadmapId');
                 const roadmapName = UI.getUrlParam('roadmapName');
                 const milestoneLevel = UI.getUrlParam('level');
-                window.location.href = `section-cards.html?resourceId=${resourceId}&sectionPosition=${section.position}&sectionState=${section.state}&name=${encodeURIComponent(section.name)}&sectionLink=${encodeURIComponent(section.link || '')}&resourceName=${encodeURIComponent(resourceName)}&resourceType=${resourceType}&resourcePattern=${resourcePattern}&resourceLink=${encodeURIComponent(resourceLink || '')}&resourceProduction=${resourceProduction}&resourceExpiration=${resourceExpiration}&subjectId=${subjectId || ''}&subjectName=${encodeURIComponent(subjectName || '')}&roadmapId=${roadmapId || ''}&roadmapName=${encodeURIComponent(roadmapName || '')}&level=${milestoneLevel || ''}`;
+                const currentTab = UI.getUrlParam('tab') || 'resources';
+                window.location.href = `section-cards.html?resourceId=${resourceId}&sectionPosition=${section.position}&sectionState=${section.state}&name=${encodeURIComponent(section.name)}&sectionLink=${encodeURIComponent(section.link || '')}&resourceName=${encodeURIComponent(resourceName)}&resourceType=${resourceType}&resourcePattern=${resourcePattern}&resourceLink=${encodeURIComponent(resourceLink || '')}&resourceProduction=${resourceProduction}&resourceExpiration=${resourceExpiration}&subjectId=${subjectId || ''}&subjectName=${encodeURIComponent(subjectName || '')}&roadmapId=${roadmapId || ''}&roadmapName=${encodeURIComponent(roadmapName || '')}&level=${milestoneLevel || ''}&tab=${currentTab}`;
             }
         });
 
@@ -632,7 +634,8 @@ function displayBreadcrumb() {
 
     if (subjectId && subjectName) {
         if (breadcrumbHtml) breadcrumbHtml += ' → ';
-        breadcrumbHtml += `<a href="subject.html?id=${subjectId}&name=${encodeURIComponent(subjectName)}&roadmapId=${roadmapId || ''}&roadmapName=${encodeURIComponent(roadmapName || '')}&level=${level}" style="color: var(--text-primary); text-decoration: none;">${UI.escapeHtml(subjectName)}</a>`;
+        const currentTab = UI.getUrlParam('tab') || 'resources';
+        breadcrumbHtml += `<a href="subject.html?id=${subjectId}&name=${encodeURIComponent(subjectName)}&roadmapId=${roadmapId || ''}&roadmapName=${encodeURIComponent(roadmapName || '')}&level=${level}&tab=${currentTab}" style="color: var(--text-primary); text-decoration: none;">${UI.escapeHtml(subjectName)}</a>`;
     }
 
     if (breadcrumbHtml) {

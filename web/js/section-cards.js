@@ -256,7 +256,8 @@ window.addEventListener('DOMContentLoaded', () => {
                 const roadmapId = UI.getUrlParam('roadmapId') || '';
                 const roadmapName = UI.getUrlParam('roadmapName') || '';
                 const milestoneLevel = UI.getUrlParam('level') || '';
-                window.location.href = `resource.html?id=${resourceId}&name=${encodeURIComponent(resourceName)}&type=${resourceType}&pattern=${resourcePattern}&link=${encodeURIComponent(resourceLink)}&production=${resourceProduction}&expiration=${resourceExpiration}&subjectId=${subjectId}&subjectName=${encodeURIComponent(subjectName)}&roadmapId=${roadmapId}&roadmapName=${encodeURIComponent(roadmapName)}&level=${milestoneLevel}`;
+                const currentTab = UI.getUrlParam('tab') || 'resources';
+                window.location.href = `resource.html?id=${resourceId}&name=${encodeURIComponent(resourceName)}&type=${resourceType}&pattern=${resourcePattern}&link=${encodeURIComponent(resourceLink)}&production=${resourceProduction}&expiration=${resourceExpiration}&subjectId=${subjectId}&subjectName=${encodeURIComponent(subjectName)}&roadmapId=${roadmapId}&roadmapName=${encodeURIComponent(roadmapName)}&level=${milestoneLevel}&tab=${currentTab}`;
             } catch (err) {
                 console.error('Remove section failed:', err);
                 UI.showError(err.message || 'Failed to remove section');
@@ -440,7 +441,9 @@ function displayBreadcrumb() {
 
     if (subjectId && subjectName) {
         if (breadcrumbHtml) breadcrumbHtml += ' → ';
-        breadcrumbHtml += `<a href="subject.html?id=${subjectId}&name=${encodeURIComponent(subjectName)}&roadmapId=${roadmapId || ''}&roadmapName=${encodeURIComponent(roadmapName || '')}" style="color: var(--text-primary); text-decoration: none;">${UI.escapeHtml(subjectName)}</a>`;
+        const currentTab = UI.getUrlParam('tab') || '';
+        const milestoneLevel = UI.getUrlParam('level') || '';
+        breadcrumbHtml += `<a href="subject.html?id=${subjectId}&name=${encodeURIComponent(subjectName)}&roadmapId=${roadmapId || ''}&roadmapName=${encodeURIComponent(roadmapName || '')}&level=${milestoneLevel}&tab=${currentTab}" style="color: var(--text-primary); text-decoration: none;">${UI.escapeHtml(subjectName)}</a>`;
     }
 
     if (resourceId && resourceName) {
@@ -450,7 +453,8 @@ function displayBreadcrumb() {
         const resourceLink = UI.getUrlParam('resourceLink') || '';
         const resourceProduction = UI.getUrlParam('resourceProduction') || '0';
         const resourceExpiration = UI.getUrlParam('resourceExpiration') || '0';
-        breadcrumbHtml += `<a href="resource.html?id=${resourceId}&name=${encodeURIComponent(resourceName)}&type=${resourceType}&pattern=${resourcePattern}&link=${encodeURIComponent(resourceLink)}&production=${resourceProduction}&expiration=${resourceExpiration}&subjectId=${subjectId || ''}&subjectName=${encodeURIComponent(subjectName || '')}&roadmapId=${roadmapId || ''}&roadmapName=${encodeURIComponent(roadmapName || '')}" style="color: var(--text-primary); text-decoration: none;">${UI.escapeHtml(resourceName)}</a>`;
+        const currentTab = UI.getUrlParam('tab') || 'resources';
+        breadcrumbHtml += `<a href="resource.html?id=${resourceId}&name=${encodeURIComponent(resourceName)}&type=${resourceType}&pattern=${resourcePattern}&link=${encodeURIComponent(resourceLink)}&production=${resourceProduction}&expiration=${resourceExpiration}&subjectId=${subjectId || ''}&subjectName=${encodeURIComponent(subjectName || '')}&roadmapId=${roadmapId || ''}&roadmapName=${encodeURIComponent(roadmapName || '')}&tab=${currentTab}" style="color: var(--text-primary); text-decoration: none;">${UI.escapeHtml(resourceName)}</a>`;
     }
 
     if (breadcrumbHtml) {
