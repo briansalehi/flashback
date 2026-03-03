@@ -169,10 +169,48 @@ window.addEventListener('DOMContentLoaded', () => {
     const markSectionReviewedBtn = document.getElementById('mark-section-reviewed-btn');
     if (markSectionReviewedBtn && sectionState !== 1) { // Show only if not already reviewed (state 1)
         markSectionReviewedBtn.style.display = 'inline-block';
-        markSectionReviewedBtn.addEventListener('click', async (e) => {
+
+        const openReviewSectionModal = () => {
+            const modal = document.getElementById('review-section-confirmation-modal');
+            if (modal) {
+                modal.style.display = 'flex';
+                document.body.style.overflow = 'hidden';
+            }
+        };
+
+        const closeReviewSectionModal = () => {
+            const modal = document.getElementById('review-section-confirmation-modal');
+            if (modal) {
+                modal.style.display = 'none';
+                document.body.style.overflow = '';
+            }
+        };
+
+        markSectionReviewedBtn.addEventListener('click', (e) => {
             e.preventDefault();
-            await markSectionAsReviewed();
+            openReviewSectionModal();
         });
+
+        const cancelReviewSectionBtn = document.getElementById('cancel-review-section-btn');
+        if (cancelReviewSectionBtn) cancelReviewSectionBtn.addEventListener('click', closeReviewSectionModal);
+
+        const closeReviewSectionModalBtn = document.getElementById('close-review-section-modal-btn');
+        if (closeReviewSectionModalBtn) closeReviewSectionModalBtn.addEventListener('click', closeReviewSectionModal);
+
+        const reviewSectionModal = document.getElementById('review-section-confirmation-modal');
+        if (reviewSectionModal) {
+            reviewSectionModal.addEventListener('click', (e) => {
+                if (e.target === reviewSectionModal) closeReviewSectionModal();
+            });
+        }
+
+        const confirmReviewSectionBtn = document.getElementById('confirm-review-section-btn');
+        if (confirmReviewSectionBtn) {
+            confirmReviewSectionBtn.addEventListener('click', async () => {
+                await markSectionAsReviewed();
+                closeReviewSectionModal();
+            });
+        }
     }
 
     // Edit section handlers

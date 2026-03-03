@@ -296,6 +296,23 @@
       </div>
     </div>
 
+    <!-- Review Section Confirmation Modal -->
+    <div id="review-section-confirmation-modal" class="modal-overlay" style="display: none;">
+      <div class="modal-content" style="max-width: 500px;">
+        <div class="modal-header">
+          <h2 class="modal-title">Mark Section as Reviewed</h2>
+          <button type="button" id="close-review-section-modal-btn" class="modal-close" aria-label="Close modal">&times;</button>
+        </div>
+        <div class="modal-body">
+          <p style="margin-bottom: 1.5rem;">Are you sure you want to mark this section as reviewed? This indicates that all cards in this section have been finalized.</p>
+          <div class="form-actions" style="display: flex; gap: 1rem; justify-content: flex-end;">
+            <button id="confirm-review-section-btn" class="btn btn-primary" style="padding: 0.5rem 1.5rem; white-space: nowrap;">Confirm</button>
+            <button id="cancel-review-section-btn" class="btn btn-secondary" style="padding: 0.5rem 1.5rem; white-space: nowrap;">Cancel</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div id="error-message" style="display: none;"></div>
 
     <div id="loading" style="display: none; text-align: center; padding: 3rem;">

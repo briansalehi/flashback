@@ -115,10 +115,48 @@ window.addEventListener('DOMContentLoaded', () => {
         } else {
             markReviewedBtn.style.display = 'none';
         }
-        markReviewedBtn.addEventListener('click', async (e) => {
+
+        const openReviewModal = () => {
+            const modal = document.getElementById('review-confirmation-modal');
+            if (modal) {
+                modal.style.display = 'flex';
+                document.body.style.overflow = 'hidden';
+            }
+        };
+
+        const closeReviewModal = () => {
+            const modal = document.getElementById('review-confirmation-modal');
+            if (modal) {
+                modal.style.display = 'none';
+                document.body.style.overflow = '';
+            }
+        };
+
+        markReviewedBtn.addEventListener('click', (e) => {
             e.preventDefault();
-            await markCardAsReviewed();
+            openReviewModal();
         });
+
+        const cancelReviewBtn = document.getElementById('cancel-review-btn');
+        if (cancelReviewBtn) cancelReviewBtn.addEventListener('click', closeReviewModal);
+
+        const closeReviewModalBtn = document.getElementById('close-review-modal-btn');
+        if (closeReviewModalBtn) closeReviewModalBtn.addEventListener('click', closeReviewModal);
+
+        const reviewModal = document.getElementById('review-confirmation-modal');
+        if (reviewModal) {
+            reviewModal.addEventListener('click', (e) => {
+                if (e.target === reviewModal) closeReviewModal();
+            });
+        }
+
+        const confirmReviewBtn = document.getElementById('confirm-review-btn');
+        if (confirmReviewBtn) {
+            confirmReviewBtn.addEventListener('click', async () => {
+                await markCardAsReviewed();
+                closeReviewModal();
+            });
+        }
     }
 
     // Also defensively hide Edit and Remove until revealed
@@ -1111,9 +1149,11 @@ async function loadBlocks() {
 
         if (blocks.length === 0) {
             UI.toggleElement('card-content', true);
+            UI.toggleElement('add-block-container', false);
             UI.toggleElement('empty-state', true);
         } else {
             UI.toggleElement('card-content', true);
+            UI.toggleElement('add-block-container', true);
             renderBlocks(blocks);
         }
     } catch (err) {
