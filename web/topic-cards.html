@@ -93,6 +93,43 @@
           box-shadow: 0 0 0 2px rgba(212, 132, 92, 0.2);
           transform: scale(1.02);
       }
+
+      .topic-header-container {
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-start;
+          gap: 1rem;
+          flex-wrap: wrap;
+          margin-bottom: 1rem;
+      }
+
+      .topic-title-group {
+          flex: 1;
+          min-width: 200px;
+          display: flex;
+          align-items: center;
+          gap: 1.5rem;
+          flex-wrap: wrap;
+      }
+
+      .topic-header-buttons {
+          display: flex;
+          gap: 0.5rem;
+          flex-shrink: 0;
+      }
+
+          .topic-title-group {
+              flex-direction: column;
+              align-items: flex-start;
+              gap: 0.5rem;
+          }
+          .topic-header-buttons {
+              width: 100%;
+          }
+          .topic-header-buttons button {
+              flex: 1;
+          }
+      }
   </style>
 </head>
 <body>
@@ -122,13 +159,13 @@
           style="color: var(--text-primary); font-size: 1.5rem; font-weight: 600; margin: 0; margin-bottom: 1rem;">
         <!-- Breadcrumb will be inserted here -->
       </h2>
-      <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; flex-wrap: wrap;">
-        <div style="flex: 1; min-width: 200px;">
-          <h1 id="topic-name" class="editable-title" title="Click to edit actions" style="margin-bottom: 0.25rem;">Loading...</h1>
+      <div class="topic-header-container">
+        <div class="topic-title-group">
+          <h1 id="topic-name" class="editable-title" title="Click to edit actions" style="margin-bottom: 0;">Loading...</h1>
           <span id="topic-level-badge"
-                style="display: inline-block; padding: 0.25rem 0.75rem; background-color: var(--accent-light); color: var(--accent-color); border-radius: 12px; font-size: 0.875rem; font-weight: 500;"></span>
+                style="display: inline-block; padding: 0.2rem 0.6rem; background-color: var(--accent-light); color: var(--accent-color); border-radius: 12px; font-size: 0.8rem; font-weight: 500;"></span>
         </div>
-        <div style="display: flex; gap: 0.5rem; flex-shrink: 0;">
+        <div class="topic-header-buttons">
           <button id="edit-topic-btn" class="btn btn-secondary" style="display: none; padding: 0.5rem 1rem; white-space: nowrap;">
             Edit Topic
           </button>

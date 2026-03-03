@@ -62,11 +62,11 @@
 
       .card-state-display {
           display: inline-block;
-          padding: 0.25rem 0.75rem;
+          padding: 0.2rem 0.6rem;
           background-color: var(--accent-light);
           color: var(--accent-color);
           border-radius: 12px;
-          font-size: 0.875rem;
+          font-size: 0.8rem;
           font-weight: 500;
           text-transform: capitalize;
           margin-bottom: 1.5rem;
@@ -102,8 +102,41 @@
           color: #c62828;
       }
 
+      .card-header-container {
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-start;
+          gap: 1rem;
+          margin-bottom: 1rem;
+          flex-wrap: wrap;
+      }
+
+      .card-title-group {
+          display: flex;
+          align-items: center;
+          gap: 1.5rem;
+          flex: 1;
+          min-width: 200px;
+          flex-wrap: wrap;
+      }
+
+      .card-header-buttons {
+          display: flex;
+          gap: 0.5rem;
+          flex-shrink: 0;
+      }
+
       /* Mobile responsive buttons */
       @media (max-width: 768px) {
+          .card-header-container {
+              flex-direction: column;
+              align-items: stretch;
+          }
+          .card-title-group {
+              flex-direction: column;
+              align-items: flex-start;
+              gap: 0.5rem;
+          }
           .card-header-buttons {
               flex-direction: column;
               align-items: stretch !important;
@@ -301,12 +334,12 @@
     </div>
 
     <div id="card-content" class="blocks-container" style="display: none;">
-      <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; margin-bottom: 1rem; flex-wrap: wrap;">
-        <div style="display: flex; align-items: center; gap: 1rem; flex: 1; min-width: 200px;">
+      <div class="card-header-container">
+        <div class="card-title-group">
           <h1 id="card-headline" class="card-headline-display editable-title" title="Click to edit actions" style="margin-bottom: 0;"></h1>
           <span id="card-state"></span>
         </div>
-        <div class="card-header-buttons" style="display: flex; gap: 0.5rem; flex-shrink: 0;">
+        <div class="card-header-buttons">
           <button id="mark-reviewed-btn" class="btn btn-secondary" style="padding: 0.5rem 1rem; white-space: nowrap;">
             Mark as Reviewed
           </button>
