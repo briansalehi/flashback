@@ -106,11 +106,15 @@ window.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Setup mark as reviewed button (attach handler only; reveal on title click)
+    // Setup mark as reviewed button (reveal if in draft state)
     const markReviewedBtn = document.getElementById('mark-reviewed-btn');
     if (markReviewedBtn) {
-        // Ensure hidden by default, will be revealed on headline interaction
-        markReviewedBtn.style.display = 'none';
+        // Reveal by default if in draft state (state 0)
+        if (state === 0) {
+            markReviewedBtn.style.display = 'inline-block';
+        } else {
+            markReviewedBtn.style.display = 'none';
+        }
         markReviewedBtn.addEventListener('click', async (e) => {
             e.preventDefault();
             await markCardAsReviewed();
@@ -185,11 +189,47 @@ window.addEventListener('DOMContentLoaded', () => {
     }
 
     const modalOverlay = document.getElementById('modal-overlay');
+
+    // Add Block Modal Functions
+    const openAddBlockModal = () => {
+        UI.toggleElement('add-block-modal', true);
+        const modalOverlay = document.getElementById('modal-overlay');
+        if (modalOverlay) modalOverlay.style.display = 'block';
+        document.body.style.overflow = 'hidden';
+        setTimeout(() => {
+            const contentInput = document.getElementById('block-content');
+            if (contentInput) contentInput.focus();
+        }, 100);
+    };
+
+    const closeAddBlockModal = () => {
+        UI.toggleElement('add-block-modal', false);
+        const modalOverlay = document.getElementById('modal-overlay');
+        if (modalOverlay) modalOverlay.style.display = 'none';
+        document.body.style.overflow = '';
+        UI.clearForm('block-form');
+    };
+
     if (modalOverlay) {
         modalOverlay.addEventListener('click', () => {
             closeRemoveCardModal();
             closeRemoveBlockModal();
+            closeAddBlockModal();
         });
+    }
+
+    const addBlockModal = document.getElementById('add-block-modal');
+    if (addBlockModal) {
+        addBlockModal.addEventListener('click', (e) => {
+            if (e.target === addBlockModal) {
+                closeAddBlockModal();
+            }
+        });
+    }
+
+    const closeBlockModalBtn = document.getElementById('close-block-modal-btn');
+    if (closeBlockModalBtn) {
+        closeBlockModalBtn.addEventListener('click', closeAddBlockModal);
     }
 
     // Setup add block button
@@ -197,22 +237,13 @@ window.addEventListener('DOMContentLoaded', () => {
     if (addBlockBtn) {
         addBlockBtn.addEventListener('click', (e) => {
             e.preventDefault();
-            UI.toggleElement('add-block-form', true);
-            setTimeout(() => {
-                const contentInput = document.getElementById('block-content');
-                if (contentInput) {
-                    contentInput.focus();
-                }
-            }, 100);
+            openAddBlockModal();
         });
     }
 
     const cancelBlockBtn = document.getElementById('cancel-block-btn');
     if (cancelBlockBtn) {
-        cancelBlockBtn.addEventListener('click', () => {
-            UI.toggleElement('add-block-form', false);
-            UI.clearForm('block-form');
-        });
+        cancelBlockBtn.addEventListener('click', closeAddBlockModal);
     }
 
     const blockForm = document.getElementById('block-form');
@@ -236,8 +267,7 @@ window.addEventListener('DOMContentLoaded', () => {
             try {
                 await client.createBlock(cardId, blockType, blockExtension, blockContent, blockMetadata);
 
-                UI.toggleElement('add-block-form', false);
-                UI.clearForm('block-form');
+                closeAddBlockModal();
                 UI.setButtonLoading('save-block-btn', false);
 
                 loadBlocks();
@@ -1750,13 +1780,17 @@ function setupEditHeadline() {
 }
 
 function openRemoveCardModal() {
-    document.getElementById('modal-overlay').style.display = 'block';
+    const overlay = document.getElementById('modal-overlay');
+    if (overlay) overlay.style.display = 'block';
     document.getElementById('remove-card-modal').style.display = 'block';
+    document.body.style.overflow = 'hidden';
 }
 
 function closeRemoveCardModal() {
-    document.getElementById('modal-overlay').style.display = 'none';
+    const overlay = document.getElementById('modal-overlay');
+    if (overlay) overlay.style.display = 'none';
     document.getElementById('remove-card-modal').style.display = 'none';
+    document.body.style.overflow = '';
 }
 
 async function confirmRemoveCard() {
@@ -1821,6 +1855,7 @@ function showRemoveBlockModal(position) {
     if (modal && overlay) {
         modal.style.display = 'block';
         overlay.style.display = 'block';
+        document.body.style.overflow = 'hidden';
 
         // Store position in modal for use when confirming
         modal.dataset.blockPosition = position;
@@ -1835,6 +1870,7 @@ function closeRemoveBlockModal() {
     if (modal && overlay) {
         modal.style.display = 'none';
         overlay.style.display = 'none';
+        document.body.style.overflow = '';
         delete modal.dataset.blockPosition;
     }
 }
