@@ -633,7 +633,7 @@ async function loadTopics() {
 
     try {
         const milestoneLevel = parseInt(UI.getUrlParam('level')) || 0;
-        const subjectId = UI.getUrlParam('id');
+        // subjectId is already defined in DOMContentLoaded scope
 
         // Fetch topics for all levels from 0 up to and including the milestone level
         const allTopics = [];
@@ -965,8 +965,8 @@ async function loadResources() {
     UI.toggleElement('resources-empty-state', false);
 
     try {
-        const subjectId = parseInt(UI.getUrlParam('id'));
-        const resources = await client.getResources(subjectId);
+        // subjectId is already defined in DOMContentLoaded scope
+        const resources = await client.getResources(parseInt(subjectId));
 
         UI.toggleElement('resources-loading', false);
         resourcesLoaded = true;
@@ -1015,7 +1015,7 @@ function renderResources(resources) {
                         <a href="${UI.escapeHtml(resource.link)}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()" class="external-link-icon" title="Open Link" style="display: flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 50%; background: rgba(255,255,255,0.05); transition: background 0.2s;">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
                         </a>
-                        <button class="btn btn-secondary drop-resource-btn" data-resource-id="${resource.id}" style="background-color: #dc3545; color: white; padding: 0.2rem 0.6rem; font-size: 10px; height: 22px; min-width: auto; white-space: nowrap; border: none;">Drop</button>
+                        <button class="btn btn-secondary drop-resource-btn" data-resource-id="${resource.id}" style="background-color: #dc3545; color: white; padding: 0.4rem 0.8rem; font-size: 12px; height: 34px; min-width: auto; white-space: nowrap; border: none; border-radius: var(--radius-md); font-weight: 600;">Drop</button>
                     </div>
                 </div>
                 <div class="item-footer" style="margin-top: 0; padding-top: 0.25rem; border-top: none; justify-content: flex-start; gap: var(--space-md); opacity: 0.8; align-items: center; pointer-events: none;">
@@ -1052,10 +1052,7 @@ function renderResources(resources) {
 }
 
 async function startPracticeMode() {
-    const level = UI.getUrlParam('level');
-    const subjectId = UI.getUrlParam('id');
-    const roadmapId = UI.getUrlParam('roadmapId');
-    const roadmapName = UI.getUrlParam('roadmapName');
+    // level, subjectId, roadmapId, roadmapName are already defined in DOMContentLoaded scope
 
     if (!roadmapId || !subjectId) {
         UI.showError('Missing roadmap or subject information');
@@ -1221,9 +1218,7 @@ async function searchAndDisplayResources(query) {
 }
 
 async function startAssessmentPractice() {
-    const subjectId = UI.getUrlParam('id');
-    const roadmapId = UI.getUrlParam('roadmapId');
-    const roadmapName = UI.getUrlParam('roadmapName');
+    // subjectId, roadmapId, roadmapName are already defined in DOMContentLoaded scope
 
     if (!roadmapId || !subjectId) {
         UI.showError('Missing roadmap or subject information');
@@ -1282,11 +1277,7 @@ async function startAssessmentPractice() {
 
 async function removeTopic(level, position) {
     try {
-        const subjectId = UI.getUrlParam('id');
-        const subjectName = UI.getUrlParam('name');
-        const roadmapId = UI.getUrlParam('roadmapId');
-        const roadmapName = UI.getUrlParam('roadmapName');
-
+        // subjectId is already defined in DOMContentLoaded scope
         await client.removeTopic(parseInt(subjectId), level, position);
         await loadTopics();
         UI.showSuccess('Topic removed successfully');
@@ -1298,11 +1289,7 @@ async function removeTopic(level, position) {
 
 async function reorderTopic(level, sourcePosition, targetPosition) {
     try {
-        const subjectId = UI.getUrlParam('id');
-        const subjectName = UI.getUrlParam('name');
-        const roadmapId = UI.getUrlParam('roadmapId');
-        const roadmapName = UI.getUrlParam('roadmapName');
-
+        // subjectId is already defined in DOMContentLoaded scope
         await client.reorderTopic(parseInt(subjectId), level, sourcePosition, targetPosition);
         await loadTopics();
     } catch (err) {
@@ -1318,11 +1305,7 @@ async function loadAssessments() {
     UI.toggleElement('assessments-empty-state', false);
 
     try {
-        const subjectId = UI.getUrlParam('id');
-        const subjectName = UI.getUrlParam('name');
-        const roadmapId = UI.getUrlParam('roadmapId');
-        const roadmapName = UI.getUrlParam('roadmapName');
-
+        // subjectId is already defined in DOMContentLoaded scope
         const topics = await client.getTopics(parseInt(subjectId));
 
         // Get all topics and check which are assimilated
