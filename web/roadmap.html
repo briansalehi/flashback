@@ -212,37 +212,88 @@
       .milestone-level-selector {
           display: inline-flex;
           align-items: center;
-          padding: 0.5rem 1rem;
-          background: linear-gradient(135deg, rgba(212, 132, 92, 0.1) 0%, rgba(230, 155, 122, 0.1) 100%);
-          color: #d4845c;
-          border: 1.5px solid rgba(212, 132, 92, 0.3);
-          border-radius: 24px;
-          font-size: 0.8125rem;
-          font-weight: 600;
-          text-transform: uppercase;
-          letter-spacing: 0.8px;
-          transition: all 0.3s ease;
+          padding: 0.4rem 0.5rem;
+          background: var(--bg-primary);
+          color: var(--color-text-primary);
+          border: 1px solid var(--border-color);
+          border-radius: var(--radius-md);
+          font-size: 11px;
+          font-weight: var(--font-weight-medium);
           cursor: pointer;
           outline: none;
+          transition: all var(--transition-fast);
+          appearance: none;
+          -webkit-appearance: none;
+          background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' fill='white' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
+          background-repeat: no-repeat;
+          background-position: calc(100% - 0.4rem) center;
+          padding-right: 1.4rem;
+          min-width: 85px;
+          height: 32px;
+          flex-shrink: 0;
       }
 
-      .milestone-level-selector:hover,
+      .milestone-level-selector:hover {
+          border-color: var(--color-primary-start);
+          background-color: var(--bg-secondary);
+          box-shadow: var(--shadow-sm);
+      }
+
       .milestone-level-selector:focus {
-          background: linear-gradient(135deg, rgba(212, 132, 92, 0.15) 0%, rgba(230, 155, 122, 0.15) 100%);
-          border-color: #d4845c;
-          box-shadow: 0 2px 8px rgba(212, 132, 92, 0.2);
+          border-color: var(--color-primary-start);
+          box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.25);
       }
 
-      .milestone-card:hover .milestone-level-selector {
-          background: linear-gradient(135deg, #d4845c 0%, #e69b7a 100%);
+      .milestone-remove-btn {
+          width: 32px;
+          height: 32px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: rgba(244, 67, 54, 0.1);
+          border: 1px solid rgba(244, 67, 54, 0.2);
+          border-radius: var(--radius-md);
+          color: #f44336;
+          cursor: pointer;
+          transition: all var(--transition-fast);
+          padding: 0;
+          font-size: 1.1rem;
+          line-height: 1;
+          flex-shrink: 0;
+      }
+
+      .milestone-remove-btn:hover {
+          background: #f44336;
           color: white;
-          border-color: #d4845c;
+          border-color: #f44336;
+          box-shadow: 0 4px 12px rgba(244, 67, 54, 0.3);
+          transform: translateY(-1px);
+      }
+
+      .milestone-remove-btn:active {
+          transform: translateY(0);
+      }
+
+      @media (max-width: 768px) {
+          .milestone-level-selector, .milestone-remove-btn {
+              height: 38px;
+          }
+          .milestone-level-selector {
+              min-width: 90px;
+              font-size: 11px;
+          }
+          .milestone-remove-btn {
+              width: 38px;
+          }
+          .item-header {
+              align-items: flex-start !important;
+          }
       }
 
       .milestone-level-selector option {
-          background: white;
-          color: #2c5f4f;
-          text-transform: uppercase;
+          background: var(--color-bg-dark-1);
+          color: var(--color-text-primary);
+          padding: 0.5rem;
       }
 
       .milestone-position {
