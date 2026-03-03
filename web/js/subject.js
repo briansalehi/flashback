@@ -1,14 +1,19 @@
 // Updated: 2026-02-20 with topic remove/reorder features
+let subjectId = null;
+let subjectName = null;
+let roadmapId = null;
+let roadmapName = null;
+
 window.addEventListener('DOMContentLoaded', () => {
     if (!client.isAuthenticated()) {
         window.location.href = '/index.html';
         return;
     }
 
-    const subjectId = UI.getUrlParam('id');
-    const subjectName = UI.getUrlParam('name');
-    const roadmapId = UI.getUrlParam('roadmapId');
-    const roadmapName = UI.getUrlParam('roadmapName');
+    subjectId = UI.getUrlParam('id');
+    subjectName = UI.getUrlParam('name');
+    roadmapId = UI.getUrlParam('roadmapId');
+    roadmapName = UI.getUrlParam('roadmapName');
 
     if (!subjectId) {
         window.location.href = '/home.html';
@@ -172,8 +177,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
                 // Redirect back to roadmap or home
                 if (roadmapId) {
-                    const roadmapName = UI.getUrlParam('roadmapName') || '';
-                    window.location.href = `roadmap.html?id=${roadmapId}&name=${encodeURIComponent(roadmapName)}`;
+                    window.location.href = `roadmap.html?id=${roadmapId}&name=${encodeURIComponent(roadmapName || '')}`;
                 } else {
                     window.location.href = '/home.html';
                 }
@@ -633,7 +637,6 @@ async function loadTopics() {
 
     try {
         const milestoneLevel = parseInt(UI.getUrlParam('level')) || 0;
-        // subjectId is already defined in DOMContentLoaded scope
 
         // Fetch topics for all levels from 0 up to and including the milestone level
         const allTopics = [];
@@ -712,11 +715,6 @@ function renderTopics(topics, maxLevel) {
                         <span class="item-badge" style="background: rgba(102, 126, 234, 0.2); color: var(--color-primary-start); font-size: 10px; height: 18px; min-width: auto; padding: 0 6px; margin-left: auto; pointer-events: none;">${UI.escapeHtml(levelInfo[level].name)}</span>
                     </div>
                 `;
-
-                const subjectId = UI.getUrlParam('id');
-                const subjectName = UI.getUrlParam('name');
-                const roadmapId = UI.getUrlParam('roadmapId');
-                const roadmapName = UI.getUrlParam('roadmapName');
 
                 // Click to navigate (but not when dragging)
                 let isDragging = false;
@@ -965,7 +963,6 @@ async function loadResources() {
     UI.toggleElement('resources-empty-state', false);
 
     try {
-        // subjectId is already defined in DOMContentLoaded scope
         const resources = await client.getResources(parseInt(subjectId));
 
         UI.toggleElement('resources-loading', false);
@@ -1033,10 +1030,6 @@ function renderResources(resources) {
         resourceItem.addEventListener('click', () => {
             const currentTab = UI.getUrlParam('tab') || 'topics';
             const level = UI.getUrlParam('level') || '0';
-            const subjectId = UI.getUrlParam('id');
-            const subjectName = UI.getUrlParam('name');
-            const roadmapId = UI.getUrlParam('roadmapId');
-            const roadmapName = UI.getUrlParam('roadmapName');
             window.location.href = `resource.html?id=${resource.id}&name=${encodeURIComponent(resource.name)}&type=${resource.type}&pattern=${resource.pattern}&link=${encodeURIComponent(resource.link)}&production=${resource.production}&expiration=${resource.expiration}&subjectId=${subjectId || ''}&subjectName=${encodeURIComponent(subjectName || '')}&roadmapId=${roadmapId || ''}&roadmapName=${encodeURIComponent(roadmapName || '')}&level=${level}&tab=${currentTab}`;
         });
 
@@ -1052,7 +1045,7 @@ function renderResources(resources) {
 }
 
 async function startPracticeMode() {
-    // level, subjectId, roadmapId, roadmapName are already defined in DOMContentLoaded scope
+    const level = UI.getUrlParam('level') || 0;
 
     if (!roadmapId || !subjectId) {
         UI.showError('Missing roadmap or subject information');
@@ -1116,9 +1109,8 @@ async function startPracticeMode() {
         const milestoneId = UI.getUrlParam('id'); // This is the milestone ID (same as subjectId)
         const milestoneLevel = UI.getUrlParam('level'); // This is the milestone level
         const subjectNameParam = UI.getUrlParam('name') || '';
-        const roadmapName = UI.getUrlParam('roadmapName') || '';
 
-        window.location.href = `card.html?cardId=${cards[0].id}&headline=${encodeURIComponent(cards[0].headline)}&state=${cards[0].state}&practiceMode=aggressive&cardIndex=0&totalCards=${cards.length}&roadmapId=${roadmapId}&roadmapName=${encodeURIComponent(roadmapName)}&subjectId=${subjectId}&subjectName=${encodeURIComponent(subjectNameParam)}&topicName=${encodeURIComponent(firstTopicWithCards.name)}&milestoneId=${milestoneId}&milestoneLevel=${milestoneLevel}`;
+        window.location.href = `card.html?cardId=${cards[0].id}&headline=${encodeURIComponent(cards[0].headline)}&state=${cards[0].state}&practiceMode=aggressive&cardIndex=0&totalCards=${cards.length}&roadmapId=${roadmapId}&roadmapName=${encodeURIComponent(roadmapName || '')}&subjectId=${subjectId}&subjectName=${encodeURIComponent(subjectNameParam)}&topicName=${encodeURIComponent(firstTopicWithCards.name)}&milestoneId=${milestoneId}&milestoneLevel=${milestoneLevel}`;
     } catch (err) {
         console.error('Start practice failed:', err);
         UI.showError('Failed to start practice: ' + (err.message || 'Unknown error'));
@@ -1131,7 +1123,6 @@ async function displayBreadcrumb(roadmapId) {
     if (!breadcrumb || !roadmapId) return;
 
     try {
-        const roadmapName = UI.getUrlParam('roadmapName') || '';
         if (roadmapName) {
             breadcrumb.innerHTML = `<a href="roadmap.html?id=${roadmapId}&name=${encodeURIComponent(roadmapName)}" style="color: var(--text-primary); text-decoration: none;">${UI.escapeHtml(roadmapName)}</a>`;
         }
@@ -1218,8 +1209,6 @@ async function searchAndDisplayResources(query) {
 }
 
 async function startAssessmentPractice() {
-    // subjectId, roadmapId, roadmapName are already defined in DOMContentLoaded scope
-
     if (!roadmapId || !subjectId) {
         UI.showError('Missing roadmap or subject information');
         return;
@@ -1262,10 +1251,9 @@ async function startAssessmentPractice() {
 
         // Navigate to first assessment card
         const subjectNameParam = UI.getUrlParam('name') || '';
-        const roadmapName = UI.getUrlParam('roadmapName') || '';
         const firstAssessment = assessmentCards[0];
 
-        window.location.href = `card.html?cardId=${firstAssessment.id}&headline=${encodeURIComponent(firstAssessment.headline)}&state=${firstAssessment.state}&practiceMode=selective&subjectId=${subjectId}&subjectName=${encodeURIComponent(subjectNameParam)}&topicName=${encodeURIComponent(firstAssessment.topicName)}&topicLevel=${firstAssessment.topicLevel}&topicPosition=${firstAssessment.topicPosition}&roadmapId=${roadmapId}&roadmapName=${encodeURIComponent(roadmapName)}`;
+        window.location.href = `card.html?cardId=${firstAssessment.id}&headline=${encodeURIComponent(firstAssessment.headline)}&state=${firstAssessment.state}&practiceMode=selective&subjectId=${subjectId}&subjectName=${encodeURIComponent(subjectNameParam)}&topicName=${encodeURIComponent(firstAssessment.topicName)}&topicLevel=${firstAssessment.topicLevel}&topicPosition=${firstAssessment.topicPosition}&roadmapId=${roadmapId}&roadmapName=${encodeURIComponent(roadmapName || '')}`;
 
         UI.setButtonLoading('start-assessment-btn', false);
     } catch (err) {
@@ -1277,7 +1265,6 @@ async function startAssessmentPractice() {
 
 async function removeTopic(level, position) {
     try {
-        // subjectId is already defined in DOMContentLoaded scope
         await client.removeTopic(parseInt(subjectId), level, position);
         await loadTopics();
         UI.showSuccess('Topic removed successfully');
@@ -1289,7 +1276,6 @@ async function removeTopic(level, position) {
 
 async function reorderTopic(level, sourcePosition, targetPosition) {
     try {
-        // subjectId is already defined in DOMContentLoaded scope
         await client.reorderTopic(parseInt(subjectId), level, sourcePosition, targetPosition);
         await loadTopics();
     } catch (err) {
@@ -1305,7 +1291,6 @@ async function loadAssessments() {
     UI.toggleElement('assessments-empty-state', false);
 
     try {
-        // subjectId is already defined in DOMContentLoaded scope
         const topics = await client.getTopics(parseInt(subjectId));
 
         // Get all topics and check which are assimilated
@@ -1397,10 +1382,6 @@ async function createAssessmentForTopic(topicLevel, topicPosition, topicName) {
     }
 
     try {
-        const subjectId = UI.getUrlParam('id');
-        const subjectName = UI.getUrlParam('name');
-        const roadmapId = UI.getUrlParam('roadmapId');
-        const roadmapName = UI.getUrlParam('roadmapName');
 
         // First create the card
         const card = await client.createCard(headline);
