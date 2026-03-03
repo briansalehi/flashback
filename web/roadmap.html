@@ -86,10 +86,12 @@
           display: flex;
           gap: 0.5rem;
           margin-top: 1rem;
+          flex-wrap: wrap;
       }
 
       .level-option {
           flex: 1;
+          min-width: 100px;
       }
 
       .level-option input[type="radio"] {
@@ -106,6 +108,11 @@
           transition: all var(--transition-fast);
           font-weight: 500;
           font-size: var(--font-size-sm);
+          height: 100%;
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+          align-items: center;
       }
 
       .level-option input[type="radio"]:checked + label {
@@ -122,6 +129,7 @@
           font-size: 0.875rem;
           color: var(--text-muted);
           margin-top: 0.25rem;
+          font-style: italic;
       }
 
       .milestone-card {
@@ -463,7 +471,7 @@
         <button id="rename-roadmap-btn" class="btn btn-secondary" style="display: none; padding: 0.5rem 1rem; white-space: nowrap;">
           Rename
         </button>
-        <button id="remove-roadmap-btn" class="btn btn-secondary" style="display: none; background-color: #dc3545; color: white; padding: 0.5rem 1rem; font-size: 0.875rem; white-space: nowrap;">
+        <button id="remove-roadmap-btn" class="btn btn-secondary" style="display: none; background-color: #dc3545; color: white; padding: 0.5rem 1rem; white-space: nowrap;">
           Remove Roadmap
         </button>
       </div>
@@ -488,10 +496,10 @@
           >
         </div>
         <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
-          <button type="submit" id="save-rename-btn" class="btn btn-primary">
+          <button type="submit" id="save-rename-btn" class="btn btn-primary" style="padding: 0.5rem 1rem; white-space: nowrap;">
             Save
           </button>
-          <button type="button" id="cancel-rename-btn" class="btn btn-secondary">
+          <button type="button" id="cancel-rename-btn" class="btn btn-secondary" style="padding: 0.5rem 1rem; white-space: nowrap;">
             Cancel
           </button>
         </div>
@@ -507,10 +515,10 @@
         <p>Are you sure you want to remove this roadmap? This action cannot be undone.</p>
       </div>
       <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
-        <button id="confirm-remove-btn" class="btn btn-danger">
+        <button id="confirm-remove-btn" class="btn btn-danger" style="padding: 0.5rem 1rem; white-space: nowrap;">
           Yes, Remove
         </button>
-        <button id="cancel-remove-btn" class="btn btn-secondary">
+        <button id="cancel-remove-btn" class="btn btn-secondary" style="padding: 0.5rem 1rem; white-space: nowrap;">
           Cancel
         </button>
       </div>
@@ -534,12 +542,14 @@
       <p class="text-muted">Add your first subject to this roadmap!</p>
     </div>
 
-    <div id="add-milestone-form" class="card" style="display: none; max-width: 700px;">
-      <div class="card-header">
-        <h3 class="card-title">Add Subject to Roadmap</h3>
-      </div>
+    <div id="add-milestone-form-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1000; justify-content: center; align-items: center; padding: 0.5rem; backdrop-filter: blur(4px);">
+      <div id="add-milestone-form" class="card" style="max-width: 700px; width: 100%; margin: 0; max-height: 100%; overflow-y: auto; box-shadow: 0 20px 50px rgba(0,0,0,0.5); display: flex; flex-direction: column;">
+        <div class="card-header" style="position: sticky; top: 0; background: var(--bg-card); z-index: 10; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; flex-shrink: 0;">
+          <h3 class="card-title" style="margin: 0;">Add Subject to Roadmap</h3>
+          <button type="button" class="btn-close" onclick="document.getElementById('cancel-milestone-btn').click()" aria-label="Close" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-muted); padding: 0.5rem;">&times;</button>
+        </div>
 
-      <form id="milestone-form">
+      <form id="milestone-form" style="display: flex; flex-direction: column; overflow-y: auto;">
         <!-- Search existing subjects section -->
         <div id="search-subject-section" class="search-section">
           <div class="form-group">
@@ -565,20 +575,10 @@
                style="display: none; text-align: center; padding: 1rem; color: var(--text-muted);">
             No subjects found
           </div>
-
-          <div style="margin-top: 1rem; text-align: center;">
-            <button type="button" id="create-new-subject-btn" class="btn btn-secondary">
-              + Create New Subject
-            </button>
-          </div>
         </div>
 
         <!-- Create new subject section -->
         <div id="create-subject-section" class="create-subject-section" style="display: none;">
-          <button type="button" id="back-to-search-btn" class="btn btn-link" style="padding: 0; margin-bottom: 1rem;">
-            ← Back to search
-          </button>
-
           <div id="create-subject-form">
             <div class="form-group">
               <label class="form-label" for="new-subject-name">New Subject Name</label>
@@ -589,53 +589,65 @@
                   placeholder="e.g., Linear Algebra"
               >
             </div>
+          </div>
+        </div>
 
-            <button type="button" id="save-new-subject-btn" class="btn btn-primary">
-              Create Subject
+        <!-- Expertise level selection & actions -->
+        <div id="milestone-addition-group">
+          <div class="form-group" style="margin-top: 2rem;">
+            <label class="form-label">Select expertise level for this roadmap</label>
+            <div class="level-selector">
+              <div class="level-option">
+                <input type="radio" id="level-surface" name="expertise-level" value="0" checked>
+                <label for="level-surface">
+                  <b>Surface</b>
+                  <div class="level-description">Full Comprehension</div>
+                </label>
+              </div>
+              <div class="level-option">
+                <input type="radio" id="level-depth" name="expertise-level" value="1">
+                <label for="level-depth">
+                  <b>Depth</b>
+                  <div class="level-description">Customization Master</div>
+                </label>
+              </div>
+              <div class="level-option">
+                <input type="radio" id="level-origin" name="expertise-level" value="2">
+                <label for="level-origin">
+                  <b>Origin</b>
+                  <div class="level-description">Creator Knowledge</div>
+                </label>
+              </div>
+            </div>
+            <input type="hidden" id="expertise-level" value="0">
+          </div>
+
+          <div style="display: flex; gap: 1rem; margin-top: 2rem; flex-wrap: wrap;">
+            <button type="submit" id="save-milestone-btn" class="btn btn-primary" style="padding: 0.5rem 1rem; white-space: nowrap;">
+              Add to Roadmap
+            </button>
+            <button type="button" id="create-new-subject-btn" class="btn btn-secondary" style="padding: 0.5rem 1rem; white-space: nowrap;">
+              + Create New Subject
+            </button>
+            <button type="button" id="cancel-milestone-btn" class="btn btn-link" style="padding: 0.5rem 1rem; white-space: nowrap;">
+              Cancel
             </button>
           </div>
         </div>
 
-        <!-- Expertise level selection -->
-        <div class="form-group" style="margin-top: 2rem;">
-          <label class="form-label">Select expertise level for this roadmap</label>
-          <div class="level-selector">
-            <div class="level-option">
-              <input type="radio" id="level-surface" name="expertise-level" value="0" checked>
-              <label for="level-surface">
-                Surface
-                <div class="level-description">Basic understanding</div>
-              </label>
-            </div>
-            <div class="level-option">
-              <input type="radio" id="level-depth" name="expertise-level" value="1">
-              <label for="level-depth">
-                Depth
-                <div class="level-description">Intermediate mastery</div>
-              </label>
-            </div>
-            <div class="level-option">
-              <input type="radio" id="level-origin" name="expertise-level" value="2">
-              <label for="level-origin">
-                Origin
-                <div class="level-description">Expert level</div>
-              </label>
-            </div>
-          </div>
-          <input type="hidden" id="expertise-level" value="0">
-        </div>
-
-        <div style="display: flex; gap: 1rem; margin-top: 2rem;">
-          <button type="submit" id="save-milestone-btn" class="btn btn-primary">
-            Add to Roadmap
+        <!-- Create mode actions -->
+        <div id="create-mode-actions" style="display: none; display: flex; gap: 1rem; margin-top: 2rem; flex-wrap: wrap;">
+          <button type="button" id="save-new-subject-btn" class="btn btn-primary" style="padding: 0.5rem 1rem; white-space: nowrap;">
+            Create Subject
           </button>
-          <button type="button" id="cancel-milestone-btn" class="btn btn-secondary">
-            Cancel
+          <button type="button" id="back-to-search-btn" class="btn btn-secondary" style="padding: 0.5rem 1rem; white-space: nowrap;">
+            ← Back to search
           </button>
         </div>
       </form>
     </div>
   </div>
+</div>
 </main>
 
 <script src="proto/flashback.js"></script>

@@ -42,11 +42,14 @@ window.addEventListener('DOMContentLoaded', () => {
             e.preventDefault();
 
             // Show the form
-            UI.toggleElement('add-milestone-form', true);
+            UI.toggleElement('add-milestone-form-overlay', true);
+            document.body.style.overflow = 'hidden'; // Prevent scrolling background
             
-            // Make sure search section is visible and create section is hidden
+            // Initial state: search mode
             UI.toggleElement('search-subject-section', true);
             UI.toggleElement('create-subject-section', false);
+            UI.toggleElement('milestone-addition-group', true);
+            UI.toggleElement('create-mode-actions', false);
             
             // Use setTimeout to ensure the element is visible before focusing
             setTimeout(() => {
@@ -62,19 +65,42 @@ window.addEventListener('DOMContentLoaded', () => {
     }
 
     const cancelMilestoneBtn = document.getElementById('cancel-milestone-btn');
+    const addMilestoneOverlay = document.getElementById('add-milestone-form-overlay');
+    
     if (cancelMilestoneBtn) {
         cancelMilestoneBtn.addEventListener('click', () => {
-            UI.toggleElement('add-milestone-form', false);
+            UI.toggleElement('add-milestone-form-overlay', false);
+            document.body.style.overflow = ''; // Restore scrolling
             UI.clearForm('milestone-form');
             clearSearchResults();
+        });
+    }
+
+    if (addMilestoneOverlay) {
+        addMilestoneOverlay.addEventListener('click', (e) => {
+            // If the user clicked directly on the overlay background (not on the modal content)
+            if (e.target === addMilestoneOverlay) {
+                if (cancelMilestoneBtn) {
+                    cancelMilestoneBtn.click();
+                } else {
+                    UI.toggleElement('add-milestone-form-overlay', false);
+                    document.body.style.overflow = '';
+                    UI.clearForm('milestone-form');
+                    clearSearchResults();
+                }
+            }
         });
     }
 
     const createNewSubjectBtn = document.getElementById('create-new-subject-btn');
     if (createNewSubjectBtn) {
         createNewSubjectBtn.addEventListener('click', () => {
+            // Enter Create Mode
             UI.toggleElement('create-subject-section', true);
             UI.toggleElement('search-subject-section', false);
+            UI.toggleElement('milestone-addition-group', false);
+            UI.toggleElement('create-mode-actions', true);
+            
             setTimeout(() => {
                 const nameInput = document.getElementById('new-subject-name');
                 if (nameInput) {
@@ -87,8 +113,11 @@ window.addEventListener('DOMContentLoaded', () => {
     const backToSearchBtn = document.getElementById('back-to-search-btn');
     if (backToSearchBtn) {
         backToSearchBtn.addEventListener('click', () => {
+            // Return to Search Mode
             UI.toggleElement('create-subject-section', false);
             UI.toggleElement('search-subject-section', true);
+            UI.toggleElement('milestone-addition-group', true);
+            UI.toggleElement('create-mode-actions', false);
             UI.clearForm('create-subject-form');
         });
     }
@@ -128,12 +157,27 @@ window.addEventListener('DOMContentLoaded', () => {
                 // After creating, search for it to add to roadmap
                 await searchSubjects(name);
 
+                // Exit Create Mode and return to Search Mode automatically
                 UI.toggleElement('create-subject-section', false);
                 UI.toggleElement('search-subject-section', true);
+                UI.toggleElement('milestone-addition-group', true);
+                UI.toggleElement('create-mode-actions', false);
+                
                 nameInput.value = '';
                 UI.setButtonLoading('save-new-subject-btn', false);
 
-                UI.showSuccess('Subject created! Select it below to add to your roadmap.');
+                // Focus on the first search result (which should be the new subject)
+                setTimeout(() => {
+                    const firstResult = document.querySelector('input[name="subject-select"]');
+                    if (firstResult) {
+                        firstResult.checked = true;
+                        firstResult.focus();
+                        // Trigger change event to highlight the selected item
+                        firstResult.dispatchEvent(new Event('change', { bubbles: true }));
+                    }
+                }, 100);
+
+                UI.showSuccess('Subject created and selected! Click "Add to Roadmap" below.');
             } catch (err) {
                 console.error('Create subject failed:', err);
                 UI.showError(err.message || 'Failed to create subject');
@@ -162,7 +206,8 @@ window.addEventListener('DOMContentLoaded', () => {
             try {
                 await client.addMilestone(roadmapId, subjectId, parseInt(level));
 
-                UI.toggleElement('add-milestone-form', false);
+                UI.toggleElement('add-milestone-form-overlay', false);
+                document.body.style.overflow = ''; // Restore scrolling
                 UI.clearForm('milestone-form');
                 clearSearchResults();
                 UI.setButtonLoading('save-milestone-btn', false);
