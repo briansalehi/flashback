@@ -286,6 +286,54 @@ window.addEventListener('DOMContentLoaded', () => {
         confirmAssignTopicBtn.addEventListener('click', assignCardToTopic);
     }
 
+    const confirmCreateAssignTopicBtn = document.getElementById('confirm-create-assign-topic-btn');
+    if (confirmCreateAssignTopicBtn) {
+        confirmCreateAssignTopicBtn.addEventListener('click', createAndAssignTopic);
+    }
+
+    const showCreateTopicBtn = document.getElementById('show-create-topic-btn');
+    if (showCreateTopicBtn) {
+        showCreateTopicBtn.addEventListener('click', () => {
+            UI.toggleElement('topic-search-mode', false);
+            UI.toggleElement('topic-create-mode', true);
+            UI.toggleElement('confirm-assign-topic-btn', false);
+            UI.toggleElement('confirm-create-assign-topic-btn', true);
+            document.getElementById('new-topic-name').value = document.getElementById('topic-search-input').value;
+            document.getElementById('new-topic-name').focus();
+        });
+    }
+
+    const backToTopicSearchBtn = document.getElementById('back-to-topic-search-btn');
+    if (backToTopicSearchBtn) {
+        backToTopicSearchBtn.addEventListener('click', () => {
+            UI.toggleElement('topic-search-mode', true);
+            UI.toggleElement('topic-create-mode', false);
+            UI.toggleElement('confirm-create-assign-topic-btn', false);
+            if (currentSelectedTopic) {
+                UI.toggleElement('confirm-assign-topic-btn', true);
+            }
+        });
+    }
+
+    const changeSubjectBtn = document.getElementById('change-subject-btn');
+    if (changeSubjectBtn) {
+        changeSubjectBtn.addEventListener('click', () => {
+            UI.toggleElement('subject-selection-info', false);
+            UI.toggleElement('subject-search-container', true);
+            UI.toggleElement('topics-section', false);
+            document.getElementById('subject-search-input').value = '';
+            document.getElementById('subject-search-input').focus();
+        });
+    }
+
+    const topicSearchInput = document.getElementById('topic-search-input');
+    if (topicSearchInput) {
+        topicSearchInput.addEventListener('input', (e) => {
+            const searchTerm = e.target.value.toLowerCase().trim();
+            filterTopics(searchTerm);
+        });
+    }
+
     const confirmRemoveSectionBtn = document.getElementById('confirm-remove-section-btn');
     if (confirmRemoveSectionBtn) {
         confirmRemoveSectionBtn.addEventListener('click', async () => {
@@ -539,6 +587,7 @@ let currentAssigningCardId = null;
 let currentAssigningCardHeadline = null;
 let currentSelectedSubjectId = null;
 let currentSelectedTopic = null;
+let currentSubjectTopics = [];
 
 window.handleAssignToTopic = async function(cardId, cardHeadline) {
     currentAssigningCardId = cardId;
@@ -556,20 +605,34 @@ window.handleAssignToTopic = async function(cardId, cardHeadline) {
     document.getElementById('subject-search-loading').style.display = 'none';
     document.getElementById('subjects-list').innerHTML = '';
 
+    UI.toggleElement('subject-selection-info', false);
+    UI.toggleElement('subject-search-container', true);
+    UI.toggleElement('topics-section', false);
+    document.getElementById('topic-search-input').value = '';
+    document.getElementById('topic-search-empty').style.display = 'none';
+
     document.getElementById('topics-loading').style.display = 'block';
     document.getElementById('topics-by-level').innerHTML = '';
     UI.toggleElement('confirm-assign-topic-btn', false);
     currentSelectedTopic = null;
+    currentSubjectTopics = [];
 
     const subjectId = UI.getUrlParam('subjectId');
+    const subjectName = UI.getUrlParam('subjectName');
     currentSelectedSubjectId = subjectId;
 
-    try {
-        await loadTopicsForSubject(subjectId);
-    } catch (err) {
-        console.error('Failed to load topics:', err);
-        document.getElementById('topics-loading').style.display = 'none';
-        UI.showError('Failed to load topics: ' + (err.message || 'Unknown error'));
+    if (subjectId) {
+        UI.toggleElement('subject-selection-info', true);
+        UI.toggleElement('subject-search-container', false);
+        UI.toggleElement('topics-section', true);
+        document.getElementById('selected-subject-name').textContent = subjectName || 'Current Subject';
+        try {
+            await loadTopicsForSubject(subjectId);
+        } catch (err) {
+            console.error('Failed to load topics:', err);
+            document.getElementById('topics-loading').style.display = 'none';
+            UI.showError('Failed to load topics: ' + (err.message || 'Unknown error'));
+        }
     }
 };
 
@@ -578,6 +641,9 @@ async function loadTopicsForSubject(subjectId) {
     document.getElementById('topics-by-level').innerHTML = '';
     UI.toggleElement('confirm-assign-topic-btn', false);
     currentSelectedTopic = null;
+    currentSubjectTopics = [];
+    document.getElementById('topic-search-input').value = '';
+    document.getElementById('topic-search-empty').style.display = 'none';
     
     try {
         const allTopics = [];
@@ -586,6 +652,7 @@ async function loadTopicsForSubject(subjectId) {
             allTopics.push(...levelTopics);
         }
 
+        currentSubjectTopics = allTopics;
         document.getElementById('topics-loading').style.display = 'none';
 
         if (allTopics.length === 0) {
@@ -596,6 +663,23 @@ async function loadTopicsForSubject(subjectId) {
     } catch (err) {
         document.getElementById('topics-loading').style.display = 'none';
         throw err;
+    }
+}
+
+function filterTopics(searchTerm) {
+    if (!currentSubjectTopics) return;
+
+    const filteredTopics = currentSubjectTopics.filter(topic => 
+        topic.name.toLowerCase().includes(searchTerm)
+    );
+
+    if (filteredTopics.length === 0) {
+        document.getElementById('topics-by-level').style.display = 'none';
+        document.getElementById('topic-search-empty').style.display = 'block';
+    } else {
+        document.getElementById('topics-by-level').style.display = 'block';
+        document.getElementById('topic-search-empty').style.display = 'none';
+        renderTopicsForAssignment(filteredTopics);
     }
 }
 
@@ -647,7 +731,12 @@ function displaySubjectResults(subjects) {
             currentSelectedTopic = null;
             UI.toggleElement('confirm-assign-topic-btn', false);
             document.getElementById('subject-search-results').style.display = 'none';
-            document.getElementById('subject-search-input').value = subject.name;
+            
+            UI.toggleElement('subject-selection-info', true);
+            UI.toggleElement('subject-search-container', false);
+            UI.toggleElement('topics-section', true);
+            document.getElementById('selected-subject-name').textContent = subject.name;
+            
             await loadTopicsForSubject(subject.id);
         });
 
@@ -658,6 +747,8 @@ function displaySubjectResults(subjects) {
 function renderTopicsForAssignment(topics) {
     const container = document.getElementById('topics-by-level');
     container.innerHTML = '';
+
+    const searchTerm = document.getElementById('topic-search-input').value.toLowerCase().trim();
 
     const levelNames = ['Surface', 'Depth', 'Origin'];
     
@@ -687,9 +778,15 @@ function renderTopicsForAssignment(topics) {
             grouped[level].forEach(topic => {
                 const topicItem = document.createElement('div');
                 topicItem.className = 'topic-item';
+
+                let highlightedName = UI.escapeHtml(topic.name);
+                if (searchTerm) {
+                    const regex = new RegExp(`(${searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+                    highlightedName = highlightedName.replace(regex, '<mark style="background-color: #fff59d; padding: 0 2px; border-radius: 2px;">$1</mark>');
+                }
+
                 topicItem.innerHTML = `
-                    <div class="topic-item-name">${UI.escapeHtml(topic.name)}</div>
-                    <div class="topic-item-meta">Pos: ${topic.position}</div>
+                    <div class="topic-item-name">${highlightedName} <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: normal; margin-left: 0.5rem;">Pos: ${topic.position}</span></div>
                 `;
                 topicItem.addEventListener('click', () => {
                     // Update selection
@@ -714,6 +811,7 @@ function renderTopicsForAssignment(topics) {
 
 async function assignCardToTopic() {
     if (!currentSelectedTopic) return;
+    UI.setButtonLoading('confirm-assign-topic-btn', true);
     try {
         const topicName = currentSelectedTopic.name;
         await client.addCardToTopic(currentAssigningCardId, currentSelectedSubjectId, currentSelectedTopic.position, currentSelectedTopic.level);
@@ -723,6 +821,41 @@ async function assignCardToTopic() {
     } catch (err) {
         console.error('Failed to assign card to topic:', err);
         UI.showError('Failed to assign card to topic: ' + (err.message || 'Unknown error'));
+    } finally {
+        UI.setButtonLoading('confirm-assign-topic-btn', false);
+    }
+}
+
+async function createAndAssignTopic() {
+    const topicName = document.getElementById('new-topic-name').value.trim();
+    if (!topicName) {
+        UI.showError('Please enter a topic name');
+        return;
+    }
+
+    const level = parseInt(document.querySelector('input[name="new-topic-level"]:checked').value);
+    
+    UI.setButtonLoading('confirm-create-assign-topic-btn', true);
+
+    try {
+        // 1. Get all topics for that level to determine next position
+        const existingTopics = await client.getTopics(currentSelectedSubjectId, level);
+        const nextPosition = existingTopics.length;
+
+        // 2. Create the topic
+        await client.createTopic(currentSelectedSubjectId, topicName, level, nextPosition);
+
+        // 3. Assign card to the new topic
+        await client.addCardToTopic(currentAssigningCardId, currentSelectedSubjectId, nextPosition, level);
+
+        closeAssignTopicModal();
+        UI.showSuccess(`Topic "${topicName}" created and card assigned successfully`);
+        await loadCards();
+    } catch (err) {
+        console.error('Failed to create and assign topic:', err);
+        UI.showError('Failed to create and assign topic: ' + (err.message || 'Unknown error'));
+    } finally {
+        UI.setButtonLoading('confirm-create-assign-topic-btn', false);
     }
 }
 
@@ -733,13 +866,32 @@ function closeAssignTopicModal() {
     currentAssigningCardHeadline = null;
     currentSelectedSubjectId = null;
     currentSelectedTopic = null;
+    currentSubjectTopics = [];
     UI.toggleElement('confirm-assign-topic-btn', false);
+    UI.toggleElement('confirm-create-assign-topic-btn', false);
+    
     const subjectSearchInput = document.getElementById('subject-search-input');
     if (subjectSearchInput) subjectSearchInput.value = '';
     const subjectSearchResults = document.getElementById('subject-search-results');
     if (subjectSearchResults) subjectSearchResults.style.display = 'none';
     const subjectsList = document.getElementById('subjects-list');
     if (subjectsList) subjectsList.innerHTML = '';
+    
+    const topicSearchInput = document.getElementById('topic-search-input');
+    if (topicSearchInput) topicSearchInput.value = '';
+    const topicsByLevel = document.getElementById('topics-by-level');
+    if (topicsByLevel) topicsByLevel.innerHTML = '';
+    const topicSearchEmpty = document.getElementById('topic-search-empty');
+    if (topicSearchEmpty) topicSearchEmpty.style.display = 'none';
+
+    UI.toggleElement('topic-search-mode', true);
+    UI.toggleElement('topic-create-mode', false);
+    const newTopicName = document.getElementById('new-topic-name');
+    if (newTopicName) newTopicName.value = '';
+
+    UI.toggleElement('subject-selection-info', false);
+    UI.toggleElement('subject-search-container', true);
+    UI.toggleElement('topics-section', false);
 }
 
 window.closeAssignTopicModal = closeAssignTopicModal;
