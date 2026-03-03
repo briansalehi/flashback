@@ -8,6 +8,7 @@ window.addEventListener('DOMContentLoaded', () => {
     const subjectId = UI.getUrlParam('id');
     const subjectName = UI.getUrlParam('name');
     const roadmapId = UI.getUrlParam('roadmapId');
+    const roadmapName = UI.getUrlParam('roadmapName');
 
     if (!subjectId) {
         window.location.href = '/home.html';
@@ -51,9 +52,14 @@ window.addEventListener('DOMContentLoaded', () => {
 
     // Rename subject handlers
     const renameSubjectBtn = document.getElementById('rename-subject-btn');
+    const renameSubjectModal = document.getElementById('rename-subject-modal');
+    const cancelRenameSubjectBtn = document.getElementById('cancel-rename-subject-btn');
+    const closeRenameSubjectModalBtn = document.getElementById('close-rename-subject-modal-btn');
+
     if (renameSubjectBtn) {
         renameSubjectBtn.addEventListener('click', () => {
             UI.toggleElement('rename-subject-modal', true);
+            document.body.style.overflow = 'hidden';
             document.getElementById('rename-subject-name').value = subjectName || '';
             setTimeout(() => {
                 document.getElementById('rename-subject-name').focus();
@@ -63,10 +69,9 @@ window.addEventListener('DOMContentLoaded', () => {
         console.error('Rename subject button not found');
     }
 
-    const cancelRenameSubjectBtn = document.getElementById('cancel-rename-subject-btn');
-    const closeRenameSubjectModalBtn = document.getElementById('close-rename-subject-modal-btn');
     const closeRename = () => {
         UI.toggleElement('rename-subject-modal', false);
+        document.body.style.overflow = '';
         UI.clearForm('rename-subject-form');
     };
     if (cancelRenameSubjectBtn) {
@@ -76,7 +81,6 @@ window.addEventListener('DOMContentLoaded', () => {
         closeRenameSubjectModalBtn.addEventListener('click', closeRename);
     }
 
-    const renameSubjectModal = document.getElementById('rename-subject-modal');
     if (renameSubjectModal) {
         renameSubjectModal.addEventListener('click', (e) => {
             if (e.target === renameSubjectModal) {
@@ -102,8 +106,7 @@ window.addEventListener('DOMContentLoaded', () => {
             try {
                 await client.renameSubject(subjectId, newName);
 
-                UI.toggleElement('rename-subject-modal', false);
-                UI.clearForm('rename-subject-form');
+                closeRename();
                 UI.setButtonLoading('save-rename-subject-btn', false);
 
                 // Update the URL and page
@@ -123,18 +126,22 @@ window.addEventListener('DOMContentLoaded', () => {
 
     // Remove subject handlers
     const removeSubjectBtn = document.getElementById('remove-subject-btn');
+    const removeSubjectModal = document.getElementById('remove-subject-modal');
+    const cancelRemoveSubjectBtn = document.getElementById('cancel-remove-subject-btn');
+    const closeRemoveSubjectModalBtn = document.getElementById('close-remove-subject-modal-btn');
+
     if (removeSubjectBtn) {
         removeSubjectBtn.addEventListener('click', () => {
             UI.toggleElement('remove-subject-modal', true);
+            document.body.style.overflow = 'hidden';
         });
     } else {
         console.error('Remove subject button not found');
     }
 
-    const cancelRemoveSubjectBtn = document.getElementById('cancel-remove-subject-btn');
-    const closeRemoveSubjectModalBtn = document.getElementById('close-remove-subject-modal-btn');
     const closeRemove = () => {
         UI.toggleElement('remove-subject-modal', false);
+        document.body.style.overflow = '';
     };
     if (cancelRemoveSubjectBtn) {
         cancelRemoveSubjectBtn.addEventListener('click', closeRemove);
@@ -143,7 +150,6 @@ window.addEventListener('DOMContentLoaded', () => {
         closeRemoveSubjectModalBtn.addEventListener('click', closeRemove);
     }
 
-    const removeSubjectModal = document.getElementById('remove-subject-modal');
     if (removeSubjectModal) {
         removeSubjectModal.addEventListener('click', (e) => {
             if (e.target === removeSubjectModal) {
@@ -161,7 +167,7 @@ window.addEventListener('DOMContentLoaded', () => {
             try {
                 await client.removeSubject(subjectId);
 
-                UI.toggleElement('remove-subject-modal', false);
+                closeRemove();
                 UI.setButtonLoading('confirm-remove-subject-btn', false);
 
                 // Redirect back to roadmap or home
@@ -178,6 +184,58 @@ window.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
+
+    const dropResourceModal = document.getElementById('drop-resource-modal');
+    const cancelDropResourceBtn = document.getElementById('cancel-drop-resource-btn');
+    const closeDropResourceModalBtn = document.getElementById('close-drop-resource-modal-btn');
+    const confirmDropResourceBtn = document.getElementById('confirm-drop-resource-btn');
+    let resourceToDropId = null;
+
+    const closeDropResourceModal = () => {
+        UI.toggleElement('drop-resource-modal', false);
+        document.body.style.overflow = '';
+        resourceToDropId = null;
+    };
+
+    if (cancelDropResourceBtn) cancelDropResourceBtn.addEventListener('click', closeDropResourceModal);
+    if (closeDropResourceModalBtn) closeDropResourceModalBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        closeDropResourceModal();
+    });
+    if (dropResourceModal) {
+        dropResourceModal.addEventListener('click', (e) => {
+            if (e.target === dropResourceModal) closeDropResourceModal();
+        });
+    }
+
+    if (confirmDropResourceBtn) {
+        confirmDropResourceBtn.addEventListener('click', async () => {
+            if (!resourceToDropId) return;
+
+            UI.hideMessage('error-message');
+            UI.setButtonLoading('confirm-drop-resource-btn', true);
+
+            try {
+                await client.dropResourceFromSubject(resourceToDropId, parseInt(subjectId));
+                closeDropResourceModal();
+                UI.setButtonLoading('confirm-drop-resource-btn', false);
+                loadResources();
+                UI.showSuccess('Resource dropped successfully');
+            } catch (err) {
+                console.error('Drop resource failed:', err);
+                UI.showError('Failed to drop resource: ' + (err.message || 'Unknown error'));
+                UI.setButtonLoading('confirm-drop-resource-btn', false);
+            }
+        });
+    }
+
+    window.openDropResourceModal = (id, name) => {
+        resourceToDropId = id;
+        const nameEl = document.getElementById('resource-to-drop-name');
+        if (nameEl) nameEl.textContent = name;
+        UI.toggleElement('drop-resource-modal', true);
+        document.body.style.overflow = 'hidden';
+    };
 
     // Practice mode functionality
     const startPracticeBtn = document.getElementById('start-practice-btn');
@@ -474,7 +532,6 @@ window.addEventListener('DOMContentLoaded', () => {
 
             UI.setButtonLoading('confirm-add-resource-btn', true);
             try {
-                const subjectId = UI.getUrlParam('id');
                 await client.addResourceToSubject(parseInt(subjectId), window.currentlySelectedResource.id);
 
                 closeResourceModal();
@@ -575,8 +632,8 @@ async function loadTopics() {
     UI.toggleElement('topics-empty-state', false);
 
     try {
-        const subjectId = UI.getUrlParam('id');
         const milestoneLevel = parseInt(UI.getUrlParam('level')) || 0;
+        const subjectId = UI.getUrlParam('id');
 
         // Fetch topics for all levels from 0 up to and including the milestone level
         const allTopics = [];
@@ -656,15 +713,16 @@ function renderTopics(topics, maxLevel) {
                     </div>
                 `;
 
+                const subjectId = UI.getUrlParam('id');
+                const subjectName = UI.getUrlParam('name');
+                const roadmapId = UI.getUrlParam('roadmapId');
+                const roadmapName = UI.getUrlParam('roadmapName');
+
                 // Click to navigate (but not when dragging)
                 let isDragging = false;
                 topicItem.style.cursor = 'pointer';
                 topicItem.addEventListener('click', (e) => {
                     if (!isDragging) {
-                        const subjectId = UI.getUrlParam('id');
-                        const subjectName = UI.getUrlParam('name');
-                        const roadmapId = UI.getUrlParam('roadmapId');
-                        const roadmapName = UI.getUrlParam('roadmapName');
                         const milestoneLevel = UI.getUrlParam('level') || '0';
                         const currentTab = UI.getUrlParam('tab') || 'topics';
                         window.location.href = `topic-cards.html?subjectId=${subjectId}&topicPosition=${topic.position}&topicLevel=${topic.level}&name=${encodeURIComponent(topic.name)}&subjectName=${encodeURIComponent(subjectName || '')}&roadmapId=${roadmapId || ''}&roadmapName=${encodeURIComponent(roadmapName || '')}&milestoneLevel=${milestoneLevel}&tab=${currentTab}`;
@@ -973,29 +1031,20 @@ function renderResources(resources) {
 
         // Make the entire resource item clickable to go to resource page
         resourceItem.addEventListener('click', () => {
+            const currentTab = UI.getUrlParam('tab') || 'topics';
+            const level = UI.getUrlParam('level') || '0';
             const subjectId = UI.getUrlParam('id');
             const subjectName = UI.getUrlParam('name');
             const roadmapId = UI.getUrlParam('roadmapId');
             const roadmapName = UI.getUrlParam('roadmapName');
-            const currentTab = UI.getUrlParam('tab') || 'topics';
-            const level = UI.getUrlParam('level') || '0';
             window.location.href = `resource.html?id=${resource.id}&name=${encodeURIComponent(resource.name)}&type=${resource.type}&pattern=${resource.pattern}&link=${encodeURIComponent(resource.link)}&production=${resource.production}&expiration=${resource.expiration}&subjectId=${subjectId || ''}&subjectName=${encodeURIComponent(subjectName || '')}&roadmapId=${roadmapId || ''}&roadmapName=${encodeURIComponent(roadmapName || '')}&level=${level}&tab=${currentTab}`;
         });
 
         // Add drop button handler
         const dropBtn = resourceItem.querySelector('.drop-resource-btn');
-        dropBtn.addEventListener('click', async (e) => {
+        dropBtn.addEventListener('click', (e) => {
             e.stopPropagation();
-            if (confirm(`Are you sure you want to drop "${resource.name}" from this subject?`)) {
-                try {
-                    const subjectId = UI.getUrlParam('id');
-                    await client.dropResourceFromSubject(resource.id, parseInt(subjectId));
-                    loadResources(); // Reload the list
-                } catch (err) {
-                    console.error('Drop resource failed:', err);
-                    UI.showError('Failed to drop resource: ' + (err.message || 'Unknown error'));
-                }
-            }
+            window.openDropResourceModal(resource.id, resource.name);
         });
 
         container.appendChild(resourceItem);
@@ -1003,9 +1052,10 @@ function renderResources(resources) {
 }
 
 async function startPracticeMode() {
+    const level = UI.getUrlParam('level');
     const subjectId = UI.getUrlParam('id');
     const roadmapId = UI.getUrlParam('roadmapId');
-    const level = UI.getUrlParam('level');
+    const roadmapName = UI.getUrlParam('roadmapName');
 
     if (!roadmapId || !subjectId) {
         UI.showError('Missing roadmap or subject information');
@@ -1084,7 +1134,7 @@ async function displayBreadcrumb(roadmapId) {
     if (!breadcrumb || !roadmapId) return;
 
     try {
-        const roadmapName = UI.getUrlParam('roadmapName');
+        const roadmapName = UI.getUrlParam('roadmapName') || '';
         if (roadmapName) {
             breadcrumb.innerHTML = `<a href="roadmap.html?id=${roadmapId}&name=${encodeURIComponent(roadmapName)}" style="color: var(--text-primary); text-decoration: none;">${UI.escapeHtml(roadmapName)}</a>`;
         }
@@ -1171,8 +1221,9 @@ async function searchAndDisplayResources(query) {
 }
 
 async function startAssessmentPractice() {
-    const subjectId = parseInt(UI.getUrlParam('id'));
+    const subjectId = UI.getUrlParam('id');
     const roadmapId = UI.getUrlParam('roadmapId');
+    const roadmapName = UI.getUrlParam('roadmapName');
 
     if (!roadmapId || !subjectId) {
         UI.showError('Missing roadmap or subject information');
@@ -1230,9 +1281,12 @@ async function startAssessmentPractice() {
 }
 
 async function removeTopic(level, position) {
-    const subjectId = UI.getUrlParam('id');
-
     try {
+        const subjectId = UI.getUrlParam('id');
+        const subjectName = UI.getUrlParam('name');
+        const roadmapId = UI.getUrlParam('roadmapId');
+        const roadmapName = UI.getUrlParam('roadmapName');
+
         await client.removeTopic(parseInt(subjectId), level, position);
         await loadTopics();
         UI.showSuccess('Topic removed successfully');
@@ -1243,9 +1297,12 @@ async function removeTopic(level, position) {
 }
 
 async function reorderTopic(level, sourcePosition, targetPosition) {
-    const subjectId = UI.getUrlParam('id');
-
     try {
+        const subjectId = UI.getUrlParam('id');
+        const subjectName = UI.getUrlParam('name');
+        const roadmapId = UI.getUrlParam('roadmapId');
+        const roadmapName = UI.getUrlParam('roadmapName');
+
         await client.reorderTopic(parseInt(subjectId), level, sourcePosition, targetPosition);
         await loadTopics();
     } catch (err) {
@@ -1261,8 +1318,12 @@ async function loadAssessments() {
     UI.toggleElement('assessments-empty-state', false);
 
     try {
-        const subjectId = parseInt(UI.getUrlParam('id'));
-        const topics = await client.getTopics(subjectId);
+        const subjectId = UI.getUrlParam('id');
+        const subjectName = UI.getUrlParam('name');
+        const roadmapId = UI.getUrlParam('roadmapId');
+        const roadmapName = UI.getUrlParam('roadmapName');
+
+        const topics = await client.getTopics(parseInt(subjectId));
 
         // Get all topics and check which are assimilated
         const topicsWithAssessments = await Promise.all(
@@ -1304,11 +1365,6 @@ function renderAssessments(topics) {
         1: { name: 'Intermediate', color: '#2196f3' },
         2: { name: 'Advanced', color: '#f44336' }
     };
-
-    const subjectId = UI.getUrlParam('id');
-    const subjectName = UI.getUrlParam('name');
-    const roadmapId = UI.getUrlParam('roadmapId');
-    const roadmapName = UI.getUrlParam('roadmapName');
 
     topics.forEach((topic, index) => {
         const topicCard = document.createElement('div');
@@ -1358,7 +1414,10 @@ async function createAssessmentForTopic(topicLevel, topicPosition, topicName) {
     }
 
     try {
-        const subjectId = parseInt(UI.getUrlParam('id'));
+        const subjectId = UI.getUrlParam('id');
+        const subjectName = UI.getUrlParam('name');
+        const roadmapId = UI.getUrlParam('roadmapId');
+        const roadmapName = UI.getUrlParam('roadmapName');
 
         // First create the card
         const card = await client.createCard(headline);
@@ -1369,10 +1428,6 @@ async function createAssessmentForTopic(topicLevel, topicPosition, topicName) {
         UI.showSuccess('Assessment created successfully! You can now add blocks to it.');
 
         // Navigate to the card page to edit it
-        const subjectName = UI.getUrlParam('name');
-        const roadmapId = UI.getUrlParam('roadmapId');
-        const roadmapName = UI.getUrlParam('roadmapName');
-
         window.location.href = `card.html?cardId=${card.id}&headline=${encodeURIComponent(headline)}&state=${card.state}&practiceMode=selective&subjectId=${subjectId}&subjectName=${encodeURIComponent(subjectName || '')}&topicPosition=${topicPosition}&topicLevel=${topicLevel}&topicName=${encodeURIComponent(topicName)}&roadmapId=${roadmapId || ''}&roadmapName=${encodeURIComponent(roadmapName || '')}`;
     } catch (err) {
         console.error('Failed to create assessment:', err);

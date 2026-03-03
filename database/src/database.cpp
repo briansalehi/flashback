@@ -655,7 +655,7 @@ std::map<uint64_t, Section> database::search_sections(uint64_t const resource_id
             uint64_t const similarity{row.at("similarity").as<uint64_t>()};
             Section section{};
             section.set_position(row.at("position").as<uint64_t>());
-            section.set_name(row.at("name").as<std::string>());
+            section.set_name(row.at("name").is_null() ? "" : row.at("name").as<std::string>());
             section.set_link(row.at("link").is_null() ? "" : row.at("link").as<std::string>());
             sections.insert({similarity, section});
         }

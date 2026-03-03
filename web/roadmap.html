@@ -480,47 +480,75 @@
     <div id="error-message" style="display: none;"></div>
 
     <!-- Rename Roadmap Modal -->
-    <div id="rename-roadmap-modal" class="card" style="display: none; max-width: 500px; margin-bottom: 2rem;">
-      <div class="card-header">
-        <h3 class="card-title">Rename Roadmap</h3>
+    <div id="rename-roadmap-modal" class="modal-overlay" style="display: none;">
+      <div class="modal-content" style="max-width: 500px;">
+        <div class="modal-header">
+          <h2 class="modal-title">Rename Roadmap</h2>
+          <button type="button" id="close-rename-modal-btn" class="modal-close" aria-label="Close modal">&times;</button>
+        </div>
+        <form id="rename-roadmap-form">
+          <div class="form-group">
+            <label class="form-label" for="rename-roadmap-name">New Roadmap Name</label>
+            <input
+                type="text"
+                id="rename-roadmap-name"
+                class="form-input"
+                placeholder="Enter new name..."
+                required
+            >
+          </div>
+          <div class="form-actions" style="display: flex; gap: 1rem; margin-top: 1.5rem; justify-content: flex-end;">
+            <button type="submit" id="save-rename-btn" class="btn btn-primary" style="padding: 0.5rem 1.5rem; white-space: nowrap;">
+              Save
+            </button>
+            <button type="button" id="cancel-rename-btn" class="btn btn-secondary" style="padding: 0.5rem 1.5rem; white-space: nowrap;">
+              Cancel
+            </button>
+          </div>
+        </form>
       </div>
-      <form id="rename-roadmap-form">
-        <div class="form-group">
-          <label class="form-label" for="rename-roadmap-name">New Roadmap Name</label>
-          <input
-              type="text"
-              id="rename-roadmap-name"
-              class="form-input"
-              placeholder="Enter new name..."
-              required
-          >
-        </div>
-        <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
-          <button type="submit" id="save-rename-btn" class="btn btn-primary" style="padding: 0.5rem 1rem; white-space: nowrap;">
-            Save
-          </button>
-          <button type="button" id="cancel-rename-btn" class="btn btn-secondary" style="padding: 0.5rem 1rem; white-space: nowrap;">
-            Cancel
-          </button>
-        </div>
-      </form>
     </div>
 
     <!-- Remove Roadmap Confirmation -->
-    <div id="remove-roadmap-modal" class="card" style="display: none; max-width: 500px; margin-bottom: 2rem;">
-      <div class="card-header">
-        <h3 class="card-title" style="color: var(--danger-color);">Remove Roadmap</h3>
+    <div id="remove-roadmap-modal" class="modal-overlay" style="display: none;">
+      <div class="modal-content" style="max-width: 500px;">
+        <div class="modal-header">
+          <h2 class="modal-title" style="color: var(--danger-color);">Remove Roadmap</h2>
+          <button type="button" id="close-remove-roadmap-modal-btn" class="modal-close" aria-label="Close modal">&times;</button>
+        </div>
+        <div class="modal-body">
+          <p>Are you sure you want to remove this roadmap? This action cannot be undone.</p>
+          <div class="form-actions" style="display: flex; gap: 1rem; margin-top: 1.5rem; justify-content: flex-end;">
+            <button id="confirm-remove-btn" class="btn btn-danger" style="padding: 0.5rem 1.5rem; white-space: nowrap;">
+              Yes, Remove
+            </button>
+            <button id="cancel-remove-btn" class="btn btn-secondary" style="padding: 0.5rem 1.5rem; white-space: nowrap;">
+              Cancel
+            </button>
+          </div>
+        </div>
       </div>
-      <div style="padding: 1rem 0;">
-        <p>Are you sure you want to remove this roadmap? This action cannot be undone.</p>
-      </div>
-      <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
-        <button id="confirm-remove-btn" class="btn btn-danger" style="padding: 0.5rem 1rem; white-space: nowrap;">
-          Yes, Remove
-        </button>
-        <button id="cancel-remove-btn" class="btn btn-secondary" style="padding: 0.5rem 1rem; white-space: nowrap;">
-          Cancel
-        </button>
+    </div>
+
+    <!-- Remove Milestone Confirmation -->
+    <div id="remove-milestone-modal" class="modal-overlay" style="display: none;">
+      <div class="modal-content" style="max-width: 500px;">
+        <div class="modal-header">
+          <h2 class="modal-title" style="color: var(--danger-color);">Remove Subject from Roadmap</h2>
+          <button type="button" id="close-remove-milestone-modal-btn" class="modal-close" aria-label="Close modal">&times;</button>
+        </div>
+        <div class="modal-body">
+          <p>Are you sure you want to remove <strong id="milestone-to-remove-name"></strong> from your roadmap?</p>
+          <span>The subject itself will not be removed, you will still be able to add it to this roadmap later.</span>
+          <div class="form-actions" style="display: flex; gap: 1rem; margin-top: 1.5rem; justify-content: flex-end;">
+            <button id="confirm-remove-milestone-btn" class="btn btn-danger" style="padding: 0.5rem 1.5rem; white-space: nowrap;">
+              Yes, Remove
+            </button>
+            <button id="cancel-remove-milestone-btn" class="btn btn-secondary" style="padding: 0.5rem 1.5rem; white-space: nowrap;">
+              Cancel
+            </button>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -546,7 +574,7 @@
       <div id="add-milestone-form" class="modal-content" style="max-width: 700px;">
         <div class="modal-header">
           <h2 class="modal-title">Add Subject to Roadmap</h2>
-          <button type="button" class="modal-close" onclick="document.getElementById('cancel-milestone-btn').click()" aria-label="Close">&times;</button>
+          <button type="button" class="modal-close" id="close-add-milestone-modal-btn" aria-label="Close modal">&times;</button>
         </div>
 
       <form id="milestone-form" style="display: flex; flex-direction: column; overflow-y: auto;">

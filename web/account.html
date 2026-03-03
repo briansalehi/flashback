@@ -150,12 +150,35 @@
       <p class="text-muted" style="margin-bottom: 1.5rem;">
         Click the button below to reset your password. A new password will be generated and sent to your email.
       </p>
-      <button id="reset-password-btn" class="btn btn-secondary" style="background-color: #dc3545; color: white; padding: 0.5rem 1rem; white-space: nowrap;">
+      <button id="open-reset-password-modal-btn" class="btn btn-secondary" style="background-color: #dc3545; color: white; padding: 0.5rem 1rem; white-space: nowrap;">
         Reset Password
       </button>
     </div>
   </div>
 </main>
+
+<!-- Reset Password Modal -->
+<div id="reset-password-modal" class="modal-overlay" style="display: none;">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2 class="modal-title">Reset Password</h2>
+      <button id="close-reset-password-modal-btn" class="modal-close" aria-label="Close modal">&times;</button>
+    </div>
+    <div class="modal-body">
+      <p style="margin-bottom: 1.5rem;">
+        Are you sure you want to reset your password? A new password will be generated and sent to your email address. This action cannot be undone.
+      </p>
+      <div class="form-actions" style="display: flex; gap: 1rem; justify-content: flex-end;">
+        <button id="confirm-reset-password-btn" class="btn btn-primary" style="background-color: #dc3545; border-color: #dc3545; padding: 0.5rem 1.5rem; white-space: nowrap;">
+          Yes, Reset Password
+        </button>
+        <button id="cancel-reset-password-btn" class="btn btn-secondary" style="padding: 0.5rem 1.5rem; white-space: nowrap;">
+          Cancel
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <script src="proto/flashback.js"></script>
 <script src="js/ui.js"></script>

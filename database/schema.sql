@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict dNsQgCxbbyNhwDHjc3nqfRL4Rcftuig11xxKLvQlmWxpRuitaOstbn0zoxvpnjg
+\restrict xW7RqWSVZugnSFynPB6Ktb76up4ioq7OexjbHcgIYeMQz2mXgaKdmZTbzx87Kvz
 
 -- Dumped from database version 18.1
 -- Dumped by pg_dump version 18.0
@@ -1439,15 +1439,25 @@ end; $$;
 ALTER FUNCTION flashback.get_progress_weight(user_id integer) OWNER TO flashback;
 
 --
--- Name: get_related_subjects(integer); Type: FUNCTION; Schema: flashback; Owner: flashback
+-- Name: get_related_milestone(integer, integer); Type: FUNCTION; Schema: flashback; Owner: flashback
 --
 
-CREATE FUNCTION flashback.get_related_subjects(resource_id integer) RETURNS TABLE(id integer, name flashback.citext)
+CREATE FUNCTION flashback.get_related_milestone(user_id integer, resource_id integer) RETURNS TABLE(id integer, name flashback.citext, level flashback.expertise_level)
     LANGUAGE plpgsql
-    AS $$ begin return query select s.id, s.name from shelves h join subjects s on s.id = h.subject where h.resource = resource_id; end; $$;
+    AS $$
+begin
+    return query
+    select s.id, s.name, max(m.level)
+    from roadmaps r
+    join milestones m on m.roadmap = r.id
+    join subjects s on s.id = m.subject
+    join shelves h on h.subject = s.id
+    where r.user = user_id and h.resource = resource_id
+    group by s.id, s.name;
+end; $$;
 
 
-ALTER FUNCTION flashback.get_related_subjects(resource_id integer) OWNER TO flashback;
+ALTER FUNCTION flashback.get_related_milestone(user_id integer, resource_id integer) OWNER TO flashback;
 
 --
 -- Name: get_requirements(integer, integer, flashback.expertise_level); Type: FUNCTION; Schema: flashback; Owner: flashback
@@ -3089,7 +3099,10 @@ CREATE FUNCTION flashback.search_sections(resource_id integer, search_pattern ch
 begin
     set pg_trgm.similarity_threshold = 0.11;
 
-    return query select row_number() over (order by s.name <-> search_pattern, s.position), s.position, s.name, s.link from sections s where s.resource = resource_id and s.name % search_pattern limit 5;
+    return query
+    select row_number() over (order by s.name <-> search_pattern, s.position::character varying <-> search_pattern, s.position), s.position, s.name, s.link
+    from sections s
+    where s.resource = resource_id and (s.name % search_pattern or s.position::character varying % search_pattern) limit 5;
 end; $$;
 
 
@@ -4228,5 +4241,5 @@ GRANT ALL ON SCHEMA public TO brian;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict dNsQgCxbbyNhwDHjc3nqfRL4Rcftuig11xxKLvQlmWxpRuitaOstbn0zoxvpnjg
+\unrestrict xW7RqWSVZugnSFynPB6Ktb76up4ioq7OexjbHcgIYeMQz2mXgaKdmZTbzx87Kvz
 

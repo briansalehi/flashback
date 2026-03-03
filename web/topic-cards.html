@@ -89,6 +89,12 @@
       .topic-list-item:active {
           transform: scale(0.98);
       }
+      .topic-list-item.selected {
+          border-color: var(--accent-color);
+          background-color: var(--accent-light);
+          box-shadow: 0 0 0 2px rgba(212, 132, 92, 0.2);
+          transform: scale(1.02);
+      }
   </style>
 </head>
 <body>
@@ -138,51 +144,85 @@
     <div id="error-message" style="display: none;"></div>
 
     <!-- Edit Topic Modal -->
-    <div id="edit-topic-modal" class="card" style="display: none; max-width: 500px; margin-bottom: 2rem;">
-      <div class="card-header">
-        <h3 class="card-title">Edit Topic</h3>
+    <div id="edit-topic-modal" class="modal-overlay" style="display: none;">
+      <div class="modal-content" style="max-width: 500px;">
+        <div class="modal-header">
+          <h2 class="modal-title">Edit Topic</h2>
+          <button type="button" id="close-edit-topic-modal-btn" class="modal-close" aria-label="Close modal">&times;</button>
+        </div>
+        <form id="edit-topic-form">
+          <div class="form-group">
+            <label class="form-label" for="edit-topic-name">Topic Name</label>
+            <input
+                type="text"
+                id="edit-topic-name"
+                class="form-input"
+                placeholder="Enter topic name"
+                required
+            >
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="edit-topic-level">Level</label>
+            <select id="edit-topic-level" class="form-input" required>
+              <option value="0">Surface</option>
+              <option value="1">Depth</option>
+              <option value="2">Origin</option>
+            </select>
+          </div>
+          <div class="form-actions" style="display: flex; gap: 1rem; margin-top: 2rem; justify-content: flex-end;">
+            <button type="submit" id="save-edit-topic-btn" class="btn btn-primary" style="padding: 0.5rem 1.5rem; white-space: nowrap;">
+              Save Changes
+            </button>
+            <button type="button" id="cancel-edit-topic-btn" class="btn btn-secondary" style="padding: 0.5rem 1.5rem; white-space: nowrap;">
+              Cancel
+            </button>
+          </div>
+        </form>
       </div>
-      <form id="edit-topic-form">
-        <div class="form-group">
-          <label class="form-label" for="edit-topic-name">Topic Name</label>
-          <input
-              type="text"
-              id="edit-topic-name"
-              class="form-input"
-              placeholder="Enter topic name"
-              required
-          >
-        </div>
-        <div class="form-group">
-          <label class="form-label" for="edit-topic-level">Level</label>
-          <select id="edit-topic-level" class="form-input" required>
-            <option value="0">Surface</option>
-            <option value="1">Depth</option>
-            <option value="2">Origin</option>
-          </select>
-        </div>
-        <div style="display: flex; gap: 1rem; margin-top: 2rem;">
-          <button type="submit" id="save-edit-topic-btn" class="btn btn-primary" style="padding: 0.5rem 1.5rem; white-space: nowrap;">
-            Save Changes
-          </button>
-          <button type="button" id="cancel-edit-topic-btn" class="btn btn-secondary" style="padding: 0.5rem 1.5rem; white-space: nowrap;">
-            Cancel
-          </button>
-        </div>
-      </form>
     </div>
 
     <!-- Remove Topic Modal -->
-    <div id="remove-topic-modal" class="card" style="display: none; max-width: 500px; margin-bottom: 2rem;">
-      <div class="card-header">
-        <h3 class="card-title">Remove Topic</h3>
+    <div id="remove-topic-modal" class="modal-overlay" style="display: none;">
+      <div class="modal-content" style="max-width: 500px;">
+        <div class="modal-header">
+          <h2 class="modal-title" style="color: var(--danger-color);">Remove Topic</h2>
+          <button type="button" id="close-remove-topic-modal-btn" class="modal-close" aria-label="Close modal">&times;</button>
+        </div>
+        <div class="modal-body">
+          <p style="margin-bottom: 1.5rem;">
+            Are you sure you want to remove this topic? This action cannot be undone. All cards in this topic will also be removed.
+          </p>
+          <div class="form-actions" style="display: flex; gap: 1rem; justify-content: flex-end;">
+            <button id="confirm-remove-topic-btn" class="btn btn-danger" style="padding: 0.5rem 1.5rem; white-space: nowrap;">
+              Remove Topic
+            </button>
+            <button id="cancel-remove-topic-btn" class="btn btn-secondary" style="padding: 0.5rem 1.5rem; white-space: nowrap;">
+              Cancel
+            </button>
+          </div>
+        </div>
       </div>
-      <div style="padding: 1rem 0;">
-        <p style="color: var(--text-muted); margin-bottom: 1.5rem;">Are you sure you want to remove this topic? This
-          action cannot be undone. All cards in this topic will also be removed.</p>
-        <div style="display: flex; gap: 1rem; justify-content: flex-end;">
-          <button id="cancel-remove-topic-btn" class="btn btn-secondary" style="padding: 0.5rem 1.5rem; white-space: nowrap;">Cancel</button>
-          <button id="confirm-remove-topic-btn" class="btn btn-danger" style="padding: 0.5rem 1.5rem; white-space: nowrap;">Remove Topic</button>
+    </div>
+
+    <!-- Diminish Assessment Modal -->
+    <div id="diminish-assessment-modal" class="modal-overlay" style="display: none;">
+      <div class="modal-content" style="max-width: 500px;">
+        <div class="modal-header">
+          <h2 class="modal-title" style="color: var(--danger-color);">Diminish Assessment</h2>
+          <button type="button" id="close-diminish-assessment-modal-btn" class="modal-close" aria-label="Close modal">&times;</button>
+        </div>
+        <div class="modal-body">
+          <p style="margin-bottom: 1.5rem;">
+            Are you sure you want to diminish the assessment <strong id="assessment-to-diminish-name"></strong>? This will remove its assessment status.
+          </p>
+          <div class="form-actions" style="display: flex; gap: 1rem; justify-content: flex-end;">
+            <button id="confirm-diminish-assessment-btn" class="btn btn-danger" style="padding: 0.5rem 1.5rem; white-space: nowrap;">
+              Yes, Diminish
+            </button>
+            <button id="cancel-diminish-assessment-btn" class="btn btn-secondary" style="padding: 0.5rem 1.5rem; white-space: nowrap;">
+              Cancel
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -290,7 +330,10 @@
                style="display: none; text-align: center; padding: 1rem; color: var(--text-muted); font-size: 0.875rem;">
             No topics found
           </div>
-          <div style="display: flex; gap: 1rem; justify-content: flex-end; margin-top: 1.5rem;">
+          <div class="form-actions" style="display: flex; gap: 1rem; justify-content: flex-end; margin-top: 1.5rem;">
+            <button id="confirm-move-card-btn" class="btn btn-primary" style="display: none; padding: 0.5rem 1.5rem; white-space: nowrap;">
+              Move Card to Topic
+            </button>
             <button id="cancel-move-card-btn" class="btn btn-secondary" style="padding: 0.5rem 1.5rem; white-space: nowrap;">Cancel</button>
           </div>
         </div>

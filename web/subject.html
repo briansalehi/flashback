@@ -550,19 +550,19 @@
     <div id="remove-subject-modal" class="modal-overlay" style="display: none;">
       <div class="modal-content" style="max-width: 500px;">
         <div class="modal-header">
-          <h3 class="modal-title">Remove Subject</h3>
+          <h2 class="modal-title" style="color: var(--danger-color);">Remove Subject</h2>
           <button type="button" class="modal-close" id="close-remove-subject-modal-btn" aria-label="Close">&times;</button>
         </div>
-        <div style="padding: 1rem 0;">
-          <p style="color: var(--text-muted); margin-bottom: 1.5rem;">
+        <div class="modal-body">
+          <p style="margin-bottom: 1.5rem;">
             Are you sure you want to remove this subject? This action cannot be undone. All associated topics, resources,
             and cards will be removed.
           </p>
-          <div style="display: flex; gap: 1rem;">
-            <button id="confirm-remove-subject-btn" class="btn btn-danger" style=" padding: 0.5rem 1rem; white-space: nowrap;">
+          <div class="form-actions" style="display: flex; gap: 1rem; justify-content: flex-end;">
+            <button id="confirm-remove-subject-btn" class="btn btn-danger" style="padding: 0.5rem 1.5rem; white-space: nowrap;">
               Yes, Remove Subject
             </button>
-            <button id="cancel-remove-subject-btn" class="btn btn-secondary" style=" padding: 0.5rem 1rem; white-space: nowrap;">
+            <button id="cancel-remove-subject-btn" class="btn btn-secondary" style="padding: 0.5rem 1.5rem; white-space: nowrap;">
               Cancel
             </button>
           </div>
@@ -836,6 +836,29 @@
             </button>
           </div>
         </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Drop Resource Modal -->
+<div id="drop-resource-modal" class="modal-overlay" style="display: none;">
+  <div class="modal-content" style="max-width: 500px;">
+    <div class="modal-header">
+      <h2 class="modal-title" style="color: var(--danger-color);">Drop Resource</h2>
+      <button type="button" class="modal-close" id="close-drop-resource-modal-btn" aria-label="Close">&times;</button>
+    </div>
+    <div class="modal-body">
+      <p style="margin-bottom: 1.5rem;">
+        Are you sure you want to drop <strong id="resource-to-drop-name"></strong> from this subject?
+      </p>
+      <div class="form-actions" style="display: flex; gap: 1rem; justify-content: flex-end;">
+        <button id="confirm-drop-resource-btn" class="btn btn-danger" style="padding: 0.5rem 1.5rem; white-space: nowrap;">
+          Yes, Drop
+        </button>
+        <button id="cancel-drop-resource-btn" class="btn btn-secondary" style="padding: 0.5rem 1.5rem; white-space: nowrap;">
+          Cancel
+        </button>
       </div>
     </div>
   </div>

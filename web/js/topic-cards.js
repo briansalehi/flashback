@@ -77,9 +77,20 @@ window.addEventListener('DOMContentLoaded', () => {
 
     // Edit topic handlers
     const editTopicBtn = document.getElementById('edit-topic-btn');
+    const editTopicModal = document.getElementById('edit-topic-modal');
+    const closeEditTopicModalBtn = document.getElementById('close-edit-topic-modal-btn');
+    const cancelEditTopicBtn = document.getElementById('cancel-edit-topic-btn');
+
+    const closeEditTopic = () => {
+        UI.toggleElement('edit-topic-modal', false);
+        document.body.style.overflow = '';
+        UI.clearForm('edit-topic-form');
+    };
+
     if (editTopicBtn) {
         editTopicBtn.addEventListener('click', () => {
             UI.toggleElement('edit-topic-modal', true);
+            document.body.style.overflow = 'hidden';
             document.getElementById('edit-topic-name').value = topicName || '';
             document.getElementById('edit-topic-level').value = topicLevel;
             setTimeout(() => {
@@ -87,12 +98,11 @@ window.addEventListener('DOMContentLoaded', () => {
             }, 100);
         });
     }
-
-    const cancelEditTopicBtn = document.getElementById('cancel-edit-topic-btn');
-    if (cancelEditTopicBtn) {
-        cancelEditTopicBtn.addEventListener('click', () => {
-            UI.toggleElement('edit-topic-modal', false);
-            UI.clearForm('edit-topic-form');
+    if (closeEditTopicModalBtn) closeEditTopicModalBtn.addEventListener('click', closeEditTopic);
+    if (cancelEditTopicBtn) cancelEditTopicBtn.addEventListener('click', closeEditTopic);
+    if (editTopicModal) {
+        editTopicModal.addEventListener('click', (e) => {
+            if (e.target === editTopicModal) closeEditTopic();
         });
     }
 
@@ -132,8 +142,7 @@ window.addEventListener('DOMContentLoaded', () => {
                 currentUrl.searchParams.set('topicLevel', newLevel);
                 window.history.replaceState({}, '', currentUrl);
 
-                UI.toggleElement('edit-topic-modal', false);
-                UI.clearForm('edit-topic-form');
+                closeEditTopic();
                 UI.setButtonLoading('save-edit-topic-btn', false);
 
                 UI.showSuccess('Topic updated successfully');
@@ -147,16 +156,26 @@ window.addEventListener('DOMContentLoaded', () => {
 
     // Remove topic handlers
     const removeTopicBtn = document.getElementById('remove-topic-btn');
+    const removeTopicModal = document.getElementById('remove-topic-modal');
+    const closeRemoveTopicModalBtn = document.getElementById('close-remove-topic-modal-btn');
+    const cancelRemoveTopicBtn = document.getElementById('cancel-remove-topic-btn');
+
+    const closeRemoveTopic = () => {
+        UI.toggleElement('remove-topic-modal', false);
+        document.body.style.overflow = '';
+    };
+
     if (removeTopicBtn) {
         removeTopicBtn.addEventListener('click', () => {
             UI.toggleElement('remove-topic-modal', true);
+            document.body.style.overflow = 'hidden';
         });
     }
-
-    const cancelRemoveTopicBtn = document.getElementById('cancel-remove-topic-btn');
-    if (cancelRemoveTopicBtn) {
-        cancelRemoveTopicBtn.addEventListener('click', () => {
-            UI.toggleElement('remove-topic-modal', false);
+    if (closeRemoveTopicModalBtn) closeRemoveTopicModalBtn.addEventListener('click', closeRemoveTopic);
+    if (cancelRemoveTopicBtn) cancelRemoveTopicBtn.addEventListener('click', closeRemoveTopic);
+    if (removeTopicModal) {
+        removeTopicModal.addEventListener('click', (e) => {
+            if (e.target === removeTopicModal) closeRemoveTopic();
         });
     }
 
@@ -169,7 +188,7 @@ window.addEventListener('DOMContentLoaded', () => {
             try {
                 await client.removeTopic(subjectId, topicLevel, topicPosition);
 
-                UI.toggleElement('remove-topic-modal', false);
+                closeRemoveTopic();
                 UI.setButtonLoading('confirm-remove-topic-btn', false);
 
                 // Redirect back to subject page
@@ -209,6 +228,15 @@ window.addEventListener('DOMContentLoaded', () => {
         moveCardModal.addEventListener('click', (e) => {
             if (e.target === moveCardModal) {
                 closeMoveCardModal();
+            }
+        });
+    }
+
+    const confirmMoveCardBtn = document.getElementById('confirm-move-card-btn');
+    if (confirmMoveCardBtn) {
+        confirmMoveCardBtn.addEventListener('click', async () => {
+            if (currentSelectedMoveTarget) {
+                await moveCardToTopic(currentSelectedMoveTarget);
             }
         });
     }
@@ -404,10 +432,12 @@ function renderCards(cards) {
 // Global state for move card modal
 let currentMovingCardId = null;
 let currentMovingCardHeadline = null;
+let currentSelectedMoveTarget = null;
 
 window.handleMoveCard = function(cardId, cardHeadline) {
     currentMovingCardId = cardId;
     currentMovingCardHeadline = cardHeadline;
+    currentSelectedMoveTarget = null;
 
     // Open modal
     UI.toggleElement('move-card-modal', true);
@@ -419,6 +449,7 @@ window.handleMoveCard = function(cardId, cardHeadline) {
     document.getElementById('topic-search-empty').style.display = 'none';
     document.getElementById('topic-search-loading').style.display = 'none';
     document.getElementById('topics-list').innerHTML = '';
+    UI.toggleElement('confirm-move-card-btn', false);
 
     setTimeout(() => {
         document.getElementById('topic-search-input').focus();
@@ -431,17 +462,22 @@ function closeMoveCardModal() {
 
     currentMovingCardId = null;
     currentMovingCardHeadline = null;
+    currentSelectedMoveTarget = null;
     document.getElementById('topic-search-input').value = '';
     document.getElementById('topic-search-results').style.display = 'none';
     document.getElementById('topic-search-empty').style.display = 'none';
     document.getElementById('topic-search-loading').style.display = 'none';
     document.getElementById('topics-list').innerHTML = '';
+    UI.toggleElement('confirm-move-card-btn', false);
 }
 
 async function searchForTopics(searchToken) {
     if (!searchToken) {
         return;
     }
+
+    currentSelectedMoveTarget = null;
+    UI.toggleElement('confirm-move-card-btn', false);
 
     const subjectId = parseInt(UI.getUrlParam('subjectId'));
 
@@ -488,6 +524,9 @@ function displayTopicResults(topics) {
     topics.forEach(topic => {
         const topicItem = document.createElement('div');
         topicItem.className = 'topic-list-item';
+        if (currentSelectedMoveTarget && currentSelectedMoveTarget.id === topic.id && currentSelectedMoveTarget.level === topic.level && currentSelectedMoveTarget.position === topic.position) {
+            topicItem.classList.add('selected');
+        }
 
         // Highlight matching text
         let highlightedName = UI.escapeHtml(topic.name);
@@ -501,8 +540,22 @@ function displayTopicResults(topics) {
             <div style="font-size: 0.875rem; color: var(--text-muted);">Level: ${levelNames[topic.level] || 'Unknown'} • Position: ${topic.position}</div>
         `;
 
-        topicItem.addEventListener('click', async () => {
-            await moveCardToTopic(topic);
+        topicItem.addEventListener('click', () => {
+            // Update selection state
+            currentSelectedMoveTarget = topic;
+
+            // Update UI: highlight selected item
+            container.querySelectorAll('.topic-list-item').forEach(item => {
+                item.classList.remove('selected');
+            });
+            topicItem.classList.add('selected');
+
+            // Show confirm button
+            const confirmBtn = document.getElementById('confirm-move-card-btn');
+            if (confirmBtn) {
+                confirmBtn.style.display = 'block';
+                confirmBtn.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
         });
 
         container.appendChild(topicItem);
@@ -510,6 +563,10 @@ function displayTopicResults(topics) {
 }
 
 async function moveCardToTopic(targetTopic) {
+    if (!targetTopic) return;
+    
+    UI.setButtonLoading('confirm-move-card-btn', true);
+    
     const subjectId = parseInt(UI.getUrlParam('subjectId'));
     const currentTopicLevel = parseInt(UI.getUrlParam('topicLevel'));
     const currentTopicPosition = parseInt(UI.getUrlParam('topicPosition'));
@@ -532,6 +589,7 @@ async function moveCardToTopic(targetTopic) {
     } catch (err) {
         console.error('Failed to move card:', err);
         UI.showError('Failed to move card: ' + (err.message || 'Unknown error'));
+        UI.setButtonLoading('confirm-move-card-btn', false);
     }
 }
 
@@ -600,7 +658,7 @@ function renderAssessments(assessments) {
                 </div>
                 <div style="display: flex; gap: 0.6rem; align-items: center;">
                     <span class="item-badge" style="background: ${stateColor.bg}; color: ${stateColor.color}; text-transform: capitalize; font-size: 11px; height: 24px; min-width: auto; padding: 0 10px; border-radius: var(--radius-full); display: inline-flex; align-items: center;">${UI.escapeHtml(stateName)}</span>
-                    <button class="btn btn-secondary btn-sm" style="background-color: #dc3545; color: white; padding: 0.3rem 1rem; height: 34px; font-size: 13px; font-weight: 600; min-width: auto; white-space: nowrap;" onclick="handleDiminishAssessment(${card.id}, '${UI.escapeHtml(card.headline).replace(/'/g, "\\'")}')">
+                    <button class="btn btn-secondary btn-sm" style="background-color: #dc3545; color: white; padding: 0.3rem 1rem; height: 34px; font-size: 13px; font-weight: 600; min-width: auto; white-space: nowrap;" onclick="window.openDiminishAssessmentModal(${card.id}, '${UI.escapeHtml(card.headline).replace(/'/g, "\\'")}')">
                         Diminish
                     </button>
                 </div>
@@ -616,22 +674,56 @@ function renderAssessments(assessments) {
     });
 }
 
-// Global handler for diminish assessment
-window.handleDiminishAssessment = async function(cardId, cardHeadline) {
-    if (!confirm(`Are you sure you want to diminish the assessment "${cardHeadline}"? This will remove it from this topic.`)) {
-        return;
+    // Diminish Assessment handlers
+    const diminishModal = document.getElementById('diminish-assessment-modal');
+    const closeDiminishModalBtn = document.getElementById('close-diminish-assessment-modal-btn');
+    const cancelDiminishBtn = document.getElementById('cancel-diminish-assessment-btn');
+    const confirmDiminishBtn = document.getElementById('confirm-diminish-assessment-btn');
+    let assessmentIdToDiminish = null;
+
+    const closeDiminishModal = () => {
+        UI.toggleElement('diminish-assessment-modal', false);
+        document.body.style.overflow = '';
+        assessmentIdToDiminish = null;
+    };
+
+    if (closeDiminishModalBtn) closeDiminishModalBtn.addEventListener('click', closeDiminishModal);
+    if (cancelDiminishBtn) cancelDiminishBtn.addEventListener('click', closeDiminishModal);
+    if (diminishModal) {
+        diminishModal.addEventListener('click', (e) => {
+            if (e.target === diminishModal) closeDiminishModal();
+        });
     }
 
-    const subjectId = parseInt(UI.getUrlParam('subjectId'));
-    const topicPosition = parseInt(UI.getUrlParam('topicPosition'));
-    const topicLevel = parseInt(UI.getUrlParam('topicLevel'));
+    if (confirmDiminishBtn) {
+        confirmDiminishBtn.addEventListener('click', async () => {
+            if (!assessmentIdToDiminish) return;
 
-    try {
-        await client.diminishAssessment(cardId, subjectId, topicLevel, topicPosition);
-        UI.showSuccess('Assessment diminished successfully');
-        loadAssessments();
-    } catch (err) {
-        console.error('Failed to diminish assessment:', err);
-        UI.showError('Failed to diminish assessment: ' + (err.message || 'Unknown error'));
+            UI.hideMessage('error-message');
+            UI.setButtonLoading('confirm-diminish-assessment-btn', true);
+
+            try {
+                const subjectId = parseInt(UI.getUrlParam('subjectId'));
+                const topicPosition = parseInt(UI.getUrlParam('topicPosition'));
+                const topicLevel = parseInt(UI.getUrlParam('topicLevel'));
+
+                await client.diminishAssessment(assessmentIdToDiminish, subjectId, topicLevel, topicPosition);
+                closeDiminishModal();
+                UI.setButtonLoading('confirm-diminish-assessment-btn', false);
+                loadAssessments();
+                UI.showSuccess('Assessment diminished successfully');
+            } catch (err) {
+                console.error('Failed to diminish assessment:', err);
+                UI.showError('Failed to diminish assessment: ' + (err.message || 'Unknown error'));
+                UI.setButtonLoading('confirm-diminish-assessment-btn', false);
+            }
+        });
     }
-};
+
+    window.openDiminishAssessmentModal = (id, headline) => {
+        assessmentIdToDiminish = id;
+        const nameEl = document.getElementById('assessment-to-diminish-name');
+        if (nameEl) nameEl.textContent = headline;
+        UI.toggleElement('diminish-assessment-modal', true);
+        document.body.style.overflow = 'hidden';
+    };

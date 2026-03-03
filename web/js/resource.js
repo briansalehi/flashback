@@ -153,9 +153,20 @@ window.addEventListener('DOMContentLoaded', () => {
 
     // Edit resource handlers
     const editResourceBtn = document.getElementById('edit-resource-btn');
+    const editResourceModal = document.getElementById('edit-resource-modal');
+    const closeEditResourceModalBtn = document.getElementById('close-edit-resource-modal-btn');
+    const cancelEditResourceBtn = document.getElementById('cancel-edit-resource-btn');
+
+    const closeEditResource = () => {
+        UI.toggleElement('edit-resource-modal', false);
+        document.body.style.overflow = '';
+        UI.clearForm('edit-resource-form');
+    };
+
     if (editResourceBtn) {
         editResourceBtn.addEventListener('click', () => {
             UI.toggleElement('edit-resource-modal', true);
+            document.body.style.overflow = 'hidden';
 
             // Populate form with current data
             document.getElementById('edit-resource-name').value = currentResourceData.name;
@@ -179,6 +190,13 @@ window.addEventListener('DOMContentLoaded', () => {
             setTimeout(() => {
                 document.getElementById('edit-resource-name').focus();
             }, 100);
+        });
+    }
+    if (closeEditResourceModalBtn) closeEditResourceModalBtn.addEventListener('click', closeEditResource);
+    if (cancelEditResourceBtn) cancelEditResourceBtn.addEventListener('click', closeEditResource);
+    if (editResourceModal) {
+        editResourceModal.addEventListener('click', (e) => {
+            if (e.target === editResourceModal) closeEditResource();
         });
     }
 
@@ -217,13 +235,6 @@ window.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    const cancelEditResourceBtn = document.getElementById('cancel-edit-resource-btn');
-    if (cancelEditResourceBtn) {
-        cancelEditResourceBtn.addEventListener('click', () => {
-            UI.toggleElement('edit-resource-modal', false);
-            UI.clearForm('edit-resource-form');
-        });
-    }
 
     const editResourceForm = document.getElementById('edit-resource-form');
     if (editResourceForm) {
@@ -252,8 +263,7 @@ window.addEventListener('DOMContentLoaded', () => {
             try {
                 await client.editResource(resourceId, type, pattern, name, production, expiration, link);
 
-                UI.toggleElement('edit-resource-modal', false);
-                UI.clearForm('edit-resource-form');
+                closeEditResource();
                 UI.setButtonLoading('save-edit-resource-btn', false);
 
                 // Update the page and URL with new data
@@ -280,16 +290,26 @@ window.addEventListener('DOMContentLoaded', () => {
 
     // Remove resource handlers
     const removeResourceBtn = document.getElementById('remove-resource-btn');
+    const removeResourceModal = document.getElementById('remove-resource-modal');
+    const closeRemoveResourceModalBtn = document.getElementById('close-remove-resource-modal-btn');
+    const cancelRemoveResourceBtn = document.getElementById('cancel-remove-resource-btn');
+
+    const closeRemoveResource = () => {
+        UI.toggleElement('remove-resource-modal', false);
+        document.body.style.overflow = '';
+    };
+
     if (removeResourceBtn) {
         removeResourceBtn.addEventListener('click', () => {
             UI.toggleElement('remove-resource-modal', true);
+            document.body.style.overflow = 'hidden';
         });
     }
-
-    const cancelRemoveResourceBtn = document.getElementById('cancel-remove-resource-btn');
-    if (cancelRemoveResourceBtn) {
-        cancelRemoveResourceBtn.addEventListener('click', () => {
-            UI.toggleElement('remove-resource-modal', false);
+    if (closeRemoveResourceModalBtn) closeRemoveResourceModalBtn.addEventListener('click', closeRemoveResource);
+    if (cancelRemoveResourceBtn) cancelRemoveResourceBtn.addEventListener('click', closeRemoveResource);
+    if (removeResourceModal) {
+        removeResourceModal.addEventListener('click', (e) => {
+            if (e.target === removeResourceModal) closeRemoveResource();
         });
     }
 
@@ -302,7 +322,7 @@ window.addEventListener('DOMContentLoaded', () => {
             try {
                 await client.removeResource(resourceId);
 
-                UI.toggleElement('remove-resource-modal', false);
+                closeRemoveResource();
                 UI.setButtonLoading('confirm-remove-resource-btn', false);
 
                 // Redirect back to subject or home

@@ -142,15 +142,108 @@ window.addEventListener('DOMContentLoaded', () => {
         headlineEl.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); reveal(); }});
     }
 
-    // Setup edit headline functionality
-    setupEditHeadline();
+    const adjustTextareaHeight = (el) => {
+        el.style.height = 'auto';
+        el.style.height = el.scrollHeight + 'px';
+    };
+
+    // Edit Card Modal Functions
+    const openEditCardModal = () => {
+        const modal = document.getElementById('edit-card-modal');
+        if (modal) {
+            modal.style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+            const headlineEl = document.getElementById('card-headline');
+            const headlineInput = document.getElementById('edit-card-headline');
+            if (headlineInput) {
+                headlineInput.value = headlineEl ? headlineEl.textContent : '';
+                setTimeout(() => {
+                    headlineInput.focus();
+                    adjustTextareaHeight(headlineInput);
+                }, 100);
+            }
+        }
+    };
+
+    const closeEditCardModal = () => {
+        const modal = document.getElementById('edit-card-modal');
+        if (modal) {
+            modal.style.display = 'none';
+            document.body.style.overflow = '';
+            UI.clearForm('edit-card-form');
+        }
+    };
+
+    const editCardBtn = document.getElementById('edit-headline-btn');
+    if (editCardBtn) {
+        editCardBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            openEditCardModal();
+        });
+    }
+
+    const cancelEditCardBtn = document.getElementById('cancel-edit-card-btn');
+    if (cancelEditCardBtn) cancelEditCardBtn.addEventListener('click', closeEditCardModal);
+
+    const closeEditCardModalBtn = document.getElementById('close-edit-card-modal-btn');
+    if (closeEditCardModalBtn) closeEditCardModalBtn.addEventListener('click', closeEditCardModal);
+
+    const editCardModal = document.getElementById('edit-card-modal');
+    if (editCardModal) {
+        editCardModal.addEventListener('click', (e) => {
+            if (e.target === editCardModal) closeEditCardModal();
+        });
+    }
+
+    const editCardHeadlineInput = document.getElementById('edit-card-headline');
+    if (editCardHeadlineInput) {
+        editCardHeadlineInput.addEventListener('input', () => {
+            adjustTextareaHeight(editCardHeadlineInput);
+        });
+    }
+
+    const editCardForm = document.getElementById('edit-card-form');
+    if (editCardForm) {
+        editCardForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const newHeadline = document.getElementById('edit-card-headline').value.trim();
+            if (!newHeadline) {
+                UI.showError('Headline cannot be empty');
+                return;
+            }
+
+            UI.setButtonLoading('save-edit-card-btn', true);
+            try {
+                const cardId = parseInt(UI.getUrlParam('cardId'));
+                await client.editCard(cardId, newHeadline);
+                document.getElementById('card-headline').textContent = newHeadline;
+                document.title = `${newHeadline} - Flashback`;
+                closeEditCardModal();
+                UI.setButtonLoading('save-edit-card-btn', false);
+                UI.showSuccess('Card updated successfully');
+            } catch (err) {
+                console.error('Failed to edit card headline:', err);
+                UI.showError('Failed to edit headline: ' + (err.message || 'Unknown error'));
+                UI.setButtonLoading('save-edit-card-btn', false);
+            }
+        });
+    }
 
     // Setup remove card button (attach handler only; reveal on title click)
     const removeCardBtn = document.getElementById('remove-card-btn');
+    const removeCardModal = document.getElementById('remove-card-modal');
+    const closeRemoveCardModalBtn = document.getElementById('close-remove-card-modal-btn');
     if (removeCardBtn) {
         removeCardBtn.addEventListener('click', (e) => {
             e.preventDefault();
             openRemoveCardModal();
+        });
+    }
+
+    if (closeRemoveCardModalBtn) closeRemoveCardModalBtn.addEventListener('click', closeRemoveCardModal);
+    if (removeCardModal) {
+        removeCardModal.addEventListener('click', (e) => {
+            if (e.target === removeCardModal) closeRemoveCardModal();
         });
     }
 
@@ -170,10 +263,19 @@ window.addEventListener('DOMContentLoaded', () => {
     }
 
     // Setup remove block modal handlers
+    const removeBlockModal = document.getElementById('remove-block-modal');
+    const closeRemoveBlockModalBtn = document.getElementById('close-remove-block-modal-btn');
     const cancelRemoveBlockBtn = document.getElementById('cancel-remove-block-btn');
     if (cancelRemoveBlockBtn) {
         cancelRemoveBlockBtn.addEventListener('click', () => {
             closeRemoveBlockModal();
+        });
+    }
+
+    if (closeRemoveBlockModalBtn) closeRemoveBlockModalBtn.addEventListener('click', closeRemoveBlockModal);
+    if (removeBlockModal) {
+        removeBlockModal.addEventListener('click', (e) => {
+            if (e.target === removeBlockModal) closeRemoveBlockModal();
         });
     }
 
@@ -193,8 +295,6 @@ window.addEventListener('DOMContentLoaded', () => {
     // Add Block Modal Functions
     const openAddBlockModal = () => {
         UI.toggleElement('add-block-modal', true);
-        const modalOverlay = document.getElementById('modal-overlay');
-        if (modalOverlay) modalOverlay.style.display = 'block';
         document.body.style.overflow = 'hidden';
         setTimeout(() => {
             const contentInput = document.getElementById('block-content');
@@ -204,8 +304,6 @@ window.addEventListener('DOMContentLoaded', () => {
 
     const closeAddBlockModal = () => {
         UI.toggleElement('add-block-modal', false);
-        const modalOverlay = document.getElementById('modal-overlay');
-        if (modalOverlay) modalOverlay.style.display = 'none';
         document.body.style.overflow = '';
         UI.clearForm('block-form');
     };
@@ -1694,103 +1792,21 @@ window.saveSplitBlock = async function(index) {
     }
 };
 
-function setupEditHeadline() {
-    const editBtn = document.getElementById('edit-headline-btn');
-    const saveBtn = document.getElementById('save-headline-btn');
-    const cancelBtn = document.getElementById('cancel-edit-btn');
-    const headlineDisplay = document.getElementById('card-headline');
-    const editForm = document.getElementById('edit-headline-form');
-    const headlineInput = document.getElementById('headline-input');
-
-    if (!editBtn || !saveBtn || !cancelBtn || !headlineDisplay || !editForm || !headlineInput) {
-        return;
-    }
-
-    // Edit button click
-    editBtn.addEventListener('click', () => {
-        headlineInput.value = headlineDisplay.textContent;
-        headlineDisplay.style.display = 'none';
-        editBtn.style.display = 'none';
-        editForm.style.display = 'block';
-        headlineInput.focus();
-    });
-
-    // Cancel button click
-    cancelBtn.addEventListener('click', () => {
-        headlineDisplay.style.display = 'block';
-        editBtn.style.display = 'block';
-        editForm.style.display = 'none';
-    });
-
-    // Save button click
-    saveBtn.addEventListener('click', async () => {
-        const newHeadline = headlineInput.value.trim();
-
-        if (!newHeadline) {
-            UI.showError('Headline cannot be empty');
-            return;
-        }
-
-        if (newHeadline === headlineDisplay.textContent) {
-            // No change, just cancel edit mode
-            headlineDisplay.style.display = 'block';
-            editBtn.style.display = 'block';
-            editForm.style.display = 'none';
-            return;
-        }
-
-        UI.setButtonLoading('save-headline-btn', true);
-
-        try {
-            const cardId = parseInt(UI.getUrlParam('cardId'));
-            await client.editCard(cardId, newHeadline);
-
-            // Update display
-            headlineDisplay.textContent = newHeadline;
-            document.title = `${newHeadline} - Flashback`;
-
-            // Exit edit mode
-            headlineDisplay.style.display = 'block';
-            editBtn.style.display = 'block';
-            editForm.style.display = 'none';
-
-            UI.setButtonLoading('save-headline-btn', false);
-        } catch (err) {
-            console.error('Failed to edit card headline:', err);
-            UI.showError('Failed to edit headline: ' + (err.message || 'Unknown error'));
-            UI.setButtonLoading('save-headline-btn', false);
-        }
-    });
-
-    // Allow Enter key to save
-    headlineInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            saveBtn.click();
-        }
-    });
-
-    // Allow Escape key to cancel
-    headlineInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') {
-            e.preventDefault();
-            cancelBtn.click();
-        }
-    });
-}
 
 function openRemoveCardModal() {
-    const overlay = document.getElementById('modal-overlay');
-    if (overlay) overlay.style.display = 'block';
-    document.getElementById('remove-card-modal').style.display = 'block';
-    document.body.style.overflow = 'hidden';
+    const modal = document.getElementById('remove-card-modal');
+    if (modal) {
+        modal.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+    }
 }
 
 function closeRemoveCardModal() {
-    const overlay = document.getElementById('modal-overlay');
-    if (overlay) overlay.style.display = 'none';
-    document.getElementById('remove-card-modal').style.display = 'none';
-    document.body.style.overflow = '';
+    const modal = document.getElementById('remove-card-modal');
+    if (modal) {
+        modal.style.display = 'none';
+        document.body.style.overflow = '';
+    }
 }
 
 async function confirmRemoveCard() {
@@ -1850,11 +1866,9 @@ async function confirmRemoveCard() {
 // Show remove block modal
 function showRemoveBlockModal(position) {
     const modal = document.getElementById('remove-block-modal');
-    const overlay = document.getElementById('modal-overlay');
 
-    if (modal && overlay) {
-        modal.style.display = 'block';
-        overlay.style.display = 'block';
+    if (modal) {
+        UI.toggleElement('remove-block-modal', true);
         document.body.style.overflow = 'hidden';
 
         // Store position in modal for use when confirming
@@ -1865,11 +1879,9 @@ function showRemoveBlockModal(position) {
 // Close remove block modal
 function closeRemoveBlockModal() {
     const modal = document.getElementById('remove-block-modal');
-    const overlay = document.getElementById('modal-overlay');
 
-    if (modal && overlay) {
-        modal.style.display = 'none';
-        overlay.style.display = 'none';
+    if (modal) {
+        UI.toggleElement('remove-block-modal', false);
         document.body.style.overflow = '';
         delete modal.dataset.blockPosition;
     }

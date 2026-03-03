@@ -177,11 +177,21 @@ window.addEventListener('DOMContentLoaded', () => {
 
     // Edit section handlers
     const editSectionBtn = document.getElementById('edit-section-btn');
+    const editSectionModal = document.getElementById('edit-section-modal');
+    const closeEditSectionModalBtn = document.getElementById('close-edit-section-modal-btn');
+    const cancelEditSectionBtn = document.getElementById('cancel-edit-section-btn');
+
+    const closeEditSection = () => {
+        UI.toggleElement('edit-section-modal', false);
+        document.body.style.overflow = '';
+        UI.clearForm('edit-section-form');
+    };
+
     if (editSectionBtn) {
         editSectionBtn.addEventListener('click', () => {
             UI.toggleElement('edit-section-modal', true);
+            document.body.style.overflow = 'hidden';
             document.getElementById('edit-section-name').value = sectionName || '';
-            // Get the link from URL params - we'll need to add it to the URL params
             const sectionLink = UI.getUrlParam('sectionLink') || '';
             document.getElementById('edit-section-link').value = sectionLink;
             setTimeout(() => {
@@ -189,12 +199,11 @@ window.addEventListener('DOMContentLoaded', () => {
             }, 100);
         });
     }
-
-    const cancelEditSectionBtn = document.getElementById('cancel-edit-section-btn');
-    if (cancelEditSectionBtn) {
-        cancelEditSectionBtn.addEventListener('click', () => {
-            UI.toggleElement('edit-section-modal', false);
-            UI.clearForm('edit-section-form');
+    if (closeEditSectionModalBtn) closeEditSectionModalBtn.addEventListener('click', closeEditSection);
+    if (cancelEditSectionBtn) cancelEditSectionBtn.addEventListener('click', closeEditSection);
+    if (editSectionModal) {
+        editSectionModal.addEventListener('click', (e) => {
+            if (e.target === editSectionModal) closeEditSection();
         });
     }
 
@@ -217,6 +226,9 @@ window.addEventListener('DOMContentLoaded', () => {
             try {
                 await client.editSection(resourceId, sectionPosition, newName, newLink);
 
+                closeEditSection();
+                UI.setButtonLoading('save-edit-section-btn', false);
+
                 // Update the page title and section name display
                 document.getElementById('section-name').textContent = newName;
                 document.title = `${newName} - Flashback`;
@@ -226,10 +238,6 @@ window.addEventListener('DOMContentLoaded', () => {
                 currentUrl.searchParams.set('name', newName);
                 currentUrl.searchParams.set('sectionLink', newLink);
                 window.history.replaceState({}, '', currentUrl);
-
-                UI.toggleElement('edit-section-modal', false);
-                UI.clearForm('edit-section-form');
-                UI.setButtonLoading('save-edit-section-btn', false);
 
                 UI.showSuccess('Section updated successfully');
             } catch (err) {
@@ -242,17 +250,40 @@ window.addEventListener('DOMContentLoaded', () => {
 
     // Remove section handlers
     const removeSectionBtn = document.getElementById('remove-section-btn');
+    const removeSectionModal = document.getElementById('remove-section-modal');
+    const closeRemoveSectionModalBtn = document.getElementById('close-remove-section-modal-btn');
+    const cancelRemoveSectionBtn = document.getElementById('cancel-remove-section-btn');
+
+    const closeRemoveSection = () => {
+        UI.toggleElement('remove-section-modal', false);
+        document.body.style.overflow = '';
+    };
+
     if (removeSectionBtn) {
         removeSectionBtn.addEventListener('click', () => {
             UI.toggleElement('remove-section-modal', true);
+            document.body.style.overflow = 'hidden';
+        });
+    }
+    if (closeRemoveSectionModalBtn) closeRemoveSectionModalBtn.addEventListener('click', closeRemoveSection);
+    if (cancelRemoveSectionBtn) cancelRemoveSectionBtn.addEventListener('click', closeRemoveSection);
+    if (removeSectionModal) {
+        removeSectionModal.addEventListener('click', (e) => {
+            if (e.target === removeSectionModal) closeRemoveSection();
         });
     }
 
-    const cancelRemoveSectionBtn = document.getElementById('cancel-remove-section-btn');
-    if (cancelRemoveSectionBtn) {
-        cancelRemoveSectionBtn.addEventListener('click', () => {
-            UI.toggleElement('remove-section-modal', false);
+    // Setup assign card to topic modal handlers
+    const assignTopicModal = document.getElementById('assign-topic-modal');
+    if (assignTopicModal) {
+        assignTopicModal.addEventListener('click', (e) => {
+            if (e.target === assignTopicModal) closeAssignTopicModal();
         });
+    }
+
+    const confirmAssignTopicBtn = document.getElementById('confirm-assign-topic-btn');
+    if (confirmAssignTopicBtn) {
+        confirmAssignTopicBtn.addEventListener('click', assignCardToTopic);
     }
 
     const confirmRemoveSectionBtn = document.getElementById('confirm-remove-section-btn');
@@ -264,7 +295,7 @@ window.addEventListener('DOMContentLoaded', () => {
             try {
                 await client.removeSection(resourceId, sectionPosition);
 
-                UI.toggleElement('remove-section-modal', false);
+                closeRemoveSection();
                 UI.setButtonLoading('confirm-remove-section-btn', false);
 
                 // Redirect back to resource page
@@ -290,10 +321,24 @@ window.addEventListener('DOMContentLoaded', () => {
     }
 
     // Setup move card modal handlers
+    const moveCardModal = document.getElementById('move-card-modal');
+    const closeMoveCardModalBtn = document.getElementById('close-move-card-modal-btn');
     const cancelMoveCardBtn = document.getElementById('cancel-move-card-btn');
-    if (cancelMoveCardBtn) {
-        cancelMoveCardBtn.addEventListener('click', () => {
-            closeMoveCardModal();
+
+    if (closeMoveCardModalBtn) closeMoveCardModalBtn.addEventListener('click', closeMoveCardModal);
+    if (cancelMoveCardBtn) cancelMoveCardBtn.addEventListener('click', closeMoveCardModal);
+    if (moveCardModal) {
+        moveCardModal.addEventListener('click', (e) => {
+            if (e.target === moveCardModal) closeMoveCardModal();
+        });
+    }
+
+    const confirmMoveCardBtn = document.getElementById('confirm-move-card-btn');
+    if (confirmMoveCardBtn) {
+        confirmMoveCardBtn.addEventListener('click', async () => {
+            if (currentSelectedMoveSection) {
+                await moveCardToSection(currentSelectedMoveSection);
+            }
         });
     }
 
@@ -488,17 +533,20 @@ function displayBreadcrumb() {
 // Global state for move card modal
 let currentMovingCardId = null;
 let currentMovingCardHeadline = null;
+let currentSelectedMoveSection = null;
 
 let currentAssigningCardId = null;
 let currentAssigningCardHeadline = null;
 let currentSelectedSubjectId = null;
+let currentSelectedTopic = null;
 
 window.handleAssignToTopic = async function(cardId, cardHeadline) {
     currentAssigningCardId = cardId;
     currentAssigningCardHeadline = cardHeadline;
 
     const modal = document.getElementById('assign-topic-modal');
-    modal.style.display = 'block';
+    UI.toggleElement('assign-topic-modal', true);
+    document.body.style.overflow = 'hidden';
     document.getElementById('assigning-card-headline').textContent = cardHeadline;
     
     // Reset subject search
@@ -510,16 +558,14 @@ window.handleAssignToTopic = async function(cardId, cardHeadline) {
 
     document.getElementById('topics-loading').style.display = 'block';
     document.getElementById('topics-by-level').innerHTML = '';
+    UI.toggleElement('confirm-assign-topic-btn', false);
+    currentSelectedTopic = null;
 
     const subjectId = UI.getUrlParam('subjectId');
     currentSelectedSubjectId = subjectId;
 
     try {
         await loadTopicsForSubject(subjectId);
-
-        setTimeout(() => {
-            modal.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }, 100);
     } catch (err) {
         console.error('Failed to load topics:', err);
         document.getElementById('topics-loading').style.display = 'none';
@@ -530,6 +576,8 @@ window.handleAssignToTopic = async function(cardId, cardHeadline) {
 async function loadTopicsForSubject(subjectId) {
     document.getElementById('topics-loading').style.display = 'block';
     document.getElementById('topics-by-level').innerHTML = '';
+    UI.toggleElement('confirm-assign-topic-btn', false);
+    currentSelectedTopic = null;
     
     try {
         const allTopics = [];
@@ -596,6 +644,8 @@ function displaySubjectResults(subjects) {
         `;
         item.addEventListener('click', async () => {
             currentSelectedSubjectId = subject.id;
+            currentSelectedTopic = null;
+            UI.toggleElement('confirm-assign-topic-btn', false);
             document.getElementById('subject-search-results').style.display = 'none';
             document.getElementById('subject-search-input').value = subject.name;
             await loadTopicsForSubject(subject.id);
@@ -641,7 +691,19 @@ function renderTopicsForAssignment(topics) {
                     <div class="topic-item-name">${UI.escapeHtml(topic.name)}</div>
                     <div class="topic-item-meta">Pos: ${topic.position}</div>
                 `;
-                topicItem.addEventListener('click', () => assignCardToTopic(topic));
+                topicItem.addEventListener('click', () => {
+                    // Update selection
+                    document.querySelectorAll('.topic-item').forEach(el => el.classList.remove('selected'));
+                    topicItem.classList.add('selected');
+                    currentSelectedTopic = topic;
+
+                    // Show confirmation button
+                    const confirmBtn = document.getElementById('confirm-assign-topic-btn');
+                    if (confirmBtn) {
+                        confirmBtn.style.display = 'block';
+                        confirmBtn.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                });
                 levelDiv.appendChild(topicItem);
             });
 
@@ -650,11 +712,14 @@ function renderTopicsForAssignment(topics) {
     }
 }
 
-async function assignCardToTopic(topic) {
+async function assignCardToTopic() {
+    if (!currentSelectedTopic) return;
     try {
-        await client.addCardToTopic(currentAssigningCardId, currentSelectedSubjectId, topic.position, topic.level);
+        const topicName = currentSelectedTopic.name;
+        await client.addCardToTopic(currentAssigningCardId, currentSelectedSubjectId, currentSelectedTopic.position, currentSelectedTopic.level);
         closeAssignTopicModal();
-        UI.showSuccess(`Card assigned to topic "${topic.name}" successfully`);
+        UI.showSuccess(`Card assigned to topic "${topicName}" successfully`);
+        await loadCards();
     } catch (err) {
         console.error('Failed to assign card to topic:', err);
         UI.showError('Failed to assign card to topic: ' + (err.message || 'Unknown error'));
@@ -662,54 +727,63 @@ async function assignCardToTopic(topic) {
 }
 
 function closeAssignTopicModal() {
-    document.getElementById('assign-topic-modal').style.display = 'none';
+    UI.toggleElement('assign-topic-modal', false);
+    document.body.style.overflow = '';
     currentAssigningCardId = null;
     currentAssigningCardHeadline = null;
     currentSelectedSubjectId = null;
-    document.getElementById('subject-search-input').value = '';
-    document.getElementById('subject-search-results').style.display = 'none';
-    document.getElementById('subjects-list').innerHTML = '';
+    currentSelectedTopic = null;
+    UI.toggleElement('confirm-assign-topic-btn', false);
+    const subjectSearchInput = document.getElementById('subject-search-input');
+    if (subjectSearchInput) subjectSearchInput.value = '';
+    const subjectSearchResults = document.getElementById('subject-search-results');
+    if (subjectSearchResults) subjectSearchResults.style.display = 'none';
+    const subjectsList = document.getElementById('subjects-list');
+    if (subjectsList) subjectsList.innerHTML = '';
 }
 
+window.closeAssignTopicModal = closeAssignTopicModal;
 window.handleMoveCard = function(cardId, cardHeadline) {
     currentMovingCardId = cardId;
     currentMovingCardHeadline = cardHeadline;
+    currentSelectedMoveSection = null;
 
-    // Position modal below the dashboard header and scroll to it
-    const modal = document.getElementById('move-card-modal');
-    const dashboardHeader = document.querySelector('.dashboard-header');
-
-    // Open modal
-    modal.style.display = 'block';
+    UI.toggleElement('move-card-modal', true);
+    document.body.style.overflow = 'hidden';
     document.getElementById('moving-card-headline').textContent = cardHeadline;
     document.getElementById('section-search-input').value = '';
     document.getElementById('section-search-results').style.display = 'none';
     document.getElementById('section-search-empty').style.display = 'none';
     document.getElementById('section-search-loading').style.display = 'none';
     document.getElementById('sections-list').innerHTML = '';
+    UI.toggleElement('confirm-move-card-btn', false);
 
-    // Scroll modal into view smoothly
     setTimeout(() => {
-        modal.scrollIntoView({ behavior: 'smooth', block: 'start' });
         document.getElementById('section-search-input').focus();
     }, 100);
 };
 
 function closeMoveCardModal() {
-    document.getElementById('move-card-modal').style.display = 'none';
+    UI.toggleElement('move-card-modal', false);
+    document.body.style.overflow = '';
     currentMovingCardId = null;
     currentMovingCardHeadline = null;
+    currentSelectedMoveSection = null;
     document.getElementById('section-search-input').value = '';
     document.getElementById('section-search-results').style.display = 'none';
     document.getElementById('section-search-empty').style.display = 'none';
     document.getElementById('section-search-loading').style.display = 'none';
     document.getElementById('sections-list').innerHTML = '';
+    UI.toggleElement('confirm-move-card-btn', false);
 }
 
 async function searchForSections(searchToken) {
     if (!searchToken) {
         return;
     }
+
+    currentSelectedMoveSection = null;
+    UI.toggleElement('confirm-move-card-btn', false);
 
     const resourceId = parseInt(UI.getUrlParam('resourceId'));
 
@@ -746,6 +820,9 @@ function displaySectionResults(sections) {
     sections.forEach(section => {
         const sectionItem = document.createElement('div');
         sectionItem.className = 'section-list-item';
+        if (currentSelectedMoveSection && currentSelectedMoveSection.position === section.position) {
+            sectionItem.classList.add('selected');
+        }
 
         // Highlight matching text
         let highlightedName = UI.escapeHtml(section.name);
@@ -759,8 +836,22 @@ function displaySectionResults(sections) {
             <div style="font-size: 0.875rem; color: var(--text-muted);">Position: ${section.position}</div>
         `;
 
-        sectionItem.addEventListener('click', async () => {
-            await moveCardToSection(section);
+        sectionItem.addEventListener('click', () => {
+            // Update selection state
+            currentSelectedMoveSection = section;
+
+            // Update UI: highlight selected item
+            container.querySelectorAll('.section-list-item').forEach(item => {
+                item.classList.remove('selected');
+            });
+            sectionItem.classList.add('selected');
+
+            // Show confirm button
+            const confirmBtn = document.getElementById('confirm-move-card-btn');
+            if (confirmBtn) {
+                confirmBtn.style.display = 'block';
+                confirmBtn.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
         });
 
         container.appendChild(sectionItem);
@@ -768,6 +859,10 @@ function displaySectionResults(sections) {
 }
 
 async function moveCardToSection(targetSection) {
+    if (!targetSection) return;
+
+    UI.setButtonLoading('confirm-move-card-btn', true);
+
     const resourceId = parseInt(UI.getUrlParam('resourceId'));
     const currentSectionPosition = parseInt(UI.getUrlParam('sectionPosition'));
 
@@ -781,5 +876,6 @@ async function moveCardToSection(targetSection) {
     } catch (err) {
         console.error('Failed to move card:', err);
         UI.showError('Failed to move card: ' + (err.message || 'Unknown error'));
+        UI.setButtonLoading('confirm-move-card-btn', false);
     }
 }

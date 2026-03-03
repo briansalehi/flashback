@@ -60,34 +60,26 @@ window.addEventListener('DOMContentLoaded', () => {
                 }
             }, 100);
         });
-    } else {
-        console.error('Create milestone button not found!');
     }
 
+    const closeAddMilestoneModalBtn = document.getElementById('close-add-milestone-modal-btn');
     const cancelMilestoneBtn = document.getElementById('cancel-milestone-btn');
     const addMilestoneOverlay = document.getElementById('add-milestone-form-overlay');
+
+    const closeAddMilestoneModal = () => {
+        UI.toggleElement('add-milestone-form-overlay', false);
+        document.body.style.overflow = ''; // Restore scrolling
+        UI.clearForm('milestone-form');
+        clearSearchResults();
+    };
     
-    if (cancelMilestoneBtn) {
-        cancelMilestoneBtn.addEventListener('click', () => {
-            UI.toggleElement('add-milestone-form-overlay', false);
-            document.body.style.overflow = ''; // Restore scrolling
-            UI.clearForm('milestone-form');
-            clearSearchResults();
-        });
-    }
+    if (closeAddMilestoneModalBtn) closeAddMilestoneModalBtn.addEventListener('click', closeAddMilestoneModal);
+    if (cancelMilestoneBtn) cancelMilestoneBtn.addEventListener('click', closeAddMilestoneModal);
 
     if (addMilestoneOverlay) {
         addMilestoneOverlay.addEventListener('click', (e) => {
-            // If the user clicked directly on the overlay background (not on the modal content)
             if (e.target === addMilestoneOverlay) {
-                if (cancelMilestoneBtn) {
-                    cancelMilestoneBtn.click();
-                } else {
-                    UI.toggleElement('add-milestone-form-overlay', false);
-                    document.body.style.overflow = '';
-                    UI.clearForm('milestone-form');
-                    clearSearchResults();
-                }
+                closeAddMilestoneModal();
             }
         });
     }
@@ -223,23 +215,32 @@ window.addEventListener('DOMContentLoaded', () => {
 
     // Rename roadmap handlers
     const renameRoadmapBtn = document.getElementById('rename-roadmap-btn');
+    const renameModal = document.getElementById('rename-roadmap-modal');
+    const closeRenameModalBtn = document.getElementById('close-rename-modal-btn');
+    const cancelRenameBtn = document.getElementById('cancel-rename-btn');
+
     if (renameRoadmapBtn) {
         renameRoadmapBtn.addEventListener('click', () => {
-            const modal = document.getElementById('rename-roadmap-modal');
             UI.toggleElement('rename-roadmap-modal', true);
+            document.body.style.overflow = 'hidden';
             document.getElementById('rename-roadmap-name').value = roadmapName || '';
             setTimeout(() => {
-                modal.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 document.getElementById('rename-roadmap-name').focus();
             }, 100);
         });
     }
 
-    const cancelRenameBtn = document.getElementById('cancel-rename-btn');
-    if (cancelRenameBtn) {
-        cancelRenameBtn.addEventListener('click', () => {
-            UI.toggleElement('rename-roadmap-modal', false);
-            UI.clearForm('rename-roadmap-form');
+    const closeRenameModal = () => {
+        UI.toggleElement('rename-roadmap-modal', false);
+        document.body.style.overflow = '';
+        UI.clearForm('rename-roadmap-form');
+    };
+
+    if (closeRenameModalBtn) closeRenameModalBtn.addEventListener('click', closeRenameModal);
+    if (cancelRenameBtn) cancelRenameBtn.addEventListener('click', closeRenameModal);
+    if (renameModal) {
+        renameModal.addEventListener('click', (e) => {
+            if (e.target === renameModal) closeRenameModal();
         });
     }
 
@@ -260,8 +261,7 @@ window.addEventListener('DOMContentLoaded', () => {
             try {
                 await client.renameRoadmap(roadmapId, newName);
 
-                UI.toggleElement('rename-roadmap-modal', false);
-                UI.clearForm('rename-roadmap-form');
+                closeRenameModal();
                 UI.setButtonLoading('save-rename-btn', false);
 
                 // Update the URL and page
@@ -281,20 +281,27 @@ window.addEventListener('DOMContentLoaded', () => {
 
     // Remove roadmap handlers
     const removeRoadmapBtn = document.getElementById('remove-roadmap-btn');
+    const removeRoadmapModal = document.getElementById('remove-roadmap-modal');
+    const closeRemoveRoadmapModalBtn = document.getElementById('close-remove-roadmap-modal-btn');
+    const cancelRemoveBtn = document.getElementById('cancel-remove-btn');
+
     if (removeRoadmapBtn) {
         removeRoadmapBtn.addEventListener('click', () => {
-            const modal = document.getElementById('remove-roadmap-modal');
             UI.toggleElement('remove-roadmap-modal', true);
-            setTimeout(() => {
-                modal.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }, 100);
+            document.body.style.overflow = 'hidden';
         });
     }
 
-    const cancelRemoveBtn = document.getElementById('cancel-remove-btn');
-    if (cancelRemoveBtn) {
-        cancelRemoveBtn.addEventListener('click', () => {
-            UI.toggleElement('remove-roadmap-modal', false);
+    const closeRemoveRoadmapModal = () => {
+        UI.toggleElement('remove-roadmap-modal', false);
+        document.body.style.overflow = '';
+    };
+
+    if (closeRemoveRoadmapModalBtn) closeRemoveRoadmapModalBtn.addEventListener('click', closeRemoveRoadmapModal);
+    if (cancelRemoveBtn) cancelRemoveBtn.addEventListener('click', closeRemoveRoadmapModal);
+    if (removeRoadmapModal) {
+        removeRoadmapModal.addEventListener('click', (e) => {
+            if (e.target === removeRoadmapModal) closeRemoveRoadmapModal();
         });
     }
 
@@ -307,7 +314,7 @@ window.addEventListener('DOMContentLoaded', () => {
             try {
                 await client.removeRoadmap(roadmapId);
 
-                UI.toggleElement('remove-roadmap-modal', false);
+                closeRemoveRoadmapModal();
                 UI.setButtonLoading('confirm-remove-btn', false);
 
                 // Redirect to home page
@@ -319,6 +326,56 @@ window.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
+
+    // Remove milestone handlers
+    const removeMilestoneModal = document.getElementById('remove-milestone-modal');
+    const closeRemoveMilestoneModalBtn = document.getElementById('close-remove-milestone-modal-btn');
+    const cancelRemoveMilestoneBtn = document.getElementById('cancel-remove-milestone-btn');
+    const confirmRemoveMilestoneBtn = document.getElementById('confirm-remove-milestone-btn');
+    let milestoneIdToRemove = null;
+
+    const closeRemoveMilestoneModal = () => {
+        UI.toggleElement('remove-milestone-modal', false);
+        document.body.style.overflow = '';
+        UI.hideMessage('error-message');
+        milestoneIdToRemove = null;
+    };
+
+    if (closeRemoveMilestoneModalBtn) closeRemoveMilestoneModalBtn.addEventListener('click', closeRemoveMilestoneModal);
+    if (cancelRemoveMilestoneBtn) cancelRemoveMilestoneBtn.addEventListener('click', closeRemoveMilestoneModal);
+    if (removeMilestoneModal) {
+        removeMilestoneModal.addEventListener('click', (e) => {
+            if (e.target === removeMilestoneModal) closeRemoveMilestoneModal();
+        });
+    }
+
+    if (confirmRemoveMilestoneBtn) {
+        confirmRemoveMilestoneBtn.addEventListener('click', async () => {
+            if (!milestoneIdToRemove) return;
+            
+            UI.hideMessage('error-message');
+            UI.setButtonLoading('confirm-remove-milestone-btn', true);
+
+            try {
+                await client.removeMilestone(roadmapId, milestoneIdToRemove);
+                closeRemoveMilestoneModal();
+                UI.setButtonLoading('confirm-remove-milestone-btn', false);
+                await loadMilestones();
+                UI.showSuccess('Milestone removed successfully');
+            } catch (err) {
+                console.error('Remove milestone failed:', err);
+                UI.showError(err.message || 'Failed to remove milestone');
+                UI.setButtonLoading('confirm-remove-milestone-btn', false);
+            }
+        });
+    }
+
+    window.openRemoveMilestoneModal = (id, name) => {
+        milestoneIdToRemove = id;
+        document.getElementById('milestone-to-remove-name').textContent = name;
+        UI.toggleElement('remove-milestone-modal', true);
+        document.body.style.overflow = 'hidden';
+    };
 
     loadMilestones();
 });
@@ -693,12 +750,9 @@ function renderMilestones(milestones) {
         // Remove milestone handler
         const removeBtn = milestoneCard.querySelector('.milestone-remove-btn');
         if (removeBtn) {
-            removeBtn.addEventListener('click', async (e) => {
+            removeBtn.addEventListener('click', (e) => {
                 e.stopPropagation(); // Prevent card click navigation
-
-                if (confirm(`Are you sure you want to remove "${milestone.name}" from this roadmap?`)) {
-                    await removeMilestone(milestone.id);
-                }
+                window.openRemoveMilestoneModal(milestone.id, milestone.name);
             });
         }
 
