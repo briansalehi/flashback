@@ -245,10 +245,14 @@ window.addEventListener('DOMContentLoaded', () => {
 
     // Topics functionality
     const addTopicBtn = document.getElementById('add-topic-btn');
+    const topicOverlay = document.getElementById('add-topic-form-overlay');
+    const topicModal = document.getElementById('add-topic-form-modal');
+
     if (addTopicBtn) {
         addTopicBtn.addEventListener('click', (e) => {
             e.preventDefault();
-            UI.toggleElement('add-topic-form', true);
+            UI.toggleElement('add-topic-form-overlay', true);
+            document.body.style.overflow = 'hidden'; // Prevent scrolling
             setTimeout(() => {
                 const nameInput = document.getElementById('topic-name');
                 if (nameInput) {
@@ -258,11 +262,28 @@ window.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    const closeTopicModal = () => {
+        UI.toggleElement('add-topic-form-overlay', false);
+        UI.clearForm('topic-form');
+        document.body.style.overflow = ''; // Restore scrolling
+    };
+
     const cancelTopicBtn = document.getElementById('cancel-topic-btn');
     if (cancelTopicBtn) {
-        cancelTopicBtn.addEventListener('click', () => {
-            UI.toggleElement('add-topic-form', false);
-            UI.clearForm('topic-form');
+        cancelTopicBtn.addEventListener('click', closeTopicModal);
+    }
+
+    const closeTopicModalBtn = document.getElementById('close-topic-modal-btn');
+    if (closeTopicModalBtn) {
+        closeTopicModalBtn.addEventListener('click', closeTopicModal);
+    }
+
+    // Click outside to close topic modal
+    if (topicOverlay) {
+        topicOverlay.addEventListener('click', (e) => {
+            if (e.target === topicOverlay) {
+                closeTopicModal();
+            }
         });
     }
 
@@ -287,8 +308,7 @@ window.addEventListener('DOMContentLoaded', () => {
                 // Position 0 means add to end
                 await client.createTopic(subjectId, name, level, 0);
 
-                UI.toggleElement('add-topic-form', false);
-                UI.clearForm('topic-form');
+                closeTopicModal();
                 UI.setButtonLoading('save-topic-btn', false);
 
                 loadTopics();
@@ -302,15 +322,15 @@ window.addEventListener('DOMContentLoaded', () => {
 
     // Pattern options per resource type
     const patternsByType = {
-        0: [{value: 0, label: 'Chapter'}, {value: 1, label: 'Page'}, {value: 7, label: 'Section'}], // Book
-        1: [{value: 1, label: 'Page'}], // Website
-        2: [{value: 2, label: 'Session'}, {value: 3, label: 'Episode'}], // Course
-        3: [{value: 3, label: 'Episode'}], // Video
-        4: [{value: 4, label: 'Playlist'}, {value: 5, label: 'Post'}], // Channel
-        5: [{value: 5, label: 'Post'}], // Mailing List
-        6: [{value: 1, label: 'Page'}], // Manual
-        7: [{value: 0, label: 'Chapter'}, {value: 1, label: 'Page'}], // Slides
-        8: [{value: 6, label: 'Memory'}], // Nerves
+        0: [{value: 0, label: 'Chapters'}, {value: 1, label: 'Pages'}, {value: 7, label: 'Sections'}], // Book
+        1: [{value: 1, label: 'Pages'}], // Website
+        2: [{value: 2, label: 'Sessions'}, {value: 3, label: 'Episodes'}], // Course
+        3: [{value: 3, label: 'Episodes'}], // Video
+        4: [{value: 4, label: 'Playlist'}, {value: 5, label: 'Posts'}], // Channel
+        5: [{value: 5, label: 'Posts'}], // Mailing List
+        6: [{value: 1, label: 'Pages'}], // Manual
+        7: [{value: 0, label: 'Chapters'}, {value: 1, label: 'Pages'}], // Slides
+        8: [{value: 6, label: 'Memories'}], // Nerves
     };
 
     const typeSelect = document.getElementById('resource-type');
@@ -341,12 +361,17 @@ window.addEventListener('DOMContentLoaded', () => {
     });
 
     // Resources functionality
-    const addExistingResourceBtn = document.getElementById('add-existing-resource-btn');
-    if (addExistingResourceBtn) {
-        addExistingResourceBtn.addEventListener('click', (e) => {
+    const addResourceBtn = document.getElementById('add-resource-btn');
+    const resourceOverlay = document.getElementById('add-resource-form-overlay');
+
+    if (addResourceBtn) {
+        addResourceBtn.addEventListener('click', (e) => {
             e.preventDefault();
-            UI.toggleElement('search-resource-form', true);
-            UI.toggleElement('add-resource-form', false);
+            UI.toggleElement('add-resource-form-overlay', true);
+            document.body.style.overflow = 'hidden'; // Prevent scrolling
+            // Always start in search mode
+            UI.toggleElement('search-resource-section', true);
+            UI.toggleElement('create-resource-section', false);
             setTimeout(() => {
                 const searchInput = document.getElementById('search-resource-input');
                 if (searchInput) {
@@ -356,18 +381,82 @@ window.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    const createNewResourceBtn = document.getElementById('create-new-resource-btn');
-    if (createNewResourceBtn) {
-        createNewResourceBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            UI.toggleElement('add-resource-form', true);
-            UI.toggleElement('search-resource-form', false);
+    const closeResourceModal = () => {
+        UI.toggleElement('add-resource-form-overlay', false);
+        UI.clearForm('resource-form');
+        document.getElementById('search-resource-input').value = '';
+        document.getElementById('search-resource-results').innerHTML = '';
+        UI.toggleElement('no-resource-results', false);
+        UI.toggleElement('confirm-add-resource-btn', false);
+        window.currentlySelectedResource = null;
+        resetPatternSelect();
+        document.body.style.overflow = ''; // Restore scrolling
+    };
+
+    const cancelResourceModalBtn = document.getElementById('cancel-resource-modal-btn');
+    if (cancelResourceModalBtn) {
+        cancelResourceModalBtn.addEventListener('click', closeResourceModal);
+    }
+
+    const closeResourceModalBtn = document.getElementById('close-resource-modal-btn');
+    if (closeResourceModalBtn) {
+        closeResourceModalBtn.addEventListener('click', closeResourceModal);
+    }
+
+    // Click outside to close resource modal
+    if (resourceOverlay) {
+        resourceOverlay.addEventListener('click', (e) => {
+            if (e.target === resourceOverlay) {
+                closeResourceModal();
+            }
+        });
+    }
+
+    const showCreateResourceBtn = document.getElementById('show-create-resource-btn');
+    if (showCreateResourceBtn) {
+        showCreateResourceBtn.addEventListener('click', () => {
+            UI.toggleElement('search-resource-section', false);
+            UI.toggleElement('create-resource-section', true);
             setTimeout(() => {
                 const nameInput = document.getElementById('resource-name');
                 if (nameInput) {
                     nameInput.focus();
                 }
             }, 100);
+        });
+    }
+
+    const backToResourceSearchBtn = document.getElementById('back-to-resource-search-btn');
+    if (backToResourceSearchBtn) {
+        backToResourceSearchBtn.addEventListener('click', () => {
+            UI.toggleElement('search-resource-section', true);
+            UI.toggleElement('create-resource-section', false);
+            UI.toggleElement('confirm-add-resource-btn', false);
+        });
+    }
+
+    // Confirmation button for resource search
+    const confirmAddResourceBtn = document.getElementById('confirm-add-resource-btn');
+    window.currentlySelectedResource = null;
+
+    if (confirmAddResourceBtn) {
+        confirmAddResourceBtn.addEventListener('click', async () => {
+            if (!window.currentlySelectedResource) return;
+
+            UI.setButtonLoading('confirm-add-resource-btn', true);
+            try {
+                const subjectId = UI.getUrlParam('id');
+                await client.addResourceToSubject(parseInt(subjectId), window.currentlySelectedResource.id);
+
+                closeResourceModal();
+                loadResources(); // Reload the resources list
+                UI.showSuccess(`Resource "${window.currentlySelectedResource.name}" added successfully`);
+            } catch (err) {
+                console.error('Add resource failed:', err);
+                UI.showError('Failed to add resource: ' + (err.message || 'Unknown error'));
+            } finally {
+                UI.setButtonLoading('confirm-add-resource-btn', false);
+            }
         });
     }
 
@@ -380,37 +469,26 @@ window.addEventListener('DOMContentLoaded', () => {
             const query = e.target.value.trim();
 
             if (query.length < 2) {
-                document.getElementById('search-resource-results').innerHTML = '<p style="color: var(--text-muted); text-align: center; padding: 1rem;">Type at least 2 characters to search...</p>';
+                document.getElementById('search-resource-results').innerHTML = '';
+                UI.toggleElement('no-resource-results', false);
+                UI.toggleElement('confirm-add-resource-btn', false);
                 return;
             }
 
             searchTimeout = setTimeout(async () => {
+                window.currentlySelectedResource = null;
+                UI.toggleElement('confirm-add-resource-btn', false);
+                // Ensure results container is cleared when search starts
+                const resultsContainer = document.getElementById('search-resource-results');
+                if (resultsContainer) resultsContainer.innerHTML = '';
                 await searchAndDisplayResources(query);
             }, 300);
-        });
-    }
-
-    const cancelSearchResourceBtn = document.getElementById('cancel-search-resource-btn');
-    if (cancelSearchResourceBtn) {
-        cancelSearchResourceBtn.addEventListener('click', () => {
-            UI.toggleElement('search-resource-form', false);
-            document.getElementById('search-resource-input').value = '';
-            document.getElementById('search-resource-results').innerHTML = '';
         });
     }
 
     function resetPatternSelect() {
         patternSelect.disabled = true;
         patternSelect.innerHTML = '<option value="">Select type first...</option>';
-    }
-
-    const cancelResourceBtn = document.getElementById('cancel-resource-btn');
-    if (cancelResourceBtn) {
-        cancelResourceBtn.addEventListener('click', () => {
-            UI.toggleElement('add-resource-form', false);
-            UI.clearForm('resource-form');
-            resetPatternSelect();
-        });
     }
 
     const resourceForm = document.getElementById('resource-form');
@@ -441,9 +519,7 @@ window.addEventListener('DOMContentLoaded', () => {
                 const resource = await client.createResource(name, parseInt(type), parseInt(pattern), url, production, expiration);
                 await client.addResourceToSubject(subjectId, resource.id);
 
-                UI.toggleElement('add-resource-form', false);
-                UI.clearForm('resource-form');
-                resetPatternSelect();
+                closeResourceModal();
                 UI.setButtonLoading('save-resource-btn', false);
 
                 loadResources();
@@ -990,17 +1066,27 @@ async function displayBreadcrumb(roadmapId) {
 
 async function searchAndDisplayResources(query) {
     const resultsContainer = document.getElementById('search-resource-results');
-    resultsContainer.innerHTML = '<p style="color: var(--text-muted); text-align: center; padding: 1rem;">Searching...</p>';
+    const loadingIndicator = document.getElementById('search-resource-results-loading');
+    const noResults = document.getElementById('no-resource-results');
+    const confirmationBtn = document.getElementById('confirm-add-resource-btn');
+
+    if (loadingIndicator) loadingIndicator.style.display = 'block';
+    if (noResults) noResults.style.display = 'none';
+    if (confirmationBtn) confirmationBtn.style.display = 'none';
+    
+    // Do not clear resultsContainer here, it's already cleared in the timeout before calling this
+    // to prevent flickering of old results while loading
 
     try {
         const results = await client.searchResources(query);
 
-        if (results.length === 0) {
-            resultsContainer.innerHTML = '<p style="color: var(--text-muted); text-align: center; padding: 1rem;">No resources found.</p>';
+        if (loadingIndicator) loadingIndicator.style.display = 'none';
+
+        if (!results || results.length === 0) {
+            if (noResults) noResults.style.display = 'block';
             return;
         }
 
-        resultsContainer.innerHTML = '';
         const typeNames = ['Book', 'Website', 'Course', 'Video', 'Channel', 'Mailing List', 'Manual', 'Slides', 'Your Knowledge'];
         const patternNames = ['Chapters', 'Pages', 'Sessions', 'Episodes', 'Playlist', 'Posts', 'Memories'];
 
@@ -1024,26 +1110,32 @@ async function searchAndDisplayResources(query) {
                 </div>
             `;
 
-            resultItem.addEventListener('click', async () => {
-                try {
-                    const subjectId = UI.getUrlParam('id');
-                    await client.addResourceToSubject(parseInt(subjectId), resource.id);
+            resultItem.addEventListener('click', () => {
+                // Highlight selection visually
+                const allItems = resultsContainer.querySelectorAll('.search-result-item');
+                allItems.forEach(item => {
+                    item.style.borderColor = 'var(--border-color)';
+                    item.style.background = 'transparent';
+                });
+                resultItem.style.borderColor = 'var(--color-primary-start)';
+                resultItem.style.background = 'rgba(107, 70, 193, 0.05)';
 
-                    UI.toggleElement('search-resource-form', false);
-                    document.getElementById('search-resource-input').value = '';
-                    resultsContainer.innerHTML = '';
-
-                    loadResources(); // Reload the resources list
-                    UI.showSuccess(`Resource "${resource.name}" added successfully`);
-                } catch (err) {
-                    console.error('Add resource failed:', err);
-                    UI.showError('Failed to add resource: ' + (err.message || 'Unknown error'));
+                // Update selection state
+                window.currentlySelectedResource = resource;
+                UI.toggleElement('confirm-add-resource-btn', true);
+                
+                // Ensure button is visible before scrolling
+                const confirmBtn = document.getElementById('confirm-add-resource-btn');
+                if (confirmBtn) {
+                    confirmBtn.style.display = 'block'; // Force display just in case toggleElement is slow
+                    confirmBtn.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
                 }
             });
 
             resultsContainer.appendChild(resultItem);
         });
     } catch (err) {
+        if (loadingIndicator) loadingIndicator.style.display = 'none';
         console.error('Search resources failed:', err);
         resultsContainer.innerHTML = `<p style="color: var(--text-danger); text-align: center; padding: 1rem;">Search failed: ${UI.escapeHtml(err.message || 'Unknown error')}</p>`;
     }

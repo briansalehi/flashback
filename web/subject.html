@@ -92,6 +92,92 @@
           transform: translateY(-2px);
       }
 
+      .search-result-item {
+          padding: 0.75rem;
+          border: 1px solid var(--border-color);
+          border-radius: 4px;
+          margin-bottom: 0.5rem;
+          transition: background-color 0.2s;
+          cursor: pointer;
+      }
+
+      .search-result-item:hover {
+          background-color: var(--bg-secondary);
+          border-color: var(--color-primary-start);
+          transform: translateY(-1px);
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      }
+
+      .search-result-item:active {
+          background-color: var(--bg-tertiary);
+          transform: translateY(0);
+      }
+
+      .level-selector {
+          display: flex;
+          gap: 0.5rem;
+          margin-top: 1rem;
+          flex-wrap: wrap;
+      }
+
+      .level-option {
+          flex: 1;
+          min-width: 100px;
+      }
+
+      .level-option input[type="radio"] {
+          display: none;
+      }
+
+      .level-option label {
+          display: block;
+          padding: 0.5rem;
+          text-align: center;
+          border: 1px solid var(--border-color);
+          border-radius: var(--radius-md);
+          cursor: pointer;
+          transition: all var(--transition-fast);
+          font-weight: 500;
+          font-size: var(--font-size-sm);
+          height: 100%;
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+          align-items: center;
+      }
+
+      .level-option input[type="radio"]:checked + label {
+          border-color: var(--color-primary-start);
+          background-color: rgba(102, 126, 234, 0.1);
+          color: white;
+      }
+
+      .level-option label:hover {
+          border-color: var(--color-primary-start);
+      }
+
+      .level-description {
+          font-size: 0.875rem;
+          color: var(--text-muted);
+          font-weight: normal;
+          margin-top: 0.25rem;
+          font-style: italic;
+      }
+
+      .btn-close {
+          background: none;
+          border: none;
+          font-size: 1.5rem;
+          cursor: pointer;
+          color: var(--text-muted);
+          padding: 0.5rem;
+          transition: color 0.2s;
+      }
+
+      .btn-close:hover {
+          color: var(--text-primary);
+      }
+
       @media (max-width: 768px) {
           .tabs-container {
               align-items: stretch;
@@ -513,57 +599,6 @@
         <h3 style="color: var(--text-muted);">No topics yet</h3>
         <p class="text-muted">Add your first topic to this subject!</p>
       </div>
-
-      <div id="add-topic-form" class="card" style="display: none; max-width: 700px;">
-        <div class="card-header">
-          <h3 class="card-title">Add Topic</h3>
-        </div>
-
-        <form id="topic-form">
-          <div class="form-group">
-            <label class="form-label" for="topic-name">Topic Name</label>
-            <input
-                type="text"
-                id="topic-name"
-                class="form-input"
-                placeholder="e.g., Gradient Descent"
-                required
-            >
-          </div>
-
-          <div class="form-group">
-            <label class="form-label">Expertise Level</label>
-            <div style="display: flex; gap: 1rem; margin-top: 0.5rem;">
-              <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
-                <input type="radio" name="topic-level" value="0" checked>
-                <span>Surface</span>
-              </label>
-              <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
-                <input type="radio" name="topic-level" value="1">
-                <span>Depth</span>
-              </label>
-              <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
-                <input type="radio" name="topic-level" value="2">
-                <span>Origin</span>
-              </label>
-            </div>
-            <p style="font-size: 0.875rem; color: var(--text-muted); margin-top: 0.5rem;">
-              <strong>Surface:</strong> Complete understanding •
-              <strong>Depth:</strong> In-depth details •
-              <strong>Origin:</strong> Creator level
-            </p>
-          </div>
-
-          <div style="display: flex; gap: 1rem; margin-top: 2rem;">
-            <button type="submit" id="save-topic-btn" class="btn btn-primary" style=" padding: 0.5rem 1rem; white-space: nowrap;">
-              Save Topic
-            </button>
-            <button type="button" id="cancel-topic-btn" class="btn btn-secondary" style=" padding: 0.5rem 1rem; white-space: nowrap;">
-              Cancel
-            </button>
-          </div>
-        </form>
-      </div>
     </div>
 
     <!-- assessments tab -->
@@ -590,6 +625,12 @@
 
     <!-- resources tab -->
     <div id="resources-content" class="tab-content">
+      <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem;">
+        <button id="add-resource-btn" class="btn btn-primary" style="padding: 0.75rem 1.5rem; white-space: nowrap;">
+          + Add Resource
+        </button>
+      </div>
+
       <div id="resources-loading" style="display: none; text-align: center; padding: 3rem;">
         <div class="loading" style="width: 40px; height: 40px; border-width: 4px;"></div>
         <p class="text-muted mt-md">Loading resources...</p>
@@ -604,48 +645,239 @@
         <p class="text-muted">Add your first resource to this subject!</p>
       </div>
 
-      <div style="display: flex; gap: 1rem; margin-top: 2rem;">
-        <button id="add-existing-resource-btn" class="btn btn-accent mb-lg" style="padding: 0.5rem 1rem; white-space: nowrap;">
-          + Add Existing Resource
-        </button>
-        <button id="create-new-resource-btn" class="btn btn-secondary mb-lg" style="padding: 0.5rem 1rem; white-space: nowrap;">
-          + Create New Resource
-        </button>
+      <div id="add-resource-form-overlay" class="modal-overlay" style="display: none;">
+        <div id="add-resource-form-modal" class="card" style="max-width: 700px; width: 100%; margin: 0; max-height: 100%; overflow-y: auto; box-shadow: 0 20px 50px rgba(0,0,0,0.5); display: flex; flex-direction: column;">
+          <div class="card-header" style="position: sticky; top: 0; background: var(--bg-card); z-index: 10; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; flex-shrink: 0;">
+            <h3 class="card-title" style="margin: 0;">Add Resource</h3>
+            <button type="button" class="btn-close" onclick="document.getElementById('cancel-resource-modal-btn').click()" aria-label="Close" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-muted); padding: 0.5rem;">&times;</button>
+          </div>
+
+          <div style="padding: 1.5rem; display: flex; flex-direction: column; overflow-y: auto;">
+            <!-- Search mode -->
+            <div id="search-resource-section">
+              <div class="form-group">
+                <label class="form-label" for="search-resource-input">Search for a resource</label>
+                <input
+                    type="text"
+                    id="search-resource-input"
+                    class="form-input"
+                    placeholder="Type to search resources..."
+                    autocomplete="off"
+                >
+              </div>
+
+              <div id="search-resource-results-loading" style="display: none; text-align: center; padding: 1rem;">
+                <div class="loading" style="width: 30px; height: 30px; border-width: 3px; margin: 0 auto;"></div>
+              </div>
+
+              <div id="search-resource-results" style="max-height: 400px; overflow-y: auto; margin-top: 1rem;">
+                <!-- Search results will be inserted here -->
+              </div>
+
+              <div id="no-resource-results" style="display: none; text-align: center; padding: 1rem; color: var(--text-muted);">
+                No resources found
+              </div>
+
+              <div style="display: flex; gap: 1rem; margin-top: 2rem; flex-wrap: wrap;">
+                <button type="button" id="confirm-add-resource-btn" class="btn btn-primary" style="display: none; padding: 0.5rem 1rem; white-space: nowrap;">
+                  Add Resource to Subject
+                </button>
+                <button type="button" id="show-create-resource-btn" class="btn btn-secondary" style="padding: 0.5rem 1rem; white-space: nowrap;">
+                  + Create New Resource
+                </button>
+                <button type="button" id="cancel-resource-modal-btn" class="btn btn-link" style="padding: 0.5rem 1rem; white-space: nowrap;">
+                  Cancel
+                </button>
+              </div>
+            </div>
+
+            <!-- Create mode -->
+            <div id="create-resource-section" style="display: none;">
+              <form id="resource-form">
+                <div class="form-group">
+                  <label class="form-label" for="resource-name">Resource Name</label>
+                  <input
+                      type="text"
+                      id="resource-name"
+                      class="form-input"
+                      placeholder="e.g., Linear Algebra Course"
+                      required
+                  >
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label" for="resource-type">Type</label>
+                  <select id="resource-type" class="form-input" required>
+                    <option value="">Select type...</option>
+                    <option value="0">Book</option>
+                    <option value="1">Website</option>
+                    <option value="2">Course</option>
+                    <option value="3">Video</option>
+                    <option value="4">Channel</option>
+                    <option value="5">Mailing List</option>
+                    <option value="6">Manual</option>
+                    <option value="7">Slides</option>
+                    <option value="8">Your Knowledge</option>
+                  </select>
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label" for="resource-pattern">Section Pattern</label>
+                  <select id="resource-pattern" class="form-input" required disabled>
+                    <option value="">Select type first...</option>
+                  </select>
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label" for="resource-url">URL (optional)</label>
+                  <input
+                      type="url"
+                      id="resource-url"
+                      class="form-input"
+                      placeholder="https://example.com/resource"
+                  >
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label" for="resource-production">Production Date</label>
+                  <input
+                      type="date"
+                      id="resource-production"
+                      class="form-input"
+                      required
+                  >
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label" for="resource-expiration">Expiration Date (Estimated)</label>
+                  <input
+                      type="date"
+                      id="resource-expiration"
+                      class="form-input"
+                      required
+                  >
+                </div>
+
+                <div style="display: flex; gap: 1rem; margin-top: 2rem; flex-wrap: wrap;">
+                  <button type="submit" id="save-resource-btn" class="btn btn-primary" style="padding: 0.5rem 1rem; white-space: nowrap;">
+                    Create & Add Resource
+                  </button>
+                  <button type="button" id="back-to-resource-search-btn" class="btn btn-secondary" style="padding: 0.5rem 1rem; white-space: nowrap;">
+                    ← Back to search
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<div id="add-topic-form-overlay" class="modal-overlay" style="display: none;">
+  <div id="add-topic-form-modal" class="card" style="max-width: 700px; width: 100%; margin: 0; max-height: 100%; overflow-y: auto; box-shadow: 0 20px 50px rgba(0,0,0,0.5); display: flex; flex-direction: column;">
+    <div class="card-header" style="position: sticky; top: 0; background: var(--bg-card); z-index: 10; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; flex-shrink: 0;">
+      <h3 class="card-title" style="margin: 0;">Add Topic</h3>
+      <button type="button" class="btn-close" id="close-topic-modal-btn" aria-label="Close">&times;</button>
+    </div>
+
+    <form id="topic-form" style="display: flex; flex-direction: column; overflow-y: auto; padding: 1.5rem;">
+      <div class="form-group">
+        <label class="form-label" for="topic-name">Topic Name</label>
+        <input
+            type="text"
+            id="topic-name"
+            class="form-input"
+            placeholder="e.g., Gradient Descent"
+            required
+        >
       </div>
 
-      <!-- Search for existing resources -->
-      <div id="search-resource-form" class="card" style="display: none; max-width: 700px;">
-        <div class="card-header">
-          <h3 class="card-title">Search Resources</h3>
+      <div class="form-group" style="margin-top: 2rem;">
+        <label class="form-label">Select expertise level</label>
+        <div class="level-selector">
+          <div class="level-option">
+            <input type="radio" id="level-surface" name="topic-level" value="0" checked>
+            <label for="level-surface">
+              <b>Surface</b>
+              <div class="level-description">Full Comprehension</div>
+            </label>
+          </div>
+          <div class="level-option">
+            <input type="radio" id="level-depth" name="topic-level" value="1">
+            <label for="level-depth">
+              <b>Depth</b>
+              <div class="level-description">Customization Master</div>
+            </label>
+          </div>
+          <div class="level-option">
+            <input type="radio" id="level-origin" name="topic-level" value="2">
+            <label for="level-origin">
+              <b>Origin</b>
+              <div class="level-description">Creator Knowledge</div>
+            </label>
+          </div>
         </div>
+      </div>
 
+      <div style="display: flex; gap: 1rem; margin-top: 2rem; flex-wrap: wrap;">
+        <button type="submit" id="save-topic-btn" class="btn btn-primary" style="padding: 0.5rem 1rem; white-space: nowrap;">
+          Save Topic
+        </button>
+        <button type="button" id="cancel-topic-btn" class="btn btn-link" style="padding: 0.5rem 1rem; white-space: nowrap;">
+          Cancel
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div id="add-resource-form-overlay" class="modal-overlay" style="display: none;">
+  <div id="add-resource-form-modal" class="card" style="max-width: 700px; width: 100%; margin: 0; max-height: 100%; overflow-y: auto; box-shadow: 0 20px 50px rgba(0,0,0,0.5); display: flex; flex-direction: column;">
+    <div class="card-header" style="position: sticky; top: 0; background: var(--bg-card); z-index: 10; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; flex-shrink: 0;">
+      <h3 class="card-title" style="margin: 0;">Add Resource</h3>
+      <button type="button" class="btn-close" id="close-resource-modal-btn" aria-label="Close">&times;</button>
+    </div>
+
+    <div style="padding: 1.5rem; display: flex; flex-direction: column; overflow-y: auto;">
+      <!-- Search mode -->
+      <div id="search-resource-section">
         <div class="form-group">
-          <label class="form-label" for="search-resource-input">Search by name</label>
+          <label class="form-label" for="search-resource-input">Search for a resource</label>
           <input
               type="text"
               id="search-resource-input"
               class="form-input"
               placeholder="Type to search resources..."
+              autocomplete="off"
           >
+        </div>
+
+        <div id="search-resource-results-loading" style="display: none; text-align: center; padding: 1rem;">
+          <div class="loading" style="width: 30px; height: 30px; border-width: 3px; margin: 0 auto;"></div>
         </div>
 
         <div id="search-resource-results" style="max-height: 400px; overflow-y: auto; margin-top: 1rem;">
           <!-- Search results will be inserted here -->
         </div>
 
-        <div style="display: flex; gap: 1rem; margin-top: 2rem;">
-          <button type="button" id="cancel-search-resource-btn" class="btn btn-secondary">
+        <div id="no-resource-results" style="display: none; text-align: center; padding: 1rem; color: var(--text-muted);">
+          No resources found
+        </div>
+
+        <div style="display: flex; gap: 1rem; margin-top: 2rem; flex-wrap: wrap;">
+          <button type="button" id="show-create-resource-btn" class="btn btn-secondary" style="padding: 0.5rem 1rem; white-space: nowrap;">
+            + Create New Resource
+          </button>
+          <button type="button" id="cancel-resource-modal-btn" class="btn btn-link" style="padding: 0.5rem 1rem; white-space: nowrap;">
             Cancel
           </button>
         </div>
       </div>
 
-      <!-- Create new resource -->
-      <div id="add-resource-form" class="card" style="display: none; max-width: 700px;">
-        <div class="card-header">
-          <h3 class="card-title">Create New Resource</h3>
-        </div>
-
+      <!-- Create mode -->
+      <div id="create-resource-section" style="display: none;">
         <form id="resource-form">
           <div class="form-group">
             <label class="form-label" for="resource-name">Resource Name</label>
@@ -711,19 +943,19 @@
             >
           </div>
 
-          <div style="display: flex; gap: 1rem; margin-top: 2rem;">
-            <button type="submit" id="save-resource-btn" class="btn btn-primary">
-              Save Resource
+          <div style="display: flex; gap: 1rem; margin-top: 2rem; flex-wrap: wrap;">
+            <button type="submit" id="save-resource-btn" class="btn btn-primary" style="padding: 0.5rem 1rem; white-space: nowrap;">
+              Create & Add Resource
             </button>
-            <button type="button" id="cancel-resource-btn" class="btn btn-secondary">
-              Cancel
+            <button type="button" id="back-to-resource-search-btn" class="btn btn-secondary" style="padding: 0.5rem 1rem; white-space: nowrap;">
+              ← Back to search
             </button>
           </div>
         </form>
       </div>
     </div>
   </div>
-</main>
+</div>
 
 <script src="proto/flashback.js"></script>
 <script src="js/client.js"></script>
