@@ -542,7 +542,7 @@ function renderTopics(topics, maxLevel) {
                 topicItem.dataset.position = topic.position;
                 topicItem.dataset.level = topic.level;
                 topicItem.innerHTML = `
-                    <div class="item-header" style="margin-bottom: 0; align-items: flex-start; flex-wrap: wrap; gap: var(--space-xs);">
+                    <div class="item-header" style="margin-bottom: 0; align-items: flex-start; flex-wrap: wrap; gap: var(--space-xs); pointer-events: none;">
                         <div style="display: flex; align-items: center; gap: var(--space-xs); flex: 1; min-width: 150px;">
                             <span class="item-badge" style="font-size: 10px; height: 18px; min-width: 18px; padding: 0 4px; text-align: center;">${index + 1}</span>
                             <h3 class="item-title" style="margin: 0; font-size: var(--font-size-base); overflow-wrap: break-word; word-break: break-word;">${UI.escapeHtml(topic.name)}</h3>
@@ -831,6 +831,7 @@ function renderResources(resources) {
     resources.forEach(resource => {
         const resourceItem = document.createElement('div');
         resourceItem.className = 'item-block compact';
+        resourceItem.style.cursor = 'pointer';
 
         // Convert epoch seconds to readable dates
         const productionDate = resource.production ? new Date(resource.production * 1000).toLocaleDateString() : 'N/A';
@@ -840,9 +841,9 @@ function renderResources(resources) {
         const patternName = patternNames[resource.pattern] || 'Unknown';
 
         resourceItem.innerHTML = `
-            <div style="width: 100%; display: flex; flex-direction: column; gap: 0.25rem;">
-                <div class="item-header" style="margin-bottom: 0; align-items: flex-start; flex-wrap: wrap; gap: var(--space-xs);">
-                    <div style="display: flex; align-items: center; gap: var(--space-xs); flex: 1; min-width: 180px; cursor: pointer;" data-resource-id="${resource.id}">
+            <div style="width: 100%; display: flex; flex-direction: column; gap: 0.25rem; pointer-events: none;">
+                <div class="item-header" style="margin-bottom: 0; align-items: flex-start; flex-wrap: wrap; gap: var(--space-xs); pointer-events: auto;">
+                    <div style="display: flex; align-items: center; gap: var(--space-xs); flex: 1; min-width: 180px;">
                         <h3 class="item-title" style="margin: 0; font-size: var(--font-size-base); overflow-wrap: break-word; word-break: break-word;">${UI.escapeHtml(resource.name)}</h3>
                     </div>
                     <div style="display: flex; gap: var(--space-xs); align-items: center; flex-shrink: 0; margin-left: auto;">
@@ -854,7 +855,7 @@ function renderResources(resources) {
                         <button class="btn btn-secondary drop-resource-btn" data-resource-id="${resource.id}" style="background-color: #dc3545; color: white; padding: 0.2rem 0.6rem; font-size: 10px; height: 22px; min-width: auto; white-space: nowrap; border: none;">Drop</button>
                     </div>
                 </div>
-                <div class="item-footer" style="margin-top: 0; padding-top: 0.25rem; border-top: none; justify-content: flex-start; gap: var(--space-md); opacity: 0.8; align-items: center;">
+                <div class="item-footer" style="margin-top: 0; padding-top: 0.25rem; border-top: none; justify-content: flex-start; gap: var(--space-md); opacity: 0.8; align-items: center; pointer-events: none;">
                     <div class="item-meta" style="font-size: 11px;">
                         <span>📅 ${UI.escapeHtml(productionDate)}</span>
                     </div>
@@ -865,20 +866,15 @@ function renderResources(resources) {
             </div>
         `;
 
-        // Make most of the resource item clickable to go to resource page
-        const clickableElements = resourceItem.querySelectorAll('[data-resource-id]');
-        clickableElements.forEach(element => {
-            if (!element.classList.contains('drop-resource-btn')) {
-                element.addEventListener('click', () => {
-                    const subjectId = UI.getUrlParam('id');
-                    const subjectName = UI.getUrlParam('name');
-                    const roadmapId = UI.getUrlParam('roadmapId');
-                    const roadmapName = UI.getUrlParam('roadmapName');
-                    const currentTab = UI.getUrlParam('tab') || 'topics';
-                    const level = UI.getUrlParam('level') || '0';
-                    window.location.href = `resource.html?id=${resource.id}&name=${encodeURIComponent(resource.name)}&type=${resource.type}&pattern=${resource.pattern}&link=${encodeURIComponent(resource.link)}&production=${resource.production}&expiration=${resource.expiration}&subjectId=${subjectId || ''}&subjectName=${encodeURIComponent(subjectName || '')}&roadmapId=${roadmapId || ''}&roadmapName=${encodeURIComponent(roadmapName || '')}&level=${level}&tab=${currentTab}`;
-                });
-            }
+        // Make the entire resource item clickable to go to resource page
+        resourceItem.addEventListener('click', () => {
+            const subjectId = UI.getUrlParam('id');
+            const subjectName = UI.getUrlParam('name');
+            const roadmapId = UI.getUrlParam('roadmapId');
+            const roadmapName = UI.getUrlParam('roadmapName');
+            const currentTab = UI.getUrlParam('tab') || 'topics';
+            const level = UI.getUrlParam('level') || '0';
+            window.location.href = `resource.html?id=${resource.id}&name=${encodeURIComponent(resource.name)}&type=${resource.type}&pattern=${resource.pattern}&link=${encodeURIComponent(resource.link)}&production=${resource.production}&expiration=${resource.expiration}&subjectId=${subjectId || ''}&subjectName=${encodeURIComponent(subjectName || '')}&roadmapId=${roadmapId || ''}&roadmapName=${encodeURIComponent(roadmapName || '')}&level=${level}&tab=${currentTab}`;
         });
 
         // Add drop button handler

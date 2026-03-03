@@ -377,6 +377,7 @@ function renderCards(cards) {
     cards.forEach(card => {
         const cardItem = document.createElement('div');
         cardItem.className = 'item-block compact';
+        cardItem.style.cursor = 'pointer';
 
         const stateName = stateNames[card.state] || 'draft';
 
@@ -392,28 +393,27 @@ function renderCards(cards) {
         const stateColor = stateColors[stateName] || stateColors['draft'];
 
         const assignButtonHtml = card.isAssignable ? `
-                    <button class="btn btn-secondary" style="padding: 0.2rem 0.6rem; white-space: nowrap; font-size: 10px; height: 22px; min-width: auto;" onclick="handleAssignToTopic(${card.id}, '${UI.escapeHtml(card.headline).replace(/'/g, "\\'")}')">
+                    <button class="btn btn-secondary" style="padding: 0.2rem 0.6rem; white-space: nowrap; font-size: 10px; height: 22px; min-width: auto;" onclick="event.stopPropagation(); handleAssignToTopic(${card.id}, '${UI.escapeHtml(card.headline).replace(/'/g, "\\'")}')">
                         Assign
                     </button>
         ` : '';
 
         cardItem.innerHTML = `
             <div class="item-header" style="margin-bottom: 0; align-items: center;">
-                <div style="display: flex; align-items: center; gap: var(--space-xs); flex: 1; cursor: pointer;" data-card-id="${card.id}" data-card-headline="${UI.escapeHtml(card.headline)}" data-card-state="${card.state}" class="card-link">
+                <div style="display: flex; align-items: center; gap: var(--space-xs); flex: 1;" data-card-id="${card.id}" data-card-headline="${UI.escapeHtml(card.headline)}" data-card-state="${card.state}">
                     <h3 class="item-title" style="margin: 0; font-size: var(--font-size-base); font-weight: 600;">${UI.escapeHtml(card.headline)}</h3>
                 </div>
                 <div style="display: flex; gap: 0.4rem; align-items: center;">
                     <span class="item-badge" style="background: ${stateColor.bg}; color: ${stateColor.color}; text-transform: capitalize; font-size: 10px; height: 18px; min-width: auto; padding: 0 6px; border-radius: var(--radius-full);">${UI.escapeHtml(stateName)}</span>
                     ${assignButtonHtml}
-                    <button class="btn btn-secondary" style="padding: 0.2rem 0.6rem; white-space: nowrap; font-size: 10px; height: 22px; min-width: auto;" onclick="handleMoveCard(${card.id}, '${UI.escapeHtml(card.headline).replace(/'/g, "\\'")}')">
+                    <button class="btn btn-secondary" style="padding: 0.2rem 0.6rem; white-space: nowrap; font-size: 10px; height: 22px; min-width: auto;" onclick="event.stopPropagation(); handleMoveCard(${card.id}, '${UI.escapeHtml(card.headline).replace(/'/g, "\\'")}')">
                         Move
                     </button>
                 </div>
             </div>
         `;
 
-        const cardLink = cardItem.querySelector('.card-link');
-        cardLink.addEventListener('click', () => {
+        cardItem.addEventListener('click', () => {
             const milestoneLevel = UI.getUrlParam('level') || '';
             window.location.href = `card.html?cardId=${card.id}&headline=${encodeURIComponent(card.headline)}&state=${card.state}&practiceMode=selective&resourceName=${encodeURIComponent(resourceName)}&sectionName=${encodeURIComponent(sectionName)}&resourceId=${resourceId}&sectionPosition=${sectionPosition}&roadmapId=${roadmapId}&roadmapName=${encodeURIComponent(roadmapName)}&subjectId=${subjectId}&subjectName=${encodeURIComponent(subjectName)}&level=${milestoneLevel}`;
         });

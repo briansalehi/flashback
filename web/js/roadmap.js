@@ -308,19 +308,40 @@ function renderSearchResults(subjects) {
     subjects.forEach((subject, index) => {
         const resultItem = document.createElement('div');
         resultItem.className = 'search-result-item';
+        resultItem.style.cursor = 'pointer';
         resultItem.innerHTML = `
-            <label class="search-result-label">
+            <div class="search-result-label" style="pointer-events: none;">
                 <input 
                     type="radio" 
                     name="subject-select" 
                     value="${subject.id}"
                     ${index === 0 ? 'checked' : ''}
+                    style="pointer-events: auto;"
                 >
                 <div>
                     <div class="search-result-name">${UI.escapeHtml(subject.name)}</div>
                 </div>
-            </label>
+            </div>
         `;
+
+        resultItem.addEventListener('click', (e) => {
+            const radio = resultItem.querySelector('input[type="radio"]');
+            if (radio && e.target !== radio) {
+                radio.checked = true;
+            }
+            
+            // Highlight the selected item
+            container.querySelectorAll('.search-result-item').forEach(item => {
+                item.classList.remove('selected');
+            });
+            resultItem.classList.add('selected');
+        });
+
+        // Set initial selected state
+        if (index === 0) {
+            resultItem.classList.add('selected');
+        }
+
         container.appendChild(resultItem);
     });
 }
@@ -374,12 +395,12 @@ function renderMilestones(milestones) {
         milestoneCard.draggable = true;
         milestoneCard.dataset.position = milestone.position;
         milestoneCard.innerHTML = `
-            <div class="item-header" style="margin-bottom: 0; align-items: center;">
-                <div style="display: flex; align-items: center; gap: var(--space-xs); flex: 1; cursor: pointer;" class="milestone-link">
+            <div class="item-header" style="margin-bottom: 0; align-items: center; pointer-events: none;">
+                <div style="display: flex; align-items: center; gap: var(--space-xs); flex: 1;" class="milestone-link">
                     <span class="item-badge" style="font-size: 10px; height: 18px; min-width: 18px; padding: 0 4px; text-align: center;">${index + 1}</span>
                     <h3 class="item-title" style="margin: 0; font-size: var(--font-size-base);">${UI.escapeHtml(milestone.name)}</h3>
                 </div>
-                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                <div style="display: flex; align-items: center; gap: 0.5rem; pointer-events: auto;">
                     <select class="milestone-level-selector" data-id="${milestone.id}" data-current-level="${milestone.level}" title="Change level" style="cursor: pointer; padding: 0.1rem 0.4rem; font-size: 10px; background: rgba(255, 255, 255, 0.05); border: 1px solid var(--border-color); border-radius: var(--radius-sm); color: var(--color-text-primary); outline: none;">
                         <option value="0" ${milestone.level === 0 ? 'selected' : ''}>Surface</option>
                         <option value="1" ${milestone.level === 1 ? 'selected' : ''}>Depth</option>
@@ -392,8 +413,9 @@ function renderMilestones(milestones) {
 
         // Click to navigate (but not when dragging)
         let isDragging = false;
-        milestoneCard.querySelector('.milestone-link').addEventListener('click', () => {
-            if (!isDragging) {
+        milestoneCard.style.cursor = 'pointer';
+        milestoneCard.addEventListener('click', (e) => {
+            if (!isDragging && !e.target.closest('button') && !e.target.closest('select') && !e.target.closest('input')) {
                 const roadmapId = UI.getUrlParam('id');
                 const roadmapName = UI.getUrlParam('name');
                 window.location.href = `subject.html?id=${milestone.id}&name=${encodeURIComponent(milestone.name)}&level=${milestone.level}&roadmapId=${roadmapId}&roadmapName=${encodeURIComponent(roadmapName || '')}`;

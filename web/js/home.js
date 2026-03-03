@@ -262,6 +262,7 @@ function renderStudyingResources(resources) {
     sortedResources.forEach(resource => {
         const resourceItem = document.createElement('div');
         resourceItem.className = 'item-block compact';
+        resourceItem.style.cursor = 'pointer';
 
         const productionDate = resource.production ? new Date(resource.production * 1000).toLocaleDateString() : 'N/A';
         const expirationDate = resource.expiration ? new Date(resource.expiration * 1000).toLocaleDateString() : 'N/A';
@@ -274,8 +275,8 @@ function renderStudyingResources(resources) {
         const level = resource.milestone.level || '';
 
         resourceItem.innerHTML = `
-            <div style="width: 100%; display: flex; flex-direction: column; gap: 0.25rem;">
-                <div class="item-header" style="margin-bottom: 0; align-items: center;">
+            <div style="width: 100%; display: flex; flex-direction: column; gap: 0.25rem; pointer-events: none;">
+                <div class="item-header" style="margin-bottom: 0; align-items: center; pointer-events: auto;">
                     <div style="display: flex; align-items: center; gap: var(--space-xs); flex: 1;">
                         <h3 class="item-title" style="margin: 0; font-size: var(--font-size-base);">${UI.escapeHtml(resource.name)}</h3>
                     </div>
@@ -287,7 +288,7 @@ function renderStudyingResources(resources) {
                         </a>
                     </div>
                 </div>
-                <div class="item-footer" style="margin-top: 0; padding-top: 0.25rem; border-top: none; justify-content: flex-start; gap: var(--space-md); opacity: 0.8;">
+                <div class="item-footer" style="margin-top: 0; padding-top: 0.25rem; border-top: none; justify-content: flex-start; gap: var(--space-md); opacity: 0.8; pointer-events: none;">
                     <div class="item-meta" style="font-size: 11px;">
                         <span>📅 ${UI.escapeHtml(productionDate)}</span>
                     </div>
@@ -337,6 +338,7 @@ function renderNerves(nerves) {
     nerves.forEach(nerve => {
         const nerveItem = document.createElement('div');
         nerveItem.className = 'item-block compact';
+        nerveItem.style.cursor = 'pointer';
 
         // Convert epoch seconds to readable dates
         const productionDate = nerve.production ? new Date(nerve.production * 1000).toLocaleDateString() : 'N/A';
@@ -356,8 +358,8 @@ function renderNerves(nerves) {
         ` : '';
 
         nerveItem.innerHTML = `
-            <div style="width: 100%; display: flex; flex-direction: column; gap: 0.25rem;">
-                <div class="item-header" style="margin-bottom: 0; align-items: center;">
+            <div style="width: 100%; display: flex; flex-direction: column; gap: 0.25rem; pointer-events: none;">
+                <div class="item-header" style="margin-bottom: 0; align-items: center; pointer-events: auto;">
                     <div style="display: flex; align-items: center; gap: var(--space-xs); flex: 1;">
                         <h3 class="item-title" style="margin: 0; font-size: var(--font-size-base);">${UI.escapeHtml(nerve.name)}</h3>
                     </div>
@@ -370,7 +372,7 @@ function renderNerves(nerves) {
                         </a>
                     </div>
                 </div>
-                <div class="item-footer" style="margin-top: 0; padding-top: 0.25rem; border-top: none; justify-content: flex-start; gap: var(--space-md); opacity: 0.8;">
+                <div class="item-footer" style="margin-top: 0; padding-top: 0.25rem; border-top: none; justify-content: flex-start; gap: var(--space-md); opacity: 0.8; pointer-events: none;">
                     <div class="item-meta" style="font-size: 11px;">
                         <span>📅 ${UI.escapeHtml(productionDate)}</span>
                     </div>

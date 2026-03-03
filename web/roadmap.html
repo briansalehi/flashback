@@ -34,6 +34,19 @@
 
       .search-result-item:hover {
           background-color: var(--bg-secondary);
+          border-color: var(--color-primary-start);
+          transform: translateY(-1px);
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      }
+
+      .search-result-item:active {
+          background-color: var(--bg-tertiary);
+          transform: translateY(0);
+      }
+
+      .search-result-item.selected {
+          border-color: var(--color-primary-start);
+          background-color: rgba(102, 126, 234, 0.1);
       }
 
       .search-result-label {
