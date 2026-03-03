@@ -508,7 +508,8 @@ function displayContextBreadcrumb(subjectName, topicName, resourceName, sectionN
                 const resourceLink = UI.getUrlParam('resourceLink') || '';
                 const resourceProduction = UI.getUrlParam('resourceProduction') || '0';
                 const resourceExpiration = UI.getUrlParam('resourceExpiration') || '0';
-                const sectionLink = `section-cards.html?resourceId=${resourceId}&sectionPosition=${sectionPosition}&name=${encodeURIComponent(sectionName)}&resourceName=${encodeURIComponent(resourceName)}&resourceType=${resourceType}&resourcePattern=${resourcePattern}&resourceLink=${encodeURIComponent(resourceLink)}&resourceProduction=${resourceProduction}&resourceExpiration=${resourceExpiration}&subjectId=${subjectId}&subjectName=${encodeURIComponent(localSubjectName)}&roadmapId=${roadmapId}&roadmapName=${encodeURIComponent(roadmapName)}&level=${milestoneLevel}&tab=${currentTab}`;
+                const sectionState = UI.getUrlParam('sectionState') || '0';
+                const sectionLink = `section-cards.html?resourceId=${resourceId}&sectionPosition=${sectionPosition}&sectionState=${sectionState}&name=${encodeURIComponent(sectionName)}&resourceName=${encodeURIComponent(resourceName)}&resourceType=${resourceType}&resourcePattern=${resourcePattern}&resourceLink=${encodeURIComponent(resourceLink)}&resourceProduction=${resourceProduction}&resourceExpiration=${resourceExpiration}&subjectId=${subjectId}&subjectName=${encodeURIComponent(localSubjectName)}&roadmapId=${roadmapId}&roadmapName=${encodeURIComponent(roadmapName)}&level=${milestoneLevel}&tab=${currentTab}`;
                 breadcrumbParts.push(`<a href="${sectionLink}" style="color: var(--text-primary); text-decoration: none;">${UI.escapeHtml(sectionName)}</a>`);
             }
         }
@@ -736,7 +737,8 @@ function buildSectionCardUrl(card) {
     const roadmapName = UI.getUrlParam('roadmapName') || '';
     const subjectId = UI.getUrlParam('subjectId') || '';
     const subjectName = UI.getUrlParam('subjectName') || '';
-    return `card.html?cardId=${card.id}&headline=${encodeURIComponent(card.headline)}&state=${card.state}&practiceMode=selective&resourceName=${encodeURIComponent(resourceName)}&sectionName=${encodeURIComponent(sectionName)}&resourceId=${resourceId}&sectionPosition=${sectionPosition}&roadmapId=${roadmapId}&roadmapName=${encodeURIComponent(roadmapName)}&subjectId=${subjectId}&subjectName=${encodeURIComponent(subjectName)}`;
+    const sectionState = UI.getUrlParam('sectionState') || '0';
+    return `card.html?cardId=${card.id}&headline=${encodeURIComponent(card.headline)}&state=${card.state}&sectionState=${sectionState}&practiceMode=selective&resourceName=${encodeURIComponent(resourceName)}&sectionName=${encodeURIComponent(sectionName)}&resourceId=${resourceId}&sectionPosition=${sectionPosition}&roadmapId=${roadmapId}&roadmapName=${encodeURIComponent(roadmapName)}&subjectId=${subjectId}&subjectName=${encodeURIComponent(subjectName)}`;
 }
 
 async function addSelectiveNavigation({ contextType, cards, currentIndex }) {
