@@ -64,10 +64,24 @@ window.addEventListener('DOMContentLoaded', () => {
     }
 
     const cancelRenameSubjectBtn = document.getElementById('cancel-rename-subject-btn');
+    const closeRenameSubjectModalBtn = document.getElementById('close-rename-subject-modal-btn');
+    const closeRename = () => {
+        UI.toggleElement('rename-subject-modal', false);
+        UI.clearForm('rename-subject-form');
+    };
     if (cancelRenameSubjectBtn) {
-        cancelRenameSubjectBtn.addEventListener('click', () => {
-            UI.toggleElement('rename-subject-modal', false);
-            UI.clearForm('rename-subject-form');
+        cancelRenameSubjectBtn.addEventListener('click', closeRename);
+    }
+    if (closeRenameSubjectModalBtn) {
+        closeRenameSubjectModalBtn.addEventListener('click', closeRename);
+    }
+
+    const renameSubjectModal = document.getElementById('rename-subject-modal');
+    if (renameSubjectModal) {
+        renameSubjectModal.addEventListener('click', (e) => {
+            if (e.target === renameSubjectModal) {
+                closeRename();
+            }
         });
     }
 
@@ -118,9 +132,23 @@ window.addEventListener('DOMContentLoaded', () => {
     }
 
     const cancelRemoveSubjectBtn = document.getElementById('cancel-remove-subject-btn');
+    const closeRemoveSubjectModalBtn = document.getElementById('close-remove-subject-modal-btn');
+    const closeRemove = () => {
+        UI.toggleElement('remove-subject-modal', false);
+    };
     if (cancelRemoveSubjectBtn) {
-        cancelRemoveSubjectBtn.addEventListener('click', () => {
-            UI.toggleElement('remove-subject-modal', false);
+        cancelRemoveSubjectBtn.addEventListener('click', closeRemove);
+    }
+    if (closeRemoveSubjectModalBtn) {
+        closeRemoveSubjectModalBtn.addEventListener('click', closeRemove);
+    }
+
+    const removeSubjectModal = document.getElementById('remove-subject-modal');
+    if (removeSubjectModal) {
+        removeSubjectModal.addEventListener('click', (e) => {
+            if (e.target === removeSubjectModal) {
+                closeRemove();
+            }
         });
     }
 
@@ -269,16 +297,15 @@ window.addEventListener('DOMContentLoaded', () => {
     };
 
     const cancelTopicBtn = document.getElementById('cancel-topic-btn');
+    const closeTopicModalBtn = document.getElementById('close-topic-modal-btn');
+
     if (cancelTopicBtn) {
         cancelTopicBtn.addEventListener('click', closeTopicModal);
     }
-
-    const closeTopicModalBtn = document.getElementById('close-topic-modal-btn');
     if (closeTopicModalBtn) {
         closeTopicModalBtn.addEventListener('click', closeTopicModal);
     }
 
-    // Click outside to close topic modal
     if (topicOverlay) {
         topicOverlay.addEventListener('click', (e) => {
             if (e.target === topicOverlay) {
@@ -286,6 +313,8 @@ window.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
+
+
 
     const topicForm = document.getElementById('topic-form');
     if (topicForm) {
@@ -618,12 +647,12 @@ function renderTopics(topics, maxLevel) {
                 topicItem.dataset.position = topic.position;
                 topicItem.dataset.level = topic.level;
                 topicItem.innerHTML = `
-                    <div class="item-header" style="margin-bottom: 0; align-items: flex-start; flex-wrap: wrap; gap: var(--space-xs); pointer-events: none;">
-                        <div style="display: flex; align-items: center; gap: var(--space-xs); flex: 1; min-width: 150px;">
+                    <div class="item-header" style="margin-bottom: 0; align-items: flex-start; flex-wrap: wrap; gap: var(--space-xs);">
+                        <div style="display: flex; align-items: flex-start; gap: var(--space-xs); flex: 1; min-width: 150px; pointer-events: none;">
                             <span class="item-badge" style="font-size: 10px; height: 18px; min-width: 18px; padding: 0 4px; text-align: center;">${index + 1}</span>
                             <h3 class="item-title" style="margin: 0; font-size: var(--font-size-base); overflow-wrap: break-word; word-break: break-word;">${UI.escapeHtml(topic.name)}</h3>
                         </div>
-                        <span class="item-badge" style="background: rgba(102, 126, 234, 0.2); color: var(--color-primary-start); font-size: 10px; height: 18px; min-width: auto; padding: 0 6px; margin-left: auto;">${UI.escapeHtml(levelInfo[level].name)}</span>
+                        <span class="item-badge" style="background: rgba(102, 126, 234, 0.2); color: var(--color-primary-start); font-size: 10px; height: 18px; min-width: auto; padding: 0 6px; margin-left: auto; pointer-events: none;">${UI.escapeHtml(levelInfo[level].name)}</span>
                     </div>
                 `;
 
@@ -918,13 +947,13 @@ function renderResources(resources) {
 
         resourceItem.innerHTML = `
             <div style="width: 100%; display: flex; flex-direction: column; gap: 0.25rem; pointer-events: none;">
-                <div class="item-header" style="margin-bottom: 0; align-items: flex-start; flex-wrap: wrap; gap: var(--space-xs); pointer-events: auto;">
-                    <div style="display: flex; align-items: center; gap: var(--space-xs); flex: 1; min-width: 180px;">
+                <div class="item-header" style="margin-bottom: 0; align-items: flex-start; flex-wrap: wrap; gap: var(--space-xs);">
+                    <div style="display: flex; align-items: flex-start; gap: var(--space-xs); flex: 1; min-width: 180px; pointer-events: none;">
                         <h3 class="item-title" style="margin: 0; font-size: var(--font-size-base); overflow-wrap: break-word; word-break: break-word;">${UI.escapeHtml(resource.name)}</h3>
                     </div>
-                    <div style="display: flex; gap: var(--space-xs); align-items: center; flex-shrink: 0; margin-left: auto;">
-                        <span class="item-badge" style="font-size: 10px; height: 18px; min-width: auto; padding: 0 6px;">${UI.escapeHtml(typeName)}</span>
-                        <span class="item-badge" style="background: rgba(102, 126, 234, 0.2); color: var(--color-primary-start); font-size: 10px; height: 18px; min-width: auto; padding: 0 6px;">${UI.escapeHtml(patternName)}</span>
+                    <div style="display: flex; gap: var(--space-xs); align-items: center; flex-shrink: 0; margin-left: auto; pointer-events: auto;">
+                        <span class="item-badge" style="font-size: 10px; height: 18px; min-width: auto; padding: 0 6px; pointer-events: none;">${UI.escapeHtml(typeName)}</span>
+                        <span class="item-badge" style="background: rgba(102, 126, 234, 0.2); color: var(--color-primary-start); font-size: 10px; height: 18px; min-width: auto; padding: 0 6px; pointer-events: none;">${UI.escapeHtml(patternName)}</span>
                         <a href="${UI.escapeHtml(resource.link)}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()" class="external-link-icon" title="Open Link" style="display: flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 50%; background: rgba(255,255,255,0.05); transition: background 0.2s;">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
                         </a>

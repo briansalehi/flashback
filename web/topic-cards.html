@@ -128,7 +128,7 @@
           <button id="edit-topic-btn" class="btn btn-secondary" style="display: none; padding: 0.5rem 1rem; white-space: nowrap;">
             Edit Topic
           </button>
-          <button id="remove-topic-btn" class="btn btn-secondary" style="display: none; background-color: #dc3545; color: white; padding: 0.5rem 1rem; font-size: 0.875rem; white-space: nowrap;">
+          <button id="remove-topic-btn" class="btn btn-secondary" style="display: none; background-color: #dc3545; color: white; padding: 0.5rem 1rem; white-space: nowrap;">
             Remove Topic
           </button>
         </div>
@@ -162,10 +162,10 @@
           </select>
         </div>
         <div style="display: flex; gap: 1rem; margin-top: 2rem;">
-          <button type="submit" id="save-edit-topic-btn" class="btn btn-primary">
+          <button type="submit" id="save-edit-topic-btn" class="btn btn-primary" style="padding: 0.5rem 1.5rem; white-space: nowrap;">
             Save Changes
           </button>
-          <button type="button" id="cancel-edit-topic-btn" class="btn btn-secondary">
+          <button type="button" id="cancel-edit-topic-btn" class="btn btn-secondary" style="padding: 0.5rem 1.5rem; white-space: nowrap;">
             Cancel
           </button>
         </div>
@@ -181,8 +181,8 @@
         <p style="color: var(--text-muted); margin-bottom: 1.5rem;">Are you sure you want to remove this topic? This
           action cannot be undone. All cards in this topic will also be removed.</p>
         <div style="display: flex; gap: 1rem; justify-content: flex-end;">
-          <button id="cancel-remove-topic-btn" class="btn btn-secondary">Cancel</button>
-          <button id="confirm-remove-topic-btn" class="btn btn-danger">Remove Topic</button>
+          <button id="cancel-remove-topic-btn" class="btn btn-secondary" style="padding: 0.5rem 1.5rem; white-space: nowrap;">Cancel</button>
+          <button id="confirm-remove-topic-btn" class="btn btn-danger" style="padding: 0.5rem 1.5rem; white-space: nowrap;">Remove Topic</button>
         </div>
       </div>
     </div>
@@ -214,32 +214,35 @@
         + Add Assessment
       </button>
 
-      <div id="add-assessment-form" class="card" style="display: none; max-width: 700px;">
-        <div class="card-header">
-          <h3 class="card-title">Add Assessment</h3>
+      <div id="add-assessment-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-content" style="max-width: 700px;">
+          <div class="modal-header">
+            <h3 class="modal-title">Add Assessment</h3>
+            <button id="close-assessment-modal-btn" class="modal-close" aria-label="Close">&times;</button>
+          </div>
+
+          <form id="assessment-form">
+            <div class="form-group">
+              <label class="form-label" for="assessment-headline">Headline (in question form)</label>
+              <input
+                  type="text"
+                  id="assessment-headline"
+                  class="form-input"
+                  placeholder="e.g., What is gradient descent?"
+                  required
+              >
+            </div>
+
+            <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+              <button type="submit" id="save-assessment-btn" class="btn btn-primary" style="padding: 0.5rem 1.5rem; white-space: nowrap;">
+                Save Assessment
+              </button>
+              <button id="cancel-assessment-btn" type="button" class="btn btn-secondary" style="padding: 0.5rem 1.5rem; white-space: nowrap;">
+                Cancel
+              </button>
+            </div>
+          </form>
         </div>
-
-        <form id="assessment-form">
-          <div class="form-group">
-            <label class="form-label" for="assessment-headline">Headline (in question form)</label>
-            <input
-                type="text"
-                id="assessment-headline"
-                class="form-input"
-                placeholder="e.g., What is gradient descent?"
-                required
-            >
-          </div>
-
-          <div style="display: flex; gap: 1rem; margin-top: 2rem;">
-            <button type="submit" id="save-assessment-btn" class="btn btn-primary">
-              Save Assessment
-            </button>
-            <button type="button" id="cancel-assessment-btn" class="btn btn-secondary">
-              Cancel
-            </button>
-          </div>
-        </form>
       </div>
 
       <div id="assessments-list">
@@ -253,40 +256,43 @@
     </div>
 
     <!-- Move Card Modal -->
-    <div id="move-card-modal" class="card" style="display: none; max-width: 600px; margin-bottom: 2rem;">
-      <div class="card-header">
-        <h3 class="card-title">Move Card to Topic</h3>
-      </div>
-      <div style="padding: 1rem 0;">
-        <p style="color: var(--text-muted); margin-bottom: 1rem;">
-          Moving: <strong id="moving-card-headline"></strong>
-        </p>
-        <div class="form-group">
-          <label class="form-label" for="topic-search-input">Search for target topic</label>
-          <input
-              type="text"
-              id="topic-search-input"
-              class="form-input"
-              placeholder="Type to search topics..."
-              autocomplete="off"
-          >
+    <div id="move-card-modal" class="modal-overlay" style="display: none;">
+      <div class="modal-content" style="max-width: 600px;">
+        <div class="modal-header">
+          <h3 class="modal-title">Move Card to Topic</h3>
+          <button id="close-move-card-modal-btn" class="modal-close" aria-label="Close">&times;</button>
         </div>
-        <div id="topic-search-loading" style="display: none; text-align: center; padding: 1rem;">
-          <div class="loading" style="width: 24px; height: 24px; border-width: 3px; margin: 0 auto;"></div>
-          <p class="text-muted" style="margin-top: 0.5rem; font-size: 0.875rem;">Searching...</p>
-        </div>
-        <div id="topic-search-results" style="margin-top: 1rem; display: none;">
-          <h4 style="font-size: 0.9rem; font-weight: 600; margin-bottom: 0.5rem;">Select target topic:</h4>
-          <div id="topics-list" style="max-height: 300px; overflow-y: auto;">
-            <!-- topics will be inserted here -->
+        <div style="padding: 1rem 0;">
+          <p style="color: var(--text-muted); margin-bottom: 1rem;">
+            Moving: <strong id="moving-card-headline"></strong>
+          </p>
+          <div class="form-group">
+            <label class="form-label" for="topic-search-input">Search for target topic</label>
+            <input
+                type="text"
+                id="topic-search-input"
+                class="form-input"
+                placeholder="Type to search topics..."
+                autocomplete="off"
+            >
           </div>
-        </div>
-        <div id="topic-search-empty"
-             style="display: none; text-align: center; padding: 1rem; color: var(--text-muted); font-size: 0.875rem;">
-          No topics found
-        </div>
-        <div style="display: flex; gap: 1rem; justify-content: flex-end; margin-top: 1.5rem;">
-          <button id="cancel-move-card-btn" class="btn btn-secondary">Cancel</button>
+          <div id="topic-search-loading" style="display: none; text-align: center; padding: 1rem;">
+            <div class="loading" style="width: 24px; height: 24px; border-width: 3px; margin: 0 auto;"></div>
+            <p class="text-muted" style="margin-top: 0.5rem; font-size: 0.875rem;">Searching...</p>
+          </div>
+          <div id="topic-search-results" style="margin-top: 1rem; display: none;">
+            <h4 style="font-size: 0.9rem; font-weight: 600; margin-bottom: 0.5rem;">Select target topic:</h4>
+            <div id="topics-list" style="max-height: 300px; overflow-y: auto;">
+              <!-- topics will be inserted here -->
+            </div>
+          </div>
+          <div id="topic-search-empty"
+               style="display: none; text-align: center; padding: 1rem; color: var(--text-muted); font-size: 0.875rem;">
+            No topics found
+          </div>
+          <div style="display: flex; gap: 1rem; justify-content: flex-end; margin-top: 1.5rem;">
+            <button id="cancel-move-card-btn" class="btn btn-secondary" style="padding: 0.5rem 1.5rem; white-space: nowrap;">Cancel</button>
+          </div>
         </div>
       </div>
     </div>

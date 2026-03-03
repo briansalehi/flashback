@@ -7,175 +7,270 @@ window.addEventListener('DOMContentLoaded', () => {
         return;
     }
 
-    document.getElementById('signout-btn').addEventListener('click', async (e) => {
-        e.preventDefault();
-        try {
-            await client.signOut();
-        } catch (err) {
-            console.error('Sign out error:', err);
-        }
-        localStorage.removeItem('token');
-        window.location.href = '/index.html';
-    });
+    const signoutBtn = document.getElementById('signout-btn');
+    if (signoutBtn) {
+        signoutBtn.addEventListener('click', async (e) => {
+            e.preventDefault();
+            try {
+                await client.signOut();
+            } catch (err) {
+                console.error('Sign out error:', err);
+            }
+            localStorage.removeItem('token');
+            window.location.href = '/index.html';
+        });
+    }
 
-    // Show/hide create form
-    document.getElementById('create-roadmap-btn').addEventListener('click', () => {
-        UI.toggleElement('create-form', true);
-        document.getElementById('roadmap-name').focus();
-    });
+    // Roadmap modal handlers
+    const createRoadmapBtn = document.getElementById('create-roadmap-btn');
+    if (createRoadmapBtn) {
+        createRoadmapBtn.addEventListener('click', () => {
+            UI.toggleElement('roadmap-modal', true);
+            UI.toggleElement('create-form-section', true);
+            UI.toggleElement('clone-roadmap-section', false);
+            const roadmapModalTitle = document.getElementById('roadmap-modal-title');
+            if (roadmapModalTitle) {
+                roadmapModalTitle.textContent = 'Create New Roadmap';
+            }
+            const roadmapName = document.getElementById('roadmap-name');
+            if (roadmapName) {
+                roadmapName.focus();
+            }
+            document.body.style.overflow = 'hidden';
+        });
+    }
 
-    document.getElementById('cancel-roadmap-btn').addEventListener('click', () => {
-        UI.toggleElement('create-form', false);
+    const closeRoadmapModal = () => {
+        UI.toggleElement('roadmap-modal', false);
         UI.clearForm('roadmap-form');
         UI.toggleElement('roadmap-search-results', false);
-        document.getElementById('suggested-roadmaps-list').innerHTML = '';
-    });
+        const suggestedList = document.getElementById('suggested-roadmaps-list');
+        if (suggestedList) {
+            suggestedList.innerHTML = '';
+        }
+        selectedRoadmapForClone = null;
+        document.body.style.overflow = '';
+    };
+
+    // Close on backdrop click
+    const roadmapModal = document.getElementById('roadmap-modal');
+    if (roadmapModal) {
+        roadmapModal.addEventListener('click', (e) => {
+            if (e.target.id === 'roadmap-modal') {
+                closeRoadmapModal();
+            }
+        });
+    }
+
+    // Close buttons and Back button
+    const closeRoadmapModalBtn = document.getElementById('close-roadmap-modal-btn');
+    if (closeRoadmapModalBtn) {
+        closeRoadmapModalBtn.addEventListener('click', closeRoadmapModal);
+    }
+
+    const cancelRoadmapBtn = document.getElementById('cancel-roadmap-btn');
+    if (cancelRoadmapBtn) {
+        cancelRoadmapBtn.addEventListener('click', closeRoadmapModal);
+    }
+
+    const cancelCloneBtn = document.getElementById('cancel-clone-btn');
+    if (cancelCloneBtn) {
+        cancelCloneBtn.addEventListener('click', () => {
+            UI.toggleElement('create-form-section', true);
+            UI.toggleElement('clone-roadmap-section', false);
+            const roadmapModalTitle = document.getElementById('roadmap-modal-title');
+            if (roadmapModalTitle) {
+                roadmapModalTitle.textContent = 'Create New Roadmap';
+            }
+            selectedRoadmapForClone = null;
+        });
+    }
 
     // Search roadmaps as user types
     let roadmapSearchTimeout;
-    document.getElementById('roadmap-name').addEventListener('input', async (e) => {
-        const searchToken = e.target.value.trim();
+    const roadmapNameInput = document.getElementById('roadmap-name');
+    if (roadmapNameInput) {
+        roadmapNameInput.addEventListener('input', async (e) => {
+            const searchToken = e.target.value.trim();
 
-        clearTimeout(roadmapSearchTimeout);
+            clearTimeout(roadmapSearchTimeout);
 
-        if (searchToken.length < 3) {
-            UI.toggleElement('roadmap-search-results', false);
-            return;
-        }
-
-        roadmapSearchTimeout = setTimeout(async () => {
-            try {
-                const roadmaps = await client.searchRoadmaps(searchToken);
-                displaySuggestedRoadmaps(roadmaps);
-            } catch (err) {
-                console.error('Roadmap search error:', err);
+            if (searchToken.length < 3) {
+                UI.toggleElement('roadmap-search-results', false);
+                return;
             }
-        }, 300);
-    });
 
-    // Clone roadmap modal handlers
+            roadmapSearchTimeout = setTimeout(async () => {
+                try {
+                    const roadmaps = await client.searchRoadmaps(searchToken);
+                    displaySuggestedRoadmaps(roadmaps);
+                } catch (err) {
+                    console.error('Roadmap search error:', err);
+                }
+            }, 300);
+        });
+    }
 
-    document.getElementById('cancel-clone-btn').addEventListener('click', () => {
-        UI.toggleElement('clone-roadmap-modal', false);
-        selectedRoadmapForClone = null;
-    });
 
-    document.getElementById('confirm-clone-btn').addEventListener('click', async () => {
-        if (!selectedRoadmapForClone) return;
+    const confirmCloneBtn = document.getElementById('confirm-clone-btn');
+    if (confirmCloneBtn) {
+        confirmCloneBtn.addEventListener('click', async () => {
+            if (!selectedRoadmapForClone) return;
 
-        UI.setButtonLoading('confirm-clone-btn', true);
+            UI.setButtonLoading('confirm-clone-btn', true);
 
-        try {
-            const clonedRoadmap = await client.cloneRoadmap(selectedRoadmapForClone.id);
+            try {
+                const clonedRoadmap = await client.cloneRoadmap(selectedRoadmapForClone.id);
 
-            UI.toggleElement('clone-roadmap-modal', false);
-            UI.toggleElement('create-form', false);
-            UI.clearForm('roadmap-form');
-            UI.toggleElement('roadmap-search-results', false);
-            UI.setButtonLoading('confirm-clone-btn', false);
-            selectedRoadmapForClone = null;
+                closeRoadmapModal();
+                UI.setButtonLoading('confirm-clone-btn', false);
 
-            // Navigate to the cloned roadmap
-            window.location.href = `roadmap.html?id=${clonedRoadmap.id}&name=${encodeURIComponent(clonedRoadmap.name)}`;
-        } catch (err) {
-            console.error('Clone roadmap failed:', err);
-            UI.showError(err.message || 'Failed to clone roadmap');
-            UI.setButtonLoading('confirm-clone-btn', false);
-        }
-    });
+                // Navigate to the cloned roadmap
+                window.location.href = `roadmap.html?id=${clonedRoadmap.id}&name=${encodeURIComponent(clonedRoadmap.name)}`;
+            } catch (err) {
+                console.error('Clone roadmap failed:', err);
+                UI.showError(err.message || 'Failed to clone roadmap');
+                UI.setButtonLoading('confirm-clone-btn', false);
+            }
+        });
+    }
 
-    // Nerve form handlers
-    document.getElementById('create-nerve-btn').addEventListener('click', () => {
-        UI.toggleElement('create-nerve-form', true);
-        document.getElementById('nerve-subject').focus();
-    });
+    // Nerve modal handlers
+    const createNerveBtn = document.getElementById('create-nerve-btn');
+    if (createNerveBtn) {
+        createNerveBtn.addEventListener('click', () => {
+            UI.toggleElement('nerve-modal', true);
+            const nerveSubject = document.getElementById('nerve-subject');
+            if (nerveSubject) {
+                nerveSubject.focus();
+            }
+            document.body.style.overflow = 'hidden';
+        });
+    }
 
-    document.getElementById('cancel-nerve-btn').addEventListener('click', () => {
-        UI.toggleElement('create-nerve-form', false);
+    const closeNerveModal = () => {
+        UI.toggleElement('nerve-modal', false);
         UI.clearForm('nerve-form');
         UI.toggleElement('nerve-subject-results', false);
-        document.getElementById('nerve-subject-id').value = '';
-    });
+        const nerveSubjectIdInput = document.getElementById('nerve-subject-id');
+        if (nerveSubjectIdInput) {
+            nerveSubjectIdInput.value = '';
+        }
+        UI.hideMessage('error-message');
+        document.body.style.overflow = '';
+    };
+
+    const closeNerveModalBtn = document.getElementById('close-nerve-modal-btn');
+    if (closeNerveModalBtn) {
+        closeNerveModalBtn.addEventListener('click', closeNerveModal);
+    }
+    const cancelNerveBtn = document.getElementById('cancel-nerve-btn');
+    if (cancelNerveBtn) {
+        cancelNerveBtn.addEventListener('click', closeNerveModal);
+    }
+
+    // Close on backdrop click
+    const nerveModal = document.getElementById('nerve-modal');
+    if (nerveModal) {
+        nerveModal.addEventListener('click', (e) => {
+            if (e.target.id === 'nerve-modal') {
+                closeNerveModal();
+            }
+        });
+    }
 
     // Subject search for nerve creation
     let subjectSearchTimeout;
-    document.getElementById('nerve-subject').addEventListener('input', async (e) => {
-        const searchToken = e.target.value.trim();
+    const nerveSubjectInput = document.getElementById('nerve-subject');
+    if (nerveSubjectInput) {
+        nerveSubjectInput.addEventListener('input', async (e) => {
+            const searchToken = e.target.value.trim();
 
-        clearTimeout(subjectSearchTimeout);
+            clearTimeout(subjectSearchTimeout);
 
-        if (searchToken.length < 2) {
-            UI.toggleElement('nerve-subject-results', false);
-            return;
-        }
-
-        subjectSearchTimeout = setTimeout(async () => {
-            try {
-                const subjects = await client.searchSubjects(searchToken);
-                displayNerveSubjectResults(subjects);
-            } catch (err) {
-                console.error('Subject search error:', err);
+            if (searchToken.length < 2) {
+                UI.toggleElement('nerve-subject-results', false);
+                return;
             }
-        }, 300);
-    });
 
-    document.getElementById('nerve-form').addEventListener('submit', async (e) => {
-        e.preventDefault();
+            subjectSearchTimeout = setTimeout(async () => {
+                try {
+                    const subjects = await client.searchSubjects(searchToken);
+                    displayNerveSubjectResults(subjects);
+                } catch (err) {
+                    console.error('Subject search error:', err);
+                }
+            }, 300);
+        });
+    }
 
-        const subjectId = document.getElementById('nerve-subject-id').value;
-        const name = document.getElementById('nerve-name').value;
-        const expirationDate = document.getElementById('nerve-expiration').value;
+    const nerveForm = document.getElementById('nerve-form');
+    if (nerveForm) {
+        nerveForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
 
-        if (!subjectId) {
-            UI.showError('Please select a subject');
-            return;
-        }
+            const subjectIdInput = document.getElementById('nerve-subject-id');
+            const nameInput = document.getElementById('nerve-name');
+            const expirationInput = document.getElementById('nerve-expiration');
 
-        // Convert date string to epoch seconds
-        const expirationEpoch = Math.floor(new Date(expirationDate).getTime() / 1000);
+            if (!subjectIdInput || !nameInput || !expirationInput) return;
 
-        UI.hideMessage('error-message');
-        UI.setButtonLoading('save-nerve-btn', true);
+            const subjectId = subjectIdInput.value;
+            const name = nameInput.value;
+            const expirationDate = expirationInput.value;
 
-        try {
-            await client.createNerve(parseInt(subjectId), name, expirationEpoch);
+            if (!subjectId) {
+                UI.showError('Please select a subject');
+                return;
+            }
 
-            UI.toggleElement('create-nerve-form', false);
-            UI.clearForm('nerve-form');
-            UI.toggleElement('nerve-subject-results', false);
-            document.getElementById('nerve-subject-id').value = '';
-            UI.setButtonLoading('save-nerve-btn', false);
+            // Convert date string to epoch seconds
+            const expirationEpoch = Math.floor(new Date(expirationDate).getTime() / 1000);
 
-            loadNerves();
-        } catch (err) {
-            console.error('Create nerve failed:', err);
-            UI.showError(err.message || 'Failed to create knowledge resource');
-            UI.setButtonLoading('save-nerve-btn', false);
-        }
-    });
-    
-    document.getElementById('roadmap-form').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        
-        const name = document.getElementById('roadmap-name').value;
+            UI.hideMessage('error-message');
+            UI.setButtonLoading('save-nerve-btn', true);
 
-        UI.hideMessage('error-message');
-        UI.setButtonLoading('save-roadmap-btn', true);
-        
-        try {
-            const roadmap = await client.createRoadmap(name);
+            try {
+                await client.createNerve(parseInt(subjectId), name, expirationEpoch);
 
-            UI.toggleElement('create-form', false);
-            UI.clearForm('roadmap-form');
-            UI.setButtonLoading('save-roadmap-btn', false);
-            
-            loadRoadmaps();
-        } catch (err) {
-            console.error('Create roadmap failed:', err);
-            UI.showError(err.message || 'Failed to create roadmap');
-            UI.setButtonLoading('save-roadmap-btn', false);
-        }
-    });
+                closeNerveModal();
+                UI.setButtonLoading('save-nerve-btn', false);
+
+                loadNerves();
+            } catch (err) {
+                console.error('Create nerve failed:', err);
+                UI.showError(err.message || 'Failed to create knowledge resource');
+                UI.setButtonLoading('save-nerve-btn', false);
+            }
+        });
+    }
+
+    const roadmapForm = document.getElementById('roadmap-form');
+    if (roadmapForm) {
+        roadmapForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const nameInput = document.getElementById('roadmap-name');
+            if (!nameInput) return;
+            const name = nameInput.value;
+
+            UI.hideMessage('error-message');
+            UI.setButtonLoading('save-roadmap-btn', true);
+
+            try {
+                const roadmap = await client.createRoadmap(name);
+
+                closeRoadmapModal();
+                UI.setButtonLoading('save-roadmap-btn', false);
+
+                loadRoadmaps();
+            } catch (err) {
+                console.error('Create roadmap failed:', err);
+                UI.showError(err.message || 'Failed to create roadmap');
+                UI.setButtonLoading('save-roadmap-btn', false);
+            }
+        });
+    }
     
     loadRoadmaps();
     loadStudyingResources();
@@ -217,9 +312,11 @@ async function loadStudyingResources() {
 
         if (studyResources.length === 0) {
             UI.toggleElement('studying-empty-state', true);
+            UI.toggleElement('studying-resources', false);
         } else {
             UI.toggleElement('studying-section', true);
             UI.toggleElement('studying-resources', true);
+            UI.toggleElement('studying-empty-state', false);
             renderStudyingResources(studyResources);
         }
     } catch (err) {
@@ -241,7 +338,7 @@ function renderRoadmaps(roadmaps) {
 
         roadmapEl.innerHTML = `
             <div class="item-header" style="margin-bottom: 0;">
-                <h3 class="item-title" style="font-size: var(--font-size-base);">${UI.escapeHtml(roadmap.name)}</h3>
+                <h3 class="item-title" style="font-size: var(--font-size-base); word-break: break-word;">${UI.escapeHtml(roadmap.name)}</h3>
             </div>
         `;
 
@@ -276,19 +373,19 @@ function renderStudyingResources(resources) {
 
         resourceItem.innerHTML = `
             <div style="width: 100%; display: flex; flex-direction: column; gap: 0.25rem; pointer-events: none;">
-                <div class="item-header" style="margin-bottom: 0; align-items: center; pointer-events: auto;">
-                    <div style="display: flex; align-items: center; gap: var(--space-xs); flex: 1;">
-                        <h3 class="item-title" style="margin: 0; font-size: var(--font-size-base);">${UI.escapeHtml(resource.name)}</h3>
+                <div class="item-header" style="margin-bottom: 0; align-items: flex-start; flex-wrap: wrap; gap: var(--space-xs); pointer-events: auto;">
+                    <div style="display: flex; align-items: flex-start; gap: var(--space-xs); flex: 1; min-width: 180px; pointer-events: none;">
+                        <h3 class="item-title" style="margin: 0; font-size: var(--font-size-base); overflow-wrap: break-word; word-break: break-word;">${UI.escapeHtml(resource.name)}</h3>
                     </div>
-                    <div style="display: flex; gap: var(--space-xs); align-items: center; flex-shrink: 0;">
-                        <span class="item-badge" style="font-size: 10px; height: 18px; min-width: auto; padding: 0 6px;">${UI.escapeHtml(typeName)}</span>
-                        <span class="item-badge" style="background: rgba(102, 126, 234, 0.2); color: var(--color-primary-start); font-size: 10px; height: 18px; min-width: auto; padding: 0 6px;">${UI.escapeHtml(patternName)}</span>
-                        <a href="${UI.escapeHtml(resource.link)}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()" class="external-link-icon" title="Open Link" style="margin-left: var(--space-xs); display: flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 50%; background: rgba(255,255,255,0.05); transition: background 0.2s;">
+                    <div style="display: flex; gap: var(--space-xs); align-items: center; flex-shrink: 0; margin-left: auto; pointer-events: auto;">
+                        <span class="item-badge" style="font-size: 10px; height: 18px; min-width: auto; padding: 0 6px; pointer-events: none;">${UI.escapeHtml(typeName)}</span>
+                        <span class="item-badge" style="background: rgba(102, 126, 234, 0.2); color: var(--color-primary-start); font-size: 10px; height: 18px; min-width: auto; padding: 0 6px; pointer-events: none;">${UI.escapeHtml(patternName)}</span>
+                        <a href="${UI.escapeHtml(resource.link)}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()" class="external-link-icon" title="Open Link" style="display: flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 50%; background: rgba(255,255,255,0.05); transition: background 0.2s;">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
                         </a>
                     </div>
                 </div>
-                <div class="item-footer" style="margin-top: 0; padding-top: 0.25rem; border-top: none; justify-content: flex-start; gap: var(--space-md); opacity: 0.8; pointer-events: none;">
+                <div class="item-footer" style="margin-top: 0; padding-top: 0.25rem; border-top: none; justify-content: flex-start; gap: var(--space-md); opacity: 0.8; pointer-events: none; align-items: center;">
                     <div class="item-meta" style="font-size: 11px;">
                         <span>📅 ${UI.escapeHtml(productionDate)}</span>
                     </div>
@@ -319,15 +416,17 @@ async function loadNerves() {
 
         if (nerves.length === 0) {
             UI.toggleElement('nerves-empty-state', true);
+            UI.toggleElement('nerves-resources', false);
         } else {
-            UI.toggleElement('nerves-section', true);
             UI.toggleElement('nerves-resources', true);
+            UI.toggleElement('nerves-empty-state', false);
             renderNerves(nerves);
         }
     } catch (err) {
         console.error('Load nerves failed:', err);
         UI.toggleElement('nerves-loading', false);
-        // Don't show error for nerves, just hide the section
+        // Don't hide the whole section, just show empty state or silent fail
+        UI.toggleElement('nerves-empty-state', true);
     }
 }
 
@@ -359,20 +458,20 @@ function renderNerves(nerves) {
 
         nerveItem.innerHTML = `
             <div style="width: 100%; display: flex; flex-direction: column; gap: 0.25rem; pointer-events: none;">
-                <div class="item-header" style="margin-bottom: 0; align-items: center; pointer-events: auto;">
-                    <div style="display: flex; align-items: center; gap: var(--space-xs); flex: 1;">
-                        <h3 class="item-title" style="margin: 0; font-size: var(--font-size-base);">${UI.escapeHtml(nerve.name)}</h3>
+                <div class="item-header" style="margin-bottom: 0; align-items: flex-start; flex-wrap: wrap; gap: var(--space-xs); pointer-events: auto;">
+                    <div style="display: flex; align-items: flex-start; gap: var(--space-xs); flex: 1; min-width: 180px; pointer-events: none;">
+                        <h3 class="item-title" style="margin: 0; font-size: var(--font-size-base); overflow-wrap: break-word; word-break: break-word;">${UI.escapeHtml(nerve.name)}</h3>
                     </div>
-                    <div style="display: flex; gap: var(--space-xs); align-items: center; flex-shrink: 0;">
+                    <div style="display: flex; gap: var(--space-xs); align-items: center; flex-shrink: 0; margin-left: auto; pointer-events: auto;">
                         ${subjectBadgeHtml}
-                        <span class="item-badge" style="font-size: 10px; height: 18px; min-width: auto; padding: 0 6px;">${UI.escapeHtml(typeName)}</span>
-                        <span class="item-badge" style="background: rgba(102, 126, 234, 0.2); color: var(--color-primary-start); font-size: 10px; height: 18px; min-width: auto; padding: 0 6px;">${UI.escapeHtml(patternName)}</span>
-                        <a href="${UI.escapeHtml(nerve.link)}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()" class="external-link-icon" title="Open Link" style="margin-left: var(--space-xs); display: flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 50%; background: rgba(255,255,255,0.05); transition: background 0.2s;">
+                        <span class="item-badge" style="font-size: 10px; height: 18px; min-width: auto; padding: 0 6px; pointer-events: none;">${UI.escapeHtml(typeName)}</span>
+                        <span class="item-badge" style="background: rgba(102, 126, 234, 0.2); color: var(--color-primary-start); font-size: 10px; height: 18px; min-width: auto; padding: 0 6px; pointer-events: none;">${UI.escapeHtml(patternName)}</span>
+                        <a href="${UI.escapeHtml(nerve.link)}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()" class="external-link-icon" title="Open Link" style="display: flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 50%; background: rgba(255,255,255,0.05); transition: background 0.2s;">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
                         </a>
                     </div>
                 </div>
-                <div class="item-footer" style="margin-top: 0; padding-top: 0.25rem; border-top: none; justify-content: flex-start; gap: var(--space-md); opacity: 0.8; pointer-events: none;">
+                <div class="item-footer" style="margin-top: 0; padding-top: 0.25rem; border-top: none; justify-content: flex-start; gap: var(--space-md); opacity: 0.8; pointer-events: none; align-items: center;">
                     <div class="item-meta" style="font-size: 11px;">
                         <span>📅 ${UI.escapeHtml(productionDate)}</span>
                     </div>
@@ -409,8 +508,14 @@ function displayNerveSubjectResults(subjects) {
         resultItem.style.borderBottom = '1px solid var(--border-color)';
 
         resultItem.addEventListener('click', () => {
-            document.getElementById('nerve-subject').value = subject.name;
-            document.getElementById('nerve-subject-id').value = subject.id;
+            const nerveSubjectInput = document.getElementById('nerve-subject');
+            if (nerveSubjectInput) {
+                nerveSubjectInput.value = subject.name;
+            }
+            const nerveSubjectIdInput = document.getElementById('nerve-subject-id');
+            if (nerveSubjectIdInput) {
+                nerveSubjectIdInput.value = subject.id;
+            }
             UI.toggleElement('nerve-subject-results', false);
         });
 
@@ -450,9 +555,16 @@ function displaySuggestedRoadmaps(roadmaps) {
 
         roadmapItem.addEventListener('click', () => {
             selectedRoadmapForClone = roadmap;
-            document.getElementById('clone-roadmap-name').textContent = roadmap.name;
-            UI.toggleElement('create-form', false);
-            UI.toggleElement('clone-roadmap-modal', true);
+            const cloneRoadmapName = document.getElementById('clone-roadmap-name');
+            if (cloneRoadmapName) {
+                cloneRoadmapName.textContent = roadmap.name;
+            }
+            UI.toggleElement('create-form-section', false);
+            UI.toggleElement('clone-roadmap-section', true);
+            const roadmapModalTitle = document.getElementById('roadmap-modal-title');
+            if (roadmapModalTitle) {
+                roadmapModalTitle.textContent = 'Clone Roadmap';
+            }
         });
 
         roadmapItem.addEventListener('mouseenter', () => {

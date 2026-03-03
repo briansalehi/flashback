@@ -189,10 +189,27 @@ window.addEventListener('DOMContentLoaded', () => {
     }
 
     // Setup move card modal handlers
+    const moveCardModal = document.getElementById('move-card-modal');
+    const closeMoveCardModalBtn = document.getElementById('close-move-card-modal-btn');
     const cancelMoveCardBtn = document.getElementById('cancel-move-card-btn');
+
+    if (closeMoveCardModalBtn) {
+        closeMoveCardModalBtn.addEventListener('click', () => {
+            closeMoveCardModal();
+        });
+    }
+
     if (cancelMoveCardBtn) {
         cancelMoveCardBtn.addEventListener('click', () => {
             closeMoveCardModal();
+        });
+    }
+
+    if (moveCardModal) {
+        moveCardModal.addEventListener('click', (e) => {
+            if (e.target === moveCardModal) {
+                closeMoveCardModal();
+            }
         });
     }
 
@@ -232,49 +249,75 @@ window.addEventListener('DOMContentLoaded', () => {
     loadAssessments();
 
     // Add Assessment button
-    document.getElementById('add-assessment-btn').addEventListener('click', () => {
-        UI.toggleElement('add-assessment-form', true);
-        document.getElementById('assessment-headline').focus();
-    });
+    const addAssessmentBtn = document.getElementById('add-assessment-btn');
+    const assessmentModal = document.getElementById('add-assessment-modal');
+    const closeAssessmentModalBtn = document.getElementById('close-assessment-modal-btn');
+    const cancelAssessmentBtn = document.getElementById('cancel-assessment-btn');
 
-    // Cancel Assessment button
-    document.getElementById('cancel-assessment-btn').addEventListener('click', () => {
-        UI.toggleElement('add-assessment-form', false);
+    if (addAssessmentBtn) {
+        addAssessmentBtn.addEventListener('click', () => {
+            UI.toggleElement('add-assessment-modal', true);
+            document.body.style.overflow = 'hidden';
+            document.getElementById('assessment-headline').focus();
+        });
+    }
+
+    const closeAssessmentModal = () => {
+        UI.toggleElement('add-assessment-modal', false);
+        document.body.style.overflow = 'auto';
         UI.clearForm('assessment-form');
-    });
+    };
+
+    if (closeAssessmentModalBtn) {
+        closeAssessmentModalBtn.addEventListener('click', closeAssessmentModal);
+    }
+
+    if (cancelAssessmentBtn) {
+        cancelAssessmentBtn.addEventListener('click', closeAssessmentModal);
+    }
+
+    if (assessmentModal) {
+        assessmentModal.addEventListener('click', (e) => {
+            if (e.target === assessmentModal) {
+                closeAssessmentModal();
+            }
+        });
+    }
 
     // Assessment Form Submit
-    document.getElementById('assessment-form').addEventListener('submit', async (e) => {
-        e.preventDefault();
+    const assessmentForm = document.getElementById('assessment-form');
+    if (assessmentForm) {
+        assessmentForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
 
-        const headline = document.getElementById('assessment-headline').value.trim();
+            const headline = document.getElementById('assessment-headline').value.trim();
 
-        if (!headline) {
-            UI.showError('Please provide a headline');
-            return;
-        }
+            if (!headline) {
+                UI.showError('Please provide a headline');
+                return;
+            }
 
-        UI.setButtonLoading('save-assessment-btn', true);
+            UI.setButtonLoading('save-assessment-btn', true);
 
-        try {
-            // First create a card
-            const card = await client.createCard(headline);
+            try {
+                // First create a card
+                const card = await client.createCard(headline);
 
-            // Then create an assessment using the card ID
-            await client.createAssessment(card.id, subjectId, topicLevel, topicPosition);
+                // Then create an assessment using the card ID
+                await client.createAssessment(card.id, subjectId, topicLevel, topicPosition);
 
-            UI.showSuccess('Assessment added successfully');
-            UI.toggleElement('add-assessment-form', false);
-            UI.clearForm('assessment-form');
-            UI.setButtonLoading('save-assessment-btn', false);
+                UI.showSuccess('Assessment added successfully');
+                closeAssessmentModal();
+                UI.setButtonLoading('save-assessment-btn', false);
 
-            loadAssessments();
-        } catch (err) {
-            console.error('Add assessment failed:', err);
-            UI.showError(err.message || 'Failed to add assessment');
-            UI.setButtonLoading('save-assessment-btn', false);
-        }
-    });
+                loadAssessments();
+            } catch (err) {
+                console.error('Add assessment failed:', err);
+                UI.showError(err.message || 'Failed to add assessment');
+                UI.setButtonLoading('save-assessment-btn', false);
+            }
+        });
+    }
 });
 
 async function loadCards() {
@@ -337,13 +380,13 @@ function renderCards(cards) {
         const stateColor = stateColors[stateName] || stateColors['draft'];
 
         cardItem.innerHTML = `
-            <div class="item-header" style="margin-bottom: 0; align-items: center;">
-                <div style="display: flex; align-items: center; gap: var(--space-xs); flex: 1;" data-card-id="${card.id}" data-card-headline="${UI.escapeHtml(card.headline)}" data-card-state="${card.state}">
-                    <h3 class="item-title" style="margin: 0; font-size: var(--font-size-base); font-weight: 600;">${UI.escapeHtml(card.headline)}</h3>
+            <div class="item-header" style="margin-bottom: 0;">
+                <div style="display: flex; align-items: flex-start; gap: var(--space-xs); flex: 1;" data-card-id="${card.id}" data-card-headline="${UI.escapeHtml(card.headline)}" data-card-state="${card.state}">
+                    <h3 class="item-title" style="margin: 0; font-size: var(--font-size-base); font-weight: 600; word-break: break-word;">${UI.escapeHtml(card.headline)}</h3>
                 </div>
-                <div style="display: flex; gap: 0.4rem; align-items: center;">
-                    <span class="item-badge" style="background: ${stateColor.bg}; color: ${stateColor.color}; text-transform: capitalize; font-size: 10px; height: 18px; min-width: auto; padding: 0 6px; border-radius: var(--radius-full);">${UI.escapeHtml(stateName)}</span>
-                    <button class="btn btn-secondary" style="padding: 0.2rem 0.6rem; white-space: nowrap; font-size: 10px; height: 22px; min-width: auto;" onclick="event.stopPropagation(); handleMoveCard(${card.id}, '${UI.escapeHtml(card.headline).replace(/'/g, "\\'")}')">
+                <div style="display: flex; gap: 0.6rem; align-items: center; justify-content: flex-end; flex-wrap: wrap;">
+                    <span class="item-badge" style="background: ${stateColor.bg}; color: ${stateColor.color}; text-transform: capitalize; font-size: 11px; height: 24px; min-width: auto; padding: 0 10px; border-radius: var(--radius-full); display: inline-flex; align-items: center; white-space: nowrap;">${UI.escapeHtml(stateName)}</span>
+                    <button class="btn btn-secondary btn-sm" style="padding: 0.3rem 1rem; height: 34px; font-size: 13px; font-weight: 600; white-space: nowrap; min-width: auto;" onclick="event.stopPropagation(); handleMoveCard(${card.id}, '${UI.escapeHtml(card.headline).replace(/'/g, "\\'")}')">
                         Move
                     </button>
                 </div>
@@ -367,8 +410,9 @@ window.handleMoveCard = function(cardId, cardHeadline) {
     currentMovingCardHeadline = cardHeadline;
 
     // Open modal
-    const modal = document.getElementById('move-card-modal');
-    modal.style.display = 'block';
+    UI.toggleElement('move-card-modal', true);
+    document.body.style.overflow = 'hidden';
+
     document.getElementById('moving-card-headline').textContent = cardHeadline;
     document.getElementById('topic-search-input').value = '';
     document.getElementById('topic-search-results').style.display = 'none';
@@ -376,15 +420,15 @@ window.handleMoveCard = function(cardId, cardHeadline) {
     document.getElementById('topic-search-loading').style.display = 'none';
     document.getElementById('topics-list').innerHTML = '';
 
-    // Scroll modal into view smoothly
     setTimeout(() => {
-        modal.scrollIntoView({ behavior: 'smooth', block: 'start' });
         document.getElementById('topic-search-input').focus();
     }, 100);
 };
 
 function closeMoveCardModal() {
-    document.getElementById('move-card-modal').style.display = 'none';
+    UI.toggleElement('move-card-modal', false);
+    document.body.style.overflow = 'auto';
+
     currentMovingCardId = null;
     currentMovingCardHeadline = null;
     document.getElementById('topic-search-input').value = '';
@@ -554,9 +598,9 @@ function renderAssessments(assessments) {
                 <div style="display: flex; align-items: center; gap: var(--space-xs); flex: 1; cursor: pointer;" data-card-id="${card.id}" data-card-headline="${UI.escapeHtml(card.headline)}" data-card-state="${card.state}" class="assessment-link">
                     <h3 class="item-title" style="margin: 0; font-size: var(--font-size-base); font-weight: 600;">${UI.escapeHtml(card.headline)}</h3>
                 </div>
-                <div style="display: flex; gap: 0.4rem; align-items: center;">
-                    <span class="item-badge" style="background: ${stateColor.bg}; color: ${stateColor.color}; text-transform: capitalize; font-size: 10px; height: 18px; min-width: auto; padding: 0 6px; border-radius: var(--radius-full);">${UI.escapeHtml(stateName)}</span>
-                    <button class="btn btn-secondary" style="background-color: #dc3545; color: white; padding: 0.2rem 0.6rem; font-size: 10px; height: 22px; min-width: auto; white-space: nowrap;" onclick="handleDiminishAssessment(${card.id}, '${UI.escapeHtml(card.headline).replace(/'/g, "\\'")}')">
+                <div style="display: flex; gap: 0.6rem; align-items: center;">
+                    <span class="item-badge" style="background: ${stateColor.bg}; color: ${stateColor.color}; text-transform: capitalize; font-size: 11px; height: 24px; min-width: auto; padding: 0 10px; border-radius: var(--radius-full); display: inline-flex; align-items: center;">${UI.escapeHtml(stateName)}</span>
+                    <button class="btn btn-secondary btn-sm" style="background-color: #dc3545; color: white; padding: 0.3rem 1rem; height: 34px; font-size: 13px; font-weight: 600; min-width: auto; white-space: nowrap;" onclick="handleDiminishAssessment(${card.id}, '${UI.escapeHtml(card.headline).replace(/'/g, "\\'")}')">
                         Diminish
                     </button>
                 </div>

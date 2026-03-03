@@ -457,6 +457,31 @@ a:hover {
     transition: var(--transition-fast);
 }
 
+/* Ensure date picker is usable on mobile */
+.form-input[type="date"] {
+    min-height: 48px; /* Better touch target */
+    position: relative;
+    cursor: pointer;
+}
+
+/* On some mobile browsers, the calendar picker indicator is required for clicking */
+.form-input[type="date"]::-webkit-calendar-picker-indicator {
+    background: transparent;
+    cursor: pointer;
+    /* In dark theme, make the default calendar icon visible by inverting its color (white) */
+    filter: invert(1);
+    opacity: 0.7;
+    transition: opacity var(--transition-fast);
+    padding: var(--space-xs);
+    z-index: 10;
+}
+
+.form-input[type="date"]::-webkit-calendar-picker-indicator:hover {
+    opacity: 1;
+}
+
+/* Remove the absolute covering and ::after emoji which could be confusing or blocked */
+
 .form-input:focus,
 .form-textarea:focus,
 .form-select:focus {
@@ -721,6 +746,21 @@ a:hover {
     gap: var(--space-md);
     margin-bottom: var(--space-sm);
     width: 100%;
+    flex-wrap: wrap; /* Allow wrapping on small screens */
+}
+
+@media (max-width: 600px) {
+    .item-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--space-sm);
+    }
+
+    .item-header > div:last-child {
+        width: 100%;
+        justify-content: flex-start;
+        flex-wrap: wrap;
+    }
 }
 
 .item-title {
@@ -1212,9 +1252,11 @@ a:hover {
     backdrop-filter: blur(4px);
     z-index: 9999;
     display: flex;
-    align-items: center;
+    align-items: flex-start; /* Change to flex-start for scrollability */
     justify-content: center;
-    padding: var(--space-md);
+    padding: var(--space-xl) var(--space-md);
+    overflow-y: auto; /* Allow scrolling if modal content is taller than screen */
+    -webkit-overflow-scrolling: touch;
 }
 
 .modal-content {
@@ -1225,6 +1267,37 @@ a:hover {
     max-width: 500px;
     width: 100%;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    position: relative;
+    margin: auto; /* Center in flex container if there is space */
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--space-lg);
+}
+
+.modal-title {
+    font-size: var(--font-size-xl);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-text-primary);
+    margin: 0;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    color: var(--color-text-muted);
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: var(--space-xs);
+    line-height: 1;
+    transition: color var(--transition-fast);
+}
+
+.modal-close:hover {
+    color: var(--color-text-primary);
 }
 
 @media (min-width: 768px) {

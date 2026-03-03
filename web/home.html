@@ -65,6 +65,10 @@
 
     <div id="error-message" style="display: none;"></div>
 
+    <button id="create-roadmap-btn" class="btn btn-primary btn-full" style="margin-bottom: 2rem; margin-top: 2rem; padding: 0.75rem 1rem; white-space: nowrap;">
+      + Create New Roadmap
+    </button>
+
     <div id="loading" style="display: none; text-align: center; padding: 3rem;">
       <div class="loading" style="width: 40px; height: 40px; border-width: 4px;"></div>
       <p class="text-muted mt-md">Loading your roadmaps...</p>
@@ -79,69 +83,74 @@
       <p class="text-muted">Create your first roadmap to get started!</p>
     </div>
 
-    <button id="create-roadmap-btn" class="btn btn-primary btn-full" style="margin-top: 2rem; padding: 0.75rem 1rem; white-space: nowrap;">
-      + Create New Roadmap
-    </button>
-
-    <div id="create-form" class="card" style="display: none; max-width: 600px; margin-bottom: 1rem;">
-      <form id="roadmap-form">
-        <div class="form-group">
-          <label class="form-label" for="roadmap-name">What is your current or desired career?</label>
-          <input
-              type="text"
-              id="roadmap-name"
-              class="form-input"
-              placeholder="Full Stack Developer"
-              required
-              autocomplete="off"
-          >
+    <div id="roadmap-modal" class="modal-overlay" style="display: none;">
+      <div class="modal-content" style="max-width: 600px;">
+        <div class="modal-header">
+          <h2 id="roadmap-modal-title" class="modal-title">Create New Roadmap</h2>
+          <button id="close-roadmap-modal-btn" class="modal-close" aria-label="Close">&times;</button>
         </div>
 
-        <!-- Search results for suggested roadmaps -->
-        <div id="roadmap-search-results" style="display: none; margin-bottom: 1.5rem;">
-          <div
-              style="padding: 0.75rem; background: var(--bg-secondary); border-radius: 4px; border: 1px solid var(--border-color);">
-            <p style="font-weight: 600; margin-bottom: 0.75rem; color: var(--text-primary);">
-              Similar roadmaps found:
-            </p>
-            <div id="suggested-roadmaps-list">
-              <!-- Suggested roadmaps will be inserted here -->
+        <div id="create-form-section">
+          <form id="roadmap-form">
+            <div class="form-group">
+              <label class="form-label" for="roadmap-name">What is your current or desired career?</label>
+              <div style="position: relative;">
+                <input
+                    type="text"
+                    id="roadmap-name"
+                    class="form-input"
+                    placeholder="Full Stack Developer"
+                    required
+                    autocomplete="off"
+                    style="padding-right: 2.5rem;"
+                >
+              </div>
             </div>
-            <p style="font-size: 0.875rem; color: var(--text-muted); margin-top: 0.75rem; margin-bottom: 0;">
-              Select a roadmap above to clone it, or continue creating a new one.
+
+            <!-- Search results for suggested roadmaps -->
+            <div id="roadmap-search-results" style="display: none; margin-bottom: 1.5rem;">
+              <div
+                  style="padding: 0.75rem; background: var(--bg-secondary); border-radius: 4px; border: 1px solid var(--border-color);">
+                <p style="font-weight: 600; margin-bottom: 0.75rem; color: var(--text-primary);">
+                  Similar roadmaps found:
+                </p>
+                <div id="suggested-roadmaps-list">
+                  <!-- Suggested roadmaps will be inserted here -->
+                </div>
+                <p style="font-size: 0.875rem; color: var(--text-muted); margin-top: 0.75rem; margin-bottom: 0;">
+                  Select a roadmap above to clone it, or continue creating a new one.
+                </p>
+              </div>
+            </div>
+
+            <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+              <button type="submit" id="save-roadmap-btn" class="btn btn-primary" style="padding: 0.5rem 1rem; white-space: nowrap;">
+                Create New Roadmap
+              </button>
+              <button type="button" id="cancel-roadmap-btn" class="btn btn-secondary" style="padding: 0.5rem 1rem; white-space: nowrap;">
+                Cancel
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Clone Roadmap Confirmation -->
+        <div id="clone-roadmap-section" style="display: none;">
+          <div style="padding: 1rem 0;">
+            <p>You are about to clone the roadmap: <strong id="clone-roadmap-name"></strong></p>
+            <p style="margin-top: 0.75rem; font-size: 0.875rem; color: var(--text-muted);">
+              Note: Review the milestones after cloning to ensure they match your goals.
             </p>
           </div>
+          <div style="display: flex; gap: 1rem; margin-top: 1.5rem; flex-wrap: wrap;">
+            <button id="confirm-clone-btn" class="btn btn-primary" style="padding: 0.5rem 1rem; white-space: nowrap;">
+              Clone Roadmap
+            </button>
+            <button id="cancel-clone-btn" class="btn btn-secondary" style="padding: 0.5rem 1rem; white-space: nowrap;">
+              Back
+            </button>
+          </div>
         </div>
-
-        <div style="display: flex; gap: 1rem;">
-          <button type="submit" id="save-roadmap-btn" class="btn btn-primary">
-            Create New Roadmap
-          </button>
-          <button type="button" id="cancel-roadmap-btn" class="btn btn-secondary">
-            Cancel
-          </button>
-        </div>
-      </form>
-    </div>
-
-    <!-- Clone Roadmap Confirmation -->
-    <div id="clone-roadmap-modal" class="card" style="display: none; max-width: 600px; margin-bottom: 1rem;">
-      <div class="card-header">
-        <h3 class="card-title">Clone Roadmap</h3>
-      </div>
-      <div style="padding: 1rem 0;">
-        <p>You are about to clone the roadmap: <strong id="clone-roadmap-name"></strong></p>
-        <p style="margin-top: 0.75rem; font-size: 0.875rem; color: var(--text-muted);">
-          Note: Review the milestones after cloning to ensure they match your goals.
-        </p>
-      </div>
-      <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
-        <button id="confirm-clone-btn" class="btn btn-primary">
-          Clone Roadmap
-        </button>
-        <button id="cancel-clone-btn" class="btn btn-secondary">
-          Back
-        </button>
       </div>
     </div>
 
@@ -178,7 +187,11 @@
         <p class="text-muted mt-md">Loading your knowledge...</p>
       </div>
 
-      <div id="nerves-resources" class="roadmaps-grid" style="margin-top: 1.5rem;">
+      <button id="create-nerve-btn" class="btn btn-primary btn-full" style="margin-top: 1rem; margin-bottom: 1.5rem; padding: 0.75rem 1rem; white-space: nowrap;">
+        + Add Your Knowledge
+      </button>
+
+      <div id="nerves-resources" class="roadmaps-grid">
         <!-- nerves will be inserted here -->
       </div>
 
@@ -186,56 +199,59 @@
         <p class="text-muted">No knowledge resources yet</p>
       </div>
 
-      <button id="create-nerve-btn" class="btn btn-primary btn-full" style="margin-top: 2rem; padding: 0.75rem 1rem; white-space: nowrap;">
-        + Add Your Knowledge
-      </button>
-
-      <div id="create-nerve-form" class="card" style="display: none; max-width: 600px; margin-bottom: 1rem;">
-        <form id="nerve-form">
-          <div class="form-group">
-            <label class="form-label" for="nerve-subject">Subject</label>
-            <input
-                type="text"
-                id="nerve-subject"
-                class="form-input"
-                placeholder="Search for subject..."
-                required
-                autocomplete="off"
-            >
-            <div id="nerve-subject-results" class="search-results" style="display: none;"></div>
-            <input type="hidden" id="nerve-subject-id" required>
+      <div id="nerve-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-content" style="max-width: 600px;">
+          <div class="modal-header">
+            <h2 class="modal-title">Add Your Knowledge</h2>
+            <button id="close-nerve-modal-btn" class="modal-close" aria-label="Close">&times;</button>
           </div>
 
-          <div class="form-group">
-            <label class="form-label" for="nerve-name">Resource Name</label>
-            <input
-                type="text"
-                id="nerve-name"
-                class="form-input"
-                placeholder="My knowledge about..."
-                required
-            >
-          </div>
+          <form id="nerve-form">
+            <div class="form-group">
+              <label class="form-label" for="nerve-subject">Subject</label>
+              <input
+                  type="text"
+                  id="nerve-subject"
+                  class="form-input"
+                  placeholder="Related subject..."
+                  required
+                  autocomplete="off"
+              >
+              <div id="nerve-subject-results" class="search-results" style="display: none;"></div>
+              <input type="hidden" id="nerve-subject-id" required>
+            </div>
 
-          <div class="form-group">
-            <label class="form-label" for="nerve-expiration">Relevant Until (Date)</label>
-            <input
-                type="date"
-                id="nerve-expiration"
-                class="form-input"
-                required
-            >
-          </div>
+            <div class="form-group">
+              <label class="form-label" for="nerve-name">Resource Name</label>
+              <input
+                  type="text"
+                  id="nerve-name"
+                  class="form-input"
+                  placeholder="My knowledge about..."
+                  required
+              >
+            </div>
 
-          <div style="display: flex; gap: 1rem;">
-            <button type="submit" id="save-nerve-btn" class="btn btn-primary">
-              Create Resource
-            </button>
-            <button type="button" id="cancel-nerve-btn" class="btn btn-secondary">
-              Cancel
-            </button>
-          </div>
-        </form>
+            <div class="form-group">
+              <label class="form-label" for="nerve-expiration">Relevant Until (Date)</label>
+              <input
+                  type="date"
+                  id="nerve-expiration"
+                  class="form-input"
+                  required
+              >
+            </div>
+
+            <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+              <button type="submit" id="save-nerve-btn" class="btn btn-primary" style="padding: 0.5rem 1rem; white-space: nowrap;">
+                Create Resource
+              </button>
+              <button type="button" id="cancel-nerve-btn" class="btn btn-secondary" style="padding: 0.5rem 1rem; white-space: nowrap;">
+                Cancel
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
   </div>

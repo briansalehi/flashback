@@ -64,7 +64,8 @@ window.addEventListener('DOMContentLoaded', () => {
     if (addSectionBtn) {
         addSectionBtn.addEventListener('click', (e) => {
             e.preventDefault();
-            UI.toggleElement('add-section-form', true);
+            UI.toggleElement('add-section-modal', true);
+            document.body.style.overflow = 'hidden';
             setTimeout(() => {
                 const nameInput = document.getElementById('section-name');
                 if (nameInput) {
@@ -74,11 +75,32 @@ window.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    const closeSectionModalBtn = document.getElementById('close-section-modal-btn');
+    if (closeSectionModalBtn) {
+        closeSectionModalBtn.addEventListener('click', () => {
+            UI.toggleElement('add-section-modal', false);
+            document.body.style.overflow = 'auto';
+            UI.clearForm('section-form');
+        });
+    }
+
     const cancelSectionBtn = document.getElementById('cancel-section-btn');
     if (cancelSectionBtn) {
         cancelSectionBtn.addEventListener('click', () => {
-            UI.toggleElement('add-section-form', false);
+            UI.toggleElement('add-section-modal', false);
+            document.body.style.overflow = 'auto';
             UI.clearForm('section-form');
+        });
+    }
+
+    const addSectionModal = document.getElementById('add-section-modal');
+    if (addSectionModal) {
+        addSectionModal.addEventListener('click', (e) => {
+            if (e.target === addSectionModal) {
+                UI.toggleElement('add-section-modal', false);
+                document.body.style.overflow = 'auto';
+                UI.clearForm('section-form');
+            }
         });
     }
 
@@ -102,7 +124,8 @@ window.addEventListener('DOMContentLoaded', () => {
                 // Position 0 means add to end
                 await client.createSection(resourceId, name, link, 0);
 
-                UI.toggleElement('add-section-form', false);
+                UI.toggleElement('add-section-modal', false);
+                document.body.style.overflow = 'auto';
                 UI.clearForm('section-form');
                 UI.setButtonLoading('save-section-btn', false);
 
