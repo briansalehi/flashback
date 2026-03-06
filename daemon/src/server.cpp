@@ -4209,7 +4209,7 @@ bool server::send_verification_email(std::string domain, std::string email, uint
 
     std::ostringstream email_buffer{};
     std::string email_content{};
-    if (std::ifstream verification_file("/usr/local/share/flashbackd/verification.html"); verification_file.is_open())
+    if (std::ifstream verification_file("/usr/local/share/flashbackd/templates/verification.html"); verification_file.is_open())
     {
         email_buffer << verification_file.rdbuf();
         email_content = email_buffer.str();
