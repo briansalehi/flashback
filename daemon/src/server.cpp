@@ -321,6 +321,11 @@ grpc::Status server::SendVerification(grpc::ServerContext* context, SendVerifica
     }
     catch (pqxx::unique_violation const& exp)
     {
+        status = grpc::Status{grpc::StatusCode::ALREADY_EXISTS, "email was already verified"};
+        std::cerr << std::format("client {} tried to verify their already verified email\n", request->user().token());
+    }
+    catch (std::exception const& exp)
+    {
         status = grpc::Status{grpc::StatusCode::INTERNAL, "failed to send verification email"};
         std::cerr << std::format("server: failed to send verification code to {}: {}\n", request->user().token(), exp.what());
     }
