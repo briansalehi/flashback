@@ -4228,9 +4228,9 @@ void server::send_verification_email(std::string domain, std::string email, uint
         throw std::runtime_error{"verification email template does not contain placeholder"};
     }
 
-    email_content.replace(pos, 2, std::to_string(code));
-
     std::clog << std::format("server: sending verification code to {}\n", email);
+
+    email_content.replace(pos, 2, std::to_string(code));
 
     nlohmann::json content;
     content["from"] = "verification@" + std::move(domain);
@@ -4239,6 +4239,7 @@ void server::send_verification_email(std::string domain, std::string email, uint
     content["text"] = "Your verification code is " + std::to_string(code);
     content["html"] = email_content;
 
+    std::string json{content.dump()};
     std::string response;
 
     struct curl_slist* headers = nullptr;
@@ -4247,7 +4248,7 @@ void server::send_verification_email(std::string domain, std::string email, uint
 
     curl_easy_setopt(curl, CURLOPT_URL, "https://api.resend.com/emails");
     curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
-    curl_easy_setopt(curl, CURLOPT_POSTFIELDS, content.dump().c_str());
+    curl_easy_setopt(curl, CURLOPT_POSTFIELDS, json.c_str());
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_callback);
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
 
@@ -4261,6 +4262,7 @@ void server::send_verification_email(std::string domain, std::string email, uint
 
     if (res != CURLE_OK || httpCode != 200)
     {
+        std::cerr << std::format("server: curl response {}: {}\n", httpCode, response);
         throw std::runtime_error{"the sender failed to send verification email"};
     }
 }
