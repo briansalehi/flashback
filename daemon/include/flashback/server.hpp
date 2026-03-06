@@ -148,12 +148,12 @@ public:
 
 protected:
     [[nodiscard]] static size_t write_callback(void* contents, size_t size, size_t nmemb, std::string* response);
-    [[nodiscard]] bool send_verification_email(std::string domain, std::string email, uint64_t code);
     [[nodiscard]] static std::string calculate_hash(std::string_view password);
     [[nodiscard]] static bool password_is_valid(std::string_view lhs, std::string_view rhs);
     [[nodiscard]] static std::string generate_token();
     [[nodiscard]] static uint64_t generate_code();
     [[nodiscard]] bool session_is_valid(User const& user) const;
+    void send_verification_email(std::string domain, std::string email, uint64_t code);
 
     std::shared_ptr<basic_database> m_database;
 };

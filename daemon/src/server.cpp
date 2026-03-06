@@ -307,14 +307,10 @@ grpc::Status server::SendVerification(grpc::ServerContext* context, SendVerifica
                 status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid user email"};
                 std::cerr << std::format("server: failed to send verification code to invalid email from user {}\n", user->id());
             }
-            else if (send_verification_email("flashback.eu.com", user->email(), code))
-            {
-                status = grpc::Status{grpc::StatusCode::OK, {}};
-            }
             else
             {
-                status = grpc::Status{grpc::StatusCode::INTERNAL, "failed to send verification email"};
-                std::cerr << std::format("server: failed to send verification code to {}\n", user->email());
+                send_verification_email("flashback.eu.com", user->email(), code);
+                status = grpc::Status{grpc::StatusCode::OK, {}};
             }
         }
     }
@@ -325,7 +321,8 @@ grpc::Status server::SendVerification(grpc::ServerContext* context, SendVerifica
     }
     catch (pqxx::unique_violation const& exp)
     {
-        std::cerr << std::format("server: {}\n", exp.what());
+        status = grpc::Status{grpc::StatusCode::INTERNAL, "failed to send verification email"};
+        std::cerr << std::format("server: failed to send verification code to {}: {}\n", request->user().token(), exp.what());
     }
 
     return status;
@@ -4199,12 +4196,12 @@ size_t server::write_callback(void* contents, size_t size, size_t nmemb, std::st
     return size * nmemb;
 }
 
-bool server::send_verification_email(std::string domain, std::string email, uint64_t const code)
+void server::send_verification_email(std::string domain, std::string email, uint64_t const code)
 {
     CURL* curl = curl_easy_init();
     if (curl == nullptr)
     {
-        return false;
+        throw std::runtime_error{"could not initialize sender"};
     }
 
     std::ostringstream email_buffer{};
@@ -4216,13 +4213,13 @@ bool server::send_verification_email(std::string domain, std::string email, uint
     }
     else
     {
-        return false;
+        throw std::runtime_error{"could not open verification email template"};
     }
 
     auto pos = email_content.find("{}");
     if (pos == std::string::npos)
     {
-        return false;
+        throw std::runtime_error{"verification email template does not contain placeholder"};
     }
 
     email_content.replace(pos, 2, std::to_string(code));
@@ -4256,7 +4253,10 @@ bool server::send_verification_email(std::string domain, std::string email, uint
     curl_slist_free_all(headers);
     curl_easy_cleanup(curl);
 
-    return res == CURLE_OK && httpCode == 200;
+    if (res != CURLE_OK || httpCode != 200)
+    {
+        throw std::runtime_error{"the sender failed to send verification email"};
+    }
 }
 
 std::string server::calculate_hash(std::string_view password)
