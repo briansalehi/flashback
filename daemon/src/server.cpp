@@ -327,7 +327,7 @@ grpc::Status server::SendVerification(grpc::ServerContext* context, SendVerifica
     catch (std::exception const& exp)
     {
         status = grpc::Status{grpc::StatusCode::INTERNAL, "failed to send verification email"};
-        std::cerr << std::format("server: failed to send verification code to {}: {}\n", request->user().token(), exp.what());
+        std::cerr << std::format("server: {}\n", exp.what());
     }
 
     return status;
