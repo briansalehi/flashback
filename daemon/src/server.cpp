@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <fstream>
 #include <chrono>
 #include <format>
 #include <iostream>
@@ -306,7 +307,7 @@ grpc::Status server::SendVerification(grpc::ServerContext* context, SendVerifica
                 status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid user email"};
                 std::cerr << std::format("server: failed to send verification code to invalid email from user {}\n", user->id());
             }
-            else if (send_verification_email(user->email(), code))
+            else if (send_verification_email("flashback.eu.com", user->email(), code))
             {
                 status = grpc::Status{grpc::StatusCode::OK, {}};
             }
@@ -673,7 +674,8 @@ grpc::Status server::AddMilestone(grpc::ServerContext* context, AddMilestoneRequ
                 if (request->position() > 0)
                 {
                     Milestone milestone = m_database->add_milestone(request->subject_id(), request->subject_level(), request->roadmap_id(), request->position());
-                    std::clog << std::format("client {} added milestone {} to roadmap {} in position {}\n", request->user().token(), request->subject_id(), request->roadmap_id(), request->position());
+                    std::clog << std::format("client {} added milestone {} to roadmap {} in position {}\n", request->user().token(), request->subject_id(), request->roadmap_id(),
+                                             request->position());
                     response->set_allocated_milestone(std::make_unique<flashback::Milestone>(milestone).release());
                     response->set_success(true);
                 }
@@ -714,7 +716,8 @@ grpc::Status server::AddRequirement(grpc::ServerContext* context, AddRequirement
 
         if (request->has_user() && session_is_valid(request->user()))
         {
-            std::clog << std::format("client {} added milestone {} as a requirement for milestone {} in roadmap {}\n", request->user().token(), request->milestone().position(), request->required_milestone().position(), request->roadmap().id());
+            std::clog << std::format("client {} added milestone {} as a requirement for milestone {} in roadmap {}\n", request->user().token(), request->milestone().position(),
+                                     request->required_milestone().position(), request->roadmap().id());
             m_database->add_requirement(request->roadmap().id(), request->milestone(), request->required_milestone());
             response->set_success(true);
         }
@@ -753,7 +756,8 @@ grpc::Status server::GetRequirements(grpc::ServerContext* context, GetRequiremen
                 *milestone = requirement;
                 response->set_success(true);
             }
-            std::clog << std::format("client {} collected {} requirements from milestone {}:{}\n", request->user().token(), response->milestones_size(), request->roadmap().id(), request->milestone().position());
+            std::clog << std::format("client {} collected {} requirements from milestone {}:{}\n", request->user().token(), response->milestones_size(), request->roadmap().id(),
+                                     request->milestone().position());
         }
     }
     catch (client_exception const& exp)
@@ -862,7 +866,8 @@ grpc::Status server::ReorderMilestone(grpc::ServerContext* context, ReorderMiles
             }
             else
             {
-                std::clog << std::format("client {} reordered milestone {} to {} in roadmap {}\n", request->user().token(), request->current_position(), request->target_position(), request->roadmap().id());
+                std::clog << std::format("client {} reordered milestone {} to {} in roadmap {}\n", request->user().token(), request->current_position(), request->target_position(),
+                                         request->roadmap().id());
                 m_database->reorder_milestone(request->roadmap().id(), request->current_position(), request->target_position());
                 response->set_success(true);
                 response->clear_details();
@@ -923,7 +928,8 @@ grpc::Status server::RemoveMilestone(grpc::ServerContext* context, RemoveMilesto
         }
         else
         {
-            std::clog << std::format("client {} removed milestone {} in roadmap {}\n", request->user().token(), request->roadmap().id(), request->milestone().id(), request->roadmap().id());
+            std::clog << std::format("client {} removed milestone {} in roadmap {}\n", request->user().token(), request->roadmap().id(), request->milestone().id(),
+                                     request->roadmap().id());
             m_database->remove_milestone(request->roadmap().id(), request->milestone().id());
             response->set_success(true);
             response->clear_details();
@@ -971,7 +977,8 @@ grpc::Status server::ChangeMilestoneLevel(grpc::ServerContext* context, ChangeMi
         }
         else
         {
-            std::clog << std::format("client {} changed the level of milestone {} in roadmap {} to {}\n", request->user().token(), request->milestone().id(), request->roadmap().id(), database::level_to_string(request->milestone().level()));
+            std::clog << std::format("client {} changed the level of milestone {} in roadmap {} to {}\n", request->user().token(), request->milestone().id(),
+                                     request->roadmap().id(), database::level_to_string(request->milestone().level()));
             m_database->change_milestone_level(request->roadmap().id(), request->milestone().id(), request->milestone().level());
             response->set_success(true);
             response->clear_details();
@@ -2265,7 +2272,8 @@ grpc::Status server::ReorderTopic(grpc::ServerContext* context, ReorderTopicRequ
         }
         else
         {
-            std::clog << std::format("client {} reordered topic {} to {} in subject {}\n", request->user().token(), request->topic().position(), request->target().position(), request->subject().id());
+            std::clog << std::format("client {} reordered topic {} to {} in subject {}\n", request->user().token(), request->topic().position(), request->target().position(),
+                                     request->subject().id());
             m_database->reorder_topic(request->subject().id(), request->topic().level(), request->topic().position(), request->target().position());
             status = grpc::Status{grpc::StatusCode::OK, {}};
         }
@@ -2345,7 +2353,8 @@ grpc::Status server::MergeTopics(grpc::ServerContext* context, MergeTopicsReques
         }
         else
         {
-            std::clog << std::format("client {} merged topics {} and {} in subject {}\n", request->user().token(), request->source().position(), request->target().position(), request->subject().id());
+            std::clog << std::format("client {} merged topics {} and {} in subject {}\n", request->user().token(), request->source().position(), request->target().position(),
+                                     request->subject().id());
             m_database->merge_topics(request->subject().id(), request->source().level(), request->source().position(), request->target().position());
             status = grpc::Status{grpc::StatusCode::OK, {}};
         }
@@ -2397,14 +2406,17 @@ grpc::Status server::EditTopic(grpc::ServerContext* context, EditTopicRequest co
             if (request->target().name() != topic.name())
             {
                 modified = true;
-                std::clog << std::format("client {} edited name of topic {} in subject {}\n", request->user().token(), request->topic().position(), request->target().position(), request->subject().id());
+                std::clog << std::format("client {} edited name of topic {} in subject {}\n", request->user().token(), request->topic().position(), request->target().position(),
+                                         request->subject().id());
                 m_database->rename_topic(request->subject().id(), request->topic().level(), request->topic().position(), request->topic().name());
             }
 
             if (request->target().level() != topic.level())
             {
                 modified = true;
-                std::clog << std::format("client {} edited level of topic {} in subject {} from {} to {}\n", request->user().token(), request->topic().position(), request->target().position(), request->subject().id(), database::level_to_string(request->topic().level()), database::level_to_string(request->target().level()));
+                std::clog << std::format("client {} edited level of topic {} in subject {} from {} to {}\n", request->user().token(), request->topic().position(),
+                                         request->target().position(), request->subject().id(), database::level_to_string(request->topic().level()),
+                                         database::level_to_string(request->target().level()));
                 m_database->change_topic_level(request->subject().id(), request->topic().position(), request->topic().level(), request->target().level());
             }
 
@@ -2459,7 +2471,8 @@ grpc::Status server::MoveTopic(grpc::ServerContext* context, MoveTopicRequest co
         }
         else
         {
-            std::clog << std::format("client {} moved topic {} in subject {} to topic {} in subject {}\n", request->user().token(), request->source_topic().position(), request->source_subject().id(), request->target_topic().position(), request->target_subject().id());
+            std::clog << std::format("client {} moved topic {} in subject {} to topic {} in subject {}\n", request->user().token(), request->source_topic().position(),
+                                     request->source_subject().id(), request->target_topic().position(), request->target_subject().id());
             m_database->move_topic(request->source_subject().id(), request->source_topic().level(), request->source_topic().position(), request->target_subject().id(),
                                    request->target_topic().position());
             status = grpc::Status{grpc::StatusCode::OK, {}};
@@ -2505,7 +2518,8 @@ grpc::Status server::SearchTopics(grpc::ServerContext* context, SearchTopicsRequ
                 result.set_position(position);
                 *response->add_results() = result;
             }
-            std::clog << std::format("client {} collected {} topics by searching {} in subject {} in level {}\n", request->user().token(), response->results_size(), request->search_token(), request->subject().id(), database::level_to_string(request->level()));
+            std::clog << std::format("client {} collected {} topics by searching {} in subject {} in level {}\n", request->user().token(), response->results_size(),
+                                     request->search_token(), request->subject().id(), database::level_to_string(request->level()));
             status = grpc::Status{grpc::StatusCode::OK, {}};
         }
     }
@@ -2622,7 +2636,8 @@ grpc::Status server::ReorderSection(grpc::ServerContext* context, ReorderSection
         }
         else
         {
-            std::clog << std::format("client {} reordered section {} to {} in resource {}\n", request->user().token(), request->source().position(), request->target().position(), request->resource().id());
+            std::clog << std::format("client {} reordered section {} to {} in resource {}\n", request->user().token(), request->source().position(), request->target().position(),
+                                     request->resource().id());
             m_database->reorder_section(request->resource().id(), request->source().position(), request->target().position());
             status = grpc::Status{grpc::StatusCode::OK, {}};
         }
@@ -2702,7 +2717,8 @@ grpc::Status server::MergeSections(grpc::ServerContext* context, MergeSectionsRe
         }
         else
         {
-            std::clog << std::format("client {} merged sections {} and {} in resource {}\n", request->user().token(), request->source().position(), request->target().position(), request->resource().id());
+            std::clog << std::format("client {} merged sections {} and {} in resource {}\n", request->user().token(), request->source().position(), request->target().position(),
+                                     request->resource().id());
             m_database->merge_sections(request->resource().id(), request->source().position(), request->target().position());
             status = grpc::Status{grpc::StatusCode::OK, {}};
         }
@@ -2763,7 +2779,8 @@ grpc::Status server::EditSection(grpc::ServerContext* context, EditSectionReques
             }
             else
             {
-                std::clog << std::format("client {} attempted editing section {} in resource {} without changes\n", request->user().token(), request->section().position(), request->resource().id());
+                std::clog << std::format("client {} attempted editing section {} in resource {} without changes\n", request->user().token(), request->section().position(),
+                                         request->resource().id());
                 status = grpc::Status{grpc::StatusCode::ALREADY_EXISTS, {}};
             }
         }
@@ -2809,7 +2826,8 @@ grpc::Status server::MoveSection(grpc::ServerContext* context, MoveSectionReques
         }
         else
         {
-            std::clog << std::format("client {} moved section {} in resource {} to section {} in resource {}\n", request->user().token(), request->source_section().position(), request->source_resource().id(), request->target_section().position(), request->target_resource().id());
+            std::clog << std::format("client {} moved section {} in resource {} to section {} in resource {}\n", request->user().token(), request->source_section().position(),
+                                     request->source_resource().id(), request->target_section().position(), request->target_resource().id());
             m_database->move_section(request->source_resource().id(), request->source_section().position(), request->target_resource().id(), request->target_section().position());
             status = grpc::Status{grpc::StatusCode::OK, {}};
         }
@@ -2853,7 +2871,8 @@ grpc::Status server::SearchSections(grpc::ServerContext* context, SearchSections
                 *result->mutable_section() = section;
                 result->set_position(position);
             }
-            std::clog << std::format("client {} collected {} sections by searching {} in resource {}\n", request->user().token(), response->result_size(), request->search_token(), request->resource().id());
+            std::clog << std::format("client {} collected {} sections by searching {} in resource {}\n", request->user().token(), response->result_size(), request->search_token(),
+                                     request->resource().id());
             status = grpc::Status{grpc::StatusCode::OK, {}};
         }
     }
@@ -2933,7 +2952,8 @@ grpc::Status server::AddCardToSection(grpc::ServerContext* context, AddCardToSec
         }
         else
         {
-            std::clog << std::format("client {} added card {} to section {} in resource {}\n", request->user().token(), request->card().id(), request->section().position(), request->resource().id());
+            std::clog << std::format("client {} added card {} to section {} in resource {}\n", request->user().token(), request->card().id(), request->section().position(),
+                                     request->resource().id());
             m_database->add_card_to_section(request->card().id(), request->resource().id(), request->section().position());
             status = grpc::Status{grpc::StatusCode::OK, {}};
         }
@@ -2975,14 +2995,16 @@ grpc::Status server::AddCardToTopic(grpc::ServerContext* context, AddCardToTopic
         }
         else
         {
-            std::clog << std::format("client {} added card {} to topic {} in subject {}\n", request->user().token(), request->card().id(), request->topic().position(), request->subject().id());
+            std::clog << std::format("client {} added card {} to topic {} in subject {}\n", request->user().token(), request->card().id(), request->topic().position(),
+                                     request->subject().id());
             m_database->add_card_to_topic(request->card().id(), request->subject().id(), request->topic().position(), request->topic().level());
             status = grpc::Status{grpc::StatusCode::OK, {}};
         }
     }
     catch (pqxx::unique_violation const& exp)
     {
-        std::cerr << std::format("client {}: attempted to add card {} to topic {} of level {} in subject {} but it already exists\n", request->user().token(), request->card().id(), request->topic().position(), database::level_to_string(request->topic().level()), request->subject().id());
+        std::cerr << std::format("client {}: attempted to add card {} to topic {} of level {} in subject {} but it already exists\n", request->user().token(), request->card().id(),
+                                 request->topic().position(), database::level_to_string(request->topic().level()), request->subject().id());
         status = grpc::Status{grpc::StatusCode::ALREADY_EXISTS, "card already exists in this topic"};
     }
     catch (client_exception const& exp)
@@ -3100,7 +3122,8 @@ grpc::Status server::SearchCards(grpc::ServerContext* context, SearchCardsReques
                 *result->mutable_card() = card;
                 result->set_position(position);
             }
-            std::clog << std::format("client {} collected {} cards by searching {} in subject {}\n", request->user().token(), response->result_size(), request->search_token(), request->subject().id());
+            std::clog << std::format("client {} collected {} cards by searching {} in subject {}\n", request->user().token(), response->result_size(), request->search_token(),
+                                     request->subject().id());
             status = grpc::Status{grpc::StatusCode::OK, {}};
         }
     }
@@ -3145,7 +3168,8 @@ grpc::Status server::MoveCardToSection(grpc::ServerContext* context, MoveCardToS
         }
         else
         {
-            std::clog << std::format("client {} moved card {} to section {} in resource {}\n", request->user().token(), request->card().id(), request->target().position(), request->resource().id());
+            std::clog << std::format("client {} moved card {} to section {} in resource {}\n", request->user().token(), request->card().id(), request->target().position(),
+                                     request->resource().id());
             m_database->move_card_to_section(request->card().id(), request->resource().id(), request->source().position(), request->target().position());
             status = grpc::Status{grpc::StatusCode::OK, {}};
         }
@@ -3231,7 +3255,8 @@ grpc::Status server::GetPracticeCards(grpc::ServerContext* context, GetPracticeC
             {
                 *response->add_card() = card;
             }
-            std::clog << std::format("client {} collected {} practice cards from topic {} in milestone {} with level {}\n", request->user().token(), response->card_size(), request->topic().position(), request->subject().id(), database::level_to_string(request->topic().level()));
+            std::clog << std::format("client {} collected {} practice cards from topic {} in milestone {} with level {}\n", request->user().token(), response->card_size(),
+                                     request->topic().position(), request->subject().id(), database::level_to_string(request->topic().level()));
             status = grpc::Status{grpc::StatusCode::OK, {}};
         }
     }
@@ -3273,7 +3298,8 @@ grpc::Status server::GetPracticeTopics(grpc::ServerContext* context, GetPractice
             {
                 *response->add_topic() = topic;
             }
-            std::clog << std::format("client {} collected {} practice topics from subject {} in level {}\n", request->user().token(), response->topic_size(), request->milestone().id(), database::level_to_string(request->milestone().level()));
+            std::clog << std::format("client {} collected {} practice topics from subject {} in level {}\n", request->user().token(), response->topic_size(),
+                                     request->milestone().id(), database::level_to_string(request->milestone().level()));
             status = grpc::Status{grpc::StatusCode::OK, {}};
         }
     }
@@ -3322,7 +3348,8 @@ grpc::Status server::MoveCardToTopic(grpc::ServerContext* context, MoveCardToTop
         }
         else
         {
-            std::clog << std::format("client {} moved card {} to topic {} in subject {}\n", request->user().token(), request->card().id(), request->target_topic().position(), request->target_subject().id());
+            std::clog << std::format("client {} moved card {} to topic {} in subject {}\n", request->user().token(), request->card().id(), request->target_topic().position(),
+                                     request->target_subject().id());
             m_database->move_card_to_topic(request->card().id(), request->subject().id(), request->topic().position(), request->topic().level(), request->target_subject().id(),
                                            request->target_topic().position(), request->target_topic().level());
             status = grpc::Status{grpc::StatusCode::OK, {}};
@@ -3365,7 +3392,8 @@ grpc::Status server::CreateAssessment(grpc::ServerContext* context, CreateAssess
         }
         else
         {
-            std::clog << std::format("client {} created assessment {} in topic {} in subject {}\n", request->user().token(), request->card().id(), request->topic().position(), request->subject().id());
+            std::clog << std::format("client {} created assessment {} in topic {} in subject {}\n", request->user().token(), request->card().id(), request->topic().position(),
+                                     request->subject().id());
             m_database->create_assessment(request->subject().id(), request->topic().level(), request->topic().position(), request->card().id());
             status = grpc::Status{grpc::StatusCode::OK, {}};
         }
@@ -3408,7 +3436,8 @@ grpc::Status server::GetAssessments(grpc::ServerContext* context, GetAssessments
             {
                 *response->add_assessment() = assessment;
             }
-            std::clog << std::format("client {} collected {} assessments in topic {} {} in subject {}\n", request->user().token(), response->assessment_size(), request->topic().position(), database::level_to_string(request->topic().level()), request->subject().id());
+            std::clog << std::format("client {} collected {} assessments in topic {} {} in subject {}\n", request->user().token(), response->assessment_size(),
+                                     request->topic().position(), database::level_to_string(request->topic().level()), request->subject().id());
             status = grpc::Status{grpc::StatusCode::OK, {}};
         }
     }
@@ -3449,7 +3478,8 @@ grpc::Status server::ExpandAssessment(grpc::ServerContext* context, ExpandAssess
         }
         else
         {
-            std::clog << std::format("client {} expanded assessment {} with topic {} {} in subject {}\n", request->user().token(), request->card().id(), request->topic().position(), database::level_to_string(request->topic().level()), request->subject().id());
+            std::clog << std::format("client {} expanded assessment {} with topic {} {} in subject {}\n", request->user().token(), request->card().id(),
+                                     request->topic().position(), database::level_to_string(request->topic().level()), request->subject().id());
             m_database->expand_assessment(request->card().id(), request->subject().id(), request->topic().level(), request->topic().position());
             status = grpc::Status{grpc::StatusCode::OK, {}};
         }
@@ -3491,7 +3521,8 @@ grpc::Status server::DiminishAssessment(grpc::ServerContext* context, DiminishAs
         }
         else
         {
-            std::clog << std::format("client {} diminished assessment {} with topic {} {} in subject {}\n", request->user().token(), request->card().id(), request->topic().position(), database::level_to_string(request->topic().level()), request->subject().id());
+            std::clog << std::format("client {} diminished assessment {} with topic {} {} in subject {}\n", request->user().token(), request->card().id(),
+                                     request->topic().position(), database::level_to_string(request->topic().level()), request->subject().id());
             m_database->diminish_assessment(request->card().id(), request->subject().id(), request->topic().level(), request->topic().position());
             status = grpc::Status{grpc::StatusCode::OK, {}};
         }
@@ -3529,7 +3560,8 @@ grpc::Status server::IsAssimilated(grpc::ServerContext* context, IsAssimilatedRe
         }
         else
         {
-            std::clog << std::format("client {} checking assimilation of topic {} {} in subject {}\n", request->user().token(), request->topic().position(), database::level_to_string(request->topic().level()), request->subject().id());
+            std::clog << std::format("client {} checking assimilation of topic {} {} in subject {}\n", request->user().token(), request->topic().position(),
+                                     database::level_to_string(request->topic().level()), request->subject().id());
             std::shared_ptr<User> const user{m_database->get_user(request->user().token(), request->user().device())};
             response->set_is_assimilated(m_database->is_assimilated(user->id(), request->subject().id(), request->topic().level(), request->topic().position()));
             status = grpc::Status{grpc::StatusCode::OK, {}};
@@ -3822,7 +3854,8 @@ grpc::Status server::ReorderBlock(grpc::ServerContext* context, ReorderBlockRequ
         }
         else
         {
-            std::clog << std::format("client {} reordered block {} to {} in card {}\n", request->user().token(), request->block().position(), request->target().position(), request->card().id());
+            std::clog << std::format("client {} reordered block {} to {} in card {}\n", request->user().token(), request->block().position(), request->target().position(),
+                                     request->card().id());
             m_database->reorder_block(request->card().id(), request->block().position(), request->target().position());
             status = grpc::Status{grpc::StatusCode::OK, {}};
         }
@@ -3864,7 +3897,8 @@ grpc::Status server::MergeBlocks(grpc::ServerContext* context, MergeBlocksReques
         }
         else
         {
-            std::clog << std::format("client {} merged blocks {} and {} in card {}\n", request->user().token(), request->block().position(), request->target().position(), request->card().id());
+            std::clog << std::format("client {} merged blocks {} and {} in card {}\n", request->user().token(), request->block().position(), request->target().position(),
+                                     request->card().id());
             m_database->merge_blocks(request->card().id(), request->block().position(), request->target().position());
             status = grpc::Status{grpc::StatusCode::OK, {}};
         }
@@ -3906,7 +3940,8 @@ grpc::Status server::SplitBlock(grpc::ServerContext* context, SplitBlockRequest 
             {
                 *response->add_block() = block;
             }
-            std::clog << std::format("client {} split block {} in card {} in {} parts\n", request->user().token(), request->block().position(), request->card().id(), response->block_size());
+            std::clog << std::format("client {} split block {} in card {} in {} parts\n", request->user().token(), request->block().position(), request->card().id(),
+                                     response->block_size());
             status = grpc::Status{grpc::StatusCode::OK, {}};
         }
     }
@@ -3981,7 +4016,8 @@ grpc::Status server::GetSectionCards(grpc::ServerContext* context, flashback::Ge
             {
                 *response->add_card() = section_card;
             }
-            std::clog << std::format("client {} collected {} cards from section {}:{}\n", request->user().token(), response->card_size(), request->resource().id(), request->section().position());
+            std::clog << std::format("client {} collected {} cards from section {}:{}\n", request->user().token(), response->card_size(), request->resource().id(),
+                                     request->section().position());
             status = grpc::Status{grpc::StatusCode::OK, {}};
         }
     }
@@ -4022,7 +4058,8 @@ grpc::Status server::GetTopicCards(grpc::ServerContext* context, flashback::GetT
             {
                 *response->add_card() = card;
             }
-            std::clog << std::format("client {} collected {} cards from topic {}:{}\n", request->user().token(), response->card_size(), request->subject().id(), request->topic().position());
+            std::clog << std::format("client {} collected {} cards from topic {}:{}\n", request->user().token(), response->card_size(), request->subject().id(),
+                                     request->topic().position());
             status = grpc::Status{grpc::StatusCode::OK, {}};
         }
     }
@@ -4102,7 +4139,8 @@ grpc::Status server::MakeProgress(grpc::ServerContext* context, MakeProgressRequ
         }
         else
         {
-            std::clog << std::format("client {} made progress on card {} in subject {} level {} in {} seconds\n", request->user().token(), request->card().id(), request->milestone().id(), database::level_to_string(request->milestone().level()), request->duration());
+            std::clog << std::format("client {} made progress on card {} in subject {} level {} in {} seconds\n", request->user().token(), request->card().id(),
+                                     request->milestone().id(), database::level_to_string(request->milestone().level()), request->duration());
             std::shared_ptr<User> const user{m_database->get_user(request->user().token(), request->user().device())};
             m_database->make_progress(user->id(), request->milestone().id(), request->milestone().level(), request->card().id(), request->duration());
             status = grpc::Status{grpc::StatusCode::OK, {}};
@@ -4161,18 +4199,42 @@ size_t server::write_callback(void* contents, size_t size, size_t nmemb, std::st
     return size * nmemb;
 }
 
-bool server::send_verification_email(std::string email, uint64_t const code)
+bool server::send_verification_email(std::string domain, std::string email, uint64_t const code)
 {
     CURL* curl = curl_easy_init();
-    if (!curl) return false;
+    if (curl == nullptr)
+    {
+        return false;
+    }
+
+    std::ostringstream email_buffer{};
+    std::string email_content{};
+    if (std::ifstream verification_file("/usr/local/share/flashbackd/verification.html"); verification_file.is_open())
+    {
+        email_buffer << verification_file.rdbuf();
+        email_content = email_buffer.str();
+    }
+    else
+    {
+        return false;
+    }
+
+    auto pos = email_content.find("{}");
+    if (pos == std::string::npos)
+    {
+        return false;
+    }
+
+    email_content.replace(pos, 2, std::to_string(code));
 
     std::clog << std::format("server: sending verification code to {}\n", email);
 
-    std::string json =
-        R"({"from": "noreply@flashback.eu.com",)"
-        R"("to": ")" + email + R"(",)"
-        R"("subject": "Flashback Verification Code",)"
-        R"("html": "<h3>Flashback</h3><p>Your verification code is <strong>)" + std::to_string(code) + R"(</strong></p>"})";
+    std::string const json =
+        R"({"from": "verification@)" + std::move(domain) + R"(",)"
+        R"("to": ")" + std::move(email) + R"(",)"
+        R"("subject": "Flashback - Email Verification",)"
+        R"("text": "Your verification code is )" + std::to_string(code) + R"(", )"
+        R"("html": """)" + email_content + R"("""})";
 
     std::string response;
 
@@ -4186,7 +4248,7 @@ bool server::send_verification_email(std::string email, uint64_t const code)
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_callback);
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
 
-    CURLcode res = curl_easy_perform(curl);
+    CURLcode const res = curl_easy_perform(curl);
 
     long httpCode = 0;
     curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &httpCode);
