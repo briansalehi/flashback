@@ -14,6 +14,9 @@ find_package(CURL 8.15.0 REQUIRED)
 find_package(GTest 1.15.0)
 find_library(sodium NAMES sodium REQUIRED)
 
+FetchContent_Declare(nlohmann_json GIT_REPOSITORY https://github.com/nlohmann/json.git GIT_TAG v3.12.0)
+FetchContent_MakeAvailable(nlohmann_json)
+
 file(GLOB source_files RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} src/*.cpp)
 list(REMOVE_ITEM source_files src/main.cpp)
 file(GLOB header_files RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} include/flashback/*.hpp)
@@ -23,7 +26,7 @@ file(GLOB mock_files RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} test/mocks/flashback/*
 add_library(flashbackd-internals)
 target_sources(flashbackd-internals PUBLIC ${source_files})
 target_include_directories(flashbackd-internals PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
-target_link_libraries(flashbackd-internals PUBLIC common database sodium Boost::system Boost::program_options CURL::libcurl)
+target_link_libraries(flashbackd-internals PUBLIC common database sodium Boost::system Boost::program_options CURL::libcurl nlohmann_json::nlohmann_json)
 target_compile_definitions(flashbackd-internals PUBLIC INSTALL_RPATH="$ORIGIN")
 target_compile_features(flashbackd-internals PUBLIC cxx_std_23)
 define_tests(TARGET flashbackd-internals FILES "${test_files}" MOCK_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/test/mocks)

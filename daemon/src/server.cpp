@@ -5,6 +5,7 @@
 #include <iostream>
 #include <sodium.h>
 #include <curl/curl.h>
+#include <nlohmann/json.hpp>
 #include <flashback/server.hpp>
 #include <flashback/exception.hpp>
 
@@ -4231,12 +4232,12 @@ void server::send_verification_email(std::string domain, std::string email, uint
 
     std::clog << std::format("server: sending verification code to {}\n", email);
 
-    std::string const json =
-        R"({"from": "verification@)" + std::move(domain) + R"(",)"
-        R"("to": ")" + std::move(email) + R"(",)"
-        R"("subject": "Flashback - Email Verification",)"
-        R"("text": "Your verification code is )" + std::to_string(code) + R"(", )"
-        R"("html": """)" + email_content + R"("""})";
+    nlohmann::json content;
+    content["from"] = "verification@" + std::move(domain);
+    content["to"] = std::move(email);
+    content["subject"] = "Flashback - Email Verification";
+    content["text"] = "Your verification code is " + std::to_string(code);
+    content["html"] = email_content;
 
     std::string response;
 
@@ -4246,7 +4247,7 @@ void server::send_verification_email(std::string domain, std::string email, uint
 
     curl_easy_setopt(curl, CURLOPT_URL, "https://api.resend.com/emails");
     curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
-    curl_easy_setopt(curl, CURLOPT_POSTFIELDS, json.c_str());
+    curl_easy_setopt(curl, CURLOPT_POSTFIELDS, content.dump().c_str());
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_callback);
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
 
