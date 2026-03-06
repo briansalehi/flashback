@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict xW7RqWSVZugnSFynPB6Ktb76up4ioq7OexjbHcgIYeMQz2mXgaKdmZTbzx87Kvz
+\restrict dd9OOxoWKwK7PKv1s92gTvJf5iBVozfMxHS2c1Zi3lkFAs0P5U3xuLQqlv7fQfY
 
 -- Dumped from database version 18.1
 -- Dumped by pg_dump version 18.0
@@ -451,7 +451,7 @@ CREATE PROCEDURE flashback.change_user_email(IN user_id integer, IN user_email c
     LANGUAGE plpgsql
     AS $$
 begin
-    update users set email = user_email where users.id = user_id;
+    update users set email = user_email, verified = false where users.id = user_id;
 end;
 $$;
 
@@ -3687,7 +3687,7 @@ CREATE TABLE flashback.users (
     state flashback.user_state DEFAULT 'active'::flashback.user_state NOT NULL,
     verified boolean DEFAULT false NOT NULL,
     hash character varying(98),
-    joined integer DEFAULT 0 NOT NULL,
+    joined integer DEFAULT (EXTRACT(epoch FROM now()))::integer NOT NULL,
     verification integer
 );
 
@@ -4241,5 +4241,5 @@ GRANT ALL ON SCHEMA public TO brian;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict xW7RqWSVZugnSFynPB6Ktb76up4ioq7OexjbHcgIYeMQz2mXgaKdmZTbzx87Kvz
+\unrestrict dd9OOxoWKwK7PKv1s92gTvJf5iBVozfMxHS2c1Zi3lkFAs0P5U3xuLQqlv7fQfY
 
