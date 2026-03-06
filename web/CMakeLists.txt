@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 4.1)
 
+include(GNUInstallDirs)
+
 find_package(Protobuf 3.19.0 REQUIRED)
 find_program(NPM_EXECUTABLE NAMES npm REQUIRED)
 find_program(NPX_EXECUTABLE NAMES npx REQUIRED)
