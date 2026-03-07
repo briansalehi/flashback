@@ -397,7 +397,7 @@ function renderStudyingResources(resources) {
         `;
 
         resourceItem.addEventListener('click', () => {
-            window.location.href = `resource.html?id=${resource.id}&name=${encodeURIComponent(resource.name)}&type=${resource.type}&pattern=${resource.pattern}&link=${encodeURIComponent(resource.link)}&production=${resource.production}&expiration=${resource.expiration}&subjectId=${subjectId}&subjectName=${subjectName}&level=${level}`;
+            window.location.href = `resource.html?id=${resource.id}&name=${encodeURIComponent(resource.name)}&type=${resource.type}&pattern=${resource.pattern}&link=${encodeURIComponent(resource.link)}&production=${resource.production}&expiration=${resource.expiration}&subjectId=${subjectId}&subjectName=${encodeURIComponent(subjectName)}&level=${level}`;
         });
 
         container.appendChild(resourceItem);
