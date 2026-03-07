@@ -249,7 +249,8 @@ window.addEventListener('DOMContentLoaded', () => {
         renameRoadmapForm.addEventListener('submit', async (e) => {
             e.preventDefault();
 
-            const newName = document.getElementById('rename-roadmap-name').value.trim();
+            const newNameInput = document.getElementById('rename-roadmap-name');
+            const newName = UI.capitalizeWords(newNameInput.value);
             if (!newName) {
                 UI.showError('Please enter a roadmap name');
                 return;

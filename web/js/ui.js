@@ -90,5 +90,13 @@ const UI = {
         if (form) {
             form.reset();
         }
+    },
+    
+    capitalizeWords(str) {
+        if (!str) return '';
+        return str.trim()
+            .split(/\s+/)
+            .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+            .join(' ');
     }
 };

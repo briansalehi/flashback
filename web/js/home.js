@@ -252,7 +252,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
             const nameInput = document.getElementById('roadmap-name');
             if (!nameInput) return;
-            const name = nameInput.value;
+            const name = UI.capitalizeWords(nameInput.value);
 
             UI.hideMessage('error-message');
             UI.setButtonLoading('save-roadmap-btn', true);
