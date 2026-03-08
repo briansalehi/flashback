@@ -939,8 +939,16 @@ a:hover {
 }
 
 /* Markdown content styling */
-.markdown-content {
+.markdown-content,
+.math-content {
     white-space: normal;
+}
+
+.math-content {
+    display: flex;
+    justify-content: center;
+    padding: var(--space-md) 0;
+    overflow-x: auto;
 }
 
 .markdown-content h1,

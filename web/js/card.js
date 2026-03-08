@@ -1307,9 +1307,26 @@ function renderBlocks(blocks) {
 
         let contentHtml = '';
         if (block.type === 1) { // code
-            // Map extension to Prism language
-            const language = mapExtensionToLanguage(block.extension);
-            contentHtml = `<pre class="content-block-text" style="background: rgba(0, 0, 0, 0.3); padding: var(--space-md); border-radius: var(--radius-md); overflow-x: auto;"><code class="language-${language} show-language">${UI.escapeHtml(block.content)}</code></pre>`;
+            if (block.extension === 'math') {
+                try {
+                    if (typeof katex !== 'undefined') {
+                        const html = katex.renderToString(block.content, {
+                            throwOnError: false,
+                            displayMode: true
+                        });
+                        contentHtml = `<div class="content-block-text math-content">${html}</div>`;
+                    } else {
+                        contentHtml = `<div class="content-block-text" style="color: var(--color-error); font-style: italic;">Math renderer not available. Content: ${UI.escapeHtml(block.content)}</div>`;
+                    }
+                } catch (err) {
+                    console.error('KaTeX rendering error:', err);
+                    contentHtml = `<div class="content-block-text" style="color: var(--color-error);">Math Error: ${UI.escapeHtml(err.message)}</div>`;
+                }
+            } else {
+                // Map extension to Prism language
+                const language = mapExtensionToLanguage(block.extension);
+                contentHtml = `<pre class="content-block-text" style="background: rgba(0, 0, 0, 0.3); padding: var(--space-md); border-radius: var(--radius-md); overflow-x: auto;"><code class="language-${language} show-language">${UI.escapeHtml(block.content)}</code></pre>`;
+            }
         } else if (block.type === 2) { // image
             contentHtml = `<img src="${UI.escapeHtml(block.content)}" alt="Block image" style="max-width: 100%; height: auto; border-radius: var(--radius-md);" />`;
         } else { // text (type 0 or default)
