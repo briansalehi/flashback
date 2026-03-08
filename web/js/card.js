@@ -346,8 +346,12 @@ window.addEventListener('DOMContentLoaded', () => {
         const typeSelect = document.getElementById('block-type');
         const extensionInput = document.getElementById('block-extension');
         if (typeSelect && extensionInput) {
-            if (parseInt(typeSelect.value) === 0) { // Text
+            const type = parseInt(typeSelect.value);
+            if (type === 0) { // Text
                 extensionInput.value = 'md';
+                extensionInput.disabled = true;
+            } else if (type === 3) { // Math
+                extensionInput.value = 'tex';
                 extensionInput.disabled = true;
             } else {
                 extensionInput.disabled = false;
@@ -366,8 +370,12 @@ window.addEventListener('DOMContentLoaded', () => {
         blockTypeSelect.addEventListener('change', () => {
             const extensionInput = document.getElementById('block-extension');
             if (extensionInput) {
-                if (parseInt(blockTypeSelect.value) === 0) { // Text
+                const type = parseInt(blockTypeSelect.value);
+                if (type === 0) { // Text
                     extensionInput.value = 'md';
+                    extensionInput.disabled = true;
+                } else if (type === 3) { // Math
+                    extensionInput.value = 'tex';
                     extensionInput.disabled = true;
                 } else {
                     extensionInput.disabled = false;
@@ -1276,7 +1284,7 @@ function renderBlocks(blocks) {
     const container = document.getElementById('blocks-list');
     container.innerHTML = '';
 
-    const blockTypes = ['text', 'code', 'image'];
+    const blockTypes = ['text', 'code', 'image', 'math'];
 
     blocks.forEach((block, index) => {
         const blockItem = document.createElement('div');
@@ -1306,27 +1314,25 @@ function renderBlocks(blocks) {
         }
 
         let contentHtml = '';
-        if (block.type === 1) { // code
-            if (block.extension === 'math') {
-                try {
-                    if (typeof katex !== 'undefined') {
-                        const html = katex.renderToString(block.content, {
-                            throwOnError: false,
-                            displayMode: true
-                        });
-                        contentHtml = `<div class="content-block-text math-content">${html}</div>`;
-                    } else {
-                        contentHtml = `<div class="content-block-text" style="color: var(--color-error); font-style: italic;">Math renderer not available. Content: ${UI.escapeHtml(block.content)}</div>`;
-                    }
-                } catch (err) {
-                    console.error('KaTeX rendering error:', err);
-                    contentHtml = `<div class="content-block-text" style="color: var(--color-error);">Math Error: ${UI.escapeHtml(err.message)}</div>`;
+        if (block.type === 3) { // math
+            try {
+                if (typeof katex !== 'undefined') {
+                    const html = katex.renderToString(block.content, {
+                        throwOnError: false,
+                        displayMode: true
+                    });
+                    contentHtml = `<div class="content-block-text math-content">${html}</div>`;
+                } else {
+                    contentHtml = `<div class="content-block-text" style="color: var(--color-error); font-style: italic;">Math renderer not available. Content: ${UI.escapeHtml(block.content)}</div>`;
                 }
-            } else {
-                // Map extension to Prism language
-                const language = mapExtensionToLanguage(block.extension);
-                contentHtml = `<pre class="content-block-text" style="background: rgba(0, 0, 0, 0.3); padding: var(--space-md); border-radius: var(--radius-md); overflow-x: auto;"><code class="language-${language} show-language">${UI.escapeHtml(block.content)}</code></pre>`;
+            } catch (err) {
+                console.error('KaTeX rendering error:', err);
+                contentHtml = `<div class="content-block-text" style="color: var(--color-error);">Math Error: ${UI.escapeHtml(err.message)}</div>`;
             }
+        } else if (block.type === 1) { // code
+            // Map extension to Prism language
+            const language = mapExtensionToLanguage(block.extension);
+            contentHtml = `<pre class="content-block-text" style="background: rgba(0, 0, 0, 0.3); padding: var(--space-md); border-radius: var(--radius-md); overflow-x: auto;"><code class="language-${language} show-language">${UI.escapeHtml(block.content)}</code></pre>`;
         } else if (block.type === 2) { // image
             contentHtml = `<img src="${UI.escapeHtml(block.content)}" alt="Block image" style="max-width: 100%; height: auto; border-radius: var(--radius-md);" />`;
         } else { // text (type 0 or default)
@@ -1655,6 +1661,7 @@ function renderBlocks(blocks) {
                     <option value="0" ${block.type === 0 ? 'selected' : ''}>Text</option>
                     <option value="1" ${block.type === 1 ? 'selected' : ''}>Code</option>
                     <option value="2" ${block.type === 2 ? 'selected' : ''}>Image</option>
+                    <option value="3" ${block.type === 3 ? 'selected' : ''}>Math</option>
                 </select>
             </div>
             <div style="margin-bottom: 1rem;">
@@ -1693,8 +1700,12 @@ function renderBlocks(blocks) {
 
             if (typeSelect && extensionInput) {
                 const handleTypeChange = () => {
-                    if (parseInt(typeSelect.value) === 0) { // Text
+                    const type = parseInt(typeSelect.value);
+                    if (type === 0) { // Text
                         extensionInput.value = 'md';
+                        extensionInput.disabled = true;
+                    } else if (type === 3) { // Math
+                        extensionInput.value = 'tex';
                         extensionInput.disabled = true;
                     } else {
                         extensionInput.disabled = false;

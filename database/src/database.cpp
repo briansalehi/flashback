@@ -1615,6 +1615,7 @@ Block::content_type database::to_content_type(std::string_view const type_string
     if (type_string == "code") { type = Block::code; }
     else if (type_string == "text") { type = Block::text; }
     else if (type_string == "image") { type = Block::image; }
+    else if (type_string == "math") { type = Block::math; }
     else { throw std::runtime_error("invalid card state"); }
 
     return type;
@@ -1631,6 +1632,8 @@ std::string database::content_type_to_string(Block::content_type const type)
     case Block::text: type_string = "text";
         break;
     case Block::image: type_string = "image";
+        break;
+    case Block::math: type_string = "math";
         break;
     default: throw std::runtime_error("invalid content type");
     }
