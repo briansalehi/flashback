@@ -68,15 +68,19 @@ window.addEventListener('DOMContentLoaded', () => {
     // Show context breadcrumb
     displayContextBreadcrumb(subjectName, topicName, resourceName, sectionName);
 
-    document.getElementById('card-headline').textContent = headline || 'Card';
-    if (typeof renderMathInElement !== 'undefined') {
-        renderMathInElement(document.getElementById('card-headline'), {
-            delimiters: [
-                {left: '$$', right: '$$', display: true},
-                {left: '$', right: '$', display: false}
-            ],
-            throwOnError: false
-        });
+    const headlineEl = document.getElementById('card-headline');
+    if (headlineEl) {
+        headlineEl.textContent = headline || 'Card';
+        headlineEl.setAttribute('data-original-text', headline || 'Card');
+        if (typeof renderMathInElement !== 'undefined') {
+            renderMathInElement(headlineEl, {
+                delimiters: [
+                    {left: '$$', right: '$$', display: true},
+                    {left: '$', right: '$', display: false}
+                ],
+                throwOnError: false
+            });
+        }
     }
     document.title = `${headline || 'Card'} - Flashback`;
 
@@ -182,7 +186,6 @@ window.addEventListener('DOMContentLoaded', () => {
     if (removeBtnInit) removeBtnInit.style.display = 'none';
 
     // Reveal header actions on headline click
-    const headlineEl = document.getElementById('card-headline');
     if (headlineEl) {
         headlineEl.setAttribute('tabindex', '0');
         const editBtn = document.getElementById('edit-headline-btn');
@@ -210,7 +213,7 @@ window.addEventListener('DOMContentLoaded', () => {
             const headlineEl = document.getElementById('card-headline');
             const headlineInput = document.getElementById('edit-card-headline');
             if (headlineInput) {
-                headlineInput.value = headlineEl ? headlineEl.textContent : '';
+                headlineInput.value = headlineEl ? (headlineEl.getAttribute('data-original-text') || headlineEl.textContent) : '';
                 setTimeout(() => {
                     headlineInput.focus();
                     adjustTextareaHeight(headlineInput);
@@ -272,6 +275,7 @@ window.addEventListener('DOMContentLoaded', () => {
                 await client.editCard(cardId, newHeadline);
                 const headlineEl = document.getElementById('card-headline');
                 headlineEl.textContent = newHeadline;
+                headlineEl.setAttribute('data-original-text', newHeadline);
                 if (typeof renderMathInElement !== 'undefined') {
                     renderMathInElement(headlineEl, {
                         delimiters: [
