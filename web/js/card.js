@@ -1743,6 +1743,17 @@ function renderBlocks(blocks) {
         }, 0);
     });
 
+    // Apply KaTeX auto-render to all text blocks
+    if (typeof renderMathInElement !== 'undefined') {
+        renderMathInElement(container, {
+            delimiters: [
+                {left: '$$', right: '$$', display: true},
+                {left: '$', right: '$', display: false}
+            ],
+            throwOnError: false
+        });
+    }
+
     // Apply Prism syntax highlighting to all code blocks
     if (typeof Prism !== 'undefined') {
         Prism.highlightAll();
