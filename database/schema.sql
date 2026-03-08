@@ -2,10 +2,10 @@
 -- PostgreSQL database dump
 --
 
-\restrict dd9OOxoWKwK7PKv1s92gTvJf5iBVozfMxHS2c1Zi3lkFAs0P5U3xuLQqlv7fQfY
+\restrict a7dms1JgAdxEnk3uABh9nfCYgWqx35E9XGFK1jUQzQS6anKQ3acTxh9X5yVKZXD
 
 -- Dumped from database version 18.1
--- Dumped by pg_dump version 18.0
+-- Dumped by pg_dump version 18.1
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -101,7 +101,8 @@ ALTER TYPE flashback.closure_state OWNER TO flashback;
 CREATE TYPE flashback.content_type AS ENUM (
     'text',
     'code',
-    'image'
+    'image',
+    'math'
 );
 
 
@@ -1608,10 +1609,10 @@ begin
     join milestones m on m.roadmap = a.id
     join shelves h on h.subject = m.subject
     join resources r on r.id = h.resource
-    left join nerves n on n.resource = r.id and n."user" = user_id
+    left join nerves n on n.resource = r.id and n."user" = a."user"
     join sections s on s.resource = r.id and s.state < 'completed'
     join section_cards c on c.resource = r.id and c.section = s.position
-    join studies i on i.card = c.card
+    join studies i on i.card = c.card and i."user" = a."user"
     where a."user" = user_id and (r.type != 'nerve'::resource_type or n.resource is not null)
     group by r.id, r.name, r.type, r.pattern, r.link, r.production, r.expiration;
 end; $$;
@@ -4241,5 +4242,5 @@ GRANT ALL ON SCHEMA public TO brian;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict dd9OOxoWKwK7PKv1s92gTvJf5iBVozfMxHS2c1Zi3lkFAs0P5U3xuLQqlv7fQfY
+\unrestrict a7dms1JgAdxEnk3uABh9nfCYgWqx35E9XGFK1jUQzQS6anKQ3acTxh9X5yVKZXD
 
