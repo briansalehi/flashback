@@ -69,6 +69,15 @@ window.addEventListener('DOMContentLoaded', () => {
     displayContextBreadcrumb(subjectName, topicName, resourceName, sectionName);
 
     document.getElementById('card-headline').textContent = headline || 'Card';
+    if (typeof renderMathInElement !== 'undefined') {
+        renderMathInElement(document.getElementById('card-headline'), {
+            delimiters: [
+                {left: '$$', right: '$$', display: true},
+                {left: '$', right: '$', display: false}
+            ],
+            throwOnError: false
+        });
+    }
     document.title = `${headline || 'Card'} - Flashback`;
 
     const stateNames = ['draft', 'reviewed', 'completed', 'approved', 'released', 'rejected'];
@@ -261,7 +270,17 @@ window.addEventListener('DOMContentLoaded', () => {
             try {
                 const cardId = parseInt(UI.getUrlParam('cardId'));
                 await client.editCard(cardId, newHeadline);
-                document.getElementById('card-headline').textContent = newHeadline;
+                const headlineEl = document.getElementById('card-headline');
+                headlineEl.textContent = newHeadline;
+                if (typeof renderMathInElement !== 'undefined') {
+                    renderMathInElement(headlineEl, {
+                        delimiters: [
+                            {left: '$$', right: '$$', display: true},
+                            {left: '$', right: '$', display: false}
+                        ],
+                        throwOnError: false
+                    });
+                }
                 document.title = `${newHeadline} - Flashback`;
                 closeEditCardModal();
                 UI.setButtonLoading('save-edit-card-btn', false);

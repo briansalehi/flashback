@@ -580,6 +580,17 @@ function renderCards(cards) {
 
         container.appendChild(cardItem);
     });
+
+    // Apply KaTeX auto-render to all card headlines
+    if (typeof renderMathInElement !== 'undefined') {
+        renderMathInElement(container, {
+            delimiters: [
+                {left: '$$', right: '$$', display: true},
+                {left: '$', right: '$', display: false}
+            ],
+            throwOnError: false
+        });
+    }
 }
 
 function displayBreadcrumb() {
@@ -641,6 +652,15 @@ window.handleAssignToTopic = async function(cardId, cardHeadline) {
     UI.toggleElement('assign-topic-modal', true);
     document.body.style.overflow = 'hidden';
     document.getElementById('assigning-card-headline').textContent = cardHeadline;
+    if (typeof renderMathInElement !== 'undefined') {
+        renderMathInElement(document.getElementById('assigning-card-headline'), {
+            delimiters: [
+                {left: '$$', right: '$$', display: true},
+                {left: '$', right: '$', display: false}
+            ],
+            throwOnError: false
+        });
+    }
     
     // Reset subject search
     document.getElementById('subject-search-input').value = '';
@@ -947,6 +967,15 @@ window.handleMoveCard = function(cardId, cardHeadline) {
     UI.toggleElement('move-card-modal', true);
     document.body.style.overflow = 'hidden';
     document.getElementById('moving-card-headline').textContent = cardHeadline;
+    if (typeof renderMathInElement !== 'undefined') {
+        renderMathInElement(document.getElementById('moving-card-headline'), {
+            delimiters: [
+                {left: '$$', right: '$$', display: true},
+                {left: '$', right: '$', display: false}
+            ],
+            throwOnError: false
+        });
+    }
     document.getElementById('section-search-input').value = '';
     document.getElementById('section-search-results').style.display = 'none';
     document.getElementById('section-search-empty').style.display = 'none';

@@ -427,6 +427,17 @@ function renderCards(cards) {
 
         container.appendChild(cardItem);
     });
+
+    // Apply KaTeX auto-render to all card headlines
+    if (typeof renderMathInElement !== 'undefined') {
+        renderMathInElement(container, {
+            delimiters: [
+                {left: '$$', right: '$$', display: true},
+                {left: '$', right: '$', display: false}
+            ],
+            throwOnError: false
+        });
+    }
 }
 
 // Global state for move card modal
@@ -444,6 +455,15 @@ window.handleMoveCard = function(cardId, cardHeadline) {
     document.body.style.overflow = 'hidden';
 
     document.getElementById('moving-card-headline').textContent = cardHeadline;
+    if (typeof renderMathInElement !== 'undefined') {
+        renderMathInElement(document.getElementById('moving-card-headline'), {
+            delimiters: [
+                {left: '$$', right: '$$', display: true},
+                {left: '$', right: '$', display: false}
+            ],
+            throwOnError: false
+        });
+    }
     document.getElementById('topic-search-input').value = '';
     document.getElementById('topic-search-results').style.display = 'none';
     document.getElementById('topic-search-empty').style.display = 'none';
@@ -672,6 +692,17 @@ function renderAssessments(assessments) {
 
         container.appendChild(cardItem);
     });
+
+    // Apply KaTeX auto-render to all assessment headlines
+    if (typeof renderMathInElement !== 'undefined') {
+        renderMathInElement(container, {
+            delimiters: [
+                {left: '$$', right: '$$', display: true},
+                {left: '$', right: '$', display: false}
+            ],
+            throwOnError: false
+        });
+    }
 }
 
     // Diminish Assessment handlers
