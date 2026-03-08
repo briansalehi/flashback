@@ -341,11 +341,48 @@ window.addEventListener('DOMContentLoaded', () => {
     const openAddBlockModal = () => {
         UI.toggleElement('add-block-modal', true);
         document.body.style.overflow = 'hidden';
+
+        // Set initial state for extension field based on default type (Text)
+        const typeSelect = document.getElementById('block-type');
+        const extensionInput = document.getElementById('block-extension');
+        if (typeSelect && extensionInput) {
+            if (parseInt(typeSelect.value) === 0) { // Text
+                extensionInput.value = 'md';
+                extensionInput.disabled = true;
+            } else {
+                extensionInput.disabled = false;
+            }
+        }
+
         setTimeout(() => {
             const contentInput = document.getElementById('block-content');
             if (contentInput) contentInput.focus();
         }, 100);
     };
+
+    // Add event listener for block type changes in Add Block modal
+    const blockTypeSelect = document.getElementById('block-type');
+    if (blockTypeSelect) {
+        blockTypeSelect.addEventListener('change', () => {
+            const extensionInput = document.getElementById('block-extension');
+            if (extensionInput) {
+                if (parseInt(blockTypeSelect.value) === 0) { // Text
+                    extensionInput.value = 'md';
+                    extensionInput.disabled = true;
+                } else {
+                    extensionInput.disabled = false;
+                }
+            }
+        });
+
+        // Ensure extension is always lower case as user types
+        const extensionInput = document.getElementById('block-extension');
+        if (extensionInput) {
+            extensionInput.addEventListener('input', () => {
+                extensionInput.value = extensionInput.value.toLowerCase();
+            });
+        }
+    }
 
     const closeAddBlockModal = () => {
         UI.toggleElement('add-block-modal', false);
@@ -395,7 +432,8 @@ window.addEventListener('DOMContentLoaded', () => {
             e.preventDefault();
 
             const blockType = parseInt(document.getElementById('block-type').value);
-            const blockExtension = document.getElementById('block-extension').value.trim();
+            const extensionInput = document.getElementById('block-extension');
+            const blockExtension = extensionInput.value.trim().toLowerCase();
             const blockMetadata = document.getElementById('block-metadata').value.trim();
             const blockContent = document.getElementById('block-content').value.trim();
 
@@ -1633,6 +1671,28 @@ function renderBlocks(blocks) {
         setTimeout(() => {
             const contentTextarea = document.getElementById(`block-content-${index}`);
             const splitBtn = document.getElementById(`split-block-btn-${index}`);
+            const typeSelect = document.getElementById(`block-type-${index}`);
+            const extensionInput = document.getElementById(`block-extension-${index}`);
+
+            if (typeSelect && extensionInput) {
+                const handleTypeChange = () => {
+                    if (parseInt(typeSelect.value) === 0) { // Text
+                        extensionInput.value = 'md';
+                        extensionInput.disabled = true;
+                    } else {
+                        extensionInput.disabled = false;
+                    }
+                };
+
+                typeSelect.addEventListener('change', handleTypeChange);
+                // Set initial state
+                handleTypeChange();
+
+                // Ensure extension is always lower case as user types
+                extensionInput.addEventListener('input', () => {
+                    extensionInput.value = extensionInput.value.toLowerCase();
+                });
+            }
 
             if (contentTextarea && splitBtn) {
                 contentTextarea.addEventListener('input', () => {
@@ -1716,7 +1776,7 @@ window.saveBlock = async function(index) {
     }
 
     const newType = parseInt(typeSelect.value);
-    const newExtension = extensionInput.value.trim();
+    const newExtension = extensionInput.value.trim().toLowerCase();
     const newMetadata = metadataInput.value.trim();
     const newContent = contentTextarea.value.trim();
 
@@ -1793,7 +1853,7 @@ window.saveSplitBlock = async function(index) {
     }
 
     const newType = parseInt(typeSelect.value);
-    const newExtension = extensionInput.value.trim();
+    const newExtension = extensionInput.value.trim().toLowerCase();
     const newMetadata = metadataInput.value.trim();
     const newContent = contentTextarea.value.trim();
 
