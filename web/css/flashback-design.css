@@ -1067,18 +1067,20 @@ a:hover {
 /* Block actions overlay */
 .block-actions-overlay {
     position: absolute;
-    top: var(--space-md);
-    right: var(--space-md);
+    bottom: 0;
+    right: 0;
+    padding: var(--space-md);
     display: flex;
-    gap: var(--space-xs);
+    gap: var(--space-sm);
     opacity: 0;
     pointer-events: none;
-    transition: opacity var(--transition-fast);
-    z-index: 10;
+    transition: all var(--transition-fast);
+    z-index: 100;
 }
 
 /* Show actions on hover (desktop) */
-.content-block:hover .block-actions-overlay {
+.content-block:hover .block-actions-overlay,
+.block-actions-overlay:hover {
     opacity: 1;
     pointer-events: all;
 }
@@ -1094,22 +1096,25 @@ a:hover {
     display: inline-flex;
     align-items: center;
     gap: var(--space-xs);
-    padding: var(--space-sm) var(--space-md);
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(0, 0, 0, 0.1);
-    border-radius: var(--radius-md);
+    padding: var(--space-xs) var(--space-md);
+    background: rgba(30, 30, 30, 0.9);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: var(--radius-full);
     font-size: var(--font-size-xs);
     font-weight: var(--font-weight-medium);
-    color: var(--color-text-primary);
+    color: var(--color-text-secondary);
     cursor: pointer;
     transition: all var(--transition-fast);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
 .block-action-btn:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    background: rgba(45, 45, 45, 0.95);
+    color: var(--color-text-primary);
+    transform: translateY(-2px);
+    border-color: rgba(255, 255, 255, 0.2);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
 }
 
 .block-action-btn:active {
@@ -1123,20 +1128,22 @@ a:hover {
 }
 
 .block-edit-btn {
-    color: var(--color-primary-start);
+    color: #8c9eff;
+    border-color: rgba(102, 126, 234, 0.4);
 }
 
 .block-edit-btn:hover {
-    background: rgba(102, 126, 234, 0.1);
-    border-color: var(--color-primary-start);
+    background: rgba(102, 126, 234, 0.25);
+    border-color: #8c9eff;
 }
 
 .block-remove-btn {
     color: #dc3545;
+    border-color: rgba(255, 82, 82, 0.4);
 }
 
 .block-remove-btn:hover {
-    background: rgba(220, 53, 69, 0.1);
+    background: rgba(255, 82, 82, 0.25);
     border-color: #dc3545;
 }
 

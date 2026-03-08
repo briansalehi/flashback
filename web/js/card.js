@@ -65,6 +65,16 @@ window.addEventListener('DOMContentLoaded', () => {
     // Start timer
     cardStartTime = Date.now();
 
+    // Global click-to-hide listener for block actions
+    document.addEventListener('mousedown', (e) => {
+        const blocks = document.querySelectorAll('.content-block.show-actions');
+        blocks.forEach(blockItem => {
+            if (!blockItem.contains(e.target) && !e.target.closest('.block-actions-overlay')) {
+                blockItem.classList.remove('show-actions');
+            }
+        });
+    });
+
     // Show context breadcrumb
     displayContextBreadcrumb(subjectName, topicName, resourceName, sectionName);
 
@@ -1388,7 +1398,7 @@ function renderBlocks(blocks) {
                     </svg>
                     Edit
                 </button>
-                <button class="block-action-btn block-remove-btn remove-block-btn" data-position="${block.position}" data-index="${index}">
+                <button class="block-action-btn block-remove-btn" data-position="${block.position}" data-index="${index}">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <polyline points="3 6 5 6 21 6"></polyline>
                         <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
@@ -1399,8 +1409,28 @@ function renderBlocks(blocks) {
             ${contentHtml}
         `;
 
-        // Drag and drop handlers
-        let isDragging = false;
+        // Show actions on tap for mobile
+        blockItem.addEventListener('click', (e) => {
+            // Only toggle on touch devices (where we don't have hover)
+            // or if we want it to work on click too.
+            // But let's check if it's not a button click itself.
+            if (e.target.closest('.block-action-btn')) return;
+
+            // Don't toggle actions if inside edit form
+            if (e.target.closest('.block-edit')) return;
+
+            const isShowing = blockItem.classList.contains('show-actions');
+
+            // Remove from others first
+            document.querySelectorAll('.content-block.show-actions').forEach(el => {
+                el.classList.remove('show-actions');
+            });
+            
+            if (!isShowing) {
+                blockItem.classList.add('show-actions');
+            }
+            e.stopPropagation(); // Prevent immediate close from document mousedown
+        });
 
         blockItem.addEventListener('dragstart', (e) => {
             // Don't allow dragging if user is interacting with form elements
@@ -1634,32 +1664,9 @@ function renderBlocks(blocks) {
             isDragEnabled = false;
         });
 
-        // Mobile tap to show/hide actions
-        let tapTimer = null;
-        blockItem.addEventListener('click', (e) => {
-            // Don't toggle actions if clicking a button or inside edit form
-            if (e.target.closest('.block-action-btn') || e.target.closest('.block-edit')) {
-                return;
-            }
-
-            // Toggle actions visibility on mobile
-            if (window.innerWidth <= 768) {
-                blockItem.classList.toggle('show-actions');
-            }
-        });
-
-        // Hide actions when tapping outside on mobile - Issue #2 fix
-        document.addEventListener('click', (e) => {
-            if (window.innerWidth <= 768) {
-                // If click is outside this block and block has show-actions class
-                if (!blockItem.contains(e.target) && blockItem.classList.contains('show-actions')) {
-                    blockItem.classList.remove('show-actions');
-                }
-            }
-        });
 
         // Remove button handler
-        const removeBtn = displayDiv.querySelector('.remove-block-btn');
+        const removeBtn = displayDiv.querySelector('.block-remove-btn');
         if (removeBtn) {
             removeBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
