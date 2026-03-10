@@ -334,6 +334,8 @@ window.addEventListener('DOMContentLoaded', () => {
                 // Then create an assessment using the card ID
                 await client.createAssessment(card.id, subjectId, topicLevel, topicPosition);
 
+                newlyCreatedCardId = card.id;
+
                 UI.showSuccess('Assessment added successfully');
                 closeAssessmentModal();
                 UI.setButtonLoading('save-assessment-btn', false);
@@ -347,6 +349,8 @@ window.addEventListener('DOMContentLoaded', () => {
         });
     }
 });
+
+let newlyCreatedCardId = null;
 
 async function loadCards() {
     UI.toggleElement('loading', true);
@@ -393,6 +397,14 @@ function renderCards(cards) {
         const cardItem = document.createElement('div');
         cardItem.className = 'item-block compact';
         cardItem.style.cursor = 'pointer';
+
+        if (newlyCreatedCardId && card.id === newlyCreatedCardId) {
+            cardItem.classList.add('newly-created');
+            setTimeout(() => {
+                cardItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                newlyCreatedCardId = null; // Clear it
+            }, 100);
+        }
 
         const stateName = stateNames[card.state] || 'draft';
 
@@ -659,6 +671,14 @@ function renderAssessments(assessments) {
     assessments.forEach(card => {
         const cardItem = document.createElement('div');
         cardItem.className = 'item-block compact';
+
+        if (newlyCreatedCardId && card.id === newlyCreatedCardId) {
+            cardItem.classList.add('newly-created');
+            setTimeout(() => {
+                cardItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                newlyCreatedCardId = null; // Clear it
+            }, 100);
+        }
 
         const stateName = stateNames[card.state] || 'draft';
 

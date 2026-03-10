@@ -156,6 +156,8 @@ window.addEventListener('DOMContentLoaded', () => {
                 const card = await client.createCard(headline);
                 await client.addCardToSection(card.id, resourceId, sectionPosition);
 
+                newlyCreatedCardId = card.id;
+
                 UI.toggleElement('add-card-modal', false);
                 document.body.style.overflow = 'auto';
                 UI.clearForm('card-form');
@@ -493,6 +495,8 @@ window.addEventListener('DOMContentLoaded', () => {
     loadCards();
 });
 
+let newlyCreatedCardId = null;
+
 async function loadCards() {
     UI.toggleElement('loading', true);
     UI.toggleElement('cards-list', false);
@@ -537,6 +541,14 @@ function renderCards(cards) {
         const cardItem = document.createElement('div');
         cardItem.className = 'item-block compact';
         cardItem.style.cursor = 'pointer';
+
+        if (newlyCreatedCardId && card.id === newlyCreatedCardId) {
+            cardItem.classList.add('newly-created');
+            setTimeout(() => {
+                cardItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                newlyCreatedCardId = null; // Clear it so it doesn't re-highlight on refresh/manual reload
+            }, 100);
+        }
 
         const stateName = stateNames[card.state] || 'draft';
 

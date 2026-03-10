@@ -100,6 +100,28 @@
     opacity: 0.5;
 }
 
+/* Highlight Animation for newly created cards */
+@keyframes highlight-new-card {
+    0% {
+        box-shadow: 0 0 0 4px var(--color-primary-start), 0 0 40px var(--color-primary-start);
+        transform: scale(1.02);
+        border-color: var(--color-primary-start);
+        background: rgba(102, 126, 234, 0.2);
+    }
+    100% {
+        box-shadow: none;
+        transform: scale(1);
+        border-color: var(--border-color);
+        background: var(--bg-primary);
+    }
+}
+
+.newly-created {
+    animation: highlight-new-card 2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    z-index: 10;
+    position: relative;
+}
+
 /* ============================================
    GLOBAL RESET & BASE STYLES
    ============================================ */
