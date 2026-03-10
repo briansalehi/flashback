@@ -1391,7 +1391,8 @@ function renderBlocks(blocks) {
                         vegaEmbed(`#diagram-${index}`, spec, {
                             actions: false,
                             responsive: true,
-                            width: "container"
+                            width: "container",
+                            theme: "dark"
                         }).catch(err => {
                             console.error('Vega-Lite rendering error:', err);
                             diagramContainer.innerHTML = `<div style="color: var(--color-error); padding: 1rem; border: 1px solid var(--color-error); border-radius: 4px;">Vega Error: ${UI.escapeHtml(err.message)}</div>`;
