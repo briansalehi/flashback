@@ -386,6 +386,9 @@ window.addEventListener('DOMContentLoaded', () => {
             } else if (type === 3) { // Math
                 extensionInput.value = 'tex';
                 extensionInput.disabled = true;
+            } else if (type === 4) { // Diagram
+                extensionInput.value = 'js';
+                extensionInput.disabled = true;
             } else {
                 extensionInput.disabled = false;
             }
@@ -409,6 +412,9 @@ window.addEventListener('DOMContentLoaded', () => {
                     extensionInput.disabled = true;
                 } else if (type === 3) { // Math
                     extensionInput.value = 'tex';
+                    extensionInput.disabled = true;
+                } else if (type === 4) { // Diagram
+                    extensionInput.value = 'js';
                     extensionInput.disabled = true;
                 } else {
                     extensionInput.disabled = false;
@@ -1317,7 +1323,7 @@ function renderBlocks(blocks) {
     const container = document.getElementById('blocks-list');
     container.innerHTML = '';
 
-    const blockTypes = ['text', 'code', 'image', 'math'];
+    const blockTypes = ['text', 'code', 'image', 'math', 'diagram'];
 
     blocks.forEach((block, index) => {
         const blockItem = document.createElement('div');
@@ -1368,6 +1374,25 @@ function renderBlocks(blocks) {
             contentHtml = `<pre class="content-block-text" style="background: rgba(0, 0, 0, 0.3); padding: var(--space-md); border-radius: var(--radius-md); overflow-x: auto;"><code class="language-${language} show-language">${UI.escapeHtml(block.content)}</code></pre>`;
         } else if (block.type === 2) { // image
             contentHtml = `<img src="${UI.escapeHtml(block.content)}" alt="Block image" style="max-width: 100%; height: auto; border-radius: var(--radius-md);" />`;
+        } else if (block.type === 4) { // diagram
+            contentHtml = `<div id="diagram-${index}" class="content-block-diagram"></div>`;
+            // Execute the JS code to render the diagram using D3
+            setTimeout(() => {
+                const diagramContainer = document.getElementById(`diagram-${index}`);
+                if (diagramContainer && typeof d3 !== 'undefined') {
+                    try {
+                        // Create a function from the content and execute it
+                        // The code should expect 'd3' and 'container' to be available
+                        const renderFn = new Function('d3', 'container', block.content);
+                        renderFn(d3, diagramContainer);
+                    } catch (err) {
+                        console.error('Diagram rendering error:', err);
+                        diagramContainer.innerHTML = `<div style="color: var(--color-error); padding: 1rem; border: 1px solid var(--color-error); border-radius: 4px;">Diagram Error: ${UI.escapeHtml(err.message)}</div>`;
+                    }
+                } else if (!window.d3) {
+                    diagramContainer.innerHTML = `<div style="color: var(--color-error); padding: 1rem;">D3 library not loaded.</div>`;
+                }
+            }, 0);
         } else { // text (type 0 or default)
             // Parse markdown for md or txt extensions
             const ext = block.extension ? block.extension.toLowerCase() : '';
@@ -1692,6 +1717,7 @@ function renderBlocks(blocks) {
                     <option value="1" ${block.type === 1 ? 'selected' : ''}>Code</option>
                     <option value="2" ${block.type === 2 ? 'selected' : ''}>Image</option>
                     <option value="3" ${block.type === 3 ? 'selected' : ''}>Math</option>
+                    <option value="4" ${block.type === 4 ? 'selected' : ''}>Diagram</option>
                 </select>
             </div>
             <div style="margin-bottom: 1rem;">
@@ -1736,6 +1762,9 @@ function renderBlocks(blocks) {
                         extensionInput.disabled = true;
                     } else if (type === 3) { // Math
                         extensionInput.value = 'tex';
+                        extensionInput.disabled = true;
+                    } else if (type === 4) { // Diagram
+                        extensionInput.value = 'js';
                         extensionInput.disabled = true;
                     } else {
                         extensionInput.disabled = false;

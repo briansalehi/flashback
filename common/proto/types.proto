@@ -39,7 +39,7 @@ message Card {
 }
 
 message Block {
-    enum content_type { text = 0; code = 1; image = 2; math = 3; }
+    enum content_type { text = 0; code = 1; image = 2; math = 3; diagram = 4; }
 
     uint64 position = 1;
     content_type type = 2;
