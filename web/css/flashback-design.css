@@ -63,6 +63,12 @@
     --transition-base: 0.3s ease;
     --transition-slow: 0.5s ease;
 
+    /* Status Colors */
+    --color-success: #4caf50;
+    --color-error: #f44336;
+    --color-warning: #ff9800;
+    --color-info: #2196f3;
+
     /* Container Widths */
     --container-sm: 640px;
     --container-md: 768px;
@@ -624,19 +630,19 @@ a:hover {
 .alert-success {
     background: rgba(76, 175, 80, 0.1);
     border: 1px solid rgba(76, 175, 80, 0.3);
-    color: #4caf50;
+    color: var(--color-success);
 }
 
 .alert-error {
     background: rgba(244, 67, 54, 0.1);
     border: 1px solid rgba(244, 67, 54, 0.3);
-    color: #f44336;
+    color: var(--color-error);
 }
 
 .alert-info {
-    background: rgba(102, 126, 234, 0.1);
-    border: 1px solid rgba(102, 126, 234, 0.3);
-    color: #667eea;
+    background: rgba(33, 150, 243, 0.1);
+    border: 1px solid rgba(33, 150, 243, 0.3);
+    color: var(--color-info);
 }
 
 /* ============================================
