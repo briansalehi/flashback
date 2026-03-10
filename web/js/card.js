@@ -88,7 +88,8 @@ window.addEventListener('DOMContentLoaded', () => {
                     {left: '$$', right: '$$', display: true},
                     {left: '$', right: '$', display: false}
                 ],
-                throwOnError: false
+                throwOnError: false,
+                errorColor: 'var(--color-error)'
             });
         }
     }
@@ -292,7 +293,8 @@ window.addEventListener('DOMContentLoaded', () => {
                             {left: '$$', right: '$$', display: true},
                             {left: '$', right: '$', display: false}
                         ],
-                        throwOnError: false
+                        throwOnError: false,
+                        errorColor: 'var(--color-error)'
                     });
                 }
                 document.title = `${newHeadline} - Flashback`;
@@ -1358,7 +1360,8 @@ function renderBlocks(blocks) {
                 if (typeof katex !== 'undefined') {
                     const html = katex.renderToString(block.content, {
                         throwOnError: false,
-                        displayMode: true
+                        displayMode: true,
+                        errorColor: 'var(--color-error)'
                     });
                     contentHtml = `<div class="content-block-text math-content">${html}</div>`;
                 } else {
@@ -1366,7 +1369,7 @@ function renderBlocks(blocks) {
                 }
             } catch (err) {
                 console.error('KaTeX rendering error:', err);
-                contentHtml = `<div class="content-block-text" style="color: var(--color-error);">Math Error: ${UI.escapeHtml(err.message)}</div>`;
+                contentHtml = `<div class="content-block-text" style="color: var(--color-error); padding: 1rem; border: 1px solid var(--color-error); border-radius: var(--radius-md);">Math Error: ${UI.escapeHtml(err.message)}</div>`;
             }
         } else if (block.type === 1) { // code
             // Map extension to Prism language
@@ -1817,7 +1820,8 @@ function renderBlocks(blocks) {
                 {left: '$$', right: '$$', display: true},
                 {left: '$', right: '$', display: false}
             ],
-            throwOnError: false
+            throwOnError: false,
+            errorColor: 'var(--color-error)'
         });
     }
 

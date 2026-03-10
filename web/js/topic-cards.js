@@ -435,7 +435,8 @@ function renderCards(cards) {
                 {left: '$$', right: '$$', display: true},
                 {left: '$', right: '$', display: false}
             ],
-            throwOnError: false
+            throwOnError: false,
+            errorColor: 'var(--color-error)'
         });
     }
 }
@@ -461,7 +462,8 @@ window.handleMoveCard = function(cardId, cardHeadline) {
                 {left: '$$', right: '$$', display: true},
                 {left: '$', right: '$', display: false}
             ],
-            throwOnError: false
+            throwOnError: false,
+            errorColor: 'var(--color-error)'
         });
     }
     document.getElementById('topic-search-input').value = '';
@@ -700,7 +702,8 @@ function renderAssessments(assessments) {
                 {left: '$$', right: '$$', display: true},
                 {left: '$', right: '$', display: false}
             ],
-            throwOnError: false
+            throwOnError: false,
+            errorColor: 'var(--color-error)'
         });
     }
 }

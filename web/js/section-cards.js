@@ -588,7 +588,8 @@ function renderCards(cards) {
                 {left: '$$', right: '$$', display: true},
                 {left: '$', right: '$', display: false}
             ],
-            throwOnError: false
+            throwOnError: false,
+            errorColor: 'var(--color-error)'
         });
     }
 }
@@ -658,7 +659,8 @@ window.handleAssignToTopic = async function(cardId, cardHeadline) {
                 {left: '$$', right: '$$', display: true},
                 {left: '$', right: '$', display: false}
             ],
-            throwOnError: false
+            throwOnError: false,
+            errorColor: 'var(--color-error)'
         });
     }
     
@@ -973,7 +975,8 @@ window.handleMoveCard = function(cardId, cardHeadline) {
                 {left: '$$', right: '$$', display: true},
                 {left: '$', right: '$', display: false}
             ],
-            throwOnError: false
+            throwOnError: false,
+            errorColor: 'var(--color-error)'
         });
     }
     document.getElementById('section-search-input').value = '';
