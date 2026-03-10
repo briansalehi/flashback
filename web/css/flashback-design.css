@@ -1046,10 +1046,20 @@ a:hover {
     font-weight: var(--font-weight-semibold);
 }
 
-.markdown-content img {
+.markdown-content img,
+.content-block-diagram svg {
     max-width: 100%;
     height: auto;
     border-radius: var(--radius-md);
+}
+
+.content-block-diagram {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: var(--space-md) 0;
+    display: flex;
+    justify-content: center;
 }
 
 /* Block metadata badge */

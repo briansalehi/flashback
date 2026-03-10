@@ -1385,6 +1385,14 @@ function renderBlocks(blocks) {
                         // The code should expect 'd3' and 'container' to be available
                         const renderFn = new Function('d3', 'container', block.content);
                         renderFn(d3, diagramContainer);
+
+                        // If it's an SVG, ensure it has some default responsive attributes if missing
+                        const svg = diagramContainer.querySelector('svg');
+                        if (svg) {
+                            if (!svg.getAttribute('viewBox') && svg.getAttribute('width') && svg.getAttribute('height')) {
+                                svg.setAttribute('viewBox', `0 0 ${svg.getAttribute('width')} ${svg.getAttribute('height')}`);
+                            }
+                        }
                     } catch (err) {
                         console.error('Diagram rendering error:', err);
                         diagramContainer.innerHTML = `<div style="color: var(--color-error); padding: 1rem; border: 1px solid var(--color-error); border-radius: 4px;">Diagram Error: ${UI.escapeHtml(err.message)}</div>`;
