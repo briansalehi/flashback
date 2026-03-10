@@ -389,7 +389,7 @@ window.addEventListener('DOMContentLoaded', () => {
                 extensionInput.value = 'tex';
                 extensionInput.disabled = true;
             } else if (type === 4) { // Diagram
-                extensionInput.value = 'json';
+                extensionInput.value = 'js';
                 extensionInput.disabled = true;
             } else {
                 extensionInput.disabled = false;
@@ -416,7 +416,7 @@ window.addEventListener('DOMContentLoaded', () => {
                     extensionInput.value = 'tex';
                     extensionInput.disabled = true;
                 } else if (type === 4) { // Diagram
-                    extensionInput.value = 'json';
+                    extensionInput.value = 'js';
                     extensionInput.disabled = true;
                 } else {
                     extensionInput.disabled = false;
@@ -1379,30 +1379,36 @@ function renderBlocks(blocks) {
             contentHtml = `<img src="${UI.escapeHtml(block.content)}" alt="Block image" style="max-width: 100%; height: auto; border-radius: var(--radius-md);" />`;
         } else if (block.type === 4) { // diagram
             contentHtml = `<div id="diagram-${index}" class="content-block-diagram"></div>`;
-            // Execute the JS code to render the diagram using Vega-Lite
+            // Execute the JS code to render the diagram using D3
             setTimeout(() => {
                 const diagramContainer = document.getElementById(`diagram-${index}`);
                 if (!diagramContainer) return;
 
-                // Vega-Lite rendering
-                if (typeof vegaEmbed !== 'undefined') {
+                // D3 rendering
+                if (typeof d3 !== 'undefined') {
                     try {
-                        const spec = JSON.parse(block.content);
-                        vegaEmbed(`#diagram-${index}`, spec, {
-                            actions: false,
-                            responsive: true,
-                            width: "container",
-                            theme: "dark"
-                        }).catch(err => {
-                            console.error('Vega-Lite rendering error:', err);
-                            diagramContainer.innerHTML = `<div style="color: var(--color-error); padding: 1rem; border: 1px solid var(--color-error); border-radius: 4px;">Vega Error: ${UI.escapeHtml(err.message)}</div>`;
-                        });
+                        // Create a scoped function to execute the diagram code
+                        // Provide d3 and the container element to the script
+                        const renderScript = new Function('d3', 'container', block.content);
+                        renderScript(d3, diagramContainer);
+                        
+                        // Handle responsiveness for SVG diagrams
+                        const svg = diagramContainer.querySelector('svg');
+                        if (svg && !svg.getAttribute('viewBox')) {
+                            const width = svg.getAttribute('width');
+                            const height = svg.getAttribute('height');
+                            if (width && height) {
+                                svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+                                svg.removeAttribute('width');
+                                svg.removeAttribute('height');
+                            }
+                        }
                     } catch (err) {
-                        console.error('JSON parse error for Vega-Lite:', err);
-                        diagramContainer.innerHTML = `<div style="color: var(--color-error); padding: 1rem; border: 1px solid var(--color-error); border-radius: 4px;">JSON Error: ${UI.escapeHtml(err.message)}</div>`;
+                        console.error('D3 rendering error:', err);
+                        diagramContainer.innerHTML = `<div style="color: var(--color-error); padding: 1rem; border: 1px solid var(--color-error); border-radius: 4px;">D3 Error: ${UI.escapeHtml(err.message)}</div>`;
                     }
                 } else {
-                    diagramContainer.innerHTML = `<div style="color: var(--color-error); padding: 1rem;">Vega-Lite library not loaded.</div>`;
+                    diagramContainer.innerHTML = `<div style="color: var(--color-error); padding: 1rem;">D3 library not loaded.</div>`;
                 }
             }, 0);
         } else { // text (type 0 or default)
@@ -1776,7 +1782,7 @@ function renderBlocks(blocks) {
                         extensionInput.value = 'tex';
                         extensionInput.disabled = true;
                     } else if (type === 4) { // Diagram
-                        extensionInput.value = 'json';
+                        extensionInput.value = 'js';
                         extensionInput.disabled = true;
                     } else {
                         extensionInput.disabled = false;
