@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict a7dms1JgAdxEnk3uABh9nfCYgWqx35E9XGFK1jUQzQS6anKQ3acTxh9X5yVKZXD
+\restrict d763HyOLKbutG7YIdisoBqML0X6Z7xvOAuDFnE2umeyqau5Pp9YgPGdHutFaxd1
 
 -- Dumped from database version 18.1
 -- Dumped by pg_dump version 18.1
@@ -102,7 +102,8 @@ CREATE TYPE flashback.content_type AS ENUM (
     'text',
     'code',
     'image',
-    'math'
+    'math',
+    'diagram'
 );
 
 
@@ -368,6 +369,23 @@ CREATE PROCEDURE flashback.add_resource_to_subject(IN resource_id integer, IN su
 
 
 ALTER PROCEDURE flashback.add_resource_to_subject(IN resource_id integer, IN subject_id integer) OWNER TO flashback;
+
+--
+-- Name: add_track(integer, integer); Type: PROCEDURE; Schema: flashback; Owner: flashback
+--
+
+CREATE PROCEDURE flashback.add_track(IN card_id integer, IN user_id integer)
+    LANGUAGE plpgsql
+    AS $$
+begin
+    insert into tracks (card, "user")
+    values (card_id, user_id)
+    on conflict on constraint tracks_pkey do
+    update set modification = extract(epoch from now())::integer where tracks.card = card_id and tracks."user" = user_id;
+end; $$;
+
+
+ALTER PROCEDURE flashback.add_track(IN card_id integer, IN user_id integer) OWNER TO flashback;
 
 --
 -- Name: change_block_type(integer, integer, flashback.content_type); Type: PROCEDURE; Schema: flashback; Owner: flashback
@@ -1619,55 +1637,6 @@ end; $$;
 
 
 ALTER FUNCTION flashback.get_study_resources(user_id integer) OWNER TO flashback;
-
---
--- Name: get_study_resources_variation_call(integer); Type: FUNCTION; Schema: flashback; Owner: flashback
---
-
-CREATE FUNCTION flashback.get_study_resources_variation_call(user_id integer) RETURNS TABLE("position" bigint, id integer, name flashback.citext, type flashback.resource_type, pattern flashback.section_pattern, link character varying, production integer, expiration integer)
-    LANGUAGE plpgsql
-    AS $$
-begin
-    return query
-    select row_number() over (order by max(i.last_study)), r.id, r.name, r.type, r.pattern, r.link, r.production, r.expiration
-    from roadmaps a
-    join milestones m on m.roadmap = a.id
-    join shelves h on h.subject = m.subject
-    join resources r on r.id = h.resource and get_resource_state(r.id) < 'completed'
-    join section_cards c on c.resource = r.id
-    join studies i on i.card = c.card
-    where a."user" = user_id
-    group by r.id, r.name, r.type, r.pattern, r.link, r.production, r.expiration
-    order by r.id;
-end; $$;
-
-
-ALTER FUNCTION flashback.get_study_resources_variation_call(user_id integer) OWNER TO flashback;
-
---
--- Name: get_study_resources_variation_join(integer); Type: FUNCTION; Schema: flashback; Owner: flashback
---
-
-CREATE FUNCTION flashback.get_study_resources_variation_join(user_id integer) RETURNS TABLE("position" bigint, id integer, name flashback.citext, type flashback.resource_type, pattern flashback.section_pattern, link character varying, production integer, expiration integer)
-    LANGUAGE plpgsql
-    AS $$
-begin
-    return query
-    select row_number() over (order by max(i.last_study)), r.id, r.name, r.type, r.pattern, r.link, r.production, r.expiration
-    from roadmaps a
-    join milestones m on m.roadmap = a.id
-    join shelves h on h.subject = m.subject
-    join resources r on r.id = h.resource
-    join sections s on s.resource = r.id and s.state < 'completed'
-    join section_cards c on c.resource = r.id and c.section = s.position
-    join studies i on i.card = c.card
-    where a."user" = user_id
-    group by r.id, r.name, r.type, r.pattern, r.link, r.production, r.expiration
-    order by r.id;
-end; $$;
-
-
-ALTER FUNCTION flashback.get_study_resources_variation_join(user_id integer) OWNER TO flashback;
 
 --
 -- Name: get_subject_resources(character varying); Type: FUNCTION; Schema: flashback; Owner: flashback
@@ -3378,6 +3347,19 @@ CREATE TABLE flashback.milestones (
 ALTER TABLE flashback.milestones OWNER TO flashback;
 
 --
+-- Name: mutations; Type: TABLE; Schema: flashback; Owner: flashback
+--
+
+CREATE TABLE flashback.mutations (
+    origin integer NOT NULL,
+    mutant integer NOT NULL,
+    date integer DEFAULT (EXTRACT(epoch FROM now()))::integer NOT NULL
+);
+
+
+ALTER TABLE flashback.mutations OWNER TO flashback;
+
+--
 -- Name: nerves; Type: TABLE; Schema: flashback; Owner: flashback
 --
 
@@ -3514,17 +3496,6 @@ ALTER TABLE flashback.resources ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY
     CACHE 1
 );
 
-
---
--- Name: roadmap_id; Type: TABLE; Schema: flashback; Owner: flashback
---
-
-CREATE TABLE flashback.roadmap_id (
-    "coalesce" integer
-);
-
-
-ALTER TABLE flashback.roadmap_id OWNER TO flashback;
 
 --
 -- Name: roadmaps; Type: TABLE; Schema: flashback; Owner: flashback
@@ -3678,6 +3649,19 @@ CREATE TABLE flashback.topics (
 ALTER TABLE flashback.topics OWNER TO flashback;
 
 --
+-- Name: tracks; Type: TABLE; Schema: flashback; Owner: flashback
+--
+
+CREATE TABLE flashback.tracks (
+    card integer NOT NULL,
+    "user" integer NOT NULL,
+    modification integer DEFAULT (EXTRACT(epoch FROM now()))::integer NOT NULL
+);
+
+
+ALTER TABLE flashback.tracks OWNER TO flashback;
+
+--
 -- Name: users; Type: TABLE; Schema: flashback; Owner: flashback
 --
 
@@ -3755,6 +3739,14 @@ ALTER TABLE ONLY flashback.milestones
 
 ALTER TABLE ONLY flashback.milestones
     ADD CONSTRAINT milestones_roadmap_subject_position_key UNIQUE (roadmap, subject, "position");
+
+
+--
+-- Name: mutations mutations_pkey; Type: CONSTRAINT; Schema: flashback; Owner: flashback
+--
+
+ALTER TABLE ONLY flashback.mutations
+    ADD CONSTRAINT mutations_pkey PRIMARY KEY (origin, mutant);
 
 
 --
@@ -3942,6 +3934,14 @@ ALTER TABLE ONLY flashback.topics
 
 
 --
+-- Name: tracks tracks_pkey; Type: CONSTRAINT; Schema: flashback; Owner: flashback
+--
+
+ALTER TABLE ONLY flashback.tracks
+    ADD CONSTRAINT tracks_pkey PRIMARY KEY (card, "user");
+
+
+--
 -- Name: users users_email_key; Type: CONSTRAINT; Schema: flashback; Owner: flashback
 --
 
@@ -4067,6 +4067,22 @@ ALTER TABLE ONLY flashback.milestones
 
 ALTER TABLE ONLY flashback.milestones
     ADD CONSTRAINT milestones_subject_fkey FOREIGN KEY (subject) REFERENCES flashback.subjects(id) ON UPDATE CASCADE ON DELETE CASCADE;
+
+
+--
+-- Name: mutations mutations_mutant_fkey; Type: FK CONSTRAINT; Schema: flashback; Owner: flashback
+--
+
+ALTER TABLE ONLY flashback.mutations
+    ADD CONSTRAINT mutations_mutant_fkey FOREIGN KEY (mutant) REFERENCES flashback.cards(id) ON UPDATE CASCADE ON DELETE CASCADE;
+
+
+--
+-- Name: mutations mutations_origin_fkey; Type: FK CONSTRAINT; Schema: flashback; Owner: flashback
+--
+
+ALTER TABLE ONLY flashback.mutations
+    ADD CONSTRAINT mutations_origin_fkey FOREIGN KEY (origin) REFERENCES flashback.cards(id) ON UPDATE CASCADE ON DELETE CASCADE;
 
 
 --
@@ -4230,6 +4246,22 @@ ALTER TABLE ONLY flashback.topic_cards
 
 
 --
+-- Name: tracks tracks_card_fkey; Type: FK CONSTRAINT; Schema: flashback; Owner: flashback
+--
+
+ALTER TABLE ONLY flashback.tracks
+    ADD CONSTRAINT tracks_card_fkey FOREIGN KEY (card) REFERENCES flashback.cards(id) ON UPDATE CASCADE ON DELETE CASCADE;
+
+
+--
+-- Name: tracks tracks_user_fkey; Type: FK CONSTRAINT; Schema: flashback; Owner: flashback
+--
+
+ALTER TABLE ONLY flashback.tracks
+    ADD CONSTRAINT tracks_user_fkey FOREIGN KEY ("user") REFERENCES flashback.users(id) ON UPDATE CASCADE ON DELETE CASCADE;
+
+
+--
 -- Name: SCHEMA public; Type: ACL; Schema: -; Owner: flashback
 --
 
@@ -4242,5 +4274,5 @@ GRANT ALL ON SCHEMA public TO brian;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict a7dms1JgAdxEnk3uABh9nfCYgWqx35E9XGFK1jUQzQS6anKQ3acTxh9X5yVKZXD
+\unrestrict d763HyOLKbutG7YIdisoBqML0X6Z7xvOAuDFnE2umeyqau5Pp9YgPGdHutFaxd1
 
