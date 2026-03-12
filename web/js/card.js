@@ -392,6 +392,7 @@ window.addEventListener('DOMContentLoaded', () => {
                 extensionInput.value = 'js';
                 extensionInput.disabled = true;
             } else {
+                extensionInput.value = '';
                 extensionInput.disabled = false;
             }
         }
@@ -419,6 +420,7 @@ window.addEventListener('DOMContentLoaded', () => {
                     extensionInput.value = 'js';
                     extensionInput.disabled = true;
                 } else {
+                    extensionInput.value = '';
                     extensionInput.disabled = false;
                 }
             }
@@ -1773,7 +1775,7 @@ function renderBlocks(blocks) {
             const extensionInput = document.getElementById(`block-extension-${index}`);
 
             if (typeSelect && extensionInput) {
-                const handleTypeChange = () => {
+                const handleTypeChange = (isInitial = false) => {
                     const type = parseInt(typeSelect.value);
                     if (type === 0) { // Text
                         extensionInput.value = 'md';
@@ -1785,13 +1787,16 @@ function renderBlocks(blocks) {
                         extensionInput.value = 'js';
                         extensionInput.disabled = true;
                     } else {
+                        if (!isInitial) {
+                            extensionInput.value = '';
+                        }
                         extensionInput.disabled = false;
                     }
                 };
 
-                typeSelect.addEventListener('change', handleTypeChange);
+                typeSelect.addEventListener('change', () => handleTypeChange(false));
                 // Set initial state
-                handleTypeChange();
+                handleTypeChange(true);
 
                 // Ensure extension is always lower case as user types
                 extensionInput.addEventListener('input', () => {
