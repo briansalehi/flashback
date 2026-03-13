@@ -31,7 +31,7 @@ function enterReorderMode(index) {
         sourceItem.classList.add('reorder-source');
     }
     
-    // Add hint
+    // Add hint at the top of the list
     const hint = document.createElement('div');
     hint.id = 'reorder-hint';
     hint.className = 'reorder-hint';
@@ -39,7 +39,7 @@ function enterReorderMode(index) {
         <span style="font-weight: 600; font-size: 0.95rem;">Select target location (same level) to move this topic</span>
         <button class="btn btn-secondary btn-sm" onclick="exitReorderMode()" style="padding: 4px 12px; font-size: 0.85rem; background: rgba(255,255,255,0.2); border: none;">Cancel</button>
     `;
-    container.parentNode.insertBefore(hint, container);
+    document.body.appendChild(hint);
     
     if (navigator.vibrate) navigator.vibrate(50);
 }

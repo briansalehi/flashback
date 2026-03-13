@@ -1672,7 +1672,7 @@ function enterReorderMode(index) {
         <span style="font-weight: 600; font-size: 0.95rem;">Select target location to move this block</span>
         <button class="btn btn-secondary btn-sm" onclick="exitReorderMode()" style="padding: 4px 12px; font-size: 0.85rem; background: rgba(255,255,255,0.2); border: none;">Cancel</button>
     `;
-    blocksList.parentNode.insertBefore(hint, blocksList);
+    document.body.appendChild(hint);
     
     // Vibrate for feedback
     if (navigator.vibrate) {
