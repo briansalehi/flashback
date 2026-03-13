@@ -340,7 +340,14 @@ window.addEventListener('DOMContentLoaded', () => {
         selectedAssessmentId = null;
 
         try {
-            subjectAssessments = await client.getSubjectAssessments(subjectId, milestoneLevel);
+            const [allAssessments, currentTopicAssessments] = await Promise.all([
+                client.getSubjectAssessments(subjectId, milestoneLevel),
+                client.getAssessments(subjectId, topicLevel, topicPosition)
+            ]);
+
+            const currentIds = new Set(currentTopicAssessments.map(a => a.id));
+            subjectAssessments = allAssessments.filter(a => !currentIds.has(a.id));
+
             UI.toggleElement('existing-assessments-loading', false);
             
             if (subjectAssessments.length === 0) {
