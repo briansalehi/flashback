@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict 5nNcx4FAbqlPCGWB2EyI7efFu9wUeLRFOKsqgLpgiIsVesthoRGA8qYyqZqcOgW
+\restrict fgnMDwDiTdJqRkAkcXZ119AT2cQWfdGd2kKKEcsrZBqfP5PnVabtJcIHOiUuwvn
 
 -- Dumped from database version 18.1
 -- Dumped by pg_dump version 18.1
@@ -2870,7 +2870,7 @@ begin
         if target_position < section_position then
             update sections set position = position + safe_margin where resource = resource_id and position >= target_position and position < section_position;
             update sections set position = target_position where resource = resource_id and position = temporary_position;
-            update sections set position = position - safe_margin + target_position where resource = resource_id and position >= safe_margin and position < section_position;
+            update sections set position = position - safe_margin + 1 where resource = resource_id and position >= safe_margin and position < section_position + safe_margin;
         else
             update sections set position = position + safe_margin where resource = resource_id and position > section_position and position <= target_position;
             update sections set position = target_position where resource = resource_id and position = temporary_position;
@@ -2900,7 +2900,7 @@ begin
         if target_position < topic_position then
             update topics set position = position + safe_margin where subject = subject_id and level = topic_level and position >= target_position and position < topic_position;
             update topics set position = target_position where subject = subject_id and level = topic_level and position = temporary_position;
-            update topics set position = position - safe_margin + target_position where subject = subject_id and level = topic_level and position >= safe_margin and position < topic_position;
+            update topics set position = position - safe_margin + 1 where subject = subject_id and level = topic_level and position >= safe_margin and position < topic_position + safe_margin;
         else
             update topics set position = position + safe_margin where subject = subject_id and level = topic_level and position > topic_position and position <= target_position;
             update topics set position = target_position where subject = subject_id and level = topic_level and position = temporary_position;
@@ -4275,5 +4275,5 @@ GRANT ALL ON SCHEMA public TO brian;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict 5nNcx4FAbqlPCGWB2EyI7efFu9wUeLRFOKsqgLpgiIsVesthoRGA8qYyqZqcOgW
+\unrestrict fgnMDwDiTdJqRkAkcXZ119AT2cQWfdGd2kKKEcsrZBqfP5PnVabtJcIHOiUuwvn
 
