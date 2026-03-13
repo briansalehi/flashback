@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict d763HyOLKbutG7YIdisoBqML0X6Z7xvOAuDFnE2umeyqau5Pp9YgPGdHutFaxd1
+\restrict dvOUCHRXq6RQjZ0mKSn2ZkWhJYZTPwgP19edJip2gGSZIBcqtnPy5uFwzA0u3Mh
 
 -- Dumped from database version 18.1
 -- Dumped by pg_dump version 18.1
@@ -2894,17 +2894,16 @@ begin
     if topic_position <> target_position then
         update topics set position = temporary_position where subject = subject_id and level = topic_level and position = topic_position;
 
+        select max(coalesce(position, 0)) + 1 into safe_margin from topics where subject = subject_id and level = topic_level;
+
         if target_position < topic_position then
-            select max(coalesce(position, 0)) + 1 into safe_margin from topics where subject = subject_id and level = topic_level;
             update topics set position = position + safe_margin where subject = subject_id and level = topic_level and position >= target_position and position < topic_position;
-        else
-            update topics set position = position - 1 where subject = subject_id and level = topic_level and position <= target_position and position > topic_position;
-        end if;
-
-        update topics set position = target_position where subject = subject_id and level = topic_level and position = temporary_position;
-
-        if target_position < topic_position then
+            update topics set position = target_position where subject = subject_id and level = topic_level and position = temporary_position;
             update topics set position = position - safe_margin + target_position where subject = subject_id and level = topic_level and position >= safe_margin and position < topic_position;
+        else
+            update topics set position = position + safe_margin where subject = subject_id and level = topic_level and position > topic_position and position <= target_position;
+            update topics set position = target_position where subject = subject_id and level = topic_level and position = temporary_position;
+            update topics set position = position - safe_margin + topic_position where subject = subject_id and level = topic_level and position > topic_position + safe_margin - 1 and position <= target_position + safe_margin;
         end if;
     end if;
 end; $$;
@@ -4274,5 +4273,5 @@ GRANT ALL ON SCHEMA public TO brian;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict d763HyOLKbutG7YIdisoBqML0X6Z7xvOAuDFnE2umeyqau5Pp9YgPGdHutFaxd1
+\unrestrict dvOUCHRXq6RQjZ0mKSn2ZkWhJYZTPwgP19edJip2gGSZIBcqtnPy5uFwzA0u3Mh
 
