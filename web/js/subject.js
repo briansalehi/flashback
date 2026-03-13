@@ -5,6 +5,8 @@ let roadmapId = null;
 let roadmapName = null;
 
 let currentTopicsData = [];
+let expandedLevels = { 0: false, 1: false, 2: false };
+let isResourcesExpanded = false;
 let reorderState = {
     active: false,
     sourceIndex: null, // Index in the flattened currentTopicsData
@@ -757,7 +759,14 @@ function renderTopics(topics, maxLevel) {
             // Sort topics by position within each level
             const sortedGroup = topicsByLevel[level].sort((a, b) => a.topic.position - b.topic.position);
 
-            sortedGroup.forEach((item, sortedIndex) => {
+            // Handle expansion/collapsing (show only top 3 by default per level)
+            let displayedGroup = sortedGroup;
+            const needsToggle = sortedGroup.length > 3;
+            if (needsToggle && !expandedLevels[level]) {
+                displayedGroup = sortedGroup.slice(0, 3);
+            }
+
+            displayedGroup.forEach((item, sortedIndex) => {
                 const topic = item.topic;
                 const globalIndex = item.globalIndex;
                 
@@ -859,6 +868,28 @@ function renderTopics(topics, maxLevel) {
                 levelSection.appendChild(topicItem);
             });
 
+            // Add toggle button if level group is long
+            if (needsToggle) {
+                const toggleContainer = document.createElement('div');
+                toggleContainer.style.textAlign = 'center';
+                toggleContainer.style.marginTop = '1rem';
+                toggleContainer.style.marginBottom = '2rem';
+                
+                const toggleBtn = document.createElement('button');
+                toggleBtn.className = 'btn btn-secondary';
+                toggleBtn.style.padding = '0.5rem 2rem';
+                toggleBtn.style.whiteSpace = 'nowrap';
+                toggleBtn.textContent = expandedLevels[level] ? 'Show Less' : `Show All (${sortedGroup.length})`;
+                
+                toggleBtn.onclick = () => {
+                    expandedLevels[level] = !expandedLevels[level];
+                    renderTopics(topics, maxLevel);
+                };
+                
+                toggleContainer.appendChild(toggleBtn);
+                levelSection.appendChild(toggleContainer);
+            }
+
             container.appendChild(levelSection);
         }
     });
@@ -895,7 +926,9 @@ function renderResources(resources) {
     const typeNames = ['Book', 'Website', 'Course', 'Video', 'Channel', 'Mailing List', 'Manual', 'Slides', 'Your Knowledge'];
     const patternNames = ['Chapters', 'Pages', 'Sessions', 'Episodes', 'Playlist', 'Posts', 'Memories'];
 
-    resources.forEach(resource => {
+    const displayResources = isResourcesExpanded ? resources : resources.slice(0, 3);
+
+    displayResources.forEach(resource => {
         const resourceItem = document.createElement('div');
         resourceItem.className = 'item-block compact';
         resourceItem.style.cursor = 'pointer';
@@ -949,6 +982,28 @@ function renderResources(resources) {
 
         container.appendChild(resourceItem);
     });
+
+    // Add expansion toggle
+    if (resources.length > 3) {
+        const toggleContainer = document.createElement('div');
+        toggleContainer.style.textAlign = 'center';
+        toggleContainer.style.marginTop = '1rem';
+        toggleContainer.style.marginBottom = '2rem';
+
+        const toggleBtn = document.createElement('button');
+        toggleBtn.className = 'btn btn-secondary';
+        toggleBtn.style.padding = '0.5rem 2rem';
+        toggleBtn.style.whiteSpace = 'nowrap';
+        toggleBtn.textContent = isResourcesExpanded ? 'Show Less' : `Show All (${resources.length})`;
+
+        toggleBtn.addEventListener('click', () => {
+            isResourcesExpanded = !isResourcesExpanded;
+            renderResources(resources);
+        });
+
+        toggleContainer.appendChild(toggleBtn);
+        container.appendChild(toggleContainer);
+    }
 }
 
 async function startPracticeMode() {

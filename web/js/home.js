@@ -1,5 +1,9 @@
 // Clone roadmap modal state (needs to be global for displaySuggestedRoadmaps)
 let selectedRoadmapForClone = null;
+let currentStudyResources = [];
+let isStudyingExpanded = false;
+let currentNerves = [];
+let isNervesExpanded = false;
 
 window.addEventListener('DOMContentLoaded', () => {
     if (!client.isAuthenticated()) {
@@ -275,6 +279,23 @@ window.addEventListener('DOMContentLoaded', () => {
     loadRoadmaps();
     loadStudyingResources();
     loadNerves();
+
+    // Toggle buttons event listeners
+    const studyingToggleBtn = document.getElementById('studying-toggle-btn');
+    if (studyingToggleBtn) {
+        studyingToggleBtn.addEventListener('click', () => {
+            isStudyingExpanded = !isStudyingExpanded;
+            renderStudyingResources(currentStudyResources);
+        });
+    }
+
+    const nervesToggleBtn = document.getElementById('nerves-toggle-btn');
+    if (nervesToggleBtn) {
+        nervesToggleBtn.addEventListener('click', () => {
+            isNervesExpanded = !isNervesExpanded;
+            renderNerves(currentNerves);
+        });
+    }
 });
 
 async function loadRoadmaps() {
@@ -304,20 +325,21 @@ async function loadStudyingResources() {
     UI.toggleElement('studying-loading', true);
     UI.toggleElement('studying-resources', false);
     UI.toggleElement('studying-empty-state', false);
+    UI.toggleElement('studying-toggle-container', false);
 
     try {
-        const studyResources = await client.getStudyResources();
+        currentStudyResources = await client.getStudyResources();
 
         UI.toggleElement('studying-loading', false);
 
-        if (studyResources.length === 0) {
+        if (currentStudyResources.length === 0) {
             UI.toggleElement('studying-empty-state', true);
             UI.toggleElement('studying-resources', false);
         } else {
             UI.toggleElement('studying-section', true);
             UI.toggleElement('studying-resources', true);
             UI.toggleElement('studying-empty-state', false);
-            renderStudyingResources(studyResources);
+            renderStudyingResources(currentStudyResources);
         }
     } catch (err) {
         console.error('Load studying resources failed:', err);
@@ -348,6 +370,8 @@ function renderRoadmaps(roadmaps) {
 
 function renderStudyingResources(resources) {
     const container = document.getElementById('studying-resources');
+    const toggleContainer = document.getElementById('studying-toggle-container');
+    const toggleBtn = document.getElementById('studying-toggle-btn');
     container.innerHTML = '';
 
     const typeNames = ['Book', 'Website', 'Course', 'Video', 'Channel', 'Mailing List', 'Manual', 'Slides', 'Your Knowledge'];
@@ -356,7 +380,18 @@ function renderStudyingResources(resources) {
     // Sort by order
     const sortedResources = resources.sort((a, b) => (a.order || 0) - (b.order || 0));
 
-    sortedResources.forEach(resource => {
+    // Determine resources to show
+    const resourcesToShow = isStudyingExpanded ? sortedResources : sortedResources.slice(0, 3);
+
+    // Update toggle button visibility and text
+    if (sortedResources.length > 3) {
+        UI.toggleElement('studying-toggle-container', true);
+        if (toggleBtn) toggleBtn.textContent = isStudyingExpanded ? 'Show Less' : `Show All (${sortedResources.length})`;
+    } else {
+        UI.toggleElement('studying-toggle-container', false);
+    }
+
+    resourcesToShow.forEach(resource => {
         const resourceItem = document.createElement('div');
         resourceItem.className = 'item-block compact';
         resourceItem.style.cursor = 'pointer';
@@ -408,19 +443,20 @@ async function loadNerves() {
     UI.toggleElement('nerves-loading', true);
     UI.toggleElement('nerves-resources', false);
     UI.toggleElement('nerves-empty-state', false);
+    UI.toggleElement('nerves-toggle-container', false);
 
     try {
-        const nerves = await client.getNerves();
+        currentNerves = await client.getNerves();
 
         UI.toggleElement('nerves-loading', false);
 
-        if (nerves.length === 0) {
+        if (currentNerves.length === 0) {
             UI.toggleElement('nerves-empty-state', true);
             UI.toggleElement('nerves-resources', false);
         } else {
             UI.toggleElement('nerves-resources', true);
             UI.toggleElement('nerves-empty-state', false);
-            renderNerves(nerves);
+            renderNerves(currentNerves);
         }
     } catch (err) {
         console.error('Load nerves failed:', err);
@@ -432,9 +468,22 @@ async function loadNerves() {
 
 function renderNerves(nerves) {
     const container = document.getElementById('nerves-resources');
+    const toggleContainer = document.getElementById('nerves-toggle-container');
+    const toggleBtn = document.getElementById('nerves-toggle-btn');
     container.innerHTML = '';
 
-    nerves.forEach(nerve => {
+    // Determine nerves to show
+    const nervesToShow = isNervesExpanded ? nerves : nerves.slice(0, 3);
+
+    // Update toggle button visibility and text
+    if (nerves.length > 3) {
+        UI.toggleElement('nerves-toggle-container', true);
+        if (toggleBtn) toggleBtn.textContent = isNervesExpanded ? 'Show Less' : `Show All (${nerves.length})`;
+    } else {
+        UI.toggleElement('nerves-toggle-container', false);
+    }
+
+    nervesToShow.forEach(nerve => {
         const nerveItem = document.createElement('div');
         nerveItem.className = 'item-block compact';
         nerveItem.style.cursor = 'pointer';
