@@ -373,7 +373,6 @@ window.addEventListener('DOMContentLoaded', () => {
             
             item.innerHTML = `
                 <div style="font-weight: 500; color: var(--text-primary);">${UI.escapeHtml(assessment.headline)}</div>
-                <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.25rem;">ID: ${assessment.id}</div>
             `;
             
             item.addEventListener('click', () => {
@@ -399,7 +398,7 @@ window.addEventListener('DOMContentLoaded', () => {
         searchInput.addEventListener('input', (e) => {
             const term = e.target.value.toLowerCase();
             const filtered = subjectAssessments.filter(a => 
-                a.headline.toLowerCase().includes(term) || a.id.toString().includes(term)
+                a.headline.toLowerCase().includes(term)
             );
             
             renderSubjectAssessments(filtered);
