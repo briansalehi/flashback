@@ -303,3 +303,6 @@ message GetTopicCardsResponse { repeated Card card = 1; }
 
 message GetTopicCoverageRequest { User user = 1; Subject subject = 2; Assessment assessment = 3; }
 message GetTopicCoverageResponse { repeated Topic topic = 1; }
+
+message GetSubjectAssessmentsRequest { User user = 1; Subject subject = 2; expertise_level max_level = 3; }
+message GetSubjectAssessmentsResponse { repeated Card card = 1; }

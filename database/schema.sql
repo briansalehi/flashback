@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict fgnMDwDiTdJqRkAkcXZ119AT2cQWfdGd2kKKEcsrZBqfP5PnVabtJcIHOiUuwvn
+\restrict agxXnWRwIdWmypt2IeSHlMP5GICc9UiTiVb1Sb9MasuMD9SegNCbsmApOQ56sNu
 
 -- Dumped from database version 18.1
 -- Dumped by pg_dump version 18.1
@@ -1639,6 +1639,26 @@ end; $$;
 
 
 ALTER FUNCTION flashback.get_study_resources(user_id integer) OWNER TO flashback;
+
+--
+-- Name: get_subject_assessments(integer, flashback.expertise_level); Type: FUNCTION; Schema: flashback; Owner: flashback
+--
+
+CREATE FUNCTION flashback.get_subject_assessments(subject_id integer, max_level flashback.expertise_level) RETURNS TABLE(id integer, state flashback.card_state, headline flashback.citext)
+    LANGUAGE plpgsql
+    AS $$
+begin
+    return query
+    select c.id, c.state, c.headline
+    from assessments a
+    join cards c on c.id = a.card
+    where a.subject = subject_id and a.level <= max_level
+    group by c.id, c.state, c.headline;
+end;
+$$;
+
+
+ALTER FUNCTION flashback.get_subject_assessments(subject_id integer, max_level flashback.expertise_level) OWNER TO flashback;
 
 --
 -- Name: get_subject_resources(character varying); Type: FUNCTION; Schema: flashback; Owner: flashback
@@ -4275,5 +4295,5 @@ GRANT ALL ON SCHEMA public TO brian;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict fgnMDwDiTdJqRkAkcXZ119AT2cQWfdGd2kKKEcsrZBqfP5PnVabtJcIHOiUuwvn
+\unrestrict agxXnWRwIdWmypt2IeSHlMP5GICc9UiTiVb1Sb9MasuMD9SegNCbsmApOQ56sNu
 

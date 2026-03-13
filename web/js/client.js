@@ -1986,6 +1986,31 @@ class FlashbackClient {
         });
     }
 
+    async getSubjectAssessments(subjectId, milestoneLevel) {
+        return new Promise((resolve, reject) => {
+            const request = new proto.flashback.GetSubjectAssessmentsRequest();
+            const user = this.getAuthenticatedUser();
+            request.setUser(user);
+            const subject = new proto.flashback.Subject();
+            subject.setId(subjectId);
+            request.setSubject(subject);
+            request.setMaxLevel(milestoneLevel);
+
+            this.client.getSubjectAssessments(request, this.getMetadata(), (err, response) => {
+                if (err) {
+                    console.error("Get Subject Assessments error:", err);
+                    reject(this.handleError(err));
+                } else {
+                    resolve(response.getCardList().map(card => ({
+                        id: card.getId(),
+                        headline: card.getHeadline(),
+                        state: card.getState()
+                    })));
+                }
+            });
+        });
+    }
+
     async isAssimilated(subjectId, topicLevel, topicPosition) {
         return new Promise((resolve, reject) => {
             const request = new proto.flashback.IsAssimilatedRequest();

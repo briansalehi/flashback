@@ -175,6 +175,7 @@ public:
     [[nodiscard]] std::vector<Card> get_topic_assessments(uint64_t user_id, uint64_t subject_id, uint64_t topic_position, expertise_level max_level) const override;
     [[nodiscard]] std::vector<Assessment> get_assessments(uint64_t user_id, uint64_t subject_id, expertise_level topic_level, uint64_t topic_position) const override;
     [[nodiscard]] bool is_assimilated(uint64_t user_id, uint64_t subject_id, expertise_level topic_level, uint64_t topic_position) const override;
+    [[nodiscard]] virtual std::vector<Card> get_subject_assessments(uint64_t subject_id, expertise_level max_level) const override;
 
     [[nodiscard]] Topic get_topic(uint64_t subject_id, expertise_level level, uint64_t position) const override;
     [[nodiscard]] Section get_section(uint64_t resource_id, uint64_t position) const override;

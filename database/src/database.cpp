@@ -1155,7 +1155,9 @@ practice_mode database::get_practice_mode(uint64_t const user_id, uint64_t const
 std::vector<Topic> database::get_practice_topics(uint64_t const user_id, uint64_t const roadmap_id, uint64_t const milestone_id, expertise_level const milestone_level) const
 {
     std::vector<Topic> topics{};
-    for (pqxx::result const result{query("select position, name, level from get_practice_topics($1, $2, $3, $4) order by position", user_id, roadmap_id, milestone_id, level_to_string(milestone_level))}; pqxx::row const& row: result)
+    for (pqxx::result const result{
+             query("select position, name, level from get_practice_topics($1, $2, $3, $4) order by position", user_id, roadmap_id, milestone_id, level_to_string(milestone_level))
+         }; pqxx::row const& row: result)
     {
         Topic topic{};
         topic.set_position(row.at("position").as<uint64_t>());
@@ -1377,6 +1379,22 @@ bool database::is_assimilated(uint64_t user_id, uint64_t subject_id, expertise_l
         assimilated = result.at(0).at("assimilated").as<bool>();
     }
     return assimilated;
+}
+
+std::vector<Card> database::get_subject_assessments(uint64_t subject_id, expertise_level max_level) const
+{
+    std::vector<Card> cards{};
+
+    for (pqxx::result const result{query("select id, state, headline from get_subject_assessments($1, $2)", subject_id, level_to_string(max_level))}; pqxx::row const& row: result)
+    {
+        Card card{};
+        card.set_id(row.at("id").as<uint64_t>());
+        card.set_state(to_card_state(row.at("state").as<std::string>()));
+        card.set_headline(row.at("headline").as<std::string>());
+        cards.push_back(card);
+    }
+
+    return cards;
 }
 
 Topic database::get_topic(uint64_t subject_id, expertise_level level, uint64_t position) const

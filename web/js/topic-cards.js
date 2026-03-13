@@ -282,11 +282,157 @@ window.addEventListener('DOMContentLoaded', () => {
     const closeAssessmentModalBtn = document.getElementById('close-assessment-modal-btn');
     const cancelAssessmentBtn = document.getElementById('cancel-assessment-btn');
 
+    let subjectAssessments = [];
+    let selectedAssessmentId = null;
+
     if (addAssessmentBtn) {
-        addAssessmentBtn.addEventListener('click', () => {
+        addAssessmentBtn.addEventListener('click', async () => {
             UI.toggleElement('add-assessment-modal', true);
             document.body.style.overflow = 'hidden';
-            document.getElementById('assessment-headline').focus();
+            
+            // Default to "Select Existing" tab
+            switchToSelectExisting();
+            
+            // Load existing assessments
+            await loadSubjectAssessments();
+        });
+    }
+
+    const switchToSelectExisting = () => {
+        document.getElementById('tab-select-existing').style.borderBottom = '2px solid var(--accent-color)';
+        document.getElementById('tab-select-existing').style.color = 'var(--accent-color)';
+        document.getElementById('tab-select-existing').style.fontWeight = '600';
+        
+        document.getElementById('tab-create-new').style.borderBottom = 'none';
+        document.getElementById('tab-create-new').style.color = 'var(--text-muted)';
+        document.getElementById('tab-create-new').style.fontWeight = '400';
+        
+        UI.toggleElement('select-existing-section', true);
+        UI.toggleElement('assessment-form', false);
+    };
+
+    const switchToCreateNew = () => {
+        document.getElementById('tab-create-new').style.borderBottom = '2px solid var(--accent-color)';
+        document.getElementById('tab-create-new').style.color = 'var(--accent-color)';
+        document.getElementById('tab-create-new').style.fontWeight = '600';
+        
+        document.getElementById('tab-select-existing').style.borderBottom = 'none';
+        document.getElementById('tab-select-existing').style.color = 'var(--text-muted)';
+        document.getElementById('tab-select-existing').style.fontWeight = '400';
+        
+        UI.toggleElement('select-existing-section', false);
+        UI.toggleElement('assessment-form', true);
+        document.getElementById('assessment-headline').focus();
+    };
+
+    const tabSelectExisting = document.getElementById('tab-select-existing');
+    const tabCreateNew = document.getElementById('tab-create-new');
+
+    if (tabSelectExisting) tabSelectExisting.addEventListener('click', switchToSelectExisting);
+    if (tabCreateNew) tabCreateNew.addEventListener('click', switchToCreateNew);
+
+    const loadSubjectAssessments = async () => {
+        const milestoneLevel = parseInt(UI.getUrlParam('milestoneLevel') || UI.getUrlParam('topicLevel'));
+        UI.toggleElement('existing-assessments-loading', true);
+        UI.toggleElement('existing-assessments-list', false);
+        UI.toggleElement('existing-assessments-empty', false);
+        UI.toggleElement('confirm-existing-assessment-btn', false);
+        selectedAssessmentId = null;
+
+        try {
+            subjectAssessments = await client.getSubjectAssessments(subjectId, milestoneLevel);
+            UI.toggleElement('existing-assessments-loading', false);
+            
+            if (subjectAssessments.length === 0) {
+                UI.toggleElement('existing-assessments-empty', true);
+                // Auto switch to create new if no existing assessments
+                switchToCreateNew();
+            } else {
+                UI.toggleElement('existing-assessments-list', true);
+                renderSubjectAssessments(subjectAssessments);
+            }
+        } catch (err) {
+            console.error('Failed to load subject assessments:', err);
+            UI.toggleElement('existing-assessments-loading', false);
+            UI.showError('Failed to load existing assessments');
+        }
+    };
+
+    const renderSubjectAssessments = (assessments) => {
+        const container = document.getElementById('existing-assessments-list');
+        container.innerHTML = '';
+        
+        assessments.forEach(assessment => {
+            const item = document.createElement('div');
+            item.className = 'assessment-item';
+            item.style.padding = '1rem';
+            item.style.borderBottom = '1px solid var(--border-color)';
+            item.style.cursor = 'pointer';
+            item.style.transition = 'background-color 0.2s';
+            item.dataset.id = assessment.id;
+            
+            item.innerHTML = `
+                <div style="font-weight: 500; color: var(--text-primary);">${UI.escapeHtml(assessment.headline)}</div>
+                <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.25rem;">ID: ${assessment.id}</div>
+            `;
+            
+            item.addEventListener('click', () => {
+                // Remove previous selection
+                container.querySelectorAll('.assessment-item').forEach(el => {
+                    el.style.backgroundColor = '';
+                    el.style.borderLeft = 'none';
+                });
+                
+                // Set new selection
+                item.style.backgroundColor = 'rgba(var(--accent-color-rgb), 0.1)';
+                item.style.borderLeft = '4px solid var(--accent-color)';
+                selectedAssessmentId = assessment.id;
+                UI.toggleElement('confirm-existing-assessment-btn', true);
+            });
+            
+            container.appendChild(item);
+        });
+    };
+
+    const searchInput = document.getElementById('existing-assessment-search');
+    if (searchInput) {
+        searchInput.addEventListener('input', (e) => {
+            const term = e.target.value.toLowerCase();
+            const filtered = subjectAssessments.filter(a => 
+                a.headline.toLowerCase().includes(term) || a.id.toString().includes(term)
+            );
+            
+            renderSubjectAssessments(filtered);
+            UI.toggleElement('existing-assessments-empty', filtered.length === 0);
+            UI.toggleElement('confirm-existing-assessment-btn', false);
+            selectedAssessmentId = null;
+        });
+    }
+
+    const confirmExistingBtn = document.getElementById('confirm-existing-assessment-btn');
+    if (confirmExistingBtn) {
+        confirmExistingBtn.addEventListener('click', async () => {
+            if (!selectedAssessmentId) return;
+            
+            UI.setButtonLoading('confirm-existing-assessment-btn', true);
+            try {
+                await client.createAssessment(selectedAssessmentId, subjectId, topicLevel, topicPosition);
+                UI.showSuccess('Assessment added successfully');
+                closeAssessmentModal();
+                loadAssessments();
+            } catch (err) {
+                console.error('Failed to add existing assessment:', err);
+                UI.showError(err.message || 'Failed to add assessment');
+            } finally {
+                UI.setButtonLoading('confirm-existing-assessment-btn', false);
+            }
+        });
+    }
+
+    const cancelExistingBtn = document.getElementById('cancel-existing-assessment-btn');
+    if (cancelExistingBtn) {
+        cancelExistingBtn.addEventListener('click', () => {
+            closeAssessmentModal();
         });
     }
 
@@ -294,6 +440,8 @@ window.addEventListener('DOMContentLoaded', () => {
         UI.toggleElement('add-assessment-modal', false);
         document.body.style.overflow = 'auto';
         UI.clearForm('assessment-form');
+        if (searchInput) searchInput.value = '';
+        selectedAssessmentId = null;
     };
 
     if (closeAssessmentModalBtn) {
@@ -700,7 +848,7 @@ function renderAssessments(assessments) {
                 </div>
                 <div style="display: flex; gap: 0.6rem; align-items: center;">
                     <span class="item-badge" style="background: ${stateColor.bg}; color: ${stateColor.color}; text-transform: capitalize; font-size: 11px; height: 24px; min-width: auto; padding: 0 10px; border-radius: var(--radius-full); display: inline-flex; align-items: center;">${UI.escapeHtml(stateName)}</span>
-                    <button class="btn btn-secondary btn-sm" style="background-color: #2196f3; color: white; padding: 0.3rem 1rem; height: 34px; font-size: 13px; font-weight: 600; min-width: auto; white-space: nowrap;" onclick="window.openExpandAssessmentModal(${card.id}, '${UI.escapeHtml(card.headline).replace(/'/g, "\\'")}')">
+                    <button class="btn btn-secondary btn-sm" style="background: var(--gradient-primary); color: white; border: none; padding: 0.3rem 1rem; height: 34px; font-size: 13px; font-weight: 600; min-width: auto; white-space: nowrap;" onclick="window.openExpandAssessmentModal(${card.id}, '${UI.escapeHtml(card.headline).replace(/'/g, "\\'")}')">
                         Expand
                     </button>
                     <button class="btn btn-secondary btn-sm" style="background-color: #dc3545; color: white; padding: 0.3rem 1rem; height: 34px; font-size: 13px; font-weight: 600; min-width: auto; white-space: nowrap;" onclick="window.openDiminishAssessmentModal(${card.id}, '${UI.escapeHtml(card.headline).replace(/'/g, "\\'")}')">
@@ -883,7 +1031,7 @@ function renderAssessments(assessments) {
         UI.toggleElement('expand-topics-empty', false);
 
         const levelInfo = [
-            { name: 'Surface', color: 'linear-gradient(135deg, #2196f3, #03a9f4)' },
+            { name: 'Surface', color: 'var(--gradient-primary)' },
             { name: 'Depth', color: 'linear-gradient(135deg, #4caf50, #8bc34a)' },
             { name: 'Origin', color: 'linear-gradient(135deg, #ff9800, #ffc107)' }
         ];
@@ -903,7 +1051,7 @@ function renderAssessments(assessments) {
                 levelHeader.style.marginBottom = '1rem';
                 levelHeader.innerHTML = `
                     <div style="display: flex; align-items: center; gap: 0.75rem;">
-                        <span class="item-badge" style="background: ${levelInfo[level].color}; color: white; border: none; font-size: 11px; padding: 2px 10px; border-radius: 4px; font-weight: 700;">${levelInfo[level].name.toUpperCase()}</span>
+                        <span class="item-badge" style="background-image: ${levelInfo[level].color}; color: white; border: none; font-size: 11px; padding: 2px 10px; border-radius: 4px; font-weight: 700;">${levelInfo[level].name.toUpperCase()}</span>
                         <div style="flex: 1; height: 1px; background: var(--border-color);"></div>
                     </div>
                 `;

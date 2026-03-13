@@ -349,7 +349,49 @@
             <button id="close-assessment-modal-btn" class="modal-close" aria-label="Close">&times;</button>
           </div>
 
-          <form id="assessment-form">
+          <div id="add-assessment-tabs" style="display: flex; border-bottom: 1px solid var(--border-color); margin-bottom: 1.5rem;">
+            <button id="tab-select-existing" class="btn" style="flex: 1; border-radius: 0; border: none; background: none; border-bottom: 2px solid var(--accent-color); color: var(--accent-color); font-weight: 600; padding: 0.75rem;">Select Existing</button>
+            <button id="tab-create-new" class="btn" style="flex: 1; border-radius: 0; border: none; background: none; color: var(--text-muted); padding: 0.75rem;">Create New</button>
+          </div>
+
+          <!-- Select Existing Assessment Section -->
+          <div id="select-existing-section">
+            <div class="form-group">
+              <label class="form-label" for="existing-assessment-search">Search Assessments</label>
+              <input
+                  type="text"
+                  id="existing-assessment-search"
+                  class="form-input"
+                  placeholder="Type to filter existing assessments..."
+                  autocomplete="off"
+              >
+            </div>
+
+            <div id="existing-assessments-loading" style="display: none; text-align: center; padding: 2rem;">
+              <div class="loading" style="width: 30px; height: 30px; border-width: 3px;"></div>
+              <p class="text-muted mt-sm">Loading subject assessments...</p>
+            </div>
+
+            <div id="existing-assessments-list" style="max-height: 400px; overflow-y: auto; margin-top: 1rem; border: 1px solid var(--border-color); border-radius: 8px;">
+              <!-- existing assessments will be listed here -->
+            </div>
+
+            <div id="existing-assessments-empty" style="display: none; text-align: center; padding: 2rem; color: var(--text-muted);">
+              No assessments found
+            </div>
+
+            <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+              <button id="confirm-existing-assessment-btn" class="btn btn-primary" style="display: none; padding: 0.5rem 1.5rem; white-space: nowrap;">
+                Add Selected Assessment
+              </button>
+              <button id="cancel-existing-assessment-btn" type="button" class="btn btn-secondary" style="padding: 0.5rem 1.5rem; white-space: nowrap;">
+                Cancel
+              </button>
+            </div>
+          </div>
+
+          <!-- Create New Assessment Section -->
+          <form id="assessment-form" style="display: none;">
             <div class="form-group">
               <label class="form-label" for="assessment-headline">Headline (in question form)</label>
               <input

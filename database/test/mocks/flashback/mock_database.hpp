@@ -172,5 +172,6 @@ public:
     MOCK_METHOD(void, expand_assessment, (uint64_t, uint64_t, expertise_level, uint64_t), (const, override));
     MOCK_METHOD(void, diminish_assessment, (uint64_t, uint64_t, expertise_level, uint64_t), (const, override));
     MOCK_METHOD(bool, is_assimilated, (uint64_t, uint64_t, expertise_level, uint64_t), (const, override));
+    MOCK_METHOD(std::vector<Card>, get_subject_assessments, (uint64_t, expertise_level), (const, override));
 };
 } // flashback

@@ -3624,6 +3624,43 @@ grpc::Status server::GetTopicCoverage(grpc::ServerContext* context, GetTopicCove
     return status;
 }
 
+grpc::Status server::GetSubjectAssessments(grpc::ServerContext* context, GetSubjectAssessmentsRequest const* request, GetSubjectAssessmentsResponse* response)
+{
+    grpc::Status status{grpc::StatusCode::INTERNAL, {}};
+
+    try
+    {
+        if (!request->has_user() || !session_is_valid(request->user()))
+        {
+            status = grpc::Status{grpc::StatusCode::UNAUTHENTICATED, "invalid user"};
+        }
+        else if (request->subject().id() == 0)
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid subject"};
+        }
+        else
+        {
+            for (Card const& card: m_database->get_subject_assessments(request->subject().id(), request->max_level()))
+            {
+                *response->add_card() = card;
+            }
+            std::clog << std::format("client {} collected {} assessments from subject {}\n", request->user().token(), response->card_size(), request->subject().id());
+            status = grpc::Status{grpc::StatusCode::OK, {}};
+        }
+    }
+    catch (client_exception const& exp)
+    {
+        std::cerr << std::format("client {}: {}\n", request->user().token(), exp.what());
+        status = grpc::Status{grpc::StatusCode::UNAVAILABLE, exp.what()};
+    }
+    catch (std::exception const& exp)
+    {
+        std::cerr << std::format("server: failed to collect assessments from subject {}, reason: {}\n", request->subject().id(), exp.what());
+    }
+
+    return status;
+}
+
 grpc::Status server::EditCard(grpc::ServerContext* context, EditCardRequest const* request, EditCardResponse* response)
 {
     grpc::Status status{grpc::StatusCode::INTERNAL, {}};
