@@ -1333,20 +1333,78 @@ function renderBlocks(blocks) {
         const blockItem = document.createElement('div');
         blockItem.className = 'content-block';
         blockItem.id = `block-${index}`;
-        blockItem.draggable = true;
         blockItem.dataset.position = block.position;
 
-        // Prevent dragging when user is selecting text or interacting with form elements
-        blockItem.addEventListener('mousedown', (e) => {
-            if (e.target.closest('textarea') ||
-                e.target.closest('input') ||
-                e.target.closest('select') ||
-                e.target.closest('button') ||
-                e.target.closest('.block-edit')) {
-                blockItem.draggable = false;
-            } else {
-                blockItem.draggable = true;
+        const handleReorderClick = async () => {
+            if (reorderState.active && reorderState.sourceIndex !== index) {
+                const sourcePos = currentBlocks[reorderState.sourceIndex].position;
+                const targetPos = block.position;
+                await reorderBlockHandler(sourcePos, targetPos);
+                exitReorderMode();
+                return true;
             }
+            return false;
+        };
+
+        const startLongPressTimer = (e) => {
+            if (reorderState.active) return;
+            const touch = e.touches ? e.touches[0] : e;
+            reorderState.startPos = { x: touch.clientX, y: touch.clientY };
+            reorderState.longPressTimer = setTimeout(() => {
+                enterReorderMode(index);
+            }, 500);
+        };
+
+        const clearLongPressTimer = () => {
+            if (reorderState.longPressTimer) {
+                clearTimeout(reorderState.longPressTimer);
+                reorderState.longPressTimer = null;
+            }
+        };
+
+        // Desktop and Touch handling for selection-based reorder
+        blockItem.addEventListener('mousedown', (e) => {
+            if (e.target.closest('button') || e.target.closest('input') || e.target.closest('textarea') || e.target.closest('select') || e.target.closest('.block-edit')) return;
+            startLongPressTimer(e);
+        });
+
+        blockItem.addEventListener('mouseup', clearLongPressTimer);
+        blockItem.addEventListener('mouseleave', clearLongPressTimer);
+
+        blockItem.addEventListener('touchstart', (e) => {
+            if (e.target.closest('button') || e.target.closest('input') || e.target.closest('textarea') || e.target.closest('select') || e.target.closest('.block-edit')) return;
+            startLongPressTimer(e);
+        }, { passive: true });
+
+        blockItem.addEventListener('touchend', clearLongPressTimer);
+        blockItem.addEventListener('touchmove', (e) => {
+            // Cancel long-press on movement
+            if (reorderState.longPressTimer) {
+                const touch = e.touches[0];
+                const dx = touch.clientX - reorderState.startPos.x;
+                const dy = touch.clientY - reorderState.startPos.y;
+                if (Math.sqrt(dx * dx + dy * dy) > 10) {
+                    clearLongPressTimer();
+                }
+            }
+        }, { passive: true });
+
+        blockItem.addEventListener('click', async (e) => {
+            if (reorderState.preventClick) {
+                reorderState.preventClick = false;
+                return;
+            }
+            if (reorderState.active) {
+                await handleReorderClick();
+                return;
+            }
+            if (e.target.closest('.block-action-btn')) return;
+            if (e.target.closest('.block-edit')) return;
+
+            const isShowing = blockItem.classList.contains('show-actions');
+            document.querySelectorAll('.content-block.show-actions').forEach(el => el.classList.remove('show-actions'));
+            if (!isShowing) blockItem.classList.add('show-actions');
+            e.stopPropagation();
         });
 
         const typeName = blockTypes[block.type] || 'text';
@@ -1454,259 +1512,8 @@ function renderBlocks(blocks) {
             ${contentHtml}
         `;
 
-        // Show actions on tap for mobile
-        blockItem.addEventListener('click', (e) => {
-            // Only toggle on touch devices (where we don't have hover)
-            // or if we want it to work on click too.
-            // But let's check if it's not a button click itself.
-            if (e.target.closest('.block-action-btn')) return;
-
-            // Don't toggle actions if inside edit form
-            if (e.target.closest('.block-edit')) return;
-
-            const isShowing = blockItem.classList.contains('show-actions');
-
-            // Remove from others first
-            document.querySelectorAll('.content-block.show-actions').forEach(el => {
-                el.classList.remove('show-actions');
-            });
-            
-            if (!isShowing) {
-                blockItem.classList.add('show-actions');
-            }
-            e.stopPropagation(); // Prevent immediate close from document mousedown
-        });
-
-        blockItem.addEventListener('dragstart', (e) => {
-            // Don't allow dragging if user is interacting with form elements
-            if (e.target.closest('textarea') ||
-                e.target.closest('input') ||
-                e.target.closest('select') ||
-                e.target.closest('.block-edit')) {
-                e.preventDefault();
-                return;
-            }
-
-            isDragging = true;
-            blockItem.classList.add('dragging');
-            e.dataTransfer.effectAllowed = 'move';
-            e.dataTransfer.setData('text/plain', JSON.stringify({
-                position: block.position
-            }));
-        });
-
-        blockItem.addEventListener('dragend', () => {
-            blockItem.classList.remove('dragging');
-            setTimeout(() => {
-                isDragging = false;
-            }, 100);
-        });
-
-        blockItem.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            e.dataTransfer.dropEffect = 'move';
-
-            const draggingBlock = document.querySelector('.dragging');
-            if (draggingBlock && draggingBlock !== blockItem) {
-                blockItem.classList.add('drag-over');
-            }
-        });
-
-        blockItem.addEventListener('dragleave', () => {
-            blockItem.classList.remove('drag-over');
-        });
-
-        blockItem.addEventListener('drop', async (e) => {
-            e.preventDefault();
-            blockItem.classList.remove('drag-over');
-
-            const dragData = JSON.parse(e.dataTransfer.getData('text/plain') || '{}');
-            const sourcePosition = dragData.position;
-            const targetPosition = block.position;
-
-            if (sourcePosition !== targetPosition) {
-                await reorderBlockHandler(sourcePosition, targetPosition);
-            }
-        });
-
-        // Touch event handlers for mobile drag-and-drop
-        let touchStartY = 0;
-        let touchStartX = 0;
-        let touchCurrentY = 0;
-        let touchStartElement = null;
-        let touchClone = null;
-        let touchTargetElement = null;
-        let longPressTimer = null;
-        let isDragEnabled = false;
-
-        blockItem.addEventListener('touchstart', (e) => {
-            // Don't interfere with buttons, inputs, textareas, or any edit form elements
-            if (e.target.closest('button') ||
-                e.target.closest('input') ||
-                e.target.closest('textarea') ||
-                e.target.closest('select') ||
-                e.target.closest('.block-edit') ||
-                e.target.tagName === 'TEXTAREA' ||
-                e.target.tagName === 'INPUT' ||
-                e.target.tagName === 'SELECT') {
-                return;
-            }
-
-            touchStartY = e.touches[0].clientY;
-            touchStartX = e.touches[0].clientX;
-            touchCurrentY = touchStartY;
-            touchStartElement = blockItem;
-            isDragEnabled = false;
-
-            // Start long-press timer (500ms)
-            longPressTimer = setTimeout(() => {
-                isDragEnabled = true;
-
-                // Vibrate for feedback if available
-                if (navigator.vibrate) {
-                    navigator.vibrate(50);
-                }
-
-                // Create a visual clone for dragging
-                touchClone = blockItem.cloneNode(true);
-                touchClone.style.position = 'fixed';
-                touchClone.style.top = blockItem.getBoundingClientRect().top + 'px';
-                touchClone.style.left = blockItem.getBoundingClientRect().left + 'px';
-                touchClone.style.width = blockItem.offsetWidth + 'px';
-                touchClone.style.opacity = '0.8';
-                touchClone.style.pointerEvents = 'none';
-                touchClone.style.zIndex = '1000';
-                touchClone.classList.add('dragging');
-                document.body.appendChild(touchClone);
-
-                blockItem.style.opacity = '0.3';
-            }, 500);
-        }, { passive: true });
-
-        blockItem.addEventListener('touchmove', (e) => {
-            if (!touchStartElement) return;
-
-            // Don't interfere with text selection in form elements
-            if (e.target.closest('textarea') ||
-                e.target.closest('input') ||
-                e.target.closest('select') ||
-                e.target.closest('.block-edit')) {
-                return;
-            }
-
-            // Calculate movement distance
-            const deltaX = Math.abs(e.touches[0].clientX - touchStartX);
-            const deltaY = Math.abs(e.touches[0].clientY - touchStartY);
-
-            // Issue #1 fix: If user moved even slightly before long-press completed, cancel it (they're scrolling)
-            // Reduced threshold to 5px to be more sensitive to scrolling
-            if (!isDragEnabled && (deltaX > 5 || deltaY > 5)) {
-                if (longPressTimer) {
-                    clearTimeout(longPressTimer);
-                    longPressTimer = null;
-                }
-                touchStartElement = null;
-                return;
-            }
-
-            // Only proceed if drag is enabled
-            if (!isDragEnabled || !touchClone) return;
-
-            e.preventDefault(); // Prevent scrolling while dragging
-            touchCurrentY = e.touches[0].clientY;
-            const dragDeltaY = touchCurrentY - touchStartY;
-
-            // Move the clone
-            const rect = touchStartElement.getBoundingClientRect();
-            touchClone.style.top = (rect.top + dragDeltaY) + 'px';
-
-            // Find the element under the touch point
-            touchClone.style.display = 'none';
-            const elementBelow = document.elementFromPoint(e.touches[0].clientX, e.touches[0].clientY);
-            touchClone.style.display = 'block';
-
-            const blockBelow = elementBelow ? elementBelow.closest('.content-block') : null;
-
-            // Remove drag-over class from all blocks
-            document.querySelectorAll('.content-block').forEach(b => b.classList.remove('drag-over'));
-
-            if (blockBelow && blockBelow !== touchStartElement) {
-                touchTargetElement = blockBelow;
-                blockBelow.classList.add('drag-over');
-            } else {
-                touchTargetElement = null;
-            }
-        }, { passive: false });
-
-        blockItem.addEventListener('touchend', async (e) => {
-            // Clear the long-press timer if it hasn't fired yet
-            if (longPressTimer) {
-                clearTimeout(longPressTimer);
-                longPressTimer = null;
-            }
-
-            // Only proceed if drag was enabled
-            if (!isDragEnabled) {
-                touchStartElement = null;
-                return;
-            }
-
-            if (!touchStartElement || !touchClone) return;
-
-            e.preventDefault();
-
-            // Remove the clone
-            if (touchClone && touchClone.parentNode) {
-                touchClone.parentNode.removeChild(touchClone);
-            }
-
-            // Restore opacity
-            touchStartElement.style.opacity = '1';
-
-            // Remove drag-over class from all blocks
-            document.querySelectorAll('.content-block').forEach(b => b.classList.remove('drag-over'));
-
-            // Perform the reorder if dropped on a different block
-            if (touchTargetElement && touchTargetElement !== touchStartElement) {
-                const sourcePosition = parseInt(touchStartElement.dataset.position);
-                const targetPosition = parseInt(touchTargetElement.dataset.position);
-
-                if (!isNaN(sourcePosition) && !isNaN(targetPosition) && sourcePosition !== targetPosition) {
-                    await reorderBlockHandler(sourcePosition, targetPosition);
-                }
-            }
-
-            // Reset touch state
-            touchStartY = 0;
-            touchStartX = 0;
-            touchCurrentY = 0;
-            touchStartElement = null;
-            touchClone = null;
-            touchTargetElement = null;
-            isDragEnabled = false;
-        });
-
         blockItem.addEventListener('touchcancel', () => {
-            // Clear the long-press timer
-            if (longPressTimer) {
-                clearTimeout(longPressTimer);
-                longPressTimer = null;
-            }
-
-            if (touchClone && touchClone.parentNode) {
-                touchClone.parentNode.removeChild(touchClone);
-            }
-            if (touchStartElement) {
-                touchStartElement.style.opacity = '1';
-            }
-            document.querySelectorAll('.content-block').forEach(b => b.classList.remove('drag-over'));
-            touchStartY = 0;
-            touchStartX = 0;
-            touchCurrentY = 0;
-            touchStartElement = null;
-            touchClone = null;
-            touchTargetElement = null;
-            isDragEnabled = false;
+            clearLongPressTimer();
         });
 
 
@@ -1766,8 +1573,7 @@ function renderBlocks(blocks) {
         blockItem.appendChild(editDiv);
         container.appendChild(blockItem);
 
-        // Add auto-split detection for content textarea
-        // Wait for next tick to ensure textarea is in DOM
+        // Add auto-split detection and type handling
         setTimeout(() => {
             const contentTextarea = document.getElementById(`block-content-${index}`);
             const splitBtn = document.getElementById(`split-block-btn-${index}`);
@@ -1793,12 +1599,8 @@ function renderBlocks(blocks) {
                         extensionInput.disabled = false;
                     }
                 };
-
                 typeSelect.addEventListener('change', () => handleTypeChange(false));
-                // Set initial state
                 handleTypeChange(true);
-
-                // Ensure extension is always lower case as user types
                 extensionInput.addEventListener('input', () => {
                     extensionInput.value = extensionInput.value.toLowerCase();
                 });
@@ -1806,21 +1608,12 @@ function renderBlocks(blocks) {
 
             if (contentTextarea && splitBtn) {
                 contentTextarea.addEventListener('input', () => {
-                    const content = contentTextarea.value;
-                    // Check if content contains three newlines (blank line between content)
-                    if (content.includes('\n\n\n')) {
+                    if (contentTextarea.value.includes('\n\n\n')) {
                         splitBtn.style.display = 'inline-block';
                     } else {
                         splitBtn.style.display = 'none';
                     }
                 });
-
-                // Issue #3 fix: Mark form elements so block handlers can ignore them
-                // Don't stop propagation - let native browser behavior work
-                // The block's touchstart handler already checks for .block-edit
-
-                // No special handling needed - the block's handlers already exclude .block-edit
-                // Native browser input handling will work correctly
             }
         }, 0);
     });
@@ -1845,6 +1638,65 @@ function renderBlocks(blocks) {
 
 // Global variable to store current blocks
 let currentBlocks = [];
+let reorderState = {
+    active: false,
+    sourceIndex: null,
+    longPressTimer: null,
+    preventClick: false,
+    startPos: { x: 0, y: 0 }
+};
+
+function enterReorderMode(index) {
+    if (reorderState.active) return;
+    
+    reorderState.active = true;
+    reorderState.sourceIndex = index;
+    reorderState.preventClick = true;
+    
+    const blocksList = document.getElementById('blocks-list');
+    if (blocksList) {
+        blocksList.classList.add('reorder-mode-active');
+    }
+    
+    // Highlight source
+    const sourceBlock = document.getElementById(`block-${index}`);
+    if (sourceBlock) {
+        sourceBlock.classList.add('reorder-source');
+    }
+    
+    // Add hint at the top of the list
+    const hint = document.createElement('div');
+    hint.id = 'reorder-hint';
+    hint.className = 'reorder-hint';
+    hint.innerHTML = `
+        <span>Select target location to move this block</span>
+        <button class="btn btn-secondary btn-sm" onclick="exitReorderMode()" style="padding: 2px 8px; font-size: 0.8rem;">Cancel</button>
+    `;
+    blocksList.parentNode.insertBefore(hint, blocksList);
+    
+    // Vibrate for feedback
+    if (navigator.vibrate) {
+        navigator.vibrate(50);
+    }
+}
+
+window.exitReorderMode = function() {
+    reorderState.active = false;
+    reorderState.sourceIndex = null;
+    
+    const blocksList = document.getElementById('blocks-list');
+    if (blocksList) {
+        blocksList.classList.remove('reorder-mode-active');
+        document.querySelectorAll('.content-block').forEach(b => {
+            b.classList.remove('reorder-source');
+        });
+    }
+    
+    const hint = document.getElementById('reorder-hint');
+    if (hint) {
+        hint.remove();
+    }
+};
 
 window.editBlock = function(index) {
     const displayDiv = document.getElementById(`block-display-${index}`);
@@ -1855,28 +1707,18 @@ window.editBlock = function(index) {
         displayDiv.style.display = 'none';
         editDiv.style.display = 'block';
 
-        // Disable dragging when in edit mode
-        if (blockItem) {
-            blockItem.draggable = false;
-            blockItem.style.cursor = 'default';
-        }
+        // Re-render blocks to refresh click handlers (optional, but good for consistency)
+        // or just ensure dragging is disabled (though we removed draggable)
     }
 };
 
 window.cancelEditBlock = function(index) {
     const displayDiv = document.getElementById(`block-display-${index}`);
     const editDiv = document.getElementById(`block-edit-${index}`);
-    const blockItem = document.getElementById(`block-${index}`);
 
     if (displayDiv && editDiv) {
         displayDiv.style.display = 'block';
         editDiv.style.display = 'none';
-
-        // Re-enable dragging when exiting edit mode
-        if (blockItem) {
-            blockItem.draggable = true;
-            blockItem.style.cursor = 'grab';
-        }
     }
 };
 

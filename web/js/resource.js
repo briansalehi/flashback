@@ -1,6 +1,62 @@
 // Store current resource data
 let currentResourceData = null;
 
+let currentSections = [];
+let reorderState = {
+    active: false,
+    sourceIndex: null,
+    longPressTimer: null,
+    preventClick: false,
+    startPos: { x: 0, y: 0 }
+};
+
+function enterReorderMode(index) {
+    if (reorderState.active) return;
+    
+    reorderState.active = true;
+    reorderState.sourceIndex = index;
+    reorderState.preventClick = true;
+    
+    const container = document.getElementById('sections-list');
+    if (container) {
+        container.classList.add('reorder-mode-active');
+    }
+    
+    // Highlight source
+    const sourceItem = container.children[index];
+    if (sourceItem) {
+        sourceItem.classList.add('reorder-source');
+    }
+    
+    // Add hint
+    const hint = document.createElement('div');
+    hint.id = 'reorder-hint';
+    hint.className = 'reorder-hint';
+    hint.innerHTML = `
+        <span>Select target location to move this section</span>
+        <button class="btn btn-secondary btn-sm" onclick="exitReorderMode()" style="padding: 2px 8px; font-size: 0.8rem;">Cancel</button>
+    `;
+    container.parentNode.insertBefore(hint, container);
+    
+    if (navigator.vibrate) navigator.vibrate(50);
+}
+
+window.exitReorderMode = function() {
+    reorderState.active = false;
+    reorderState.sourceIndex = null;
+    
+    const container = document.getElementById('sections-list');
+    if (container) {
+        container.classList.remove('reorder-mode-active');
+        document.querySelectorAll('.item-block').forEach(b => {
+            b.classList.remove('reorder-source');
+        });
+    }
+    
+    const hint = document.getElementById('reorder-hint');
+    if (hint) hint.remove();
+};
+
 window.addEventListener('DOMContentLoaded', () => {
     if (!client.isAuthenticated()) {
         window.location.href = '/index.html';
@@ -376,16 +432,54 @@ function renderSections(sections) {
     const container = document.getElementById('sections-list');
     container.innerHTML = '';
 
-    // Sort sections by position
-    const sortedSections = sections.sort((a, b) => a.position - b.position);
+    // Sort sections by position and store
+    currentSections = sections.sort((a, b) => a.position - b.position);
+    const sortedSections = currentSections;
 
     const stateNames = ['draft', 'reviewed', 'completed'];
 
     sortedSections.forEach((section, index) => {
         const sectionItem = document.createElement('div');
         sectionItem.className = 'item-block compact';
-        sectionItem.draggable = true;
         sectionItem.dataset.position = section.position;
+
+
+        const startLongPressTimer = (e) => {
+            if (reorderState.active) return;
+            const touch = e.touches ? e.touches[0] : e;
+            reorderState.startPos = { x: touch.clientX, y: touch.clientY };
+            reorderState.longPressTimer = setTimeout(() => enterReorderMode(index), 500);
+        };
+
+        const clearLongPressTimer = () => {
+            if (reorderState.longPressTimer) {
+                clearTimeout(reorderState.longPressTimer);
+                reorderState.longPressTimer = null;
+            }
+        };
+
+        sectionItem.addEventListener('mousedown', (e) => {
+            if (e.target.closest('button') || e.target.closest('select') || e.target.closest('input') || e.target.closest('a')) return;
+            startLongPressTimer(e);
+        });
+        sectionItem.addEventListener('mouseup', clearLongPressTimer);
+        sectionItem.addEventListener('mouseleave', clearLongPressTimer);
+        sectionItem.addEventListener('touchstart', (e) => {
+            if (e.target.closest('button') || e.target.closest('select') || e.target.closest('input') || e.target.closest('a')) return;
+            startLongPressTimer(e);
+        }, { passive: true });
+        sectionItem.addEventListener('touchend', clearLongPressTimer);
+        sectionItem.addEventListener('touchmove', (e) => {
+            if (reorderState.longPressTimer) {
+                const touch = e.touches[0];
+                const dx = touch.clientX - reorderState.startPos.x;
+                const dy = touch.clientY - reorderState.startPos.y;
+                if (Math.sqrt(dx * dx + dy * dy) > 10) {
+                    clearLongPressTimer();
+                }
+            }
+        }, { passive: true });
+        sectionItem.addEventListener('touchcancel', clearLongPressTimer);
 
         const stateName = stateNames[section.state] || 'draft';
 
@@ -421,239 +515,57 @@ function renderSections(sections) {
             </div>
         `;
 
-        // Click to navigate (but not when dragging or clicking links)
-        let isDragging = false;
-        sectionItem.addEventListener('click', (e) => {
-            // Don't navigate if clicking on links
-            if (e.target.tagName === 'A') {
+        // Selection-based reorder click handler
+        sectionItem.style.cursor = 'pointer';
+        sectionItem.addEventListener('click', async (e) => {
+            if (reorderState.preventClick) {
+                reorderState.preventClick = false;
+                return;
+            }
+            if (reorderState.active) {
+                if (reorderState.sourceIndex === index) {
+                    exitReorderMode();
+                    return;
+                }
+
+                const sourceSection = currentSections[reorderState.sourceIndex];
+                if (!sourceSection) {
+                    console.error('Source section not found at index:', reorderState.sourceIndex);
+                    exitReorderMode();
+                    return;
+                }
+
+                const sourcePos = parseInt(sourceSection.position);
+                const targetPos = parseInt(section.position);
+
+                await reorderSection(sourcePos, targetPos);
+                exitReorderMode();
                 return;
             }
 
-            if (!isDragging) {
-                const resourceId = UI.getUrlParam('id');
-                const resourceName = UI.getUrlParam('name') || '';
-                const resourceType = UI.getUrlParam('type');
-                const resourcePattern = UI.getUrlParam('pattern');
-                const resourceLink = UI.getUrlParam('link');
-                const resourceProduction = UI.getUrlParam('production');
-                const resourceExpiration = UI.getUrlParam('expiration');
-                const subjectId = UI.getUrlParam('subjectId');
-                const subjectName = UI.getUrlParam('subjectName');
-                const roadmapId = UI.getUrlParam('roadmapId');
-                const roadmapName = UI.getUrlParam('roadmapName');
-                const milestoneLevel = UI.getUrlParam('level');
-                const currentTab = UI.getUrlParam('tab') || 'resources';
-                window.location.href = `section-cards.html?resourceId=${resourceId}&sectionPosition=${section.position}&sectionState=${section.state}&name=${encodeURIComponent(section.name)}&sectionLink=${encodeURIComponent(section.link || '')}&resourceName=${encodeURIComponent(resourceName)}&resourceType=${resourceType}&resourcePattern=${resourcePattern}&resourceLink=${encodeURIComponent(resourceLink || '')}&resourceProduction=${resourceProduction}&resourceExpiration=${resourceExpiration}&subjectId=${subjectId || ''}&subjectName=${encodeURIComponent(subjectName || '')}&roadmapId=${roadmapId || ''}&roadmapName=${encodeURIComponent(roadmapName || '')}&level=${milestoneLevel || ''}&tab=${currentTab}`;
-            }
-        });
-
-        // Drag and drop handlers
-        sectionItem.addEventListener('dragstart', (e) => {
-            isDragging = true;
-            sectionItem.classList.add('dragging');
-            e.dataTransfer.effectAllowed = 'move';
-            e.dataTransfer.setData('text/plain', JSON.stringify({
-                position: section.position
-            }));
-        });
-
-        sectionItem.addEventListener('dragend', () => {
-            sectionItem.classList.remove('dragging');
-            setTimeout(() => {
-                isDragging = false;
-            }, 100);
-        });
-
-        sectionItem.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            e.dataTransfer.dropEffect = 'move';
-
-            const draggingCard = document.querySelector('.dragging');
-            if (draggingCard && draggingCard !== sectionItem) {
-                sectionItem.classList.add('drag-over');
-            }
-        });
-
-        sectionItem.addEventListener('dragleave', () => {
-            sectionItem.classList.remove('drag-over');
-        });
-
-        sectionItem.addEventListener('drop', async (e) => {
-            e.preventDefault();
-            sectionItem.classList.remove('drag-over');
-
-            const dragData = JSON.parse(e.dataTransfer.getData('text/plain') || '{}');
-            const sourcePosition = dragData.position;
-            const targetPosition = section.position;
-
-            if (sourcePosition !== targetPosition) {
-                await reorderSection(sourcePosition, targetPosition);
-            }
-        });
-
-        // Touch event handlers for mobile drag-and-drop
-        let touchStartY = 0;
-        let touchStartX = 0;
-        let touchCurrentY = 0;
-        let touchStartElement = null;
-        let touchClone = null;
-        let touchTargetElement = null;
-        let longPressTimer = null;
-        let isTouchDragEnabled = false;
-
-        sectionItem.addEventListener('touchstart', (e) => {
-            // Don't interfere with links or buttons
+            // Don't navigate if clicking on links or other actions
             if (e.target.closest('a') || e.target.closest('button')) {
                 return;
             }
 
-            touchStartY = e.touches[0].clientY;
-            touchStartX = e.touches[0].clientX;
-            touchCurrentY = touchStartY;
-            touchStartElement = sectionItem;
-            isTouchDragEnabled = false;
-
-            // Start long-press timer (500ms)
-            longPressTimer = setTimeout(() => {
-                isTouchDragEnabled = true;
-
-                // Vibrate for feedback if available
-                if (navigator.vibrate) {
-                    navigator.vibrate(50);
-                }
-
-                // Create a visual clone for dragging
-                touchClone = sectionItem.cloneNode(true);
-                touchClone.style.position = 'fixed';
-                touchClone.style.top = sectionItem.getBoundingClientRect().top + 'px';
-                touchClone.style.left = sectionItem.getBoundingClientRect().left + 'px';
-                touchClone.style.width = sectionItem.offsetWidth + 'px';
-                touchClone.style.opacity = '0.8';
-                touchClone.style.pointerEvents = 'none';
-                touchClone.style.zIndex = '1000';
-                touchClone.classList.add('dragging');
-                document.body.appendChild(touchClone);
-
-                sectionItem.style.opacity = '0.3';
-            }, 500);
+            const resourceId = UI.getUrlParam('id');
+            const resourceName = UI.getUrlParam('name') || '';
+            const resourceType = UI.getUrlParam('type');
+            const resourcePattern = UI.getUrlParam('pattern');
+            const resourceLink = UI.getUrlParam('link');
+            const resourceProduction = UI.getUrlParam('production');
+            const resourceExpiration = UI.getUrlParam('expiration');
+            const subjectId = UI.getUrlParam('subjectId');
+            const subjectName = UI.getUrlParam('subjectName');
+            const roadmapId = UI.getUrlParam('roadmapId');
+            const roadmapName = UI.getUrlParam('roadmapName');
+            const milestoneLevel = UI.getUrlParam('level');
+            const currentTab = UI.getUrlParam('tab') || 'resources';
+            window.location.href = `section-cards.html?resourceId=${resourceId}&sectionPosition=${section.position}&sectionState=${section.state}&name=${encodeURIComponent(section.name)}&sectionLink=${encodeURIComponent(section.link || '')}&resourceName=${encodeURIComponent(resourceName)}&resourceType=${resourceType}&resourcePattern=${resourcePattern}&resourceLink=${encodeURIComponent(resourceLink || '')}&resourceProduction=${resourceProduction}&resourceExpiration=${resourceExpiration}&subjectId=${subjectId || ''}&subjectName=${encodeURIComponent(subjectName || '')}&roadmapId=${roadmapId || ''}&roadmapName=${encodeURIComponent(roadmapName || '')}&level=${milestoneLevel || ''}&tab=${currentTab}`;
         });
 
-        sectionItem.addEventListener('touchmove', (e) => {
-            if (!touchStartElement) return;
-
-            // Calculate movement distance
-            const deltaX = Math.abs(e.touches[0].clientX - touchStartX);
-            const deltaY = Math.abs(e.touches[0].clientY - touchStartY);
-
-            // If user moved significantly before long-press completed, cancel it (they're scrolling)
-            if (!isTouchDragEnabled && (deltaX > 10 || deltaY > 10)) {
-                if (longPressTimer) {
-                    clearTimeout(longPressTimer);
-                    longPressTimer = null;
-                }
-                touchStartElement = null;
-                return;
-            }
-
-            // Only proceed if drag is enabled
-            if (!isTouchDragEnabled || !touchClone) return;
-
-            e.preventDefault(); // Prevent scrolling while dragging
-            touchCurrentY = e.touches[0].clientY;
-            const dragDeltaY = touchCurrentY - touchStartY;
-
-            // Move the clone
-            const rect = touchStartElement.getBoundingClientRect();
-            touchClone.style.top = (rect.top + dragDeltaY) + 'px';
-
-            // Find the element under the touch point
-            touchClone.style.display = 'none';
-            const elementBelow = document.elementFromPoint(e.touches[0].clientX, e.touches[0].clientY);
-            touchClone.style.display = 'block';
-
-            const itemBelow = elementBelow ? elementBelow.closest('.item-block') : null;
-
-            // Remove drag-over class from all items
-            document.querySelectorAll('.item-block').forEach(i => i.classList.remove('drag-over'));
-
-            if (itemBelow && itemBelow !== touchStartElement) {
-                touchTargetElement = itemBelow;
-                itemBelow.classList.add('drag-over');
-            } else {
-                touchTargetElement = null;
-            }
-        });
-
-        sectionItem.addEventListener('touchend', async (e) => {
-            // Clear the long-press timer if it hasn't fired yet
-            if (longPressTimer) {
-                clearTimeout(longPressTimer);
-                longPressTimer = null;
-            }
-
-            // Only proceed if drag was enabled
-            if (!isTouchDragEnabled) {
-                touchStartElement = null;
-                return;
-            }
-
-            if (!touchStartElement || !touchClone) return;
-
-            e.preventDefault();
-
-            // Remove the clone
-            if (touchClone && touchClone.parentNode) {
-                touchClone.parentNode.removeChild(touchClone);
-            }
-
-            // Restore opacity
-            touchStartElement.style.opacity = '1';
-
-            // Remove drag-over class from all items
-            document.querySelectorAll('.item-block').forEach(i => i.classList.remove('drag-over'));
-
-            // Perform the reorder if dropped on a different item
-            if (touchTargetElement && touchTargetElement !== touchStartElement) {
-                const sourcePosition = parseInt(touchStartElement.dataset.position);
-                const targetPosition = parseInt(touchTargetElement.dataset.position);
-
-                if (!isNaN(sourcePosition) && !isNaN(targetPosition) && sourcePosition !== targetPosition) {
-                    await reorderSection(sourcePosition, targetPosition);
-                }
-            }
-
-            // Reset touch state
-            touchStartY = 0;
-            touchStartX = 0;
-            touchCurrentY = 0;
-            touchStartElement = null;
-            touchClone = null;
-            touchTargetElement = null;
-            isTouchDragEnabled = false;
-        });
-
-        sectionItem.addEventListener('touchcancel', () => {
-            // Clear the long-press timer
-            if (longPressTimer) {
-                clearTimeout(longPressTimer);
-                longPressTimer = null;
-            }
-
-            if (touchClone && touchClone.parentNode) {
-                touchClone.parentNode.removeChild(touchClone);
-            }
-            if (touchStartElement) {
-                touchStartElement.style.opacity = '1';
-            }
-            document.querySelectorAll('.item-block').forEach(i => i.classList.remove('drag-over'));
-            touchStartY = 0;
-            touchStartX = 0;
-            touchCurrentY = 0;
-            touchStartElement = null;
-            touchClone = null;
-            touchTargetElement = null;
-            isTouchDragEnabled = false;
-        });
+        // Add touchcancel to clear long-press
+        sectionItem.addEventListener('touchcancel', clearLongPressTimer);
 
         container.appendChild(sectionItem);
     });

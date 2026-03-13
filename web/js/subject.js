@@ -4,6 +4,62 @@ let subjectName = null;
 let roadmapId = null;
 let roadmapName = null;
 
+let currentTopicsData = [];
+let reorderState = {
+    active: false,
+    sourceIndex: null, // Index in the flattened currentTopicsData
+    longPressTimer: null,
+    preventClick: false,
+    startPos: { x: 0, y: 0 }
+};
+
+function enterReorderMode(index) {
+    if (reorderState.active) return;
+    
+    reorderState.active = true;
+    reorderState.sourceIndex = index;
+    reorderState.preventClick = true;
+    
+    const container = document.getElementById('topics-list');
+    if (container) {
+        container.classList.add('reorder-mode-active');
+    }
+    
+    // Find the item by data-index
+    const sourceItem = container.querySelector(`[data-topic-index="${index}"]`);
+    if (sourceItem) {
+        sourceItem.classList.add('reorder-source');
+    }
+    
+    // Add hint
+    const hint = document.createElement('div');
+    hint.id = 'reorder-hint';
+    hint.className = 'reorder-hint';
+    hint.innerHTML = `
+        <span>Select target location (same level) to move this topic</span>
+        <button class="btn btn-secondary btn-sm" onclick="exitReorderMode()" style="padding: 2px 8px; font-size: 0.8rem;">Cancel</button>
+    `;
+    container.parentNode.insertBefore(hint, container);
+    
+    if (navigator.vibrate) navigator.vibrate(50);
+}
+
+window.exitReorderMode = function() {
+    reorderState.active = false;
+    reorderState.sourceIndex = null;
+    
+    const container = document.getElementById('topics-list');
+    if (container) {
+        container.classList.remove('reorder-mode-active');
+        document.querySelectorAll('.item-block').forEach(b => {
+            b.classList.remove('reorder-source');
+        });
+    }
+    
+    const hint = document.getElementById('reorder-hint');
+    if (hint) hint.remove();
+};
+
 window.addEventListener('DOMContentLoaded', () => {
     if (!client.isAuthenticated()) {
         window.location.href = '/index.html';
@@ -662,6 +718,7 @@ async function loadTopics() {
 }
 
 function renderTopics(topics, maxLevel) {
+    currentTopicsData = topics;
     const container = document.getElementById('topics-list');
     container.innerHTML = '';
 
@@ -671,11 +728,11 @@ function renderTopics(topics, maxLevel) {
         { name: 'Origin', description: 'Here you will have enough to be a creator' }
     ];
 
-    // Group topics by level
+    // Group topics by level, preserving original global index
     const topicsByLevel = { 0: [], 1: [], 2: [] };
-    topics.forEach(topic => {
+    topics.forEach((topic, index) => {
         if (topicsByLevel[topic.level] !== undefined) {
-            topicsByLevel[topic.level].push(topic);
+            topicsByLevel[topic.level].push({ topic, globalIndex: index });
         }
     });
 
@@ -698,255 +755,105 @@ function renderTopics(topics, maxLevel) {
             levelSection.appendChild(levelHeader);
 
             // Sort topics by position within each level
-            const sortedTopics = topicsByLevel[level].sort((a, b) => a.position - b.position);
+            const sortedGroup = topicsByLevel[level].sort((a, b) => a.topic.position - b.topic.position);
 
-            sortedTopics.forEach((topic, index) => {
+            sortedGroup.forEach((item, sortedIndex) => {
+                const topic = item.topic;
+                const globalIndex = item.globalIndex;
+                
                 const topicItem = document.createElement('div');
                 topicItem.className = 'item-block compact';
-                topicItem.draggable = true;
                 topicItem.dataset.position = topic.position;
                 topicItem.dataset.level = topic.level;
+                topicItem.dataset.topicIndex = globalIndex;
+
+                const startLongPressTimer = (e) => {
+                    if (reorderState.active) return;
+                    const touch = e.touches ? e.touches[0] : e;
+                    reorderState.startPos = { x: touch.clientX, y: touch.clientY };
+                    reorderState.longPressTimer = setTimeout(() => enterReorderMode(globalIndex), 500);
+                };
+
+                const clearLongPressTimer = () => {
+                    if (reorderState.longPressTimer) {
+                        clearTimeout(reorderState.longPressTimer);
+                        reorderState.longPressTimer = null;
+                    }
+                };
+
+                topicItem.addEventListener('mousedown', (e) => {
+                    if (e.target.closest('button')) return;
+                    startLongPressTimer(e);
+                });
+                topicItem.addEventListener('mouseup', clearLongPressTimer);
+                topicItem.addEventListener('mouseleave', clearLongPressTimer);
+                topicItem.addEventListener('touchstart', (e) => {
+                    if (e.target.closest('button')) return;
+                    startLongPressTimer(e);
+                }, { passive: true });
+                topicItem.addEventListener('touchend', clearLongPressTimer);
+                topicItem.addEventListener('touchmove', (e) => {
+                    if (reorderState.longPressTimer) {
+                        const touch = e.touches[0];
+                        const dx = touch.clientX - reorderState.startPos.x;
+                        const dy = touch.clientY - reorderState.startPos.y;
+                        if (Math.sqrt(dx * dx + dy * dy) > 10) {
+                            clearLongPressTimer();
+                        }
+                    }
+                }, { passive: true });
+                topicItem.addEventListener('touchcancel', clearLongPressTimer);
+
                 topicItem.innerHTML = `
                     <div class="item-header" style="margin-bottom: 0; align-items: flex-start; flex-wrap: wrap; gap: var(--space-xs);">
                         <div style="display: flex; align-items: flex-start; gap: var(--space-xs); flex: 1; min-width: 150px; pointer-events: none;">
-                            <span class="item-badge" style="font-size: 10px; height: 18px; min-width: 18px; padding: 0 4px; text-align: center;">${index + 1}</span>
+                            <span class="item-badge" style="font-size: 10px; height: 18px; min-width: 18px; padding: 0 4px; text-align: center;">${sortedIndex + 1}</span>
                             <h3 class="item-title" style="margin: 0; font-size: var(--font-size-base); overflow-wrap: break-word; word-break: break-word;">${UI.escapeHtml(topic.name)}</h3>
                         </div>
                         <span class="item-badge" style="background: rgba(102, 126, 234, 0.2); color: var(--color-primary-start); font-size: 10px; height: 18px; min-width: auto; padding: 0 6px; margin-left: auto; pointer-events: none;">${UI.escapeHtml(levelInfo[level].name)}</span>
                     </div>
                 `;
 
-                // Click to navigate (but not when dragging)
-                let isDragging = false;
+                // Click to navigate or reorder
                 topicItem.style.cursor = 'pointer';
-                topicItem.addEventListener('click', (e) => {
-                    if (!isDragging) {
-                        const milestoneLevel = UI.getUrlParam('level') || '0';
-                        const currentTab = UI.getUrlParam('tab') || 'topics';
-                        window.location.href = `topic-cards.html?subjectId=${subjectId}&topicPosition=${topic.position}&topicLevel=${topic.level}&name=${encodeURIComponent(topic.name)}&subjectName=${encodeURIComponent(subjectName || '')}&roadmapId=${roadmapId || ''}&roadmapName=${encodeURIComponent(roadmapName || '')}&milestoneLevel=${milestoneLevel}&tab=${currentTab}`;
+                topicItem.addEventListener('click', async (e) => {
+                    if (reorderState.preventClick) {
+                        reorderState.preventClick = false;
+                        return;
                     }
-                });
-
-                // Drag and drop handlers
-                topicItem.addEventListener('dragstart', (e) => {
-                    isDragging = true;
-                    topicItem.classList.add('dragging');
-                    e.dataTransfer.effectAllowed = 'move';
-                    e.dataTransfer.setData('text/plain', JSON.stringify({
-                        position: topic.position,
-                        level: topic.level
-                    }));
-                });
-
-                topicItem.addEventListener('dragend', () => {
-                    topicItem.classList.remove('dragging');
-                    setTimeout(() => {
-                        isDragging = false;
-                    }, 100);
-                });
-
-                topicItem.addEventListener('dragover', (e) => {
-                    e.preventDefault();
-                    e.dataTransfer.dropEffect = 'move';
-
-                    const draggingCard = document.querySelector('.dragging');
-                    if (draggingCard && draggingCard !== topicItem) {
-                        const draggingData = JSON.parse(e.dataTransfer.getData('text/plain') || '{}');
-                        // Only allow drag-drop within same level
-                        if (draggingData.level === topic.level) {
-                            topicItem.classList.add('drag-over');
+                    if (reorderState.active) {
+                        const targetTopicIndex = parseInt(e.currentTarget.dataset.topicIndex);
+                        if (reorderState.sourceIndex === targetTopicIndex) {
+                            exitReorderMode();
+                            return;
                         }
-                    }
-                });
 
-                topicItem.addEventListener('dragleave', () => {
-                    topicItem.classList.remove('drag-over');
-                });
+                        const sourceTopic = currentTopicsData[reorderState.sourceIndex];
+                        const targetTopic = currentTopicsData[targetTopicIndex];
+                        if (!sourceTopic || !targetTopic) {
+                            console.error('Source or target topic not found');
+                            exitReorderMode();
+                            return;
+                        }
 
-                topicItem.addEventListener('drop', async (e) => {
-                    e.preventDefault();
-                    topicItem.classList.remove('drag-over');
+                        if (parseInt(sourceTopic.level) !== parseInt(targetTopic.level)) {
+                            UI.showError('Topics can only be reordered within the same level');
+                            return;
+                        }
 
-                    const dragData = JSON.parse(e.dataTransfer.getData('text/plain') || '{}');
-                    const sourcePosition = dragData.position;
-                    const sourceLevel = dragData.level;
-                    const targetPosition = topic.position;
-                    const targetLevel = topic.level;
+                        const sourceLevel = parseInt(sourceTopic.level);
+                        const sourcePosition = parseInt(sourceTopic.position);
+                        const targetPosition = parseInt(targetTopic.position);
 
-                    // Only reorder within same level
-                    if (sourceLevel === targetLevel && sourcePosition !== targetPosition) {
                         await reorderTopic(sourceLevel, sourcePosition, targetPosition);
-                    }
-                });
-
-                // Touch event handlers for mobile drag-and-drop
-                let touchStartY = 0;
-                let touchStartX = 0;
-                let touchCurrentY = 0;
-                let touchStartElement = null;
-                let touchClone = null;
-                let touchTargetElement = null;
-                let longPressTimer = null;
-                let isTouchDragEnabled = false;
-
-                topicItem.addEventListener('touchstart', (e) => {
-                    touchStartY = e.touches[0].clientY;
-                    touchStartX = e.touches[0].clientX;
-                    touchCurrentY = touchStartY;
-                    touchStartElement = topicItem;
-                    isTouchDragEnabled = false;
-
-                    // Start long-press timer (500ms)
-                    longPressTimer = setTimeout(() => {
-                        isTouchDragEnabled = true;
-
-                        // Vibrate for feedback if available
-                        if (navigator.vibrate) {
-                            navigator.vibrate(50);
-                        }
-
-                        // Create a visual clone for dragging
-                        touchClone = topicItem.cloneNode(true);
-                        touchClone.style.position = 'fixed';
-                        touchClone.style.top = topicItem.getBoundingClientRect().top + 'px';
-                        touchClone.style.left = topicItem.getBoundingClientRect().left + 'px';
-                        touchClone.style.width = topicItem.offsetWidth + 'px';
-                        touchClone.style.opacity = '0.8';
-                        touchClone.style.pointerEvents = 'none';
-                        touchClone.style.zIndex = '1000';
-                        touchClone.classList.add('dragging');
-                        document.body.appendChild(touchClone);
-
-                        topicItem.style.opacity = '0.3';
-                    }, 500);
-                });
-
-                topicItem.addEventListener('touchmove', (e) => {
-                    if (!touchStartElement) return;
-
-                    // Calculate movement distance
-                    const deltaX = Math.abs(e.touches[0].clientX - touchStartX);
-                    const deltaY = Math.abs(e.touches[0].clientY - touchStartY);
-
-                    // If user moved significantly before long-press completed, cancel it (they're scrolling)
-                    if (!isTouchDragEnabled && (deltaX > 10 || deltaY > 10)) {
-                        if (longPressTimer) {
-                            clearTimeout(longPressTimer);
-                            longPressTimer = null;
-                        }
-                        touchStartElement = null;
+                        exitReorderMode();
                         return;
                     }
+                    if (e.target.closest('button')) return;
 
-                    // Only proceed if drag is enabled
-                    if (!isTouchDragEnabled || !touchClone) return;
-
-                    e.preventDefault(); // Prevent scrolling while dragging
-                    touchCurrentY = e.touches[0].clientY;
-                    const dragDeltaY = touchCurrentY - touchStartY;
-
-                    // Move the clone
-                    const rect = touchStartElement.getBoundingClientRect();
-                    touchClone.style.top = (rect.top + dragDeltaY) + 'px';
-
-                    // Find the element under the touch point
-                    touchClone.style.display = 'none';
-                    const elementBelow = document.elementFromPoint(e.touches[0].clientX, e.touches[0].clientY);
-                    touchClone.style.display = 'block';
-
-                    const itemBelow = elementBelow ? elementBelow.closest('.item-block') : null;
-
-                    // Remove drag-over class from all items
-                    document.querySelectorAll('.item-block').forEach(i => i.classList.remove('drag-over'));
-
-                    // Only allow drag-drop within same level
-                    if (itemBelow && itemBelow !== touchStartElement) {
-                        const itemBelowLevel = parseInt(itemBelow.dataset.level);
-                        const touchStartLevel = parseInt(touchStartElement.dataset.level);
-                        if (itemBelowLevel === touchStartLevel) {
-                            touchTargetElement = itemBelow;
-                            itemBelow.classList.add('drag-over');
-                        } else {
-                            touchTargetElement = null;
-                        }
-                    } else {
-                        touchTargetElement = null;
-                    }
-                });
-
-                topicItem.addEventListener('touchend', async (e) => {
-                    // Clear the long-press timer if it hasn't fired yet
-                    if (longPressTimer) {
-                        clearTimeout(longPressTimer);
-                        longPressTimer = null;
-                    }
-
-                    // Only proceed if drag was enabled
-                    if (!isTouchDragEnabled) {
-                        touchStartElement = null;
-                        return;
-                    }
-
-                    if (!touchStartElement || !touchClone) return;
-
-                    e.preventDefault();
-
-                    // Remove the clone
-                    if (touchClone && touchClone.parentNode) {
-                        touchClone.parentNode.removeChild(touchClone);
-                    }
-
-                    // Restore opacity
-                    touchStartElement.style.opacity = '1';
-
-                    // Remove drag-over class from all items
-                    document.querySelectorAll('.item-block').forEach(i => i.classList.remove('drag-over'));
-
-                    // Perform the reorder if dropped on a different item in same level
-                    if (touchTargetElement && touchTargetElement !== touchStartElement) {
-                        const sourcePosition = parseInt(touchStartElement.dataset.position);
-                        const sourceLevel = parseInt(touchStartElement.dataset.level);
-                        const targetPosition = parseInt(touchTargetElement.dataset.position);
-                        const targetLevel = parseInt(touchTargetElement.dataset.level);
-
-                        if (!isNaN(sourcePosition) && !isNaN(targetPosition) && !isNaN(sourceLevel) && !isNaN(targetLevel)) {
-                            if (sourceLevel === targetLevel && sourcePosition !== targetPosition) {
-                                await reorderTopic(sourceLevel, sourcePosition, targetPosition);
-                            }
-                        }
-                    }
-
-                    // Reset touch state
-                    touchStartY = 0;
-                    touchStartX = 0;
-                    touchCurrentY = 0;
-                    touchStartElement = null;
-                    touchClone = null;
-                    touchTargetElement = null;
-                    isTouchDragEnabled = false;
-                });
-
-                topicItem.addEventListener('touchcancel', () => {
-                    // Clear the long-press timer
-                    if (longPressTimer) {
-                        clearTimeout(longPressTimer);
-                        longPressTimer = null;
-                    }
-
-                    if (touchClone && touchClone.parentNode) {
-                        touchClone.parentNode.removeChild(touchClone);
-                    }
-                    if (touchStartElement) {
-                        touchStartElement.style.opacity = '1';
-                    }
-                    document.querySelectorAll('.item-block').forEach(i => i.classList.remove('drag-over'));
-                    touchStartY = 0;
-                    touchStartX = 0;
-                    touchCurrentY = 0;
-                    touchStartElement = null;
-                    touchClone = null;
-                    touchTargetElement = null;
-                    isTouchDragEnabled = false;
+                    const milestoneLevel = UI.getUrlParam('level') || '0';
+                    const currentTab = UI.getUrlParam('tab') || 'topics';
+                    window.location.href = `topic-cards.html?subjectId=${subjectId}&topicPosition=${topic.position}&topicLevel=${topic.level}&name=${encodeURIComponent(topic.name)}&subjectName=${encodeURIComponent(subjectName || '')}&roadmapId=${roadmapId || ''}&roadmapName=${encodeURIComponent(roadmapName || '')}&milestoneLevel=${milestoneLevel}&tab=${currentTab}`;
                 });
 
                 levelSection.appendChild(topicItem);
@@ -1276,6 +1183,7 @@ async function removeTopic(level, position) {
 
 async function reorderTopic(level, sourcePosition, targetPosition) {
     try {
+        console.log('Reordering topic', sourcePosition, 'with', targetPosition);
         await client.reorderTopic(parseInt(subjectId), level, sourcePosition, targetPosition);
         await loadTopics();
     } catch (err) {
