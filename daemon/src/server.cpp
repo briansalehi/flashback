@@ -3583,6 +3583,47 @@ grpc::Status server::IsAssimilated(grpc::ServerContext* context, IsAssimilatedRe
     return status;
 }
 
+grpc::Status server::GetTopicCoverage(grpc::ServerContext* context, GetTopicCoverageRequest const* request, GetTopicCoverageResponse* response)
+{
+    grpc::Status status{grpc::StatusCode::INTERNAL, {}};
+
+    try
+    {
+        if (!request->has_user() || !session_is_valid(request->user()))
+        {
+            status = grpc::Status{grpc::StatusCode::UNAUTHENTICATED, "invalid user"};
+        }
+        else if (request->subject().id() == 0)
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid subject"};
+        }
+        else if (request->assessment().card().id() == 0)
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid assessment"};
+        }
+        else
+        {
+            for (Topic const& topic: m_database->get_topic_coverage(request->subject().id(), request->assessment().card().id()))
+            {
+                *response->add_topic() = topic;
+            }
+            std::clog << std::format("client {} collected {} topics in subject {} covered by assessment {}\n", request->user().token(), response->topic_size(), request->subject().id(), request->assessment().card().id());
+            status = grpc::Status{grpc::StatusCode::OK, {}};
+        }
+    }
+    catch (client_exception const& exp)
+    {
+        std::cerr << std::format("client {}: {}\n", request->user().token(), exp.what());
+        status = grpc::Status{grpc::StatusCode::UNAVAILABLE, exp.what()};
+    }
+    catch (std::exception const& exp)
+    {
+        std::cerr << std::format("server: failed to collect topics in subject {} covered by assessment {}, reason: {}\n", request->subject().id(), request->assessment().card().id(), exp.what());
+    }
+
+    return status;
+}
+
 grpc::Status server::EditCard(grpc::ServerContext* context, EditCardRequest const* request, EditCardResponse* response)
 {
     grpc::Status status{grpc::StatusCode::INTERNAL, {}};

@@ -700,6 +700,9 @@ function renderAssessments(assessments) {
                 </div>
                 <div style="display: flex; gap: 0.6rem; align-items: center;">
                     <span class="item-badge" style="background: ${stateColor.bg}; color: ${stateColor.color}; text-transform: capitalize; font-size: 11px; height: 24px; min-width: auto; padding: 0 10px; border-radius: var(--radius-full); display: inline-flex; align-items: center;">${UI.escapeHtml(stateName)}</span>
+                    <button class="btn btn-secondary btn-sm" style="background-color: #2196f3; color: white; padding: 0.3rem 1rem; height: 34px; font-size: 13px; font-weight: 600; min-width: auto; white-space: nowrap;" onclick="window.openExpandAssessmentModal(${card.id}, '${UI.escapeHtml(card.headline).replace(/'/g, "\\'")}')">
+                        Expand
+                    </button>
                     <button class="btn btn-secondary btn-sm" style="background-color: #dc3545; color: white; padding: 0.3rem 1rem; height: 34px; font-size: 13px; font-weight: 600; min-width: auto; white-space: nowrap;" onclick="window.openDiminishAssessmentModal(${card.id}, '${UI.escapeHtml(card.headline).replace(/'/g, "\\'")}')">
                         Diminish
                     </button>
@@ -781,3 +784,199 @@ function renderAssessments(assessments) {
         UI.toggleElement('diminish-assessment-modal', true);
         document.body.style.overflow = 'hidden';
     };
+
+    // Expand Assessment handlers
+    const expandModal = document.getElementById('expand-assessment-modal');
+    const closeExpandModalBtn = document.getElementById('close-expand-assessment-modal-btn');
+    const cancelExpandBtn = document.getElementById('cancel-expand-assessment-btn');
+    const confirmExpandBtn = document.getElementById('confirm-expand-assessment-btn');
+    const expandTopicsList = document.getElementById('expand-topics-list');
+    const expandTopicsSearchInput = document.getElementById('expand-topics-search-input');
+    let assessmentIdToExpand = null;
+    let selectedTargetTopic = null;
+    let cachedTopicsForExpansion = [];
+    let coveredTopicsForExpansion = [];
+    let currentMaxLevelForExpansion = 0;
+
+    const closeExpandModal = () => {
+        UI.toggleElement('expand-assessment-modal', false);
+        document.body.style.overflow = '';
+        assessmentIdToExpand = null;
+        selectedTargetTopic = null;
+        cachedTopicsForExpansion = [];
+        coveredTopicsForExpansion = [];
+        if (expandTopicsSearchInput) expandTopicsSearchInput.value = '';
+        UI.toggleElement('confirm-expand-assessment-btn', false);
+    };
+
+    if (expandTopicsSearchInput) {
+        expandTopicsSearchInput.addEventListener('input', () => {
+            const searchTerm = expandTopicsSearchInput.value.trim().toLowerCase();
+            const filteredTopics = cachedTopicsForExpansion.filter(topic => 
+                topic.name.toLowerCase().includes(searchTerm)
+            );
+            renderTopicsForExpansion(filteredTopics, currentMaxLevelForExpansion);
+        });
+    }
+
+    if (closeExpandModalBtn) closeExpandModalBtn.addEventListener('click', closeExpandModal);
+    if (cancelExpandBtn) cancelExpandBtn.addEventListener('click', closeExpandModal);
+    if (expandModal) {
+        expandModal.addEventListener('click', (e) => {
+            if (e.target === expandModal) closeExpandModal();
+        });
+    }
+
+    window.openExpandAssessmentModal = async (id, headline) => {
+        assessmentIdToExpand = id;
+        const nameEl = document.getElementById('assessment-to-expand-name');
+        if (nameEl) nameEl.textContent = headline;
+        
+        UI.toggleElement('expand-assessment-modal', true);
+        document.body.style.overflow = 'hidden';
+        
+        await loadTopicsForExpansion();
+    };
+
+    async function loadTopicsForExpansion() {
+        const subjectId = parseInt(UI.getUrlParam('subjectId'));
+        const milestoneLevel = parseInt(UI.getUrlParam('milestoneLevel')) || 0;
+        currentMaxLevelForExpansion = milestoneLevel;
+        
+        UI.toggleElement('expand-topics-loading', true);
+        UI.toggleElement('expand-topics-search-container', false);
+        UI.toggleElement('expand-topics-empty', false);
+        expandTopicsList.innerHTML = '';
+        UI.toggleElement('confirm-expand-assessment-btn', false);
+        
+        try {
+            const levels = [];
+            for (let i = 0; i <= milestoneLevel; i++) {
+                levels.push(i);
+            }
+            
+            const [results, coverage] = await Promise.all([
+                Promise.all(levels.map(level => client.getTopics(subjectId, level))),
+                client.getTopicCoverage(subjectId, assessmentIdToExpand)
+            ]);
+            
+            cachedTopicsForExpansion = results.flat();
+            coveredTopicsForExpansion = coverage;
+            
+            UI.toggleElement('expand-topics-loading', false);
+            UI.toggleElement('expand-topics-search-container', cachedTopicsForExpansion.length > 0);
+            renderTopicsForExpansion(cachedTopicsForExpansion, milestoneLevel);
+        } catch (err) {
+            console.error('Failed to load topics for expansion:', err);
+            UI.toggleElement('expand-topics-loading', false);
+            expandTopicsList.innerHTML = '<p class="text-danger">Failed to load topics.</p>';
+        }
+    }
+
+    function renderTopicsForExpansion(topics, maxLevel) {
+        expandTopicsList.innerHTML = '';
+        
+        if (topics.length === 0) {
+            UI.toggleElement('expand-topics-empty', true);
+            return;
+        }
+        UI.toggleElement('expand-topics-empty', false);
+
+        const levelInfo = [
+            { name: 'Surface', color: 'linear-gradient(135deg, #2196f3, #03a9f4)' },
+            { name: 'Depth', color: 'linear-gradient(135deg, #4caf50, #8bc34a)' },
+            { name: 'Origin', color: 'linear-gradient(135deg, #ff9800, #ffc107)' }
+        ];
+
+        const topicsByLevel = { 0: [], 1: [], 2: [] };
+        topics.forEach(topic => {
+            if (topicsByLevel[topic.level] !== undefined) {
+                topicsByLevel[topic.level].push(topic);
+            }
+        });
+
+        for (let level = 0; level <= 2; level++) {
+            if (topicsByLevel[level] && topicsByLevel[level].length > 0) {
+                const levelHeader = document.createElement('div');
+                levelHeader.className = 'level-header';
+                levelHeader.style.marginTop = '1.5rem';
+                levelHeader.style.marginBottom = '1rem';
+                levelHeader.innerHTML = `
+                    <div style="display: flex; align-items: center; gap: 0.75rem;">
+                        <span class="item-badge" style="background: ${levelInfo[level].color}; color: white; border: none; font-size: 11px; padding: 2px 10px; border-radius: 4px; font-weight: 700;">${levelInfo[level].name.toUpperCase()}</span>
+                        <div style="flex: 1; height: 1px; background: var(--border-color);"></div>
+                    </div>
+                `;
+                expandTopicsList.appendChild(levelHeader);
+
+                const sortedGroup = topicsByLevel[level].sort((a, b) => a.position - b.position);
+                sortedGroup.forEach(topic => {
+                    const topicItem = document.createElement('div');
+                    topicItem.className = 'topic-list-item';
+                    topicItem.style.padding = '1rem';
+                    topicItem.style.borderRadius = 'var(--radius-md)';
+                    topicItem.innerHTML = `
+                        <div style="display: flex; align-items: center; justify-content: space-between;">
+                            <span style="font-weight: 600; font-size: 1rem;">${UI.escapeHtml(topic.name)}</span>
+                            <span class="text-muted" style="font-size: 0.8rem;">Pos: ${topic.position + 1}</span>
+                        </div>
+                    `;
+                    
+                    // Don't allow expanding to the current topic or already covered topics
+                    const currentTopicPosition = parseInt(UI.getUrlParam('topicPosition'));
+                    const currentTopicLevel = parseInt(UI.getUrlParam('topicLevel'));
+                    
+                    const isCurrentTopic = topic.position === currentTopicPosition && topic.level === currentTopicLevel;
+                    const isAlreadyCovered = coveredTopicsForExpansion.some(t => t.position === topic.position && t.level === topic.level);
+
+                    if (isCurrentTopic || isAlreadyCovered) {
+                        topicItem.style.opacity = '0.5';
+                        topicItem.style.cursor = 'not-allowed';
+                        topicItem.title = isCurrentTopic ? 'This is the current topic' : 'This topic is already covered by this assessment';
+                    } else {
+                        topicItem.addEventListener('click', () => {
+                            // Deselect previous
+                            const previouslySelected = expandTopicsList.querySelector('.topic-list-item.selected');
+                            if (previouslySelected) previouslySelected.classList.remove('selected');
+                            
+                            topicItem.classList.add('selected');
+                            selectedTargetTopic = topic;
+                            UI.toggleElement('confirm-expand-assessment-btn', true);
+                        });
+                    }
+                    
+                    expandTopicsList.appendChild(topicItem);
+                });
+            }
+        }
+    }
+
+    if (confirmExpandBtn) {
+        confirmExpandBtn.addEventListener('click', async () => {
+            if (!assessmentIdToExpand || !selectedTargetTopic) return;
+
+            UI.hideMessage('error-message');
+            UI.setButtonLoading('confirm-expand-assessment-btn', true);
+
+            try {
+                const subjectId = parseInt(UI.getUrlParam('subjectId'));
+                await client.expandAssessment(
+                    assessmentIdToExpand, 
+                    subjectId, 
+                    selectedTargetTopic.level, 
+                    selectedTargetTopic.position
+                );
+                
+                closeExpandModal();
+                UI.setButtonLoading('confirm-expand-assessment-btn', false);
+                UI.showSuccess('Assessment expanded successfully');
+                // Optional: reload assessments if needed, but expanding to ANOTHER topic 
+                // might not change current topic's assessment list unless it's a new link.
+                loadAssessments(); 
+            } catch (err) {
+                console.error('Failed to expand assessment:', err);
+                UI.showError('Failed to expand assessment: ' + (err.message || 'Unknown error'));
+                UI.setButtonLoading('confirm-expand-assessment-btn', false);
+            }
+        });
+    }

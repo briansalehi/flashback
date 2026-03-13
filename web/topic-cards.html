@@ -266,6 +266,55 @@
       </div>
     </div>
 
+    <!-- Expand Assessment Modal -->
+    <div id="expand-assessment-modal" class="modal-overlay" style="display: none;">
+      <div class="modal-content" style="max-width: 600px;">
+        <div class="modal-header">
+          <h2 class="modal-title">Expand Assessment</h2>
+          <button type="button" id="close-expand-assessment-modal-btn" class="modal-close" aria-label="Close modal">&times;</button>
+        </div>
+        <div class="modal-body">
+          <p style="margin-bottom: 1.5rem;">
+            Select a topic to expand the assessment <strong id="assessment-to-expand-name"></strong> into.
+          </p>
+          
+          <div id="expand-topics-loading" style="display: none; text-align: center; padding: 2rem;">
+            <div class="loading" style="width: 40px; height: 40px; border-width: 4px;"></div>
+            <p class="text-muted mt-md">Loading topics...</p>
+          </div>
+
+          <div id="expand-topics-search-container" style="display: none; margin-bottom: 1.5rem;">
+            <div class="form-group" style="margin-bottom: 0.5rem;">
+              <input
+                  type="text"
+                  id="expand-topics-search-input"
+                  class="form-input"
+                  placeholder="Search for target topic..."
+                  autocomplete="off"
+              >
+            </div>
+          </div>
+
+          <div id="expand-topics-list" style="max-height: 400px; overflow-y: auto; margin-bottom: 1.5rem;">
+            <!-- topics grouped by level will be inserted here -->
+          </div>
+
+          <div id="expand-topics-empty" style="display: none; text-align: center; padding: 2rem; color: var(--text-muted); font-size: 0.875rem;">
+            No topics found
+          </div>
+
+          <div class="form-actions" style="display: flex; gap: 1rem; justify-content: flex-end;">
+            <button id="confirm-expand-assessment-btn" class="btn btn-primary" style="display: none; padding: 0.5rem 1.5rem; white-space: nowrap;">
+              Expand Assessment
+            </button>
+            <button id="cancel-expand-assessment-btn" class="btn btn-secondary" style="padding: 0.5rem 1.5rem; white-space: nowrap;">
+              Cancel
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div id="loading" style="display: none; text-align: center; padding: 3rem;">
       <div class="loading" style="width: 40px; height: 40px; border-width: 4px;"></div>
       <p class="text-muted mt-md">Loading cards...</p>
@@ -289,7 +338,7 @@
         <p class="text-muted mt-md">Loading assessments...</p>
       </div>
 
-      <button id="add-assessment-btn" class="btn btn-primary btn-full" style="margin-top: 1rem; margin-bottom: 2rem; padding: 0.75rem 1rem; white-space: nowrap;">
+      <button id="add-assessment-btn" class="btn btn-primary btn-full" style="margin-top: 0.5rem; margin-bottom: 1.5rem; padding: 0.65rem 1rem; white-space: nowrap;">
         + Add Assessment
       </button>
 

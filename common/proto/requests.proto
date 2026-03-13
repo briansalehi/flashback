@@ -300,3 +300,6 @@ message GetSectionCardsResponse { repeated SectionCard card = 1; }
 
 message GetTopicCardsRequest { User user = 1; Subject subject = 2; Topic topic = 3; }
 message GetTopicCardsResponse { repeated Card card = 1; }
+
+message GetTopicCoverageRequest { User user = 1; Subject subject = 2; Assessment assessment = 3; }
+message GetTopicCoverageResponse { repeated Topic topic = 1; }

@@ -101,6 +101,7 @@ service Server {
     rpc GetAssessments(GetAssessmentsRequest) returns (GetAssessmentsResponse);
     rpc ExpandAssessment(ExpandAssessmentRequest) returns (ExpandAssessmentResponse);
     rpc DiminishAssessment(DiminishAssessmentRequest) returns (DiminishAssessmentResponse);
+    rpc GetTopicCoverage(GetTopicCoverageRequest) returns (GetTopicCoverageResponse);
     rpc CreateNerve(CreateNerveRequest) returns (CreateNerveResponse);
     rpc GetNerves(GetNervesRequest) returns (GetNervesResponse);
     //rpc EstimateCardTime(EstimateCardTimeRequest) returns (EstimateCardTimeResponse);

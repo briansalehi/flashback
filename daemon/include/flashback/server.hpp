@@ -126,6 +126,7 @@ public:
     grpc::Status ExpandAssessment(grpc::ServerContext* context, ExpandAssessmentRequest const* request, ExpandAssessmentResponse* response) override;
     grpc::Status DiminishAssessment(grpc::ServerContext* context, DiminishAssessmentRequest const* request, DiminishAssessmentResponse* response) override;
     grpc::Status IsAssimilated(grpc::ServerContext* context, IsAssimilatedRequest const* request, IsAssimilatedResponse* response) override;
+    grpc::Status GetTopicCoverage(grpc::ServerContext* context, GetTopicCoverageRequest const* request, GetTopicCoverageResponse* response) override;
 
     // card page
     grpc::Status EditCard(grpc::ServerContext* context, EditCardRequest const* request, EditCardResponse* response) override;

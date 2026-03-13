@@ -1957,6 +1957,35 @@ class FlashbackClient {
         });
     }
 
+    async getTopicCoverage(subjectId, assessmentId) {
+        return new Promise((resolve, reject) => {
+            const request = new proto.flashback.GetTopicCoverageRequest();
+            const user = this.getAuthenticatedUser();
+            request.setUser(user);
+            const subject = new proto.flashback.Subject();
+            subject.setId(subjectId);
+            request.setSubject(subject);
+            const card = new proto.flashback.Card();
+            card.setId(assessmentId);
+            const assessment = new proto.flashback.Assessment();
+            assessment.setCard(card);
+            request.setAssessment(assessment);
+
+            this.client.getTopicCoverage(request, this.getMetadata(), (err, response) => {
+                if (err) {
+                    console.error("Get Topic Coverage error:", err);
+                    reject(this.handleError(err));
+                } else {
+                    resolve(response.getTopicList().map(topic => ({
+                        position: topic.getPosition(),
+                        name: topic.getName(),
+                        level: topic.getLevel()
+                    })));
+                }
+            });
+        });
+    }
+
     async isAssimilated(subjectId, topicLevel, topicPosition) {
         return new Promise((resolve, reject) => {
             const request = new proto.flashback.IsAssimilatedRequest();
