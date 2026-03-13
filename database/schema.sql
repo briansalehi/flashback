@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict dvOUCHRXq6RQjZ0mKSn2ZkWhJYZTPwgP19edJip2gGSZIBcqtnPy5uFwzA0u3Mh
+\restrict 5nNcx4FAbqlPCGWB2EyI7efFu9wUeLRFOKsqgLpgiIsVesthoRGA8qYyqZqcOgW
 
 -- Dumped from database version 18.1
 -- Dumped by pg_dump version 18.1
@@ -229,6 +229,8 @@ begin
     select coalesce(max(position), 0) + 1 into top_position from section_cards sc where sc.resource = resource_id and sc.section = section_position;
 
     insert into section_cards (resource, section, card, position) values (resource_id, section_position, card_id, top_position);
+
+    update sections set state = 'draft'::closure_state where resource = resource_id and position = section_position;
 
     return top_position;
 end;
@@ -1606,7 +1608,7 @@ declare pattern section_pattern;
 begin
     select r.pattern into pattern from resources r where r.id = resource_id;
 
-    return query select s.position, s.state, coalesce(s.name, initcap(pattern || ' ' || s.position)::citext), s.link from sections s where s.resource = resource_id;
+    return query select s.position, s.state, s.name, s.link from sections s where s.resource = resource_id;
 end;
 $$;
 
@@ -2863,17 +2865,16 @@ begin
     if section_position <> target_position then
         update sections set position = temporary_position where resource = resource_id and position = section_position;
 
+        select max(coalesce(position, 0)) + 1 into safe_margin from sections where resource = resource_id;
+
         if target_position < section_position then
-            select max(coalesce(position, 0)) + 1 into safe_margin from sections where resource = resource_id;
             update sections set position = position + safe_margin where resource = resource_id and position >= target_position and position < section_position;
-        else
-            update sections set position = position - 1 where resource = resource_id and position <= target_position and position > section_position;
-        end if;
-
-        update sections set position = target_position where resource = resource_id and position = temporary_position;
-
-        if target_position < section_position then
+            update sections set position = target_position where resource = resource_id and position = temporary_position;
             update sections set position = position - safe_margin + target_position where resource = resource_id and position >= safe_margin and position < section_position;
+        else
+            update sections set position = position + safe_margin where resource = resource_id and position > section_position and position <= target_position;
+            update sections set position = target_position where resource = resource_id and position = temporary_position;
+            update sections set position = position - safe_margin - 1 where resource = resource_id and position > section_position + safe_margin - 1 and position <= target_position + safe_margin;
         end if;
     end if;
 end; $$;
@@ -2903,7 +2904,8 @@ begin
         else
             update topics set position = position + safe_margin where subject = subject_id and level = topic_level and position > topic_position and position <= target_position;
             update topics set position = target_position where subject = subject_id and level = topic_level and position = temporary_position;
-            update topics set position = position - safe_margin + topic_position where subject = subject_id and level = topic_level and position > topic_position + safe_margin - 1 and position <= target_position + safe_margin;
+
+            update topics set position = position - safe_margin - 1 where subject = subject_id and level = topic_level and position > topic_position + safe_margin - 1 and position <= target_position + safe_margin;
         end if;
     end if;
 end; $$;
@@ -4273,5 +4275,5 @@ GRANT ALL ON SCHEMA public TO brian;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict dvOUCHRXq6RQjZ0mKSn2ZkWhJYZTPwgP19edJip2gGSZIBcqtnPy5uFwzA0u3Mh
+\unrestrict 5nNcx4FAbqlPCGWB2EyI7efFu9wUeLRFOKsqgLpgiIsVesthoRGA8qYyqZqcOgW
 
