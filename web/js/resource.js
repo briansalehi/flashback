@@ -403,12 +403,21 @@ window.addEventListener('DOMContentLoaded', () => {
     }
 
     loadSections();
+    
+    // Search event listener
+    const sectionsSearchInput = document.getElementById('sections-search-input');
+    if (sectionsSearchInput) {
+        sectionsSearchInput.addEventListener('input', () => {
+            renderSections(currentSections);
+        });
+    }
 });
 
 async function loadSections() {
     UI.toggleElement('loading', true);
     UI.toggleElement('sections-list', false);
     UI.toggleElement('empty-state', false);
+    UI.toggleElement('sections-search-container', false);
 
     try {
         const resourceId = UI.getUrlParam('id');
@@ -419,9 +428,11 @@ async function loadSections() {
         if (sections.length === 0) {
             UI.toggleElement('empty-state', true);
             UI.toggleElement('sections-toggle-container', false);
+            UI.toggleElement('sections-search-container', false);
         } else {
             UI.toggleElement('empty-state', false);
             UI.toggleElement('sections-list', true);
+            UI.toggleElement('sections-search-container', true);
             renderSections(sections);
         }
     } catch (err) {
@@ -433,21 +444,31 @@ async function loadSections() {
 
 function renderSections(sections) {
     const container = document.getElementById('sections-list');
+    const searchInput = document.getElementById('sections-search-input');
+    const searchTerm = searchInput ? searchInput.value.toLowerCase().trim() : '';
     container.innerHTML = '';
 
     // Sort sections by position and store
     currentSections = sections.sort((a, b) => a.position - b.position);
+
+    // Filter by search term
+    let filteredSections = currentSections;
+    if (searchTerm) {
+        filteredSections = currentSections.filter(section => 
+            section.name.toLowerCase().includes(searchTerm)
+        );
+    }
     
     // Handle expansion/collapsing (show only top 3 by default)
     const toggleContainer = document.getElementById('sections-toggle-container');
     const toggleBtn = document.getElementById('sections-toggle-btn');
     
-    let displayedSections = currentSections;
-    if (currentSections.length > 3) {
+    let displayedSections = filteredSections;
+    if (filteredSections.length > 3) {
         UI.toggleElement('sections-toggle-container', true);
         if (!isSectionsExpanded) {
-            displayedSections = currentSections.slice(0, 3);
-            toggleBtn.textContent = `Show All (${currentSections.length})`;
+            displayedSections = filteredSections.slice(0, 3);
+            toggleBtn.textContent = `Show All (${filteredSections.length})`;
         } else {
             toggleBtn.textContent = 'Show Less';
         }

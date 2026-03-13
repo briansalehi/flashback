@@ -5,6 +5,7 @@ let roadmapId = null;
 let roadmapName = null;
 
 let currentTopicsData = [];
+let currentResourcesData = [];
 let expandedLevels = { 0: false, 1: false, 2: false };
 let isResourcesExpanded = false;
 let reorderState = {
@@ -359,6 +360,10 @@ window.addEventListener('DOMContentLoaded', () => {
             addTopicBtn.style.display = (targetTab === 'topics') ? 'block' : 'none';
         }
 
+        // Toggle search containers visibility
+        UI.toggleElement('topics-search-container', targetTab === 'topics');
+        UI.toggleElement('resources-search-container', targetTab === 'resources');
+
         // Update URL if requested
         const currentUrl = new URL(window.location.href);
         if (updateUrl) {
@@ -683,6 +688,22 @@ window.addEventListener('DOMContentLoaded', () => {
     let topicsLoaded = false;
     let assessmentsLoaded = false;
     let resourcesLoaded = false;
+    
+    // Search event listeners
+    const topicsSearchInput = document.getElementById('topics-search-input');
+    if (topicsSearchInput) {
+        topicsSearchInput.addEventListener('input', () => {
+            const milestoneLevel = parseInt(UI.getUrlParam('level')) || 0;
+            renderTopics(currentTopicsData, milestoneLevel);
+        });
+    }
+
+    const resourcesSearchInput = document.getElementById('resources-search-input');
+    if (resourcesSearchInput) {
+        resourcesSearchInput.addEventListener('input', () => {
+            renderResources(currentResourcesData);
+        });
+    }
 
     const initialTab = UI.getUrlParam('tab') || 'topics';
     activateTab(initialTab, false);
@@ -692,6 +713,7 @@ async function loadTopics() {
     UI.toggleElement('topics-loading', true);
     UI.toggleElement('topics-list', false);
     UI.toggleElement('topics-empty-state', false);
+    UI.toggleElement('topics-search-container', false);
 
     try {
         const milestoneLevel = parseInt(UI.getUrlParam('level')) || 0;
@@ -708,8 +730,11 @@ async function loadTopics() {
 
         if (allTopics.length === 0) {
             UI.toggleElement('topics-empty-state', true);
+            UI.toggleElement('topics-search-container', false);
         } else {
             UI.toggleElement('topics-list', true);
+            // Show the topics search bar when topics are loaded; tab switching controls visibility elsewhere
+            UI.toggleElement('topics-search-container', true);
             renderTopics(allTopics, milestoneLevel);
         }
     } catch (err) {
@@ -722,6 +747,8 @@ async function loadTopics() {
 function renderTopics(topics, maxLevel) {
     currentTopicsData = topics;
     const container = document.getElementById('topics-list');
+    const searchInput = document.getElementById('topics-search-input');
+    const searchTerm = searchInput ? searchInput.value.toLowerCase().trim() : '';
     container.innerHTML = '';
 
     const levelInfo = [
@@ -730,11 +757,21 @@ function renderTopics(topics, maxLevel) {
         { name: 'Origin', description: 'Here you will have enough to be a creator' }
     ];
 
+    // Filter by search term
+    let filteredTopics = topics;
+    if (searchTerm) {
+        filteredTopics = topics.filter(topic => 
+            topic.name.toLowerCase().includes(searchTerm)
+        );
+    }
+
     // Group topics by level, preserving original global index
     const topicsByLevel = { 0: [], 1: [], 2: [] };
-    topics.forEach((topic, index) => {
+    filteredTopics.forEach((topic) => {
+        // Re-find the global index of this topic in the original currentTopicsData
+        const globalIndex = topics.indexOf(topic);
         if (topicsByLevel[topic.level] !== undefined) {
-            topicsByLevel[topic.level].push({ topic, globalIndex: index });
+            topicsByLevel[topic.level].push({ topic, globalIndex });
         }
     });
 
@@ -899,18 +936,22 @@ async function loadResources() {
     UI.toggleElement('resources-loading', true);
     UI.toggleElement('resources-list', false);
     UI.toggleElement('resources-empty-state', false);
+    UI.toggleElement('resources-search-container', false);
 
     try {
-        const resources = await client.getResources(parseInt(subjectId));
+        currentResourcesData = await client.getResources(parseInt(subjectId));
 
         UI.toggleElement('resources-loading', false);
         resourcesLoaded = true;
 
-        if (resources.length === 0) {
+        if (currentResourcesData.length === 0) {
             UI.toggleElement('resources-empty-state', true);
+            UI.toggleElement('resources-search-container', false);
         } else {
             UI.toggleElement('resources-list', true);
-            renderResources(resources);
+            // Show the resources search bar when resources are loaded; tab switching controls visibility elsewhere
+            UI.toggleElement('resources-search-container', true);
+            renderResources(currentResourcesData);
         }
     } catch (err) {
         console.error('Loading resources failed:', err);
@@ -921,12 +962,24 @@ async function loadResources() {
 
 function renderResources(resources) {
     const container = document.getElementById('resources-list');
+    const searchInput = document.getElementById('resources-search-input');
+    const searchTerm = searchInput ? searchInput.value.toLowerCase().trim() : '';
     container.innerHTML = '';
 
     const typeNames = ['Book', 'Website', 'Course', 'Video', 'Channel', 'Mailing List', 'Manual', 'Slides', 'Your Knowledge'];
     const patternNames = ['Chapters', 'Pages', 'Sessions', 'Episodes', 'Playlist', 'Posts', 'Memories'];
 
-    const displayResources = isResourcesExpanded ? resources : resources.slice(0, 3);
+    // Filter by search term
+    let filteredResources = resources;
+    if (searchTerm) {
+        filteredResources = resources.filter(resource => 
+            resource.name.toLowerCase().includes(searchTerm) ||
+            (typeNames[resource.type] || '').toLowerCase().includes(searchTerm) ||
+            (patternNames[resource.pattern] || '').toLowerCase().includes(searchTerm)
+        );
+    }
+
+    const displayResources = isResourcesExpanded ? filteredResources : filteredResources.slice(0, 3);
 
     displayResources.forEach(resource => {
         const resourceItem = document.createElement('div');
@@ -984,7 +1037,7 @@ function renderResources(resources) {
     });
 
     // Add expansion toggle
-    if (resources.length > 3) {
+    if (filteredResources.length > 3) {
         const toggleContainer = document.createElement('div');
         toggleContainer.style.textAlign = 'center';
         toggleContainer.style.marginTop = '1rem';
@@ -994,7 +1047,7 @@ function renderResources(resources) {
         toggleBtn.className = 'btn btn-secondary';
         toggleBtn.style.padding = '0.5rem 2rem';
         toggleBtn.style.whiteSpace = 'nowrap';
-        toggleBtn.textContent = isResourcesExpanded ? 'Show Less' : `Show All (${resources.length})`;
+        toggleBtn.textContent = isResourcesExpanded ? 'Show Less' : `Show All (${filteredResources.length})`;
 
         toggleBtn.addEventListener('click', () => {
             isResourcesExpanded = !isResourcesExpanded;

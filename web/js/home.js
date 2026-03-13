@@ -279,6 +279,21 @@ window.addEventListener('DOMContentLoaded', () => {
     loadRoadmaps();
     loadStudyingResources();
     loadNerves();
+    
+    // Search event listeners
+    const studyingSearchInput = document.getElementById('studying-search-input');
+    if (studyingSearchInput) {
+        studyingSearchInput.addEventListener('input', (e) => {
+            renderStudyingResources(currentStudyResources);
+        });
+    }
+
+    const nervesSearchInput = document.getElementById('nerves-search-input');
+    if (nervesSearchInput) {
+        nervesSearchInput.addEventListener('input', (e) => {
+            renderNerves(currentNerves);
+        });
+    }
 
     // Toggle buttons event listeners
     const studyingToggleBtn = document.getElementById('studying-toggle-btn');
@@ -326,6 +341,7 @@ async function loadStudyingResources() {
     UI.toggleElement('studying-resources', false);
     UI.toggleElement('studying-empty-state', false);
     UI.toggleElement('studying-toggle-container', false);
+    UI.toggleElement('studying-search-container', false);
 
     try {
         currentStudyResources = await client.getStudyResources();
@@ -335,9 +351,11 @@ async function loadStudyingResources() {
         if (currentStudyResources.length === 0) {
             UI.toggleElement('studying-empty-state', true);
             UI.toggleElement('studying-resources', false);
+            UI.toggleElement('studying-search-container', false);
         } else {
             UI.toggleElement('studying-section', true);
             UI.toggleElement('studying-resources', true);
+            UI.toggleElement('studying-search-container', true);
             UI.toggleElement('studying-empty-state', false);
             renderStudyingResources(currentStudyResources);
         }
@@ -372,13 +390,26 @@ function renderStudyingResources(resources) {
     const container = document.getElementById('studying-resources');
     const toggleContainer = document.getElementById('studying-toggle-container');
     const toggleBtn = document.getElementById('studying-toggle-btn');
+    const searchInput = document.getElementById('studying-search-input');
+    const searchTerm = searchInput ? searchInput.value.toLowerCase().trim() : '';
     container.innerHTML = '';
 
     const typeNames = ['Book', 'Website', 'Course', 'Video', 'Channel', 'Mailing List', 'Manual', 'Slides', 'Your Knowledge'];
     const patternNames = ['Chapters', 'Pages', 'Sessions', 'Episodes', 'Playlist', 'Posts', 'Memories'];
 
+    // Filter by search term
+    let filteredResources = resources;
+    if (searchTerm) {
+        filteredResources = resources.filter(resource => 
+            resource.name.toLowerCase().includes(searchTerm) ||
+            (typeNames[resource.type] || '').toLowerCase().includes(searchTerm) ||
+            (patternNames[resource.pattern] || '').toLowerCase().includes(searchTerm) ||
+            (resource.milestone.name || '').toLowerCase().includes(searchTerm)
+        );
+    }
+
     // Sort by order
-    const sortedResources = resources.sort((a, b) => (a.order || 0) - (b.order || 0));
+    const sortedResources = filteredResources.sort((a, b) => (a.order || 0) - (b.order || 0));
 
     // Determine resources to show
     const resourcesToShow = isStudyingExpanded ? sortedResources : sortedResources.slice(0, 3);
@@ -444,6 +475,7 @@ async function loadNerves() {
     UI.toggleElement('nerves-resources', false);
     UI.toggleElement('nerves-empty-state', false);
     UI.toggleElement('nerves-toggle-container', false);
+    UI.toggleElement('nerves-search-container', false);
 
     try {
         currentNerves = await client.getNerves();
@@ -453,8 +485,10 @@ async function loadNerves() {
         if (currentNerves.length === 0) {
             UI.toggleElement('nerves-empty-state', true);
             UI.toggleElement('nerves-resources', false);
+            UI.toggleElement('nerves-search-container', false);
         } else {
             UI.toggleElement('nerves-resources', true);
+            UI.toggleElement('nerves-search-container', true);
             UI.toggleElement('nerves-empty-state', false);
             renderNerves(currentNerves);
         }
@@ -470,15 +504,26 @@ function renderNerves(nerves) {
     const container = document.getElementById('nerves-resources');
     const toggleContainer = document.getElementById('nerves-toggle-container');
     const toggleBtn = document.getElementById('nerves-toggle-btn');
+    const searchInput = document.getElementById('nerves-search-input');
+    const searchTerm = searchInput ? searchInput.value.toLowerCase().trim() : '';
     container.innerHTML = '';
 
+    // Filter by search term
+    let filteredNerves = nerves;
+    if (searchTerm) {
+        filteredNerves = nerves.filter(nerve => 
+            nerve.name.toLowerCase().includes(searchTerm) ||
+            (nerve.milestone ? nerve.milestone.name : '').toLowerCase().includes(searchTerm)
+        );
+    }
+
     // Determine nerves to show
-    const nervesToShow = isNervesExpanded ? nerves : nerves.slice(0, 3);
+    const nervesToShow = isNervesExpanded ? filteredNerves : filteredNerves.slice(0, 3);
 
     // Update toggle button visibility and text
-    if (nerves.length > 3) {
+    if (filteredNerves.length > 3) {
         UI.toggleElement('nerves-toggle-container', true);
-        if (toggleBtn) toggleBtn.textContent = isNervesExpanded ? 'Show Less' : `Show All (${nerves.length})`;
+        if (toggleBtn) toggleBtn.textContent = isNervesExpanded ? 'Show Less' : `Show All (${filteredNerves.length})`;
     } else {
         UI.toggleElement('nerves-toggle-container', false);
     }
