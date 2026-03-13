@@ -416,13 +416,13 @@ window.addEventListener('DOMContentLoaded', () => {
             
             UI.setButtonLoading('confirm-existing-assessment-btn', true);
             try {
-                await client.createAssessment(selectedAssessmentId, subjectId, topicLevel, topicPosition);
-                UI.showSuccess('Assessment added successfully');
+                await client.expandAssessment(selectedAssessmentId, subjectId, topicLevel, topicPosition);
+                UI.showSuccess('Assessment expanded successfully');
                 closeAssessmentModal();
                 loadAssessments();
             } catch (err) {
-                console.error('Failed to add existing assessment:', err);
-                UI.showError(err.message || 'Failed to add assessment');
+                console.error('Failed to expand assessment:', err);
+                UI.showError(err.message || 'Failed to expand assessment');
             } finally {
                 UI.setButtonLoading('confirm-existing-assessment-btn', false);
             }
