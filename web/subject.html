@@ -472,6 +472,26 @@
           letter-spacing: -0.01em;
           opacity: 0.8;
       }
+      .level-header {
+          font-size: var(--font-size-sm);
+          font-weight: 700;
+          color: var(--color-primary-start);
+          text-transform: uppercase;
+          letter-spacing: 0.1em;
+          padding: var(--space-md) 0 var(--space-xs);
+          border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+          margin-bottom: var(--space-md);
+          display: flex;
+          align-items: center;
+          gap: var(--space-sm);
+      }
+
+      .level-header::after {
+          content: "";
+          flex: 1;
+          height: 1px;
+          background: linear-gradient(to right, rgba(102, 126, 234, 0.2), transparent);
+      }
   </style>
 </head>
 <body>

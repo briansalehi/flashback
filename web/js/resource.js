@@ -33,8 +33,8 @@ function enterReorderMode(index) {
     hint.id = 'reorder-hint';
     hint.className = 'reorder-hint';
     hint.innerHTML = `
-        <span>Select target location to move this section</span>
-        <button class="btn btn-secondary btn-sm" onclick="exitReorderMode()" style="padding: 2px 8px; font-size: 0.8rem;">Cancel</button>
+        <span style="font-weight: 600; font-size: 0.95rem;">Select target location to move this section</span>
+        <button class="btn btn-secondary btn-sm" onclick="exitReorderMode()" style="padding: 4px 12px; font-size: 0.85rem; background: rgba(255,255,255,0.2); border: none;">Cancel</button>
     `;
     container.parentNode.insertBefore(hint, container);
     

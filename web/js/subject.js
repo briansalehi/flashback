@@ -36,8 +36,8 @@ function enterReorderMode(index) {
     hint.id = 'reorder-hint';
     hint.className = 'reorder-hint';
     hint.innerHTML = `
-        <span>Select target location (same level) to move this topic</span>
-        <button class="btn btn-secondary btn-sm" onclick="exitReorderMode()" style="padding: 2px 8px; font-size: 0.8rem;">Cancel</button>
+        <span style="font-weight: 600; font-size: 0.95rem;">Select target location (same level) to move this topic</span>
+        <button class="btn btn-secondary btn-sm" onclick="exitReorderMode()" style="padding: 4px 12px; font-size: 0.85rem; background: rgba(255,255,255,0.2); border: none;">Cancel</button>
     `;
     container.parentNode.insertBefore(hint, container);
     
@@ -750,7 +750,7 @@ function renderTopics(topics, maxLevel) {
             const levelHeader = document.createElement('div');
             levelHeader.className = 'level-header';
             levelHeader.innerHTML = `
-                ${UI.escapeHtml(levelInfo[level].name)} — ${UI.escapeHtml(levelInfo[level].description)}
+                <span>${UI.escapeHtml(levelInfo[level].name)}</span>
             `;
             levelSection.appendChild(levelHeader);
 
@@ -810,7 +810,7 @@ function renderTopics(topics, maxLevel) {
                             <span class="item-badge" style="font-size: 10px; height: 18px; min-width: 18px; padding: 0 4px; text-align: center;">${sortedIndex + 1}</span>
                             <h3 class="item-title" style="margin: 0; font-size: var(--font-size-base); overflow-wrap: break-word; word-break: break-word;">${UI.escapeHtml(topic.name)}</h3>
                         </div>
-                        <span class="item-badge" style="background: rgba(102, 126, 234, 0.2); color: var(--color-primary-start); font-size: 10px; height: 18px; min-width: auto; padding: 0 6px; margin-left: auto; pointer-events: none;">${UI.escapeHtml(levelInfo[level].name)}</span>
+                        <span class="item-badge" style="background: var(--gradient-primary); font-size: 10px; height: 18px; min-width: auto; padding: 0 6px; margin-left: auto; pointer-events: none; border-radius: var(--radius-sm); text-transform: uppercase; letter-spacing: 0.05em;">${UI.escapeHtml(levelInfo[level].name)}</span>
                     </div>
                 `;
 

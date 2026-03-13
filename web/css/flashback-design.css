@@ -155,6 +155,9 @@
 }
 
 .reorder-hint {
+    position: sticky;
+    top: 90px;
+    z-index: 1001;
     background: var(--gradient-primary);
     color: white;
     padding: var(--space-sm) var(--space-md);

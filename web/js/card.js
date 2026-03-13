@@ -1563,9 +1563,9 @@ function renderBlocks(blocks) {
                 <textarea id="block-content-${index}" class="form-input" style="width: 100%; min-height: 150px; font-family: monospace;" placeholder="Enter block content..." required>${UI.escapeHtml(contentValue)}</textarea>
             </div>
             <div style="display: flex; gap: 0.5rem; align-items: center;">
-                <button class="btn btn-primary" onclick="saveBlock(${index})" id="save-block-btn-${index}">Save</button>
-                <button class="btn btn-secondary" onclick="cancelEditBlock(${index})">Cancel</button>
-                <button class="btn btn-secondary" onclick="saveSplitBlock(${index})" id="split-block-btn-${index}" style="display: none; background-color: #d4845c; color: white;">Save & Split</button>
+                <button class="btn btn-primary" onclick="saveBlock(${index})" id="save-block-btn-${index}" style="padding: 0.5rem 1.5rem; white-space: nowrap;">Save</button>
+                <button class="btn btn-secondary" onclick="cancelEditBlock(${index})" style="padding: 0.5rem 1.5rem; white-space: nowrap;">Cancel</button>
+                <button class="btn btn-secondary" onclick="saveSplitBlock(${index})" id="split-block-btn-${index}" style="display: none; background-color: #d4845c; color: white; padding: 0.5rem 1.5rem; white-space: nowrap;">Save & Split</button>
             </div>
         `;
 
@@ -1669,8 +1669,8 @@ function enterReorderMode(index) {
     hint.id = 'reorder-hint';
     hint.className = 'reorder-hint';
     hint.innerHTML = `
-        <span>Select target location to move this block</span>
-        <button class="btn btn-secondary btn-sm" onclick="exitReorderMode()" style="padding: 2px 8px; font-size: 0.8rem;">Cancel</button>
+        <span style="font-weight: 600; font-size: 0.95rem;">Select target location to move this block</span>
+        <button class="btn btn-secondary btn-sm" onclick="exitReorderMode()" style="padding: 4px 12px; font-size: 0.85rem; background: rgba(255,255,255,0.2); border: none;">Cancel</button>
     `;
     blocksList.parentNode.insertBefore(hint, blocksList);
     
