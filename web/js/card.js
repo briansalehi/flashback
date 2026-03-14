@@ -1494,7 +1494,7 @@ function renderBlocks(blocks) {
         displayDiv.innerHTML = `
             ${metadataHtml}
             <div class="block-actions-overlay">
-                <button class="block-action-btn block-edit-btn" onclick="editBlock(${index})">
+                <button class="block-action-btn block-edit-btn">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
                         <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
@@ -1517,11 +1517,30 @@ function renderBlocks(blocks) {
         });
 
 
+        // Edit button handler
+        const editBtn = displayDiv.querySelector('.block-edit-btn');
+        if (editBtn) {
+            editBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                // Only trigger if the actions overlay is visible
+                const overlay = e.currentTarget.closest('.block-actions-overlay');
+                if (overlay && window.getComputedStyle(overlay).opacity === '0') {
+                    return;
+                }
+                window.editBlock(index);
+            });
+        }
+
         // Remove button handler
         const removeBtn = displayDiv.querySelector('.block-remove-btn');
         if (removeBtn) {
             removeBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
+                // Only trigger if the actions overlay is visible
+                const overlay = e.currentTarget.closest('.block-actions-overlay');
+                if (overlay && window.getComputedStyle(overlay).opacity === '0') {
+                    return;
+                }
                 showRemoveBlockModal(block.position);
             });
         }

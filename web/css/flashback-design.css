@@ -1194,17 +1194,19 @@ a:hover {
     z-index: 100;
 }
 
-/* Show actions on hover (desktop) */
-.content-block:hover .block-actions-overlay,
-.block-actions-overlay:hover {
-    opacity: 1;
-    pointer-events: all;
+/* Show actions on hover (desktop only) */
+@media (hover: hover) {
+    .content-block:hover .block-actions-overlay,
+    .block-actions-overlay:hover {
+        opacity: 1;
+        pointer-events: auto;
+    }
 }
 
 /* Show actions when tapped (mobile) */
 .content-block.show-actions .block-actions-overlay {
     opacity: 1;
-    pointer-events: all;
+    pointer-events: auto;
 }
 
 /* Modern action buttons */

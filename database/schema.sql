@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict agxXnWRwIdWmypt2IeSHlMP5GICc9UiTiVb1Sb9MasuMD9SegNCbsmApOQ56sNu
+\restrict L94b8dnL5zT9ZAfbhpJDUhno5r2IwD6FNDtH9KbbbfEoZJXJA1XD6ltQANcBWe3
 
 -- Dumped from database version 18.1
 -- Dumped by pg_dump version 18.1
@@ -845,7 +845,9 @@ CREATE PROCEDURE flashback.diminish_assessment(IN card_id integer, IN subject_id
     LANGUAGE plpgsql
     AS $$
 begin
-    delete from assessments where subject = subject_id and level = topic_level and topic = topic_position and card = card_id;
+    if (select count(card) from assessments where subject = subject_id and card = card_id) > 1 then
+        delete from assessments where subject = subject_id and level = topic_level and topic = topic_position and card = card_id;
+    end if;
 end;
 $$;
 
@@ -4295,5 +4297,5 @@ GRANT ALL ON SCHEMA public TO brian;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict agxXnWRwIdWmypt2IeSHlMP5GICc9UiTiVb1Sb9MasuMD9SegNCbsmApOQ56sNu
+\unrestrict L94b8dnL5zT9ZAfbhpJDUhno5r2IwD6FNDtH9KbbbfEoZJXJA1XD6ltQANcBWe3
 
