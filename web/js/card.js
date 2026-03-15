@@ -1779,7 +1779,7 @@ window.enterReorderMode = function(index) {
     hint.className = 'reorder-hint';
     hint.innerHTML = `
         <span style="font-weight: 600; font-size: 0.95rem;">Select target location to move this block</span>
-        <button class="btn btn-secondary btn-sm" onclick="window.exitReorderMode()" style="padding: 4px 12px; font-size: 0.85rem; background: rgba(255,255,255,0.2); border: none;">Cancel</button>
+        <button class="btn btn-secondary btn-sm" onclick="window.exitReorderMode()" style="padding: 0.4rem 1.5rem; font-size: 0.85rem; background: rgba(255,255,255,0.2); border: none; white-space: nowrap;">Cancel</button>
     `;
     document.body.appendChild(hint);
     
@@ -1813,7 +1813,7 @@ window.enterMergeMode = function(index) {
     hint.style.background = '#48bb78'; // Use green for merge hint
     hint.innerHTML = `
         <span style="font-weight: 600; font-size: 0.95rem;">Select another block to merge into</span>
-        <button class="btn btn-secondary btn-sm" onclick="window.exitMergeMode()" style="padding: 4px 12px; font-size: 0.85rem; background: rgba(255,255,255,0.2); border: none;">Cancel</button>
+        <button class="btn btn-secondary btn-sm" onclick="window.exitMergeMode()" style="padding: 0.4rem 1.5rem; font-size: 0.85rem; background: rgba(255,255,255,0.2); border: none; white-space: nowrap;">Cancel</button>
     `;
     document.body.appendChild(hint);
     

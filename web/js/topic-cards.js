@@ -672,7 +672,7 @@ window.enterMergeMode = function(cardId, headline) {
     hint.style.background = '#48bb78'; // Use green for merge hint
     hint.innerHTML = `
         <span style="font-weight: 600; font-size: 0.95rem;">Select another card to merge into</span>
-        <button class="btn btn-secondary btn-sm" onclick="window.exitMergeMode()" style="padding: 4px 12px; font-size: 0.85rem; background: rgba(255,255,255,0.2); border: none;">Cancel</button>
+        <button class="btn btn-secondary btn-sm" onclick="window.exitMergeMode()" style="padding: 0.4rem 1.5rem; font-size: 0.85rem; background: rgba(255,255,255,0.2); border: none; white-space: nowrap;">Cancel</button>
     `;
     document.body.appendChild(hint);
     
