@@ -579,19 +579,34 @@ function renderCards(cards) {
         const stateColor = stateColors[stateName] || stateColors['draft'];
 
         const assignButtonHtml = card.isAssignable ? `
-                    <button class="btn btn-secondary btn-sm" style="padding: 0.3rem 1rem; height: 34px; font-size: 13px; font-weight: 600; white-space: nowrap; min-width: auto;" onclick="event.stopPropagation(); handleAssignToTopic(${card.id}, '${UI.escapeHtml(card.headline).replace(/'/g, "\\'")}')">
+                    <button class="block-action-btn block-assign-btn" onclick="event.stopPropagation(); handleAssignToTopic(${card.id}, '${UI.escapeHtml(card.headline).replace(/'/g, "\\'")}')">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                        </svg>
                         Assign
                     </button>
         ` : '';
 
         const mergeButtonHtml = `
-            <button class="btn btn-secondary btn-sm" style="padding: 0.3rem 1rem; height: 34px; font-size: 13px; font-weight: 600; white-space: nowrap; min-width: auto; display: flex; align-items: center; gap: 4px;" onclick="event.stopPropagation(); window.enterMergeMode(${card.id}, '${UI.escapeHtml(card.headline).replace(/'/g, "\\'")}')">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <button class="block-action-btn block-merge-btn" onclick="event.stopPropagation(); window.enterMergeMode(${card.id}, '${UI.escapeHtml(card.headline).replace(/'/g, "\\'")}')">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M4 12V4a2 2 0 0 1 2-2h10l4 4v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-4"></path>
                     <polyline points="14 2 14 6 20 6"></polyline>
                     <path d="M12 18v-6l3 3M12 12l-3 3"></path>
                 </svg>
                 Merge
+            </button>
+        `;
+
+        const moveButtonHtml = `
+            <button class="block-action-btn block-move-btn" onclick="event.stopPropagation(); handleMoveCard(${card.id}, '${UI.escapeHtml(card.headline).replace(/'/g, "\\'")}')">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 2h9a2 2 0 0 1 2 2z"></path>
+                    <path d="M12 11l2 2-2 2"></path>
+                    <path d="M8 13h6"></path>
+                </svg>
+                Move
             </button>
         `;
 
@@ -604,9 +619,7 @@ function renderCards(cards) {
                     <span class="item-badge" style="background: ${stateColor.bg}; color: ${stateColor.color}; text-transform: capitalize; font-size: 11px; height: 24px; min-width: auto; padding: 0 10px; border-radius: var(--radius-full); display: inline-flex; align-items: center; white-space: nowrap;">${UI.escapeHtml(stateName)}</span>
                     ${assignButtonHtml}
                     ${mergeButtonHtml}
-                    <button class="btn btn-secondary btn-sm" style="padding: 0.3rem 1rem; height: 34px; font-size: 13px; font-weight: 600; white-space: nowrap; min-width: auto;" onclick="event.stopPropagation(); handleMoveCard(${card.id}, '${UI.escapeHtml(card.headline).replace(/'/g, "\\'")}')">
-                        Move
-                    </button>
+                    ${moveButtonHtml}
                 </div>
             </div>
         `;
@@ -1059,6 +1072,7 @@ function showMergeConfirmModal(targetId, targetHeadline) {
     customHeadlineInput.style.display = 'none';
     customHeadlineInput.value = '';
     confirmBtn.style.display = 'none';
+    document.querySelectorAll('.headline-option').forEach(option => option.classList.remove('selected'));
     document.querySelectorAll('input[name="merge-headline-option"]').forEach(radio => radio.checked = false);
 
     // Render KaTeX if needed
@@ -1072,6 +1086,16 @@ function showMergeConfirmModal(targetId, targetHeadline) {
 
     // Event listeners for this modal session
     const handleHeadlineOptionChange = (e) => {
+        // Update selected class
+        document.querySelectorAll('.headline-option').forEach(option => {
+            const radio = option.querySelector('input[type="radio"]');
+            if (radio.checked) {
+                option.classList.add('selected');
+            } else {
+                option.classList.remove('selected');
+            }
+        });
+
         if (e.target.value === 'custom') {
             customHeadlineInput.style.display = 'block';
             customHeadlineInput.focus();
