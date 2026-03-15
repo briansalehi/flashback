@@ -1380,7 +1380,11 @@ function renderBlocks(blocks) {
         blockItem.dataset.position = block.position;
 
         const handleReorderClick = async () => {
-            if (reorderState.active && reorderState.sourceIndex !== index) {
+            if (reorderState.active) {
+                if (reorderState.sourceIndex === index) {
+                    window.exitReorderMode();
+                    return true;
+                }
                 const sourcePos = currentBlocks[reorderState.sourceIndex].position;
                 const targetPos = block.position;
                 window.showConfirmModal('Confirm Reorder', 'Are you sure you want to move this block after your selection?', async () => {
@@ -1389,7 +1393,11 @@ function renderBlocks(blocks) {
                 });
                 return true;
             }
-            if (mergeState.active && mergeState.sourceIndex !== index) {
+            if (mergeState.active) {
+                if (mergeState.sourceIndex === index) {
+                    window.exitMergeMode();
+                    return true;
+                }
                 const sourcePos = currentBlocks[mergeState.sourceIndex].position;
                 const targetPos = block.position;
                 window.showConfirmModal('Confirm Merge', 'Are you sure you want to merge these blocks? You can split them again by entering two adjacent newlines where you want them to split when editing the block.', async () => {
@@ -1771,7 +1779,7 @@ window.enterReorderMode = function(index) {
     hint.className = 'reorder-hint';
     hint.innerHTML = `
         <span style="font-weight: 600; font-size: 0.95rem;">Select target location to move this block</span>
-        <button class="btn btn-secondary btn-sm" onclick="exitReorderMode()" style="padding: 4px 12px; font-size: 0.85rem; background: rgba(255,255,255,0.2); border: none;">Cancel</button>
+        <button class="btn btn-secondary btn-sm" onclick="window.exitReorderMode()" style="padding: 4px 12px; font-size: 0.85rem; background: rgba(255,255,255,0.2); border: none;">Cancel</button>
     `;
     document.body.appendChild(hint);
     
@@ -1805,7 +1813,7 @@ window.enterMergeMode = function(index) {
     hint.style.background = '#48bb78'; // Use green for merge hint
     hint.innerHTML = `
         <span style="font-weight: 600; font-size: 0.95rem;">Select another block to merge into</span>
-        <button class="btn btn-secondary btn-sm" onclick="exitMergeMode()" style="padding: 4px 12px; font-size: 0.85rem; background: rgba(255,255,255,0.2); border: none;">Cancel</button>
+        <button class="btn btn-secondary btn-sm" onclick="window.exitMergeMode()" style="padding: 4px 12px; font-size: 0.85rem; background: rgba(255,255,255,0.2); border: none;">Cancel</button>
     `;
     document.body.appendChild(hint);
     

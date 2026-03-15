@@ -506,7 +506,22 @@ window.addEventListener('DOMContentLoaded', () => {
 
 let newlyCreatedCardId = null;
 
+// Global state for merge cards
+let mergeState = {
+    active: false,
+    sourceId: null,
+    sourceHeadline: null
+};
+
 async function loadCards() {
+    // Refresh card list to apply merge mode styles if active
+    const container = document.getElementById('cards-list');
+    if (mergeState.active) {
+        document.body.classList.add('merge-mode-active');
+    } else {
+        document.body.classList.remove('merge-mode-active');
+    }
+
     UI.toggleElement('loading', true);
     UI.toggleElement('cards-list', false);
     UI.toggleElement('empty-state', false);
@@ -573,6 +588,17 @@ function renderCards(cards) {
         };
         const stateColor = stateColors[stateName] || stateColors['draft'];
 
+        const mergeButtonHtml = `
+            <button class="btn btn-secondary btn-sm" style="padding: 0.3rem 1rem; height: 34px; font-size: 13px; font-weight: 600; white-space: nowrap; min-width: auto; display: flex; align-items: center; gap: 4px;" onclick="event.stopPropagation(); window.enterMergeMode(${card.id}, '${UI.escapeHtml(card.headline).replace(/'/g, "\\'")}')">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M4 12V4a2 2 0 0 1 2-2h10l4 4v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="14 2 14 6 20 6"></polyline>
+                    <path d="M12 18v-6l3 3M12 12l-3 3"></path>
+                </svg>
+                Merge
+            </button>
+        `;
+
         cardItem.innerHTML = `
             <div class="item-header" style="margin-bottom: 0;">
                 <div style="display: flex; align-items: flex-start; gap: var(--space-xs); flex: 1;" data-card-id="${card.id}" data-card-headline="${UI.escapeHtml(card.headline)}" data-card-state="${card.state}">
@@ -580,6 +606,7 @@ function renderCards(cards) {
                 </div>
                 <div style="display: flex; gap: 0.6rem; align-items: center; justify-content: flex-end; flex-wrap: wrap;">
                     <span class="item-badge" style="background: ${stateColor.bg}; color: ${stateColor.color}; text-transform: capitalize; font-size: 11px; height: 24px; min-width: auto; padding: 0 10px; border-radius: var(--radius-full); display: inline-flex; align-items: center; white-space: nowrap;">${UI.escapeHtml(stateName)}</span>
+                    ${mergeButtonHtml}
                     <button class="btn btn-secondary btn-sm" style="padding: 0.3rem 1rem; height: 34px; font-size: 13px; font-weight: 600; white-space: nowrap; min-width: auto;" onclick="event.stopPropagation(); handleMoveCard(${card.id}, '${UI.escapeHtml(card.headline).replace(/'/g, "\\'")}')">
                         Move
                     </button>
@@ -587,7 +614,19 @@ function renderCards(cards) {
             </div>
         `;
 
+        if (mergeState.active && mergeState.sourceId === card.id) {
+            cardItem.classList.add('merge-source');
+        }
+
         cardItem.addEventListener('click', () => {
+            if (mergeState.active) {
+                if (mergeState.sourceId === card.id) {
+                    window.exitMergeMode();
+                    return;
+                }
+                showMergeConfirmModal(card.id, card.headline);
+                return;
+            }
             window.location.href = `card.html?cardId=${card.id}&headline=${encodeURIComponent(card.headline)}&state=${card.state}&practiceMode=selective&roadmapId=${roadmapId}&roadmapName=${encodeURIComponent(roadmapName)}&subjectId=${subjectId}&subjectName=${encodeURIComponent(subjectName)}&topicPosition=${topicPosition}&topicLevel=${topicLevel}&topicName=${encodeURIComponent(topicName)}&milestoneLevel=${milestoneLevel}`;
         });
 
@@ -611,6 +650,119 @@ function renderCards(cards) {
 let currentMovingCardId = null;
 let currentMovingCardHeadline = null;
 let currentSelectedMoveTarget = null;
+
+window.enterMergeMode = function(cardId, headline) {
+    mergeState.active = true;
+    mergeState.sourceId = cardId;
+    mergeState.sourceHeadline = headline;
+    
+    // Add hint at the top of the list
+    const hint = document.createElement('div');
+    hint.id = 'reorder-hint';
+    hint.className = 'reorder-hint';
+    hint.style.background = '#48bb78'; // Use green for merge hint
+    hint.innerHTML = `
+        <span style="font-weight: 600; font-size: 0.95rem;">Select another card to merge into</span>
+        <button class="btn btn-secondary btn-sm" onclick="window.exitMergeMode()" style="padding: 4px 12px; font-size: 0.85rem; background: rgba(255,255,255,0.2); border: none;">Cancel</button>
+    `;
+    document.body.appendChild(hint);
+    
+    loadCards();
+};
+
+window.exitMergeMode = function() {
+    mergeState.active = false;
+    mergeState.sourceId = null;
+    mergeState.sourceHeadline = null;
+    document.body.classList.remove('merge-mode-active');
+    
+    const hint = document.getElementById('reorder-hint');
+    if (hint) {
+        hint.remove();
+    }
+    
+    loadCards();
+};
+
+function showMergeConfirmModal(targetId, targetHeadline) {
+    const modal = document.getElementById('merge-cards-confirm-modal');
+    const sourceHeadlineText = document.getElementById('merge-source-headline-text');
+    const targetHeadlineText = document.getElementById('merge-target-headline-text');
+    const customHeadlineInput = document.getElementById('merge-custom-headline-input');
+    const confirmBtn = document.getElementById('confirm-merge-cards-btn');
+
+    sourceHeadlineText.textContent = mergeState.sourceHeadline;
+    targetHeadlineText.textContent = targetHeadline;
+
+    // Reset modal state
+    customHeadlineInput.style.display = 'none';
+    customHeadlineInput.value = '';
+    confirmBtn.style.display = 'none';
+    document.querySelectorAll('input[name="merge-headline-option"]').forEach(radio => radio.checked = false);
+
+    // Render KaTeX if needed
+    if (typeof renderMathInElement !== 'undefined') {
+        renderMathInElement(sourceHeadlineText, { delimiters: [{left: '$$', right: '$$', display: true}, {left: '$', right: '$', display: false}], throwOnError: false });
+        renderMathInElement(targetHeadlineText, { delimiters: [{left: '$$', right: '$$', display: true}, {left: '$', right: '$', display: false}], throwOnError: false });
+    }
+
+    UI.toggleElement('merge-cards-confirm-modal', true);
+    document.body.style.overflow = 'hidden';
+
+    // Event listeners for this modal session
+    const handleHeadlineOptionChange = (e) => {
+        if (e.target.value === 'custom') {
+            customHeadlineInput.style.display = 'block';
+            customHeadlineInput.focus();
+            confirmBtn.style.display = customHeadlineInput.value.trim() ? 'block' : 'none';
+        } else {
+            customHeadlineInput.style.display = 'none';
+            confirmBtn.style.display = 'block';
+        }
+    };
+
+    const handleCustomHeadlineInput = () => {
+        confirmBtn.style.display = customHeadlineInput.value.trim() ? 'block' : 'none';
+    };
+
+    const handleConfirm = async () => {
+        const selectedOption = document.querySelector('input[name="merge-headline-option"]:checked').value;
+        let finalHeadline = '';
+        if (selectedOption === 'source') finalHeadline = mergeState.sourceHeadline;
+        else if (selectedOption === 'target') finalHeadline = targetHeadline;
+        else finalHeadline = customHeadlineInput.value.trim();
+
+        UI.setButtonLoading('confirm-merge-cards-btn', true);
+        try {
+            await client.mergeCards(mergeState.sourceId, targetId, finalHeadline);
+            window.exitMergeMode();
+            closeMergeConfirmModal();
+            UI.showSuccess('Cards merged successfully');
+        } catch (err) {
+            console.error('Failed to merge cards:', err);
+            UI.showError('Failed to merge cards: ' + (err.message || 'Unknown error'));
+        } finally {
+            UI.setButtonLoading('confirm-merge-cards-btn', false);
+        }
+    };
+
+    const closeMergeConfirmModal = () => {
+        UI.toggleElement('merge-cards-confirm-modal', false);
+        document.body.style.overflow = '';
+        // Cleanup listeners
+        document.querySelectorAll('input[name="merge-headline-option"]').forEach(radio => radio.removeEventListener('change', handleHeadlineOptionChange));
+        customHeadlineInput.removeEventListener('input', handleCustomHeadlineInput);
+        confirmBtn.removeEventListener('click', handleConfirm);
+    };
+
+    document.querySelectorAll('input[name="merge-headline-option"]').forEach(radio => radio.addEventListener('change', handleHeadlineOptionChange));
+    customHeadlineInput.addEventListener('input', handleCustomHeadlineInput);
+    confirmBtn.addEventListener('click', handleConfirm);
+
+    document.getElementById('close-merge-cards-modal-btn').onclick = closeMergeConfirmModal;
+    document.getElementById('cancel-merge-cards-btn').onclick = closeMergeConfirmModal;
+    modal.onclick = (e) => { if (e.target === modal) closeMergeConfirmModal(); };
+}
 
 window.handleMoveCard = function(cardId, cardHeadline) {
     currentMovingCardId = cardId;

@@ -686,6 +686,50 @@
   </div>
 </main>
 
+<!-- Merge Cards Confirmation Modal -->
+<div id="merge-cards-confirm-modal" class="modal-overlay" style="display: none;">
+  <div class="modal-content" style="max-width: 600px;">
+    <div class="modal-header">
+      <h2 class="modal-title">Confirm Merge Cards</h2>
+      <button type="button" id="close-merge-cards-modal-btn" class="modal-close" aria-label="Close modal">&times;</button>
+    </div>
+    <div class="modal-body">
+      <p style="margin-bottom: 1.5rem; color: var(--text-secondary);">Select the headline for the merged card, or enter a new one:</p>
+        
+      <div class="headline-selection-container" style="display: flex; flex-direction: column; gap: 1rem; margin-bottom: 1.5rem;">
+        <label class="headline-option" style="display: flex; align-items: flex-start; gap: 0.75rem; padding: 1rem; border: 2px solid var(--border-color); border-radius: var(--radius-md); cursor: pointer; transition: all 0.2s;">
+          <input type="radio" name="merge-headline-option" value="source" style="margin-top: 0.25rem;">
+          <div style="flex: 1;">
+            <span style="display: block; font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.25rem; font-weight: 600; text-transform: uppercase;">Source Card Headline</span>
+            <span id="merge-source-headline-text" style="font-weight: 600; word-break: break-word;"></span>
+          </div>
+        </label>
+          
+        <label class="headline-option" style="display: flex; align-items: flex-start; gap: 0.75rem; padding: 1rem; border: 2px solid var(--border-color); border-radius: var(--radius-md); cursor: pointer; transition: all 0.2s;">
+          <input type="radio" name="merge-headline-option" value="target" style="margin-top: 0.25rem;">
+          <div style="flex: 1;">
+            <span style="display: block; font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.25rem; font-weight: 600; text-transform: uppercase;">Target Card Headline</span>
+            <span id="merge-target-headline-text" style="font-weight: 600; word-break: break-word;"></span>
+          </div>
+        </label>
+          
+        <label class="headline-option" id="custom-headline-option" style="display: flex; flex-direction: column; gap: 0.5rem; padding: 1rem; border: 2px solid var(--border-color); border-radius: var(--radius-md); cursor: pointer; transition: all 0.2s;">
+          <div style="display: flex; align-items: center; gap: 0.75rem;">
+            <input type="radio" name="merge-headline-option" value="custom">
+            <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Custom Headline</span>
+          </div>
+          <input type="text" id="merge-custom-headline-input" class="form-control" placeholder="Enter new headline..." style="margin-top: 0.5rem; display: none;">
+        </label>
+      </div>
+        
+      <div style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 2rem;">
+        <button type="button" id="cancel-merge-cards-btn" class="btn btn-secondary">Cancel</button>
+        <button type="button" id="confirm-merge-cards-btn" class="btn btn-primary" style="display: none; background: #48bb78; border-color: #48bb78;">Confirm Merge</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script src="proto/flashback.js"></script>
 <script src="js/client.js"></script>
 <script src="js/ui.js"></script>
