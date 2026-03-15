@@ -190,6 +190,50 @@ window.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // Generic confirmation modal setup
+    const confirmModal = document.getElementById('confirm-modal');
+    if (confirmModal) {
+        const closeConfirmModal = () => {
+            confirmModal.style.display = 'none';
+            document.body.style.overflow = '';
+            // Clear callback to avoid leaks or accidental double-calls
+            confirmModal._confirmCallback = null;
+        };
+
+        const closeBtn = document.getElementById('close-confirm-modal-btn');
+        if (closeBtn) closeBtn.addEventListener('click', closeConfirmModal);
+
+        const cancelBtn = document.getElementById('cancel-confirm-modal-btn');
+        if (cancelBtn) cancelBtn.addEventListener('click', closeConfirmModal);
+
+        const confirmBtn = document.getElementById('confirm-modal-btn');
+        if (confirmBtn) {
+            confirmBtn.addEventListener('click', async () => {
+                if (typeof confirmModal._confirmCallback === 'function') {
+                    UI.setButtonLoading('confirm-modal-btn', true);
+                    try {
+                        await confirmModal._confirmCallback();
+                    } finally {
+                        UI.setButtonLoading('confirm-modal-btn', false);
+                        closeConfirmModal();
+                    }
+                } else {
+                    closeConfirmModal();
+                }
+            });
+        }
+
+        window.showConfirmModal = (title, message, callback) => {
+            const titleEl = document.getElementById('confirm-modal-title');
+            const messageEl = document.getElementById('confirm-modal-message');
+            if (titleEl) titleEl.textContent = title;
+            if (messageEl) messageEl.textContent = message;
+            confirmModal._confirmCallback = callback;
+            confirmModal.style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+        };
+    }
+
     // Also defensively hide Edit and Remove until revealed
     const editBtnInit = document.getElementById('edit-headline-btn');
     if (editBtnInit) editBtnInit.style.display = 'none';
@@ -1339,8 +1383,19 @@ function renderBlocks(blocks) {
             if (reorderState.active && reorderState.sourceIndex !== index) {
                 const sourcePos = currentBlocks[reorderState.sourceIndex].position;
                 const targetPos = block.position;
-                await reorderBlockHandler(sourcePos, targetPos);
-                exitReorderMode();
+                window.showConfirmModal('Confirm Reorder', 'Are you sure you want to move this block after your selection?', async () => {
+                    await reorderBlockHandler(sourcePos, targetPos);
+                    window.exitReorderMode();
+                });
+                return true;
+            }
+            if (mergeState.active && mergeState.sourceIndex !== index) {
+                const sourcePos = currentBlocks[mergeState.sourceIndex].position;
+                const targetPos = block.position;
+                window.showConfirmModal('Confirm Merge', 'Are you sure you want to merge these blocks? You can split them again by entering two adjacent newlines where you want them to split when editing the block.', async () => {
+                    await mergeBlocksHandler(sourcePos, targetPos);
+                    window.exitMergeMode();
+                });
                 return true;
             }
             return false;
@@ -1351,7 +1406,7 @@ function renderBlocks(blocks) {
             const touch = e.touches ? e.touches[0] : e;
             reorderState.startPos = { x: touch.clientX, y: touch.clientY };
             reorderState.longPressTimer = setTimeout(() => {
-                enterReorderMode(index);
+                window.enterReorderMode(index);
             }, 500);
         };
 
@@ -1394,7 +1449,7 @@ function renderBlocks(blocks) {
                 reorderState.preventClick = false;
                 return;
             }
-            if (reorderState.active) {
+            if (reorderState.active || mergeState.active) {
                 await handleReorderClick();
                 return;
             }
@@ -1501,6 +1556,14 @@ function renderBlocks(blocks) {
                     </svg>
                     Edit
                 </button>
+                <button class="block-action-btn block-merge-btn">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M4 12V4a2 2 0 0 1 2-2h10l4 4v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="14 2 14 6 20 6"></polyline>
+                        <path d="M12 18v-6l3 3M12 12l-3 3"></path>
+                    </svg>
+                    Merge
+                </button>
                 <button class="block-action-btn block-remove-btn" data-position="${block.position}" data-index="${index}">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <polyline points="3 6 5 6 21 6"></polyline>
@@ -1528,6 +1591,20 @@ function renderBlocks(blocks) {
                     return;
                 }
                 window.editBlock(index);
+            });
+        }
+
+        // Merge button handler
+        const mergeBtn = displayDiv.querySelector('.block-merge-btn');
+        if (mergeBtn) {
+            mergeBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                // Only trigger if the actions overlay is visible
+                const overlay = e.currentTarget.closest('.block-actions-overlay');
+                if (overlay && window.getComputedStyle(overlay).opacity === '0') {
+                    return;
+                }
+                enterMergeMode(index);
             });
         }
 
@@ -1665,8 +1742,13 @@ let reorderState = {
     startPos: { x: 0, y: 0 }
 };
 
-function enterReorderMode(index) {
-    if (reorderState.active) return;
+let mergeState = {
+    active: false,
+    sourceIndex: null
+};
+
+window.enterReorderMode = function(index) {
+    if (reorderState.active || mergeState.active) return;
     
     reorderState.active = true;
     reorderState.sourceIndex = index;
@@ -1699,6 +1781,59 @@ function enterReorderMode(index) {
     }
 }
 
+window.enterMergeMode = function(index) {
+    if (mergeState.active || reorderState.active) return;
+    
+    mergeState.active = true;
+    mergeState.sourceIndex = index;
+    
+    const blocksList = document.getElementById('blocks-list');
+    if (blocksList) {
+        blocksList.classList.add('merge-mode-active');
+    }
+    
+    // Highlight source
+    const sourceBlock = document.getElementById(`block-${index}`);
+    if (sourceBlock) {
+        sourceBlock.classList.add('merge-source');
+    }
+    
+    // Add hint at the top of the list
+    const hint = document.createElement('div');
+    hint.id = 'reorder-hint';
+    hint.className = 'reorder-hint';
+    hint.style.background = '#48bb78'; // Use green for merge hint
+    hint.innerHTML = `
+        <span style="font-weight: 600; font-size: 0.95rem;">Select another block to merge into</span>
+        <button class="btn btn-secondary btn-sm" onclick="exitMergeMode()" style="padding: 4px 12px; font-size: 0.85rem; background: rgba(255,255,255,0.2); border: none;">Cancel</button>
+    `;
+    document.body.appendChild(hint);
+    
+    // Vibrate for feedback
+    if (navigator.vibrate) {
+        navigator.vibrate(50);
+    }
+}
+
+window.exitMergeMode = function() {
+    mergeState.active = false;
+    mergeState.sourceIndex = null;
+    
+    const blocksList = document.getElementById('blocks-list');
+    if (blocksList) {
+        blocksList.classList.remove('merge-mode-active');
+        document.querySelectorAll('.content-block').forEach(b => {
+            b.classList.remove('reorder-source');
+            b.classList.remove('merge-source');
+        });
+    }
+    
+    const hint = document.getElementById('reorder-hint');
+    if (hint) {
+        hint.remove();
+    }
+};
+
 window.exitReorderMode = function() {
     reorderState.active = false;
     reorderState.sourceIndex = null;
@@ -1706,8 +1841,10 @@ window.exitReorderMode = function() {
     const blocksList = document.getElementById('blocks-list');
     if (blocksList) {
         blocksList.classList.remove('reorder-mode-active');
+        blocksList.classList.remove('merge-mode-active');
         document.querySelectorAll('.content-block').forEach(b => {
             b.classList.remove('reorder-source');
+            b.classList.remove('merge-source');
         });
     }
     
@@ -1995,6 +2132,19 @@ async function removeBlockHandler(position) {
         console.error('Remove block failed:', err);
         UI.showError('Failed to remove block: ' + (err.message || 'Unknown error'));
         UI.setButtonLoading('confirm-remove-block-btn', false);
+    }
+}
+
+async function mergeBlocksHandler(sourcePosition, targetPosition) {
+    const cardId = parseInt(UI.getUrlParam('cardId'));
+
+    try {
+        await client.mergeBlocks(cardId, sourcePosition, targetPosition);
+        await loadBlocks();
+        UI.showSuccess('Blocks merged successfully');
+    } catch (err) {
+        console.error('Merge blocks failed:', err);
+        UI.showError('Failed to merge blocks: ' + (err.message || 'Unknown error'));
     }
 }
 

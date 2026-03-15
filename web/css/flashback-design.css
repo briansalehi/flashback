@@ -118,7 +118,9 @@
 
 /* Reordering Selection Styles */
 .reorder-mode-active .content-block,
-.reorder-mode-active .item-block {
+.reorder-mode-active .item-block,
+.merge-mode-active .content-block,
+.merge-mode-active .item-block {
     cursor: pointer !important;
     transition: all 0.2s ease;
     border: 2px dashed var(--color-primary-start) !important;
@@ -126,10 +128,22 @@
     opacity: 0.8;
 }
 
+.merge-mode-active .content-block,
+.merge-mode-active .item-block {
+    border-color: #48bb78 !important;
+}
+
 .reorder-mode-active .content-block:hover,
 .reorder-mode-active .item-block:hover {
     opacity: 1;
     background: rgba(102, 126, 234, 0.1) !important;
+    transform: translateY(-2px);
+}
+
+.merge-mode-active .content-block:hover,
+.merge-mode-active .item-block:hover {
+    opacity: 1;
+    background: rgba(72, 187, 120, 0.1) !important;
     transform: translateY(-2px);
 }
 
@@ -158,6 +172,38 @@
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
     line-height: 1;
     white-space: nowrap;
+}
+
+.reorder-mode-active .merge-source::after,
+.merge-mode-active .merge-source::after {
+    content: 'Merging this';
+    position: absolute;
+    top: -12px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #48bb78;
+    color: white;
+    font-size: 0.75rem;
+    padding: 4px 12px;
+    border-radius: var(--radius-full);
+    font-weight: 700;
+    z-index: 1002;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    line-height: 1;
+    white-space: nowrap;
+}
+
+.merge-source {
+    border: 2px solid #48bb78 !important;
+    background: rgba(72, 187, 120, 0.2) !important;
+    box-shadow: 0 0 15px rgba(72, 187, 120, 0.3);
+    opacity: 1 !important;
+    position: relative !important;
+    overflow: visible !important;
+}
+
+.merge-mode-active .merge-source {
+    border-style: solid !important;
 }
 
 .reorder-hint {
@@ -1263,6 +1309,16 @@ a:hover {
 .block-remove-btn:hover {
     background: rgba(255, 82, 82, 0.25);
     border-color: #dc3545;
+}
+
+.block-merge-btn {
+    color: #48bb78;
+    border-color: rgba(72, 187, 120, 0.4);
+}
+
+.block-merge-btn:hover {
+    background: rgba(72, 187, 120, 0.25);
+    border-color: #48bb78;
 }
 
 @media (min-width: 768px) {
