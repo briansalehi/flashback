@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict L94b8dnL5zT9ZAfbhpJDUhno5r2IwD6FNDtH9KbbbfEoZJXJA1XD6ltQANcBWe3
+\restrict 9QeWCjnhCSYaVr1otgqUobru0R6THYSkqoVji5L1qR7tlPPjWbN2kMGcmNEjhWA
 
 -- Dumped from database version 18.1
 -- Dumped by pg_dump version 18.1
@@ -1553,6 +1553,27 @@ $$;
 ALTER FUNCTION flashback.get_resources(user_id integer, subject_id integer) OWNER TO flashback;
 
 --
+-- Name: get_roadmap_weight(integer); Type: FUNCTION; Schema: flashback; Owner: flashback
+--
+
+CREATE FUNCTION flashback.get_roadmap_weight(roadmap_id integer) RETURNS bigint
+    LANGUAGE plpgsql
+    AS $$
+declare total_cards integer;
+begin
+    select count(tc.card) into total_cards
+    from milestones m
+    join topic_cards tc on tc.subject = m.subject and tc.level <= m.level
+    where m.roadmap = roadmap_id;
+
+    return total_cards;
+end;
+$$;
+
+
+ALTER FUNCTION flashback.get_roadmap_weight(roadmap_id integer) OWNER TO flashback;
+
+--
 -- Name: get_roadmaps(integer); Type: FUNCTION; Schema: flashback; Owner: flashback
 --
 
@@ -3066,14 +3087,14 @@ ALTER FUNCTION flashback.search_resources(search_pattern character varying) OWNE
 -- Name: search_roadmaps(integer, character varying); Type: FUNCTION; Schema: flashback; Owner: flashback
 --
 
-CREATE FUNCTION flashback.search_roadmaps(user_id integer, token character varying) RETURNS TABLE(similarity bigint, roadmap integer, name flashback.citext)
+CREATE FUNCTION flashback.search_roadmaps(user_id integer, token character varying) RETURNS TABLE(similarity bigint, roadmap integer, name flashback.citext, creation integer, weight bigint)
     LANGUAGE plpgsql
     AS $$
 begin
     set pg_trgm.similarity_threshold = 0.1;
 
     return query
-    select row_number() over (order by r.name <-> token), r.id, r.name
+    select row_number() over (order by r.name <-> token, r.creation desc), r.id, r.name, r.creation, get_roadmap_weight(r.id)
     from roadmaps r
     where r.name % token and r.user <> user_id
     limit 5;
@@ -3527,7 +3548,8 @@ ALTER TABLE flashback.resources ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY
 CREATE TABLE flashback.roadmaps (
     id integer NOT NULL,
     name flashback.citext NOT NULL,
-    "user" integer NOT NULL
+    "user" integer NOT NULL,
+    creation integer DEFAULT (EXTRACT(epoch FROM now()))::integer NOT NULL
 );
 
 
@@ -4297,5 +4319,5 @@ GRANT ALL ON SCHEMA public TO brian;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict L94b8dnL5zT9ZAfbhpJDUhno5r2IwD6FNDtH9KbbbfEoZJXJA1XD6ltQANcBWe3
+\unrestrict 9QeWCjnhCSYaVr1otgqUobru0R6THYSkqoVji5L1qR7tlPPjWbN2kMGcmNEjhWA
 
