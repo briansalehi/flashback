@@ -142,6 +142,7 @@ public:
     // grpc::Status GetVariations(grpc::ServerContext* context, GetVariationsRequest const* request, GetVariationsResponse* response) override;
     grpc::Status GetSectionCards(grpc::ServerContext* context, GetSectionCardsRequest const* request, GetSectionCardsResponse* response) override;
     grpc::Status GetTopicCards(grpc::ServerContext* context, GetTopicCardsRequest const* request, GetTopicCardsResponse* response) override;
+    grpc::Status MoveBlock(grpc::ServerContext* context, MoveBlockRequest const* request, MoveBlockResponse* response) override;
 
     // progress
     grpc::Status Study(grpc::ServerContext* context, StudyRequest const* request, StudyResponse* response) override;

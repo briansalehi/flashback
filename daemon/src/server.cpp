@@ -4157,6 +4157,52 @@ grpc::Status server::GetTopicCards(grpc::ServerContext* context, flashback::GetT
     return status;
 }
 
+grpc::Status server::MoveBlock(grpc::ServerContext* context, MoveBlockRequest const* request, MoveBlockResponse* response)
+{
+    grpc::Status status{grpc::StatusCode::INTERNAL, {}};
+
+    try
+    {
+        if (!request->has_user() || !session_is_valid(request->user()))
+        {
+            status = grpc::Status{grpc::StatusCode::UNAUTHENTICATED, "invalid user"};
+        }
+        else if (request->card().id() == 0)
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid source card"};
+        }
+        else if (request->block().position() == 0)
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid source block position"};
+        }
+        else if (request->target_card().id() == 0)
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid target card"};
+        }
+        else if (request->target_block().position() == 0)
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid target block position"};
+        }
+        else
+        {
+            m_database->move_block(request->card().id(), request->block().position(), request->target_card().id(), request->target_block().position());
+            std::clog << std::format("client {} moved block from position {} in card {} to position {} in card {}\n", request->user().token(), request->block().position(), request->card().id(), request->target_block().position(), request->target_card().id());
+            status = grpc::Status{grpc::StatusCode::OK, {}};
+        }
+    }
+    catch (client_exception const& exp)
+    {
+        std::cerr << std::format("client {}: {}\n", request->user().token(), exp.what());
+        status = grpc::Status{grpc::StatusCode::UNAVAILABLE, exp.what()};
+    }
+    catch (std::exception const& exp)
+    {
+        std::cerr << std::format("server: {}\n", exp.what());
+    }
+
+    return status;
+}
+
 grpc::Status server::Study(grpc::ServerContext* context, StudyRequest const* request, StudyResponse* response)
 {
     grpc::Status status{grpc::StatusCode::INTERNAL, {}};

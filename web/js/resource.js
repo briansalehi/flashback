@@ -58,6 +58,57 @@ window.exitReorderMode = function() {
     if (hint) hint.remove();
 };
 
+// Confirmation Modal Functions
+(function() {
+    const confirmModal = document.getElementById('confirm-modal');
+    if (!confirmModal) return;
+
+    const closeConfirmModal = () => {
+        confirmModal.style.display = 'none';
+        document.body.style.overflow = '';
+        UI.setButtonLoading('confirm-modal-btn', false);
+    };
+
+    const closeBtn = document.getElementById('close-confirm-modal-btn');
+    if (closeBtn) closeBtn.addEventListener('click', closeConfirmModal);
+
+    const cancelBtn = document.getElementById('cancel-confirm-modal-btn');
+    if (cancelBtn) cancelBtn.addEventListener('click', closeConfirmModal);
+
+    const confirmBtn = document.getElementById('confirm-modal-btn');
+    if (confirmBtn) {
+        confirmBtn.addEventListener('click', async () => {
+            if (typeof confirmModal._confirmCallback === 'function') {
+                UI.setButtonLoading('confirm-modal-btn', true);
+                try {
+                    await confirmModal._confirmCallback();
+                } finally {
+                    UI.setButtonLoading('confirm-modal-btn', false);
+                    closeConfirmModal();
+                }
+            } else {
+                closeConfirmModal();
+            }
+        });
+    }
+
+    if (confirmModal) {
+        confirmModal.addEventListener('click', (e) => {
+            if (e.target === confirmModal) closeConfirmModal();
+        });
+    }
+
+    window.showConfirmModal = (title, message, callback) => {
+        const titleEl = document.getElementById('confirm-modal-title');
+        const messageEl = document.getElementById('confirm-modal-message');
+        if (titleEl) titleEl.textContent = title;
+        if (messageEl) messageEl.textContent = message;
+        confirmModal._confirmCallback = callback;
+        confirmModal.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+    };
+})();
+
 window.addEventListener('DOMContentLoaded', () => {
     if (!client.isAuthenticated()) {
         window.location.href = '/index.html';
@@ -587,8 +638,10 @@ function renderSections(sections) {
                 const sourcePos = parseInt(sourceSection.position);
                 const targetPos = parseInt(section.position);
 
-                await reorderSection(sourcePos, targetPos);
-                exitReorderMode();
+                window.showConfirmModal('Confirm Reorder', 'Are you sure you want to move this section here?', async () => {
+                    await reorderSection(sourcePos, targetPos);
+                    exitReorderMode();
+                });
                 return;
             }
 

@@ -1359,6 +1359,140 @@ a:hover {
     border-color: #b794f4;
 }
 
+/* Move Block Modal Styles */
+.target-blocks-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.target-block-option {
+    padding: 0.6rem 0.875rem;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: var(--radius-md);
+    transition: all var(--transition-fast);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    position: relative;
+    overflow: hidden;
+    pointer-events: none;
+    opacity: 0.8;
+}
+
+.target-block-gap {
+    height: 14px;
+    margin: 6px 0;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px dashed rgba(255, 255, 255, 0.2);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.target-block-gap:hover {
+    background: rgba(72, 187, 120, 0.1);
+    border-color: rgba(72, 187, 120, 0.4);
+    height: 24px;
+}
+
+.target-block-gap.selected {
+    background: rgba(72, 187, 120, 0.2);
+    border-color: var(--color-success);
+    border-style: solid;
+    height: 32px;
+}
+
+.target-block-gap::after {
+    content: 'Insert Here';
+    font-size: 0.65rem;
+    font-weight: var(--font-weight-bold);
+    color: var(--color-success);
+    opacity: 0;
+    transition: opacity var(--transition-fast);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.target-block-gap:hover::after,
+.target-block-gap.selected::after {
+    opacity: 1;
+}
+
+/* Removed .target-block-option:hover as blocks are no longer interactive */
+
+.target-block-option.selected {
+    background: rgba(255, 255, 255, 0.02);
+    border-color: rgba(255, 255, 255, 0.05);
+    box-shadow: none;
+}
+
+.target-block-info {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-shrink: 0;
+}
+
+.target-block-type-badge {
+    padding: 0.15rem 0.4rem;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    font-size: 0.6rem;
+    font-weight: var(--font-weight-medium);
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+    letter-spacing: 0.025em;
+}
+
+.target-block-content {
+    flex: 1;
+    font-size: var(--font-size-sm);
+    color: var(--color-text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-family: 'Inter', sans-serif;
+}
+
+.target-block-option.selected .target-block-content {
+    color: var(--color-success);
+}
+
+.headline-options-container {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+}
+
+@media (min-width: 640px) {
+    .headline-options-container {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+.card-state-tag {
+    font-size: 0.65rem;
+    padding: 0.1rem 0.4rem;
+    border-radius: 4px;
+    text-transform: uppercase;
+    font-weight: var(--font-weight-bold);
+    margin-left: auto;
+}
+
+.card-state-tag.draft { background: #4a5568; color: #edf2f7; }
+.card-state-tag.reviewed { background: #2b6cb0; color: #ebf8ff; }
+.card-state-tag.completed { background: #2f855a; color: #f0fff4; }
+.card-state-tag.approved { background: #c05621; color: #fffaf0; }
+.card-state-tag.released { background: #2c5282; color: #ebf8ff; }
+.card-state-tag.rejected { background: #9b2c2c; color: #fff5f5; }
+
 @media (min-width: 768px) {
     .content-block {
         padding: var(--space-2xl);

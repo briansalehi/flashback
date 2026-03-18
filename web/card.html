@@ -524,6 +524,34 @@
       </div>
     </div>
 
+    <!-- Move Block Modal -->
+    <div id="move-block-modal" class="modal-overlay" style="display: none;">
+      <div class="modal-content" style="max-width: 800px; max-height: 90vh; display: flex; flex-direction: column;">
+        <div class="modal-header">
+          <h2 class="modal-title">Move Block</h2>
+          <button type="button" id="close-move-block-modal-btn" class="modal-close" aria-label="Close modal">&times;</button>
+        </div>
+        <div class="modal-body" style="overflow-y: auto; flex: 1; padding: 1.5rem;">
+          <div id="move-block-step-1">
+            <h4 style="margin-bottom: 1rem; color: var(--text-secondary);">Select Target Card</h4>
+            <div id="move-target-cards-list" class="headline-options-container">
+              <!-- Cards will be listed here -->
+            </div>
+          </div>
+          <div id="move-block-step-2" style="display: none; margin-top: 1.5rem;">
+            <h4 style="margin-bottom: 1rem; color: var(--text-secondary);">Select Target Position</h4>
+            <div id="move-target-blocks-list" class="target-blocks-list">
+              <!-- Blocks of selected card will be listed here -->
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer" style="padding: 1.5rem; border-top: 1px solid rgba(255, 255, 255, 0.1); display: flex; justify-content: flex-end; gap: 1rem;">
+          <button id="confirm-move-block-btn" class="btn btn-primary" style="display: none; padding: 0.5rem 1.5rem;">Confirm Move</button>
+          <button id="cancel-move-block-modal-btn" class="btn btn-secondary" style="padding: 0.5rem 1.5rem;">Cancel</button>
+        </div>
+      </div>
+    </div>
+
     <!-- Review Confirmation Modal -->
     <div id="review-confirmation-modal" class="modal-overlay" style="display: none;">
       <div class="modal-content" style="max-width: 500px;">

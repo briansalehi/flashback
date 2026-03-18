@@ -1,4 +1,3 @@
-// Updated: 2026-02-20 with topic remove/reorder features
 let subjectId = null;
 let subjectName = null;
 let roadmapId = null;
@@ -62,6 +61,57 @@ window.exitReorderMode = function() {
     const hint = document.getElementById('reorder-hint');
     if (hint) hint.remove();
 };
+
+// Confirmation Modal Functions
+(function() {
+    const confirmModal = document.getElementById('confirm-modal');
+    if (!confirmModal) return;
+
+    const closeConfirmModal = () => {
+        confirmModal.style.display = 'none';
+        document.body.style.overflow = '';
+        UI.setButtonLoading('confirm-modal-btn', false);
+    };
+
+    const closeBtn = document.getElementById('close-confirm-modal-btn');
+    if (closeBtn) closeBtn.addEventListener('click', closeConfirmModal);
+
+    const cancelBtn = document.getElementById('cancel-confirm-modal-btn');
+    if (cancelBtn) cancelBtn.addEventListener('click', closeConfirmModal);
+
+    const confirmBtn = document.getElementById('confirm-modal-btn');
+    if (confirmBtn) {
+        confirmBtn.addEventListener('click', async () => {
+            if (typeof confirmModal._confirmCallback === 'function') {
+                UI.setButtonLoading('confirm-modal-btn', true);
+                try {
+                    await confirmModal._confirmCallback();
+                } finally {
+                    UI.setButtonLoading('confirm-modal-btn', false);
+                    closeConfirmModal();
+                }
+            } else {
+                closeConfirmModal();
+            }
+        });
+    }
+
+    if (confirmModal) {
+        confirmModal.addEventListener('click', (e) => {
+            if (e.target === confirmModal) closeConfirmModal();
+        });
+    }
+
+    window.showConfirmModal = (title, message, callback) => {
+        const titleEl = document.getElementById('confirm-modal-title');
+        const messageEl = document.getElementById('confirm-modal-message');
+        if (titleEl) titleEl.textContent = title;
+        if (messageEl) messageEl.textContent = message;
+        confirmModal._confirmCallback = callback;
+        confirmModal.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+    };
+})();
 
 window.addEventListener('DOMContentLoaded', () => {
     if (!client.isAuthenticated()) {
@@ -891,8 +941,10 @@ function renderTopics(topics, maxLevel) {
                         const sourcePosition = parseInt(sourceTopic.position);
                         const targetPosition = parseInt(targetTopic.position);
 
-                        await reorderTopic(sourceLevel, sourcePosition, targetPosition);
-                        exitReorderMode();
+                        window.showConfirmModal('Confirm Reorder', 'Are you sure you want to move this topic here?', async () => {
+                            await reorderTopic(sourceLevel, sourcePosition, targetPosition);
+                            exitReorderMode();
+                        });
                         return;
                     }
                     if (e.target.closest('button')) return;
@@ -1291,7 +1343,6 @@ async function removeTopic(level, position) {
 
 async function reorderTopic(level, sourcePosition, targetPosition) {
     try {
-        console.log('Reordering topic', sourcePosition, 'with', targetPosition);
         await client.reorderTopic(parseInt(subjectId), level, sourcePosition, targetPosition);
         await loadTopics();
     } catch (err) {

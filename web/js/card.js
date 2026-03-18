@@ -41,6 +41,204 @@ async function markCardAsReviewed() {
     }
 }
 
+window.enterMoveBlockMode = async function(index) {
+    moveBlockState.sourceIndex = index;
+    moveBlockState.targetCardId = null;
+    moveBlockState.targetBlockPosition = null;
+
+    const modal = document.getElementById('move-block-modal');
+    const cardsList = document.getElementById('move-target-cards-list');
+    const step1 = document.getElementById('move-block-step-1');
+    const step2 = document.getElementById('move-block-step-2');
+    const confirmBtn = document.getElementById('confirm-move-block-btn');
+
+    step1.style.display = 'block';
+    step2.style.display = 'none';
+    confirmBtn.style.display = 'none';
+    cardsList.innerHTML = '<div class="loading-spinner"></div>';
+    UI.toggleElement('move-block-modal', true);
+
+    try {
+        const currentCardId = parseInt(UI.getUrlParam('cardId'));
+        const topicPosition = UI.getUrlParam('topicPosition');
+        const topicLevel = UI.getUrlParam('topicLevel');
+        const subjectId = UI.getUrlParam('subjectId');
+        const resourceId = UI.getUrlParam('resourceId');
+        const sectionPosition = UI.getUrlParam('sectionPosition');
+
+        let cards = [];
+        if (topicPosition !== null && topicPosition !== '' && topicLevel !== null && topicLevel !== '' && (subjectId || UI.getUrlParam('subjectId'))) {
+            cards = await client.getTopicCards(parseInt(subjectId || UI.getUrlParam('subjectId')), parseInt(topicPosition), parseInt(topicLevel));
+        } else if (resourceId && sectionPosition !== null && sectionPosition !== '') {
+            cards = await client.getSectionCards(parseInt(resourceId), parseInt(sectionPosition));
+        } else {
+            throw new Error('Could not determine card context (topic or section).');
+        }
+
+        cardsList.innerHTML = '';
+        if (cards.length <= 1) {
+            cardsList.innerHTML = '<p class="text-muted">No other cards found in this section/topic to move to.</p>';
+            return;
+        }
+
+        const stateNames = ['draft', 'reviewed', 'completed', 'approved', 'released', 'rejected'];
+
+        cards.forEach(card => {
+            if (card.id === currentCardId) return;
+
+            const cardOption = document.createElement('div');
+            cardOption.className = 'headline-option';
+            const stateName = stateNames[card.state] || 'draft';
+            cardOption.innerHTML = `
+                <div class="headline-text">${UI.escapeHtml(card.headline)}</div>
+                <div class="card-state-tag ${stateName}">${stateName}</div>
+            `;
+            cardOption.onclick = () => selectTargetCard(card.id, card.headline);
+            cardsList.appendChild(cardOption);
+        });
+        
+        if (typeof renderMathInElement !== 'undefined') {
+            renderMathInElement(cardsList, {
+                delimiters: [
+                    {left: '$$', right: '$$', display: true},
+                    {left: '$', right: '$', display: false}
+                ],
+                throwOnError: false
+            });
+        }
+    } catch (err) {
+        console.error('Failed to load target cards:', err);
+        cardsList.innerHTML = `<p class="text-error">Error: ${UI.escapeHtml(err.message)}</p>`;
+    }
+};
+
+async function selectTargetCard(cardId, headline) {
+    moveBlockState.targetCardId = cardId;
+    moveBlockState.targetBlockPosition = null;
+    
+    document.querySelectorAll('#move-target-cards-list .headline-option').forEach(el => el.classList.remove('selected'));
+    event.currentTarget.classList.add('selected');
+
+    const step2 = document.getElementById('move-block-step-2');
+    const blocksList = document.getElementById('move-target-blocks-list');
+    const confirmBtn = document.getElementById('confirm-move-block-btn');
+
+    step2.style.display = 'block';
+    confirmBtn.style.display = 'none';
+    blocksList.innerHTML = '<div class="loading-spinner"></div>';
+    
+    // Scroll to step 2 with better visibility
+    setTimeout(() => {
+        step2.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        // Also scroll the modal body to ensure it's at the top
+        const modalBody = document.querySelector('#move-block-modal .modal-body');
+        if (modalBody) {
+            modalBody.scrollTo({ top: step2.offsetTop - 20, behavior: 'smooth' });
+        }
+    }, 100);
+
+    try {
+        const blocks = await client.getBlocks(cardId);
+        blocksList.innerHTML = '';
+
+        const blockTypes = ['text', 'code', 'image', 'math', 'diagram'];
+
+        // Function to create a gap
+        const createGap = (pos) => {
+            const gap = document.createElement('div');
+            gap.className = 'target-block-gap';
+            gap.onclick = () => selectTargetPosition(pos, gap);
+            return gap;
+        };
+
+        if (blocks.length === 0) {
+            blocksList.appendChild(createGap(0));
+        } else {
+            blocks.forEach((block, idx) => {
+                // Gap before this block takes its position
+                blocksList.appendChild(createGap(block.position));
+
+                const blockOption = document.createElement('div');
+                blockOption.className = 'target-block-option';
+                const typeName = blockTypes[block.type] || 'text';
+                const extInfo = block.extension ? `: ${block.extension}` : '';
+                
+                // Clean content for preview (remove markdown, newlines etc)
+                let preview = block.content.substring(0, 100).replace(/\n/g, ' ');
+                if (block.content.length > 100) preview += '...';
+
+                blockOption.innerHTML = `
+                    <div class="target-block-info">
+                        <span class="target-block-type-badge">${typeName}${extInfo}</span>
+                    </div>
+                    <div class="target-block-content">${UI.escapeHtml(preview)}</div>
+                `;
+                blocksList.appendChild(blockOption);
+            });
+
+            // Final gap after the last block
+            blocksList.appendChild(createGap(blocks[blocks.length - 1].position + 1));
+        }
+
+    } catch (err) {
+        console.error('Failed to load target blocks:', err);
+        blocksList.innerHTML = `<p class="text-error">Error: ${UI.escapeHtml(err.message)}</p>`;
+    }
+}
+
+function selectTargetPosition(position, element) {
+    moveBlockState.targetBlockPosition = position;
+    document.querySelectorAll('#move-target-blocks-list .target-block-gap').forEach(el => el.classList.remove('selected'));
+    element.classList.add('selected');
+    
+    const confirmBtn = document.getElementById('confirm-move-block-btn');
+    confirmBtn.style.display = 'block';
+    setTimeout(() => {
+        confirmBtn.scrollIntoView({ behavior: 'smooth', block: 'end' });
+        const modalBody = document.querySelector('#move-block-modal .modal-body');
+        if (modalBody) {
+            modalBody.scrollTo({ top: modalBody.scrollHeight, behavior: 'smooth' });
+        }
+    }, 100);
+}
+
+// Modal closing handlers
+const closeMoveBlockModal = () => {
+    UI.toggleElement('move-block-modal', false);
+    moveBlockState = { sourceIndex: null, targetCardId: null, targetBlockPosition: null };
+};
+
+document.getElementById('close-move-block-modal-btn').onclick = closeMoveBlockModal;
+document.getElementById('cancel-move-block-modal-btn').onclick = closeMoveBlockModal;
+
+document.getElementById('confirm-move-block-btn').onclick = async () => {
+    const sourceBlock = currentBlocks[moveBlockState.sourceIndex];
+    const sourceCardId = parseInt(UI.getUrlParam('cardId'));
+    
+    if (!sourceBlock || !moveBlockState.targetCardId || moveBlockState.targetBlockPosition === null) {
+        UI.showError('Invalid move selection');
+        return;
+    }
+
+    UI.setButtonLoading('confirm-move-block-btn', true);
+    try {
+        await client.moveBlock(
+            sourceCardId,
+            sourceBlock.position,
+            moveBlockState.targetCardId,
+            moveBlockState.targetBlockPosition
+        );
+        closeMoveBlockModal();
+        UI.showSuccess('Block moved successfully');
+        await loadBlocks();
+    } catch (err) {
+        console.error('MoveBlock failed:', err);
+        UI.showError('Failed to move block: ' + (err.message || 'Unknown error'));
+    } finally {
+        UI.setButtonLoading('confirm-move-block-btn', false);
+    }
+};
+
 window.addEventListener('DOMContentLoaded', () => {
     if (!client.isAuthenticated()) {
         window.location.href = '/index.html';
@@ -163,6 +361,13 @@ window.addEventListener('DOMContentLoaded', () => {
             }
         };
 
+        const reviewModal = document.getElementById('review-confirmation-modal');
+        if (reviewModal) {
+            reviewModal.addEventListener('click', (e) => {
+                if (e.target === reviewModal) closeReviewModal();
+            });
+        }
+
         markReviewedBtn.addEventListener('click', (e) => {
             e.preventDefault();
             openReviewModal();
@@ -174,7 +379,6 @@ window.addEventListener('DOMContentLoaded', () => {
         const closeReviewModalBtn = document.getElementById('close-review-modal-btn');
         if (closeReviewModalBtn) closeReviewModalBtn.addEventListener('click', closeReviewModal);
 
-        const reviewModal = document.getElementById('review-confirmation-modal');
         if (reviewModal) {
             reviewModal.addEventListener('click', (e) => {
                 if (e.target === reviewModal) closeReviewModal();
@@ -199,6 +403,11 @@ window.addEventListener('DOMContentLoaded', () => {
             // Clear callback to avoid leaks or accidental double-calls
             confirmModal._confirmCallback = null;
         };
+
+        confirmModal.addEventListener('click', (e) => {
+            if (e.target === confirmModal) closeConfirmModal();
+        });
+
 
         const closeBtn = document.getElementById('close-confirm-modal-btn');
         if (closeBtn) closeBtn.addEventListener('click', closeConfirmModal);
@@ -307,6 +516,20 @@ window.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    const removeCardModal = document.getElementById('remove-card-modal');
+    if (removeCardModal) {
+        removeCardModal.addEventListener('click', (e) => {
+            if (e.target === removeCardModal) closeRemoveCardModal();
+        });
+    }
+
+    const removeBlockModal = document.getElementById('remove-block-modal');
+    if (removeBlockModal) {
+        removeBlockModal.addEventListener('click', (e) => {
+            if (e.target === removeBlockModal) closeRemoveBlockModal();
+        });
+    }
+
     const editCardHeadlineInput = document.getElementById('edit-card-headline');
     if (editCardHeadlineInput) {
         editCardHeadlineInput.addEventListener('input', () => {
@@ -355,7 +578,6 @@ window.addEventListener('DOMContentLoaded', () => {
 
     // Setup remove card button (attach handler only; reveal on title click)
     const removeCardBtn = document.getElementById('remove-card-btn');
-    const removeCardModal = document.getElementById('remove-card-modal');
     const closeRemoveCardModalBtn = document.getElementById('close-remove-card-modal-btn');
     if (removeCardBtn) {
         removeCardBtn.addEventListener('click', (e) => {
@@ -365,11 +587,6 @@ window.addEventListener('DOMContentLoaded', () => {
     }
 
     if (closeRemoveCardModalBtn) closeRemoveCardModalBtn.addEventListener('click', closeRemoveCardModal);
-    if (removeCardModal) {
-        removeCardModal.addEventListener('click', (e) => {
-            if (e.target === removeCardModal) closeRemoveCardModal();
-        });
-    }
 
     // Setup remove card modal handlers
     const cancelRemoveCardBtn = document.getElementById('cancel-remove-card-btn');
@@ -387,7 +604,6 @@ window.addEventListener('DOMContentLoaded', () => {
     }
 
     // Setup remove block modal handlers
-    const removeBlockModal = document.getElementById('remove-block-modal');
     const closeRemoveBlockModalBtn = document.getElementById('close-remove-block-modal-btn');
     const cancelRemoveBlockBtn = document.getElementById('cancel-remove-block-btn');
     if (cancelRemoveBlockBtn) {
@@ -397,11 +613,6 @@ window.addEventListener('DOMContentLoaded', () => {
     }
 
     if (closeRemoveBlockModalBtn) closeRemoveBlockModalBtn.addEventListener('click', closeRemoveBlockModal);
-    if (removeBlockModal) {
-        removeBlockModal.addEventListener('click', (e) => {
-            if (e.target === removeBlockModal) closeRemoveBlockModal();
-        });
-    }
 
     const confirmRemoveBlockBtn = document.getElementById('confirm-remove-block-btn');
     if (confirmRemoveBlockBtn) {
@@ -679,7 +890,6 @@ async function recordProgress(hideAfterSuccess = true) {
     UI.setButtonLoading('record-progress-btn', true);
 
     try {
-        console.log(`studying card ${cardId} for ${duration} seconds`);
         await client.study(cardId, duration);
         UI.showSuccess('Study progress recorded!');
 
@@ -1572,6 +1782,14 @@ function renderBlocks(blocks) {
                     </svg>
                     Merge
                 </button>
+                <button class="block-action-btn block-move-btn" onclick="window.enterMoveBlockMode(${index})">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 2h9a2 2 0 0 1 2 2z"></path>
+                        <path d="M12 11l2 2-2 2"></path>
+                        <path d="M8 13h6"></path>
+                    </svg>
+                    Move
+                </button>
                 <button class="block-action-btn block-remove-btn" data-position="${block.position}" data-index="${index}">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <polyline points="3 6 5 6 21 6"></polyline>
@@ -1753,6 +1971,12 @@ let reorderState = {
 let mergeState = {
     active: false,
     sourceIndex: null
+};
+
+let moveBlockState = {
+    sourceIndex: null,
+    targetCardId: null,
+    targetBlockPosition: null
 };
 
 window.enterReorderMode = function(index) {
