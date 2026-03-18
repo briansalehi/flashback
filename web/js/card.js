@@ -1509,6 +1509,8 @@ async function loadBlocks() {
             UI.toggleElement('card-content', true);
             UI.toggleElement('add-block-container', false);
             UI.toggleElement('empty-state', true);
+            const container = document.getElementById('blocks-list');
+            if (container) container.innerHTML = '';
         } else {
             UI.toggleElement('card-content', true);
             UI.toggleElement('add-block-container', true);

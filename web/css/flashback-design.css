@@ -1251,11 +1251,14 @@ a:hover {
     right: 0;
     padding: var(--space-md);
     display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
     gap: var(--space-sm);
     opacity: 0;
     pointer-events: none;
     transition: all var(--transition-fast);
     z-index: 100;
+    max-width: 100%;
 }
 
 /* Show actions on hover (desktop only) */
@@ -1359,6 +1362,26 @@ a:hover {
     border-color: #b794f4;
 }
 
+/* Mobile adjustments for block actions */
+@media (max-width: 480px) {
+    .block-actions-overlay {
+        padding: var(--space-xs);
+        gap: var(--space-xs);
+        justify-content: flex-end;
+    }
+    .block-action-btn {
+        padding: 4px 8px;
+        font-size: 10px;
+        min-height: 28px;
+        border-radius: var(--radius-md);
+    }
+    .block-action-btn svg {
+        width: 14px;
+        height: 14px;
+        margin: 0;
+    }
+}
+
 /* Move Block Modal Styles */
 .target-blocks-list {
     display: flex;
@@ -1385,8 +1408,8 @@ a:hover {
     height: 18px;
     margin: 8px 0;
     border-radius: 6px;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px dashed rgba(255, 255, 255, 0.3);
+    background: rgba(72, 187, 120, 0.05);
+    border: 2px dashed rgba(72, 187, 120, 0.4);
     cursor: pointer;
     transition: all var(--transition-fast);
     position: relative;
