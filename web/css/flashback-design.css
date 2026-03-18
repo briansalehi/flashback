@@ -76,6 +76,11 @@
     --container-xl: 1200px;
 }
 
+/* disable prism ligatures */
+.token.operator {
+    font-variant-ligatures: none;
+}
+
 /* Editable title affordance */
 .editable-title {
     cursor: pointer;
