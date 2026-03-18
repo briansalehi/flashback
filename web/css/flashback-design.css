@@ -1362,6 +1362,26 @@ a:hover {
     border-color: #b794f4;
 }
 
+.block-expand-btn {
+    color: #4299e1;
+    border-color: rgba(66, 153, 225, 0.4);
+}
+
+.block-expand-btn:hover {
+    background: rgba(66, 153, 225, 0.25);
+    border-color: #4299e1;
+}
+
+.block-diminish-btn {
+    color: #f56565;
+    border-color: rgba(245, 101, 101, 0.4);
+}
+
+.block-diminish-btn:hover {
+    background: rgba(245, 101, 101, 0.25);
+    border-color: #f56565;
+}
+
 /* Mobile adjustments for block actions */
 @media (max-width: 480px) {
     .block-actions-overlay {

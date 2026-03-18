@@ -1019,19 +1019,39 @@ function renderAssessments(assessments) {
         };
         const stateColor = stateColors[stateName] || stateColors['draft'];
 
+        const expandButtonHtml = `
+            <button class="block-action-btn block-expand-btn" onclick="window.openExpandAssessmentModal(${card.id}, '${UI.escapeHtml(card.headline).replace(/'/g, "\\'")}')">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M15 3h6v6"></path>
+                    <path d="M9 21H3v-6"></path>
+                    <path d="M21 3l-7 7"></path>
+                    <path d="M3 21l7-7"></path>
+                </svg>
+                Expand
+            </button>
+        `;
+
+        const diminishButtonHtml = `
+            <button class="block-action-btn block-diminish-btn" onclick="window.openDiminishAssessmentModal(${card.id}, '${UI.escapeHtml(card.headline).replace(/'/g, "\\'")}')">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M4 14h6v6"></path>
+                    <path d="M20 10h-6V4"></path>
+                    <path d="M14 10l7-7"></path>
+                    <path d="M10 14l-7 7"></path>
+                </svg>
+                Diminish
+            </button>
+        `;
+
         cardItem.innerHTML = `
             <div class="item-header" style="margin-bottom: 0; align-items: center;">
                 <div style="display: flex; align-items: center; gap: var(--space-xs); flex: 1; cursor: pointer;" data-card-id="${card.id}" data-card-headline="${UI.escapeHtml(card.headline)}" data-card-state="${card.state}" class="assessment-link">
                     <h3 class="item-title" style="margin: 0; font-size: var(--font-size-base); font-weight: 600;">${UI.escapeHtml(card.headline)}</h3>
                 </div>
-                <div style="display: flex; gap: 0.6rem; align-items: center;">
-                    <span class="item-badge" style="background: ${stateColor.bg}; color: ${stateColor.color}; text-transform: capitalize; font-size: 11px; height: 24px; min-width: auto; padding: 0 10px; border-radius: var(--radius-full); display: inline-flex; align-items: center;">${UI.escapeHtml(stateName)}</span>
-                    <button class="btn btn-secondary btn-sm" style="background: var(--gradient-primary); color: white; border: none; padding: 0.3rem 1rem; height: 34px; font-size: 13px; font-weight: 600; min-width: auto; white-space: nowrap;" onclick="window.openExpandAssessmentModal(${card.id}, '${UI.escapeHtml(card.headline).replace(/'/g, "\\'")}')">
-                        Expand
-                    </button>
-                    <button class="btn btn-secondary btn-sm" style="background-color: #dc3545; color: white; padding: 0.3rem 1rem; height: 34px; font-size: 13px; font-weight: 600; min-width: auto; white-space: nowrap;" onclick="window.openDiminishAssessmentModal(${card.id}, '${UI.escapeHtml(card.headline).replace(/'/g, "\\'")}')">
-                        Diminish
-                    </button>
+                <div style="display: flex; gap: 0.4rem; align-items: center; justify-content: flex-end; flex-wrap: wrap;">
+                    <span class="item-badge" style="background: ${stateColor.bg}; color: ${stateColor.color}; text-transform: capitalize; font-size: 11px; height: 24px; min-width: auto; padding: 0 10px; border-radius: var(--radius-full); display: inline-flex; align-items: center; white-space: nowrap; margin-bottom: 2px;">${UI.escapeHtml(stateName)}</span>
+                    ${expandButtonHtml}
+                    ${diminishButtonHtml}
                 </div>
             </div>
         `;
