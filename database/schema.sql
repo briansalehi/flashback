@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict 9QeWCjnhCSYaVr1otgqUobru0R6THYSkqoVji5L1qR7tlPPjWbN2kMGcmNEjhWA
+\restrict O9xdY1tTkL2WzwTYrqHu8PDkDnxoTfzrv4fdY7eyw7QBgYYSnHqjhMLM1jZjuWC
 
 -- Dumped from database version 18.1
 -- Dumped by pg_dump version 18.1
@@ -1323,7 +1323,7 @@ begin
         from topic_cards tc
         join cards c on c.id = tc.card and c.state in ('reviewed'::card_state, 'completed'::card_state, 'approved'::card_state, 'released'::card_state)
         left join progress p on p.user = user_id and p.card = tc.card
-        where tc.subject = subject_id and tc.level <= cognitive_level and tc.level = topic_level and tc.topic = topic_position;
+        where tc.subject = subject_id and tc.level <= cognitive_level and tc.level <= topic_level and tc.topic = topic_position;
     end if;
 end; $$;
 
@@ -1351,6 +1351,7 @@ begin
         count(*) filter (where p.last_practice is null)
         into most_recent_practice, last_recent_practice, unread_cards
     from topic_cards tc
+    join cards c on c.id = tc.card and c.state in ('reviewed', 'completed', 'approved', 'released')
     left join progress p on p.user = user_id and p.card = tc.card
     where tc.subject = subject_id and tc.level = topic_level;
 
@@ -1925,7 +1926,7 @@ begin
     where t.subject = subject_id and t.level = topic_level and t.topic = topic_position
     group by t.subject, t.level, t.topic;
 
-    return assimilated;
+    return coalesce(assimilated, false);
 end; $$;
 
 
@@ -4319,5 +4320,5 @@ GRANT ALL ON SCHEMA public TO brian;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict 9QeWCjnhCSYaVr1otgqUobru0R6THYSkqoVji5L1qR7tlPPjWbN2kMGcmNEjhWA
+\unrestrict O9xdY1tTkL2WzwTYrqHu8PDkDnxoTfzrv4fdY7eyw7QBgYYSnHqjhMLM1jZjuWC
 
