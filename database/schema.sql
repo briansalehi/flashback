@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict O9xdY1tTkL2WzwTYrqHu8PDkDnxoTfzrv4fdY7eyw7QBgYYSnHqjhMLM1jZjuWC
+\restrict uEu6c4TYgAvn3oCWPdFMpl1UVrAxShBqhcEq71VaSFKr3WlYjgcNOmeyeJP3w1x
 
 -- Dumped from database version 18.1
 -- Dumped by pg_dump version 18.1
@@ -2413,9 +2413,9 @@ begin
     if target_position > 0 and block_position > 0 then
         call reorder_block(card_id, block_position, source_top_position);
 
-        update blocks set card = target_card, position = target_top_position where card = card_id and position = source_top_position;
+        update blocks set card = target_card, position = coalesce(target_top_position, 1) where card = card_id and position = source_top_position;
 
-        call reorder_block(target_card, target_top_position, target_position);
+        call reorder_block(target_card, coalesce(target_top_position, 1), target_position);
     end if;
 end; $$;
 
@@ -2462,7 +2462,7 @@ begin
     then
         select coalesce(max(position), 0) + 1 into last_position from topic_cards where subject = target_subject and topic = target_topic and level = target_level;
 
-        update topic_cards set subject = target_subject, topic = target_topic, position = last_position, level = target_level where subject = subject_id and topic = topic_position and level = topic_level and card = card_id;
+        update topic_cards set subject = target_subject, topic = target_topic, position = coalesce(last_position, 1), level = target_level where subject = subject_id and topic = topic_position and level = topic_level and card = card_id;
 
         update topic_cards t set position = tt.updated_position from (
             select position, row_number() over (order by position) as updated_position from topic_cards where subject = subject_id and topic = topic_position and level = topic_level
@@ -4320,5 +4320,5 @@ GRANT ALL ON SCHEMA public TO brian;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict O9xdY1tTkL2WzwTYrqHu8PDkDnxoTfzrv4fdY7eyw7QBgYYSnHqjhMLM1jZjuWC
+\unrestrict uEu6c4TYgAvn3oCWPdFMpl1UVrAxShBqhcEq71VaSFKr3WlYjgcNOmeyeJP3w1x
 
