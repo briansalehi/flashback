@@ -4185,8 +4185,8 @@ grpc::Status server::MoveBlock(grpc::ServerContext* context, MoveBlockRequest co
         }
         else
         {
-            m_database->move_block(request->card().id(), request->block().position(), request->target_card().id(), request->target_block().position());
             std::clog << std::format("client {} moved block from position {} in card {} to position {} in card {}\n", request->user().token(), request->block().position(), request->card().id(), request->target_block().position(), request->target_card().id());
+            m_database->move_block(request->card().id(), request->block().position(), request->target_card().id(), request->target_block().position());
             status = grpc::Status{grpc::StatusCode::OK, {}};
         }
     }

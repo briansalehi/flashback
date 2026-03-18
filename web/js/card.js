@@ -67,8 +67,12 @@ window.enterMoveBlockMode = async function(index) {
         const sectionPosition = UI.getUrlParam('sectionPosition');
 
         let cards = [];
-        if (topicPosition !== null && topicPosition !== '' && topicLevel !== null && topicLevel !== '' && (subjectId || UI.getUrlParam('subjectId'))) {
-            cards = await client.getTopicCards(parseInt(subjectId || UI.getUrlParam('subjectId')), parseInt(topicPosition), parseInt(topicLevel));
+        const subjId = parseInt(subjectId || UI.getUrlParam('subjectId'));
+        const tPos = parseInt(topicPosition);
+        const tLevel = parseInt(topicLevel);
+
+        if (!isNaN(tPos) && !isNaN(tLevel) && !isNaN(subjId)) {
+            cards = await client.getTopicCards(subjId, tPos, tLevel);
         } else if (resourceId && sectionPosition !== null && sectionPosition !== '') {
             cards = await client.getSectionCards(parseInt(resourceId), parseInt(sectionPosition));
         } else {
@@ -152,7 +156,7 @@ async function selectTargetCard(cardId, headline) {
         };
 
         if (blocks.length === 0) {
-            blocksList.appendChild(createGap(0));
+            blocksList.appendChild(createGap(1));
         } else {
             blocks.forEach((block, idx) => {
                 // Gap before this block takes its position
@@ -174,10 +178,12 @@ async function selectTargetCard(cardId, headline) {
                     <div class="target-block-content">${UI.escapeHtml(preview)}</div>
                 `;
                 blocksList.appendChild(blockOption);
-            });
 
-            // Final gap after the last block
-            blocksList.appendChild(createGap(blocks[blocks.length - 1].position + 1));
+                // Add gap after the last block
+                if (idx === blocks.length - 1) {
+                    blocksList.appendChild(createGap(block.position + 1));
+                }
+            });
         }
 
     } catch (err) {
@@ -214,7 +220,7 @@ document.getElementById('cancel-move-block-modal-btn').onclick = closeMoveBlockM
 document.getElementById('confirm-move-block-btn').onclick = async () => {
     const sourceBlock = currentBlocks[moveBlockState.sourceIndex];
     const sourceCardId = parseInt(UI.getUrlParam('cardId'));
-    
+
     if (!sourceBlock || !moveBlockState.targetCardId || moveBlockState.targetBlockPosition === null) {
         UI.showError('Invalid move selection');
         return;
