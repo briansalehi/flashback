@@ -527,9 +527,9 @@ async function loadCards() {
     UI.toggleElement('empty-state', false);
 
     try {
-        const subjectId = UI.getUrlParam('subjectId');
-        const topicPosition = UI.getUrlParam('topicPosition');
-        const topicLevel = UI.getUrlParam('topicLevel');
+        const subjectId = parseInt(UI.getUrlParam('subjectId'));
+        const topicPosition = parseInt(UI.getUrlParam('topicPosition'));
+        const topicLevel = parseInt(UI.getUrlParam('topicLevel'));
 
         const cards = await client.getTopicCards(subjectId, topicPosition, topicLevel);
 

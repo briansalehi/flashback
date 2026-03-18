@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict uEu6c4TYgAvn3oCWPdFMpl1UVrAxShBqhcEq71VaSFKr3WlYjgcNOmeyeJP3w1x
+\restrict AKXOaYH4aTFUeYuLCQ5OKd3Hk4Rm2YQnCPo5F1qkyeG6nWJpKsApNcSlj2153xx
 
 -- Dumped from database version 18.1
 -- Dumped by pg_dump version 18.1
@@ -3591,7 +3591,7 @@ ALTER TABLE flashback.section_cards OWNER TO flashback;
 CREATE TABLE flashback.sections (
     resource integer NOT NULL,
     "position" integer NOT NULL,
-    name flashback.citext,
+    name flashback.citext NOT NULL,
     link character varying(2000),
     state flashback.closure_state DEFAULT 'draft'::flashback.closure_state NOT NULL
 );
@@ -4320,5 +4320,5 @@ GRANT ALL ON SCHEMA public TO brian;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict uEu6c4TYgAvn3oCWPdFMpl1UVrAxShBqhcEq71VaSFKr3WlYjgcNOmeyeJP3w1x
+\unrestrict AKXOaYH4aTFUeYuLCQ5OKd3Hk4Rm2YQnCPo5F1qkyeG6nWJpKsApNcSlj2153xx
 

@@ -1382,11 +1382,11 @@ a:hover {
 }
 
 .target-block-gap {
-    height: 14px;
-    margin: 6px 0;
+    height: 18px;
+    margin: 8px 0;
     border-radius: 6px;
     background: rgba(255, 255, 255, 0.05);
-    border: 1px dashed rgba(255, 255, 255, 0.2);
+    border: 1px dashed rgba(255, 255, 255, 0.3);
     cursor: pointer;
     transition: all var(--transition-fast);
     position: relative;
@@ -1410,10 +1410,10 @@ a:hover {
 
 .target-block-gap::after {
     content: 'Insert Here';
-    font-size: 0.65rem;
+    font-size: 0.6rem;
     font-weight: var(--font-weight-bold);
     color: var(--color-success);
-    opacity: 0;
+    opacity: 0.4;
     transition: opacity var(--transition-fast);
     text-transform: uppercase;
     letter-spacing: 0.05em;

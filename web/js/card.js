@@ -67,9 +67,9 @@ window.enterMoveBlockMode = async function(index) {
         const sectionPosition = UI.getUrlParam('sectionPosition');
 
         let cards = [];
-        const subjId = parseInt(subjectId || UI.getUrlParam('subjectId'));
-        const tPos = parseInt(topicPosition);
-        const tLevel = parseInt(topicLevel);
+        const subjId = parseInt(UI.getUrlParam('subjectId'));
+        const tPos = parseInt(UI.getUrlParam('topicPosition'));
+        const tLevel = parseInt(UI.getUrlParam('topicLevel'));
 
         if (!isNaN(tPos) && !isNaN(tLevel) && !isNaN(subjId)) {
             cards = await client.getTopicCards(subjId, tPos, tLevel);
