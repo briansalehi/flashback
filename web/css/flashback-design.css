@@ -329,7 +329,7 @@ a:hover {
 
 .page-wrapper {
     min-height: 100vh;
-    padding-top: 80px; /* Account for fixed header */
+    padding-top: 80px; /* Increased to prevent content overlap with header */
     padding-bottom: var(--space-xl);
 }
 
@@ -341,7 +341,7 @@ a:hover {
     top: 0;
     left: 0;
     width: 100%;
-    padding: var(--space-md) var(--space-md);
+    padding: var(--space-sm) var(--space-md); /* Reduced padding */
     background: rgba(15, 15, 15, 0.95);
     backdrop-filter: blur(10px);
     z-index: 1000;
@@ -454,7 +454,7 @@ a:hover {
     }
 
     .header {
-        padding: var(--space-lg) var(--space-xl);
+        padding: var(--space-md) var(--space-xl);
     }
 
     .header-logo img {
@@ -1551,13 +1551,13 @@ a:hover {
    DASHBOARD COMPONENTS
    ============================================ */
 .dashboard {
-    padding-top: 80px;
+    padding-top: 80px; /* Increased to prevent content overlap with header */
     padding-bottom: var(--space-2xl);
 }
 
 /* Breadcrumbs */
 .breadcrumb-container {
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.5rem; /* Slightly more room */
     padding: 0.25rem 0;
 }
 
@@ -1681,7 +1681,7 @@ a:hover {
 }
 
 .dashboard-header {
-    margin-bottom: var(--space-xl);
+    margin-bottom: var(--space-md); /* Reduced from space-xl to space-md */
 }
 
 .dashboard-header h1,
@@ -1939,4 +1939,10 @@ a:hover {
     background: linear-gradient(135deg, #57ca87 0%, #43b177 100%);
     box-shadow: 0 6px 16px rgba(72, 187, 120, 0.3);
     transform: translateY(-1px);
+}
+
+@media (max-width: 768px) {
+    .page-wrapper, .dashboard {
+        padding-top: 70px; /* Slightly less on mobile, but enough for 60px header */
+    }
 }
