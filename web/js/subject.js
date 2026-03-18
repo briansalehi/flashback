@@ -621,6 +621,24 @@ window.addEventListener('DOMContentLoaded', () => {
         showCreateResourceBtn.addEventListener('click', () => {
             UI.toggleElement('search-resource-section', false);
             UI.toggleElement('create-resource-section', true);
+
+            // Set default dates for new resource
+            const today = new Date();
+            const fiveYearsLater = new Date();
+            fiveYearsLater.setFullYear(today.getFullYear() + 5);
+
+            const formatDate = (date) => date.toISOString().split('T')[0];
+
+            const productionInput = document.getElementById('resource-production');
+            const expirationInput = document.getElementById('resource-expiration');
+
+            if (productionInput && !productionInput.value) {
+                productionInput.value = formatDate(today);
+            }
+            if (expirationInput && !expirationInput.value) {
+                expirationInput.value = formatDate(fiveYearsLater);
+            }
+
             setTimeout(() => {
                 const nameInput = document.getElementById('resource-name');
                 if (nameInput) {
@@ -703,10 +721,11 @@ window.addEventListener('DOMContentLoaded', () => {
             const type = document.getElementById('resource-type').value;
             const pattern = document.getElementById('resource-pattern').value;
             const url = document.getElementById('resource-url').value.trim();
-            const productionDate = document.getElementById('resource-production').value;
-            const expirationDate = document.getElementById('resource-expiration').value;
+            const formatDate = (date) => date.toISOString().split('T')[0];
+            const productionDate = document.getElementById('resource-production').value || formatDate(new Date());
+            const expirationDate = document.getElementById('resource-expiration').value || formatDate(new Date(new Date().setFullYear(new Date().getFullYear() + 5)));
 
-            if (!name || !type || !pattern || !productionDate || !expirationDate) {
+            if (!name || !type || !pattern) {
                 UI.showError('Please fill required fields');
                 return;
             }
