@@ -765,7 +765,12 @@ function showMergeConfirmModal(targetId, targetHeadline) {
 
     document.getElementById('close-merge-cards-modal-btn').onclick = closeMergeConfirmModal;
     document.getElementById('cancel-merge-cards-btn').onclick = closeMergeConfirmModal;
-    modal.onclick = (e) => { if (e.target === modal) closeMergeConfirmModal(); };
+
+    if (modal) {
+        modal.onclick = (e) => {
+            if (e.target === modal) closeMergeConfirmModal();
+        };
+    }
 }
 
 window.handleMoveCard = function(cardId, cardHeadline) {
