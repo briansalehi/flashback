@@ -23,51 +23,50 @@
 
       /* Page-specific component styles */
       .tabs-container {
-          display: flex;
-          flex-direction: column;
-          gap: 1.5rem;
-          margin-top: 1rem;
-          margin-bottom: 0.5rem;
+          margin-top: 1.5rem;
+          margin-bottom: 1.5rem;
       }
 
       .tabs {
           display: flex;
-          gap: 0.5rem;
-          padding: 0.5rem;
-          background: linear-gradient(135deg, rgba(107, 70, 193, 0.08) 0%, rgba(139, 92, 246, 0.08) 100%);
-          border-radius: 16px;
-          border: 2px solid rgba(107, 70, 193, 0.15);
-          box-shadow: 0 2px 8px rgba(107, 70, 193, 0.08);
-          align-self: stretch;
+          gap: 0.25rem;
+          padding: 0.25rem;
+          background: rgba(255, 255, 255, 0.05);
+          backdrop-filter: blur(10px);
+          border-radius: var(--radius-lg);
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          box-shadow: var(--shadow-sm);
       }
 
       .tab {
-          padding: 0.5rem 1rem;
+          padding: 0.65rem 1.25rem;
           background: transparent;
           border: none;
-          color: var(--text-primary);
-          opacity: 0.7;
+          color: var(--text-muted);
           font-size: 0.875rem;
-          font-weight: 600;
+          font-weight: 500;
           cursor: pointer;
           position: relative;
-          transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
-          border-radius: 12px;
-          letter-spacing: -0.01em;
+          transition: all var(--transition-base);
+          border-radius: calc(var(--radius-lg) - 0.25rem);
           flex: 1;
           text-align: center;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 0.5rem;
       }
 
       .tab:hover {
-          opacity: 1;
-          background: rgba(255, 255, 255, 0.1);
+          color: var(--text-primary);
+          background: rgba(255, 255, 255, 0.05);
       }
 
       .tab.active {
           color: white;
-          opacity: 1;
           background: var(--gradient-primary);
-          box-shadow: var(--shadow-sm);
+          font-weight: 600;
+          box-shadow: 0 4px 12px rgba(107, 70, 193, 0.3);
       }
 
       #start-practice-btn {
@@ -618,9 +617,20 @@
     <!-- Tabs and Practice Button -->
     <div class="tabs-container">
       <div class="tabs">
-        <button class="tab active" data-tab="topics">Topics</button>
+        <button class="tab active" data-tab="topics">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+          </svg>
+          Topics
+        </button>
         <!-- <button class="tab" data-tab="assessments">Assessments</button> -->
-        <button class="tab" data-tab="resources">Resources</button>
+        <button class="tab" data-tab="resources">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+          </svg>
+          Resources
+        </button>
       </div>
     </div>
 

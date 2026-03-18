@@ -293,26 +293,16 @@ window.addEventListener('DOMContentLoaded', () => {
     }
 
     const switchToSelectExisting = () => {
-        document.getElementById('tab-select-existing').style.borderBottom = '2px solid var(--accent-color)';
-        document.getElementById('tab-select-existing').style.color = 'var(--accent-color)';
-        document.getElementById('tab-select-existing').style.fontWeight = '600';
-        
-        document.getElementById('tab-create-new').style.borderBottom = 'none';
-        document.getElementById('tab-create-new').style.color = 'var(--text-muted)';
-        document.getElementById('tab-create-new').style.fontWeight = '400';
+        document.getElementById('tab-select-existing').classList.add('active');
+        document.getElementById('tab-create-new').classList.remove('active');
         
         UI.toggleElement('select-existing-section', true);
         UI.toggleElement('assessment-form', false);
     };
 
     const switchToCreateNew = () => {
-        document.getElementById('tab-create-new').style.borderBottom = '2px solid var(--accent-color)';
-        document.getElementById('tab-create-new').style.color = 'var(--accent-color)';
-        document.getElementById('tab-create-new').style.fontWeight = '600';
-        
-        document.getElementById('tab-select-existing').style.borderBottom = 'none';
-        document.getElementById('tab-select-existing').style.color = 'var(--text-muted)';
-        document.getElementById('tab-select-existing').style.fontWeight = '400';
+        document.getElementById('tab-create-new').classList.add('active');
+        document.getElementById('tab-select-existing').classList.remove('active');
         
         UI.toggleElement('select-existing-section', false);
         UI.toggleElement('assessment-form', true);
