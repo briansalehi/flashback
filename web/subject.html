@@ -25,8 +25,8 @@
       .tabs-container {
           display: flex;
           flex-direction: column;
-          align-items: flex-end;
           gap: 1.5rem;
+          margin-top: 1rem;
           margin-bottom: 0.5rem;
       }
 
@@ -71,23 +71,57 @@
       }
 
       #start-practice-btn {
-          padding: 0.75rem 2rem;
-          font-size: 1rem;
-          font-weight: 600;
-          background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-          border: none;
-          color: white;
-          border-radius: 12px;
-          box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
-          transition: all 0.3s ease;
-          white-space: nowrap;
-          flex-shrink: 0;
+          display: none; /* Hidden by default, shown by JS logic or refined by floating class */
       }
 
-      #start-practice-btn:hover {
-          background: linear-gradient(135deg, #059669 0%, #047857 100%);
-          box-shadow: 0 6px 16px rgba(16, 185, 129, 0.35);
-          transform: translateY(-2px);
+      .floating-action-btn {
+          position: fixed;
+          bottom: 2rem;
+          right: 2rem;
+          z-index: 1000;
+          display: flex !important;
+          align-items: center;
+          gap: 0.75rem;
+          padding: 0.85rem 1.75rem;
+          border-radius: 50px;
+          box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3), var(--shadow-lg);
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          backdrop-filter: blur(10px);
+      }
+
+      .floating-action-btn:hover {
+          transform: translateY(-4px) scale(1.02);
+          box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4), var(--shadow-xl);
+      }
+
+      .floating-action-btn svg {
+          transition: transform 0.3s ease;
+      }
+
+      .floating-action-btn:hover svg {
+          transform: scale(1.15);
+      }
+
+      @media (max-width: 768px) {
+          .floating-action-btn {
+              bottom: 1.5rem;
+              right: 1.5rem;
+              padding: 0.75rem 1.25rem;
+              font-size: 0.9rem;
+          }
+        
+          .floating-action-btn span {
+              display: none;
+          }
+
+          .floating-action-btn {
+              padding: 1rem;
+              width: 56px;
+              height: 56px;
+              justify-content: center;
+              border-radius: 28px;
+          }
       }
 
       .search-result-item {
@@ -179,10 +213,6 @@
       @media (max-width: 768px) {
           .tabs-container {
               align-items: stretch;
-          }
-
-          #start-practice-btn {
-              width: 100%;
           }
 
           .tabs {
@@ -587,17 +617,19 @@
 
     <!-- Tabs and Practice Button -->
     <div class="tabs-container">
-      <div style="display: flex; margin-bottom: 0.5rem; padding: 0.75rem 1rem; white-space: nowrap;">
-        <button id="start-practice-btn" class="btn btn-primary">
-          Start Practice
-        </button>
-      </div>
       <div class="tabs">
         <button class="tab active" data-tab="topics">Topics</button>
         <!-- <button class="tab" data-tab="assessments">Assessments</button> -->
         <button class="tab" data-tab="resources">Resources</button>
       </div>
     </div>
+
+    <button id="start-practice-btn" class="btn btn-primary floating-action-btn">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M5 3l14 9-14 9V3z"></path>
+      </svg>
+      <span>Start Practice</span>
+    </button>
 
     <button id="add-topic-btn" class="btn btn-primary btn-full" style="margin-bottom: 1.5rem; padding: 0.65rem 1rem; white-space: nowrap;">
       + Add Topic
