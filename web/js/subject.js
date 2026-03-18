@@ -1186,15 +1186,12 @@ async function startPracticeMode() {
 }
 
 async function displayBreadcrumb(roadmapId) {
-    const breadcrumb = document.getElementById('breadcrumb');
-    if (!breadcrumb || !roadmapId) return;
-
-    try {
-        if (roadmapName) {
-            breadcrumb.innerHTML = `<a href="roadmap.html?id=${roadmapId}&name=${encodeURIComponent(roadmapName)}" style="color: var(--text-primary); text-decoration: none;">${UI.escapeHtml(roadmapName)}</a>`;
-        }
-    } catch (err) {
-        console.error('Failed to display breadcrumb:', err);
+    if (!roadmapId) return;
+    
+    if (roadmapName) {
+        UI.renderBreadcrumbs([
+            { name: roadmapName, url: `roadmap.html?id=${roadmapId}&name=${encodeURIComponent(roadmapName)}` }
+        ]);
     }
 }
 

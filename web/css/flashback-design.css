@@ -1555,6 +1555,131 @@ a:hover {
     padding-bottom: var(--space-2xl);
 }
 
+/* Breadcrumbs */
+.breadcrumb-container {
+    margin-bottom: 0.5rem;
+    padding: 0.25rem 0;
+}
+
+.breadcrumb-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.breadcrumb-item {
+    display: flex;
+    align-items: center;
+}
+
+.breadcrumb-item a {
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+    color: var(--color-text-muted);
+    font-size: 0.9rem;
+    font-weight: 500;
+    padding: 0.3rem 0;
+    transition: all var(--transition-base);
+    position: relative;
+}
+
+.breadcrumb-item a:hover {
+    color: var(--color-text-primary);
+    transform: translateX(4px);
+}
+
+.breadcrumb-item.is-active a {
+    color: var(--color-text-primary);
+    font-weight: 500;
+}
+
+.breadcrumb-item.is-active a:hover {
+    color: var(--color-text-primary);
+    transform: translateX(4px);
+}
+
+.breadcrumb-item:not(:first-child)::before {
+    content: "└";
+    color: rgba(255, 255, 255, 0.2);
+    font-size: 1.1rem;
+    margin-right: 0.8rem;
+    font-family: monospace;
+    line-height: 1;
+}
+
+.breadcrumb-item:nth-child(2) { padding-left: 1.2rem; }
+.breadcrumb-item:nth-child(3) { padding-left: 2.4rem; }
+.breadcrumb-item:nth-child(4) { padding-left: 3.6rem; }
+.breadcrumb-item:nth-child(5) { padding-left: 4.8rem; }
+
+@media (max-width: 640px) {
+    .breadcrumb-item:nth-child(n) { padding-left: 0 !important; }
+    .breadcrumb-item:not(:first-child)::before {
+        display: none;
+    }
+    .breadcrumb-ellipsis {
+        padding-left: 0 !important;
+    }
+    .breadcrumb-separator {
+        display: none;
+    }
+    .breadcrumb-list { gap: 0.35rem; }
+}
+
+/* Collapsible logic */
+.breadcrumb-item.is-collapsible {
+    display: none;
+}
+
+.breadcrumb-container.is-expanded .breadcrumb-item.is-collapsible {
+    display: flex;
+}
+
+.breadcrumb-container.is-expanded .breadcrumb-ellipsis {
+    display: none;
+}
+
+.breadcrumb-ellipsis {
+    display: flex;
+    align-items: center;
+}
+
+.breadcrumb-expand-btn {
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--color-text-muted);
+    border-radius: var(--radius-md);
+    padding: 0.2rem 0.6rem;
+    cursor: pointer;
+    font-weight: bold;
+    transition: all var(--transition-base);
+}
+
+.breadcrumb-expand-btn:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--color-text-primary);
+}
+
+@media (max-width: 640px) {
+    .breadcrumb-item a {
+        font-size: 0.8rem;
+        padding: 0.3rem 0.6rem;
+    }
+    
+    .breadcrumb-item:not(.is-active):not(:first-child) span {
+        display: none; /* Icon only for non-active items on tiny screens? Maybe too much. Let's keep text for now but allow scroll */
+    }
+
+    /* On mobile, keep it strictly one line and let it scroll */
+    .breadcrumb-list {
+        padding-bottom: 0.5rem;
+    }
+}
+
 .dashboard-header {
     margin-bottom: var(--space-xl);
 }

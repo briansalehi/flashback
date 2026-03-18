@@ -1,35 +1,29 @@
 function displayBreadcrumb() {
-    const breadcrumb = document.getElementById('breadcrumb');
-    if (!breadcrumb) {
-        console.error('Breadcrumb element not found');
-        return;
-    }
-
     const subjectId = UI.getUrlParam('subjectId');
     const subjectName = UI.getUrlParam('subjectName');
     const roadmapId = UI.getUrlParam('roadmapId');
     const roadmapName = UI.getUrlParam('roadmapName');
 
-    let breadcrumbHtml = '';
+    const breadcrumbItems = [];
 
     if (roadmapId && roadmapName) {
-        breadcrumbHtml += `<a href="roadmap.html?id=${roadmapId}&name=${encodeURIComponent(roadmapName)}" style="color: var(--text-primary); text-decoration: none;">${UI.escapeHtml(roadmapName)}</a>`;
+        breadcrumbItems.push({
+            name: roadmapName,
+            url: `roadmap.html?id=${roadmapId}&name=${encodeURIComponent(roadmapName)}`
+        });
     }
 
     if (subjectId && subjectName) {
-        if (breadcrumbHtml) breadcrumbHtml += ' → ';
         const topicLevel = UI.getUrlParam('topicLevel') || '0';
         const milestoneLevel = UI.getUrlParam('milestoneLevel') || topicLevel;
         const currentTab = UI.getUrlParam('tab') || 'topics';
-        breadcrumbHtml += `<a href="subject.html?id=${subjectId}&name=${encodeURIComponent(subjectName)}&roadmapId=${roadmapId || ''}&roadmapName=${encodeURIComponent(roadmapName || '')}&level=${milestoneLevel}&tab=${currentTab}" style="color: var(--text-primary); text-decoration: none;">${UI.escapeHtml(subjectName)}</a>`;
+        breadcrumbItems.push({
+            name: subjectName,
+            url: `subject.html?id=${subjectId}&name=${encodeURIComponent(subjectName)}&roadmapId=${roadmapId || ''}&roadmapName=${encodeURIComponent(roadmapName || '')}&level=${milestoneLevel}&tab=${currentTab}`
+        });
     }
 
-    if (breadcrumbHtml) {
-        breadcrumb.innerHTML = breadcrumbHtml;
-        breadcrumb.style.display = 'block';
-    } else {
-        console.log('No breadcrumb HTML generated');
-    }
+    UI.renderBreadcrumbs(breadcrumbItems);
 }
 
 window.addEventListener('DOMContentLoaded', () => {

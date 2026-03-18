@@ -659,43 +659,45 @@ function renderCards(cards) {
 }
 
 function displayBreadcrumb() {
-    const breadcrumb = document.getElementById('breadcrumb');
-    if (!breadcrumb) return;
-
     const resourceId = UI.getUrlParam('resourceId');
     const resourceName = UI.getUrlParam('resourceName');
     const subjectId = UI.getUrlParam('subjectId');
     const subjectName = UI.getUrlParam('subjectName');
     const roadmapId = UI.getUrlParam('roadmapId');
     const roadmapName = UI.getUrlParam('roadmapName');
+    const level = UI.getUrlParam('level');
+    const currentTab = UI.getUrlParam('tab') || 'resources';
 
-    let breadcrumbHtml = '';
+    const breadcrumbItems = [];
 
     if (roadmapId && roadmapName) {
-        breadcrumbHtml += `<a href="roadmap.html?id=${roadmapId}&name=${encodeURIComponent(roadmapName)}" style="color: var(--text-primary); text-decoration: none;">${UI.escapeHtml(roadmapName)}</a>`;
+        breadcrumbItems.push({
+            name: roadmapName,
+            url: `roadmap.html?id=${roadmapId}&name=${encodeURIComponent(roadmapName)}`
+        });
     }
 
     if (subjectId && subjectName) {
-        if (breadcrumbHtml) breadcrumbHtml += ' → ';
-        const currentTab = UI.getUrlParam('tab') || '';
-        const milestoneLevel = UI.getUrlParam('level') || '';
-        breadcrumbHtml += `<a href="subject.html?id=${subjectId}&name=${encodeURIComponent(subjectName)}&roadmapId=${roadmapId || ''}&roadmapName=${encodeURIComponent(roadmapName || '')}&level=${milestoneLevel}&tab=${currentTab}" style="color: var(--text-primary); text-decoration: none;">${UI.escapeHtml(subjectName)}</a>`;
+        breadcrumbItems.push({
+            name: subjectName,
+            url: `subject.html?id=${subjectId}&name=${encodeURIComponent(subjectName)}&roadmapId=${roadmapId || ''}&roadmapName=${encodeURIComponent(roadmapName || '')}&level=${level || ''}&tab=${currentTab}`
+        });
     }
 
     if (resourceId && resourceName) {
-        if (breadcrumbHtml) breadcrumbHtml += ' → ';
         const resourceType = UI.getUrlParam('resourceType') || '0';
         const resourcePattern = UI.getUrlParam('resourcePattern') || '0';
         const resourceLink = UI.getUrlParam('resourceLink') || '';
         const resourceProduction = UI.getUrlParam('resourceProduction') || '0';
         const resourceExpiration = UI.getUrlParam('resourceExpiration') || '0';
-        const currentTab = UI.getUrlParam('tab') || 'resources';
-        breadcrumbHtml += `<a href="resource.html?id=${resourceId}&name=${encodeURIComponent(resourceName)}&type=${resourceType}&pattern=${resourcePattern}&link=${encodeURIComponent(resourceLink)}&production=${resourceProduction}&expiration=${resourceExpiration}&subjectId=${subjectId || ''}&subjectName=${encodeURIComponent(subjectName || '')}&roadmapId=${roadmapId || ''}&roadmapName=${encodeURIComponent(roadmapName || '')}&tab=${currentTab}" style="color: var(--text-primary); text-decoration: none;">${UI.escapeHtml(resourceName)}</a>`;
+        
+        breadcrumbItems.push({
+            name: resourceName,
+            url: `resource.html?id=${resourceId}&name=${encodeURIComponent(resourceName)}&type=${resourceType}&pattern=${resourcePattern}&link=${encodeURIComponent(resourceLink)}&production=${resourceProduction}&expiration=${resourceExpiration}&subjectId=${subjectId || ''}&subjectName=${encodeURIComponent(subjectName || '')}&roadmapId=${roadmapId || ''}&roadmapName=${encodeURIComponent(roadmapName || '')}&level=${level || ''}&tab=${currentTab}`
+        });
     }
 
-    if (breadcrumbHtml) {
-        breadcrumb.innerHTML = breadcrumbHtml;
-    }
+    UI.renderBreadcrumbs(breadcrumbItems);
 }
 
 // Global state for move card modal
