@@ -217,6 +217,13 @@ const closeMoveBlockModal = () => {
 document.getElementById('close-move-block-modal-btn').onclick = closeMoveBlockModal;
 document.getElementById('cancel-move-block-modal-btn').onclick = closeMoveBlockModal;
 
+const moveBlockModal = document.getElementById('move-block-modal');
+if (moveBlockModal) {
+    moveBlockModal.onclick = (e) => {
+        if (e.target === moveBlockModal) closeMoveBlockModal();
+    };
+}
+
 document.getElementById('confirm-move-block-btn').onclick = async () => {
     const sourceBlock = currentBlocks[moveBlockState.sourceIndex];
     const sourceCardId = parseInt(UI.getUrlParam('cardId'));
