@@ -69,31 +69,6 @@
           color: #388e3c;
       }
 
-      .section-state {
-          display: inline-block;
-          padding: 0.2rem 0.6rem;
-          background-color: var(--accent-light);
-          color: var(--accent-color);
-          border-radius: 12px;
-          font-size: 0.8rem;
-          font-weight: 500;
-          text-transform: capitalize;
-      }
-
-      .section-state.draft {
-          background-color: #f0f0f0;
-          color: #666;
-      }
-
-      .section-state.reviewed {
-          background-color: #e3f2fd;
-          color: #1976d2;
-      }
-
-      .section-state.completed {
-          background-color: #e8f5e9;
-          color: #388e3c;
-      }
 
       .section-list-item {
           padding: 0.75rem;
@@ -162,10 +137,9 @@
       @media (max-width: 768px) {
           .section-header-buttons {
               flex-direction: column;
-              align-items: stretch !important;
+              align-items: stretch;
               width: 100%;
           }
-
           .section-header-buttons button {
               width: 100%;
           }
@@ -269,6 +243,9 @@
           <button id="remove-section-btn" class="btn btn-secondary" style="display: none; background-color: #dc3545; color: white; padding: 0.5rem 1rem; white-space: nowrap;">
             Remove Section
           </button>
+          <button id="add-card-btn" class="btn btn-primary" style="display: none; padding: 0.5rem 1rem; white-space: nowrap;">
+            + Add Card
+          </button>
         </div>
       </div>
     </div>
@@ -361,10 +338,6 @@
       <div class="loading" style="width: 40px; height: 40px; border-width: 4px;"></div>
       <p class="text-muted mt-md">Loading cards...</p>
     </div>
-
-    <button id="add-card-btn" class="btn btn-primary btn-full mb-lg" style="margin-top: 1rem; margin-bottom: 2rem; padding: 0.75rem 1rem; white-space: nowrap;">
-      + Add Card
-    </button>
 
     <div id="add-card-modal" class="modal-overlay" style="display: none;">
       <div class="modal-content" style="max-width: 700px;">

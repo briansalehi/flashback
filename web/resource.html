@@ -28,6 +28,10 @@
 
       /* Mobile responsive buttons (optional future use) */
       @media (max-width: 768px) {
+          .resource-header-container {
+              flex-direction: column;
+              align-items: stretch !important;
+          }
           .resource-header-buttons {
               flex-direction: column;
               align-items: stretch !important;
@@ -64,11 +68,12 @@
   <div class="container">
     <div class="dashboard-header">
     <div id="breadcrumb"></div>
-    <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; flex-wrap: wrap;">
+    <div class="resource-header-container" style="display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; flex-wrap: wrap;">
         <h1 id="resource-name" class="editable-title" title="Click to edit actions" style="flex: 1; min-width: 200px; margin: 0;">Loading...</h1>
-        <div style="display: flex; gap: 0.5rem; flex-shrink: 0;">
+        <div class="resource-header-buttons" style="display: flex; gap: 0.5rem; flex-shrink: 0;">
           <button id="edit-resource-btn" class="btn btn-secondary" style="display: none; padding: 0.5rem 1rem; white-space: nowrap;">Edit Resource</button>
           <button id="remove-resource-btn" class="btn btn-secondary" style="display: none; background-color: #dc3545; color: white; padding: 0.5rem 1rem; font-size: 0.875rem; white-space: nowrap;">Remove Resource</button>
+          <button id="add-section-btn" class="btn btn-primary" style="display: none; padding: 0.5rem 1rem; white-space: nowrap;">+ Add Section</button>
         </div>
       </div>
     </div>
@@ -183,11 +188,6 @@
         </div>
       </div>
     </div>
-
-
-    <button id="add-section-btn" class="btn btn-primary" style="margin-top: 1rem; margin-bottom: 1rem; padding: 0.75rem 1rem; white-space: nowrap;">
-      + Add Section
-    </button>
 
     <div id="sections-search-container" style="margin-top: 1rem; margin-bottom: 1rem;">
       <input type="text" id="sections-search-input" class="form-input" placeholder="Search sections..." autocomplete="off">

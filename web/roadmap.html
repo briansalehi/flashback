@@ -439,6 +439,24 @@
       .remove-milestone-btn:active {
           transform: translateY(-50%) scale(0.95);
       }
+
+      /* Responsive dashboard-header */
+      @media (max-width: 768px) {
+          .roadmap-header-container {
+              flex-direction: column;
+              align-items: stretch !important;
+          }
+
+          .roadmap-header-buttons {
+              flex-direction: column;
+              align-items: stretch !important;
+              width: 100%;
+          }
+
+          .roadmap-header-buttons button {
+              width: 100%;
+          }
+      }
   </style>
 </head>
 <body>
@@ -463,19 +481,30 @@
 
 <main class="dashboard">
   <div class="container">
-    <div class="dashboard-header" style="flex-wrap: wrap; gap: 1rem;">
+    <div class="dashboard-header roadmap-header-container" style="display: flex; flex-wrap: wrap; gap: 1rem; justify-content: space-between; align-items: flex-start; margin-top: 1rem;">
       <h1 id="roadmap-name" class="editable-title" title="Click to edit actions" style="flex: 1; min-width: 200px; margin: 0;">Loading...</h1>
-      <div style="display: flex; gap: 0.5rem; flex-shrink: 0;">
+      <div class="roadmap-header-buttons" style="display: flex; gap: 0.5rem; flex-shrink: 0;">
         <button id="rename-roadmap-btn" class="btn btn-secondary" style="display: none; padding: 0.5rem 1rem; white-space: nowrap;">
           Rename
         </button>
         <button id="remove-roadmap-btn" class="btn btn-secondary" style="display: none; background-color: #dc3545; color: white; padding: 0.5rem 1rem; white-space: nowrap;">
           Remove Roadmap
         </button>
+        <button id="create-milestone-btn" class="btn btn-primary" style="display: none; padding: 0.5rem 1rem; white-space: nowrap;">
+          + Add Subject to Roadmap
+        </button>
       </div>
     </div>
 
     <div id="error-message" style="display: none;"></div>
+
+    <div class="search-container" style="display: block; margin-top: 1.5rem; margin-bottom: 1.5rem;">
+      <input type="text" id="milestone-search-input" class="form-input" placeholder="Search milestones...">
+    </div>
+
+    <div id="no-milestones-found" style="display: none; text-align: center; padding: 2rem;">
+      <p class="text-muted">No milestones matching your search.</p>
+    </div>
 
     <!-- Rename Roadmap Modal -->
     <div id="rename-roadmap-modal" class="modal-overlay" style="display: none;">
@@ -549,10 +578,6 @@
         </div>
       </div>
     </div>
-
-    <button id="create-milestone-btn" class="btn btn-primary btn-full" style="margin-top: 2rem; padding: 0.65rem 1rem; white-space: nowrap;">
-      + Add Subject to Roadmap
-    </button>
 
     <div id="loading" style="display: none; text-align: center; padding: 3rem;">
       <div class="loading" style="width: 40px; height: 40px; border-width: 4px;"></div>

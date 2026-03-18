@@ -64,12 +64,24 @@ window.addEventListener('DOMContentLoaded', () => {
         sectionTitle.setAttribute('tabindex', '0');
         const editBtn = document.getElementById('edit-section-btn');
         const removeBtn = document.getElementById('remove-section-btn');
-        const reveal = () => {
-            if (editBtn) editBtn.style.display = 'inline-block';
-            if (removeBtn) removeBtn.style.display = 'inline-block';
+        const addCardBtn = document.getElementById('add-card-btn');
+        const markReviewedBtn = document.getElementById('mark-section-reviewed-btn');
+        const toggleActions = () => {
+            const isHidden = (editBtn && editBtn.style.display === 'none');
+            if (isHidden) {
+                if (editBtn) editBtn.style.display = 'inline-block';
+                if (removeBtn) removeBtn.style.display = 'inline-block';
+                if (addCardBtn) addCardBtn.style.display = 'inline-block';
+                if (markReviewedBtn && sectionState !== 1) markReviewedBtn.style.display = 'inline-block';
+            } else {
+                if (editBtn) editBtn.style.display = 'none';
+                if (removeBtn) removeBtn.style.display = 'none';
+                if (addCardBtn) addCardBtn.style.display = 'none';
+                if (markReviewedBtn) markReviewedBtn.style.display = 'none';
+            }
         };
-        sectionTitle.addEventListener('click', reveal);
-        sectionTitle.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); reveal(); }});
+        sectionTitle.addEventListener('click', toggleActions);
+        sectionTitle.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleActions(); }});
     }
 
     // Display breadcrumb
@@ -81,7 +93,7 @@ window.addEventListener('DOMContentLoaded', () => {
     const stateBadge = document.getElementById('section-state-badge');
     if (stateBadge) {
         stateBadge.textContent = stateName;
-        stateBadge.className = `section-state ${stateName}`;
+        stateBadge.className = `state-badge ${stateName}`;
     }
 
     const signoutBtn = document.getElementById('signout-btn');
@@ -174,9 +186,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
     // Setup mark section as reviewed button
     const markSectionReviewedBtn = document.getElementById('mark-section-reviewed-btn');
-    if (markSectionReviewedBtn && sectionState !== 1) { // Show only if not already reviewed (state 1)
-        markSectionReviewedBtn.style.display = 'inline-block';
-
+    if (markSectionReviewedBtn) {
         const openReviewSectionModal = () => {
             const modal = document.getElementById('review-section-confirmation-modal');
             if (modal) {

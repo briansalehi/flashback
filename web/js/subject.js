@@ -144,12 +144,14 @@ window.addEventListener('DOMContentLoaded', () => {
         subjectTitle.setAttribute('tabindex', '0');
         const renameBtn = document.getElementById('rename-subject-btn');
         const removeBtn = document.getElementById('remove-subject-btn');
-        const reveal = () => {
-            if (renameBtn) renameBtn.style.display = 'inline-block';
-            if (removeBtn) removeBtn.style.display = 'inline-block';
+        const toggleVisibility = () => {
+            const isVisible = renameBtn && renameBtn.style.display !== 'none';
+            const display = isVisible ? 'none' : 'inline-block';
+            if (renameBtn) renameBtn.style.display = display;
+            if (removeBtn) removeBtn.style.display = display;
         };
-        subjectTitle.addEventListener('click', reveal);
-        subjectTitle.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); reveal(); }});
+        subjectTitle.addEventListener('click', toggleVisibility);
+        subjectTitle.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleVisibility(); }});
     }
 
     // Display breadcrumb

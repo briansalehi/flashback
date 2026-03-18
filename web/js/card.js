@@ -19,7 +19,7 @@ async function markCardAsReviewed() {
         const stateElement = document.getElementById('card-state');
         if (stateElement) {
             stateElement.textContent = 'reviewed';
-            stateElement.className = 'card-state-display reviewed';
+            stateElement.className = 'state-badge reviewed';
             stateElement.style.display = 'inline-block';
         }
 
@@ -311,7 +311,7 @@ window.addEventListener('DOMContentLoaded', () => {
     const stateElement = document.getElementById('card-state');
     if (stateElement) {
         stateElement.textContent = stateName;
-        stateElement.className = `card-state-display ${stateName}`;
+        stateElement.className = `state-badge ${stateName}`;
         stateElement.style.display = 'inline-block';
     }
 
@@ -348,15 +348,11 @@ window.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Setup mark as reviewed button (reveal if in draft state)
+    // Setup mark as reviewed button
     const markReviewedBtn = document.getElementById('mark-reviewed-btn');
     if (markReviewedBtn) {
-        // Reveal by default if in draft state (state 0)
-        if (state === 0) {
-            markReviewedBtn.style.display = 'inline-block';
-        } else {
-            markReviewedBtn.style.display = 'none';
-        }
+        // Show only if in draft state (state 0)
+        markReviewedBtn.style.display = (state === 0) ? 'inline-block' : 'none';
 
         const openReviewModal = () => {
             const modal = document.getElementById('review-confirmation-modal');
@@ -456,24 +452,46 @@ window.addEventListener('DOMContentLoaded', () => {
         };
     }
 
-    // Also defensively hide Edit and Remove until revealed
+    // Also defensively hide Add Block, Mark Reviewed, Edit, and Remove until revealed
+    const addBlockBtnInit = document.getElementById('add-block-btn');
+    if (addBlockBtnInit) addBlockBtnInit.style.display = 'none';
+    const markReviewedBtnInit = document.getElementById('mark-reviewed-btn');
+    if (markReviewedBtnInit) markReviewedBtnInit.style.display = 'none';
     const editBtnInit = document.getElementById('edit-headline-btn');
     if (editBtnInit) editBtnInit.style.display = 'none';
     const removeBtnInit = document.getElementById('remove-card-btn');
     if (removeBtnInit) removeBtnInit.style.display = 'none';
 
-    // Reveal header actions on headline click
+    // Toggle header actions on headline click
     if (headlineEl) {
         headlineEl.setAttribute('tabindex', '0');
         const editBtn = document.getElementById('edit-headline-btn');
         const removeBtn = document.getElementById('remove-card-btn');
-        const reveal = () => {
-            if (editBtn) editBtn.style.display = 'inline-block';
-            if (removeBtn) removeBtn.style.display = 'inline-block';
-            if (markReviewedBtn && state !== 1) markReviewedBtn.style.display = 'inline-block';
+        const addBlockBtn = document.getElementById('add-block-btn');
+        const markReviewedBtn = document.getElementById('mark-reviewed-btn');
+        
+        const toggleActions = () => {
+            const isHidden = (editBtn && editBtn.style.display === 'none');
+            if (isHidden) {
+                if (editBtn) editBtn.style.display = 'inline-block';
+                if (removeBtn) removeBtn.style.display = 'inline-block';
+                if (addBlockBtn) addBlockBtn.style.display = 'flex'; // Use flex for better alignment with SVG
+                if (markReviewedBtn && state !== 1) markReviewedBtn.style.display = 'inline-block';
+            } else {
+                if (editBtn) editBtn.style.display = 'none';
+                if (removeBtn) removeBtn.style.display = 'none';
+                if (addBlockBtn) addBlockBtn.style.display = 'none';
+                if (markReviewedBtn) markReviewedBtn.style.display = 'none';
+            }
         };
-        headlineEl.addEventListener('click', reveal);
-        headlineEl.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); reveal(); }});
+        
+        headlineEl.addEventListener('click', toggleActions);
+        headlineEl.addEventListener('keydown', (e) => { 
+            if (e.key === 'Enter' || e.key === ' ') { 
+                e.preventDefault(); 
+                toggleActions(); 
+            }
+        });
     }
 
     const adjustTextareaHeight = (el) => {
@@ -1699,13 +1717,11 @@ async function loadBlocks() {
 
         if (blocks.length === 0) {
             UI.toggleElement('card-content', true);
-            UI.toggleElement('add-block-container', false);
             UI.toggleElement('empty-state', true);
             const container = document.getElementById('blocks-list');
             if (container) container.innerHTML = '';
         } else {
             UI.toggleElement('card-content', true);
-            UI.toggleElement('add-block-container', true);
             renderBlocks(blocks);
         }
     } catch (err) {

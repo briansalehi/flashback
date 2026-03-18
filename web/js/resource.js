@@ -154,18 +154,22 @@ window.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Reveal edit/remove on title click
+    // Toggle edit/remove actions on title click
     const resourceTitle = document.getElementById('resource-name');
     if (resourceTitle) {
         resourceTitle.setAttribute('tabindex', '0');
         const editBtn = document.getElementById('edit-resource-btn');
         const removeBtn = document.getElementById('remove-resource-btn');
-        const reveal = () => {
-            if (editBtn) editBtn.style.display = 'inline-block';
-            if (removeBtn) removeBtn.style.display = 'inline-block';
+        const addSectionBtn = document.getElementById('add-section-btn');
+        const toggle = () => {
+            const isVisible = editBtn && editBtn.style.display !== 'none';
+            const display = isVisible ? 'none' : 'inline-block';
+            if (editBtn) editBtn.style.display = display;
+            if (removeBtn) removeBtn.style.display = display;
+            if (addSectionBtn) addSectionBtn.style.display = display;
         };
-        resourceTitle.addEventListener('click', reveal);
-        resourceTitle.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); reveal(); }});
+        resourceTitle.addEventListener('click', toggle);
+        resourceTitle.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); }});
     }
 
     const addSectionBtn = document.getElementById('add-section-btn');

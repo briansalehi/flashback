@@ -1536,6 +1536,58 @@ a:hover {
 .card-state-tag.released { background: #2c5282; color: #ebf8ff; }
 .card-state-tag.rejected { background: #9b2c2c; color: #fff5f5; }
 
+/* Modern state badge style (consistent with card page) */
+.state-badge {
+    display: inline-block;
+    padding: 0.15rem 0.5rem;
+    background: rgba(44, 95, 79, 0.1);
+    color: var(--accent-color);
+    border-radius: 4px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border: 1px solid rgba(44, 95, 79, 0.2);
+    backdrop-filter: blur(4px);
+    white-space: nowrap;
+}
+
+.state-badge.draft {
+    background: rgba(102, 102, 102, 0.1);
+    color: #888;
+    border-color: rgba(102, 102, 102, 0.2);
+}
+
+.state-badge.reviewed {
+    background: rgba(25, 118, 210, 0.1);
+    color: #1976d2;
+    border-color: rgba(25, 118, 210, 0.2);
+}
+
+.state-badge.completed {
+    background: rgba(56, 142, 60, 0.1);
+    color: #388e3c;
+    border-color: rgba(56, 142, 60, 0.2);
+}
+
+.state-badge.approved {
+    background: rgba(245, 124, 0, 0.1);
+    color: #f57c00;
+    border-color: rgba(245, 124, 0, 0.2);
+}
+
+.state-badge.released {
+    background: rgba(2, 119, 189, 0.1);
+    color: #0277bd;
+    border-color: rgba(2, 119, 189, 0.2);
+}
+
+.state-badge.rejected {
+    background: rgba(198, 40, 40, 0.1);
+    color: #c62828;
+    border-color: rgba(198, 40, 40, 0.2);
+}
+
 @media (min-width: 768px) {
     .content-block {
         padding: var(--space-2xl);

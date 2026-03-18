@@ -60,64 +60,23 @@
           line-height: 1.3;
       }
 
-      .card-state-display {
-          display: inline-block;
-          padding: 0.2rem 0.6rem;
-          background-color: var(--accent-light);
-          color: var(--accent-color);
-          border-radius: 12px;
-          font-size: 0.8rem;
-          font-weight: 500;
-          text-transform: capitalize;
-          margin-bottom: 1.5rem;
-      }
-
-      .card-state-display.draft {
-          background-color: #f0f0f0;
-          color: #666;
-      }
-
-      .card-state-display.reviewed {
-          background-color: #e3f2fd;
-          color: #1976d2;
-      }
-
-      .card-state-display.completed {
-          background-color: #e8f5e9;
-          color: #388e3c;
-      }
-
-      .card-state-display.approved {
-          background-color: #fff3e0;
-          color: #f57c00;
-      }
-
-      .card-state-display.released {
-          background-color: #e1f5fe;
-          color: #0277bd;
-      }
-
-      .card-state-display.rejected {
-          background-color: #ffebee;
-          color: #c62828;
-      }
 
       .card-header-container {
           display: flex;
           justify-content: space-between;
-          align-items: flex-start;
-          gap: 1rem;
-          margin-bottom: 1rem;
-          flex-wrap: wrap;
+          align-items: center;
+          gap: 1.5rem;
+          margin-bottom: 2rem;
+          padding-bottom: 1rem;
+          border-bottom: 1px solid rgba(229, 223, 213, 0.5);
       }
 
       .card-title-group {
           display: flex;
-          align-items: center;
-          gap: 1.5rem;
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 0.25rem;
           flex: 1;
-          min-width: 200px;
-          flex-wrap: wrap;
       }
 
       .card-header-buttons {
@@ -130,21 +89,20 @@
       @media (max-width: 768px) {
           .card-header-container {
               flex-direction: column;
-              align-items: stretch;
+              align-items: flex-start;
+              gap: 1rem;
           }
           .card-title-group {
-              flex-direction: column;
-              align-items: flex-start;
-              gap: 0.5rem;
+              width: 100%;
           }
           .card-header-buttons {
               flex-direction: column;
-              align-items: stretch !important;
+              align-items: stretch;
               width: 100%;
           }
-
           .card-header-buttons button {
               width: 100%;
+              justify-content: center;
           }
       }
 
@@ -330,14 +288,14 @@
       <p class="text-muted mt-md">Loading card...</p>
     </div>
 
-    <div id="card-content" class="blocks-container" style="display: none;">
+      <div id="card-content" class="blocks-container" style="display: none;">
       <div class="card-header-container">
         <div class="card-title-group">
+          <div id="card-state" style="display: none;"></div>
           <h1 id="card-headline" class="card-headline-display editable-title" title="Click to edit actions" style="margin-bottom: 0;"></h1>
-          <span id="card-state"></span>
         </div>
         <div class="card-header-buttons">
-          <button id="mark-reviewed-btn" class="btn btn-secondary" style="padding: 0.5rem 1rem; white-space: nowrap;">
+          <button id="mark-reviewed-btn" class="btn btn-secondary" style="display: none; padding: 0.5rem 1rem; white-space: nowrap;">
             Mark as Reviewed
           </button>
           <button id="edit-headline-btn" class="btn btn-secondary" style="display: none; padding: 0.5rem 1rem; white-space: nowrap;">
@@ -347,17 +305,14 @@
                   style="display: none; background-color: #dc3545; color: white; padding: 0.5rem 1rem; white-space: nowrap;">
             Remove Card
           </button>
+          <button id="add-block-btn" class="btn btn-primary" style="display: none; padding: 0.5rem 1rem; font-weight: 500; align-items: center; gap: 0.5rem;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="12" y1="5" x2="12" y2="19"></line>
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+            Add Block
+          </button>
         </div>
-      </div>
-
-      <div id="add-block-container" style="margin-bottom: 2rem; display: flex; justify-content: flex-end;">
-        <button id="add-block-btn" class="btn btn-primary" style="padding: 0.6rem 1.5rem; font-weight: 500; display: flex; align-items: center; gap: 0.5rem; margin-top: 2rem;">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="12" y1="5" x2="12" y2="19"></line>
-            <line x1="5" y1="12" x2="19" y2="12"></line>
-          </svg>
-          Add Block
-        </button>
       </div>
 
       <div id="blocks-list">

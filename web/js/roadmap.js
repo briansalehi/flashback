@@ -118,19 +118,24 @@ window.addEventListener('DOMContentLoaded', () => {
         return;
     }
 
-    // Set roadmap title and reveal actions on title click
+    // Set roadmap title and toggle actions on title click
     const roadmapTitle = document.getElementById('roadmap-name');
     if (roadmapTitle) {
         roadmapTitle.textContent = roadmapName || 'Roadmap';
         roadmapTitle.setAttribute('tabindex', '0');
         const renameBtn = document.getElementById('rename-roadmap-btn');
         const removeBtn = document.getElementById('remove-roadmap-btn');
-        const reveal = () => {
-            if (renameBtn) renameBtn.style.display = 'inline-block';
-            if (removeBtn) removeBtn.style.display = 'inline-block';
+        const addBtn = document.getElementById('create-milestone-btn');
+        const toggle = () => {
+            const isVisible = renameBtn && renameBtn.style.display !== 'none';
+            const display = isVisible ? 'none' : 'inline-block';
+            if (renameBtn) renameBtn.style.display = display;
+            if (removeBtn) removeBtn.style.display = display;
+            if (addBtn) addBtn.style.display = display;
+            // Search bar should always remain visible and outside the title section
         };
-        roadmapTitle.addEventListener('click', reveal);
-        roadmapTitle.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); reveal(); }});
+        roadmapTitle.addEventListener('click', toggle);
+        roadmapTitle.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); }});
     }
 
     const signoutBtn = document.getElementById('signout-btn');
@@ -188,6 +193,14 @@ window.addEventListener('DOMContentLoaded', () => {
             if (e.target === addMilestoneOverlay) {
                 closeAddMilestoneModal();
             }
+        });
+    }
+
+    const milestoneSearchInput = document.getElementById('milestone-search-input');
+    if (milestoneSearchInput) {
+        milestoneSearchInput.addEventListener('input', (e) => {
+            const searchTerm = e.target.value.toLowerCase().trim();
+            filterMilestones(searchTerm);
         });
     }
 
@@ -582,9 +595,24 @@ async function loadMilestones() {
 
         if (response.milestones.length === 0) {
             UI.toggleElement('empty-state', true);
+            // Hide search container if there are no milestones at all
+            const searchContainer = document.querySelector('.search-container');
+            if (searchContainer) searchContainer.style.display = 'none';
         } else {
             UI.toggleElement('milestones-container', true);
+            // Show search container if we have milestones (and actions are shown)
+            const renameBtn = document.getElementById('rename-roadmap-btn');
+            const searchContainer = document.querySelector('.search-container');
+            if (searchContainer && renameBtn && renameBtn.style.display !== 'none') {
+                searchContainer.style.display = 'block';
+            }
             renderMilestones(response.milestones);
+            
+            // Re-apply search if exists
+            const searchInput = document.getElementById('milestone-search-input');
+            if (searchInput && searchInput.value) {
+                filterMilestones(searchInput.value.toLowerCase().trim());
+            }
         }
     } catch (err) {
         console.error('Loading milestones failed:', err);
@@ -768,5 +796,32 @@ async function changeMilestoneLevel(milestoneId, newLevel) {
     } catch (err) {
         console.error('Change milestone level failed:', err);
         UI.showError('Failed to change milestone level: ' + (err.message || 'Unknown error'));
+    }
+}
+
+function filterMilestones(searchTerm) {
+    const container = document.getElementById('milestones-container');
+    const milestoneCards = container.querySelectorAll('.item-block');
+    let hasResults = false;
+
+    milestoneCards.forEach(card => {
+        const titleElement = card.querySelector('.item-title');
+        if (!titleElement) return;
+        const name = titleElement.textContent.toLowerCase();
+        if (name.includes(searchTerm)) {
+            card.style.display = 'block';
+            hasResults = true;
+        } else {
+            card.style.display = 'none';
+        }
+    });
+
+    UI.toggleElement('no-milestones-found', !hasResults && searchTerm !== '');
+    
+    // Hide empty state if we're searching, even if no results found in search
+    if (searchTerm !== '') {
+        UI.toggleElement('empty-state', false);
+    } else if (currentMilestones.length === 0) {
+        UI.toggleElement('empty-state', true);
     }
 }

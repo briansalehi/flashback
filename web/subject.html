@@ -121,6 +121,21 @@
               justify-content: center;
               border-radius: 28px;
           }
+
+          .subject-header-container {
+              flex-direction: column;
+              align-items: stretch !important;
+          }
+
+          .subject-header-buttons {
+              flex-direction: column;
+              align-items: stretch !important;
+              width: 100%;
+          }
+
+          .subject-header-buttons button {
+              width: 100%;
+          }
       }
 
       .search-result-item {
@@ -547,9 +562,9 @@
   <div class="container">
     <div class="dashboard-header">
     <div id="breadcrumb"></div>
-    <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; flex-wrap: wrap;">
+    <div class="subject-header-container" style="display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; flex-wrap: wrap;">
         <h1 id="subject-name" class="editable-title" title="Click to edit actions" style="flex: 1; min-width: 200px;">Loading...</h1>
-        <div style="display: flex; gap: 0.5rem; flex-shrink: 0;">
+        <div class="subject-header-buttons" style="display: flex; gap: 0.5rem; flex-shrink: 0;">
           <button id="rename-subject-btn" class="btn btn-secondary" style="display: none; padding: 0.5rem 1rem; white-space: nowrap;">
             Rename
           </button>
