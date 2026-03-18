@@ -437,6 +437,56 @@
       </div>
     </div>
 
+    <!-- Edit Block Modal -->
+    <div id="edit-block-modal" class="modal-overlay" style="display: none;">
+      <div class="modal-content" style="max-width: 800px;">
+        <div class="modal-header">
+          <h2 class="modal-title">Edit Block</h2>
+          <button type="button" id="close-edit-block-modal-btn" class="modal-close" aria-label="Close modal">&times;</button>
+        </div>
+        <form id="edit-block-modal-form">
+          <div class="modal-body">
+            <div style="margin-bottom: 1rem;">
+              <label class="form-label">Type: <span style="color: red;">*</span></label>
+              <select id="edit-block-type" class="form-input" style="width: 100%;">
+                <option value="0">Text</option>
+                <option value="1">Code</option>
+                <option value="2">Image</option>
+                <option value="3">Math</option>
+                <option value="4">Diagram</option>
+              </select>
+            </div>
+            <div style="margin-bottom: 1rem;">
+              <label class="form-label">Extension: <span style="color: red;">*</span></label>
+              <input type="text" id="edit-block-extension" class="form-input" style="width: 100%;" placeholder="e.g., js, py, cpp" required>
+            </div>
+            <div style="margin-bottom: 1rem;">
+              <label class="form-label">Metadata (optional):</label>
+              <input type="text" id="edit-block-metadata" class="form-input" style="width: 100%;" placeholder="e.g., Important, Note, Warning">
+            </div>
+            <div style="margin-bottom: 1rem;">
+              <label class="form-label">Content: <span style="color: red;">*</span></label>
+              <p style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 0.5rem;">
+                💡 Tip: Leave a blank line (press Enter twice) to split this block into multiple blocks
+              </p>
+              <textarea id="edit-block-content" class="form-input" style="width: 100%; min-height: 250px; font-family: monospace;" placeholder="Enter block content..." required></textarea>
+            </div>
+          </div>
+          <div class="form-actions" style="display: flex; gap: 1rem; margin-top: 2rem; justify-content: flex-end;">
+            <button type="submit" id="save-edit-block-modal-btn" class="btn btn-primary" style="padding: 0.5rem 1.5rem; white-space: nowrap;">
+              Save Changes
+            </button>
+            <button type="button" id="save-split-block-modal-btn" class="btn" style="display: none; background-color: #d4845c; color: white; padding: 0.5rem 1.5rem; white-space: nowrap;">
+              Save & Split
+            </button>
+            <button type="button" id="cancel-edit-block-modal-btn" class="btn btn-secondary" style="padding: 0.5rem 1.5rem; white-space: nowrap;">
+              Cancel
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
     <!-- Edit Card Modal -->
     <div id="edit-card-modal" class="modal-overlay" style="display: none;">
       <div class="modal-content" style="max-width: 600px;">

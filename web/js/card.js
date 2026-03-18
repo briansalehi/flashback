@@ -474,7 +474,8 @@ window.addEventListener('DOMContentLoaded', () => {
         el.style.height = el.scrollHeight + 'px';
     };
 
-    // Edit Card Modal Functions
+    let editCardOriginalValue = '';
+
     const openEditCardModal = () => {
         const modal = document.getElementById('edit-card-modal');
         if (modal) {
@@ -483,7 +484,8 @@ window.addEventListener('DOMContentLoaded', () => {
             const headlineEl = document.getElementById('card-headline');
             const headlineInput = document.getElementById('edit-card-headline');
             if (headlineInput) {
-                headlineInput.value = headlineEl ? (headlineEl.getAttribute('data-original-text') || headlineEl.textContent) : '';
+                editCardOriginalValue = headlineEl ? (headlineEl.getAttribute('data-original-text') || headlineEl.textContent) : '';
+                headlineInput.value = editCardOriginalValue;
                 setTimeout(() => {
                     headlineInput.focus();
                     adjustTextareaHeight(headlineInput);
@@ -492,7 +494,15 @@ window.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    const closeEditCardModal = () => {
+    const closeEditCardModal = (force = false) => {
+        const headlineInput = document.getElementById('edit-card-headline');
+        if (!force && headlineInput && headlineInput.value !== editCardOriginalValue) {
+            window.showConfirmModal('Unsaved Changes', 'You have unsaved changes. Are you sure you want to discard them?', () => {
+                closeEditCardModal(true);
+            });
+            return;
+        }
+
         const modal = document.getElementById('edit-card-modal');
         if (modal) {
             modal.style.display = 'none';
@@ -519,6 +529,190 @@ window.addEventListener('DOMContentLoaded', () => {
     if (editCardModal) {
         editCardModal.addEventListener('click', (e) => {
             if (e.target === editCardModal) closeEditCardModal();
+        });
+    }
+
+    let editBlockState = {
+        index: -1,
+        originalType: 0,
+        originalExtension: '',
+        originalMetadata: '',
+        originalContent: ''
+    };
+
+    window.openEditBlockModal = (index) => {
+        const block = currentBlocks[index];
+        if (!block) return;
+
+        const modal = document.getElementById('edit-block-modal');
+        if (modal) {
+            editBlockState = {
+                index: index,
+                originalType: block.type,
+                originalExtension: block.extension || '',
+                originalMetadata: block.metadata || '',
+                originalContent: block.content || ''
+            };
+
+            document.getElementById('edit-block-type').value = editBlockState.originalType;
+            document.getElementById('edit-block-extension').value = editBlockState.originalExtension;
+            document.getElementById('edit-block-metadata').value = editBlockState.originalMetadata;
+            document.getElementById('edit-block-content').value = editBlockState.originalContent;
+
+            modal.style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+
+            const typeSelect = document.getElementById('edit-block-type');
+            const extensionInput = document.getElementById('edit-block-extension');
+            const contentTextarea = document.getElementById('edit-block-content');
+            const splitBtn = document.getElementById('save-split-block-modal-btn');
+
+            const handleTypeChange = () => {
+                const type = parseInt(typeSelect.value);
+                if (type === 0) { // Text
+                    extensionInput.value = 'md';
+                    extensionInput.disabled = true;
+                } else if (type === 3) { // Math
+                    extensionInput.value = 'tex';
+                    extensionInput.disabled = true;
+                } else {
+                    extensionInput.disabled = false;
+                }
+            };
+
+            const handleContentChange = () => {
+                const content = contentTextarea.value;
+                if (content.includes('\n\n')) {
+                    splitBtn.style.display = 'inline-block';
+                } else {
+                    splitBtn.style.display = 'none';
+                }
+            };
+
+            typeSelect.onchange = handleTypeChange;
+            contentTextarea.oninput = handleContentChange;
+
+            handleTypeChange();
+            handleContentChange();
+
+            setTimeout(() => {
+                contentTextarea.focus();
+            }, 100);
+        }
+    };
+
+    window.closeEditBlockModal = (force = false) => {
+        if (!force) {
+            const currentType = parseInt(document.getElementById('edit-block-type').value);
+            const currentExtension = document.getElementById('edit-block-extension').value;
+            const currentMetadata = document.getElementById('edit-block-metadata').value;
+            const currentContent = document.getElementById('edit-block-content').value;
+
+            if (currentType !== editBlockState.originalType ||
+                currentExtension !== editBlockState.originalExtension ||
+                currentMetadata !== editBlockState.originalMetadata ||
+                currentContent !== editBlockState.originalContent) {
+
+                window.showConfirmModal('Unsaved Changes', 'You have unsaved changes. Are you sure you want to discard them?', () => {
+                    window.closeEditBlockModal(true);
+                });
+                return;
+            }
+        }
+
+        const modal = document.getElementById('edit-block-modal');
+        if (modal) {
+            modal.style.display = 'none';
+            document.body.style.overflow = '';
+            UI.clearForm('edit-block-modal-form');
+        }
+    };
+
+    const editBlockModal = document.getElementById('edit-block-modal');
+    if (editBlockModal) {
+        editBlockModal.addEventListener('click', (e) => {
+            if (e.target === editBlockModal) window.closeEditBlockModal();
+        });
+    }
+
+    const cancelEditBlockModalBtn = document.getElementById('cancel-edit-block-modal-btn');
+    if (cancelEditBlockModalBtn) cancelEditBlockModalBtn.addEventListener('click', () => window.closeEditBlockModal());
+
+    const closeEditBlockModalBtn = document.getElementById('close-edit-block-modal-btn');
+    if (closeEditBlockModalBtn) closeEditBlockModalBtn.addEventListener('click', () => window.closeEditBlockModal());
+
+    const editBlockForm = document.getElementById('edit-block-modal-form');
+    if (editBlockForm) {
+        editBlockForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const index = editBlockState.index;
+            const type = parseInt(document.getElementById('edit-block-type').value);
+            const extension = document.getElementById('edit-block-extension').value.trim();
+            const metadata = document.getElementById('edit-block-metadata').value.trim();
+            const content = document.getElementById('edit-block-content').value.trim();
+
+            if (!content) {
+                UI.showError('Content cannot be empty');
+                return;
+            }
+
+            UI.setButtonLoading('save-edit-block-modal-btn', true);
+            try {
+                const cardId = parseInt(UI.getUrlParam('cardId'));
+                const position = currentBlocks[index].position;
+                await client.editBlock(cardId, position, type, extension, content, metadata);
+                await loadBlocks();
+                closeEditBlockModal(true);
+                UI.showSuccess('Block updated successfully');
+            } catch (err) {
+                console.error('Failed to edit block:', err);
+                UI.showError('Failed to edit block: ' + (err.message || 'Unknown error'));
+            } finally {
+                UI.setButtonLoading('save-edit-block-modal-btn', false);
+            }
+        });
+    }
+
+    const saveSplitBlockModalBtn = document.getElementById('save-split-block-modal-btn');
+    if (saveSplitBlockModalBtn) {
+        saveSplitBlockModalBtn.addEventListener('click', async () => {
+            const index = editBlockState.index;
+            const type = parseInt(document.getElementById('edit-block-type').value);
+            const extension = document.getElementById('edit-block-extension').value.trim();
+            const metadata = document.getElementById('edit-block-metadata').value.trim();
+            const content = document.getElementById('edit-block-content').value.trim();
+
+            if (!content) {
+                UI.showError('Content cannot be empty');
+                return;
+            }
+
+            UI.setButtonLoading('save-split-block-modal-btn', true);
+            try {
+                const cardId = parseInt(UI.getUrlParam('cardId'));
+                const position = currentBlocks[index].position;
+
+                const parts = content.split('\n\n').filter(p => p.trim() !== '');
+                if (parts.length <= 1) {
+                    await client.editBlock(cardId, position, type, extension, content, metadata);
+                } else {
+                    // Update first part
+                    await client.editBlock(cardId, position, type, extension, parts[0], metadata);
+                    // Add subsequent parts
+                    for (let i = 1; i < parts.length; i++) {
+                        await client.addBlock(cardId, position + i, type, parts[i], extension, metadata);
+                    }
+                }
+
+                await loadBlocks();
+                closeEditBlockModal(true);
+                UI.showSuccess('Block updated and split successfully');
+            } catch (err) {
+                console.error('Failed to split block:', err);
+                UI.showError('Failed to split block: ' + (err.message || 'Unknown error'));
+            } finally {
+                UI.setButtonLoading('save-split-block-modal-btn', false);
+            }
         });
     }
 
@@ -1815,7 +2009,7 @@ function renderBlocks(blocks) {
                 if (overlay && window.getComputedStyle(overlay).opacity === '0') {
                     return;
                 }
-                window.editBlock(index);
+                window.openEditBlockModal(index);
             });
         }
 
@@ -1847,96 +2041,9 @@ function renderBlocks(blocks) {
             });
         }
 
-        // Edit mode
-        const editDiv = document.createElement('div');
-        editDiv.className = 'block-edit';
-        editDiv.id = `block-edit-${index}`;
-        editDiv.style.display = 'none';
-
-        const extensionValue = block.extension !== undefined && block.extension !== null ? block.extension : '';
-        const metadataValue = block.metadata !== undefined && block.metadata !== null ? block.metadata : '';
-        const contentValue = block.content !== undefined && block.content !== null ? block.content : '';
-
-        editDiv.innerHTML = `
-            <div style="margin-bottom: 1rem;">
-                <label style="display: block; margin-bottom: 0.25rem; font-weight: 500;">Type: <span style="color: red;">*</span></label>
-                <select id="block-type-${index}" class="form-input" style="width: 100%;">
-                    <option value="0" ${block.type === 0 ? 'selected' : ''}>Text</option>
-                    <option value="1" ${block.type === 1 ? 'selected' : ''}>Code</option>
-                    <option value="2" ${block.type === 2 ? 'selected' : ''}>Image</option>
-                    <option value="3" ${block.type === 3 ? 'selected' : ''}>Math</option>
-                    <option value="4" ${block.type === 4 ? 'selected' : ''}>Diagram</option>
-                </select>
-            </div>
-            <div style="margin-bottom: 1rem;">
-                <label style="display: block; margin-bottom: 0.25rem; font-weight: 500;">Extension: <span style="color: red;">*</span></label>
-                <input type="text" id="block-extension-${index}" class="form-input" style="width: 100%;" value="${UI.escapeHtml(extensionValue)}" placeholder="e.g., js, py, cpp" required>
-            </div>
-            <div style="margin-bottom: 1rem;">
-                <label style="display: block; margin-bottom: 0.25rem; font-weight: 500;">Metadata (optional):</label>
-                <input type="text" id="block-metadata-${index}" class="form-input" style="width: 100%;" value="${UI.escapeHtml(metadataValue)}" placeholder="e.g., Important, Note, Warning">
-            </div>
-            <div style="margin-bottom: 1rem;">
-                <label style="display: block; margin-bottom: 0.25rem; font-weight: 500;">Content: <span style="color: red;">*</span></label>
-                <p style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 0.5rem;">
-                    💡 Tip: Leave a blank line (press Enter twice) to split this block into multiple blocks
-                </p>
-                <textarea id="block-content-${index}" class="form-input" style="width: 100%; min-height: 150px; font-family: monospace;" placeholder="Enter block content..." required>${UI.escapeHtml(contentValue)}</textarea>
-            </div>
-            <div style="display: flex; gap: 0.5rem; align-items: center;">
-                <button class="btn btn-primary" onclick="saveBlock(${index})" id="save-block-btn-${index}" style="padding: 0.5rem 1.5rem; white-space: nowrap;">Save</button>
-                <button class="btn btn-secondary" onclick="cancelEditBlock(${index})" style="padding: 0.5rem 1.5rem; white-space: nowrap;">Cancel</button>
-                <button class="btn btn-secondary" onclick="saveSplitBlock(${index})" id="split-block-btn-${index}" style="display: none; background-color: #d4845c; color: white; padding: 0.5rem 1.5rem; white-space: nowrap;">Save & Split</button>
-            </div>
-        `;
 
         blockItem.appendChild(displayDiv);
-        blockItem.appendChild(editDiv);
         container.appendChild(blockItem);
-
-        // Add auto-split detection and type handling
-        setTimeout(() => {
-            const contentTextarea = document.getElementById(`block-content-${index}`);
-            const splitBtn = document.getElementById(`split-block-btn-${index}`);
-            const typeSelect = document.getElementById(`block-type-${index}`);
-            const extensionInput = document.getElementById(`block-extension-${index}`);
-
-            if (typeSelect && extensionInput) {
-                const handleTypeChange = (isInitial = false) => {
-                    const type = parseInt(typeSelect.value);
-                    if (type === 0) { // Text
-                        extensionInput.value = 'md';
-                        extensionInput.disabled = true;
-                    } else if (type === 3) { // Math
-                        extensionInput.value = 'tex';
-                        extensionInput.disabled = true;
-                    } else if (type === 4) { // Diagram
-                        extensionInput.value = 'js';
-                        extensionInput.disabled = true;
-                    } else {
-                        if (!isInitial) {
-                            extensionInput.value = '';
-                        }
-                        extensionInput.disabled = false;
-                    }
-                };
-                typeSelect.addEventListener('change', () => handleTypeChange(false));
-                handleTypeChange(true);
-                extensionInput.addEventListener('input', () => {
-                    extensionInput.value = extensionInput.value.toLowerCase();
-                });
-            }
-
-            if (contentTextarea && splitBtn) {
-                contentTextarea.addEventListener('input', () => {
-                    if (contentTextarea.value.includes('\n\n\n')) {
-                        splitBtn.style.display = 'inline-block';
-                    } else {
-                        splitBtn.style.display = 'none';
-                    }
-                });
-            }
-        }, 0);
     });
 
     // Apply KaTeX auto-render to all text blocks
@@ -2085,172 +2192,6 @@ window.exitReorderMode = function() {
     }
 };
 
-window.editBlock = function(index) {
-    const displayDiv = document.getElementById(`block-display-${index}`);
-    const editDiv = document.getElementById(`block-edit-${index}`);
-    const blockItem = document.getElementById(`block-${index}`);
-
-    if (displayDiv && editDiv) {
-        displayDiv.style.display = 'none';
-        editDiv.style.display = 'block';
-
-        // Re-render blocks to refresh click handlers (optional, but good for consistency)
-        // or just ensure dragging is disabled (though we removed draggable)
-    }
-};
-
-window.cancelEditBlock = function(index) {
-    const displayDiv = document.getElementById(`block-display-${index}`);
-    const editDiv = document.getElementById(`block-edit-${index}`);
-
-    if (displayDiv && editDiv) {
-        displayDiv.style.display = 'block';
-        editDiv.style.display = 'none';
-    }
-};
-
-window.saveBlock = async function(index) {
-    const block = currentBlocks[index];
-    if (!block) {
-        UI.showError('Block not found');
-        return;
-    }
-
-    const typeSelect = document.getElementById(`block-type-${index}`);
-    const extensionInput = document.getElementById(`block-extension-${index}`);
-    const metadataInput = document.getElementById(`block-metadata-${index}`);
-    const contentTextarea = document.getElementById(`block-content-${index}`);
-
-    if (!typeSelect || !extensionInput || !metadataInput || !contentTextarea) {
-        UI.showError('Form elements not found');
-        return;
-    }
-
-    const newType = parseInt(typeSelect.value);
-    const newExtension = extensionInput.value.trim().toLowerCase();
-    const newMetadata = metadataInput.value.trim();
-    const newContent = contentTextarea.value.trim();
-
-    if (!newContent) {
-        UI.showError('Content cannot be empty');
-        return;
-    }
-
-    if (!newExtension) {
-        UI.showError('Extension cannot be empty');
-        return;
-    }
-
-    if (isNaN(newType)) {
-        UI.showError('Type must be selected');
-        return;
-    }
-
-    UI.setButtonLoading(`save-block-btn-${index}`, true);
-
-    try {
-        const cardId = parseInt(UI.getUrlParam('cardId'));
-
-        await client.editBlock(cardId, block.position, newType, newExtension, newContent, newMetadata);
-
-        // Update the block in our current blocks array
-        currentBlocks[index] = {
-            ...block,
-            type: newType,
-            extension: newExtension,
-            metadata: newMetadata,
-            content: newContent
-        };
-
-        // Re-render all blocks to show the updated content
-        renderBlocks(currentBlocks);
-
-        UI.setButtonLoading(`save-block-btn-${index}`, false);
-    } catch (err) {
-        console.error('Failed to edit block:', err);
-
-        // Error code 6 means ALREADY_EXISTS (no changes detected)
-        if (err.code === 6) {
-            // No changes, just exit edit mode
-            const displayDiv = document.getElementById(`block-display-${index}`);
-            const editDiv = document.getElementById(`block-edit-${index}`);
-            if (displayDiv && editDiv) {
-                displayDiv.style.display = 'block';
-                editDiv.style.display = 'none';
-            }
-        } else {
-            UI.showError('Failed to edit block: ' + (err.message || 'Unknown error'));
-        }
-
-        UI.setButtonLoading(`save-block-btn-${index}`, false);
-    }
-};
-
-window.saveSplitBlock = async function(index) {
-    const block = currentBlocks[index];
-    if (!block) {
-        UI.showError('Block not found');
-        return;
-    }
-
-    const typeSelect = document.getElementById(`block-type-${index}`);
-    const extensionInput = document.getElementById(`block-extension-${index}`);
-    const metadataInput = document.getElementById(`block-metadata-${index}`);
-    const contentTextarea = document.getElementById(`block-content-${index}`);
-
-    if (!typeSelect || !extensionInput || !metadataInput || !contentTextarea) {
-        UI.showError('Form elements not found');
-        return;
-    }
-
-    const newType = parseInt(typeSelect.value);
-    const newExtension = extensionInput.value.trim().toLowerCase();
-    const newMetadata = metadataInput.value.trim();
-    const newContent = contentTextarea.value.trim();
-
-    if (!newContent) {
-        UI.showError('Content cannot be empty');
-        return;
-    }
-
-    if (!newExtension) {
-        UI.showError('Extension cannot be empty');
-        return;
-    }
-
-    if (isNaN(newType)) {
-        UI.showError('Type must be selected');
-        return;
-    }
-
-    // Check if content actually contains three newlines (blank line)
-    if (!newContent.includes('\n\n\n')) {
-        UI.showError('Content must contain a blank line (three newlines) to split');
-        return;
-    }
-
-    UI.setButtonLoading(`split-block-btn-${index}`, true);
-
-    try {
-        const cardId = parseInt(UI.getUrlParam('cardId'));
-
-        // First, update the block with the new content
-        await client.editBlock(cardId, block.position, newType, newExtension, newContent, newMetadata);
-
-        // Then, split the block
-        await client.splitBlock(cardId, block.position);
-
-        // Reload all blocks to show the split result
-        await loadBlocks();
-
-        UI.showSuccess('Block split successfully');
-        UI.setButtonLoading(`split-block-btn-${index}`, false);
-    } catch (err) {
-        console.error('Failed to split block:', err);
-        UI.showError('Failed to split block: ' + (err.message || 'Unknown error'));
-        UI.setButtonLoading(`split-block-btn-${index}`, false);
-    }
-};
 
 
 function openRemoveCardModal() {
