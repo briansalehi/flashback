@@ -44,10 +44,8 @@ jobs:
           path: artifacts/
       - id: package-files
         run: |
-          ls artifacts/*.deb
-          ls artifacts/*.rpm
-          echo "deb_file=$(ls artifacts/*.deb)" >> GITHUB_OUTPUT
-          echo "rpm_file=$(ls artifacts/*.rpm)" >> GITHUB_OUTPUT
+          echo "deb_file=$(ls artifacts/*.deb)" >> $GITHUB_OUTPUT
+          echo "rpm_file=$(ls artifacts/*.rpm)" >> $GITHUB_OUTPUT
       - id: create-release
         uses: actions/create-release@v1.1.4
         env:
