@@ -19,25 +19,13 @@ jobs:
         run: cargo install tauri-cli --version '^2.10.1' --locked
       - name: Build
         run: cargo tauri build
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: linux-bundles
-          path: src-tauri/target/release/bundle/deb/*.deb src-tauri/target/release/bundle/rpm/*.rpm
-  release:
-    needs: build-linux
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      packages: write
-    steps:
-      - id: download-artifacts
-        name: Download artifacts
-        uses: actions/download-artifact@v4
-        with:
-          path: artifacts/
-      - run: cargo tauri build
-      - run: cargo tauri publish
+      - id: artifacts
+        name: Locating artifacts
+        run: |
+          deb_path=$(find app/src-tauri/target/release/bundle/deb -type f -name "*.deb")
+          rpm_path=$(find app/src-tauri/target/release/bundle/rpm -type f -name "*.rpm")
+          echo "deb_path=${deb_path}" >> $GITHUB_OUTPUT
+          echo "rpm_path=${rpm_path}" >> $GITHUB_OUTPUT
       - id: create-release
         uses: actions/create-release@v1
         env:
@@ -53,7 +41,7 @@ jobs:
           GITHUB_TOKEN: "${{ secrets.github_token }}"
         with:
           upload_url: "${{ steps.create-release.outputs.upload_url }}"
-          asset_path: "${{ steps.download-artifacts.outputs.artifact_path }}/*.deb"
+          asset_path: "${{ steps.artifacts.outputs.deb_path }}"
           asset_name: "deb-packages"
           asset_content_type: "application/x-deb"
       - uses: actions/upload-release-asset@v1
@@ -61,6 +49,6 @@ jobs:
           GITHUB_TOKEN: "${{ secrets.github_token }}"
         with:
           upload_url: "${{ steps.create-release.outputs.upload_url }}"
-          asset_path: "${{ steps.download_artifacts.outputs.artifact_path }}/*.rpm"
+          asset_path: "${{ steps.artifacts.outputs.rpm_path }}"
           asset_name: "rpm-packages"
           asset_content_type: "application/x-rpm"
