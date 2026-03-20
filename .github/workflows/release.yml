@@ -44,8 +44,10 @@ jobs:
           path: artifacts/
       - id: package-files
         run: |
-          echo "deb_path=$(ls artifacts/*.deb)" >> $GITHUB_OUTPUT
-          echo "rpm_path=$(ls artifacts/*.rpm)" >> $GITHUB_OUTPUT
+          deb_path=$(ls artifacts/*.deb)
+          rpm_path=$(ls artifacts/*.rpm)
+          echo "deb_path=$deb_path" >> $GITHUB_OUTPUT
+          echo "rpm_path=$rpm_path" >> $GITHUB_OUTPUT
           version="$(echo $deb_path | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')"
           echo "version=$version" >> $GITHUB_OUTPUT
           echo "deb_file=flashback-${version}-amd64.deb" >> $GITHUB_OUTPUT
