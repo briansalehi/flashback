@@ -13,8 +13,18 @@ jobs:
       - uses: actions/checkout@v4
       - name: Install dependencies
         run: sudo apt install --yes --no-install-recommends libwebkit2gtk-4.1-dev libayatana-appindicator3-1 libgtk-3-dev openjdk-21-jdk openjdk-21-jdk-headless
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
       - name: Build
         run: cargo tauri build
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-bundles
+          path: |
+            src-tauri/target/release/bundle/deb/*.deb
+            src-tauri/target/release/bundle/rpm/*.rpm
+            src-tauri/target/release/bundle/appimage/*.AppImage
   release:
     needs: build-linux
     runs-on: ubuntu-latest
@@ -22,9 +32,44 @@ jobs:
       contents: write
       packages: write
     steps:
-      - name: Download artifacts
+      - id: download-artifacts
+        name: Download artifacts
         uses: actions/download-artifact@v4
         with:
           path: artifacts/
       - run: cargo tauri build
       - run: cargo tauri publish
+      - id: create-release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: "${{ secrets.github_token }}"
+        with:
+          tag_name: "${{ github.ref_name }}"
+          release_name: "Release ${{ github.ref_name }}"
+          body: "Installation packages"
+          draft: false
+          prerelease: false
+      - uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: "${{ secrets.github_token }}"
+        with:
+          upload_url: "${{ steps.create-release.outputs.upload_url }}"
+          asset_path: "${{ steps.download-artifacts.outputs.artifact_path }}/deb/*.deb"
+          asset_name: "deb-packages"
+          asset_content_type: "application/x-deb"
+      - uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: "${{ secrets.github_token }}"
+        with:
+          upload_url: "${{ steps.create-release.outputs.upload_url }}"
+          asset_path: "${{ steps.download_artifacts.outputs.artifact_path }}/rpm/*.rpm"
+          asset_name: "rpm-packages"
+          asset_content_type: "application/x-rpm"
+      - uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: "${{ secrets.github_token }}"
+        with:
+          upload_url: "${{ steps.create-release.outputs.upload_url }}"
+          asset_path: "${{ steps.download_artifacts.outputs.artifact_path }}/appimage/*.AppImage"
+          asset_name: "appimage-packages"
+          asset_content_type: "application/x-appimage"
