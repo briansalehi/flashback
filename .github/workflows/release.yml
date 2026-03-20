@@ -44,8 +44,10 @@ jobs:
           path: artifacts/
       - id: package-files
         run: |
-          echo "deb_file=$(ls artifacts/*.deb)" >> $GITHUB_OUTPUT
-          echo "rpm_file=$(ls artifacts/*.rpm)" >> $GITHUB_OUTPUT
+          echo "deb_path=$(ls artifacts/*.deb)" >> $GITHUB_OUTPUT
+          echo "rpm_path=$(ls artifacts/*.rpm)" >> $GITHUB_OUTPUT
+          echo "deb_file=$(basename artifacts/*.deb)" >> $GITHUB_OUTPUT
+          echo "rpm_file=$(basename artifacts/*.rpm)" >> $GITHUB_OUTPUT
       - id: create-release
         uses: actions/create-release@v1.1.4
         env:
@@ -61,14 +63,14 @@ jobs:
           GITHUB_TOKEN: "${{ secrets.github_token }}"
         with:
           upload_url: "${{ steps.create-release.outputs.upload_url }}"
-          asset_path: ${{ steps.package-files.outputs.deb_file }}
-          asset_name: "deb-package"
+          asset_path: ${{ steps.package-files.outputs.deb_path }}
+          asset_name: ${{ steps.package-files.outputs.deb_file }}
           asset_content_type: "application/x-deb"
       - uses: actions/upload-release-asset@v1.0.2
         env:
           GITHUB_TOKEN: "${{ secrets.github_token }}"
         with:
           upload_url: "${{ steps.create-release.outputs.upload_url }}"
-          asset_path: ${{ steps.package-files.outputs.rpm_file }}
-          asset_name: "rpm-package"
+          asset_path: ${{ steps.package-files.outputs.rpm_path }}
+          asset_name: ${{ steps.package-files.outputs.rpm_file }}
           asset_content_type: "application/x-rpm"
