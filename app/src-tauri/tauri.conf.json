@@ -22,7 +22,7 @@
   },
   "bundle": {
     "active": true,
-    "targets": "all",
+    "targets": ["rpm", "deb"],
     "icon": [
       "icons/flashback.png"
     ]
