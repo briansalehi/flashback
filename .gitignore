@@ -5,6 +5,7 @@
 *.tar
 *.lock
 *.keystore
+*.jks
 *build*/
 .env
 .idea/
