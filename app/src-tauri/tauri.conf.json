@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "Flashback",
-  "version": "0.4.1",
-  "identifier": "com.eu.flashback",
+  "version": "0.4.2",
+  "identifier": "com.us.flashback",
   "build": {
     "frontendDist": "../src"
   },
