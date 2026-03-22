@@ -28,6 +28,12 @@
     --space-2xl: 3rem;     /* 48px */
     --space-3xl: 4rem;     /* 64px */
 
+    /* Safe Area Insets for Mobile/App */
+    --safe-area-top: env(safe-area-inset-top, 0px);
+    --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+    --safe-area-left: env(safe-area-inset-left, 0px);
+    --safe-area-right: env(safe-area-inset-right, 0px);
+
     /* Typography Scale (Mobile-First) */
     --font-size-xs: 0.75rem;     /* 12px */
     --font-size-sm: 0.875rem;    /* 14px */
@@ -334,7 +340,7 @@ a:hover {
 
 .page-wrapper {
     min-height: 100vh;
-    padding-top: calc(80px + env(safe-area-inset-top, 0px)); /* Increased to prevent content overlap with header */
+    padding-top: calc(88px + var(--safe-area-top)); /* Adjusted for increased mobile header height */
     padding-bottom: var(--space-xl);
 }
 
@@ -346,8 +352,8 @@ a:hover {
     top: 0;
     left: 0;
     width: 100%;
-    padding: var(--space-sm) var(--space-md); /* Reduced padding */
-    padding-top: calc(var(--space-sm) + env(safe-area-inset-top, 0px));
+    padding: var(--space-sm) var(--space-md);
+    padding-top: calc(var(--space-md) + var(--safe-area-top)); /* Base spacing increased for mobile */
     background: rgba(15, 15, 15, 0.95);
     backdrop-filter: blur(10px);
     z-index: 1000;
@@ -461,6 +467,7 @@ a:hover {
 
     .header {
         padding: var(--space-md) var(--space-xl);
+        padding-top: calc(var(--space-md) + var(--safe-area-top));
     }
 
     .header-logo img {
