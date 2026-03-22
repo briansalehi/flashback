@@ -53,8 +53,8 @@ jobs:
         run: cargo tauri android init
       - name: Configure Gradle
         run: |
-          sed -i '/getByName("release")/a signingConfig = signingConfigs.getByName("release")' app/src-tauri/gen/android/app/build.gradle.kts
-          sed -i '/^android {/a signingConfigs { create("release") { storeFile = file("keystore.jks"); storePassword = file("keystore.txt"); keyAlias = "flashback"; keyPassword = file("keystore.txt"); } }' app/src-tauri/gen/android/app/build.gradle.kts
+          sed -i '/getByName("release")/a signingConfig = signingConfigs.getByName("release")' $(find app -type f -name build.gradle.kts)
+          sed -i '/^android {/a signingConfigs { create("release") { storeFile = file("keystore.jks"); storePassword = file("keystore.txt"); keyAlias = "flashback"; keyPassword = file("keystore.txt"); } }' $(find app -type f -name build.gradle.kts)
       - name: Generate Icon
         run: cargo tauri icon app/src-tauri/icon/flashback-transparent.png
       - name: Build Android Package
