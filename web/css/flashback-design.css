@@ -334,7 +334,7 @@ a:hover {
 
 .page-wrapper {
     min-height: 100vh;
-    padding-top: 80px; /* Increased to prevent content overlap with header */
+    padding-top: calc(80px + env(safe-area-inset-top, 0px)); /* Increased to prevent content overlap with header */
     padding-bottom: var(--space-xl);
 }
 
@@ -347,6 +347,7 @@ a:hover {
     left: 0;
     width: 100%;
     padding: var(--space-sm) var(--space-md); /* Reduced padding */
+    padding-top: calc(var(--space-sm) + env(safe-area-inset-top, 0px));
     background: rgba(15, 15, 15, 0.95);
     backdrop-filter: blur(10px);
     z-index: 1000;

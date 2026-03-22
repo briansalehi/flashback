@@ -790,7 +790,7 @@ window.addEventListener('DOMContentLoaded', () => {
                     });
                 }
                 document.title = `${newHeadline} - Flashback`;
-                closeEditCardModal();
+                closeEditCardModal(true);
                 UI.setButtonLoading('save-edit-card-btn', false);
                 UI.showSuccess('Card updated successfully');
             } catch (err) {
