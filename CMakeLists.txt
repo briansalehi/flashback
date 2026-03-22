@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 4.1)
-project(Flashback VERSION 0.4.11 LANGUAGES CXX DESCRIPTION "A program to transform complex technical subjects into muscle memory" HOMEPAGE_URL "https://flashback.eu.com")
+project(Flashback VERSION 0.4.12 LANGUAGES CXX DESCRIPTION "A program to transform complex technical subjects into muscle memory" HOMEPAGE_URL "https://flashback.eu.com")
 
 include(cmake/test_utils.cmake)
 include(CTest)

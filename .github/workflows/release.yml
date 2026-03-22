@@ -19,6 +19,8 @@ jobs:
       #- name: Install Tauri CLI
       #  run: cargo install tauri-cli --version '^2.10.1' --locked
       #  timeout-minutes: 20
+      - name: Update Rust
+        run: rustup update stable && rustup default stable
       - name: Build Linux Desktop Application
         run: cargo tauri build
         timeout-minutes: 20
@@ -45,6 +47,8 @@ jobs:
       #- name: Install Tauri CLI
       #  run: cargo install tauri-cli --version '^2.10.1' --locked
       #  timeout-minutes: 20
+      - name: Update Rust
+        run: rustup update stable && rustup default stable
       - name: Initialize Android Project
         run: cargo tauri android init
       - name: Configure Gradle
@@ -61,10 +65,10 @@ jobs:
         run: |
           base64 -d <<< "$KEYSTORE_BASE64" > app/src-tauri/gen/android/app/keystore.jks
           echo "$KEYSTORE_PASSWORD" >> app/src-tauri/gen/android/app/keystore.txt
-          echo "keyAlias=$KEYSTORE_ALIAS" > app/src-tauri/gen/android/keystore.properties
-          echo "keyPassword=$KEYSTORE_PASSWORD" >> app/src-tauri/gen/android/keystore.properties
-          echo "password=$KEYSTORE_PASSWORD" >> app/src-tauri/gen/android/keystore.properties
-          echo "storeFile=keystore.jks" >> app/src-tauri/gen/android/keystore.properties
+          echo "keyAlias=$KEYSTORE_ALIAS" > app/src-tauri/gen/android/app/keystore.properties
+          echo "keyPassword=$KEYSTORE_PASSWORD" >> app/src-tauri/gen/android/app/keystore.properties
+          echo "password=$KEYSTORE_PASSWORD" >> app/src-tauri/gen/android/app/keystore.properties
+          echo "storeFile=keystore.jks" >> app/src-tauri/gen/android/app/keystore.properties
           cargo tauri android build
         timeout-minutes: 20
       - name: Store Artifacts
