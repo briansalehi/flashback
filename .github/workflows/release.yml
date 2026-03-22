@@ -16,8 +16,6 @@ jobs:
         uses: actions/checkout@v6.0.2
       #- name: Install Dependencies
       #  run: sudo apt update && sudo apt install --yes --no-install-recommends libwebkit2gtk-4.1-dev libayatana-appindicator3-1 libgtk-3-dev openjdk-21-jdk openjdk-21-jdk-headless
-      - name: Caching Rust Installation
-        uses: Swatinem/rust-cache@v2
       - name: Install Tauri CLI
         run: cargo install tauri-cli --version '^2.10.1' --locked
         timeout-minutes: 20
@@ -44,8 +42,6 @@ jobs:
     steps:
       - name: Checkout Repository for Android
         uses: actions/checkout@v6.0.2
-      - name: Caching Rust Installation
-        uses: Swatinem/rust-cache@v2
       - name: Install Tauri CLI
         run: cargo install tauri-cli --version '^2.10.1' --locked
         timeout-minutes: 20
