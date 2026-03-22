@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict AKXOaYH4aTFUeYuLCQ5OKd3Hk4Rm2YQnCPo5F1qkyeG6nWJpKsApNcSlj2153xx
+\restrict oAqJPNiDJTS6nYf7xqCxl7kjAO49D2cPISPoK0CIjo6qdJgvrOnp8YqfGJIYi2g
 
 -- Dumped from database version 18.1
 -- Dumped by pg_dump version 18.1
@@ -1612,8 +1612,9 @@ CREATE FUNCTION flashback.get_section_cards(resource_id integer, section_positio
 begin
     return query select c.id, c.state, c.headline, (tc.card is null)
     from section_cards sc
+    join shelves h on h.resource = sc.resource
     join cards c on c.id = sc.card
-    left join topic_cards tc on tc.card = sc.card
+    left join topic_cards tc on tc.card = sc.card and tc.subject = h.subject
     where sc.resource = resource_id and sc.section = section_position;
 end;
 $$;
@@ -4320,5 +4321,5 @@ GRANT ALL ON SCHEMA public TO brian;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict AKXOaYH4aTFUeYuLCQ5OKd3Hk4Rm2YQnCPo5F1qkyeG6nWJpKsApNcSlj2153xx
+\unrestrict oAqJPNiDJTS6nYf7xqCxl7kjAO49D2cPISPoK0CIjo6qdJgvrOnp8YqfGJIYi2g
 
