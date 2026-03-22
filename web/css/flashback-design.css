@@ -1629,14 +1629,14 @@ a:hover {
    DASHBOARD COMPONENTS
    ============================================ */
 .dashboard {
-    padding-top: 80px; /* Increased to prevent content overlap with header */
+    padding-top: calc(88px + var(--safe-area-top)); /* Consistent with page-wrapper */
     padding-bottom: var(--space-2xl);
 }
 
 /* Breadcrumbs */
 .breadcrumb-container {
-    margin-bottom: 0.5rem; /* Slightly more room */
-    padding: 0.25rem 0;
+    margin-bottom: 1rem; /* More room below breadcrumbs */
+    padding: 0.5rem 0;   /* Slightly more vertical padding */
 }
 
 .breadcrumb-list {
@@ -2021,6 +2021,6 @@ a:hover {
 
 @media (max-width: 768px) {
     .page-wrapper, .dashboard {
-        padding-top: 70px; /* Slightly less on mobile, but enough for 60px header */
+        padding-top: calc(80px + var(--safe-area-top)); /* Ensure enough space for mobile header */
     }
 }
