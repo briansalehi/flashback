@@ -13,7 +13,7 @@ jobs:
       image: nailyudha/tauri:latest
     steps:
       - name: Checkout Repository for Android
-        uses: actions/checkout@6.0.2
+        uses: actions/checkout@6
       #- name: Install Dependencies
       #  run: sudo apt update && sudo apt install --yes --no-install-recommends libwebkit2gtk-4.1-dev libayatana-appindicator3-1 libgtk-3-dev openjdk-21-jdk openjdk-21-jdk-headless
       - name: Install Tauri CLI
@@ -39,7 +39,7 @@ jobs:
       image: nailyudha/tauri:latest
     steps:
       - name: Checkout Repository for Android
-        uses: actions/checkout@6.0.2
+        uses: actions/checkout@6
       - name: Install Tauri CLI
         run: cargo install tauri-cli --version '^2.10.1' --locked
       - name: Initialize Android Project
