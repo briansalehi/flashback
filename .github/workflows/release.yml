@@ -10,7 +10,7 @@ jobs:
   build-linux:
     runs-on: ubuntu-latest
     container:
-      image: ivangabriele/tauri:debian-bookworm-22
+      image: liudonghua123/tauri-build:latest
     steps:
       - name: Checkout Repository for Android
         uses: actions/checkout@v6.0.2
@@ -38,7 +38,7 @@ jobs:
   build-android:
     runs-on: ubuntu-latest
     container:
-      image: ivangabriele/tauri:debian-bookworm-22
+      image: liudonghua123/tauri-build:latest
     steps:
       - name: Checkout Repository for Android
         uses: actions/checkout@v6.0.2
