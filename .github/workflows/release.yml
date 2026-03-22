@@ -48,6 +48,8 @@ jobs:
         run: |
           sed -i '/getByName("release")/a signingConfig = signingConfigs.getByName("release")' app/src-tauri/gen/android/app/build.gradle.kts
           sed -i '/^android {/a signingConfigs { create("release") { storeFile = file("keystore.jks"); storePassword = System.getenv("KEYSTORE_PASSWORD"); keyAlias = "flashback"; keyPassword = System.getenv("KEYSTORE_PASSWORD"); } }' app/src-tauri/gen/android/app/build.gradle.kts
+      - name: Generate Icon
+        run: cargo tauri icon app/src-tauri/icon/flashback-transparent.png
       - name: Build Android Package
         env:
           KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
