@@ -1897,6 +1897,12 @@ function renderBlocks(blocks) {
             if (e.target.closest('.block-action-btn')) return;
             if (e.target.closest('.block-edit')) return;
 
+            // Inhibit showing actions during reorder or merge mode
+            const blocksList = document.getElementById('blocks-list');
+            if (blocksList && (blocksList.classList.contains('merge-mode-active') || blocksList.classList.contains('reorder-mode-active'))) {
+                return;
+            }
+
             document.querySelectorAll('.content-block.show-actions').forEach(el => {
                 if (el !== blockItem) el.classList.remove('show-actions');
             });
@@ -2120,6 +2126,9 @@ let moveBlockState = {
 window.enterReorderMode = function(index) {
     if (reorderState.active || mergeState.active) return;
     
+    // Close any open block actions
+    document.querySelectorAll('.content-block.show-actions').forEach(el => el.classList.remove('show-actions'));
+    
     reorderState.active = true;
     reorderState.sourceIndex = index;
     reorderState.preventClick = true;
@@ -2153,6 +2162,9 @@ window.enterReorderMode = function(index) {
 
 window.enterMergeMode = function(index) {
     if (mergeState.active || reorderState.active) return;
+    
+    // Close any open block actions
+    document.querySelectorAll('.content-block.show-actions').forEach(el => el.classList.remove('show-actions'));
     
     mergeState.active = true;
     mergeState.sourceIndex = index;
@@ -2189,6 +2201,9 @@ window.exitMergeMode = function() {
     mergeState.active = false;
     mergeState.sourceIndex = null;
     
+    // Hide any block actions that might have been visible
+    document.querySelectorAll('.content-block.show-actions').forEach(el => el.classList.remove('show-actions'));
+    
     const blocksList = document.getElementById('blocks-list');
     if (blocksList) {
         blocksList.classList.remove('merge-mode-active');
@@ -2207,6 +2222,9 @@ window.exitMergeMode = function() {
 window.exitReorderMode = function() {
     reorderState.active = false;
     reorderState.sourceIndex = null;
+    
+    // Hide any block actions that might have been visible
+    document.querySelectorAll('.content-block.show-actions').forEach(el => el.classList.remove('show-actions'));
     
     const blocksList = document.getElementById('blocks-list');
     if (blocksList) {

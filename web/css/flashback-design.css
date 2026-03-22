@@ -1281,12 +1281,25 @@ a:hover {
         opacity: 1;
         pointer-events: auto;
     }
+
+    /* Prevent actions from appearing on hover during merge or reorder mode */
+    .merge-mode-active .content-block:hover .block-actions-overlay,
+    .reorder-mode-active .content-block:hover .block-actions-overlay {
+        opacity: 0 !important;
+        pointer-events: none !important;
+    }
 }
 
 /* Show actions when tapped (mobile) */
 .content-block.show-actions .block-actions-overlay {
     opacity: 1;
     pointer-events: auto;
+}
+
+/* Ensure actions are hidden during merge or reorder mode even if show-actions is present */
+.merge-mode-active .block-actions-overlay,
+.reorder-mode-active .block-actions-overlay {
+    display: none !important;
 }
 
 /* Modern action buttons */
