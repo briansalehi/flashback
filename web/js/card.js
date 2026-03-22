@@ -277,14 +277,27 @@ window.addEventListener('DOMContentLoaded', () => {
     cardStartTime = Date.now();
 
     // Global click-to-hide listener for block actions
-    document.addEventListener('mousedown', (e) => {
+    const closeAllBlockActions = (e) => {
         const blocks = document.querySelectorAll('.content-block.show-actions');
         blocks.forEach(blockItem => {
             if (!blockItem.contains(e.target) && !e.target.closest('.block-actions-overlay')) {
                 blockItem.classList.remove('show-actions');
             }
         });
+    };
+
+    document.addEventListener('mousedown', (e) => {
+        // Only close if not clicking a block or its action buttons
+        if (!e.target.closest('.content-block')) {
+            closeAllBlockActions(e);
+        }
     });
+    document.addEventListener('touchstart', (e) => {
+        // Only close if not touching a block or its action buttons
+        if (!e.target.closest('.content-block')) {
+            closeAllBlockActions(e);
+        }
+    }, { passive: true });
 
     // Show context breadcrumb
     displayContextBreadcrumb(subjectName, topicName, resourceName, sectionName);
@@ -607,7 +620,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
             const handleContentChange = () => {
                 const content = contentTextarea.value;
-                if (content.includes('\n\n')) {
+                if (content.includes('\n\n\n')) {
                     splitBtn.style.display = 'inline-block';
                 } else {
                     splitBtn.style.display = 'none';
@@ -717,16 +730,10 @@ window.addEventListener('DOMContentLoaded', () => {
                 const cardId = parseInt(UI.getUrlParam('cardId'));
                 const position = currentBlocks[index].position;
 
-                const parts = content.split('\n\n').filter(p => p.trim() !== '');
-                if (parts.length <= 1) {
-                    await client.editBlock(cardId, position, type, extension, content, metadata);
-                } else {
-                    // Update first part
-                    await client.editBlock(cardId, position, type, extension, parts[0], metadata);
-                    // Add subsequent parts
-                    for (let i = 1; i < parts.length; i++) {
-                        await client.addBlock(cardId, position + i, type, parts[i], extension, metadata);
-                    }
+                const parts = content.split('\n\n\n').filter(p => p.trim() !== '');
+                await client.editBlock(cardId, position, type, extension, content, metadata);
+                if (parts.length > 1) {
+                    await client.splitBlock(cardId, position);
                 }
 
                 await loadBlocks();
@@ -1890,9 +1897,11 @@ function renderBlocks(blocks) {
             if (e.target.closest('.block-action-btn')) return;
             if (e.target.closest('.block-edit')) return;
 
-            const isShowing = blockItem.classList.contains('show-actions');
-            document.querySelectorAll('.content-block.show-actions').forEach(el => el.classList.remove('show-actions'));
-            if (!isShowing) blockItem.classList.add('show-actions');
+            document.querySelectorAll('.content-block.show-actions').forEach(el => {
+                if (el !== blockItem) el.classList.remove('show-actions');
+            });
+            
+            blockItem.classList.toggle('show-actions');
             e.stopPropagation();
         });
 
