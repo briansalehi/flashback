@@ -16,10 +16,14 @@ jobs:
         uses: actions/checkout@v6.0.2
       #- name: Install Dependencies
       #  run: sudo apt update && sudo apt install --yes --no-install-recommends libwebkit2gtk-4.1-dev libayatana-appindicator3-1 libgtk-3-dev openjdk-21-jdk openjdk-21-jdk-headless
+      - name: Caching Rust Installation
+        uses: Swatinem/rust-cache@v2
       - name: Install Tauri CLI
         run: cargo install tauri-cli --version '^2.10.1' --locked
+        timeout-minutes: 20
       - name: Build Linux Desktop Application
         run: cargo tauri build
+        timeout-minutes: 20
       - name: Store Artifacts
         run: |
           deb_path=$(find app/src-tauri/target/release/bundle/deb -type f -name "*.deb")
@@ -40,8 +44,11 @@ jobs:
     steps:
       - name: Checkout Repository for Android
         uses: actions/checkout@v6.0.2
+      - name: Caching Rust Installation
+        uses: Swatinem/rust-cache@v2
       - name: Install Tauri CLI
         run: cargo install tauri-cli --version '^2.10.1' --locked
+        timeout-minutes: 20
       - name: Initialize Android Project
         run: cargo tauri android init
       - name: Configure Gradle
@@ -63,6 +70,7 @@ jobs:
           echo "password=$KEYSTORE_PASSWORD" >> app/src-tauri/gen/android/keystore.properties
           echo "storeFile=keystore.jks >> app/src-tauri/gen/android/keystore.properties
           cargo tauri android build
+        timeout-minutes: 20
       - name: Store Artifacts
         run: |
           apk_path=$(find src-tauri/gen/android/app/build/outputs/apk/universal/release -type f -name "*.apk")
