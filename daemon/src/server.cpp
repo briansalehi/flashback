@@ -4635,5 +4635,5 @@ bool server::session_is_valid(User const& user) const
 
 bool server::user_is_verified(User const& user) const
 {
-    return m_database->user_is_verified(user.id());
+    return m_database->user_is_verified(user.token(), user.device());
 }
