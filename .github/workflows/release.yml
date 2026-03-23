@@ -51,9 +51,9 @@ jobs:
           KEYSTORE_ALIAS: ${{ secrets.KEYSTORE_ALIAS }}
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
         run: |
-          print '%s' "${KEYSTORE_BASE64}" | base64 -d > app/src-tauri/gen/android/app/keystore.jks
-          print '%s' "${KEYSTORE_PASSWORD}" > app/src-tauri/gen/android/app/keystore.txt
-          print 'keyAlias=%s\nkeyPassword=%s\npassword=%s\nstoreFile=keystore.jks' "${KEYSTORE_ALIAS}" "${KEYSTORE_PASSWORD}" "${KEYSTORE_PASSWORD}" > app/src-tauri/gen/android/keystore.properties
+          printf '%s' "${KEYSTORE_BASE64}" | base64 -d > app/src-tauri/gen/android/app/keystore.jks
+          printf '%s' "${KEYSTORE_PASSWORD}" > app/src-tauri/gen/android/app/keystore.txt
+          printf 'keyAlias=%s\nkeyPassword=%s\npassword=%s\nstoreFile=keystore.jks' "${KEYSTORE_ALIAS}" "${KEYSTORE_PASSWORD}" "${KEYSTORE_PASSWORD}" > app/src-tauri/gen/android/keystore.properties
       - name: Build Android Package
         env:
           KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
