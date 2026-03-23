@@ -100,6 +100,49 @@ const UI = {
             .join(' ');
     },
 
+    showVerificationModal() {
+        if (document.getElementById('verification-modal')) {
+            return;
+        }
+
+        const modalOverlay = document.createElement('div');
+        modalOverlay.id = 'verification-modal';
+        modalOverlay.className = 'modal-overlay';
+        modalOverlay.style.display = 'flex';
+
+        modalOverlay.innerHTML = `
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 class="modal-title">Verification Required</h2>
+                </div>
+                <div class="modal-body">
+                    <p style="margin-bottom: 1.5rem; color: var(--color-text-secondary);">
+                        You need to verify your email address before you can make any changes.
+                        Please check your inbox or go to the account page to send a new verification code.
+                    </p>
+                    <div class="form-actions" style="display: flex; gap: 1rem; justify-content: flex-end;">
+                        <button id="go-to-account-btn" class="btn btn-primary" style="padding: 0.5rem 1.5rem; white-space: nowrap;">
+                            Go to Account
+                        </button>
+                        <button id="close-verification-modal-btn" class="btn btn-secondary" style="padding: 0.5rem 1.5rem; white-space: nowrap;">
+                            Dismiss
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(modalOverlay);
+
+        document.getElementById('go-to-account-btn').addEventListener('click', () => {
+            window.location.href = '/account.html';
+        });
+
+        document.getElementById('close-verification-modal-btn').addEventListener('click', () => {
+            document.body.removeChild(modalOverlay);
+        });
+    },
+
     /**
      * Render breadcrumbs in a standardized way
      * @param {Array<{name: string, url: string}>} items - List of breadcrumb items

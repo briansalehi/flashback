@@ -77,7 +77,9 @@ class FlashbackClient {
     }
 
     handleError(err) {
-        if (err.code === 16) { // grpc::StatusCode::UNAUTHENTICATED
+        if (err.code === 7) { // grpc::StatusCode::PERMISSION_DENIED
+            UI.showVerificationModal();
+        } else if (err.code === 16) { // grpc::StatusCode::UNAUTHENTICATED
             localStorage.removeItem('token');
             this.token = '';
             window.location.href = '/home.html';
