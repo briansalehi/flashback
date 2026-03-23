@@ -27,7 +27,7 @@ jobs:
       - name: Upload Artifacts
         uses: actions/upload-artifact@v7.0.0
         with:
-          name: packages
+          name: packages-linux
           path: packages/
           retention-days: 1
   build-android:
@@ -71,7 +71,7 @@ jobs:
       - name: Upload Artifacts
         uses: actions/upload-artifact@v7.0.0
         with:
-          name: packages
+          name: packages-android
           path: packages/
           retention-days: 1
   publish-artifacts:
@@ -82,21 +82,28 @@ jobs:
     steps:
       - uses: actions/download-artifact@v8.0.1
         with:
-          name: packages
+          name: packages-linux
+          path: packages/
+      - uses: actions/download-artifact@v8.0.1
+        with:
+          name: packages-android
           path: packages/
       - id: package-files
         run: |
           deb_path=$(ls packages/*.deb)
           rpm_path=$(ls packages/*.rpm)
           apk_path=packages/flashback.apk
+          aab_path=packages/flashback.aab
           echo "deb_path=$deb_path" >> $GITHUB_OUTPUT
           echo "rpm_path=$rpm_path" >> $GITHUB_OUTPUT
           echo "apk_path=$apk_path" >> $GITHUB_OUTPUT
+          echo "aab_path=$aab_path" >> $GITHUB_OUTPUT
           version="$(echo $deb_path | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')"
           echo "version=$version" >> $GITHUB_OUTPUT
           echo "deb_file=flashback-${version}-amd64.deb" >> $GITHUB_OUTPUT
           echo "rpm_file=flashback-${version}-amd64.rpm" >> $GITHUB_OUTPUT
           echo "apk_file=flashback-${version}.apk" >> $GITHUB_OUTPUT
+          echo "aab_file=flashback-${version}.aab" >> $GITHUB_OUTPUT
       - id: create-release
         uses: actions/create-release@v1.1.4
         env:
