@@ -699,7 +699,7 @@ grpc::Status server::GetMilestones(grpc::ServerContext* context, GetMilestonesRe
                 *response->add_milestones() = milestone;
             }
             std::clog << std::format("client {} collected {} milestones from roadmap {}\n", request->user().token(), response->milestones_size(), request->roadmap_id());
-            status = grpc::Status{grpc::StatusCode::UNAUTHENTICATED, "invalid user"};
+            status = grpc::Status{grpc::StatusCode::OK, {}};
         }
     }
     catch (client_exception const& exp)
