@@ -44,7 +44,7 @@ jobs:
           sed -i '/getByName("release")/a signingConfig = signingConfigs.getByName("release")' $(find app -type f -name build.gradle.kts)
           sed -i '/^android {/a signingConfigs { create("release") { storeFile = file("keystore.jks").readText().trim(); storePassword = file("keystore.txt").readText().trim(); keyAlias = "flashback"; keyPassword = file("keystore.txt"); } }' $(find app -type f -name build.gradle.kts)
       - name: Generate Icon
-        run: cargo tauri icon app/src-tauri/icon/flashback-transparent.png
+        run: cargo tauri icon app/src-tauri/icons/flashback-transparent.png
       - name: Build Android Package
         env:
           KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
