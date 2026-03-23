@@ -839,6 +839,7 @@ grpc::Status server::CreateSubject(grpc::ServerContext* context, CreateSubjectRe
         }
         else if (!user_is_verified(request->user()))
         {
+            std::clog << std::format("client {} tried to create a subject without verification\n", request->user().token());
             status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not verified"};
         }
         else
@@ -876,6 +877,7 @@ grpc::Status server::SearchSubjects(grpc::ServerContext* context, SearchSubjects
         }
         else if (!request->token().empty())
         {
+            std::clog << std::format("client {} tried to search subjects with empty search string\n", request->user().token());
             status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid search string"};
         }
         else
@@ -915,18 +917,22 @@ grpc::Status server::ReorderMilestone(grpc::ServerContext* context, ReorderMiles
         }
         else if (!request->has_roadmap() || request->roadmap().id() == 0)
         {
+            std::clog << std::format("client {} tried to reorder milestones of an invalid roadmap\n", request->user().token());
             status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid roadmap"};
         }
         else if (request->current_position() == 0 || request->target_position() == 0)
         {
+            std::clog << std::format("client {} tried to reorder milestones of a roadmap with invalidi positions\n", request->user().token());
             status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid positions"};
         }
         else if (request->current_position() == request->target_position())
         {
+            std::clog << std::format("client {} tried to reorder milestones of a roadamp with the same position\n", request->user().token());
             status = grpc::Status{grpc::StatusCode::ALREADY_EXISTS, "same positions"};
         }
         else if (!user_is_verified(request->user()))
         {
+            std::clog << std::format("client {} tried to reorder milestones of a roadmap without verification\n", request->user().token());
             status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not verified"};
         }
         else
@@ -950,48 +956,43 @@ grpc::Status server::ReorderMilestone(grpc::ServerContext* context, ReorderMiles
 
 grpc::Status server::RemoveMilestone(grpc::ServerContext* context, RemoveMilestoneRequest const* request, RemoveMilestoneResponse* response)
 {
+    grpc::Status status{grpc::StatusCode::INTERNAL, {}};
+
     try
     {
         if (!request->has_user() || !session_is_valid(request->user()))
         {
-            response->set_success(false);
-            response->set_details("invalid user");
-            response->set_code(3);
+            status = grpc::Status{grpc::StatusCode::UNAUTHENTICATED, "invalid user"};
         }
         else if (!request->has_roadmap() || request->roadmap().id() == 0)
         {
-            response->set_success(false);
-            response->set_details("invalid roadmap");
-            response->set_code(4);
+            std::clog << std::format("client {} tried to remove a milestone of an invalid roadmap\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid roadmap"};
         }
         else if (!request->has_milestone() || request->milestone().id() == 0)
         {
-            response->set_success(false);
-            response->set_details("invalid milestone");
-            response->set_code(5);
+            std::clog << std::format("client {} tried to remove an invalid milestone\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid milestone"};
+        }
+        else if (!user_is_verified(request->user()))
+        {
+            std::clog << std::format("client {} tried to remove a milestone without verification\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not verified"};
         }
         else
         {
-            std::clog << std::format("client {} removed milestone {} in roadmap {}\n", request->user().token(), request->roadmap().id(), request->milestone().id(),
-                                     request->roadmap().id());
+            std::clog << std::format("client {} removed milestone {} in roadmap {}\n", request->user().token(), request->roadmap().id(), request->milestone().id(), request->roadmap().id());
             m_database->remove_milestone(request->roadmap().id(), request->milestone().id());
-            response->set_success(true);
-            response->clear_details();
-            response->set_code(0);
+            status = grpc::Status{grpc::StatusCode::OK, {}};
         }
     }
     catch (client_exception const& exp)
     {
-        response->set_success(false);
-        response->set_details(exp.what());
-        response->set_code(1);
-        std::cerr << std::format("client {} {}\n", request->user().token(), exp.what());
+        std::cerr << std::format("client {} tried to remove a milestone but failed: {}\n", request->user().token(), exp.what());
     }
     catch (std::exception const& exp)
     {
-        response->set_success(false);
-        response->set_details("internal error");
-        response->set_code(2);
+        std::cerr << std::format("server: tried to remove a milestone but failed: {}\n", exp.what());
     }
 
     return status;
@@ -999,48 +1000,44 @@ grpc::Status server::RemoveMilestone(grpc::ServerContext* context, RemoveMilesto
 
 grpc::Status server::ChangeMilestoneLevel(grpc::ServerContext* context, ChangeMilestoneLevelRequest const* request, ChangeMilestoneLevelResponse* response)
 {
+    grpc::Status status{grpc::StatusCode::INTERNAL, {}};
+
     try
     {
         if (!request->has_user() || !session_is_valid(request->user()))
         {
-            response->set_success(false);
-            response->set_details("invalid user");
-            response->set_code(3);
+            status = grpc::Status{grpc::StatusCode::UNAUTHENTICATED, "invalid user"};
         }
         else if (!request->has_roadmap() || request->roadmap().id() == 0)
         {
-            response->set_success(false);
-            response->set_details("invalid roadmap");
-            response->set_code(4);
+            std::clog << std::format("client {} tried to change a milestone level of an invalid roadmap\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid roadmap"};
         }
         else if (!request->has_milestone() || request->milestone().id() == 0)
         {
-            response->set_success(false);
-            response->set_details("invalid milestone");
-            response->set_code(5);
+            std::clog << std::format("client {} tried to change the level of an invalid milestone\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid milestone"};
+        }
+        else if (!user_is_verified(request->user()))
+        {
+            std::clog << std::format("client {} tried to change the level of a milestone without verification\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not verified"};
         }
         else
         {
             std::clog << std::format("client {} changed the level of milestone {} in roadmap {} to {}\n", request->user().token(), request->milestone().id(),
                                      request->roadmap().id(), database::level_to_string(request->milestone().level()));
             m_database->change_milestone_level(request->roadmap().id(), request->milestone().id(), request->milestone().level());
-            response->set_success(true);
-            response->clear_details();
-            response->set_code(0);
+            status = grpc::Status{grpc::StatusCode::OK, {}};
         }
     }
     catch (client_exception const& exp)
     {
-        std::cerr << std::format("client {} {}\n", request->user().token(), exp.what());
-        response->set_success(false);
-        response->set_details(exp.what());
-        response->set_code(1);
+        std::cerr << std::format("client {} tried to change milestone level but failed: {}\n", request->user().token(), exp.what());
     }
     catch (std::exception const& exp)
     {
-        response->set_success(false);
-        response->set_details("internal error");
-        response->set_code(2);
+        std::cerr << std::format("server: tried to change milestone level but failed: {}\n", exp.what());
     }
 
     return status;
@@ -1048,39 +1045,43 @@ grpc::Status server::ChangeMilestoneLevel(grpc::ServerContext* context, ChangeMi
 
 grpc::Status server::RenameSubject(grpc::ServerContext* context, RenameSubjectRequest const* request, RenameSubjectResponse* response)
 {
+    grpc::Status status{grpc::StatusCode::INTERNAL, {}};
+
     try
     {
         if (request->has_user() && session_is_valid(request->user()))
         {
-            if (request->id() == 0)
-            {
-                response->set_details("invalid subject id");
-                response->set_code(1);
-            }
-            else if (request->name().empty())
-            {
-                response->set_details("invalid subject name");
-                response->set_code(2);
-            }
-            else
-            {
-                std::clog << std::format("client {} renamed subject {} to {}\n", request->user().token(), request->id(), request->name());
-                m_database->rename_subject(request->id(), request->name());
-                response->set_success(true);
-                response->set_code(0);
-            }
+            status = grpc::Status{grpc::StatusCode::UNAUTHENTICATED, "invalid user"};
+        }
+        else if (request->id() == 0)
+        {
+            std::clog << std::format("client {} tried to rename an invalid subject\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid subject"};
+        }
+        else if (request->name().empty())
+        {
+            std::clog << std::format("client {} tried to set an empty name on a subject\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid name"};
+        }
+        else if (!user_is_verified(request->user()))
+        {
+            std::clog << std::format("client {} tried to rename a subject without verification\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not verified"};
         }
         else
         {
-            response->set_details("invalid user");
-            response->set_code(3);
+            std::clog << std::format("client {} renamed subject {} to {}\n", request->user().token(), request->id(), request->name());
+            m_database->rename_subject(request->id(), request->name());
+            status = grpc::Status{grpc::StatusCode::OK, {}};
         }
     }
     catch (client_exception const& exp)
     {
-        std::cerr << std::format("client {} {}\n", request->user().token(), exp.what());
-        response->set_details(exp.what());
-        response->set_code(4);
+        std::cerr << std::format("client {} tried to rename a subject but failed: {}\n", request->user().token(), exp.what());
+    }
+    catch (std::exception const& exp)
+    {
+        std::cerr << std::format("server: tried to rename a subject but failed: {}\n", exp.what());
     }
 
     return status;
@@ -1088,41 +1089,38 @@ grpc::Status server::RenameSubject(grpc::ServerContext* context, RenameSubjectRe
 
 grpc::Status server::RemoveSubject(grpc::ServerContext* context, RemoveSubjectRequest const* request, RemoveSubjectResponse* response)
 {
+    grpc::Status status{grpc::StatusCode::INTERNAL, {}};
+
     try
     {
         if (!request->has_user() || !session_is_valid(request->user()))
         {
-            response->set_success(false);
-            response->set_details("invalid user");
-            response->set_code(3);
+            status = grpc::Status{grpc::StatusCode::UNAUTHENTICATED, "invalid user"};
         }
         else if (request->subject().id() == 0)
         {
-            response->set_success(false);
-            response->set_details("invalid subject");
-            response->set_code(4);
+            std::clog << std::format("client {} tried to remove an invalid subject\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid subject"};
+        }
+        else if (!user_is_verified(request->user()))
+        {
+            std::clog << std::format("client {} tried to remove a subject without verification\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not verified"};
         }
         else
         {
             std::clog << std::format("client {} removed subject {}\n", request->user().token(), request->subject().id());
             m_database->remove_subject(request->subject().id());
-            response->set_success(true);
-            response->clear_details();
-            response->set_code(0);
+            status = grpc::Status{grpc::StatusCode::OK, {}};
         }
     }
     catch (client_exception const& exp)
     {
-        std::cerr << std::format("client {} {}\n", request->user().token(), exp.what());
-        response->set_success(false);
-        response->set_details(exp.what());
-        response->set_code(1);
+        std::cerr << std::format("client {} tried to remove a subject but failed: {}\n", request->user().token(), exp.what());
     }
     catch (std::exception const& exp)
     {
-        response->set_success(false);
-        response->set_details("internal error");
-        response->set_code(2);
+        std::cerr << std::format("server: tried to remove a subject but failed: {}\n", exp.what());
     }
 
     return status;
@@ -1130,41 +1128,36 @@ grpc::Status server::RemoveSubject(grpc::ServerContext* context, RemoveSubjectRe
 
 grpc::Status server::MergeSubjects(grpc::ServerContext* context, MergeSubjectsRequest const* request, MergeSubjectsResponse* response)
 {
+    grpc::Status status{grpc::StatusCode::INTERNAL, {}};
+
     try
     {
         if (!request->has_user() || !session_is_valid(request->user()))
         {
-            response->set_success(false);
-            response->set_details("invalid user");
-            response->set_code(3);
+            status = grpc::Status{grpc::StatusCode::UNAUTHENTICATED, "invalid user"};
         }
         else if (request->source_subject().id() == 0 || request->target_subject().id() == 0)
         {
-            response->set_success(false);
-            response->set_details("invalid subject");
-            response->set_code(4);
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid"};
+        }
+        else if (!user_is_verified(request->user()))
+        {
+            std::clog << std::format("client {} tried to x without verification\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not verified"};
         }
         else
         {
             std::clog << std::format("client {} merged subject {} to {}\n", request->user().token(), request->source_subject().id(), request->target_subject().id());
             m_database->merge_subjects(request->source_subject().id(), request->target_subject().id());
-            response->set_success(true);
-            response->clear_details();
-            response->set_code(0);
+            status = grpc::Status{grpc::StatusCode::OK, {}};
         }
     }
     catch (client_exception const& exp)
     {
         std::cerr << std::format("client {} {}\n", request->user().token(), exp.what());
-        response->set_success(false);
-        response->set_details(exp.what());
-        response->set_code(1);
     }
     catch (std::exception const& exp)
     {
-        response->set_success(false);
-        response->set_details("internal error");
-        response->set_code(2);
     }
 
     return status;
@@ -1172,19 +1165,17 @@ grpc::Status server::MergeSubjects(grpc::ServerContext* context, MergeSubjectsRe
 
 grpc::Status server::GetResources(grpc::ServerContext* context, GetResourcesRequest const* request, GetResourcesResponse* response)
 {
+    grpc::Status status{grpc::StatusCode::INTERNAL, {}};
+
     try
     {
         if (!request->has_user() || !session_is_valid(request->user()))
         {
-            response->set_success(false);
-            response->set_details("invalid user");
-            response->set_code(3);
+            status = grpc::Status{grpc::StatusCode::UNAUTHENTICATED, "invalid user"};
         }
         else if (request->subject().id() == 0)
         {
-            response->set_success(false);
-            response->set_details("invalid subject");
-            response->set_code(4);
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid"};
         }
         else
         {
@@ -1195,23 +1186,15 @@ grpc::Status server::GetResources(grpc::ServerContext* context, GetResourcesRequ
                 *resource = r;
             }
             std::clog << std::format("client {} collected {} resources\n", request->user().token(), response->resources_size());
-            response->set_success(true);
-            response->clear_details();
-            response->set_code(0);
+            status = grpc::Status{grpc::StatusCode::OK, {}};
         }
     }
     catch (client_exception const& exp)
     {
         std::cerr << std::format("client {} {}\n", request->user().token(), exp.what());
-        response->set_success(false);
-        response->set_details(exp.what());
-        response->set_code(1);
     }
     catch (std::exception const& exp)
     {
-        response->set_success(false);
-        response->set_details("internal error");
-        response->set_code(2);
         std::cerr << std::format("server: {}\n", exp.what());
     }
 
@@ -1220,42 +1203,37 @@ grpc::Status server::GetResources(grpc::ServerContext* context, GetResourcesRequ
 
 grpc::Status server::CreateResource(grpc::ServerContext* context, CreateResourceRequest const* request, CreateResourceResponse* response)
 {
+    grpc::Status status{grpc::StatusCode::INTERNAL, {}};
+
     try
     {
         if (!request->has_user() || !session_is_valid(request->user()))
         {
-            response->set_success(false);
-            response->set_details("invalid user");
-            response->set_code(3);
+            status = grpc::Status{grpc::StatusCode::UNAUTHENTICATED, "invalid user"};
         }
         else if (request->resource().id() != 0)
         {
-            response->set_success(false);
-            response->set_details("resource already has an identifier");
-            response->set_code(4);
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid"};
+        }
+        else if (!user_is_verified(request->user()))
+        {
+            std::clog << std::format("client {} tried to x without verification\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not verified"};
         }
         else
         {
             auto resource{std::make_unique<Resource>(m_database->create_resource(request->resource()))};
             std::clog << std::format("client {} created resource {}\n", request->user().token(), resource->id());
-            response->set_success(true);
-            response->clear_details();
-            response->set_code(0);
             response->set_allocated_resource(resource.release());
+            status = grpc::Status{grpc::StatusCode::OK, {}};
         }
     }
     catch (client_exception const& exp)
     {
         std::cerr << std::format("client {} {}\n", request->user().token(), exp.what());
-        response->set_success(false);
-        response->set_details(exp.what());
-        response->set_code(1);
     }
     catch (std::exception const& exp)
     {
-        response->set_success(false);
-        response->set_details("internal error");
-        response->set_code(2);
         std::cerr << std::format("server: {}\n", exp.what());
     }
 
@@ -1264,62 +1242,46 @@ grpc::Status server::CreateResource(grpc::ServerContext* context, CreateResource
 
 grpc::Status server::AddResourceToSubject(grpc::ServerContext* context, AddResourceToSubjectRequest const* request, AddResourceToSubjectResponse* response)
 {
-    grpc::Status{grpc::StatusCode::INTERNAL, {}};
+    grpc::Status status{grpc::StatusCode::INTERNAL, {}};
 
     try
     {
         if (!request->has_user() || !session_is_valid(request->user()))
         {
-            response->set_success(false);
-            response->set_details("invalid user");
-            response->set_code(3);
-            grpc::Status{grpc::StatusCode::UNAUTHENTICATED, "invalid user"};
+            status = grpc::Status{grpc::StatusCode::UNAUTHENTICATED, "invalid user"};
         }
         else if (request->resource().id() == 0)
         {
-            response->set_success(false);
-            response->set_details("invalid resource");
-            response->set_code(4);
-            grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid resource"};
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid"};
         }
         else if (request->subject().id() == 0)
         {
-            response->set_success(false);
-            response->set_details("invalid subject");
-            response->set_code(4);
-            grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid subject"};
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid"};
+        }
+        else if (!user_is_verified(request->user()))
+        {
+            std::clog << std::format("client {} tried to x without verification\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not verified"};
         }
         else
         {
             std::clog << std::format("client {} added resource {} to subject {}\n", request->user().token(), request->resource().id(), request->subject().id());
             m_database->add_resource_to_subject(request->resource().id(), request->subject().id());
-            response->set_success(true);
-            response->clear_details();
-            response->set_code(0);
-            grpc::Status{grpc::StatusCode::OK, {}};
+            status = grpc::Status{grpc::StatusCode::OK, {}};
         }
     }
     catch (pqxx::unique_violation const& exp)
     {
         std::cerr << std::format("client {} attempted to add duplicate resource {} to subject {}\n", request->user().token(), request->resource().id(), request->subject().id());
-        response->set_success(false);
-        response->set_details(exp.what());
-        response->set_code(1);
         grpc::Status{grpc::StatusCode::ALREADY_EXISTS, "duplicate resources in subject are not allowed"};
     }
     catch (client_exception const& exp)
     {
         std::cerr << std::format("client {} {}\n", request->user().token(), exp.what());
-        response->set_success(false);
-        response->set_details(exp.what());
-        response->set_code(1);
         grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, exp.what()};
     }
     catch (std::exception const& exp)
     {
-        response->set_success(false);
-        response->set_details("internal error");
-        response->set_code(2);
         std::cerr << std::format("server: {}\n", exp.what());
     }
 
@@ -1328,47 +1290,40 @@ grpc::Status server::AddResourceToSubject(grpc::ServerContext* context, AddResou
 
 grpc::Status server::DropResourceFromSubject(grpc::ServerContext* context, DropResourceFromSubjectRequest const* request, DropResourceFromSubjectResponse* response)
 {
+    grpc::Status status{grpc::StatusCode::INTERNAL, {}};
+
     try
     {
         if (!request->has_user() || !session_is_valid(request->user()))
         {
-            response->set_success(false);
-            response->set_details("invalid user");
-            response->set_code(3);
+            status = grpc::Status{grpc::StatusCode::UNAUTHENTICATED, "invalid user"};
         }
         else if (request->resource().id() == 0)
         {
-            response->set_success(false);
-            response->set_details("invalid resource");
-            response->set_code(4);
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid"};
         }
         else if (request->subject().id() == 0)
         {
-            response->set_success(false);
-            response->set_details("invalid subject");
-            response->set_code(4);
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid"};
+        }
+        else if (!user_is_verified(request->user()))
+        {
+            std::clog << std::format("client {} tried to x without verification\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not verified"};
         }
         else
         {
             std::clog << std::format("client {} dropped resource {} from subject {}\n", request->user().token(), request->resource().id(), request->subject().id());
             m_database->drop_resource_from_subject(request->resource().id(), request->subject().id());
-            response->set_success(true);
-            response->clear_details();
-            response->set_code(0);
+            status = grpc::Status{grpc::StatusCode::OK, {}};
         }
     }
     catch (client_exception const& exp)
     {
         std::cerr << std::format("client {} {}\n", request->user().token(), exp.what());
-        response->set_success(false);
-        response->set_details(exp.what());
-        response->set_code(1);
     }
     catch (std::exception const& exp)
     {
-        response->set_success(false);
-        response->set_details("internal error");
-        response->set_code(2);
         std::cerr << std::format("server: {}\n", exp.what());
     }
 
@@ -1377,19 +1332,17 @@ grpc::Status server::DropResourceFromSubject(grpc::ServerContext* context, DropR
 
 grpc::Status server::SearchResources(grpc::ServerContext* context, SearchResourcesRequest const* request, SearchResourcesResponse* response)
 {
+    grpc::Status status{grpc::StatusCode::INTERNAL, {}};
+
     try
     {
         if (!request->has_user() || !session_is_valid(request->user()))
         {
-            response->set_success(false);
-            response->set_details("invalid user");
-            response->set_code(3);
+            status = grpc::Status{grpc::StatusCode::UNAUTHENTICATED, "invalid user"};
         }
         else if (request->search_token().empty())
         {
-            response->set_success(false);
-            response->set_details("invalid input");
-            response->set_code(4);
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid"};
         }
         else
         {
@@ -1401,23 +1354,15 @@ grpc::Status server::SearchResources(grpc::ServerContext* context, SearchResourc
                 result->set_position(position);
             }
             std::clog << std::format("client {} collected {} resources by searching\n", request->user().token(), response->results_size(), request->search_token());
-            response->set_success(true);
-            response->clear_details();
-            response->set_code(0);
+            status = grpc::Status{grpc::StatusCode::OK, {}};
         }
     }
     catch (client_exception const& exp)
     {
         std::cerr << std::format("client {} {}\n", request->user().token(), exp.what());
-        response->set_success(false);
-        response->set_details(exp.what());
-        response->set_code(1);
     }
     catch (std::exception const& exp)
     {
-        response->set_success(false);
-        response->set_details("internal error");
-        response->set_code(2);
         std::cerr << std::format("server: {}\n", exp.what());
     }
 
@@ -1426,47 +1371,40 @@ grpc::Status server::SearchResources(grpc::ServerContext* context, SearchResourc
 
 grpc::Status server::MergeResources(grpc::ServerContext* context, MergeResourcesRequest const* request, MergeResourcesResponse* response)
 {
+    grpc::Status status{grpc::StatusCode::INTERNAL, {}};
+
     try
     {
         if (!request->has_user() || !session_is_valid(request->user()))
         {
-            response->set_success(false);
-            response->set_details("invalid user");
-            response->set_code(3);
+            status = grpc::Status{grpc::StatusCode::UNAUTHENTICATED, "invalid user"};
         }
         else if (request->source().id() == 0)
         {
-            response->set_success(false);
-            response->set_details("invalid source");
-            response->set_code(4);
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid"};
         }
         else if (request->target().id() == 0)
         {
-            response->set_success(false);
-            response->set_details("invalid target");
-            response->set_code(5);
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid"};
+        }
+        else if (!user_is_verified(request->user()))
+        {
+            std::clog << std::format("client {} tried to x without verification\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not verified"};
         }
         else
         {
             std::clog << std::format("client {} merged resource {} to {}\n", request->user().token(), request->source().id(), request->target().id());
             m_database->merge_resources(request->source().id(), request->target().id());
-            response->set_success(true);
-            response->clear_details();
-            response->set_code(0);
+            status = grpc::Status{grpc::StatusCode::OK, {}};
         }
     }
     catch (client_exception const& exp)
     {
         std::cerr << std::format("client {} {}\n", request->user().token(), exp.what());
-        response->set_success(false);
-        response->set_details(exp.what());
-        response->set_code(1);
     }
     catch (std::exception const& exp)
     {
-        response->set_success(false);
-        response->set_details("internal error");
-        response->set_code(2);
         std::cerr << std::format("server: {}\n", exp.what());
     }
 
@@ -1475,41 +1413,31 @@ grpc::Status server::MergeResources(grpc::ServerContext* context, MergeResources
 
 grpc::Status server::RemoveResource(grpc::ServerContext* context, RemoveResourceRequest const* request, RemoveResourceResponse* response)
 {
+    grpc::Status status{grpc::StatusCode::INTERNAL, {}};
+
     try
     {
         if (!request->has_user() || !session_is_valid(request->user()))
         {
-            response->set_success(false);
-            response->set_details("invalid user");
-            response->set_code(3);
+            status = grpc::Status{grpc::StatusCode::UNAUTHENTICATED, "invalid user"};
         }
         else if (request->resource().id() == 0)
         {
-            response->set_success(false);
-            response->set_details("invalid resource");
-            response->set_code(4);
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid"};
         }
         else
         {
             std::clog << std::format("client {} removed resource {}\n", request->user().token(), request->resource().id());
             m_database->remove_resource(request->resource().id());
-            response->set_success(true);
-            response->clear_details();
-            response->set_code(0);
+            status = grpc::Status{grpc::StatusCode::OK, {}};
         }
     }
     catch (client_exception const& exp)
     {
         std::cerr << std::format("client {} {}\n", request->user().token(), exp.what());
-        response->set_success(false);
-        response->set_details(exp.what());
-        response->set_code(1);
     }
     catch (std::exception const& exp)
     {
-        response->set_success(false);
-        response->set_details("internal error");
-        response->set_code(2);
         std::cerr << std::format("server: {}\n", exp.what());
     }
 
@@ -1518,19 +1446,22 @@ grpc::Status server::RemoveResource(grpc::ServerContext* context, RemoveResource
 
 grpc::Status server::EditResource(grpc::ServerContext* context, EditResourceRequest const* request, EditResourceResponse* response)
 {
+    grpc::Status status{grpc::StatusCode::INTERNAL, {}};
+
     try
     {
         if (!request->has_user() || !session_is_valid(request->user()))
         {
-            response->set_success(false);
-            response->set_details("invalid user");
-            response->set_code(3);
+            status = grpc::Status{grpc::StatusCode::UNAUTHENTICATED, "invalid user"};
         }
         else if (request->resource().id() == 0)
         {
-            response->set_success(false);
-            response->set_details("invalid resource");
-            response->set_code(4);
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid"};
+        }
+        else if (!user_is_verified(request->user()))
+        {
+            std::clog << std::format("client {} tried to x without verification\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not verified"};
         }
         else
         {
@@ -1579,32 +1510,22 @@ grpc::Status server::EditResource(grpc::ServerContext* context, EditResourceRequ
                 modified = true;
             }
 
-            response->set_success(modified);
-
             if (modified)
             {
-                response->clear_details();
-                response->set_code(0);
+                status = grpc::Status{grpc::StatusCode::OK, {}};
             }
             else
             {
-                response->set_details("no modification");
-                response->set_code(5);
+                status = grpc::Status{grpc::StatusCode::ALREADY_EXISTS, "no changes"};
             }
         }
     }
     catch (client_exception const& exp)
     {
         std::cerr << std::format("client {} {}\n", request->user().token(), exp.what());
-        response->set_success(false);
-        response->set_details(exp.what());
-        response->set_code(1);
     }
     catch (std::exception const& exp)
     {
-        response->set_success(false);
-        response->set_details("internal error");
-        response->set_code(2);
         std::cerr << std::format("server: {}\n", exp.what());
     }
 
@@ -1628,6 +1549,11 @@ grpc::Status server::CreateNerve(grpc::ServerContext* context, CreateNerveReques
         else if (request->resource().expiration() == 0)
         {
             status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid resource expiration"};
+        }
+        else if (!user_is_verified(request->user()))
+        {
+            std::clog << std::format("client {} tried to x without verification\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not verified"};
         }
         else
         {
@@ -1714,6 +1640,11 @@ grpc::Status server::CreateProvider(grpc::ServerContext* context, CreateProvider
         {
             status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid provider", "provider id must be zero before creation"};
         }
+        else if (!user_is_verified(request->user()))
+        {
+            std::clog << std::format("client {} tried to x without verification\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not verified"};
+        }
         else
         {
             Provider provider{m_database->create_provider(request->provider().name())};
@@ -1753,6 +1684,11 @@ grpc::Status server::AddProvider(grpc::ServerContext* context, AddProviderReques
         {
             status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid provider"};
         }
+        else if (!user_is_verified(request->user()))
+        {
+            std::clog << std::format("client {} tried to x without verification\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not verified"};
+        }
         else
         {
             std::clog << std::format("client {} added provider {} to resource {}\n", request->user().token(), request->provider().id(), request->resource().id());
@@ -1790,6 +1726,11 @@ grpc::Status server::DropProvider(grpc::ServerContext* context, DropProviderRequ
         else if (request->provider().id() == 0)
         {
             status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid provider"};
+        }
+        else if (!user_is_verified(request->user()))
+        {
+            std::clog << std::format("client {} tried to x without verification\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not verified"};
         }
         else
         {
@@ -1864,6 +1805,11 @@ grpc::Status server::RenameProvider(grpc::ServerContext* context, RenameProvider
         {
             status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid provider"};
         }
+        else if (!user_is_verified(request->user()))
+        {
+            std::clog << std::format("client {} tried to x without verification\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not verified"};
+        }
         else
         {
             std::clog << std::format("client {} renamed provider {}\n", request->user().token(), 0, request->provider().id());
@@ -1897,6 +1843,11 @@ grpc::Status server::RemoveProvider(grpc::ServerContext* context, RemoveProvider
         else if (request->provider().id() == 0)
         {
             status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid provider"};
+        }
+        else if (!user_is_verified(request->user()))
+        {
+            std::clog << std::format("client {} tried to x without verification\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not verified"};
         }
         else
         {
@@ -1936,6 +1887,11 @@ grpc::Status server::MergeProviders(grpc::ServerContext* context, MergeProviders
         {
             status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid target provider"};
         }
+        else if (!user_is_verified(request->user()))
+        {
+            std::clog << std::format("client {} tried to x without verification\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not verified"};
+        }
         else
         {
             std::clog << std::format("client {} merged provider {} to {}\n", request->user().token(), 0, request->source().id(), request->target().id());
@@ -1973,6 +1929,11 @@ grpc::Status server::CreatePresenter(grpc::ServerContext* context, CreatePresent
         else if (request->presenter().id() != 0)
         {
             status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid presenter", "presenter id must be zero before creation"};
+        }
+        else if (!user_is_verified(request->user()))
+        {
+            std::clog << std::format("client {} tried to x without verification\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not verified"};
         }
         else
         {
@@ -2013,6 +1974,11 @@ grpc::Status server::AddPresenter(grpc::ServerContext* context, AddPresenterRequ
         {
             status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid presenter"};
         }
+        else if (!user_is_verified(request->user()))
+        {
+            std::clog << std::format("client {} tried to x without verification\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not verified"};
+        }
         else
         {
             std::clog << std::format("client {} created presenter {} to resource {}\n", request->user().token(), 0, request->presenter().id(), request->resource().id());
@@ -2050,6 +2016,11 @@ grpc::Status server::DropPresenter(grpc::ServerContext* context, DropPresenterRe
         else if (request->presenter().id() == 0)
         {
             status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid presenter"};
+        }
+        else if (!user_is_verified(request->user()))
+        {
+            std::clog << std::format("client {} tried to x without verification\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not verified"};
         }
         else
         {
@@ -2124,6 +2095,11 @@ grpc::Status server::RenamePresenter(grpc::ServerContext* context, RenamePresent
         {
             status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid presenter"};
         }
+        else if (!user_is_verified(request->user()))
+        {
+            std::clog << std::format("client {} tried to x without verification\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not verified"};
+        }
         else
         {
             std::clog << std::format("client {} renamed presenter {}\n", request->user().token(), request->presenter().id());
@@ -2157,6 +2133,11 @@ grpc::Status server::RemovePresenter(grpc::ServerContext* context, RemovePresent
         else if (request->presenter().id() == 0)
         {
             status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid presenter"};
+        }
+        else if (!user_is_verified(request->user()))
+        {
+            std::clog << std::format("client {} tried to x without verification\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not verified"};
         }
         else
         {
@@ -2195,6 +2176,11 @@ grpc::Status server::MergePresenters(grpc::ServerContext* context, MergePresente
         else if (request->target().id() == 0)
         {
             status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid target presenter"};
+        }
+        else if (!user_is_verified(request->user()))
+        {
+            std::clog << std::format("client {} tried to x without verification\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not verified"};
         }
         else
         {
@@ -2271,6 +2257,11 @@ grpc::Status server::CreateTopic(grpc::ServerContext* context, CreateTopicReques
         {
             status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid topic name"};
         }
+        else if (!user_is_verified(request->user()))
+        {
+            std::clog << std::format("client {} tried to x without verification\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not verified"};
+        }
         else
         {
             Topic* topic{response->mutable_topic()};
@@ -2314,6 +2305,11 @@ grpc::Status server::ReorderTopic(grpc::ServerContext* context, ReorderTopicRequ
         {
             status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid target topic"};
         }
+        else if (!user_is_verified(request->user()))
+        {
+            std::clog << std::format("client {} tried to x without verification\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not verified"};
+        }
         else
         {
             std::clog << std::format("client {} reordered topic {} to {} in subject {}\n", request->user().token(), request->topic().position(), request->target().position(),
@@ -2352,6 +2348,11 @@ grpc::Status server::RemoveTopic(grpc::ServerContext* context, RemoveTopicReques
         else if (request->topic().position() == 0)
         {
             status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid topic"};
+        }
+        else if (!user_is_verified(request->user()))
+        {
+            std::clog << std::format("client {} tried to x without verification\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not verified"};
         }
         else
         {
@@ -2394,6 +2395,11 @@ grpc::Status server::MergeTopics(grpc::ServerContext* context, MergeTopicsReques
         else if (request->target().position() == 0)
         {
             status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid source topic"};
+        }
+        else if (!user_is_verified(request->user()))
+        {
+            std::clog << std::format("client {} tried to x without verification\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not verified"};
         }
         else
         {
@@ -2442,6 +2448,11 @@ grpc::Status server::EditTopic(grpc::ServerContext* context, EditTopicRequest co
         else if (request->target().name().empty())
         {
             status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid target topic name"};
+        }
+        else if (!user_is_verified(request->user()))
+        {
+            std::clog << std::format("client {} tried to x without verification\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not verified"};
         }
         else
         {
@@ -2512,6 +2523,11 @@ grpc::Status server::MoveTopic(grpc::ServerContext* context, MoveTopicRequest co
         else if (request->target_topic().position() == 0)
         {
             status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid target topic"};
+        }
+        else if (!user_is_verified(request->user()))
+        {
+            std::clog << std::format("client {} tried to x without verification\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not verified"};
         }
         else
         {
@@ -2635,6 +2651,11 @@ grpc::Status server::CreateSection(grpc::ServerContext* context, CreateSectionRe
         {
             status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid section name"};
         }
+        else if (!user_is_verified(request->user()))
+        {
+            std::clog << std::format("client {} tried to x without verification\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not verified"};
+        }
         else
         {
             Section* section{response->mutable_section()};
@@ -2678,6 +2699,11 @@ grpc::Status server::ReorderSection(grpc::ServerContext* context, ReorderSection
         {
             status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid target section"};
         }
+        else if (!user_is_verified(request->user()))
+        {
+            std::clog << std::format("client {} tried to x without verification\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not verified"};
+        }
         else
         {
             std::clog << std::format("client {} reordered section {} to {} in resource {}\n", request->user().token(), request->source().position(), request->target().position(),
@@ -2716,6 +2742,11 @@ grpc::Status server::RemoveSection(grpc::ServerContext* context, RemoveSectionRe
         else if (request->section().position() == 0)
         {
             status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid section"};
+        }
+        else if (!user_is_verified(request->user()))
+        {
+            std::clog << std::format("client {} tried to x without verification\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not verified"};
         }
         else
         {
@@ -2759,6 +2790,11 @@ grpc::Status server::MergeSections(grpc::ServerContext* context, MergeSectionsRe
         {
             status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid target section"};
         }
+        else if (!user_is_verified(request->user()))
+        {
+            std::clog << std::format("client {} tried to x without verification\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not verified"};
+        }
         else
         {
             std::clog << std::format("client {} merged sections {} and {} in resource {}\n", request->user().token(), request->source().position(), request->target().position(),
@@ -2798,6 +2834,11 @@ grpc::Status server::EditSection(grpc::ServerContext* context, EditSectionReques
         else if (request->section().position() == 0)
         {
             status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid section"};
+        }
+        else if (!user_is_verified(request->user()))
+        {
+            std::clog << std::format("client {} tried to x without verification\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not verified"};
         }
         else
         {
@@ -2867,6 +2908,11 @@ grpc::Status server::MoveSection(grpc::ServerContext* context, MoveSectionReques
         else if (request->target_section().position() == 0)
         {
             status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid target section"};
+        }
+        else if (!user_is_verified(request->user()))
+        {
+            std::clog << std::format("client {} tried to x without verification\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not verified"};
         }
         else
         {
@@ -2951,6 +2997,11 @@ grpc::Status server::CreateCard(grpc::ServerContext* context, CreateCardRequest 
         {
             status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "empty headline not allowed"};
         }
+        else if (!user_is_verified(request->user()))
+        {
+            std::clog << std::format("client {} tried to x without verification\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not verified"};
+        }
         else
         {
             Card* card{response->mutable_card()};
@@ -2993,6 +3044,11 @@ grpc::Status server::AddCardToSection(grpc::ServerContext* context, AddCardToSec
         else if (request->section().position() == 0)
         {
             status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid section"};
+        }
+        else if (!user_is_verified(request->user()))
+        {
+            std::clog << std::format("client {} tried to x without verification\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not verified"};
         }
         else
         {
@@ -3037,6 +3093,11 @@ grpc::Status server::AddCardToTopic(grpc::ServerContext* context, AddCardToTopic
         {
             status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid topic"};
         }
+        else if (!user_is_verified(request->user()))
+        {
+            std::clog << std::format("client {} tried to x without verification\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not verified"};
+        }
         else
         {
             std::clog << std::format("client {} added card {} to topic {} in subject {}\n", request->user().token(), request->card().id(), request->topic().position(),
@@ -3077,6 +3138,11 @@ grpc::Status server::RemoveCard(grpc::ServerContext* context, RemoveCardRequest 
         else if (request->card().id() == 0)
         {
             status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid card"};
+        }
+        else if (!user_is_verified(request->user()))
+        {
+            std::clog << std::format("client {} tried to x without verification\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not verified"};
         }
         else
         {
@@ -3119,6 +3185,11 @@ grpc::Status server::MergeCards(grpc::ServerContext* context, MergeCardsRequest 
         else if (request->target().headline().empty())
         {
             status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "empty headline not allowed"};
+        }
+        else if (!user_is_verified(request->user()))
+        {
+            std::clog << std::format("client {} tried to x without verification\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not verified"};
         }
         else
         {
@@ -3210,6 +3281,11 @@ grpc::Status server::MoveCardToSection(grpc::ServerContext* context, MoveCardToS
         {
             status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid target section"};
         }
+        else if (!user_is_verified(request->user()))
+        {
+            std::clog << std::format("client {} tried to x without verification\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not verified"};
+        }
         else
         {
             std::clog << std::format("client {} moved card {} to section {} in resource {}\n", request->user().token(), request->card().id(), request->target().position(),
@@ -3248,6 +3324,11 @@ grpc::Status server::MarkSectionAsReviewed(grpc::ServerContext* context, MarkSec
         else if (request->section().position() == 0)
         {
             status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid section"};
+        }
+        else if (!user_is_verified(request->user()))
+        {
+            std::clog << std::format("client {} tried to x without verification\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not verified"};
         }
         else
         {
@@ -3290,6 +3371,11 @@ grpc::Status server::GetPracticeCards(grpc::ServerContext* context, GetPracticeC
         else if (request->topic().position() == 0)
         {
             status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid topic"};
+        }
+        else if (!user_is_verified(request->user()))
+        {
+            std::clog << std::format("client {} tried to x without verification\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not verified"};
         }
         else
         {
@@ -3334,6 +3420,11 @@ grpc::Status server::GetPracticeTopics(grpc::ServerContext* context, GetPractice
         else if (request->milestone().id() == 0)
         {
             status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid subject"};
+        }
+        else if (!user_is_verified(request->user()))
+        {
+            std::clog << std::format("client {} tried to x without verification\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not verified"};
         }
         else
         {
@@ -3390,6 +3481,11 @@ grpc::Status server::MoveCardToTopic(grpc::ServerContext* context, MoveCardToTop
         {
             status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid target topic"};
         }
+        else if (!user_is_verified(request->user()))
+        {
+            std::clog << std::format("client {} tried to x without verification\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not verified"};
+        }
         else
         {
             std::clog << std::format("client {} moved card {} to topic {} in subject {}\n", request->user().token(), request->card().id(), request->target_topic().position(),
@@ -3433,6 +3529,11 @@ grpc::Status server::CreateAssessment(grpc::ServerContext* context, CreateAssess
         else if (request->topic().position() == 0)
         {
             status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid topic"};
+        }
+        else if (!user_is_verified(request->user()))
+        {
+            std::clog << std::format("client {} tried to x without verification\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not verified"};
         }
         else
         {
@@ -3520,6 +3621,11 @@ grpc::Status server::ExpandAssessment(grpc::ServerContext* context, ExpandAssess
         {
             status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid topic"};
         }
+        else if (!user_is_verified(request->user()))
+        {
+            std::clog << std::format("client {} tried to x without verification\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not verified"};
+        }
         else
         {
             std::clog << std::format("client {} expanded assessment {} with topic {} {} in subject {}\n", request->user().token(), request->card().id(),
@@ -3562,6 +3668,11 @@ grpc::Status server::DiminishAssessment(grpc::ServerContext* context, DiminishAs
         else if (request->topic().position() == 0)
         {
             status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid topic"};
+        }
+        else if (!user_is_verified(request->user()))
+        {
+            std::clog << std::format("client {} tried to x without verification\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not verified"};
         }
         else
         {
@@ -3717,6 +3828,11 @@ grpc::Status server::EditCard(grpc::ServerContext* context, EditCardRequest cons
         {
             status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid card"};
         }
+        else if (!user_is_verified(request->user()))
+        {
+            std::clog << std::format("client {} tried to x without verification\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not verified"};
+        }
         else
         {
             Card card{m_database->get_card(request->card().id())};
@@ -3772,6 +3888,11 @@ grpc::Status server::CreateBlock(grpc::ServerContext* context, CreateBlockReques
         else if (request->block().extension().empty())
         {
             status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid extension", "block extension cannot be empty"};
+        }
+        else if (!user_is_verified(request->user()))
+        {
+            std::clog << std::format("client {} tried to x without verification\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not verified"};
         }
         else
         {
@@ -3849,6 +3970,11 @@ grpc::Status server::RemoveBlock(grpc::ServerContext* context, RemoveBlockReques
         {
             status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid block"};
         }
+        else if (!user_is_verified(request->user()))
+        {
+            std::clog << std::format("client {} tried to x without verification\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not verified"};
+        }
         else
         {
             std::clog << std::format("client {} removed block {} in card {}\n", request->user().token(), request->block().position(), request->card().id());
@@ -3895,6 +4021,11 @@ grpc::Status server::EditBlock(grpc::ServerContext* context, EditBlockRequest co
         else if (request->block().extension().empty())
         {
             status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid extension", "block extension cannot be empty"};
+        }
+        else if (!user_is_verified(request->user()))
+        {
+            std::clog << std::format("client {} tried to x without verification\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not verified"};
         }
         else
         {
@@ -3974,6 +4105,11 @@ grpc::Status server::ReorderBlock(grpc::ServerContext* context, ReorderBlockRequ
         {
             status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid target block"};
         }
+        else if (!user_is_verified(request->user()))
+        {
+            std::clog << std::format("client {} tried to x without verification\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not verified"};
+        }
         else
         {
             std::clog << std::format("client {} reordered block {} to {} in card {}\n", request->user().token(), request->block().position(), request->target().position(),
@@ -4017,6 +4153,11 @@ grpc::Status server::MergeBlocks(grpc::ServerContext* context, MergeBlocksReques
         {
             status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid target block"};
         }
+        else if (!user_is_verified(request->user()))
+        {
+            std::clog << std::format("client {} tried to x without verification\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not verified"};
+        }
         else
         {
             std::clog << std::format("client {} merged blocks {} and {} in card {}\n", request->user().token(), request->block().position(), request->target().position(),
@@ -4056,6 +4197,11 @@ grpc::Status server::SplitBlock(grpc::ServerContext* context, SplitBlockRequest 
         {
             status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid block"};
         }
+        else if (!user_is_verified(request->user()))
+        {
+            std::clog << std::format("client {} tried to x without verification\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not verified"};
+        }
         else
         {
             for (auto const& [position, block]: m_database->split_block(request->card().id(), request->block().position()))
@@ -4093,6 +4239,11 @@ grpc::Status server::MarkCardAsReviewed(grpc::ServerContext* context, MarkCardAs
         else if (request->card().id() == 0)
         {
             status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid card"};
+        }
+        else if (!user_is_verified(request->user()))
+        {
+            std::clog << std::format("client {} tried to x without verification\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not verified"};
         }
         else
         {
@@ -4224,6 +4375,11 @@ grpc::Status server::MoveBlock(grpc::ServerContext* context, MoveBlockRequest co
         {
             status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid target block position"};
         }
+        else if (!user_is_verified(request->user()))
+        {
+            std::clog << std::format("client {} tried to x without verification\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not verified"};
+        }
         else
         {
             std::clog << std::format("client {} moved block from position {} in card {} to position {} in card {}\n", request->user().token(), request->block().position(), request->card().id(), request->target_block().position(), request->target_card().id());
@@ -4304,6 +4460,11 @@ grpc::Status server::MakeProgress(grpc::ServerContext* context, MakeProgressRequ
         else if (request->duration() < 3)
         {
             status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid duration", "reading a card less than 3 seconds is not acceptable"};
+        }
+        else if (!user_is_verified(request->user()))
+        {
+            std::clog << std::format("client {} tried to x without verification\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not verified"};
         }
         else
         {
