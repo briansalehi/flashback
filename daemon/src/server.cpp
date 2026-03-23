@@ -766,33 +766,29 @@ grpc::Status server::AddMilestone(grpc::ServerContext* context, AddMilestoneRequ
 
 grpc::Status server::AddRequirement(grpc::ServerContext* context, AddRequirementRequest const* request, AddRequirementResponse* response)
 {
+    grpc::Status status{grpc::StatusCode::INTERNAL, {}};
+
     try
     {
-        response->set_success(false);
-        response->clear_details();
-        response->set_code(0);
-
-        if (request->has_user() && session_is_valid(request->user()))
+        if (!request->has_user() || !session_is_valid(request->user()))
+        {
+            status = grpc::Status{grpc::StatusCode::UNAUTHENTICATED, "invalid user"};
+        }
+        else
         {
             std::clog << std::format("client {} added milestone {} as a requirement for milestone {} in roadmap {}\n", request->user().token(), request->milestone().position(),
                                      request->required_milestone().position(), request->roadmap().id());
             m_database->add_requirement(request->roadmap().id(), request->milestone(), request->required_milestone());
-            response->set_success(true);
+            status = grpc::Status{grpc::StatusCode::OK, {}};
         }
     }
     catch (client_exception const& exp)
     {
-        response->set_code(3);
-        response->set_details(exp.what());
-        response->set_success(false);
-        std::cerr << std::format("client {} {}\n", request->user().token(), exp.what());
+        std::cerr << std::format("client {} tried to add a requirement but failed: {}\n", request->user().token(), exp.what());
     }
     catch (std::exception const& exp)
     {
         std::cerr << std::format("server: {}\n", exp.what());
-        response->set_code(3);
-        response->set_details("internal error");
-        response->set_success(false);
     }
 
     return status;
@@ -800,38 +796,34 @@ grpc::Status server::AddRequirement(grpc::ServerContext* context, AddRequirement
 
 grpc::Status server::GetRequirements(grpc::ServerContext* context, GetRequirementsRequest const* request, GetRequirementsResponse* response)
 {
+    grpc::Status status{grpc::StatusCode::INTERNAL, {}};
+
     try
     {
-        response->set_success(false);
-        response->clear_details();
-        response->set_code(0);
-
-        if (request->has_user() && session_is_valid(request->user()))
+        if (!request->has_user() || !session_is_valid(request->user()))
+        {
+            status = grpc::Status{grpc::StatusCode::UNAUTHENTICATED, "invalid user"};
+        }
+        else
         {
             for (Milestone const& requirement: m_database->get_requirements(request->roadmap().id(), request->milestone().id(), request->milestone().level()))
             {
-                Milestone* milestone = response->add_milestones();
-                *milestone = requirement;
-                response->set_success(true);
+                *response->add_milestones() = requirement;
             }
+            status = grpc::Status{grpc::StatusCode::OK, {}};
             std::clog << std::format("client {} collected {} requirements from milestone {}:{}\n", request->user().token(), response->milestones_size(), request->roadmap().id(),
                                      request->milestone().position());
         }
     }
     catch (client_exception const& exp)
     {
-        response->set_code(3);
-        response->set_details(exp.what());
-        response->set_success(false);
-        std::cerr << std::format("client {} {}\n", request->user().token(), exp.what());
+        std::cerr << std::format("client {} tried to get requirements but failed: {}\n", request->user().token(), exp.what());
     }
     catch (std::exception const& exp)
     {
         std::cerr << std::format("server: {}\n", exp.what());
-        response->set_code(3);
-        response->set_details("internal error");
-        response->set_success(false);
     }
+
     return status;
 }
 
@@ -851,12 +843,12 @@ grpc::Status server::CreateSubject(grpc::ServerContext* context, CreateSubjectRe
         }
         else
         {
-            Subject subject{m_database->create_subject(request->name())};
+            Subject const subject{m_database->create_subject(request->name())};
             std::clog << std::format("client {} created subject {}\n", request->user().token(), subject.id());
             status = grpc::Status{grpc::StatusCode::OK, ""};
         }
     }
-    catch (flashback::client_exception const& exp)
+    catch (client_exception const& exp)
     {
         status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, exp.what()};
     }
@@ -874,9 +866,19 @@ grpc::Status server::CreateSubject(grpc::ServerContext* context, CreateSubjectRe
 
 grpc::Status server::SearchSubjects(grpc::ServerContext* context, SearchSubjectsRequest const* request, SearchSubjectsResponse* response)
 {
+    grpc::Status status{grpc::StatusCode::INTERNAL, {}};
+
     try
     {
-        if (request->has_user() && !request->token().empty() && session_is_valid(request->user()))
+        if (!request->has_user() || session_is_valid(request->user()))
+        {
+            status = grpc::Status{grpc::StatusCode::UNAUTHENTICATED, "invalid user"};
+        }
+        else if (!request->token().empty())
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid search string"};
+        }
+        else
         {
             for (auto const& [position, subject]: m_database->search_subjects(request->token()))
             {
@@ -884,12 +886,14 @@ grpc::Status server::SearchSubjects(grpc::ServerContext* context, SearchSubjects
                 matching_subject->set_position(position);
                 matching_subject->set_allocated_subject(std::make_unique<Subject>(subject).release());
             }
+
             std::clog << std::format("client {} collected {} subjects by searching {}\n", request->user().token(), response->subjects_size(), request->token());
+            status = grpc::Status{grpc::StatusCode::OK, {}};
         }
     }
     catch (client_exception const& exp)
     {
-        std::cerr << std::format("client {} {}\n", request->user().token(), exp.what());
+        std::cerr << std::format("client {} tried to search subjects but failed: {}\n", request->user().token(), exp.what());
     }
     catch (std::exception const& exp)
     {
@@ -901,62 +905,43 @@ grpc::Status server::SearchSubjects(grpc::ServerContext* context, SearchSubjects
 
 grpc::Status server::ReorderMilestone(grpc::ServerContext* context, ReorderMilestoneRequest const* request, ReorderMilestoneResponse* response)
 {
+    grpc::Status status{grpc::StatusCode::INTERNAL, {}};
+
     try
     {
-        if (request->has_user() && session_is_valid(request->user()))
+        if (!request->has_user() || !session_is_valid(request->user()))
         {
-            if (!request->has_roadmap() || request->roadmap().id() == 0)
-            {
-                response->set_success(false);
-                response->set_details("invalid roadmap");
-                response->set_code(4);
-            }
-            else if (request->current_position() == 0 || request->target_position() == 0)
-            {
-                response->set_success(false);
-                response->set_details("invalid positions");
-                response->set_code(5);
-            }
-            else if (request->current_position() == request->target_position())
-            {
-                response->set_success(false);
-                response->set_details("same position is invalid");
-                response->set_code(6);
-            }
-            else
-            {
-                std::clog << std::format("client {} reordered milestone {} to {} in roadmap {}\n", request->user().token(), request->current_position(), request->target_position(),
-                                         request->roadmap().id());
-                m_database->reorder_milestone(request->roadmap().id(), request->current_position(), request->target_position());
-                response->set_success(true);
-                response->clear_details();
-                response->set_code(0);
-            }
+            status = grpc::Status{grpc::StatusCode::UNAUTHENTICATED, "invalid user"};
+        }
+        else if (!request->has_roadmap() || request->roadmap().id() == 0)
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid roadmap"};
+        }
+        else if (request->current_position() == 0 || request->target_position() == 0)
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid positions"};
+        }
+        else if (request->current_position() == request->target_position())
+        {
+            status = grpc::Status{grpc::StatusCode::ALREADY_EXISTS, "same positions"};
+        }
+        else if (!user_is_verified(request->user()))
+        {
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not verified"};
         }
         else
         {
-            response->set_success(false);
-            response->set_details("invalid user");
-            response->set_code(3);
+            std::clog << std::format("client {} reordered milestone {} to {} in roadmap {}\n", request->user().token(), request->current_position(), request->target_position(), request->roadmap().id());
+            m_database->reorder_milestone(request->roadmap().id(), request->current_position(), request->target_position());
+            status = grpc::Status{grpc::StatusCode::OK, {}};
         }
     }
-    catch (flashback::client_exception const& exp)
+    catch (client_exception const& exp)
     {
-        response->set_success(false);
-        response->set_details(exp.what());
-        response->set_code(1);
-    }
-    catch (pqxx::unique_violation const& exp)
-    {
-        response->set_success(false);
-        response->set_details("duplicate request");
-        response->set_code(2);
+        std::cerr << std::format("client {} tried to reorder milestones but failed: {}\n", request->user().token(), exp.what());
     }
     catch (std::exception const& exp)
     {
-        response->set_success(false);
-        response->set_details("internal error");
-        response->set_code(3);
         std::cerr << std::format("server: error while creating subject: {}\n", exp.what());
     }
 
