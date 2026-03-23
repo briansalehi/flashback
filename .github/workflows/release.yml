@@ -51,12 +51,15 @@ jobs:
           KEYSTORE_ALIAS: ${{ secrets.KEYSTORE_ALIAS }}
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
         run: |
-          base64 -d <<< "$KEYSTORE_BASE64" > app/src-tauri/gen/android/app/keystore.jks
-          echo "$KEYSTORE_PASSWORD" >> app/src-tauri/gen/android/app/keystore.txt
-          echo "keyAlias=$KEYSTORE_ALIAS" > app/src-tauri/gen/android/app/keystore.properties
-          echo "keyPassword=$KEYSTORE_PASSWORD" >> app/src-tauri/gen/android/app/keystore.properties
-          echo "password=$KEYSTORE_PASSWORD" >> app/src-tauri/gen/android/app/keystore.properties
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > app/src-tauri/gen/android/app/keystore.jks
+          
+          echo "${{ secrets.KEYSTORE_PASSWORD }}" >> app/src-tauri/gen/android/app/keystore.txt
+          
+          echo "keyAlias=${{ secrets.KEYSTORE_ALIAS }}" > app/src-tauri/gen/android/app/keystore.properties
+          echo "keyPassword=${{ secrets.KEYSTORE_PASSWORD }}" >> app/src-tauri/gen/android/app/keystore.properties
+          echo "password=${{ secrets.KEYSTORE_PASSWORD }}" >> app/src-tauri/gen/android/app/keystore.properties
           echo "storeFile=keystore.jks" >> app/src-tauri/gen/android/app/keystore.properties
+          
           cargo tauri android build
         timeout-minutes: 20
       - name: Store Artifacts
