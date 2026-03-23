@@ -8,7 +8,7 @@ message GetUserRequest { User user = 1; }
 message GetUserResponse { User user = 1; }
 
 message SignInRequest { User user = 1; }
-message SignInResponse { }
+message SignInResponse { User user = 1; }
 
 message SignOutRequest { User user = 1; }
 message SignOutResponse { }

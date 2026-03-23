@@ -72,6 +72,7 @@ grpc::Status server::SignIn(grpc::ServerContext* context, const SignInRequest* r
                 user->clear_id();
                 user->clear_hash();
                 user->clear_password();
+                *request->add_user() = user;
                 status = grpc::Status{grpc::StatusCode::OK, {}};
             }
         }
