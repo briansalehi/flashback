@@ -156,6 +156,7 @@ protected:
     [[nodiscard]] static std::string generate_token();
     [[nodiscard]] static uint64_t generate_code();
     [[nodiscard]] bool session_is_valid(User const& user) const;
+    [[nodiscard]] bool user_is_verified(User const& user) const;
     void send_verification_email(std::string domain, std::string email, uint64_t code);
 
     std::shared_ptr<basic_database> m_database;

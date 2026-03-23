@@ -15,6 +15,7 @@ public:
     MOCK_METHOD(void, change_user_email, (uint64_t, std::string_view), (const, override));
     MOCK_METHOD(void, make_progress, (uint64_t, uint64_t, expertise_level, uint64_t, uint64_t), (const, override));
     MOCK_METHOD(std::vector<Topic>, get_practice_topics, (uint64_t, uint64_t, uint64_t, expertise_level), (const, override));
+    MOCK_METHOD(bool, user_is_verified, (uint64_t), (const, override));
 
     MOCK_METHOD(Topic, get_topic, (uint64_t, expertise_level, uint64_t), (const, override));
     MOCK_METHOD(Section, get_section, (uint64_t, uint64_t), (const, override));

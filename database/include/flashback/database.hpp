@@ -32,6 +32,7 @@ public:
     void revoke_sessions_except(uint64_t user_id, std::string_view token) const override;
     void rename_user(uint64_t user_id, std::string_view name) const override;
     void change_user_email(uint64_t user_id, std::string_view email) const override;
+    [[nodiscard]] bool user_is_verified(uint64_t user_id) const override;
 
     // roadmaps
     [[nodiscard]] Roadmap create_roadmap(uint64_t user_id, std::string name) const override;

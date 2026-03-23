@@ -8,13 +8,13 @@ message GetUserRequest { User user = 1; }
 message GetUserResponse { User user = 1; }
 
 message SignInRequest { User user = 1; }
-message SignInResponse { bool success = 1; string details = 2; User user = 3; }
+message SignInResponse { }
 
 message SignOutRequest { User user = 1; }
 message SignOutResponse { }
 
 message SignUpRequest { User user = 1; }
-message SignUpResponse { bool success = 1; string details = 2; User user = 3; }
+message SignUpResponse { User user = 1; }
 
 message SendVerificationRequest { User user = 1; }
 message SendVerificationResponse { }
@@ -23,7 +23,7 @@ message VerifyUserRequest { User user = 1; uint64 code = 2; }
 message VerifyUserResponse { }
 
 message ResetPasswordRequest { User user = 1; }
-message ResetPasswordResponse { bool success = 1; string details = 2; User user = 3; }
+message ResetPasswordResponse { }
 
 message EditUserRequest { User user = 1; }
 message EditUserResponse { }
@@ -47,58 +47,58 @@ message CloneRoadmapRequest { User user = 1; Roadmap roadmap = 2; }
 message CloneRoadmapResponse { Roadmap roadmap = 1; }
 
 message GetMilestonesRequest { User user = 1; uint64 roadmap_id = 2; }
-message GetMilestonesResponse { repeated Milestone milestones = 1; bool success = 2; string details = 3; uint32 code = 4; }
+message GetMilestonesResponse { repeated Milestone milestones = 1; }
 
 message AddMilestoneRequest { User user = 1; uint64 subject_id = 2; expertise_level subject_level = 3; uint64 roadmap_id = 4; uint64 position = 5; }
-message AddMilestoneResponse { Milestone milestone = 1; bool success = 2; string details = 3; uint32 code = 4; }
+message AddMilestoneResponse { Milestone milestone = 1; }
 
 message AddRequirementRequest { User user = 1; Roadmap roadmap = 2; Milestone milestone = 3; Milestone required_milestone = 4; }
-message AddRequirementResponse { bool success = 1; string details = 2; uint32 code = 3; }
+message AddRequirementResponse { }
 
 message GetRequirementsRequest { User user = 1; Roadmap roadmap = 2; Milestone milestone = 3; }
-message GetRequirementsResponse { repeated Milestone milestones = 1; bool success = 2; string details = 3; uint32 code = 4; }
+message GetRequirementsResponse { repeated Milestone milestones = 1; }
 
 message SearchSubjectsRequest { User user = 1; string token = 2; }
 message SearchSubjectsResponse { repeated MatchingSubject subjects = 1; }
 
 message CreateSubjectRequest { User user = 1; string name = 2; }
-message CreateSubjectResponse { bool success = 1; string details = 2; uint32 code = 3; }
+message CreateSubjectResponse { }
 
 message ReorderMilestoneRequest { User user = 1; Roadmap roadmap = 2; uint64 current_position = 3; uint64 target_position = 4; }
-message ReorderMilestoneResponse { bool success = 1; string details = 2; uint32 code = 3; }
+message ReorderMilestoneResponse { }
 
 message RemoveMilestoneRequest { User user = 1; Roadmap roadmap = 2; Milestone milestone = 3; }
-message RemoveMilestoneResponse { bool success = 1; string details = 2; uint32 code = 3; }
+message RemoveMilestoneResponse { }
 
 message ChangeMilestoneLevelRequest { User user = 1; Roadmap roadmap = 2; Milestone milestone = 3; }
-message ChangeMilestoneLevelResponse { bool success = 1; string details = 2; uint32 code = 3; }
+message ChangeMilestoneLevelResponse { }
 
 message RenameSubjectRequest { User user = 1; uint64 id = 2; string name = 3; }
-message RenameSubjectResponse { bool success = 1; string details = 2; uint32 code = 3; }
+message RenameSubjectResponse { }
 
 message RemoveSubjectRequest { User user = 1; Subject subject = 2; }
-message RemoveSubjectResponse { bool success = 1; string details = 2; uint32 code = 3; }
+message RemoveSubjectResponse { }
 
 message MergeSubjectsRequest { User user = 1; Subject source_subject = 2; Subject target_subject = 3; }
-message MergeSubjectsResponse { bool success = 1; string details = 2; uint32 code = 3; }
+message MergeSubjectsResponse { }
 
 message GetResourcesRequest { User user = 1; Subject subject = 2; }
-message GetResourcesResponse { bool success = 1; string details = 2; uint32 code = 3;  repeated Resource resources = 4; }
+message GetResourcesResponse { repeated Resource resources = 4; }
 
 message CreateResourceRequest { User user = 1; Resource resource = 2; }
-message CreateResourceResponse { bool success = 1; string details = 2; uint32 code = 3; Resource resource = 4; }
+message CreateResourceResponse { Resource resource = 4; }
 
 message AddResourceToSubjectRequest { User user = 1; Resource resource = 2; Subject subject = 3; }
-message AddResourceToSubjectResponse { bool success = 1; string details = 2; uint32 code = 3; }
+message AddResourceToSubjectResponse { }
 
 message DropResourceFromSubjectRequest { User user = 1; Resource resource = 2; Subject subject = 3; }
-message DropResourceFromSubjectResponse { bool success = 1; string details = 2; uint32 code = 3; }
+message DropResourceFromSubjectResponse { }
 
 message MergeResourcesRequest { User user = 1; Resource source = 2; Resource target = 3; }
-message MergeResourcesResponse { bool success = 1; string details = 2; uint32 code = 3; }
+message MergeResourcesResponse { }
 
 message SearchResourcesRequest { User user = 1; string search_token = 2; }
-message SearchResourcesResponse { bool success = 1; string details = 2; uint32 code = 3; repeated ResourceSearchResult results = 4; }
+message SearchResourcesResponse { repeated ResourceSearchResult results = 4; }
 
 message CreateTopicRequest { User user = 1; Subject subject = 2; Topic topic = 3; }
 message CreateTopicResponse { Topic topic = 1; }
@@ -125,10 +125,10 @@ message GetSectionsRequest { User user = 1; Resource resource = 2; }
 message GetSectionsResponse { repeated Section section = 1; }
 
 message RemoveResourceRequest { User user = 1; Resource resource = 2; }
-message RemoveResourceResponse { bool success = 1; string details = 2; uint32 code = 3; }
+message RemoveResourceResponse { }
 
 message EditResourceRequest { User user = 1; Resource resource = 2; }
-message EditResourceResponse { bool success = 1; string details = 2; uint32 code = 3; }
+message EditResourceResponse { }
 
 message CreateSectionRequest { User user = 1; Resource resource = 2; Section section = 3; }
 message CreateSectionResponse { Section section = 1; }
@@ -142,7 +142,7 @@ message RemoveSectionResponse { }
 message MergeSectionsRequest { User user = 1; Resource resource = 2; Section source = 3; Section target = 4; }
 message MergeSectionsResponse { }
 
-message MoveSectionRequest { User user = 1; Resource source_resource = 2; Section source_section = 3; Resource target_resource = 4; Section target_section = 5;   }
+message MoveSectionRequest { User user = 1; Resource source_resource = 2; Section source_section = 3; Resource target_resource = 4; Section target_section = 5; }
 message MoveSectionResponse { }
 
 message CreateProviderRequest { User user = 1; Provider provider = 2; }

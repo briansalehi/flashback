@@ -210,6 +210,11 @@ void database::change_user_email(uint64_t user_id, std::string_view email) const
     exec("call change_user_email($1, $2)", user_id, email);
 }
 
+bool database::user_is_verified(uint64_t user_id) const
+{
+    return query("select user_is_verified($1)", user_id).at(0).at(0).as<bool>();
+}
+
 Roadmap database::create_roadmap(uint64_t const user_id, std::string name) const
 {
     if (name.empty())
