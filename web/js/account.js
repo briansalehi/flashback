@@ -156,6 +156,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 showSuccess('User information updated successfully!');
                 toggleEditMode(false);
+                
+                // Refresh user data to update verification status if email changed
+                await loadUser();
 
                 if (saveUserBtn) {
                     saveUserBtn.disabled = false;
