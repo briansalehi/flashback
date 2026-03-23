@@ -63,9 +63,11 @@ jobs:
         timeout-minutes: 20
       - name: Store Artifacts
         run: |
-          apk_path=$(find src-tauri/gen/android/app/build/outputs/apk/universal/release -type f -name "*.apk")
+          apk_path=$(find app/src-tauri/gen/android/app/build/outputs/apk/universal/release -type f -name "*.apk")
+          aab_path=$(find app/src-tauri/gen/android/app/build/outputs/bundle/universalRelease -type f -name "*.aab")
           mkdir packages
           mv $apk_path packages/flashback.apk
+          mv $aab_path packages/flashback.aab
       - name: Upload Artifacts
         uses: actions/upload-artifact@v7.0.0
         with:
@@ -129,3 +131,11 @@ jobs:
           asset_path: ${{ steps.package-files.outputs.apk_path }}
           asset_name: ${{ steps.package-files.outputs.apk_file }}
           asset_content_type: "application/vnd.android.package-archive"
+      - uses: actions/upload-release-asset@v1.0.2
+        env:
+          GITHUB_TOKEN: "${{ secrets.github_token }}"
+        with:
+          upload_url: "${{ steps.create-release.outputs.upload_url }}"
+          asset_path: ${{ steps.package-files.outputs.aab_path }}
+          asset_name: ${{ steps.package-files.outputs.aab_file }}
+          asset_content_type: "application/x-authorware-bin"
