@@ -464,7 +464,11 @@ grpc::Status server::GetRoadmaps(grpc::ServerContext* context, GetRoadmapsReques
 
     try
     {
-        if (request->has_user() && session_is_valid(request->user()))
+        if (!request->has_user() || !session_is_valid(request->user()))
+        {
+            status = grpc::Status{grpc::StatusCode::UNAUTHENTICATED, "invalid user"};
+        }
+        else
         {
             std::shared_ptr<User> const user{m_database->get_user(request->user().token(), request->user().device())};
             std::vector<Roadmap> const roadmaps{m_database->get_roadmaps(user->id())};
@@ -538,7 +542,7 @@ grpc::Status server::RenameRoadmap(grpc::ServerContext* context, RenameRoadmapRe
         {
             status = grpc::Status{grpc::StatusCode::UNAUTHENTICATED, "invalid user"};
         }
-        else if (request->has_roadmap())
+        else if (!request->has_roadmap())
         {
             std::clog << std::format("client {} tried to rename an invalid roadmap\n", request->user().token());
             status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid roadmap"};
@@ -572,7 +576,7 @@ grpc::Status server::RemoveRoadmap(grpc::ServerContext* context, RemoveRoadmapRe
         {
             status = grpc::Status{grpc::StatusCode::UNAUTHENTICATED, "invalid user"};
         }
-        else if (request->has_user() && request->has_roadmap() && session_is_valid(request->user()))
+        else if (!request->has_roadmap())
         {
             std::clog << std::format("client {} tried to remove an invalid roadmap\n", request->user().token());
             status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid roadmap"};
@@ -872,11 +876,11 @@ grpc::Status server::SearchSubjects(grpc::ServerContext* context, SearchSubjects
 
     try
     {
-        if (!request->has_user() || session_is_valid(request->user()))
+        if (!request->has_user() || !session_is_valid(request->user()))
         {
             status = grpc::Status{grpc::StatusCode::UNAUTHENTICATED, "invalid user"};
         }
-        else if (!request->token().empty())
+        else if (request->token().empty())
         {
             std::clog << std::format("client {} tried to search subjects with empty search string\n", request->user().token());
             status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid search string"};
@@ -1050,7 +1054,7 @@ grpc::Status server::RenameSubject(grpc::ServerContext* context, RenameSubjectRe
 
     try
     {
-        if (request->has_user() && session_is_valid(request->user()))
+        if (!request->has_user() || !session_is_valid(request->user()))
         {
             status = grpc::Status{grpc::StatusCode::UNAUTHENTICATED, "invalid user"};
         }
