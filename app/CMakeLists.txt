@@ -4,24 +4,6 @@ project(Flashback LANGUAGES NONE DESCRIPTION "Cross platform Flashback applicati
 find_program(JAVA_EXEC java)
 find_program(CARGO_EXEC cargo)
 
-execute_process(COMMAND ${JAVA_EXEC} --version OUTPUT_VARIABLE JAVA_VERSION_RAW OUTPUT_STRIP_TRAILING_WHITESPACE)
-string(REGEX MATCH "[0-9]+\\.[0-9]+\\.[0-9]+" JAVA_VERSION ${JAVA_VERSION_RAW})
-
-execute_process(COMMAND ${CARGO_EXEC} --version OUTPUT_VARIABLE CARGO_VERSION_RAW OUTPUT_STRIP_TRAILING_WHITESPACE)
-string(REGEX MATCH "[0-9]+\\.[0-9]+\\.[0-9]+" CARGO_VERSION ${CARGO_VERSION_RAW})
-
-if(JAVA_VERSION VERSION_LESS "21.0.0")
-    message(WARNING "java 21.0.0 or more recent is required but found java ${JAVA_VERSION}")
-else()
-    message(STATUS "Found Java ${JAVA_VERSION}: ${JAVA_EXEC}")
-endif()
-
-if(CARGO_VERSION VERSION_LESS "1.94.0")
-    message(WARNING "cargo 1.94.0 or more recent is required  but found cargo ${CARGO_VERSION}")
-else()
-    message(STATUS "Found cargo ${CARGO_VERSION}: ${CARGO_EXEC}")
-endif()
-
 if(EXISTS $ENV{JAVA_HOME})
     message(STATUS "JAVA_HOME: $ENV{JAVA_HOME}")
 else()
@@ -40,42 +22,65 @@ else()
     message(WARNING "NDK_HOME is not set")
 endif()
 
-add_custom_target(linux
-    COMMAND ${CARGO_EXEC} tauri build
-    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-    COMMENT "Building Linux desktop application"
-    USES_TERMINAL
-    VERBATIM
-)
+if(JAVA_EXEC)
+    execute_process(COMMAND ${JAVA_EXEC} --version OUTPUT_VARIABLE JAVA_VERSION_RAW OUTPUT_STRIP_TRAILING_WHITESPACE)
+    string(REGEX MATCH "[0-9]+\\.[0-9]+\\.[0-9]+" JAVA_VERSION ${JAVA_VERSION_RAW})
 
-add_custom_target(windows
-    COMMAND ${CARGO_EXEC} tauri build
-    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/src-tauri
-    COMMENT "Building Windows desktop application"
-    USES_TERMINAL
-    VERBATIM
-)
+    if(JAVA_VERSION VERSION_LESS "21.0.0")
+        message(WARNING "java 21.0.0 or more recent is required but found java ${JAVA_VERSION}")
+    else()
+        message(STATUS "Found Java ${JAVA_VERSION}: ${JAVA_EXEC}")
+    endif()
+endif()
 
-add_custom_target(macos
-    COMMAND ${CARGO_EXEC} tauri build
-    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/src-tauri
-    COMMENT "Building Mac desktop application"
-    USES_TERMINAL
-    VERBATIM
-)
+if(CARGO_EXEC)
+    execute_process(COMMAND ${CARGO_EXEC} --version OUTPUT_VARIABLE CARGO_VERSION_RAW OUTPUT_STRIP_TRAILING_WHITESPACE)
+    string(REGEX MATCH "[0-9]+\\.[0-9]+\\.[0-9]+" CARGO_VERSION ${CARGO_VERSION_RAW})
 
-add_custom_target(android
-    COMMAND
-        PATH=$ENV{PATH}
-        JAVA_HOME=$ENV{JAVA_HOME}
-        ANDROID_HOME=$ENV{ANDROID_HOME}
-        NDK_HOME=$ENV{NDK_HOME}
-        ${CARGO_EXEC} tauri android build --debug
-    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-    COMMENT "Building Android application"
-    USES_TERMINAL
-    VERBATIM
-)
+    if(CARGO_VERSION VERSION_LESS "1.94.0")
+        message(WARNING "cargo 1.94.0 or more recent is required  but found cargo ${CARGO_VERSION}")
+    else()
+        message(STATUS "Found cargo ${CARGO_VERSION}: ${CARGO_EXEC}")
+    endif()
+
+    add_custom_target(linux
+            COMMAND ${CARGO_EXEC} tauri build
+            WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+            COMMENT "Building Linux desktop application"
+            USES_TERMINAL
+            VERBATIM
+    )
+
+    add_custom_target(windows
+            COMMAND ${CARGO_EXEC} tauri build
+            WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/src-tauri
+            COMMENT "Building Windows desktop application"
+            USES_TERMINAL
+            VERBATIM
+    )
+
+    add_custom_target(macos
+            COMMAND ${CARGO_EXEC} tauri build
+            WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/src-tauri
+            COMMENT "Building Mac desktop application"
+            USES_TERMINAL
+            VERBATIM
+    )
+
+    add_custom_target(android
+            COMMAND
+            PATH=$ENV{PATH}
+            JAVA_HOME=$ENV{JAVA_HOME}
+            ANDROID_HOME=$ENV{ANDROID_HOME}
+            NDK_HOME=$ENV{NDK_HOME}
+            ${CARGO_EXEC} tauri android build --debug
+            WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+            COMMENT "Building Android application"
+            USES_TERMINAL
+            VERBATIM
+    )
+
+endif()
 
 file(GLOB artifacts RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
     app/src-tauri/target/release/bundle/deb/*.deb
