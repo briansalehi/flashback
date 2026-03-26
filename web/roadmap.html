@@ -457,6 +457,72 @@
               width: 100%;
           }
       }
+
+      .floating-add-btn {
+          position: fixed;
+          bottom: 2rem;
+          left: 2rem;
+          background: var(--gradient-primary);
+          color: white;
+          border: none;
+          border-radius: var(--radius-full);
+          padding: 0.75rem 1.5rem;
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          font-weight: 600;
+          box-shadow: var(--shadow-lg);
+          cursor: pointer;
+          transition: all var(--transition-base);
+          z-index: 100;
+      }
+
+      .floating-add-btn:hover {
+          transform: translateY(-4px) scale(1.05);
+          box-shadow: 0 10px 25px rgba(102, 126, 234, 0.5);
+      }
+
+      .floating-add-btn:active {
+          transform: translateY(-2px) scale(0.98);
+      }
+
+      .roadmap-actions-inline .btn-icon:hover {
+          color: var(--color-primary-start) !important;
+          background: rgba(102, 126, 234, 0.1) !important;
+          border-radius: var(--radius-sm);
+      }
+
+      #roadmap-name {
+          user-select: none;
+      }
+
+      @media (max-width: 600px) {
+          .floating-add-btn .btn-text {
+              display: none;
+          }
+          .floating-add-btn {
+              padding: 1rem;
+              bottom: 1.5rem;
+              left: 1.5rem;
+          }
+
+          /* New styles for roadmap header on mobile */
+          .roadmap-title-group {
+              flex-wrap: wrap;
+              gap: 0.5rem !important;
+          }
+
+          #roadmap-name {
+              flex-basis: 100%;
+              margin-bottom: 0.25rem;
+              font-size: 1.75rem;
+              user-select: none;
+          }
+
+          .roadmap-actions-inline {
+              margin-left: 0 !important;
+          }
+      }
   </style>
 </head>
 <body>
@@ -481,20 +547,28 @@
 
 <main class="dashboard">
   <div class="container">
-    <div class="dashboard-header roadmap-header-container" style="display: flex; flex-wrap: wrap; gap: 1rem; justify-content: space-between; align-items: flex-start; margin-top: 1rem;">
-      <h1 id="roadmap-name" class="editable-title" title="Click to edit actions" style="flex: 1; min-width: 200px; margin: 0;">Loading...</h1>
+    <div class="dashboard-header roadmap-header-container" style="display: flex; flex-wrap: wrap; gap: 1rem; justify-content: space-between; align-items: center; margin-top: 1rem;">
+      <div class="roadmap-title-group" style="display: flex; align-items: center; gap: 1rem; flex: 1; min-width: 250px;">
+        <h1 id="roadmap-name" style="margin: 0;">Loading...</h1>
+        <div class="roadmap-actions-inline" style="display: flex; gap: 0.75rem;">
+          <button id="rename-roadmap-btn" class="btn btn-icon" title="Rename Roadmap" style="background: none; border: none; padding: 0.25rem; color: var(--color-text-muted); cursor: pointer;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>
+          </button>
+          <button id="remove-roadmap-btn" class="btn btn-icon" title="Remove Roadmap" style="background: none; border: none; padding: 0.25rem; color: var(--color-text-muted); cursor: pointer;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+          </button>
+        </div>
+      </div>
       <div class="roadmap-header-buttons" style="display: flex; gap: 0.5rem; flex-shrink: 0;">
-        <button id="rename-roadmap-btn" class="btn btn-secondary" style="display: none; padding: 0.5rem 1rem; white-space: nowrap;">
-          Rename
-        </button>
-        <button id="remove-roadmap-btn" class="btn btn-secondary" style="display: none; background-color: #dc3545; color: white; padding: 0.5rem 1rem; white-space: nowrap;">
-          Remove Roadmap
-        </button>
-        <button id="create-milestone-btn" class="btn btn-primary" style="display: none; padding: 0.5rem 1rem; white-space: nowrap;">
-          + Add Subject to Roadmap
-        </button>
+        <!-- Add Subject button removed from here, now floating -->
       </div>
     </div>
+
+    <!-- Floating Add Button -->
+    <button id="create-milestone-btn" class="floating-add-btn" title="Add Subject to Roadmap">
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+      <span class="btn-text">Add Subject</span>
+    </button>
 
     <div id="error-message" style="display: none;"></div>
 

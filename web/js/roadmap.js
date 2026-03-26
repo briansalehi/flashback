@@ -118,24 +118,11 @@ window.addEventListener('DOMContentLoaded', () => {
         return;
     }
 
-    // Set roadmap title and toggle actions on title click
+    // Set roadmap title
     const roadmapTitle = document.getElementById('roadmap-name');
     if (roadmapTitle) {
         roadmapTitle.textContent = roadmapName || 'Roadmap';
-        roadmapTitle.setAttribute('tabindex', '0');
-        const renameBtn = document.getElementById('rename-roadmap-btn');
-        const removeBtn = document.getElementById('remove-roadmap-btn');
-        const addBtn = document.getElementById('create-milestone-btn');
-        const toggle = () => {
-            const isVisible = renameBtn && renameBtn.style.display !== 'none';
-            const display = isVisible ? 'none' : 'inline-block';
-            if (renameBtn) renameBtn.style.display = display;
-            if (removeBtn) removeBtn.style.display = display;
-            if (addBtn) addBtn.style.display = display;
-            // Search bar should always remain visible and outside the title section
-        };
-        roadmapTitle.addEventListener('click', toggle);
-        roadmapTitle.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); }});
+        // Buttons are now always visible, no toggle needed
     }
 
     const signoutBtn = document.getElementById('signout-btn');
@@ -340,10 +327,12 @@ window.addEventListener('DOMContentLoaded', () => {
     const cancelRenameBtn = document.getElementById('cancel-rename-btn');
 
     if (renameRoadmapBtn) {
-        renameRoadmapBtn.addEventListener('click', () => {
+        renameRoadmapBtn.addEventListener('click', (e) => {
+            e.preventDefault();
             UI.toggleElement('rename-roadmap-modal', true);
             document.body.style.overflow = 'hidden';
-            document.getElementById('rename-roadmap-name').value = roadmapName || '';
+            const roadmapNameCurrent = document.getElementById('roadmap-name').textContent;
+            document.getElementById('rename-roadmap-name').value = roadmapNameCurrent || roadmapName || '';
             setTimeout(() => {
                 document.getElementById('rename-roadmap-name').focus();
             }, 100);
@@ -407,7 +396,8 @@ window.addEventListener('DOMContentLoaded', () => {
     const cancelRemoveBtn = document.getElementById('cancel-remove-btn');
 
     if (removeRoadmapBtn) {
-        removeRoadmapBtn.addEventListener('click', () => {
+        removeRoadmapBtn.addEventListener('click', (e) => {
+            e.preventDefault();
             UI.toggleElement('remove-roadmap-modal', true);
             document.body.style.overflow = 'hidden';
         });

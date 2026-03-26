@@ -91,6 +91,7 @@
 .editable-title {
     cursor: pointer;
     position: relative;
+    user-select: none;
 }
 .editable-title:hover,
 .editable-title:focus {
@@ -944,6 +945,7 @@ a:hover {
     margin: 0;
     flex: 1;
     line-height: 1.4;
+    user-select: none; /* Prevent accidental text selection during touch reordering */
 }
 
 .item-badge {
