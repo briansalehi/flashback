@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict oAqJPNiDJTS6nYf7xqCxl7kjAO49D2cPISPoK0CIjo6qdJgvrOnp8YqfGJIYi2g
+\restrict Ds5mWMZi9fKuQH9mpMQYa0iQ3Rbqx1k0q7gyBEYThiJmLMBH1R6ifBaNxSQb9QX
 
 -- Dumped from database version 18.1
 -- Dumped by pg_dump version 18.1
@@ -3281,15 +3281,20 @@ CREATE FUNCTION flashback.user_is_active(email character varying) RETURNS boolea
 ALTER FUNCTION flashback.user_is_active(email character varying) OWNER TO flashback;
 
 --
--- Name: user_is_verified(character varying); Type: FUNCTION; Schema: flashback; Owner: flashback
+-- Name: user_is_verified(character varying, character varying); Type: FUNCTION; Schema: flashback; Owner: flashback
 --
 
-CREATE FUNCTION flashback.user_is_verified(email character varying) RETURNS boolean
+CREATE FUNCTION flashback.user_is_verified(user_token character varying, user_device character varying) RETURNS boolean
     LANGUAGE plpgsql
-    AS $$ declare result boolean; begin select verified into result from users where users.email = user_is_verified.email; return result; end; $$;
+    AS $$
+declare is_verified boolean;
+begin
+    select u.verified into is_verified from users u join sessions s on s.user = u.id where u.id = s.user and s.token = user_token and s.device = user_device;
+    return coalesce(is_verified, false);
+end; $$;
 
 
-ALTER FUNCTION flashback.user_is_verified(email character varying) OWNER TO flashback;
+ALTER FUNCTION flashback.user_is_verified(user_token character varying, user_device character varying) OWNER TO flashback;
 
 --
 -- Name: verify_user(integer); Type: PROCEDURE; Schema: flashback; Owner: flashback
@@ -4321,5 +4326,5 @@ GRANT ALL ON SCHEMA public TO brian;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict oAqJPNiDJTS6nYf7xqCxl7kjAO49D2cPISPoK0CIjo6qdJgvrOnp8YqfGJIYi2g
+\unrestrict Ds5mWMZi9fKuQH9mpMQYa0iQ3Rbqx1k0q7gyBEYThiJmLMBH1R6ifBaNxSQb9QX
 
