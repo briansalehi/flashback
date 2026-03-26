@@ -55,26 +55,6 @@ window.addEventListener('DOMContentLoaded', () => {
     // Display breadcrumb
     displayBreadcrumb();
 
-    // Reveal edit/remove on title click
-    const topicTitle = document.getElementById('topic-name');
-    if (topicTitle) {
-        topicTitle.setAttribute('tabindex', '0');
-        const editBtn = document.getElementById('edit-topic-btn');
-        const removeBtn = document.getElementById('remove-topic-btn');
-        const toggleActions = () => {
-            const isHidden = (editBtn && editBtn.style.display === 'none');
-            if (isHidden) {
-                if (editBtn) editBtn.style.display = 'inline-block';
-                if (removeBtn) removeBtn.style.display = 'inline-block';
-            } else {
-                if (editBtn) editBtn.style.display = 'none';
-                if (removeBtn) removeBtn.style.display = 'none';
-            }
-        };
-        topicTitle.addEventListener('click', toggleActions);
-        topicTitle.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleActions(); }});
-    }
-
     // Edit topic handlers
     const editTopicBtn = document.getElementById('edit-topic-btn');
     const editTopicModal = document.getElementById('edit-topic-modal');
