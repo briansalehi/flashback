@@ -125,12 +125,6 @@ window.addEventListener('DOMContentLoaded', () => {
     document.getElementById('resource-name').textContent = resourceName || 'Resource';
     document.title = `${resourceName || 'Resource'} - Flashback`;
 
-    // Ensure action buttons are hidden by default (defensive)
-    const initEditBtn = document.getElementById('edit-resource-btn');
-    const initRemoveBtn = document.getElementById('remove-resource-btn');
-    if (initEditBtn) initEditBtn.style.display = 'none';
-    if (initRemoveBtn) initRemoveBtn.style.display = 'none';
-
     // Store current resource data from URL params
     currentResourceData = {
         id: resourceId,
@@ -154,23 +148,6 @@ window.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Toggle edit/remove actions on title click
-    const resourceTitle = document.getElementById('resource-name');
-    if (resourceTitle) {
-        resourceTitle.setAttribute('tabindex', '0');
-        const editBtn = document.getElementById('edit-resource-btn');
-        const removeBtn = document.getElementById('remove-resource-btn');
-        const addSectionBtn = document.getElementById('add-section-btn');
-        const toggle = () => {
-            const isVisible = editBtn && editBtn.style.display !== 'none';
-            const display = isVisible ? 'none' : 'inline-block';
-            if (editBtn) editBtn.style.display = display;
-            if (removeBtn) removeBtn.style.display = display;
-            if (addSectionBtn) addSectionBtn.style.display = display;
-        };
-        resourceTitle.addEventListener('click', toggle);
-        resourceTitle.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); }});
-    }
 
     const addSectionBtn = document.getElementById('add-section-btn');
     if (addSectionBtn) {
