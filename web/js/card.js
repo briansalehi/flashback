@@ -20,7 +20,7 @@ async function markCardAsReviewed() {
         if (stateElement) {
             stateElement.textContent = 'reviewed';
             stateElement.className = 'state-badge reviewed';
-            stateElement.style.display = 'inline-block';
+            stateElement.style.display = 'inline-flex';
         }
 
         // Update URL state parameter to 1 (reviewed)
@@ -276,6 +276,12 @@ window.addEventListener('DOMContentLoaded', () => {
     // Start timer
     cardStartTime = Date.now();
 
+    // Setup basic buttons
+    const markReviewedBtn = document.getElementById('mark-reviewed-btn');
+    const addBlockBtn = document.getElementById('add-block-btn');
+    const editBtn = document.getElementById('edit-headline-btn');
+    const removeBtn = document.getElementById('remove-card-btn');
+
     // Global click-to-hide listener for block actions
     const closeAllBlockActions = (e) => {
         const blocks = document.querySelectorAll('.content-block.show-actions');
@@ -300,7 +306,12 @@ window.addEventListener('DOMContentLoaded', () => {
     }, { passive: true });
 
     // Show context breadcrumb
-    displayContextBreadcrumb(subjectName, topicName, resourceName, sectionName);
+    const breadcrumbItems = displayContextBreadcrumb(subjectName, topicName, resourceName, sectionName);
+    
+    // Render breadcrumbs
+    if (typeof UI !== 'undefined' && UI.renderBreadcrumbs) {
+        UI.renderBreadcrumbs(breadcrumbItems);
+    }
 
     const headlineEl = document.getElementById('card-headline');
     if (headlineEl) {
@@ -325,7 +336,7 @@ window.addEventListener('DOMContentLoaded', () => {
     if (stateElement) {
         stateElement.textContent = stateName;
         stateElement.className = `state-badge ${stateName}`;
-        stateElement.style.display = 'inline-block';
+        stateElement.style.display = 'inline-flex';
     }
 
     const signoutBtn = document.getElementById('signout-btn');
@@ -362,10 +373,9 @@ window.addEventListener('DOMContentLoaded', () => {
     });
 
     // Setup mark as reviewed button
-    const markReviewedBtn = document.getElementById('mark-reviewed-btn');
     if (markReviewedBtn) {
         // Show only if in draft state (state 0)
-        markReviewedBtn.style.display = (state === 0) ? 'inline-block' : 'none';
+        markReviewedBtn.style.display = (state === 0) ? 'inline-flex' : 'none';
 
         const openReviewModal = () => {
             const modal = document.getElementById('review-confirmation-modal');
@@ -400,12 +410,6 @@ window.addEventListener('DOMContentLoaded', () => {
 
         const closeReviewModalBtn = document.getElementById('close-review-modal-btn');
         if (closeReviewModalBtn) closeReviewModalBtn.addEventListener('click', closeReviewModal);
-
-        if (reviewModal) {
-            reviewModal.addEventListener('click', (e) => {
-                if (e.target === reviewModal) closeReviewModal();
-            });
-        }
 
         const confirmReviewBtn = document.getElementById('confirm-review-btn');
         if (confirmReviewBtn) {
@@ -465,47 +469,11 @@ window.addEventListener('DOMContentLoaded', () => {
         };
     }
 
-    // Also defensively hide Add Block, Mark Reviewed, Edit, and Remove until revealed
-    const addBlockBtnInit = document.getElementById('add-block-btn');
-    if (addBlockBtnInit) addBlockBtnInit.style.display = 'none';
-    const markReviewedBtnInit = document.getElementById('mark-reviewed-btn');
-    if (markReviewedBtnInit) markReviewedBtnInit.style.display = 'none';
-    const editBtnInit = document.getElementById('edit-headline-btn');
-    if (editBtnInit) editBtnInit.style.display = 'none';
-    const removeBtnInit = document.getElementById('remove-card-btn');
-    if (removeBtnInit) removeBtnInit.style.display = 'none';
-
-    // Toggle header actions on headline click
-    if (headlineEl) {
-        headlineEl.setAttribute('tabindex', '0');
-        const editBtn = document.getElementById('edit-headline-btn');
-        const removeBtn = document.getElementById('remove-card-btn');
-        const addBlockBtn = document.getElementById('add-block-btn');
-        const markReviewedBtn = document.getElementById('mark-reviewed-btn');
-        
-        const toggleActions = () => {
-            const isHidden = (editBtn && editBtn.style.display === 'none');
-            if (isHidden) {
-                if (editBtn) editBtn.style.display = 'inline-block';
-                if (removeBtn) removeBtn.style.display = 'inline-block';
-                if (addBlockBtn) addBlockBtn.style.display = 'flex'; // Use flex for better alignment with SVG
-                if (markReviewedBtn && state !== 1) markReviewedBtn.style.display = 'inline-block';
-            } else {
-                if (editBtn) editBtn.style.display = 'none';
-                if (removeBtn) removeBtn.style.display = 'none';
-                if (addBlockBtn) addBlockBtn.style.display = 'none';
-                if (markReviewedBtn) markReviewedBtn.style.display = 'none';
-            }
-        };
-        
-        headlineEl.addEventListener('click', toggleActions);
-        headlineEl.addEventListener('keydown', (e) => { 
-            if (e.key === 'Enter' || e.key === ' ') { 
-                e.preventDefault(); 
-                toggleActions(); 
-            }
-        });
-    }
+    // Initialize button visibility
+    if (addBlockBtn) addBlockBtn.style.display = 'flex';
+    if (markReviewedBtn && state !== 1) markReviewedBtn.style.display = 'inline-flex';
+    if (editBtn) editBtn.style.display = 'inline-flex';
+    if (removeBtn) removeBtn.style.display = 'inline-flex';
 
     const adjustTextareaHeight = (el) => {
         el.style.height = 'auto';
@@ -951,7 +919,6 @@ window.addEventListener('DOMContentLoaded', () => {
     }
 
     // Setup add block button
-    const addBlockBtn = document.getElementById('add-block-btn');
     if (addBlockBtn) {
         addBlockBtn.addEventListener('click', (e) => {
             e.preventDefault();

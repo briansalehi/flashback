@@ -21,6 +21,7 @@
           padding-bottom: var(--space-xl);
       }
 
+
       /* Page-specific component styles */
       .tabs-container {
           margin-top: 1.5rem;
@@ -181,12 +182,15 @@
 
           .subject-header-container {
               flex-direction: row !important;
-              align-items: center !important;
+              align-items: flex-start !important;
+              justify-content: flex-start !important;
           }
 
           .subject-title-group {
               flex-wrap: wrap;
               gap: 0.5rem !important;
+              justify-content: flex-start !important;
+              align-items: flex-start !important;
           }
 
           #subject-name {
@@ -195,10 +199,13 @@
               font-size: 1.75rem;
               user-select: none;
               cursor: default;
+              text-align: left !important;
           }
 
           .subject-actions-inline {
               margin-left: 0 !important;
+              width: 100%;
+              justify-content: flex-start !important;
           }
 
           .subject-header-buttons {
@@ -628,11 +635,11 @@
 
 <main class="dashboard">
   <div class="container">
+    <div id="breadcrumb" class="breadcrumb-container"></div>
     <div class="dashboard-header">
-    <div id="breadcrumb"></div>
-    <div class="subject-header-container" style="display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap;">
-        <div class="subject-title-group" style="display: flex; align-items: center; gap: 1rem; flex: 1; min-width: 250px;">
-          <h1 id="subject-name" style="margin: 0;">Loading...</h1>
+    <div class="subject-header-container" style="display: flex; justify-content: flex-start; align-items: center; gap: 1rem; flex-wrap: wrap;">
+        <div class="subject-title-group" style="display: flex; align-items: center; gap: 1rem; flex: 1; min-width: 250px; justify-content: flex-start;">
+          <h1 id="subject-name" style="margin: 0; text-align: left;">Loading...</h1>
           <div class="subject-actions-inline" style="display: flex; gap: 0.75rem;">
             <button id="rename-subject-btn" class="btn btn-icon" title="Rename Subject" style="background: none; border: none; padding: 0.25rem; color: var(--color-text-muted); cursor: pointer;">
               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>

@@ -17,7 +17,7 @@ async function markSectionAsReviewed() {
         const stateBadge = document.getElementById('section-state-badge');
         if (stateBadge) {
             stateBadge.textContent = 'reviewed';
-            stateBadge.className = 'section-state reviewed';
+            stateBadge.className = 'state-badge reviewed';
         }
 
         // Update URL state parameter to 1 (reviewed)
@@ -58,31 +58,29 @@ window.addEventListener('DOMContentLoaded', () => {
     document.getElementById('section-name').textContent = sectionName || 'Section';
     document.title = `${sectionName || 'Section'} - Flashback`;
 
-    // Reveal edit/remove on title click
-    const sectionTitle = document.getElementById('section-name');
-    if (sectionTitle) {
-        sectionTitle.setAttribute('tabindex', '0');
-        const editBtn = document.getElementById('edit-section-btn');
-        const removeBtn = document.getElementById('remove-section-btn');
-        const addCardBtn = document.getElementById('add-card-btn');
-        const markReviewedBtn = document.getElementById('mark-section-reviewed-btn');
-        const toggleActions = () => {
-            const isHidden = (editBtn && editBtn.style.display === 'none');
-            if (isHidden) {
-                if (editBtn) editBtn.style.display = 'inline-block';
-                if (removeBtn) removeBtn.style.display = 'inline-block';
-                if (addCardBtn) addCardBtn.style.display = 'inline-block';
-                if (markReviewedBtn && sectionState !== 1) markReviewedBtn.style.display = 'inline-block';
-            } else {
-                if (editBtn) editBtn.style.display = 'none';
-                if (removeBtn) removeBtn.style.display = 'none';
-                if (addCardBtn) addCardBtn.style.display = 'none';
-                if (markReviewedBtn) markReviewedBtn.style.display = 'none';
-            }
-        };
-        sectionTitle.addEventListener('click', toggleActions);
-        sectionTitle.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleActions(); }});
+    // Initialize button visibility
+    const editBtn = document.getElementById('edit-section-btn');
+    const removeBtn = document.getElementById('remove-section-btn');
+    const addCardBtn = document.getElementById('add-card-btn');
+    const markReviewedBtn = document.getElementById('mark-section-reviewed-btn');
+
+    if (editBtn) editBtn.style.display = 'inline-flex';
+    if (removeBtn) removeBtn.style.display = 'inline-flex';
+    if (addCardBtn) {
+        addCardBtn.style.display = 'flex';
+        addCardBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            UI.toggleElement('add-card-modal', true);
+            document.body.style.overflow = 'hidden';
+            setTimeout(() => {
+                const headlineInput = document.getElementById('card-headline');
+                if (headlineInput) {
+                    headlineInput.focus();
+                }
+            }, 100);
+        });
     }
+    if (markReviewedBtn && sectionState !== 1) markReviewedBtn.style.display = 'inline-flex';
 
     // Display breadcrumb
     displayBreadcrumb();
@@ -102,21 +100,6 @@ window.addEventListener('DOMContentLoaded', () => {
             e.preventDefault();
             await client.signOut();
             window.location.href = '/index.html';
-        });
-    }
-
-    const addCardBtn = document.getElementById('add-card-btn');
-    if (addCardBtn) {
-        addCardBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            UI.toggleElement('add-card-modal', true);
-            document.body.style.overflow = 'hidden';
-            setTimeout(() => {
-                const headlineInput = document.getElementById('card-headline');
-                if (headlineInput) {
-                    headlineInput.focus();
-                }
-            }, 100);
         });
     }
 
