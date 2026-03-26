@@ -359,6 +359,8 @@ a:hover {
     backdrop-filter: blur(10px);
     z-index: 1000;
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    user-select: none;
+    -webkit-user-select: none;
 }
 
 .header-content {
@@ -865,6 +867,8 @@ a:hover {
     align-items: center;
     min-height: 80px;
     backdrop-filter: blur(10px);
+    user-select: none;
+    -webkit-user-select: none;
 }
 
 .item-block::after {
@@ -961,6 +965,8 @@ a:hover {
     font-weight: var(--font-weight-bold);
     border-radius: var(--radius-full);
     white-space: nowrap;
+    user-select: none;
+    -webkit-user-select: none;
 }
 
 /* Item Block Content */
@@ -1555,6 +1561,8 @@ a:hover {
     text-transform: uppercase;
     font-weight: var(--font-weight-bold);
     margin-left: auto;
+    user-select: none;
+    -webkit-user-select: none;
 }
 
 .card-state-tag.draft { background: #4a5568; color: #edf2f7; }
@@ -1578,6 +1586,8 @@ a:hover {
     border: 1px solid rgba(44, 95, 79, 0.2);
     backdrop-filter: blur(4px);
     white-space: nowrap;
+    user-select: none;
+    -webkit-user-select: none;
 }
 
 .state-badge.draft {
@@ -1638,7 +1648,7 @@ a:hover {
 /* Breadcrumbs */
 .breadcrumb-container {
     margin-bottom: 1rem; /* More room below breadcrumbs */
-    padding: 0.5rem 0;   /* Slightly more vertical padding */
+    user-select: none;
 }
 
 .breadcrumb-list {
@@ -1762,6 +1772,8 @@ a:hover {
 
 .dashboard-header {
     margin-bottom: var(--space-md); /* Reduced from space-xl to space-md */
+    user-select: none;
+    -webkit-user-select: none;
 }
 
 .dashboard-header h1,

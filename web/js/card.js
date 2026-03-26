@@ -1282,6 +1282,7 @@ async function addSelectiveNavigation({ contextType, cards, currentIndex }) {
     navContainer.style.cssText = 'display: flex; justify-content: space-between; align-items: center; margin-top: 2rem; padding-top: 1rem; border-top: 2px solid var(--border-color);';
 
     const infoText = document.createElement('span');
+    infoText.className = 'practice-nav-info';
     infoText.textContent = `Card ${currentIndex + 1} of ${cards.length}`;
     infoText.style.color = 'var(--text-muted)';
 
@@ -1418,6 +1419,7 @@ function addPracticeNavigation(cardIndex, totalCards) {
     navContainer.style.cssText = 'display: flex; justify-content: space-between; align-items: center; margin-top: 2rem; padding-top: 1rem; border-top: 2px solid var(--border-color);';
 
     const infoText = document.createElement('span');
+    infoText.className = 'practice-nav-info';
     infoText.textContent = `Card ${cardIndex + 1} of ${totalCards}`;
     infoText.style.color = 'var(--text-muted)';
 
