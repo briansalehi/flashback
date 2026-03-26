@@ -135,23 +135,14 @@ window.addEventListener('DOMContentLoaded', () => {
     // Ensure action buttons are hidden by default (defensive in case of prior states/styles)
     const initRenameBtn = document.getElementById('rename-subject-btn');
     const initRemoveBtn = document.getElementById('remove-subject-btn');
-    if (initRenameBtn) initRenameBtn.style.display = 'none';
-    if (initRemoveBtn) initRemoveBtn.style.display = 'none';
+    if (initRenameBtn) initRenameBtn.style.display = 'inline-block';
+    if (initRemoveBtn) initRemoveBtn.style.display = 'inline-block';
 
     // Reveal edit/remove on title click
     const subjectTitle = document.getElementById('subject-name');
     if (subjectTitle) {
-        subjectTitle.setAttribute('tabindex', '0');
-        const renameBtn = document.getElementById('rename-subject-btn');
-        const removeBtn = document.getElementById('remove-subject-btn');
-        const toggleVisibility = () => {
-            const isVisible = renameBtn && renameBtn.style.display !== 'none';
-            const display = isVisible ? 'none' : 'inline-block';
-            if (renameBtn) renameBtn.style.display = display;
-            if (removeBtn) removeBtn.style.display = display;
-        };
-        subjectTitle.addEventListener('click', toggleVisibility);
-        subjectTitle.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleVisibility(); }});
+        subjectTitle.textContent = subjectName || 'Subject';
+        // Buttons are now always visible, no toggle needed
     }
 
     // Display breadcrumb
@@ -173,10 +164,12 @@ window.addEventListener('DOMContentLoaded', () => {
     const closeRenameSubjectModalBtn = document.getElementById('close-rename-subject-modal-btn');
 
     if (renameSubjectBtn) {
-        renameSubjectBtn.addEventListener('click', () => {
+        renameSubjectBtn.addEventListener('click', (e) => {
+            e.preventDefault();
             UI.toggleElement('rename-subject-modal', true);
             document.body.style.overflow = 'hidden';
-            document.getElementById('rename-subject-name').value = subjectName || '';
+            const currentSubjectName = document.getElementById('subject-name').textContent;
+            document.getElementById('rename-subject-name').value = currentSubjectName || subjectName || '';
             setTimeout(() => {
                 document.getElementById('rename-subject-name').focus();
             }, 100);
@@ -247,7 +240,8 @@ window.addEventListener('DOMContentLoaded', () => {
     const closeRemoveSubjectModalBtn = document.getElementById('close-remove-subject-modal-btn');
 
     if (removeSubjectBtn) {
-        removeSubjectBtn.addEventListener('click', () => {
+        removeSubjectBtn.addEventListener('click', (e) => {
+            e.preventDefault();
             UI.toggleElement('remove-subject-modal', true);
             document.body.style.overflow = 'hidden';
         });
@@ -407,9 +401,21 @@ window.addEventListener('DOMContentLoaded', () => {
         });
 
         // Toggle "Add Topic" button visibility (only show on Topics tab)
-        const addTopicBtn = document.getElementById('add-topic-btn');
-        if (addTopicBtn) {
-            addTopicBtn.style.display = (targetTab === 'topics') ? 'block' : 'none';
+        const floatingAddBtn = document.getElementById('floating-add-btn');
+        if (floatingAddBtn) {
+            if (targetTab === 'topics') {
+                floatingAddBtn.style.display = 'flex';
+                floatingAddBtn.title = 'Add Topic';
+                const btnText = floatingAddBtn.querySelector('.btn-text');
+                if (btnText) btnText.textContent = 'Add Topic';
+            } else if (targetTab === 'resources') {
+                floatingAddBtn.style.display = 'flex';
+                floatingAddBtn.title = 'Add Resource';
+                const btnText = floatingAddBtn.querySelector('.btn-text');
+                if (btnText) btnText.textContent = 'Add Resource';
+            } else {
+                floatingAddBtn.style.display = 'none';
+            }
         }
 
         // Toggle search containers visibility
@@ -449,21 +455,39 @@ window.addEventListener('DOMContentLoaded', () => {
     });
 
     // Topics functionality
-    const addTopicBtn = document.getElementById('add-topic-btn');
+    const floatingAddBtn = document.getElementById('floating-add-btn');
     const topicOverlay = document.getElementById('add-topic-form-overlay');
     const topicModal = document.getElementById('add-topic-form-modal');
 
-    if (addTopicBtn) {
-        addTopicBtn.addEventListener('click', (e) => {
+    if (floatingAddBtn) {
+        floatingAddBtn.addEventListener('click', (e) => {
             e.preventDefault();
-            UI.toggleElement('add-topic-form-overlay', true);
-            document.body.style.overflow = 'hidden'; // Prevent scrolling
-            setTimeout(() => {
-                const nameInput = document.getElementById('topic-name');
-                if (nameInput) {
-                    nameInput.focus();
-                }
-            }, 100);
+            
+            // Determine action based on active tab
+            const activeTab = document.querySelector('.tab.active').dataset.tab;
+            
+            if (activeTab === 'topics') {
+                UI.toggleElement('add-topic-form-overlay', true);
+                document.body.style.overflow = 'hidden'; // Prevent scrolling
+                setTimeout(() => {
+                    const nameInput = document.getElementById('topic-name');
+                    if (nameInput) {
+                        nameInput.focus();
+                    }
+                }, 100);
+            } else if (activeTab === 'resources') {
+                UI.toggleElement('add-resource-form-overlay', true);
+                document.body.style.overflow = 'hidden'; // Prevent scrolling
+                // Always start in search mode
+                UI.toggleElement('search-resource-section', true);
+                UI.toggleElement('create-resource-section', false);
+                setTimeout(() => {
+                    const searchInput = document.getElementById('search-resource-input');
+                    if (searchInput) {
+                        searchInput.focus();
+                    }
+                }, 100);
+            }
         });
     }
 
@@ -567,25 +591,7 @@ window.addEventListener('DOMContentLoaded', () => {
     });
 
     // Resources functionality
-    const addResourceBtn = document.getElementById('add-resource-btn');
     const resourceOverlay = document.getElementById('add-resource-form-overlay');
-
-    if (addResourceBtn) {
-        addResourceBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            UI.toggleElement('add-resource-form-overlay', true);
-            document.body.style.overflow = 'hidden'; // Prevent scrolling
-            // Always start in search mode
-            UI.toggleElement('search-resource-section', true);
-            UI.toggleElement('create-resource-section', false);
-            setTimeout(() => {
-                const searchInput = document.getElementById('search-resource-input');
-                if (searchInput) {
-                    searchInput.focus();
-                }
-            }, 100);
-        });
-    }
 
     const closeResourceModal = () => {
         UI.toggleElement('add-resource-form-overlay', false);

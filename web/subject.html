@@ -83,15 +83,18 @@
           gap: 0.75rem;
           padding: 0.85rem 1.75rem;
           border-radius: 50px;
-          box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3), var(--shadow-lg);
+          background: var(--gradient-primary);
+          color: white;
+          border: 1px solid rgba(255, 255, 255, 0.2);
+          box-shadow: 0 8px 32px rgba(102, 126, 234, 0.4), var(--shadow-lg);
           transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-          border: 1px solid rgba(255, 255, 255, 0.1);
           backdrop-filter: blur(10px);
       }
 
       .floating-action-btn:hover {
           transform: translateY(-4px) scale(1.02);
-          box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4), var(--shadow-xl);
+          box-shadow: 0 12px 40px rgba(102, 126, 234, 0.6), var(--shadow-xl);
+          background: var(--gradient-primary-hover);
       }
 
       .floating-action-btn svg {
@@ -100,6 +103,46 @@
 
       .floating-action-btn:hover svg {
           transform: scale(1.15);
+      }
+
+      .floating-add-btn {
+          position: fixed;
+          bottom: 2rem;
+          left: 2rem;
+          background: var(--gradient-primary);
+          color: white;
+          border: 1px solid rgba(255, 255, 255, 0.2);
+          border-radius: var(--radius-full);
+          padding: 0.75rem 1.5rem;
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          font-weight: 600;
+          box-shadow: 0 8px 32px rgba(102, 126, 234, 0.4), var(--shadow-lg);
+          cursor: pointer;
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          z-index: 100;
+          backdrop-filter: blur(10px);
+      }
+
+      .floating-add-btn:hover {
+          transform: translateY(-4px) scale(1.05);
+          box-shadow: 0 12px 40px rgba(102, 126, 234, 0.6), var(--shadow-xl);
+          background: var(--gradient-primary-hover);
+      }
+
+      .floating-add-btn:active {
+          transform: translateY(-2px) scale(0.98);
+      }
+
+      .subject-actions-inline .btn-icon:hover {
+          color: var(--color-primary-start) !important;
+          background: rgba(102, 126, 234, 0.1) !important;
+          border-radius: var(--radius-sm);
+      }
+
+      #subject-name {
+          user-select: none;
       }
 
       @media (max-width: 768px) {
@@ -122,19 +165,41 @@
               border-radius: 28px;
           }
 
+          .floating-add-btn .btn-text {
+              display: none;
+          }
+          .floating-add-btn {
+              padding: 1rem;
+              bottom: 1.5rem;
+              left: 1.5rem;
+              width: 56px;
+              height: 56px;
+              justify-content: center;
+              border-radius: 28px;
+          }
+
           .subject-header-container {
-              flex-direction: column;
-              align-items: stretch !important;
+              flex-direction: row !important;
+              align-items: center !important;
+          }
+
+          .subject-title-group {
+              flex-wrap: wrap;
+              gap: 0.5rem !important;
+          }
+
+          #subject-name {
+              flex-basis: 100%;
+              margin-bottom: 0.25rem;
+              font-size: 1.75rem;
+          }
+
+          .subject-actions-inline {
+              margin-left: 0 !important;
           }
 
           .subject-header-buttons {
-              flex-direction: column;
-              align-items: stretch !important;
-              width: 100%;
-          }
-
-          .subject-header-buttons button {
-              width: 100%;
+              display: none !important;
           }
       }
 
@@ -562,15 +627,20 @@
   <div class="container">
     <div class="dashboard-header">
     <div id="breadcrumb"></div>
-    <div class="subject-header-container" style="display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; flex-wrap: wrap;">
-        <h1 id="subject-name" class="editable-title" title="Click to edit actions" style="flex: 1; min-width: 200px;">Loading...</h1>
+    <div class="subject-header-container" style="display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap;">
+        <div class="subject-title-group" style="display: flex; align-items: center; gap: 1rem; flex: 1; min-width: 250px;">
+          <h1 id="subject-name" style="margin: 0;">Loading...</h1>
+          <div class="subject-actions-inline" style="display: flex; gap: 0.75rem;">
+            <button id="rename-subject-btn" class="btn btn-icon" title="Rename Subject" style="background: none; border: none; padding: 0.25rem; color: var(--color-text-muted); cursor: pointer;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>
+            </button>
+            <button id="remove-subject-btn" class="btn btn-icon" title="Remove Subject" style="background: none; border: none; padding: 0.25rem; color: var(--color-text-muted); cursor: pointer;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+            </button>
+          </div>
+        </div>
         <div class="subject-header-buttons" style="display: flex; gap: 0.5rem; flex-shrink: 0;">
-          <button id="rename-subject-btn" class="btn btn-secondary" style="display: none; padding: 0.5rem 1rem; white-space: nowrap;">
-            Rename
-          </button>
-          <button id="remove-subject-btn" class="btn btn-secondary" style="display: none; background-color: #dc3545; color: white; padding: 0.5rem 1rem; white-space: nowrap;">
-            Remove Subject
-          </button>
+          <!-- Buttons moved to floating button -->
         </div>
       </div>
     </div>
@@ -656,10 +726,13 @@
       <span>Start Practice</span>
     </button>
 
-    <button id="add-topic-btn" class="btn btn-primary btn-full" style="margin-bottom: 1.5rem; padding: 0.65rem 1rem; white-space: nowrap;">
-      + Add Topic
+    <!-- Floating Add Button (Left) -->
+    <button id="floating-add-btn" class="floating-add-btn" title="Add Topic">
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+      <span class="btn-text">Add Topic</span>
     </button>
 
+    <!-- topics search -->
     <div id="topics-search-container" style="margin-top: 1rem; margin-bottom: 1rem;">
       <input type="text" id="topics-search-input" class="form-input" placeholder="Search topics..." autocomplete="off">
     </div>
@@ -707,11 +780,6 @@
 
     <!-- resources tab -->
     <div id="resources-content" class="tab-content">
-      <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem;">
-        <button id="add-resource-btn" class="btn btn-primary" style="padding: 0.65rem 1.5rem; white-space: nowrap;">
-          + Add Resource
-        </button>
-      </div>
 
       <div id="resources-search-container" style="margin-top: 1rem; margin-bottom: 1rem;">
         <input type="text" id="resources-search-input" class="form-input" placeholder="Search resources..." autocomplete="off">
