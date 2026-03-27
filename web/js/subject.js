@@ -113,6 +113,11 @@ window.exitReorderMode = function() {
 })();
 
 window.addEventListener('DOMContentLoaded', () => {
+    const resourceForm = document.getElementById('resource-form');
+    let topicsLoaded = false;
+    let assessmentsLoaded = false;
+    let resourcesLoaded = false;
+
     if (!client.isAuthenticated()) {
         window.location.href = '/index.html';
         return;
@@ -481,6 +486,7 @@ window.addEventListener('DOMContentLoaded', () => {
                 // Always start in search mode
                 UI.toggleElement('search-resource-section', true);
                 UI.toggleElement('create-resource-section', false);
+                UI.toggleElement('show-create-resource-btn', true);
                 setTimeout(() => {
                     const searchInput = document.getElementById('search-resource-input');
                     if (searchInput) {
@@ -566,11 +572,28 @@ window.addEventListener('DOMContentLoaded', () => {
 
     const typeSelect = document.getElementById('resource-type');
     const patternSelect = document.getElementById('resource-pattern');
+    const typeDisplay = document.getElementById('resource-type-display');
+    const patternDisplay = document.getElementById('resource-pattern-display');
+    const patternGroup = document.getElementById('resource-pattern-group');
 
     typeSelect.addEventListener('change', () => {
         const typeValue = typeSelect.value;
+        const typeText = typeSelect.options[typeSelect.selectedIndex].text;
+        
+        if (typeValue) {
+            if (typeDisplay) {
+                typeDisplay.textContent = typeText;
+                typeDisplay.style.display = 'inline';
+            }
+            typeSelect.style.display = 'none';
+            if (patternGroup) patternGroup.style.display = 'block';
+        } else {
+            if (typeDisplay) typeDisplay.style.display = 'none';
+            typeSelect.style.display = 'block';
+            if (patternGroup) patternGroup.style.display = 'none';
+        }
+        
         patternSelect.innerHTML = '';
-
         if (!typeValue) {
             patternSelect.disabled = true;
             patternSelect.appendChild(new Option('Select type first...', ''));
@@ -583,11 +606,64 @@ window.addEventListener('DOMContentLoaded', () => {
         if (patterns.length === 1) {
             patternSelect.appendChild(new Option(patterns[0].label, patterns[0].value));
             patternSelect.value = patterns[0].value;
+            // Also hide pattern select if it's auto-selected
+            const patternText = patterns[0].label;
+            if (patternDisplay) {
+                patternDisplay.textContent = patternText;
+                patternDisplay.style.display = 'inline';
+            }
+            patternSelect.style.display = 'none';
         } else {
             patternSelect.appendChild(new Option('Select pattern...', ''));
             patterns.forEach(p => {
                 patternSelect.appendChild(new Option(p.label, p.value));
             });
+            if (patternDisplay) patternDisplay.style.display = 'none';
+            patternSelect.style.display = 'block';
+        }
+    });
+
+    patternSelect.addEventListener('change', () => {
+        const patternValue = patternSelect.value;
+        const patternText = patternSelect.options[patternSelect.selectedIndex].text;
+        if (patternValue) {
+            if (patternDisplay) {
+                patternDisplay.textContent = patternText;
+                patternDisplay.style.display = 'inline';
+            }
+            patternSelect.style.display = 'none';
+        }
+    });
+
+    if (typeDisplay) {
+        typeDisplay.addEventListener('click', () => {
+            typeDisplay.style.display = 'none';
+            typeSelect.style.display = 'block';
+            typeSelect.focus();
+        });
+    }
+
+    typeSelect.addEventListener('blur', () => {
+        if (typeSelect.value && typeDisplay) {
+            typeDisplay.textContent = typeSelect.options[typeSelect.selectedIndex].text;
+            typeDisplay.style.display = 'inline';
+            typeSelect.style.display = 'none';
+        }
+    });
+
+    if (patternDisplay) {
+        patternDisplay.addEventListener('click', () => {
+            patternDisplay.style.display = 'none';
+            patternSelect.style.display = 'block';
+            patternSelect.focus();
+        });
+    }
+
+    patternSelect.addEventListener('blur', () => {
+        if (patternSelect.value && patternDisplay) {
+            patternDisplay.textContent = patternSelect.options[patternSelect.selectedIndex].text;
+            patternDisplay.style.display = 'inline';
+            patternSelect.style.display = 'none';
         }
     });
 
@@ -622,37 +698,6 @@ window.addEventListener('DOMContentLoaded', () => {
             if (e.target === resourceOverlay) {
                 closeResourceModal();
             }
-        });
-    }
-
-    const showCreateResourceBtn = document.getElementById('show-create-resource-btn');
-    if (showCreateResourceBtn) {
-        showCreateResourceBtn.addEventListener('click', () => {
-            UI.toggleElement('search-resource-section', false);
-            UI.toggleElement('create-resource-section', true);
-
-            // Set default dates for new resource
-            const todayString = UI.getLocalISODate();
-
-            const productionInput = document.getElementById('resource-production');
-            const expirationInput = document.getElementById('resource-expiration');
-
-            if (productionInput && !productionInput.value) {
-                productionInput.value = todayString;
-            }
-            if (expirationInput && !expirationInput.value) {
-                // Set default expiration to 5 years from today
-                const fiveYearsLater = new Date();
-                fiveYearsLater.setFullYear(fiveYearsLater.getFullYear() + 5);
-                expirationInput.value = UI.getLocalISODate(fiveYearsLater);
-            }
-
-            setTimeout(() => {
-                const nameInput = document.getElementById('resource-name');
-                if (nameInput) {
-                    nameInput.focus();
-                }
-            }, 100);
         });
     }
 
@@ -701,6 +746,7 @@ window.addEventListener('DOMContentLoaded', () => {
                 document.getElementById('search-resource-results').innerHTML = '';
                 UI.toggleElement('no-resource-results', false);
                 UI.toggleElement('confirm-add-resource-btn', false);
+                UI.toggleElement('show-create-resource-btn', true);
                 return;
             }
 
@@ -718,14 +764,43 @@ window.addEventListener('DOMContentLoaded', () => {
     function resetPatternSelect() {
         patternSelect.disabled = true;
         patternSelect.innerHTML = '<option value="">Select type first...</option>';
+        patternSelect.style.display = 'block';
+        if (patternDisplay) patternDisplay.style.display = 'none';
+        if (patternGroup) patternGroup.style.display = 'none';
+        typeSelect.style.display = 'block';
+        if (typeDisplay) typeDisplay.style.display = 'none';
     }
 
-    const resourceForm = document.getElementById('resource-form');
     if (resourceForm) {
+        const resourceNameInput = document.getElementById('resource-name');
+        const saveResourceBtn = document.getElementById('save-resource-btn');
+
+        function checkResourceDuplicate() {
+            const name = resourceNameInput.value.trim().toLowerCase();
+            if (!name) {
+                saveResourceBtn.disabled = false;
+                saveResourceBtn.title = '';
+                return;
+            }
+
+            const isDuplicate = currentResourcesData.some(r => r.name.toLowerCase() === name);
+            if (isDuplicate) {
+                saveResourceBtn.disabled = true;
+                saveResourceBtn.title = 'A resource with this name already exists in this subject';
+            } else {
+                saveResourceBtn.disabled = false;
+                saveResourceBtn.title = '';
+            }
+        }
+
+        if (resourceNameInput) {
+            resourceNameInput.addEventListener('input', checkResourceDuplicate);
+        }
+
         resourceForm.addEventListener('submit', async (e) => {
             e.preventDefault();
 
-            const name = document.getElementById('resource-name').value.trim();
+            const name = resourceNameInput.value.trim();
             const type = document.getElementById('resource-type').value;
             const pattern = document.getElementById('resource-pattern').value;
             const url = document.getElementById('resource-url').value.trim();
@@ -758,12 +833,46 @@ window.addEventListener('DOMContentLoaded', () => {
                 UI.setButtonLoading('save-resource-btn', false);
             }
         });
+
+        const showCreateResourceBtn = document.getElementById('show-create-resource-btn');
+        if (showCreateResourceBtn) {
+            showCreateResourceBtn.addEventListener('click', () => {
+                UI.toggleElement('search-resource-section', false);
+                UI.toggleElement('create-resource-section', true);
+
+                // Copy search input to name input
+                const searchInput = document.getElementById('search-resource-input');
+                if (searchInput && resourceNameInput) {
+                    resourceNameInput.value = searchInput.value;
+                    checkResourceDuplicate();
+                }
+
+                // Set default dates for new resource
+                const todayString = UI.getLocalISODate();
+
+                const productionInput = document.getElementById('resource-production');
+                const expirationInput = document.getElementById('resource-expiration');
+
+                if (productionInput && !productionInput.value) {
+                    productionInput.value = todayString;
+                }
+                if (expirationInput && !expirationInput.value) {
+                    // Set default expiration to 5 years from today
+                    const fiveYearsLater = new Date();
+                    fiveYearsLater.setFullYear(fiveYearsLater.getFullYear() + 5);
+                    expirationInput.value = UI.getLocalISODate(fiveYearsLater);
+                }
+
+                setTimeout(() => {
+                    if (resourceNameInput) {
+                        resourceNameInput.focus();
+                    }
+                }, 100);
+            });
+        }
     }
 
     // Load active tab (from URL or default to topics)
-    let topicsLoaded = false;
-    let assessmentsLoaded = false;
-    let resourcesLoaded = false;
     
     // Search event listeners
     const topicsSearchInput = document.getElementById('topics-search-input');
@@ -1264,9 +1373,22 @@ async function searchAndDisplayResources(query) {
     // to prevent flickering of old results while loading
 
     try {
-        const results = await client.searchResources(query);
+        let results = await client.searchResources(query);
 
         if (loadingIndicator) loadingIndicator.style.display = 'none';
+
+        // Check for exact match in ALL results BEFORE filtering
+        const normalizedQuery = query.toLowerCase();
+        const exactMatch = results.some(r => r.name.toLowerCase() === normalizedQuery);
+
+        // Filter out resources already in currentResourcesData
+        if (results && results.length > 0 && currentResourcesData && currentResourcesData.length > 0) {
+            const existingIds = new Set(currentResourcesData.map(r => r.id));
+            results = results.filter(r => !existingIds.has(r.id));
+        }
+
+        // Handle show-create-resource-btn visibility
+        UI.toggleElement('show-create-resource-btn', !exactMatch);
 
         if (!results || results.length === 0) {
             if (noResults) noResults.style.display = 'block';

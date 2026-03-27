@@ -1,4 +1,5 @@
 :root {
+    color-scheme: dark;
     /* Colors - Primary Palette */
     --color-primary-start: #667eea;
     --color-primary-end: #764ba2;
@@ -623,27 +624,55 @@ a:hover {
     transition: var(--transition-fast);
 }
 
+/* Ensure dropdown options are themed in dark mode */
+.form-input option,
+.form-select option {
+    background-color: #1a1a1a;
+    color: var(--color-text-primary);
+}
+
+.form-select, select.form-input {
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>');
+    background-repeat: no-repeat;
+    background-position: right 1rem center;
+    background-size: 1rem;
+    padding-right: 2.5rem;
+}
+
 /* Ensure date picker is usable on mobile */
 .form-input[type="date"] {
     min-height: 48px; /* Better touch target */
     position: relative;
     cursor: pointer;
+    /* Custom calendar icon that stays visible and doesn't interfere with clicks */
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>');
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 1.25rem;
+    padding-right: 2.5rem;
 }
 
-/* On some mobile browsers, the calendar picker indicator is required for clicking */
+/* On some mobile browsers, the calendar picker indicator is required for clicking.
+   We make it cover the entire input area but keep it invisible to avoid duplication. */
 .form-input[type="date"]::-webkit-calendar-picker-indicator {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
     background: transparent;
     cursor: pointer;
-    /* In dark theme, make the default calendar icon visible by inverting its color (white) */
-    filter: invert(1);
-    opacity: 0.7;
-    transition: opacity var(--transition-fast);
-    padding: var(--space-xs);
-    z-index: 10;
+    margin: 0;
+    padding: 0;
+    opacity: 0;
+    z-index: 5;
 }
 
-.form-input[type="date"]::-webkit-calendar-picker-indicator:hover {
-    opacity: 1;
+.form-input[type="date"]::-webkit-inner-spin-button,
+.form-input[type="date"]::-webkit-clear-button {
+    display: none;
 }
 
 /* Remove the absolute covering and ::after emoji which could be confusing or blocked */
@@ -1908,7 +1937,7 @@ a:hover {
     flex-shrink: 0;
 }
 
-#roadmap-form, #nerve-form, #milestone-form, .modal-body {
+#roadmap-form, #nerve-form, #milestone-form, #resource-form, .modal-body {
     flex: 1;
     overflow-y: auto;
     min-height: 0;
@@ -2021,7 +2050,7 @@ a:hover {
     .modal-content {
         padding: var(--space-md);
         border-radius: var(--radius-lg);
-        max-height: 96vh;
+        max-height: 96dvh; /* Use dvh for better mobile keyboard handling */
     }
 }
 

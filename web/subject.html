@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="color-scheme" content="dark">
   <title>Subject - Flashback</title>
 
   <!-- Design System CSS - MUST be loaded first -->
@@ -879,7 +880,7 @@
       <button type="button" class="modal-close" id="close-resource-modal-btn" aria-label="Close">&times;</button>
     </div>
 
-    <div class="modal-body" style="padding: 1.5rem; display: flex; flex-direction: column;">
+    <div class="modal-body">
       <!-- Search mode -->
       <div id="search-resource-section">
         <div class="form-group">
@@ -932,8 +933,10 @@
             >
           </div>
 
-          <div class="form-group">
-            <label class="form-label" for="resource-type">Type</label>
+          <div class="form-group" id="resource-type-group">
+            <label class="form-label" for="resource-type">
+              Type <span id="resource-type-display" class="clickable-value" style="display: none; color: var(--color-primary-start); cursor: pointer; text-decoration: underline; margin-left: 0.5rem;"></span>
+            </label>
             <select id="resource-type" class="form-input" required>
               <option value="">Select type...</option>
               <option value="0">Book</option>
@@ -948,8 +951,10 @@
             </select>
           </div>
 
-          <div class="form-group">
-            <label class="form-label" for="resource-pattern">Section Pattern</label>
+          <div class="form-group" id="resource-pattern-group" style="display: none;">
+            <label class="form-label" for="resource-pattern">
+              Section Pattern <span id="resource-pattern-display" class="clickable-value" style="display: none; color: var(--color-primary-start); cursor: pointer; text-decoration: underline; margin-left: 0.5rem;"></span>
+            </label>
             <select id="resource-pattern" class="form-input" required disabled>
               <option value="">Select type first...</option>
             </select>
