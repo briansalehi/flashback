@@ -644,32 +644,11 @@ a:hover {
 /* Ensure date picker is usable on mobile */
 .form-input[type="date"] {
     min-height: 48px; /* Better touch target */
-    position: relative;
     cursor: pointer;
-    /* Custom calendar icon that stays visible and doesn't interfere with clicks */
-    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>');
-    background-repeat: no-repeat;
-    background-position: right 0.75rem center;
-    background-size: 1.25rem;
-    padding-right: 2.5rem;
 }
 
-/* On some mobile browsers, the calendar picker indicator is required for clicking.
-   We make it cover the entire input area but keep it invisible to avoid duplication. */
-.form-input[type="date"]::-webkit-calendar-picker-indicator {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: transparent;
-    cursor: pointer;
-    margin: 0;
-    padding: 0;
-    opacity: 0;
-    z-index: 5;
-}
-
+/* We let the browser handle the calendar icon in dark mode to avoid duplication.
+   color-scheme: dark ensures the native icon is visible and themed correctly. */
 .form-input[type="date"]::-webkit-inner-spin-button,
 .form-input[type="date"]::-webkit-clear-button {
     display: none;
