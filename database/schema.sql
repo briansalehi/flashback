@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict Ds5mWMZi9fKuQH9mpMQYa0iQ3Rbqx1k0q7gyBEYThiJmLMBH1R6ifBaNxSQb9QX
+\restrict YQvhjqLCSLeg2ir5UUwaYa0VoBMUpkLMFeMmfc7wWhvLtGfMbiHmGXuBxbqUhNO
 
 -- Dumped from database version 18.1
 -- Dumped by pg_dump version 18.1
@@ -1610,11 +1610,9 @@ CREATE FUNCTION flashback.get_section_cards(resource_id integer, section_positio
     LANGUAGE plpgsql
     AS $$
 begin
-    return query select c.id, c.state, c.headline, (tc.card is null)
+    return query select c.id, c.state, c.headline, is_assignable(c.id)
     from section_cards sc
-    join shelves h on h.resource = sc.resource
     join cards c on c.id = sc.card
-    left join topic_cards tc on tc.card = sc.card and tc.subject = h.subject
     where sc.resource = resource_id and sc.section = section_position;
 end;
 $$;
@@ -1910,6 +1908,27 @@ end; $$;
 
 
 ALTER FUNCTION flashback.get_user_cognitive_level(user_id integer, roadmap_id integer, subject_id integer) OWNER TO flashback;
+
+--
+-- Name: is_assignable(integer); Type: FUNCTION; Schema: flashback; Owner: flashback
+--
+
+CREATE FUNCTION flashback.is_assignable(card_id integer) RETURNS boolean
+    LANGUAGE plpgsql
+    AS $$
+declare assignable boolean;
+begin
+    if exists (select card from topic_cards where card = card_id) then
+        assignable = false;
+    else
+        assignable = true;
+    end if;
+
+    return assignable;
+end; $$;
+
+
+ALTER FUNCTION flashback.is_assignable(card_id integer) OWNER TO flashback;
 
 --
 -- Name: is_assimilated(integer, integer, flashback.expertise_level, integer); Type: FUNCTION; Schema: flashback; Owner: flashback
@@ -4326,5 +4345,5 @@ GRANT ALL ON SCHEMA public TO brian;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict Ds5mWMZi9fKuQH9mpMQYa0iQ3Rbqx1k0q7gyBEYThiJmLMBH1R6ifBaNxSQb9QX
+\unrestrict YQvhjqLCSLeg2ir5UUwaYa0VoBMUpkLMFeMmfc7wWhvLtGfMbiHmGXuBxbqUhNO
 
