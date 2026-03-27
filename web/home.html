@@ -93,7 +93,7 @@
         </div>
 
         <div id="create-form-section">
-          <form id="roadmap-form">
+          <form id="roadmap-form" class="modal-body">
             <div class="form-group">
               <label class="form-label" for="roadmap-name">What is your current or desired career?</label>
               <div style="position: relative;">
@@ -224,7 +224,7 @@
             <button id="close-nerve-modal-btn" class="modal-close" aria-label="Close">&times;</button>
           </div>
 
-          <form id="nerve-form">
+          <form id="nerve-form" class="modal-body">
             <div class="form-group">
               <label class="form-label" for="nerve-subject">Subject</label>
               <div style="position: relative;">
@@ -236,7 +236,7 @@
                     required
                     autocomplete="off"
                 >
-                <div id="nerve-subject-results" class="search-results" style="display: none;"></div>
+                <div id="nerve-subject-results" class="search-results search-results-overlay" style="display: none;"></div>
               </div>
               <input type="hidden" id="nerve-subject-id" required>
             </div>

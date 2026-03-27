@@ -306,7 +306,11 @@ class FlashbackClient {
                     console.error('CreateSubject error:', err);
                     reject(this.handleError(err));
                 } else {
-                    resolve();
+                    const subject = response.getSubject();
+                    resolve({
+                        id: subject.getId(),
+                        name: subject.getName()
+                    });
                 }
             });
         });

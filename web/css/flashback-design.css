@@ -530,6 +530,13 @@ a:hover {
     background: linear-gradient(135deg, #e53935 0%, #c62828 100%);
 }
 
+.btn:disabled,
+.btn.disabled {
+    opacity: 0.5 !important;
+    cursor: not-allowed !important;
+    pointer-events: none !important;
+}
+
 .btn-lg {
     padding: var(--space-md) var(--space-xl);
     font-size: var(--font-size-lg);
@@ -1874,10 +1881,10 @@ a:hover {
     backdrop-filter: blur(4px);
     z-index: 9999;
     display: flex;
-    align-items: flex-start; /* Change to flex-start for scrollability */
+    align-items: flex-start;
     justify-content: center;
-    padding: var(--space-xl) var(--space-md);
-    overflow-y: auto; /* Allow scrolling if modal content is taller than screen */
+    padding: var(--space-md);
+    overflow: hidden;
     -webkit-overflow-scrolling: touch;
 }
 
@@ -1885,13 +1892,14 @@ a:hover {
     background: rgba(15, 15, 15, 0.98);
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: var(--radius-xl);
-    padding: var(--space-xl);
+    padding: var(--space-lg);
     max-width: 500px;
     width: 100%;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
     position: relative;
-    margin: 0 auto; /* Remove vertical auto to prevent shifting when growing */
-    max-height: calc(100vh - 2 * var(--space-xl));
+    margin: 0 auto;
+    max-height: calc(100vh - 2 * var(--space-md));
+    max-height: calc(100dvh - 2 * var(--space-md));
     display: flex;
     flex-direction: column;
 }
@@ -1900,11 +1908,13 @@ a:hover {
     flex-shrink: 0;
 }
 
-#roadmap-form, #nerve-form, .modal-body {
+#roadmap-form, #nerve-form, #milestone-form, .modal-body {
     flex: 1;
     overflow-y: auto;
+    min-height: 0;
     padding-right: var(--space-xs);
     margin-right: calc(-1 * var(--space-xs));
+    padding-bottom: var(--space-md);
 }
 
 .modal-header {
@@ -1940,6 +1950,7 @@ a:hover {
     .modal-content {
         padding: var(--space-2xl);
         max-height: calc(100vh - 4 * var(--space-xl));
+        max-height: calc(100dvh - 4 * var(--space-xl));
     }
 }
 
@@ -1953,7 +1964,7 @@ a:hover {
     padding: 2px;
 }
 
-.search-results {
+.search-results-overlay {
     background: rgba(15, 15, 15, 0.95);
     border: 1px solid var(--border-color);
     margin-top: 0.25rem;
@@ -1963,6 +1974,43 @@ a:hover {
     left: 0;
     width: 100%;
     z-index: 100;
+}
+
+/* Modern Search Result Items */
+.search-result-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--space-sm) var(--space-md);
+    margin-bottom: var(--space-xs);
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.search-result-item:hover {
+    border-color: var(--color-primary-start);
+    background: var(--bg-secondary);
+    transform: translateX(4px);
+}
+
+.search-result-item.selected {
+    border-color: var(--color-primary-start);
+    background: rgba(102, 126, 234, 0.1);
+    box-shadow: 0 0 0 1px var(--color-primary-start);
+}
+
+.search-result-name {
+    font-weight: var(--font-weight-medium);
+    color: var(--color-text-primary);
+}
+
+.select-indicator {
+    font-size: var(--font-size-sm);
+    color: var(--color-primary-start);
+    font-weight: var(--font-weight-bold);
 }
 
 @media (max-width: 480px) {

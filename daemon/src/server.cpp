@@ -850,6 +850,7 @@ grpc::Status server::CreateSubject(grpc::ServerContext* context, CreateSubjectRe
         else
         {
             Subject const subject{m_database->create_subject(request->name())};
+            *response->mutable_subject() = subject;
             std::clog << std::format("client {} created subject {}\n", request->user().token(), subject.id());
             status = grpc::Status{grpc::StatusCode::OK, ""};
         }

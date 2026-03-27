@@ -23,48 +23,6 @@
 
 
       /* Page-specific component styles */
-      .search-result-item {
-          padding: 0.75rem;
-          border: 1px solid var(--border-color);
-          border-radius: 4px;
-          margin-bottom: 0.5rem;
-          transition: background-color 0.2s;
-      }
-
-      .search-result-item:hover {
-          background-color: var(--bg-secondary);
-          border-color: var(--color-primary-start);
-          transform: translateY(-1px);
-          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-      }
-
-      .search-result-item:active {
-          background-color: var(--bg-tertiary);
-          transform: translateY(0);
-      }
-
-      .search-result-item.selected {
-          border-color: var(--color-primary-start);
-          background-color: rgba(102, 126, 234, 0.1);
-      }
-
-      .search-result-label {
-          display: flex;
-          align-items: flex-start;
-          cursor: pointer;
-          gap: 0.75rem;
-      }
-
-      .search-result-label input[type="radio"] {
-          margin-top: 0.25rem;
-          cursor: pointer;
-      }
-
-      .search-result-name {
-          font-weight: 500;
-          color: var(--text-primary);
-      }
-
       .search-section {
           margin-bottom: 1.5rem;
       }
@@ -73,12 +31,6 @@
           margin-top: 1rem;
           padding-top: 1rem;
           border-top: 1px solid var(--border-color);
-      }
-
-      #search-results {
-          max-height: 300px;
-          overflow-y: auto;
-          margin-top: 1rem;
       }
 
       .level-selector {
@@ -593,7 +545,7 @@
           <h2 class="modal-title">Rename Roadmap</h2>
           <button type="button" id="close-rename-modal-btn" class="modal-close" aria-label="Close modal">&times;</button>
         </div>
-        <form id="rename-roadmap-form">
+        <form id="rename-roadmap-form" class="modal-body">
           <div class="form-group">
             <label class="form-label" for="rename-roadmap-name">New Roadmap Name</label>
             <input
@@ -680,52 +632,36 @@
           <button type="button" class="modal-close" id="close-add-milestone-modal-btn" aria-label="Close modal">&times;</button>
         </div>
 
-      <form id="milestone-form" style="display: flex; flex-direction: column; overflow-y: auto;">
-        <!-- Search existing subjects section -->
-        <div id="search-subject-section" class="search-section">
+      <form id="milestone-form" class="modal-body">
+        <!-- Search subjects section -->
+        <div class="form-group">
+          <label class="form-label" for="subject-search-input">Search for a subject</label>
+          <input
+              type="text"
+              id="subject-search-input"
+              class="form-input"
+              placeholder="e.g. Mathematics, Biology..."
+              autocomplete="off"
+          >
+        </div>
+
+        <div id="search-results-loading" style="display: none; text-align: center; padding: 1rem;">
+          <div class="loading" style="width: 30px; height: 30px; border-width: 3px; margin: 0 auto;"></div>
+        </div>
+
+        <div id="search-results" class="search-results" style="display: none; margin-bottom: 1.5rem;">
+          <!-- Search results will be inserted here -->
+        </div>
+
+        <div id="create-subject-suggestion" style="margin-bottom: 1.5rem;">
+           <button type="button" id="suggest-create-subject-btn" class="btn btn-secondary" style="width: 100%; justify-content: center; padding: 0.75rem;" disabled>
+             + Create New Subject
+           </button>
+        </div>
+
+        <!-- Expertise level selection & actions - shown after selection -->
+        <div id="milestone-addition-group" style="display: none; margin-top: 1rem;">
           <div class="form-group">
-            <label class="form-label" for="subject-search-input">Search for a subject</label>
-            <input
-                type="text"
-                id="subject-search-input"
-                class="form-input"
-                placeholder="Start typing to search..."
-                autocomplete="off"
-            >
-          </div>
-
-          <div id="search-results-loading" style="display: none; text-align: center; padding: 1rem;">
-            <div class="loading" style="width: 30px; height: 30px; border-width: 3px; margin: 0 auto;"></div>
-          </div>
-
-          <div id="search-results" style="display: none;">
-            <!-- Search results will be inserted here -->
-          </div>
-
-          <div id="no-search-results"
-               style="display: none; text-align: center; padding: 1rem; color: var(--text-muted);">
-            No subjects found
-          </div>
-        </div>
-
-        <!-- Create new subject section -->
-        <div id="create-subject-section" class="create-subject-section" style="display: none;">
-          <div id="create-subject-form">
-            <div class="form-group">
-              <label class="form-label" for="new-subject-name">New Subject Name</label>
-              <input
-                  type="text"
-                  id="new-subject-name"
-                  class="form-input"
-                  placeholder="e.g., Linear Algebra"
-              >
-            </div>
-          </div>
-        </div>
-
-        <!-- Expertise level selection & actions -->
-        <div id="milestone-addition-group">
-          <div class="form-group" style="margin-top: 2rem;">
             <label class="form-label">Select expertise level for this roadmap</label>
             <div class="level-selector">
               <div class="level-option">
@@ -753,27 +689,14 @@
             <input type="hidden" id="expertise-level" value="0">
           </div>
 
-          <div style="display: flex; gap: 1rem; margin-top: 2rem; flex-wrap: wrap;">
-            <button type="submit" id="save-milestone-btn" class="btn btn-primary" style="padding: 0.5rem 1rem; white-space: nowrap;">
+          <div class="form-actions" style="display: flex; gap: 1rem; margin-top: 2rem; justify-content: flex-end; flex-wrap: wrap;">
+            <button type="submit" id="save-milestone-btn" class="btn btn-primary" style="padding: 0.5rem 1.5rem; white-space: nowrap;">
               Add to Roadmap
             </button>
-            <button type="button" id="create-new-subject-btn" class="btn btn-secondary" style="padding: 0.5rem 1rem; white-space: nowrap;">
-              + Create New Subject
-            </button>
-            <button type="button" id="cancel-milestone-btn" class="btn btn-link" style="padding: 0.5rem 1rem; white-space: nowrap;">
+            <button type="button" id="cancel-milestone-btn" class="btn btn-secondary" style="padding: 0.5rem 1.5rem; white-space: nowrap;">
               Cancel
             </button>
           </div>
-        </div>
-
-        <!-- Create mode actions -->
-        <div id="create-mode-actions" style="display: none; display: flex; gap: 1rem; margin-top: 2rem; flex-wrap: wrap;">
-          <button type="button" id="save-new-subject-btn" class="btn btn-primary" style="padding: 0.5rem 1rem; white-space: nowrap;">
-            Create Subject
-          </button>
-          <button type="button" id="back-to-search-btn" class="btn btn-secondary" style="padding: 0.5rem 1rem; white-space: nowrap;">
-            ← Back to search
-          </button>
         </div>
       </form>
     </div>

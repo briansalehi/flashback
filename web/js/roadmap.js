@@ -113,6 +113,9 @@ window.addEventListener('DOMContentLoaded', () => {
 
     const roadmapId = UI.getUrlParam('id');
     const roadmapName = UI.getUrlParam('name');
+    const suggestCreateBtn = document.getElementById('suggest-create-subject-btn');
+    const rdSubjectSearchInput = document.getElementById('subject-search-input');
+    
     if (!roadmapId) {
         window.location.href = '/home.html';
         return;
@@ -144,17 +147,17 @@ window.addEventListener('DOMContentLoaded', () => {
             UI.toggleElement('add-milestone-form-overlay', true);
             document.body.style.overflow = 'hidden'; // Prevent scrolling background
             
-            // Initial state: search mode
-            UI.toggleElement('search-subject-section', true);
-            UI.toggleElement('create-subject-section', false);
-            UI.toggleElement('milestone-addition-group', true);
-            UI.toggleElement('create-mode-actions', false);
+            // Initial state
+            UI.toggleElement('search-results', false);
+            if (suggestCreateBtn) suggestCreateBtn.disabled = true;
+            UI.toggleElement('milestone-addition-group', false);
             
             // Use setTimeout to ensure the element is visible before focusing
             setTimeout(() => {
                 const searchInput = document.getElementById('subject-search-input');
                 if (searchInput) {
                     searchInput.disabled = false;
+                    searchInput.value = '';
                     searchInput.focus();
                 }
             }, 100);
@@ -191,96 +194,58 @@ window.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    const createNewSubjectBtn = document.getElementById('create-new-subject-btn');
-    if (createNewSubjectBtn) {
-        createNewSubjectBtn.addEventListener('click', () => {
-            // Enter Create Mode
-            UI.toggleElement('create-subject-section', true);
-            UI.toggleElement('search-subject-section', false);
-            UI.toggleElement('milestone-addition-group', false);
-            UI.toggleElement('create-mode-actions', true);
-            
-            setTimeout(() => {
-                const nameInput = document.getElementById('new-subject-name');
-                if (nameInput) {
-                    nameInput.focus();
-                }
-            }, 100);
-        });
-    }
-
-    const backToSearchBtn = document.getElementById('back-to-search-btn');
-    if (backToSearchBtn) {
-        backToSearchBtn.addEventListener('click', () => {
-            // Return to Search Mode
-            UI.toggleElement('create-subject-section', false);
-            UI.toggleElement('search-subject-section', true);
-            UI.toggleElement('milestone-addition-group', true);
-            UI.toggleElement('create-mode-actions', false);
-            UI.clearForm('create-subject-form');
-        });
-    }
-
+    // Search input handler
     let searchTimeout;
-    const subjectSearchInput = document.getElementById('subject-search-input');
-    if (subjectSearchInput) {
-        subjectSearchInput.addEventListener('input', (e) => {
+    if (rdSubjectSearchInput) {
+        rdSubjectSearchInput.addEventListener('input', (e) => {
             clearTimeout(searchTimeout);
             const searchToken = e.target.value.trim();
+
+            if (searchToken.length < 1) {
+                UI.toggleElement('search-results', false);
+                UI.toggleElement('create-subject-suggestion', true);
+                if (suggestCreateBtn) suggestCreateBtn.disabled = true;
+                UI.toggleElement('milestone-addition-group', false);
+                return;
+            }
 
             searchTimeout = setTimeout(async () => {
                 await searchSubjects(searchToken);
             }, 300);
         });
-    } else {
-        console.error('Search input not found!');
     }
 
-    const saveNewSubjectBtn = document.getElementById('save-new-subject-btn');
-    if (saveNewSubjectBtn) {
-        saveNewSubjectBtn.addEventListener('click', async () => {
-            const nameInput = document.getElementById('new-subject-name');
-            const name = nameInput.value.trim();
+    // Suggest Create Subject Button Handler
+    if (suggestCreateBtn) {
+        suggestCreateBtn.addEventListener('click', async () => {
+            const name = rdSubjectSearchInput.value.trim();
 
-            if (!name) {
-                UI.showError('Please enter a subject name');
-                return;
-            }
+            if (!name) return;
 
             UI.hideMessage('error-message');
-            UI.setButtonLoading('save-new-subject-btn', true);
+            UI.setButtonLoading('suggest-create-subject-btn', true);
 
             try {
-                await client.createSubject(name);
+                const response = await client.createSubject(name);
+                const newSubjectId = response.id || response.subject_id;
 
-                // After creating, search for it to add to roadmap
-                await searchSubjects(name);
-
-                // Exit Create Mode and return to Search Mode automatically
-                UI.toggleElement('create-subject-section', false);
-                UI.toggleElement('search-subject-section', true);
-                UI.toggleElement('milestone-addition-group', true);
-                UI.toggleElement('create-mode-actions', false);
+                // After creating, automatically select it
+                if (suggestCreateBtn) suggestCreateBtn.disabled = true;
+                UI.toggleElement('search-results', true);
                 
-                nameInput.value = '';
-                UI.setButtonLoading('save-new-subject-btn', false);
+                // Render just this one new subject as selected
+                renderSearchResults([{ id: newSubjectId, name: name }]);
+                
+                // Select it
+                const firstResult = document.querySelector('.search-result-item');
+                if (firstResult) firstResult.click();
 
-                // Focus on the first search result (which should be the new subject)
-                setTimeout(() => {
-                    const firstResult = document.querySelector('input[name="subject-select"]');
-                    if (firstResult) {
-                        firstResult.checked = true;
-                        firstResult.focus();
-                        // Trigger change event to highlight the selected item
-                        firstResult.dispatchEvent(new Event('change', { bubbles: true }));
-                    }
-                }, 100);
-
-                UI.showSuccess('Subject created and selected! Click "Add to Roadmap" below.');
+                UI.setButtonLoading('suggest-create-subject-btn', false);
+                UI.showSuccess(`Subject "${name}" created and selected!`);
             } catch (err) {
                 console.error('Create subject failed:', err);
                 UI.showError(err.message || 'Failed to create subject');
-                UI.setButtonLoading('save-new-subject-btn', false);
+                UI.setButtonLoading('suggest-create-subject-btn', false);
             }
         });
     }
@@ -290,13 +255,13 @@ window.addEventListener('DOMContentLoaded', () => {
         milestoneForm.addEventListener('submit', async (e) => {
             e.preventDefault();
 
-            const selectedSubject = document.querySelector('input[name="subject-select"]:checked');
-            if (!selectedSubject) {
+            const selectedResult = document.querySelector('.search-result-item.selected');
+            if (!selectedResult) {
                 UI.showError('Please select a subject');
                 return;
             }
 
-            const subjectId = selectedSubject.value;
+            const subjectId = selectedResult.dataset.id;
             const level = document.getElementById('expertise-level').value;
 
             UI.hideMessage('error-message');
@@ -492,20 +457,33 @@ window.addEventListener('DOMContentLoaded', () => {
 });
 
 async function searchSubjects(searchToken) {
+    const suggestCreateBtn = document.getElementById('suggest-create-subject-btn');
     UI.toggleElement('search-results-loading', true);
     UI.toggleElement('search-results', false);
-    UI.toggleElement('no-search-results', false);
+    UI.toggleElement('create-subject-suggestion', true);
+    if (suggestCreateBtn) suggestCreateBtn.disabled = true;
+    UI.toggleElement('milestone-addition-group', false);
 
     try {
-        const results = await client.searchSubjects(searchToken);
+        const allResults = await client.searchSubjects(searchToken);
 
         UI.toggleElement('search-results-loading', false);
 
-        if (results.length === 0) {
-            UI.toggleElement('no-search-results', true);
+        // Exclude subjects already in the roadmap
+        const existingSubjectIds = new Set(currentMilestones.map(m => m.id));
+        const filteredResults = allResults.filter(s => !existingSubjectIds.has(s.id));
+
+        if (filteredResults.length === 0) {
+            UI.toggleElement('search-results', false);
         } else {
             UI.toggleElement('search-results', true);
-            renderSearchResults(results);
+            renderSearchResults(filteredResults);
+        }
+
+        // Check for exact match in ALL results to avoid duplicates
+        const exactMatch = allResults.find(r => r.name.trim().toLowerCase() === searchToken.toLowerCase());
+        if (suggestCreateBtn) {
+            suggestCreateBtn.disabled = !!exactMatch;
         }
     } catch (err) {
         console.error('Search subjects failed:', err);
@@ -518,53 +496,52 @@ function renderSearchResults(subjects) {
     const container = document.getElementById('search-results');
     container.innerHTML = '';
 
-    subjects.forEach((subject, index) => {
+    subjects.forEach((subject) => {
         const resultItem = document.createElement('div');
         resultItem.className = 'search-result-item';
-        resultItem.style.cursor = 'pointer';
+        resultItem.dataset.id = subject.id;
         resultItem.innerHTML = `
-            <div class="search-result-label" style="pointer-events: none;">
-                <input 
-                    type="radio" 
-                    name="subject-select" 
-                    value="${subject.id}"
-                    ${index === 0 ? 'checked' : ''}
-                    style="pointer-events: auto;"
-                >
-                <div>
-                    <div class="search-result-name">${UI.escapeHtml(subject.name)}</div>
-                </div>
+            <div style="flex: 1;">
+                <div class="search-result-name" style="font-weight: 600; color: var(--text-primary);">${UI.escapeHtml(subject.name)}</div>
+            </div>
+            <div class="select-indicator" style="display: none; color: var(--color-primary-start);">
+                ✓
             </div>
         `;
 
-        resultItem.addEventListener('click', (e) => {
-            const radio = resultItem.querySelector('input[type="radio"]');
-            if (radio && e.target !== radio) {
-                radio.checked = true;
-            }
-            
-            // Highlight the selected item
+        resultItem.addEventListener('click', () => {
+            // Clear previous selection
             container.querySelectorAll('.search-result-item').forEach(item => {
                 item.classList.remove('selected');
+                item.querySelector('.select-indicator').style.display = 'none';
             });
+            
+            // Set new selection
             resultItem.classList.add('selected');
-        });
+            resultItem.querySelector('.select-indicator').style.display = 'block';
+            
+            // Hide create button when a result is selected to save space
+            UI.toggleElement('create-subject-suggestion', false);
 
-        // Set initial selected state
-        if (index === 0) {
-            resultItem.classList.add('selected');
-        }
+            // Show milestone addition group
+            UI.toggleElement('milestone-addition-group', true);
+        });
 
         container.appendChild(resultItem);
     });
 }
 
 function clearSearchResults() {
-    document.getElementById('subject-search-input').value = '';
-    document.getElementById('search-results').innerHTML = '';
+    const searchInput = document.getElementById('subject-search-input');
+    if (searchInput) searchInput.value = '';
+    const resultsContainer = document.getElementById('search-results');
+    const suggestCreateBtn = document.getElementById('suggest-create-subject-btn');
+    if (resultsContainer) resultsContainer.innerHTML = '';
     UI.toggleElement('search-results', false);
-    UI.toggleElement('no-search-results', false);
+    UI.toggleElement('create-subject-suggestion', true);
+    if (suggestCreateBtn) suggestCreateBtn.disabled = true;
     UI.toggleElement('search-results-loading', false);
+    UI.toggleElement('milestone-addition-group', false);
 }
 
 async function loadMilestones() {

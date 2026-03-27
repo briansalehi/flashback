@@ -62,7 +62,7 @@ message SearchSubjectsRequest { User user = 1; string token = 2; }
 message SearchSubjectsResponse { repeated MatchingSubject subjects = 1; }
 
 message CreateSubjectRequest { User user = 1; string name = 2; }
-message CreateSubjectResponse { }
+message CreateSubjectResponse { Subject subject = 1; }
 
 message ReorderMilestoneRequest { User user = 1; Roadmap roadmap = 2; uint64 current_position = 3; uint64 target_position = 4; }
 message ReorderMilestoneResponse { }
