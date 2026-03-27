@@ -307,11 +307,11 @@
               <option value="2">Origin</option>
             </select>
           </div>
-          <div class="form-actions" style="display: flex; gap: 1rem; margin-top: 2rem; justify-content: flex-end;">
-            <button type="submit" id="save-edit-topic-btn" class="btn btn-primary" style="padding: 0.5rem 1.5rem; white-space: nowrap;">
+          <div class="modal-actions">
+            <button type="submit" id="save-edit-topic-btn" class="btn btn-primary">
               Save Changes
             </button>
-            <button type="button" id="cancel-edit-topic-btn" class="btn btn-secondary" style="padding: 0.5rem 1.5rem; white-space: nowrap;">
+            <button type="button" id="cancel-edit-topic-btn" class="btn btn-secondary">
               Cancel
             </button>
           </div>
@@ -330,11 +330,11 @@
           <p style="margin-bottom: 1.5rem;">
             Are you sure you want to remove this topic? This action cannot be undone. All cards in this topic will also be removed.
           </p>
-          <div class="form-actions" style="display: flex; gap: 1rem; justify-content: flex-end;">
-            <button id="confirm-remove-topic-btn" class="btn btn-danger" style="padding: 0.5rem 1.5rem; white-space: nowrap;">
+          <div class="modal-actions">
+            <button id="confirm-remove-topic-btn" class="btn btn-danger">
               Remove Topic
             </button>
-            <button id="cancel-remove-topic-btn" class="btn btn-secondary" style="padding: 0.5rem 1.5rem; white-space: nowrap;">
+            <button id="cancel-remove-topic-btn" class="btn btn-secondary">
               Cancel
             </button>
           </div>
@@ -353,11 +353,11 @@
           <p style="margin-bottom: 1.5rem;">
             Are you sure you want to diminish the assessment <strong id="assessment-to-diminish-name"></strong>? This will remove its assessment status.
           </p>
-          <div class="form-actions" style="display: flex; gap: 1rem; justify-content: flex-end;">
-            <button id="confirm-diminish-assessment-btn" class="btn btn-danger" style="padding: 0.5rem 1.5rem; white-space: nowrap;">
+          <div class="modal-actions">
+            <button id="confirm-diminish-assessment-btn" class="btn btn-danger">
               Yes, Diminish
             </button>
-            <button id="cancel-diminish-assessment-btn" class="btn btn-secondary" style="padding: 0.5rem 1.5rem; white-space: nowrap;">
+            <button id="cancel-diminish-assessment-btn" class="btn btn-secondary">
               Cancel
             </button>
           </div>
@@ -394,7 +394,7 @@
             </div>
           </div>
 
-          <div id="expand-topics-list" style="max-height: 400px; overflow-y: auto; margin-bottom: 1.5rem;">
+          <div id="expand-topics-list" style="margin-bottom: 1.5rem;">
             <!-- topics grouped by level will be inserted here -->
           </div>
 
@@ -402,11 +402,11 @@
             No topics found
           </div>
 
-          <div class="form-actions" style="display: flex; gap: 1rem; justify-content: flex-end;">
-            <button id="confirm-expand-assessment-btn" class="btn btn-primary" style="display: none; padding: 0.5rem 1.5rem; white-space: nowrap;">
+          <div class="modal-actions">
+            <button id="confirm-expand-assessment-btn" class="btn btn-primary" style="display: none;">
               Expand Assessment
             </button>
-            <button id="cancel-expand-assessment-btn" class="btn btn-secondary" style="padding: 0.5rem 1.5rem; white-space: nowrap;">
+            <button id="cancel-expand-assessment-btn" class="btn btn-secondary">
               Cancel
             </button>
           </div>
@@ -450,7 +450,8 @@
             <button id="close-assessment-modal-btn" class="modal-close" aria-label="Close">&times;</button>
           </div>
 
-          <div id="add-assessment-tabs" class="tabs-container" style="margin-bottom: 1.5rem;">
+          <div class="modal-body">
+            <div id="add-assessment-tabs" class="tabs-container" style="margin-bottom: 1.5rem;">
             <div class="tabs">
               <button id="tab-select-existing" class="tab active">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -486,7 +487,7 @@
               <p class="text-muted mt-sm">Loading subject assessments...</p>
             </div>
 
-            <div id="existing-assessments-list" style="max-height: 400px; overflow-y: auto; margin-top: 1rem; border: 1px solid var(--border-color); border-radius: 8px;">
+            <div id="existing-assessments-list" style="margin-top: 1rem;">
               <!-- existing assessments will be listed here -->
             </div>
 
@@ -494,11 +495,11 @@
               No assessments found
             </div>
 
-            <div style="display: flex; gap: 1rem; margin-top: 2rem;">
-              <button id="confirm-existing-assessment-btn" class="btn btn-primary" style="display: none; padding: 0.5rem 1.5rem; white-space: nowrap;">
+            <div class="modal-actions">
+              <button id="confirm-existing-assessment-btn" class="btn btn-primary" style="display: none;">
                 Add Selected Assessment
               </button>
-              <button id="cancel-existing-assessment-btn" type="button" class="btn btn-secondary" style="padding: 0.5rem 1.5rem; white-space: nowrap;">
+              <button id="cancel-existing-assessment-btn" type="button" class="btn btn-secondary">
                 Cancel
               </button>
             </div>
@@ -517,19 +518,20 @@
               >
             </div>
 
-            <div style="display: flex; gap: 1rem; margin-top: 2rem;">
-              <button type="submit" id="save-assessment-btn" class="btn btn-primary" style="padding: 0.5rem 1.5rem; white-space: nowrap;">
+            <div class="modal-actions">
+              <button type="submit" id="save-assessment-btn" class="btn btn-primary">
                 Save Assessment
               </button>
-              <button id="cancel-assessment-btn" type="button" class="btn btn-secondary" style="padding: 0.5rem 1.5rem; white-space: nowrap;">
+              <button id="cancel-assessment-btn" type="button" class="btn btn-secondary">
                 Cancel
               </button>
             </div>
           </form>
         </div>
       </div>
+    </div>
 
-      <div id="assessments-list">
+    <div id="assessments-list">
         <!-- assessments will be inserted here -->
       </div>
 
@@ -546,7 +548,7 @@
           <h3 class="modal-title">Move Card to Topic</h3>
           <button id="close-move-card-modal-btn" class="modal-close" aria-label="Close">&times;</button>
         </div>
-        <div style="padding: 1rem 0;">
+        <div class="modal-body">
           <p style="color: var(--text-muted); margin-bottom: 1rem;">
             Moving: <strong id="moving-card-headline"></strong>
           </p>
@@ -566,7 +568,7 @@
           </div>
           <div id="topic-search-results" style="margin-top: 1rem; display: none;">
             <h4 style="font-size: 0.9rem; font-weight: 600; margin-bottom: 0.5rem;">Select target topic:</h4>
-            <div id="topics-list" style="max-height: 300px; overflow-y: auto;">
+            <div id="topics-list">
               <!-- topics will be inserted here -->
             </div>
           </div>
@@ -574,11 +576,11 @@
                style="display: none; text-align: center; padding: 1rem; color: var(--text-muted); font-size: 0.875rem;">
             No topics found
           </div>
-          <div class="form-actions" style="display: flex; gap: 1rem; justify-content: flex-end; margin-top: 1.5rem;">
-            <button id="confirm-move-card-btn" class="btn btn-primary" style="display: none; padding: 0.5rem 1.5rem; white-space: nowrap;">
+          <div class="modal-actions">
+            <button id="confirm-move-card-btn" class="btn btn-primary" style="display: none;">
               Move Card to Topic
             </button>
-            <button id="cancel-move-card-btn" class="btn btn-secondary" style="padding: 0.5rem 1.5rem; white-space: nowrap;">Cancel</button>
+            <button id="cancel-move-card-btn" class="btn btn-secondary">Cancel</button>
           </div>
         </div>
       </div>
@@ -616,9 +618,9 @@
         </label>
       </div>
         
-      <div style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 2rem;">
-        <button type="button" id="cancel-merge-cards-btn" class="btn btn-secondary" style="padding: 0.5rem 1.5rem; white-space: nowrap;">Cancel</button>
-        <button type="button" id="confirm-merge-cards-btn" class="btn btn-primary btn-merge-confirm" style="display: none; padding: 0.5rem 1.5rem; white-space: nowrap;">Confirm Merge</button>
+      <div class="modal-actions">
+        <button type="button" id="confirm-merge-cards-btn" class="btn btn-primary btn-merge-confirm" style="display: none;">Confirm Merge</button>
+        <button type="button" id="cancel-merge-cards-btn" class="btn btn-secondary">Cancel</button>
       </div>
     </div>
   </div>

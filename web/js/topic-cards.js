@@ -341,27 +341,22 @@ window.addEventListener('DOMContentLoaded', () => {
         
         assessments.forEach(assessment => {
             const item = document.createElement('div');
-            item.className = 'assessment-item';
-            item.style.padding = '1rem';
-            item.style.borderBottom = '1px solid var(--border-color)';
-            item.style.cursor = 'pointer';
-            item.style.transition = 'background-color 0.2s';
+            item.className = 'search-result-item';
             item.dataset.id = assessment.id;
             
             item.innerHTML = `
-                <div style="font-weight: 500; color: var(--text-primary);">${UI.escapeHtml(assessment.headline)}</div>
+                <div class="search-result-name">${UI.escapeHtml(assessment.headline)}</div>
             `;
             
             item.addEventListener('click', () => {
                 // Remove previous selection
-                container.querySelectorAll('.assessment-item').forEach(el => {
-                    el.style.backgroundColor = '';
-                    el.style.borderLeft = 'none';
+                container.querySelectorAll('.search-result-item').forEach(el => {
+                    el.classList.remove('selected');
                 });
                 
                 // Set new selection
-                item.style.backgroundColor = 'rgba(var(--accent-color-rgb), 0.1)';
-                item.style.borderLeft = '4px solid var(--accent-color)';
+                item.classList.add('selected');
+                
                 selectedAssessmentId = assessment.id;
                 UI.toggleElement('confirm-existing-assessment-btn', true);
             });

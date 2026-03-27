@@ -839,7 +839,7 @@ function displaySubjectResults(subjects) {
 
     subjects.forEach(subject => {
         const item = document.createElement('div');
-        item.className = 'subject-result-item';
+        item.className = 'subject-result-item search-result-item';
 
         let highlightedName = UI.escapeHtml(subject.name);
         if (searchTerm) {
@@ -848,8 +848,8 @@ function displaySubjectResults(subjects) {
         }
 
         item.innerHTML = `
-            <div style="font-weight: 600; color: var(--primary-dark);">${highlightedName}</div>
-            <div style="font-size: 0.75rem; color: var(--text-muted); background: var(--background); padding: 0.1rem 0.4rem; border-radius: 4px;">Subject</div>
+            <div style="font-weight: 600; color: var(--color-text-primary);">${highlightedName}</div>
+            <div class="topic-item-meta">Subject</div>
         `;
         item.addEventListener('click', async () => {
             currentSelectedSubjectId = subject.id;
@@ -902,7 +902,7 @@ function renderTopicsForAssignment(topics) {
 
             grouped[level].forEach(topic => {
                 const topicItem = document.createElement('div');
-                topicItem.className = 'topic-item';
+                topicItem.className = 'topic-item search-result-item';
 
                 let highlightedName = UI.escapeHtml(topic.name);
                 if (searchTerm) {
@@ -911,7 +911,11 @@ function renderTopicsForAssignment(topics) {
                 }
 
                 topicItem.innerHTML = `
-                    <div class="topic-item-name">${highlightedName} <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: normal; margin-left: 0.5rem;">Pos: ${topic.position}</span></div>
+                    <div class="topic-item-name">
+                        <span style="color: var(--color-primary-start); margin-right: 0.5rem; opacity: 0.7;">●</span>
+                        ${highlightedName}
+                    </div>
+                    <div class="topic-pos-badge">Pos ${topic.position}</div>
                 `;
                 topicItem.addEventListener('click', () => {
                     // Update selection
