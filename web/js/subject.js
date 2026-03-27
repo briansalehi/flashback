@@ -2,7 +2,6 @@ let subjectId = null;
 let subjectName = null;
 let roadmapId = null;
 let roadmapName = null;
-
 let currentTopicsData = [];
 let currentResourcesData = [];
 let expandedLevels = { 0: false, 1: false, 2: false };
@@ -469,6 +468,7 @@ window.addEventListener('DOMContentLoaded', () => {
             if (activeTab === 'topics') {
                 UI.toggleElement('add-topic-form-overlay', true);
                 document.body.style.overflow = 'hidden'; // Prevent scrolling
+                checkTopicDuplicate(); // Initial check when opening
                 setTimeout(() => {
                     const nameInput = document.getElementById('topic-name');
                     if (nameInput) {
@@ -495,6 +495,7 @@ window.addEventListener('DOMContentLoaded', () => {
         UI.toggleElement('add-topic-form-overlay', false);
         UI.clearForm('topic-form');
         document.body.style.overflow = ''; // Restore scrolling
+        checkTopicDuplicate(); // Reset button state
     };
 
     const cancelTopicBtn = document.getElementById('cancel-topic-btn');
@@ -782,6 +783,15 @@ window.addEventListener('DOMContentLoaded', () => {
 
     const initialTab = UI.getUrlParam('tab') || 'topics';
     activateTab(initialTab, false);
+
+    // Topic duplicate check listeners
+    const topicNameInput = document.getElementById('topic-name');
+    if (topicNameInput) {
+        topicNameInput.addEventListener('input', checkTopicDuplicate);
+    }
+    document.querySelectorAll('input[name="topic-level"]').forEach(radio => {
+        radio.addEventListener('change', checkTopicDuplicate);
+    });
 });
 
 async function loadTopics() {
@@ -793,12 +803,10 @@ async function loadTopics() {
     try {
         const milestoneLevel = parseInt(UI.getUrlParam('level')) || 0;
 
-        // Fetch topics for all levels from 0 up to and including the milestone level
-        const allTopics = [];
-        for (let level = 0; level <= milestoneLevel; level++) {
-            const topics = await client.getTopics(subjectId, level);
-            allTopics.push(...topics);
-        }
+        // Always fetch all levels to prevent duplicates and enable reordering
+        const levels = [0, 1, 2];
+        const topicsResults = await Promise.all(levels.map(level => client.getTopics(subjectId, level)));
+        const allTopics = topicsResults.flat();
 
         UI.toggleElement('topics-loading', false);
         topicsLoaded = true;
@@ -1133,6 +1141,28 @@ function renderResources(resources) {
 
         toggleContainer.appendChild(toggleBtn);
         container.appendChild(toggleContainer);
+    }
+}
+
+function checkTopicDuplicate() {
+    const nameInput = document.getElementById('topic-name');
+    const saveBtn = document.getElementById('save-topic-btn');
+    const levelRadio = document.querySelector('input[name="topic-level"]:checked');
+    
+    if (!nameInput || !saveBtn || !levelRadio) return;
+
+    const name = nameInput.value.trim().toLowerCase();
+    const level = parseInt(levelRadio.value);
+
+    const exists = currentTopicsData.some(topic => 
+        topic.name.toLowerCase().trim() === name && parseInt(topic.level) === level
+    );
+
+    saveBtn.disabled = exists;
+    if (exists) {
+        saveBtn.title = "A topic with this name already exists at this level";
+    } else {
+        saveBtn.title = "";
     }
 }
 
