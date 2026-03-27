@@ -1123,8 +1123,11 @@ a:hover {
     transition: opacity var(--transition-fast);
 }
 
-.content-block:hover::before {
-    opacity: 1;
+/* Show handle on hover (desktop with mouse only) */
+@media (hover: hover) and (pointer: fine) {
+    .content-block:hover::before {
+        opacity: 1;
+    }
 }
 
 .content-block:hover {
@@ -1298,8 +1301,8 @@ a:hover {
     max-width: 100%;
 }
 
-/* Show actions on hover (desktop only) */
-@media (hover: hover) {
+/* Show actions on hover (desktop with mouse only to avoid sticky hover on mobile) */
+@media (hover: hover) and (pointer: fine) {
     .content-block:hover .block-actions-overlay,
     .block-actions-overlay:hover {
         opacity: 1;

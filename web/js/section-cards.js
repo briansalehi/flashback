@@ -353,9 +353,9 @@ window.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    const changeSubjectBtn = document.getElementById('change-subject-btn');
-    if (changeSubjectBtn) {
-        changeSubjectBtn.addEventListener('click', () => {
+    const subjectSelectionInfo = document.getElementById('subject-selection-info');
+    if (subjectSelectionInfo) {
+        subjectSelectionInfo.addEventListener('click', () => {
             UI.toggleElement('subject-selection-info', false);
             UI.toggleElement('subject-search-container', true);
             UI.toggleElement('topics-section', false);

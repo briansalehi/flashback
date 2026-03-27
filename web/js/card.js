@@ -361,14 +361,20 @@ window.addEventListener('DOMContentLoaded', () => {
         addStudyNavigation();
     }
 
-    // Track when user navigates away from card
-    // Intercept link clicks to properly record progress before navigation
-    document.addEventListener('click', async (e) => {
+    // Close block actions when clicking elsewhere
+    document.addEventListener('click', (e) => {
         const link = e.target.closest('a');
         if (link && link.href && cardStartTime) {
             e.preventDefault();
-            await handleCardExit();
-            window.location.href = link.href;
+            handleCardExit().then(() => {
+                window.location.href = link.href;
+            });
+            return;
+        }
+
+        // Close block actions if clicking outside any block or actions overlay
+        if (!e.target.closest('.content-block') && !e.target.closest('.block-actions-overlay')) {
+            document.querySelectorAll('.content-block.show-actions').forEach(el => el.classList.remove('show-actions'));
         }
     });
 
@@ -1863,6 +1869,8 @@ function renderBlocks(blocks) {
                 await handleReorderClick();
                 return;
             }
+            
+            // If clicking on an action button, don't toggle (they have their own stopPropagation)
             if (e.target.closest('.block-action-btn')) return;
             if (e.target.closest('.block-edit')) return;
 
@@ -1872,12 +1880,22 @@ function renderBlocks(blocks) {
                 return;
             }
 
+            const isShowing = blockItem.classList.contains('show-actions');
+            
+            // Close all other blocks
             document.querySelectorAll('.content-block.show-actions').forEach(el => {
                 if (el !== blockItem) el.classList.remove('show-actions');
             });
             
-            blockItem.classList.toggle('show-actions');
-            e.stopPropagation();
+            if (isShowing) {
+                blockItem.classList.remove('show-actions');
+            } else {
+                blockItem.classList.add('show-actions');
+            }
+            
+            // Do NOT stop propagation here to allow global click listener to handle other cases, 
+            // but since we are inside a content-block, the global listener's !closest('.content-block') check 
+            // will prevent it from closing what we just toggled.
         });
 
         const typeName = blockTypes[block.type] || 'text';
