@@ -101,7 +101,7 @@
                     type="text"
                     id="roadmap-name"
                     class="form-input"
-                    placeholder="Full Stack Developer"
+                    placeholder="Genomics Sequencing Technician"
                     required
                     autocomplete="off"
                     style="padding-right: 2.5rem;"
@@ -227,15 +227,17 @@
           <form id="nerve-form">
             <div class="form-group">
               <label class="form-label" for="nerve-subject">Subject</label>
-              <input
-                  type="text"
-                  id="nerve-subject"
-                  class="form-input"
-                  placeholder="Related subject..."
-                  required
-                  autocomplete="off"
-              >
-              <div id="nerve-subject-results" class="search-results" style="display: none;"></div>
+              <div style="position: relative;">
+                <input
+                    type="text"
+                    id="nerve-subject"
+                    class="form-input"
+                    placeholder="Related subject..."
+                    required
+                    autocomplete="off"
+                >
+                <div id="nerve-subject-results" class="search-results" style="display: none;"></div>
+              </div>
               <input type="hidden" id="nerve-subject-id" required>
             </div>
 

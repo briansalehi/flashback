@@ -99,7 +99,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
             clearTimeout(roadmapSearchTimeout);
 
-            if (searchToken.length < 3) {
+            if (searchToken.length < 1) {
                 UI.toggleElement('roadmap-search-results', false);
                 return;
             }
@@ -149,6 +149,12 @@ window.addEventListener('DOMContentLoaded', () => {
                 nerveSubject.focus();
             }
             document.body.style.overflow = 'hidden';
+
+            // Set default expiration date to today
+            const expirationInput = document.getElementById('nerve-expiration');
+            if (expirationInput && !expirationInput.value) {
+                expirationInput.value = UI.getLocalISODate();
+            }
         });
     }
 
@@ -192,7 +198,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
             clearTimeout(subjectSearchTimeout);
 
-            if (searchToken.length < 2) {
+            if (searchToken.length < 1) {
                 UI.toggleElement('nerve-subject-results', false);
                 return;
             }
@@ -614,7 +620,7 @@ function displayNerveSubjectResults(subjects) {
         });
 
         resultItem.addEventListener('mouseenter', () => {
-            resultItem.style.backgroundColor = 'var(--background-secondary)';
+            resultItem.style.backgroundColor = 'var(--bg-secondary)';
         });
 
         resultItem.addEventListener('mouseleave', () => {

@@ -631,20 +631,19 @@ window.addEventListener('DOMContentLoaded', () => {
             UI.toggleElement('create-resource-section', true);
 
             // Set default dates for new resource
-            const today = new Date();
-            const fiveYearsLater = new Date();
-            fiveYearsLater.setFullYear(today.getFullYear() + 5);
-
-            const formatDate = (date) => date.toISOString().split('T')[0];
+            const todayString = UI.getLocalISODate();
 
             const productionInput = document.getElementById('resource-production');
             const expirationInput = document.getElementById('resource-expiration');
 
             if (productionInput && !productionInput.value) {
-                productionInput.value = formatDate(today);
+                productionInput.value = todayString;
             }
             if (expirationInput && !expirationInput.value) {
-                expirationInput.value = formatDate(fiveYearsLater);
+                // Set default expiration to 5 years from today
+                const fiveYearsLater = new Date();
+                fiveYearsLater.setFullYear(fiveYearsLater.getFullYear() + 5);
+                expirationInput.value = UI.getLocalISODate(fiveYearsLater);
             }
 
             setTimeout(() => {
@@ -697,7 +696,7 @@ window.addEventListener('DOMContentLoaded', () => {
             clearTimeout(searchTimeout);
             const query = e.target.value.trim();
 
-            if (query.length < 2) {
+            if (query.length < 1) {
                 document.getElementById('search-resource-results').innerHTML = '';
                 UI.toggleElement('no-resource-results', false);
                 UI.toggleElement('confirm-add-resource-btn', false);
@@ -729,9 +728,8 @@ window.addEventListener('DOMContentLoaded', () => {
             const type = document.getElementById('resource-type').value;
             const pattern = document.getElementById('resource-pattern').value;
             const url = document.getElementById('resource-url').value.trim();
-            const formatDate = (date) => date.toISOString().split('T')[0];
-            const productionDate = document.getElementById('resource-production').value || formatDate(new Date());
-            const expirationDate = document.getElementById('resource-expiration').value || formatDate(new Date(new Date().setFullYear(new Date().getFullYear() + 5)));
+            const productionDate = document.getElementById('resource-production').value || UI.getLocalISODate();
+            const expirationDate = document.getElementById('resource-expiration').value || UI.getLocalISODate(new Date(new Date().setFullYear(new Date().getFullYear() + 5)));
 
             if (!name || !type || !pattern) {
                 UI.showError('Please fill required fields');

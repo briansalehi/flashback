@@ -591,6 +591,7 @@ a:hover {
    ============================================ */
 .form-group {
     margin-bottom: var(--space-lg);
+    position: relative;
 }
 
 .form-label {
@@ -1889,7 +1890,21 @@ a:hover {
     width: 100%;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
     position: relative;
-    margin: auto; /* Center in flex container if there is space */
+    margin: 0 auto; /* Remove vertical auto to prevent shifting when growing */
+    max-height: calc(100vh - 2 * var(--space-xl));
+    display: flex;
+    flex-direction: column;
+}
+
+.modal-header, .modal-footer {
+    flex-shrink: 0;
+}
+
+#roadmap-form, #nerve-form, .modal-body {
+    flex: 1;
+    overflow-y: auto;
+    padding-right: var(--space-xs);
+    margin-right: calc(-1 * var(--space-xs));
 }
 
 .modal-header {
@@ -1924,6 +1939,41 @@ a:hover {
 @media (min-width: 768px) {
     .modal-content {
         padding: var(--space-2xl);
+        max-height: calc(100vh - 4 * var(--space-xl));
+    }
+}
+
+/* Search results limiting within modals */
+#suggested-roadmaps-list,
+.search-results {
+    max-height: 200px;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    border-radius: var(--radius-sm);
+    padding: 2px;
+}
+
+.search-results {
+    background: rgba(15, 15, 15, 0.95);
+    border: 1px solid var(--border-color);
+    margin-top: 0.25rem;
+    box-shadow: var(--shadow-md);
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 100%;
+    z-index: 100;
+}
+
+@media (max-width: 480px) {
+    .modal-overlay {
+        padding: var(--space-sm);
+    }
+    
+    .modal-content {
+        padding: var(--space-md);
+        border-radius: var(--radius-lg);
+        max-height: 96vh;
     }
 }
 
