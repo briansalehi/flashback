@@ -421,8 +421,9 @@
           <button id="close-block-modal-btn" class="modal-close" aria-label="Close modal">&times;</button>
         </div>
 
-        <form id="block-form">
-          <div class="form-group">
+        <form id="block-form" style="display: flex; flex-direction: column; flex: 1; min-height: 0;">
+          <div class="modal-body">
+            <div class="form-group">
             <label class="form-label" for="block-type">Block Type</label>
             <select id="block-type" class="form-input" required>
               <option value="0">Text</option>
@@ -465,7 +466,9 @@
             ></textarea>
           </div>
 
-          <div style="display: flex; gap: 1rem; margin-top: 2rem; flex-wrap: wrap;">
+          </div>
+
+          <div class="modal-actions">
             <button type="submit" id="save-block-btn" class="btn btn-primary" style="padding: 0.5rem 1.5rem; white-space: nowrap;">
               Save Block
             </button>
@@ -484,7 +487,7 @@
           <h2 class="modal-title">Edit Block</h2>
           <button type="button" id="close-edit-block-modal-btn" class="modal-close" aria-label="Close modal">&times;</button>
         </div>
-        <form id="edit-block-modal-form">
+        <form id="edit-block-modal-form" style="display: flex; flex-direction: column; flex: 1; min-height: 0;">
           <div class="modal-body">
             <div style="margin-bottom: 1rem;">
               <label class="form-label">Type: <span style="color: red;">*</span></label>
@@ -512,7 +515,7 @@
               <textarea id="edit-block-content" class="form-input" style="width: 100%; min-height: 250px; font-family: monospace;" placeholder="Enter block content..." required></textarea>
             </div>
           </div>
-          <div class="form-actions" style="display: flex; gap: 1rem; margin-top: 2rem; justify-content: flex-end;">
+          <div class="modal-actions">
             <button type="submit" id="save-edit-block-modal-btn" class="btn btn-primary" style="padding: 0.5rem 1.5rem; white-space: nowrap;">
               Save Changes
             </button>
@@ -534,7 +537,7 @@
           <h2 class="modal-title">Edit Card</h2>
           <button type="button" id="close-edit-card-modal-btn" class="modal-close" aria-label="Close modal">&times;</button>
         </div>
-        <form id="edit-card-form">
+        <form id="edit-card-form" style="display: flex; flex-direction: column; flex: 1; min-height: 0;">
           <div class="modal-body">
             <div class="form-group">
               <label class="form-label" for="edit-card-headline">Headline (in question form)</label>
@@ -548,7 +551,7 @@
               ></textarea>
             </div>
           </div>
-          <div class="form-actions" style="display: flex; gap: 1rem; margin-top: 2rem; justify-content: flex-end;">
+          <div class="modal-actions">
             <button type="submit" id="save-edit-card-btn" class="btn btn-primary" style="padding: 0.5rem 1.5rem; white-space: nowrap;">
               Save Changes
             </button>
@@ -569,10 +572,10 @@
         </div>
         <div class="modal-body">
           <p style="margin-bottom: 1.5rem;">Are you sure you want to remove this card? This action cannot be undone.</p>
-          <div class="form-actions" style="display: flex; gap: 1rem; justify-content: flex-end;">
-            <button id="confirm-remove-card-btn" class="btn btn-danger" style="padding: 0.5rem 1.5rem; white-space: nowrap;">Remove Card</button>
-            <button id="cancel-remove-card-btn" class="btn btn-secondary" style="padding: 0.5rem 1.5rem; white-space: nowrap;">Cancel</button>
-          </div>
+        </div>
+        <div class="modal-actions">
+          <button id="confirm-remove-card-btn" class="btn btn-danger" style="padding: 0.5rem 1.5rem; white-space: nowrap;">Remove Card</button>
+          <button id="cancel-remove-card-btn" class="btn btn-secondary" style="padding: 0.5rem 1.5rem; white-space: nowrap;">Cancel</button>
         </div>
       </div>
     </div>
@@ -586,10 +589,10 @@
         </div>
         <div class="modal-body">
           <p style="margin-bottom: 1.5rem;">Are you sure you want to remove this block? This action cannot be undone.</p>
-          <div class="form-actions" style="display: flex; gap: 1rem; justify-content: flex-end;">
-            <button id="confirm-remove-block-btn" class="btn btn-danger" style="padding: 0.5rem 1.5rem; white-space: nowrap;">Remove Block</button>
-            <button id="cancel-remove-block-btn" class="btn btn-secondary" style="padding: 0.5rem 1.5rem; white-space: nowrap;">Cancel</button>
-          </div>
+        </div>
+        <div class="modal-actions">
+          <button id="confirm-remove-block-btn" class="btn btn-danger" style="padding: 0.5rem 1.5rem; white-space: nowrap;">Remove Block</button>
+          <button id="cancel-remove-block-btn" class="btn btn-secondary" style="padding: 0.5rem 1.5rem; white-space: nowrap;">Cancel</button>
         </div>
       </div>
     </div>
@@ -603,10 +606,10 @@
         </div>
         <div class="modal-body">
           <p id="confirm-modal-message" style="margin-bottom: 1.5rem;">Are you sure you want to proceed?</p>
-          <div class="form-actions" style="display: flex; gap: 1rem; justify-content: flex-end;">
-            <button id="confirm-modal-btn" class="btn btn-primary" style="padding: 0.5rem 1.5rem; white-space: nowrap;">Confirm</button>
-            <button id="cancel-confirm-modal-btn" class="btn btn-secondary" style="padding: 0.5rem 1.5rem; white-space: nowrap;">Cancel</button>
-          </div>
+        </div>
+        <div class="modal-actions">
+          <button id="confirm-modal-btn" class="btn btn-primary" style="padding: 0.5rem 1.5rem; white-space: nowrap;">Confirm</button>
+          <button id="cancel-confirm-modal-btn" class="btn btn-secondary" style="padding: 0.5rem 1.5rem; white-space: nowrap;">Cancel</button>
         </div>
       </div>
     </div>
@@ -632,7 +635,7 @@
             </div>
           </div>
         </div>
-        <div class="modal-footer" style="padding: 1.5rem; border-top: 1px solid rgba(255, 255, 255, 0.1); display: flex; justify-content: flex-end; gap: 1rem;">
+        <div class="modal-actions" style="padding: 0 1.5rem 1.5rem; justify-content: flex-end; gap: 1rem;">
           <button id="confirm-move-block-btn" class="btn btn-primary" style="display: none; padding: 0.5rem 1.5rem;">Confirm Move</button>
           <button id="cancel-move-block-modal-btn" class="btn btn-secondary" style="padding: 0.5rem 1.5rem;">Cancel</button>
         </div>
@@ -648,10 +651,10 @@
         </div>
         <div class="modal-body">
           <p style="margin-bottom: 1.5rem;">Are you sure you want to mark this card as reviewed? This indicates you have finished editing it.</p>
-          <div class="form-actions" style="display: flex; gap: 1rem; justify-content: flex-end;">
-            <button id="confirm-review-btn" class="btn btn-primary" style="padding: 0.5rem 1.5rem; white-space: nowrap;">Confirm</button>
-            <button id="cancel-review-btn" class="btn btn-secondary" style="padding: 0.5rem 1.5rem; white-space: nowrap;">Cancel</button>
-          </div>
+        </div>
+        <div class="modal-actions">
+          <button id="confirm-review-btn" class="btn btn-primary" style="padding: 0.5rem 1.5rem; white-space: nowrap;">Confirm</button>
+          <button id="cancel-review-btn" class="btn btn-secondary" style="padding: 0.5rem 1.5rem; white-space: nowrap;">Cancel</button>
         </div>
       </div>
     </div>

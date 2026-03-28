@@ -1128,9 +1128,14 @@ a:hover {
     .content-block:hover::before {
         opacity: 1;
     }
+
+    .content-block:hover {
+        background: rgba(0, 0, 0, 0.3);
+        border-color: rgba(102, 126, 234, 0.3);
+    }
 }
 
-.content-block:hover {
+.content-block.show-actions {
     background: rgba(0, 0, 0, 0.3);
     border-color: rgba(102, 126, 234, 0.3);
 }
@@ -1895,6 +1900,7 @@ a:hover {
     align-items: flex-start;
     justify-content: center;
     padding: var(--space-md);
+    padding-top: calc(88px + var(--space-md) + var(--safe-area-top)); /* Below header */
     overflow: hidden;
     -webkit-overflow-scrolling: touch;
 }
@@ -1909,8 +1915,8 @@ a:hover {
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
     position: relative;
     margin: 0 auto;
-    max-height: calc(100vh - 2 * var(--space-md));
-    max-height: calc(100dvh - 2 * var(--space-md));
+    max-height: calc(100vh - 88px - 2 * var(--space-md));
+    max-height: calc(100dvh - 88px - 2 * var(--space-md));
     display: flex;
     flex-direction: column;
 }
@@ -1960,8 +1966,8 @@ a:hover {
 @media (min-width: 768px) {
     .modal-content {
         padding: var(--space-2xl);
-        max-height: calc(100vh - 4 * var(--space-xl));
-        max-height: calc(100dvh - 4 * var(--space-xl));
+        max-height: calc(100vh - 88px - 4 * var(--space-xl));
+        max-height: calc(100dvh - 88px - 4 * var(--space-xl));
     }
 }
 

@@ -128,14 +128,14 @@ const UI = {
                         You need to verify your email address before you can make any changes.
                         Please check your inbox or go to the account page to send a new verification code.
                     </p>
-                    <div class="form-actions" style="display: flex; gap: 1rem; justify-content: flex-end;">
-                        <button id="go-to-account-btn" class="btn btn-primary" style="padding: 0.5rem 1.5rem; white-space: nowrap;">
-                            Go to Account
-                        </button>
-                        <button id="close-verification-modal-btn" class="btn btn-secondary" style="padding: 0.5rem 1.5rem; white-space: nowrap;">
-                            Dismiss
-                        </button>
-                    </div>
+                </div>
+                <div class="modal-actions">
+                    <button id="go-to-account-btn" class="btn btn-primary" style="padding: 0.5rem 1.5rem; white-space: nowrap;">
+                        Go to Account
+                    </button>
+                    <button id="close-verification-modal-btn" class="btn btn-secondary" style="padding: 0.5rem 1.5rem; white-space: nowrap;">
+                        Dismiss
+                    </button>
                 </div>
             </div>
         `;
