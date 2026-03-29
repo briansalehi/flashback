@@ -2,9 +2,9 @@
 -- PostgreSQL database dump
 --
 
-\restrict GOqdl6DqSlLodVcXKHB0uby8qm9DvRBtHxkw6XMt8mwclNi4IQlW5aIJUVYrWZE
+\restrict ooXcExsfFNFUYPrBDUJuTDI0THdNam5AziusvJ9rJFQtqA4BQBP3xbU54Q6vfu0
 
--- Dumped from database version 18.1
+-- Dumped from database version 18.3
 -- Dumped by pg_dump version 18.3
 
 SET statement_timeout = 0;
@@ -250,9 +250,20 @@ declare top_position integer;
 begin
     select coalesce(max(t.position), 0) + 1 into top_position from topic_cards t where t.subject = subject_id and t.level = topic_level and t.topic = topic_position;
 
-    insert into topic_cards (subject, level, topic, card, position) values (subject_id, topic_level, topic_position, card_id, top_position);
+    insert into topic_cards (subject, level, topic, card, position) values (subject_id, topic_level, topic_position, card_id, coalesce(top_position, 1));
 
-    return top_position;
+    -- add resource to subject shelf when it does not already exist
+    insert into shelves (resource, subject)
+    select distinct resource, subject_id
+    from shelves 
+    where resource in (
+        select resource from section_cards where card = card_id
+    )
+    and resource not in (
+        select resource from shelves where subject = subject_id
+    );
+
+    return coalesce(top_position, 1);
 end;
 $$;
 
@@ -3201,7 +3212,6 @@ CREATE FUNCTION flashback.split_block(card_id integer, block_position integer) R
 declare parts_count integer;
 declare block_type content_type;
 declare block_extension varchar(20);
-declare margin integer;
 begin
     create temp table block_parts as
     select row_number() over () - 1 + block_position as position, part
@@ -3211,22 +3221,13 @@ begin
 
     select count(b.position) into parts_count from block_parts b;
 
-    select coalesce(max(b.position), 1) - block_position into margin from blocks b where b.card = card_id;
-
     select b.type, b.extension into block_type, block_extension from blocks b where b.card = card_id and b.position = block_position;
 
-    update blocks b set position = b.position + margin where b.card = card_id and b.position > block_position;
-
-    --update blocks b set position = new_position from (
-    --    select row_number() over (order by position) - 1 + position + parts_count as new_position, position as old_position
-    --    from blocks bb where bb.card = card_id and bb.position > block_position
-    --) where b.card = card_id and b.position = old_position;
+    update blocks b set position = b.position + parts_count - 1 where b.card = card_id and b.position > block_position;
 
     delete from blocks b where b.card = card_id and b.position = block_position;
 
     insert into blocks (card, position, content, type, extension) select card_id, block_parts.position, part, block_type, block_extension from block_parts;
-
-    update blocks b set position = b.position - margin + parts_count - 1 where b.card = card_id and b.position > block_position + margin;
 
     drop table block_parts;
 
@@ -3917,6 +3918,14 @@ ALTER TABLE ONLY flashback.section_cards
 
 
 --
+-- Name: section_cards section_cards_resource_card_key; Type: CONSTRAINT; Schema: flashback; Owner: flashback
+--
+
+ALTER TABLE ONLY flashback.section_cards
+    ADD CONSTRAINT section_cards_resource_card_key UNIQUE (resource, card);
+
+
+--
 -- Name: section_cards section_cards_unique_position_key; Type: CONSTRAINT; Schema: flashback; Owner: flashback
 --
 
@@ -4345,5 +4354,5 @@ GRANT ALL ON SCHEMA public TO brian;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict GOqdl6DqSlLodVcXKHB0uby8qm9DvRBtHxkw6XMt8mwclNi4IQlW5aIJUVYrWZE
+\unrestrict ooXcExsfFNFUYPrBDUJuTDI0THdNam5AziusvJ9rJFQtqA4BQBP3xbU54Q6vfu0
 
