@@ -14,17 +14,6 @@ function enterReorderMode(index) {
     reorderState.sourceIndex = index;
     reorderState.preventClick = true;
     
-    const container = document.getElementById('milestones-container');
-    if (container) {
-        container.classList.add('reorder-mode-active');
-    }
-    
-    // Highlight source
-    const sourceCard = container.children[index];
-    if (sourceCard) {
-        sourceCard.classList.add('reorder-source');
-    }
-    
     // Add hint at the top of the list
     const hint = document.createElement('div');
     hint.id = 'reorder-hint';
@@ -36,22 +25,28 @@ function enterReorderMode(index) {
     document.body.appendChild(hint);
     
     if (navigator.vibrate) navigator.vibrate(50);
+
+    // Re-render to show gaps
+    renderMilestones(currentMilestones);
+
+    // Ensure source milestone remains in view after gaps are added
+    requestAnimationFrame(() => {
+        const sourceItem = document.getElementById(`milestone-${index}`);
+        if (sourceItem) {
+            sourceItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    });
 }
 
 window.exitReorderMode = function() {
     reorderState.active = false;
     reorderState.sourceIndex = null;
     
-    const container = document.getElementById('milestones-container');
-    if (container) {
-        container.classList.remove('reorder-mode-active');
-        document.querySelectorAll('.item-block').forEach(b => {
-            b.classList.remove('reorder-source');
-        });
-    }
-    
     const hint = document.getElementById('reorder-hint');
     if (hint) hint.remove();
+
+    // Re-render to remove gaps
+    renderMilestones(currentMilestones);
 };
 
 // Confirmation Modal Functions
@@ -593,11 +588,48 @@ function renderMilestones(milestones) {
     const container = document.getElementById('milestones-container');
     container.innerHTML = '';
 
+    if (reorderState.active) {
+        container.classList.add('reorder-mode-active');
+    } else {
+        container.classList.remove('reorder-mode-active');
+    }
+
     const levelNames = ['Surface', 'Depth', 'Origin'];
 
+    const sourceMilestone = reorderState.active ? currentMilestones[reorderState.sourceIndex] : null;
+
+    const createGap = (pos) => {
+        const gap = document.createElement('div');
+        gap.className = 'target-block-gap';
+        gap.onclick = (e) => {
+            e.stopPropagation();
+            const sourcePos = parseInt(sourceMilestone.position);
+            const targetPos = pos;
+
+            if (sourcePos === targetPos) {
+                exitReorderMode();
+                return;
+            }
+
+            window.showConfirmModal('Confirm Reorder', 'Are you sure you want to move this subject here?', async () => {
+                await reorderMilestone(sourcePos, targetPos);
+                exitReorderMode();
+            });
+        };
+        return gap;
+    };
+
     milestones.forEach((milestone, index) => {
+        if (reorderState.active && milestone.position !== sourceMilestone.position && milestone.position !== sourceMilestone.position + 1) {
+            container.appendChild(createGap(milestone.position));
+        }
+
         const milestoneCard = document.createElement('div');
         milestoneCard.className = 'item-block compact';
+        if (reorderState.active && index === reorderState.sourceIndex) {
+            milestoneCard.classList.add('reorder-source');
+        }
+        milestoneCard.id = `milestone-${index}`;
         milestoneCard.dataset.position = milestone.position;
 
 
@@ -658,32 +690,16 @@ function renderMilestones(milestones) {
         `;
 
         // Selection-based reorder click handler
-        milestoneCard.style.cursor = 'pointer';
+        milestoneCard.style.cursor = reorderState.active ? 'default' : 'pointer';
         milestoneCard.addEventListener('click', async (e) => {
-            if (reorderState.preventClick) {
-                reorderState.preventClick = false;
+            if (reorderState.active) {
+                if (index === reorderState.sourceIndex) {
+                    exitReorderMode();
+                }
                 return;
             }
-            if (reorderState.active) {
-                if (reorderState.sourceIndex === index) {
-                    exitReorderMode();
-                    return;
-                }
-
-                const sourceMilestone = currentMilestones[reorderState.sourceIndex];
-                if (!sourceMilestone) {
-                    console.error('Source milestone not found at index:', reorderState.sourceIndex);
-                    exitReorderMode();
-                    return;
-                }
-
-                const sourcePos = parseInt(sourceMilestone.position);
-                const targetPos = parseInt(milestone.position);
-
-                window.showConfirmModal('Confirm Reorder', 'Are you sure you want to move this subject here?', async () => {
-                    await reorderMilestone(sourcePos, targetPos);
-                    exitReorderMode();
-                });
+            if (reorderState.preventClick) {
+                reorderState.preventClick = false;
                 return;
             }
 
@@ -725,6 +741,10 @@ function renderMilestones(milestones) {
         }
 
         container.appendChild(milestoneCard);
+
+        if (reorderState.active && index === milestones.length - 1 && milestone.position + 1 !== sourceMilestone.position && milestone.position + 1 !== sourceMilestone.position + 1) {
+            container.appendChild(createGap(milestone.position + 1));
+        }
     });
 }
 

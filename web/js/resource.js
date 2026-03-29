@@ -18,17 +18,6 @@ function enterReorderMode(index) {
     reorderState.sourceIndex = index;
     reorderState.preventClick = true;
     
-    const container = document.getElementById('sections-list');
-    if (container) {
-        container.classList.add('reorder-mode-active');
-    }
-    
-    // Highlight source
-    const sourceItem = container.children[index];
-    if (sourceItem) {
-        sourceItem.classList.add('reorder-source');
-    }
-    
     // Add hint at the top of the list
     const hint = document.createElement('div');
     hint.id = 'reorder-hint';
@@ -40,22 +29,28 @@ function enterReorderMode(index) {
     document.body.appendChild(hint);
     
     if (navigator.vibrate) navigator.vibrate(50);
+
+    // Re-render to show gaps
+    renderSections(currentSections);
+
+    // Ensure source section remains in view after gaps are added
+    requestAnimationFrame(() => {
+        const sourceItem = document.getElementById(`section-${index}`);
+        if (sourceItem) {
+            sourceItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    });
 }
 
 window.exitReorderMode = function() {
     reorderState.active = false;
     reorderState.sourceIndex = null;
     
-    const container = document.getElementById('sections-list');
-    if (container) {
-        container.classList.remove('reorder-mode-active');
-        document.querySelectorAll('.item-block').forEach(b => {
-            b.classList.remove('reorder-source');
-        });
-    }
-    
     const hint = document.getElementById('reorder-hint');
     if (hint) hint.remove();
+
+    // Re-render to remove gaps
+    renderSections(currentSections);
 };
 
 // Confirmation Modal Functions
@@ -480,6 +475,12 @@ function renderSections(sections) {
     const searchTerm = searchInput ? searchInput.value.toLowerCase().trim() : '';
     container.innerHTML = '';
 
+    if (reorderState.active) {
+        container.classList.add('reorder-mode-active');
+    } else {
+        container.classList.remove('reorder-mode-active');
+    }
+
     // Sort sections by position and store
     currentSections = sections.sort((a, b) => a.position - b.position);
 
@@ -496,7 +497,7 @@ function renderSections(sections) {
     const toggleBtn = document.getElementById('sections-toggle-btn');
     
     let displayedSections = filteredSections;
-    if (filteredSections.length > 3) {
+    if (filteredSections.length > 3 && !reorderState.active) {
         UI.toggleElement('sections-toggle-container', true);
         if (!isSectionsExpanded) {
             displayedSections = filteredSections.slice(0, 3);
@@ -519,9 +520,40 @@ function renderSections(sections) {
 
     const stateNames = ['draft', 'reviewed', 'completed'];
 
+    const sourceSection = reorderState.active ? currentSections[reorderState.sourceIndex] : null;
+
+    const createGap = (pos) => {
+        const gap = document.createElement('div');
+        gap.className = 'target-block-gap';
+        gap.onclick = (e) => {
+            e.stopPropagation();
+            const sourcePos = parseInt(sourceSection.position);
+            const targetPos = pos;
+
+            if (sourcePos === targetPos) {
+                exitReorderMode();
+                return;
+            }
+
+            window.showConfirmModal('Confirm Reorder', 'Are you sure you want to move this section here?', async () => {
+                await reorderSection(sourcePos, targetPos);
+                exitReorderMode();
+            });
+        };
+        return gap;
+    };
+
     displayedSections.forEach((section, index) => {
+        if (reorderState.active && section.position !== sourceSection.position && section.position !== sourceSection.position + 1) {
+            container.appendChild(createGap(section.position));
+        }
+
         const sectionItem = document.createElement('div');
         sectionItem.className = 'item-block compact';
+        if (reorderState.active && index === reorderState.sourceIndex) {
+            sectionItem.classList.add('reorder-source');
+        }
+        sectionItem.id = `section-${index}`;
         sectionItem.dataset.position = section.position;
 
 
@@ -597,32 +629,16 @@ function renderSections(sections) {
         `;
 
         // Selection-based reorder click handler
-        sectionItem.style.cursor = 'pointer';
+        sectionItem.style.cursor = reorderState.active ? 'default' : 'pointer';
         sectionItem.addEventListener('click', async (e) => {
-            if (reorderState.preventClick) {
-                reorderState.preventClick = false;
+            if (reorderState.active) {
+                if (index === reorderState.sourceIndex) {
+                    exitReorderMode();
+                }
                 return;
             }
-            if (reorderState.active) {
-                if (reorderState.sourceIndex === index) {
-                    exitReorderMode();
-                    return;
-                }
-
-                const sourceSection = currentSections[reorderState.sourceIndex];
-                if (!sourceSection) {
-                    console.error('Source section not found at index:', reorderState.sourceIndex);
-                    exitReorderMode();
-                    return;
-                }
-
-                const sourcePos = parseInt(sourceSection.position);
-                const targetPos = parseInt(section.position);
-
-                window.showConfirmModal('Confirm Reorder', 'Are you sure you want to move this section here?', async () => {
-                    await reorderSection(sourcePos, targetPos);
-                    exitReorderMode();
-                });
+            if (reorderState.preventClick) {
+                reorderState.preventClick = false;
                 return;
             }
 
@@ -651,6 +667,10 @@ function renderSections(sections) {
         sectionItem.addEventListener('touchcancel', clearLongPressTimer);
 
         container.appendChild(sectionItem);
+
+        if (reorderState.active && index === displayedSections.length - 1 && section.position + 1 !== sourceSection.position && section.position + 1 !== sourceSection.position + 1) {
+            container.appendChild(createGap(section.position + 1));
+        }
     });
 }
 
@@ -679,31 +699,6 @@ function displayBreadcrumb() {
     }
 
     UI.renderBreadcrumbs(breadcrumbItems);
-}
-
-async function removeSection(position) {
-    const resourceId = UI.getUrlParam('id');
-
-    try {
-        await client.removeSection(resourceId, position);
-        await loadSections();
-        UI.showSuccess('Section removed successfully');
-    } catch (err) {
-        console.error('Remove section failed:', err);
-        UI.showError('Failed to remove section: ' + (err.message || 'Unknown error'));
-    }
-}
-
-async function reorderSection(sourcePosition, targetPosition) {
-    const resourceId = UI.getUrlParam('id');
-
-    try {
-        await client.reorderSection(resourceId, sourcePosition, targetPosition);
-        await loadSections();
-    } catch (err) {
-        console.error('Reorder section failed:', err);
-        UI.showError('Failed to reorder section: ' + (err.message || 'Unknown error'));
-    }
 }
 
 async function removeSection(position) {

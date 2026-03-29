@@ -21,17 +21,6 @@ function enterReorderMode(index) {
     reorderState.sourceIndex = index;
     reorderState.preventClick = true;
     
-    const container = document.getElementById('topics-list');
-    if (container) {
-        container.classList.add('reorder-mode-active');
-    }
-    
-    // Find the item by data-index
-    const sourceItem = container.querySelector(`[data-topic-index="${index}"]`);
-    if (sourceItem) {
-        sourceItem.classList.add('reorder-source');
-    }
-    
     // Add hint at the top of the list
     const hint = document.createElement('div');
     hint.id = 'reorder-hint';
@@ -43,22 +32,28 @@ function enterReorderMode(index) {
     document.body.appendChild(hint);
     
     if (navigator.vibrate) navigator.vibrate(50);
+
+    // Re-render to show gaps
+    renderTopics(currentTopicsData, Object.keys(expandedLevels).length - 1);
+
+    // Ensure source topic remains in view after gaps are added
+    requestAnimationFrame(() => {
+        const sourceItem = document.getElementById(`topic-${index}`);
+        if (sourceItem) {
+            sourceItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    });
 }
 
 window.exitReorderMode = function() {
     reorderState.active = false;
     reorderState.sourceIndex = null;
     
-    const container = document.getElementById('topics-list');
-    if (container) {
-        container.classList.remove('reorder-mode-active');
-        document.querySelectorAll('.item-block').forEach(b => {
-            b.classList.remove('reorder-source');
-        });
-    }
-    
     const hint = document.getElementById('reorder-hint');
     if (hint) hint.remove();
+
+    // Re-render to remove gaps
+    renderTopics(currentTopicsData, Object.keys(expandedLevels).length - 1);
 };
 
 // Confirmation Modal Functions
@@ -942,6 +937,12 @@ function renderTopics(topics, maxLevel) {
     const searchInput = document.getElementById('topics-search-input');
     const searchTerm = searchInput ? searchInput.value.toLowerCase().trim() : '';
     container.innerHTML = '';
+    
+    if (reorderState.active) {
+        container.classList.add('reorder-mode-active');
+    } else {
+        container.classList.remove('reorder-mode-active');
+    }
 
     const levelInfo = [
         { name: 'Surface', description: 'What you need for a complete understanding' },
@@ -988,19 +989,51 @@ function renderTopics(topics, maxLevel) {
             // Sort topics by position within each level
             const sortedGroup = topicsByLevel[level].sort((a, b) => a.topic.position - b.topic.position);
 
+            const sourceTopic = reorderState.active ? currentTopicsData[reorderState.sourceIndex] : null;
+
+            const createGap = (pos) => {
+                const gap = document.createElement('div');
+                gap.className = 'target-block-gap';
+                gap.onclick = (e) => {
+                    e.stopPropagation();
+                    const sourceLevel = parseInt(sourceTopic.level);
+                    const sourcePosition = parseInt(sourceTopic.position);
+                    const targetPosition = pos;
+
+                    if (sourceLevel === level && sourcePosition === targetPosition) {
+                        exitReorderMode();
+                        return;
+                    }
+
+                    window.showConfirmModal('Confirm Reorder', 'Are you sure you want to move this topic here?', async () => {
+                        await reorderTopic(sourceLevel, sourcePosition, targetPosition);
+                        exitReorderMode();
+                    });
+                };
+                return gap;
+            };
+
             // Handle expansion/collapsing (show only top 3 by default per level)
             let displayedGroup = sortedGroup;
             const needsToggle = sortedGroup.length > 3;
-            if (needsToggle && !expandedLevels[level]) {
+            if (needsToggle && !expandedLevels[level] && !reorderState.active) {
                 displayedGroup = sortedGroup.slice(0, 3);
             }
 
             displayedGroup.forEach((item, sortedIndex) => {
                 const topic = item.topic;
                 const globalIndex = item.globalIndex;
+
+                if (reorderState.active && parseInt(sourceTopic.level) === level && topic.position !== sourceTopic.position && topic.position !== sourceTopic.position + 1) {
+                    levelSection.appendChild(createGap(topic.position));
+                }
                 
                 const topicItem = document.createElement('div');
                 topicItem.className = 'item-block compact';
+                if (reorderState.active && globalIndex === reorderState.sourceIndex) {
+                    topicItem.classList.add('reorder-source');
+                }
+                topicItem.id = `topic-${globalIndex}`;
                 topicItem.dataset.position = topic.position;
                 topicItem.dataset.level = topic.level;
                 topicItem.dataset.topicIndex = globalIndex;
@@ -1053,40 +1086,16 @@ function renderTopics(topics, maxLevel) {
                 `;
 
                 // Click to navigate or reorder
-                topicItem.style.cursor = 'pointer';
+                topicItem.style.cursor = reorderState.active ? 'default' : 'pointer';
                 topicItem.addEventListener('click', async (e) => {
-                    if (reorderState.preventClick) {
-                        reorderState.preventClick = false;
+                    if (reorderState.active) {
+                        if (globalIndex === reorderState.sourceIndex) {
+                            exitReorderMode();
+                        }
                         return;
                     }
-                    if (reorderState.active) {
-                        const targetTopicIndex = parseInt(e.currentTarget.dataset.topicIndex);
-                        if (reorderState.sourceIndex === targetTopicIndex) {
-                            exitReorderMode();
-                            return;
-                        }
-
-                        const sourceTopic = currentTopicsData[reorderState.sourceIndex];
-                        const targetTopic = currentTopicsData[targetTopicIndex];
-                        if (!sourceTopic || !targetTopic) {
-                            console.error('Source or target topic not found');
-                            exitReorderMode();
-                            return;
-                        }
-
-                        if (parseInt(sourceTopic.level) !== parseInt(targetTopic.level)) {
-                            UI.showError('Topics can only be reordered within the same level');
-                            return;
-                        }
-
-                        const sourceLevel = parseInt(sourceTopic.level);
-                        const sourcePosition = parseInt(sourceTopic.position);
-                        const targetPosition = parseInt(targetTopic.position);
-
-                        window.showConfirmModal('Confirm Reorder', 'Are you sure you want to move this topic here?', async () => {
-                            await reorderTopic(sourceLevel, sourcePosition, targetPosition);
-                            exitReorderMode();
-                        });
+                    if (reorderState.preventClick) {
+                        reorderState.preventClick = false;
                         return;
                     }
                     if (e.target.closest('button')) return;
@@ -1097,6 +1106,11 @@ function renderTopics(topics, maxLevel) {
                 });
 
                 levelSection.appendChild(topicItem);
+
+                // Add gap after the last block
+                if (reorderState.active && parseInt(sourceTopic.level) === level && sortedIndex === displayedGroup.length - 1 && topic.position + 1 !== sourceTopic.position && topic.position + 1 !== sourceTopic.position + 1) {
+                    levelSection.appendChild(createGap(topic.position + 1));
+                }
             });
 
             // Add toggle button if level group is long

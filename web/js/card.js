@@ -1781,9 +1781,42 @@ function renderBlocks(blocks) {
 
     const blockTypes = ['text', 'code', 'image', 'math', 'diagram'];
 
+    const createGap = (pos) => {
+        const gap = document.createElement('div');
+        gap.className = 'target-block-gap';
+        gap.onclick = (e) => {
+            e.stopPropagation();
+            const sourcePos = currentBlocks[reorderState.sourceIndex].position;
+            const targetPos = pos;
+
+            if (sourcePos === targetPos) {
+                window.exitReorderMode();
+                return;
+            }
+
+            window.showConfirmModal('Confirm Reorder', 'Are you sure you want to move this block here?', async () => {
+                await reorderBlockHandler(sourcePos, targetPos);
+                window.exitReorderMode();
+            });
+        };
+        return gap;
+    };
+
+    const sourceBlock = reorderState.active ? currentBlocks[reorderState.sourceIndex] : null;
+
     blocks.forEach((block, index) => {
+        if (reorderState.active && block.position !== sourceBlock.position && block.position !== sourceBlock.position + 1) {
+            container.appendChild(createGap(block.position));
+        }
+
         const blockItem = document.createElement('div');
         blockItem.className = 'content-block';
+        if (reorderState.active && index === reorderState.sourceIndex) {
+            blockItem.classList.add('reorder-source');
+        }
+        if (mergeState.active && index === mergeState.sourceIndex) {
+            blockItem.classList.add('merge-source');
+        }
         blockItem.id = `block-${index}`;
         blockItem.dataset.position = block.position;
 
@@ -1791,14 +1824,7 @@ function renderBlocks(blocks) {
             if (reorderState.active) {
                 if (reorderState.sourceIndex === index) {
                     window.exitReorderMode();
-                    return true;
                 }
-                const sourcePos = currentBlocks[reorderState.sourceIndex].position;
-                const targetPos = block.position;
-                window.showConfirmModal('Confirm Reorder', 'Are you sure you want to move this block after your selection?', async () => {
-                    await reorderBlockHandler(sourcePos, targetPos);
-                    window.exitReorderMode();
-                });
                 return true;
             }
             if (mergeState.active) {
@@ -1861,12 +1887,12 @@ function renderBlocks(blocks) {
         }, { passive: true });
 
         blockItem.addEventListener('click', async (e) => {
-            if (reorderState.preventClick) {
-                reorderState.preventClick = false;
-                return;
-            }
             if (reorderState.active || mergeState.active) {
                 await handleReorderClick();
+                return;
+            }
+            if (reorderState.preventClick) {
+                reorderState.preventClick = false;
                 return;
             }
             
@@ -2071,6 +2097,13 @@ function renderBlocks(blocks) {
         container.appendChild(blockItem);
     });
 
+    if (reorderState.active) {
+        const lastBlock = blocks[blocks.length - 1];
+        if (sourceBlock.position !== lastBlock.position) {
+            container.appendChild(createGap(lastBlock.position + 1));
+        }
+    }
+
     // Apply KaTeX auto-render to all text blocks
     if (typeof renderMathInElement !== 'undefined') {
         renderMathInElement(container, {
@@ -2124,11 +2157,16 @@ window.enterReorderMode = function(index) {
     if (blocksList) {
         blocksList.classList.add('reorder-mode-active');
     }
+
+    renderBlocks(currentBlocks);
     
     // Highlight source
     const sourceBlock = document.getElementById(`block-${index}`);
     if (sourceBlock) {
-        sourceBlock.classList.add('reorder-source');
+        // Ensure source block remains in view after gaps are added
+        requestAnimationFrame(() => {
+            sourceBlock.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        });
     }
     
     // Add hint at the top of the list
@@ -2160,11 +2198,16 @@ window.enterMergeMode = function(index) {
     if (blocksList) {
         blocksList.classList.add('merge-mode-active');
     }
+
+    renderBlocks(currentBlocks);
     
     // Highlight source
     const sourceBlock = document.getElementById(`block-${index}`);
     if (sourceBlock) {
-        sourceBlock.classList.add('merge-source');
+        // Ensure source block remains in view
+        requestAnimationFrame(() => {
+            sourceBlock.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        });
     }
     
     // Add hint at the top of the list
@@ -2194,12 +2237,10 @@ window.exitMergeMode = function() {
     const blocksList = document.getElementById('blocks-list');
     if (blocksList) {
         blocksList.classList.remove('merge-mode-active');
-        document.querySelectorAll('.content-block').forEach(b => {
-            b.classList.remove('reorder-source');
-            b.classList.remove('merge-source');
-        });
     }
     
+    renderBlocks(currentBlocks);
+
     const hint = document.getElementById('reorder-hint');
     if (hint) {
         hint.remove();
@@ -2217,11 +2258,9 @@ window.exitReorderMode = function() {
     if (blocksList) {
         blocksList.classList.remove('reorder-mode-active');
         blocksList.classList.remove('merge-mode-active');
-        document.querySelectorAll('.content-block').forEach(b => {
-            b.classList.remove('reorder-source');
-            b.classList.remove('merge-source');
-        });
     }
+
+    renderBlocks(currentBlocks);
     
     const hint = document.getElementById('reorder-hint');
     if (hint) {
