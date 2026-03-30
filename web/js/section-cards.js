@@ -11,6 +11,14 @@ async function markSectionAsReviewed() {
     UI.setButtonLoading('mark-section-reviewed-btn', true);
 
     try {
+        const cards = await client.getSectionCards(resourceId, sectionPosition);
+        const draftCards = cards.filter(card => card.state === 0);
+        if (draftCards.length > 0) {
+            UI.showError('All cards in this section must be reviewed before marking the section as reviewed.');
+            UI.setButtonLoading('mark-section-reviewed-btn', false);
+            return;
+        }
+
         await client.markSectionAsReviewed(resourceId, sectionPosition);
 
         // Update state display
@@ -52,6 +60,14 @@ async function markSectionAsCompleted() {
     UI.setButtonLoading('mark-section-reviewed-btn', true);
 
     try {
+        const cards = await client.getSectionCards(resourceId, sectionPosition);
+        const draftCards = cards.filter(card => card.state === 0);
+        if (draftCards.length > 0) {
+            UI.showError('All cards in this section must be reviewed before marking the section as completed.');
+            UI.setButtonLoading('mark-section-reviewed-btn', false);
+            return;
+        }
+
         await client.markSectionAsCompleted(resourceId, sectionPosition);
 
         // Update state display
