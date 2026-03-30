@@ -1,0 +1,12 @@
+{
+  "bundle": {
+    "linux": {
+      "deb": {
+        "desktopTemplate": "assets/Flashback.desktop"
+      },
+      "rpm": {
+        "desktopTemplate": "assets/Flashback.desktop"
+      }
+    }
+  }
+}

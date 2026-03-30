@@ -1,0 +1,11 @@
+[Desktop Entry]
+Categories=Education;Utility;
+Comment=A program for experts to transform complex technical subjects into muscle memory
+Exec=env GTK_THEME=Adwaita:dark flashback
+StartupWMClass=flashback
+StartupNotify=true
+Icon=flashback
+Name=Flashback
+Keywords=flashcard;learning;memory;spaced repetition;study;
+Terminal=false
+Type=Application
