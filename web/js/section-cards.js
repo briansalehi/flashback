@@ -28,7 +28,7 @@ async function markSectionAsReviewed() {
         // Update the button for the next state (Completed)
         if (markSectionReviewedBtn) {
             markSectionReviewedBtn.title = 'Mark as Completed';
-            markSectionReviewedBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-check-check"><path d="M18 6 7 17l-5-5"></path><path d="m22 10-7.5 7.5L13 16"></path></svg>';
+            markSectionReviewedBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-check-check"><path d="m4 9 5 5 11-11"></path><path d="m4 15 5 5 11-11"></path></svg>';
         }
 
         UI.setButtonLoading('mark-section-reviewed-btn', false);
@@ -125,7 +125,7 @@ window.addEventListener('DOMContentLoaded', () => {
         markReviewedBtn.style.display = 'inline-flex';
         if (sectionState === 1) {
             markReviewedBtn.title = 'Mark as Completed';
-            markReviewedBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-check-check"><path d="M18 6 7 17l-5-5"></path><path d="m22 10-7.5 7.5L13 16"></path></svg>';
+            markReviewedBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-check-check"><path d="m4 9 5 5 11-11"></path><path d="m4 15 5 5 11-11"></path></svg>';
         }
     }
 
