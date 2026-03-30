@@ -363,6 +363,10 @@ window.addEventListener('DOMContentLoaded', () => {
                 const newUrl = `resource.html?id=${resourceId}&name=${encodeURIComponent(name)}&type=${type}&pattern=${pattern}&link=${encodeURIComponent(link)}&production=${production}&expiration=${expiration}&subjectId=${subjectId || ''}&subjectName=${encodeURIComponent(subjectName || '')}&roadmapId=${roadmapId || ''}&roadmapName=${encodeURIComponent(roadmapName || '')}`;
                 window.history.replaceState({}, '', newUrl);
 
+                // Update breadcrumb and re-render sections to update links with the new resource name
+                displayBreadcrumb();
+                renderSections(currentSections);
+
                 UI.showSuccess('Resource updated successfully');
             } catch (err) {
                 console.error('Edit resource failed:', err);

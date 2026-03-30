@@ -105,7 +105,7 @@ jobs:
           echo "apk_file=flashback-${version}.apk" >> $GITHUB_OUTPUT
           echo "aab_file=flashback-${version}.aab" >> $GITHUB_OUTPUT
       - id: create-release
-        uses: actions/create-release@v1.1.4
+        uses: softprops/action-gh-release@v2.6.1
         env:
           GITHUB_TOKEN: "${{ secrets.github_token }}"
         with:

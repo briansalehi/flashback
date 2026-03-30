@@ -223,6 +223,10 @@ window.addEventListener('DOMContentLoaded', () => {
                 document.getElementById('subject-name').textContent = newName;
                 document.title = `${newName} - Flashback`;
 
+                // Update breadcrumb and re-render resources to update links with the new subject name
+                displayBreadcrumb(roadmapId);
+                renderResources(currentResourcesData);
+
                 UI.showSuccess('Subject renamed successfully');
             } catch (err) {
                 console.error('Rename subject failed:', err);

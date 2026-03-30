@@ -31,6 +31,10 @@ async function markSectionAsReviewed() {
             markSectionReviewedBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-check-check"><path d="m4 9 5 5 11-11"></path><path d="m4 15 5 5 11-11"></path></svg>';
         }
 
+        // Re-render cards to update their links with the new section state
+        const cards = await client.getSectionCards(resourceId, sectionPosition);
+        renderCards(cards);
+
         UI.setButtonLoading('mark-section-reviewed-btn', false);
     } catch (err) {
         console.error('Failed to mark section as reviewed:', err);
@@ -78,6 +82,9 @@ async function markSectionAsCompleted() {
         if (markSectionReviewedBtn) {
             markSectionReviewedBtn.style.display = 'none';
         }
+
+        // Re-render cards to update their links with the new section state
+        renderCards(cards);
 
         UI.setButtonLoading('mark-section-reviewed-btn', false);
     } catch (err) {
@@ -374,6 +381,9 @@ window.addEventListener('DOMContentLoaded', () => {
                 currentUrl.searchParams.set('name', newName);
                 currentUrl.searchParams.set('sectionLink', newLink);
                 window.history.replaceState({}, '', currentUrl);
+
+                // Update breadcrumb to reflect the new section name
+                displayBreadcrumb();
 
                 UI.showSuccess('Section updated successfully');
             } catch (err) {
