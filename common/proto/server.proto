@@ -76,6 +76,7 @@ service Server {
     rpc AddCardToSection(AddCardToSectionRequest) returns (AddCardToSectionResponse);
     rpc AddCardToTopic(AddCardToTopicRequest) returns (AddCardToTopicResponse);
     rpc MarkSectionAsReviewed(MarkSectionAsReviewedRequest) returns (MarkSectionAsReviewedResponse);
+    rpc MarkSectionAsCompleted(MarkSectionAsCompletedRequest) returns (MarkSectionAsCompletedResponse);
     rpc IsAssimilated(IsAssimilatedRequest) returns (IsAssimilatedResponse);
     rpc Study(StudyRequest) returns (StudyResponse);
     rpc RemoveCard(RemoveCardRequest) returns (RemoveCardResponse);

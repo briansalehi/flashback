@@ -906,6 +906,29 @@ class FlashbackClient {
         });
     }
 
+    async markSectionAsCompleted(resourceId, sectionPosition) {
+        return new Promise((resolve, reject) => {
+            const request = new proto.flashback.MarkSectionAsCompletedRequest();
+            const user = this.getAuthenticatedUser();
+            request.setUser(user);
+            const resource = new proto.flashback.Resource();
+            resource.setId(resourceId);
+            request.setResource(resource);
+            const section = new proto.flashback.Section();
+            section.setPosition(sectionPosition);
+            request.setSection(section);
+
+            this.client.markSectionAsCompleted(request, this.getMetadata(), (err) => {
+                if (err) {
+                    console.error("MarkSectionAsCompleted error:", err);
+                    reject(this.handleError(err));
+                } else {
+                    resolve();
+                }
+            });
+        });
+    }
+
     async study(cardId, duration) {
         return new Promise((resolve, reject) => {
             const request = new proto.flashback.StudyRequest();

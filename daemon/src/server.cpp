@@ -3338,7 +3338,7 @@ grpc::Status server::MarkSectionAsReviewed(grpc::ServerContext* context, MarkSec
         }
         else
         {
-            std::clog << std::format("client {} marked section {} in resource {} as reiewed\n", request->user().token(), request->section().position(), request->resource().id());
+            std::clog << std::format("client {} marked section {} in resource {} as reviewed\n", request->user().token(), request->section().position(), request->resource().id());
             m_database->mark_section_as_reviewed(request->resource().id(), request->section().position());
             status = grpc::Status{grpc::StatusCode::OK, {}};
         }
@@ -3351,6 +3351,49 @@ grpc::Status server::MarkSectionAsReviewed(grpc::ServerContext* context, MarkSec
     catch (std::exception const& exp)
     {
         std::cerr << std::format("server: {}\n", exp.what());
+    }
+
+    return status;
+}
+
+grpc::Status server::MarkSectionAsCompleted(grpc::ServerContext* context, MarkSectionAsCompletedRequest const* request, MarkSectionAsCompletedResponse* response)
+{
+    grpc::Status status{grpc::StatusCode::INTERNAL, {}};
+
+    try
+    {
+        if (!request->has_user() || !session_is_valid(request->user()))
+        {
+            status = grpc::Status{grpc::StatusCode::UNAUTHENTICATED, "invalid user"};
+        }
+        else if (request->resource().id() == 0)
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid resource"};
+        }
+        else if (request->section().position() == 0)
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid section"};
+        }
+        else if (!user_is_verified(request->user()))
+        {
+            std::clog << std::format("client {} tried to mark a section as completed without verification\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not verified"};
+        }
+        else
+        {
+            std::clog << std::format("client {} marked section {} in resource {} as completed\n", request->user().token(), request->section().position(), request->resource().id());
+            m_database->mark_section_as_completed(request->resource().id(), request->section().position());
+            status = grpc::Status{grpc::StatusCode::OK, {}};
+        }
+    }
+    catch (client_exception const& exp)
+    {
+        std::cerr << std::format("client {} tried to mark a section as completed but failed: {}\n", request->user().token(), exp.what());
+        status = grpc::Status{grpc::StatusCode::UNAVAILABLE, exp.what()};
+    }
+    catch (std::exception const& exp)
+    {
+        std::cerr << std::format("server: tried to mark a section as completed but failed: {}\n", exp.what());
     }
 
     return status;

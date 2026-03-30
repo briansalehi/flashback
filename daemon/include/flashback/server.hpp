@@ -116,6 +116,7 @@ public:
     // section page
     grpc::Status MoveCardToSection(grpc::ServerContext* context, MoveCardToSectionRequest const* request, MoveCardToSectionResponse* response) override;
     grpc::Status MarkSectionAsReviewed(grpc::ServerContext* context, MarkSectionAsReviewedRequest const* request, MarkSectionAsReviewedResponse* response) override;
+    grpc::Status MarkSectionAsCompleted(grpc::ServerContext* context, MarkSectionAsCompletedRequest const* request, MarkSectionAsCompletedResponse* response) override;
 
     // topic page
     grpc::Status GetPracticeCards(grpc::ServerContext* context, GetPracticeCardsRequest const* request, GetPracticeCardsResponse* response) override;
