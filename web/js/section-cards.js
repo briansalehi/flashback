@@ -25,15 +25,56 @@ async function markSectionAsReviewed() {
         url.searchParams.set('sectionState', '1');
         window.history.replaceState({}, '', url);
 
-        // Hide the button
+        // Update the button for the next state (Completed)
         if (markSectionReviewedBtn) {
-            markSectionReviewedBtn.style.display = 'none';
+            markSectionReviewedBtn.title = 'Mark as Completed';
+            markSectionReviewedBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline><polyline points="13 6 6 13 1 8"></polyline></svg>';
         }
 
         UI.setButtonLoading('mark-section-reviewed-btn', false);
     } catch (err) {
         console.error('Failed to mark section as reviewed:', err);
         UI.showError('Failed to mark section as reviewed: ' + (err.message || 'Unknown error'));
+        UI.setButtonLoading('mark-section-reviewed-btn', false);
+    }
+}
+
+async function markSectionAsCompleted() {
+    const resourceId = parseInt(UI.getUrlParam('resourceId'));
+    const sectionPosition = parseInt(UI.getUrlParam('sectionPosition'));
+    const markSectionReviewedBtn = document.getElementById('mark-section-reviewed-btn');
+
+    if (!resourceId || isNaN(sectionPosition)) {
+        UI.showError('Invalid resource ID or section position');
+        return;
+    }
+
+    UI.setButtonLoading('mark-section-reviewed-btn', true);
+
+    try {
+        await client.markSectionAsCompleted(resourceId, sectionPosition);
+
+        // Update state display
+        const stateBadge = document.getElementById('section-state-badge');
+        if (stateBadge) {
+            stateBadge.textContent = 'completed';
+            stateBadge.className = 'state-badge completed';
+        }
+
+        // Update URL state parameter to 2 (completed)
+        const url = new URL(window.location.href);
+        url.searchParams.set('sectionState', '2');
+        window.history.replaceState({}, '', url);
+
+        // Hide the button as it's now completed
+        if (markSectionReviewedBtn) {
+            markSectionReviewedBtn.style.display = 'none';
+        }
+
+        UI.setButtonLoading('mark-section-reviewed-btn', false);
+    } catch (err) {
+        console.error('Failed to mark section as completed:', err);
+        UI.showError('Failed to mark section as completed: ' + (err.message || 'Unknown error'));
         UI.setButtonLoading('mark-section-reviewed-btn', false);
     }
 }
@@ -80,7 +121,13 @@ window.addEventListener('DOMContentLoaded', () => {
             }, 100);
         });
     }
-    if (markReviewedBtn && sectionState !== 1) markReviewedBtn.style.display = 'inline-flex';
+    if (markReviewedBtn && sectionState < 2) {
+        markReviewedBtn.style.display = 'inline-flex';
+        if (sectionState === 1) {
+            markReviewedBtn.title = 'Mark as Completed';
+            markReviewedBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline><polyline points="13 6 6 13 1 8"></polyline></svg>';
+        }
+    }
 
     // Display breadcrumb
     displayBreadcrumb();
@@ -186,9 +233,30 @@ window.addEventListener('DOMContentLoaded', () => {
             }
         };
 
+        const openCompleteSectionModal = () => {
+            const modal = document.getElementById('complete-section-confirmation-modal');
+            if (modal) {
+                modal.style.display = 'flex';
+                document.body.style.overflow = 'hidden';
+            }
+        };
+
+        const closeCompleteSectionModal = () => {
+            const modal = document.getElementById('complete-section-confirmation-modal');
+            if (modal) {
+                modal.style.display = 'none';
+                document.body.style.overflow = '';
+            }
+        };
+
         markSectionReviewedBtn.addEventListener('click', (e) => {
             e.preventDefault();
-            openReviewSectionModal();
+            const sectionState = parseInt(UI.getUrlParam('sectionState')) || 0;
+            if (sectionState === 1) {
+                openCompleteSectionModal();
+            } else {
+                openReviewSectionModal();
+            }
         });
 
         const cancelReviewSectionBtn = document.getElementById('cancel-review-section-btn');
@@ -209,6 +277,28 @@ window.addEventListener('DOMContentLoaded', () => {
             confirmReviewSectionBtn.addEventListener('click', async () => {
                 await markSectionAsReviewed();
                 closeReviewSectionModal();
+            });
+        }
+
+        // Completed section modal handlers
+        const cancelCompleteSectionBtn = document.getElementById('cancel-complete-section-btn');
+        if (cancelCompleteSectionBtn) cancelCompleteSectionBtn.addEventListener('click', closeCompleteSectionModal);
+
+        const closeCompleteSectionModalBtn = document.getElementById('close-complete-section-modal-btn');
+        if (closeCompleteSectionModalBtn) closeCompleteSectionModalBtn.addEventListener('click', closeCompleteSectionModal);
+
+        const completeSectionModal = document.getElementById('complete-section-confirmation-modal');
+        if (completeSectionModal) {
+            completeSectionModal.addEventListener('click', (e) => {
+                if (e.target === completeSectionModal) closeCompleteSectionModal();
+            });
+        }
+
+        const confirmCompleteSectionBtn = document.getElementById('confirm-complete-section-btn');
+        if (confirmCompleteSectionBtn) {
+            confirmCompleteSectionBtn.addEventListener('click', async () => {
+                await markSectionAsCompleted();
+                closeCompleteSectionModal();
             });
         }
     }
