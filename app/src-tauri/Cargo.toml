@@ -1,6 +1,6 @@
 [package]
 name = "flashback"
-version = "0.4.22"
+version = "0.4.23"
 description = "A program for experts to transform complex technical subjects into muscle memory "
 authors = ["Brian Salehi <briansalehi@proton.me>"]
 edition = "2021"
