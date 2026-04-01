@@ -579,6 +579,17 @@ window.addEventListener('DOMContentLoaded', () => {
         const typeValue = typeSelect.value;
         const typeText = typeSelect.options[typeSelect.selectedIndex].text;
         
+        const urlGroup = document.getElementById('resource-url').closest('.form-group');
+        const productionGroup = document.getElementById('resource-production').closest('.form-group');
+
+        if (typeValue === '8') {
+            if (urlGroup) urlGroup.style.display = 'none';
+            if (productionGroup) productionGroup.style.display = 'none';
+        } else {
+            if (urlGroup) urlGroup.style.display = 'block';
+            if (productionGroup) productionGroup.style.display = 'block';
+        }
+
         if (typeValue) {
             if (typeDisplay) {
                 typeDisplay.textContent = typeText;
@@ -768,6 +779,11 @@ window.addEventListener('DOMContentLoaded', () => {
         if (patternGroup) patternGroup.style.display = 'none';
         typeSelect.style.display = 'block';
         if (typeDisplay) typeDisplay.style.display = 'none';
+
+        const urlGroup = document.getElementById('resource-url').closest('.form-group');
+        const productionGroup = document.getElementById('resource-production').closest('.form-group');
+        if (urlGroup) urlGroup.style.display = 'block';
+        if (productionGroup) productionGroup.style.display = 'block';
     }
 
     if (resourceForm) {
@@ -819,8 +835,13 @@ window.addEventListener('DOMContentLoaded', () => {
             UI.setButtonLoading('save-resource-btn', true);
 
             try {
-                const resource = await client.createResource(name, parseInt(type), parseInt(pattern), url, production, expiration);
-                await client.addResourceToSubject(subjectId, resource.id);
+                if (type === '8') {
+                    // Resource type 8 is Knowledge/Nerve
+                    await client.createNerve(parseInt(subjectId), name, expiration);
+                } else {
+                    const resource = await client.createResource(name, parseInt(type), parseInt(pattern), url, production, expiration);
+                    await client.addResourceToSubject(subjectId, resource.id);
+                }
 
                 closeResourceModal();
                 UI.setButtonLoading('save-resource-btn', false);
