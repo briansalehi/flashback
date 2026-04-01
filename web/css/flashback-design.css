@@ -1732,10 +1732,18 @@ a:hover {
 .breadcrumb-item:nth-child(5) { padding-left: 4.8rem; }
 
 @media (max-width: 640px) {
-    .breadcrumb-item:nth-child(n) { padding-left: 0 !important; }
     .breadcrumb-item:not(:first-child)::before {
-        display: none;
+        content: "└";
+        color: rgba(255, 255, 255, 0.2);
+        font-size: 0.9rem;
+        margin-right: 0.4rem;
+        font-family: monospace;
+        line-height: 1;
     }
+    .breadcrumb-item:nth-child(2) { padding-left: 0.6rem; }
+    .breadcrumb-item:nth-child(3) { padding-left: 1.2rem; }
+    .breadcrumb-item:nth-child(4) { padding-left: 1.8rem; }
+    .breadcrumb-item:nth-child(5) { padding-left: 2.4rem; }
     .breadcrumb-ellipsis {
         padding-left: 0 !important;
     }
@@ -1745,38 +1753,8 @@ a:hover {
     .breadcrumb-list { gap: 0.35rem; }
 }
 
-/* Collapsible logic */
-.breadcrumb-item.is-collapsible {
-    display: none;
-}
-
-.breadcrumb-container.is-expanded .breadcrumb-item.is-collapsible {
-    display: flex;
-}
-
-.breadcrumb-container.is-expanded .breadcrumb-ellipsis {
-    display: none;
-}
-
 .breadcrumb-ellipsis {
-    display: flex;
-    align-items: center;
-}
-
-.breadcrumb-expand-btn {
-    background: transparent;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    color: var(--color-text-muted);
-    border-radius: var(--radius-md);
-    padding: 0.2rem 0.6rem;
-    cursor: pointer;
-    font-weight: bold;
-    transition: all var(--transition-base);
-}
-
-.breadcrumb-expand-btn:hover {
-    background: rgba(255, 255, 255, 0.08);
-    color: var(--color-text-primary);
+    display: none;
 }
 
 @media (max-width: 640px) {

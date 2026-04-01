@@ -177,63 +177,17 @@ const UI = {
         const list = document.createElement('ol');
         list.className = 'breadcrumb-list';
 
-        // Add home icon for the first item if it's not already one
-        const displayItems = [...items];
-        
-        // Logic for collapsing: if items > 3, we might want to collapse the middle ones
-        const shouldCollapse = displayItems.length > 3;
-        
-        displayItems.forEach((item, index) => {
-            // Collapse middle items if necessary
-            if (shouldCollapse && index > 0 && index < displayItems.length - 1) {
-                // If it's the second item, add the ellipsis toggle
-                if (index === 1) {
-                    const ellipsisItem = document.createElement('li');
-                    ellipsisItem.className = 'breadcrumb-ellipsis';
-                    // Indentation handled by CSS or inline if dynamic
-                    ellipsisItem.innerHTML = `
-                        <div class="breadcrumb-item-inner" style="display: flex; align-items: center;">
-                            <span class="breadcrumb-separator" style="color: rgba(255, 255, 255, 0.2); font-size: 1.1rem; margin-right: 0.8rem; font-family: monospace; line-height: 1;">└</span>
-                            <button class="breadcrumb-expand-btn" title="Show all path">
-                                <span>...</span>
-                            </button>
-                        </div>
-                    `;
-                    ellipsisItem.onclick = (e) => {
-                        e.stopPropagation();
-                        container.classList.add('is-expanded');
-                    };
-                    list.appendChild(ellipsisItem);
-                }
-                
-                // Add the actual item but hidden by default
-                const itemEl = document.createElement('li');
-                itemEl.className = 'breadcrumb-item is-collapsible';
-                itemEl.style.paddingLeft = `${index * 1.2}rem`;
-                
-                const link = document.createElement('a');
-                link.href = item.url;
-                link.textContent = item.name;
-                
-                itemEl.appendChild(link);
-                list.appendChild(itemEl);
-            } else {
-                const itemEl = document.createElement('li');
-                const isLast = index === displayItems.length - 1;
-                itemEl.className = 'breadcrumb-item' + (isLast ? ' is-active' : '');
-                
-                // For the last item, if we're collapsing, its indentation should reflect its real position
-                if (shouldCollapse && isLast) {
-                    itemEl.style.paddingLeft = `${(displayItems.length - 1) * 1.2}rem`;
-                }
-                
-                const link = document.createElement('a');
-                link.href = item.url;
-                link.textContent = item.name;
-                
-                itemEl.appendChild(link);
-                list.appendChild(itemEl);
-            }
+        items.forEach((item, index) => {
+            const itemEl = document.createElement('li');
+            const isLast = index === items.length - 1;
+            itemEl.className = 'breadcrumb-item' + (isLast ? ' is-active' : '');
+            
+            const link = document.createElement('a');
+            link.href = item.url;
+            link.textContent = item.name;
+            
+            itemEl.appendChild(link);
+            list.appendChild(itemEl);
         });
 
         breadcrumbList.appendChild(list);
