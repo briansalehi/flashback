@@ -1075,15 +1075,12 @@ async function createAndAssignTopic() {
     UI.setButtonLoading('confirm-create-assign-topic-btn', true);
 
     try {
-        // 1. Get all topics for that level to determine next position
-        const existingTopics = await client.getTopics(currentSelectedSubjectId, level);
-        const nextPosition = existingTopics.length;
+        // 1. Create the topic
+        // passing 0 as position to append it at the end
+        const newTopic = await client.createTopic(currentSelectedSubjectId, topicName, level, 0);
 
-        // 2. Create the topic
-        await client.createTopic(currentSelectedSubjectId, topicName, level, nextPosition);
-
-        // 3. Assign card to the new topic
-        await client.addCardToTopic(currentAssigningCardId, currentSelectedSubjectId, nextPosition, level);
+        // 2. Assign card to the new topic
+        await client.addCardToTopic(currentAssigningCardId, currentSelectedSubjectId, newTopic.position, newTopic.level);
 
         closeAssignTopicModal();
         UI.showSuccess(`Topic "${topicName}" created and card assigned successfully`);
