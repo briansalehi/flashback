@@ -117,7 +117,12 @@ window.addEventListener('DOMContentLoaded', () => {
         return;
     }
 
-    document.getElementById('resource-name').textContent = resourceName || 'Resource';
+    const typeId = UI.getUrlParam('type');
+    const resourceNameHeader = document.getElementById('resource-name');
+    if (resourceNameHeader) {
+        const icon = UI.getResourceIcon(parseInt(typeId));
+        resourceNameHeader.innerHTML = `<span class="resource-icon">${icon}</span> ${UI.escapeHtml(resourceName || 'Resource')}`;
+    }
     document.title = `${resourceName || 'Resource'} - Flashback`;
 
     // Store current resource data from URL params

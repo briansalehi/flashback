@@ -1209,6 +1209,7 @@ function renderResources(resources) {
             <div style="width: 100%; display: flex; flex-direction: column; gap: 0.25rem; pointer-events: none;">
                 <div class="item-header" style="margin-bottom: 0; align-items: flex-start; flex-wrap: wrap; gap: var(--space-xs);">
                     <div style="display: flex; align-items: flex-start; gap: var(--space-xs); flex: 1; min-width: 180px; pointer-events: none;">
+                        <span class="resource-icon">${UI.getResourceIcon(resource.type)}</span>
                         <h3 class="item-title" style="margin: 0; font-size: var(--font-size-base); overflow-wrap: break-word; word-break: break-word;">${UI.escapeHtml(resource.name)}</h3>
                     </div>
                     <div style="display: flex; gap: var(--space-xs); align-items: center; flex-shrink: 0; margin-left: auto; pointer-events: auto;">

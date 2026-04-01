@@ -968,6 +968,21 @@ a:hover {
     user-select: none; /* Prevent accidental text selection during touch reordering */
 }
 
+.resource-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 0.5rem;
+    color: var(--color-text-muted);
+    vertical-align: middle;
+}
+
+.resource-icon svg {
+    display: block;
+    width: 1.1em;
+    height: 1.1em;
+}
+
 .item-badge {
     display: inline-flex;
     align-items: center;
