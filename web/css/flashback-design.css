@@ -1778,13 +1778,9 @@ a:hover {
     .breadcrumb-item a,
     .breadcrumb-item .breadcrumb-text {
         font-size: 0.8rem;
-        padding: 0.3rem 0.6rem;
+        padding: 0.3rem 0;
     }
     
-    .breadcrumb-item:not(.is-active):not(:first-child) span {
-        display: none; /* Icon only for non-active items on tiny screens? Maybe too much. Let's keep text for now but allow scroll */
-    }
-
     /* On mobile, keep it strictly one line and let it scroll */
     .breadcrumb-list {
         padding-bottom: 0.5rem;

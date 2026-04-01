@@ -193,7 +193,7 @@ const UI = {
 
         container.innerHTML = '';
         container.className = 'breadcrumb-container';
-        container.style.display = 'flex';
+        container.style.display = 'block';
 
         const breadcrumbList = document.createElement('nav');
         breadcrumbList.className = 'breadcrumb-nav';
