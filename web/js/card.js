@@ -989,6 +989,7 @@ function displayContextBreadcrumb(subjectName, topicName, resourceName, sectionN
     if (roadmapId && roadmapName) {
         breadcrumbItems.push({
             name: roadmapName,
+            icon: UI.getRoadmapIcon(),
             url: `roadmap.html?id=${roadmapId}&name=${encodeURIComponent(roadmapName)}`
         });
     }
@@ -1040,6 +1041,7 @@ function displayContextBreadcrumb(subjectName, topicName, resourceName, sectionN
                 
                 breadcrumbItems.push({
                     name: resourceName,
+                    icon: UI.getResourceIcon(parseInt(resourceType)),
                     url: `resource.html?id=${resourceId}&name=${encodeURIComponent(resourceName)}&type=${resourceType}&pattern=${resourcePattern}&link=${encodeURIComponent(resourceLink)}&production=${resourceProduction}&expiration=${resourceExpiration}&subjectId=${subjectId}&subjectName=${encodeURIComponent(localSubjectName)}&roadmapId=${roadmapId}&roadmapName=${encodeURIComponent(roadmapName)}&level=${milestoneLevel}&tab=${currentTab}`
                 });
             }
@@ -1060,7 +1062,7 @@ function displayContextBreadcrumb(subjectName, topicName, resourceName, sectionN
         }
     }
 
-    UI.renderBreadcrumbs(breadcrumbItems, 'context-breadcrumb');
+    return breadcrumbItems;
 }
 
 // Handle card exit - no longer records progress automatically

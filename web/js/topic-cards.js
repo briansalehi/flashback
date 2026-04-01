@@ -3,12 +3,14 @@ function displayBreadcrumb() {
     const subjectName = UI.getUrlParam('subjectName');
     const roadmapId = UI.getUrlParam('roadmapId');
     const roadmapName = UI.getUrlParam('roadmapName');
+    const topicName = UI.getUrlParam('name');
 
     const breadcrumbItems = [];
 
     if (roadmapId && roadmapName) {
         breadcrumbItems.push({
             name: roadmapName,
+            icon: UI.getRoadmapIcon(),
             url: `roadmap.html?id=${roadmapId}&name=${encodeURIComponent(roadmapName)}`
         });
     }

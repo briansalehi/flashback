@@ -7,6 +7,13 @@ let reorderState = {
     startPos: { x: 0, y: 0 }
 };
 
+function updateRoadmapTitle(name) {
+    const roadmapTitle = document.getElementById('roadmap-name');
+    if (roadmapTitle) {
+        roadmapTitle.innerHTML = `<span class="resource-icon" style="color: var(--color-text-primary);">${UI.getRoadmapIcon()}</span> ${UI.escapeHtml(name || 'Roadmap')}`;
+    }
+}
+
 function enterReorderMode(index) {
     if (reorderState.active) return;
     
@@ -117,11 +124,7 @@ window.addEventListener('DOMContentLoaded', () => {
     }
 
     // Set roadmap title
-    const roadmapTitle = document.getElementById('roadmap-name');
-    if (roadmapTitle) {
-        roadmapTitle.textContent = roadmapName || 'Roadmap';
-        // Buttons are now always visible, no toggle needed
-    }
+    updateRoadmapTitle(roadmapName);
 
     const signoutBtn = document.getElementById('signout-btn');
     if (signoutBtn) {
@@ -291,7 +294,7 @@ window.addEventListener('DOMContentLoaded', () => {
             e.preventDefault();
             UI.toggleElement('rename-roadmap-modal', true);
             document.body.style.overflow = 'hidden';
-            const roadmapNameCurrent = document.getElementById('roadmap-name').textContent;
+            const roadmapNameCurrent = document.getElementById('roadmap-name').textContent.trim();
             document.getElementById('rename-roadmap-name').value = roadmapNameCurrent || roadmapName || '';
             setTimeout(() => {
                 document.getElementById('rename-roadmap-name').focus();
@@ -337,7 +340,7 @@ window.addEventListener('DOMContentLoaded', () => {
                 // Update the URL and page
                 const newUrl = `roadmap.html?id=${roadmapId}&name=${encodeURIComponent(newName)}`;
                 window.history.replaceState({}, '', newUrl);
-                document.getElementById('roadmap-name').textContent = newName;
+                updateRoadmapTitle(newName);
                 document.title = `${newName} - Flashback`;
 
                 UI.showSuccess('Roadmap renamed successfully');
@@ -549,7 +552,7 @@ async function loadMilestones() {
         const roadmapName = UI.getUrlParam('name');
         const response = await client.getMilestones(roadmapId);
 
-        document.getElementById('roadmap-name').textContent = roadmapName;
+        updateRoadmapTitle(roadmapName);
         document.title = `${roadmapName || 'Roadmap'} - Flashback`;
 
 

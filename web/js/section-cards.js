@@ -768,12 +768,15 @@ function displayBreadcrumb() {
     const roadmapName = UI.getUrlParam('roadmapName');
     const level = UI.getUrlParam('level');
     const currentTab = UI.getUrlParam('tab') || 'resources';
+    const sectionPosition = UI.getUrlParam('sectionPosition');
+    const sectionName = UI.getUrlParam('name');
 
     const breadcrumbItems = [];
 
     if (roadmapId && roadmapName) {
         breadcrumbItems.push({
             name: roadmapName,
+            icon: UI.getRoadmapIcon(),
             url: `roadmap.html?id=${roadmapId}&name=${encodeURIComponent(roadmapName)}`
         });
     }
@@ -794,6 +797,7 @@ function displayBreadcrumb() {
         
         breadcrumbItems.push({
             name: resourceName,
+            icon: UI.getResourceIcon(parseInt(resourceType)),
             url: `resource.html?id=${resourceId}&name=${encodeURIComponent(resourceName)}&type=${resourceType}&pattern=${resourcePattern}&link=${encodeURIComponent(resourceLink)}&production=${resourceProduction}&expiration=${resourceExpiration}&subjectId=${subjectId || ''}&subjectName=${encodeURIComponent(subjectName || '')}&roadmapId=${roadmapId || ''}&roadmapName=${encodeURIComponent(roadmapName || '')}&level=${level || ''}&tab=${currentTab}`
         });
     }

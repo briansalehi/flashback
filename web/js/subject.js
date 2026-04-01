@@ -1392,10 +1392,18 @@ async function startPracticeMode() {
 async function displayBreadcrumb(roadmapId) {
     if (!roadmapId) return;
     
+    const subjectName = UI.getUrlParam('name') || '';
+
     if (roadmapName) {
-        UI.renderBreadcrumbs([
-            { name: roadmapName, url: `roadmap.html?id=${roadmapId}&name=${encodeURIComponent(roadmapName)}` }
-        ]);
+        const breadcrumbItems = [
+            { 
+                name: roadmapName, 
+                icon: UI.getRoadmapIcon(),
+                url: `roadmap.html?id=${roadmapId}&name=${encodeURIComponent(roadmapName)}` 
+            }
+        ];
+
+        UI.renderBreadcrumbs(breadcrumbItems);
     }
 }
 
