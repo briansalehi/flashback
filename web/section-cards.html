@@ -77,19 +77,23 @@
               gap: 0.5rem !important;
               justify-content: flex-start !important;
               align-items: flex-start !important;
+              padding-left: 0 !important;
           }
 
           #section-name {
               flex-basis: 100%;
-              margin-bottom: 0.25rem;
+              margin-bottom: 0;
               font-size: 1.75rem;
               text-align: left !important;
+              padding-left: 0 !important;
           }
 
           .section-actions-inline {
+              margin-top: 0.25rem;
               margin-left: 0 !important;
               width: 100%;
               justify-content: flex-start !important;
+              padding-left: 0 !important;
           }
       }
 
@@ -160,8 +164,8 @@
 
       .section-header-container {
           display: flex;
-          justify-content: space-between;
-          align-items: flex-start;
+          justify-content: flex-start;
+          align-items: center;
           gap: 1rem;
           margin-bottom: 1rem;
           flex-wrap: wrap;
@@ -170,9 +174,9 @@
       .section-title-group {
           display: flex;
           align-items: center;
-          gap: 1.5rem;
+          gap: 1rem;
           flex: 1;
-          min-width: 200px;
+          min-width: 250px;
           flex-wrap: wrap;
       }
 
@@ -185,19 +189,19 @@
 
       @media (max-width: 600px) {
           .section-header-container {
-              flex-direction: column;
-              align-items: stretch;
+              flex-direction: row;
+              align-items: center;
           }
           .section-title-group {
-              flex-direction: column;
-              align-items: flex-start;
+              flex-direction: row;
+              align-items: center;
               gap: 0.5rem;
           }
           .section-header-buttons {
-              width: 100%;
+              width: auto;
           }
           .section-header-buttons button {
-              flex: 1;
+              flex: none;
           }
       }
 
@@ -299,24 +303,26 @@
 <main class="dashboard">
   <div class="container">
     <div id="breadcrumb" class="breadcrumb-container"></div>
-    <div class="dashboard-header section-header-container" style="display: flex; flex-wrap: wrap; gap: 1rem; justify-content: flex-start; align-items: center; margin-top: 1rem;">
-      <div class="section-title-group" style="display: flex; align-items: center; gap: 1rem; flex: 1; min-width: 250px; justify-content: flex-start;">
-        <h1 id="section-name" style="margin: 0; text-align: left;">Loading...</h1>
-        <div class="section-actions-inline" style="display: flex; gap: 0.75rem; align-items: center;">
-          <button id="edit-section-btn" class="btn btn-icon" title="Edit Section" style="background: none; border: none; padding: 0.25rem; color: var(--color-text-muted); cursor: pointer;">
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>
-          </button>
-          <button id="remove-section-btn" class="btn btn-icon" title="Remove Section" style="background: none; border: none; padding: 0.25rem; color: var(--color-text-muted); cursor: pointer;">
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
-          </button>
-          <button id="mark-section-reviewed-btn" class="btn btn-icon" title="Mark as Reviewed" style="display: none; background: none; border: none; padding: 0.25rem; color: var(--color-text-muted); cursor: pointer;">
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-          </button>
-          <span id="section-state-badge"></span>
+    <div class="dashboard-header">
+      <div class="section-header-container" style="display: flex; flex-wrap: wrap; gap: 1rem; justify-content: flex-start; align-items: center; padding-left: 0;">
+        <div class="section-title-group" style="display: flex; align-items: center; gap: 1rem; flex: 1; min-width: 250px; justify-content: flex-start; padding-left: 0;">
+          <h1 id="section-name" style="margin: 0; text-align: left; padding-left: 0;">Loading...</h1>
+          <div class="section-actions-inline" style="display: flex; gap: 0.75rem; align-items: center;">
+            <button id="edit-section-btn" class="btn btn-icon" title="Edit Section" style="background: none; border: none; padding: 0.25rem; color: var(--color-text-muted); cursor: pointer;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>
+            </button>
+            <button id="remove-section-btn" class="btn btn-icon" title="Remove Section" style="background: none; border: none; padding: 0.25rem; color: var(--color-text-muted); cursor: pointer;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+            </button>
+            <button id="mark-section-reviewed-btn" class="btn btn-icon" title="Mark as Reviewed" style="display: none; background: none; border: none; padding: 0.25rem; color: var(--color-text-muted); cursor: pointer;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            </button>
+            <span id="section-state-badge"></span>
+          </div>
         </div>
-      </div>
-      <div class="section-header-buttons" style="display: flex; gap: 0.5rem; flex-shrink: 0;">
-        <!-- Add Card button now floating -->
+        <div class="section-header-buttons" style="display: flex; gap: 0.5rem; flex-shrink: 0;">
+          <!-- Add Card button now floating -->
+        </div>
       </div>
     </div>
 
