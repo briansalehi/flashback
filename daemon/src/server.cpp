@@ -1217,9 +1217,13 @@ grpc::Status server::CreateResource(grpc::ServerContext* context, CreateResource
         {
             status = grpc::Status{grpc::StatusCode::UNAUTHENTICATED, "invalid user"};
         }
+        else if (request->subject().id() == 0)
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid subject"};
+        }
         else if (request->resource().id() != 0)
         {
-            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid"};
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid resource", "resource cannot have an identifier before its creation"};
         }
         else if (!user_is_verified(request->user()))
         {
@@ -1228,9 +1232,21 @@ grpc::Status server::CreateResource(grpc::ServerContext* context, CreateResource
         }
         else
         {
-            auto resource{std::make_unique<Resource>(m_database->create_resource(request->resource()))};
+            std::shared_ptr<User> const user{m_database->get_user(request->user().token(), request->user().device())};
+            Resource* resource = response->mutable_resource();
+            *resource = m_database->create_resource(request->resource());
             std::clog << std::format("client {} created resource {}\n", request->user().token(), resource->id());
-            response->set_allocated_resource(resource.release());
+
+            std::clog << std::format("client {} added resource {} to subject {}\n", request->user().token(), resource->id(), request->subject().id());
+            m_database->add_resource_to_subject(resource->id(), request->subject().id());
+
+            if (resource->type() == Resource::nerve)
+            {
+                Resource* nerve = response->mutable_resource();
+                *nerve = m_database->create_nerve(user->id(), resource->name(), request->subject().id(), resource->expiration());
+                std::clog << std::format("client {} created nerve {} in subject {}\n", request->user().token(), nerve->id(), request->subject().id());
+            }
+
             status = grpc::Status{grpc::StatusCode::OK, {}};
         }
     }
@@ -1529,59 +1545,6 @@ grpc::Status server::EditResource(grpc::ServerContext* context, EditResourceRequ
     catch (client_exception const& exp)
     {
         std::cerr << std::format("client {} {}\n", request->user().token(), exp.what());
-    }
-    catch (std::exception const& exp)
-    {
-        std::cerr << std::format("server: {}\n", exp.what());
-    }
-
-    return status;
-}
-
-grpc::Status server::CreateNerve(grpc::ServerContext* context, CreateNerveRequest const* request, CreateNerveResponse* response)
-{
-    grpc::Status status{grpc::StatusCode::INTERNAL, {}};
-
-    try
-    {
-        if (!request->has_user() || !session_is_valid(request->user()))
-        {
-            status = grpc::Status{grpc::StatusCode::UNAUTHENTICATED, "invalid user"};
-        }
-        else if (request->resource().name().empty())
-        {
-            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid resource name"};
-        }
-        else if (request->resource().expiration() == 0)
-        {
-            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid resource expiration"};
-        }
-        else if (!user_is_verified(request->user()))
-        {
-            std::clog << std::format("client {} tried to x without verification\n", request->user().token());
-            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not verified"};
-        }
-        else
-        {
-            std::shared_ptr<User> const user{m_database->get_user(request->user().token(), request->user().device())};
-            Resource* nerve = response->mutable_resource();
-            *nerve = m_database->create_nerve(user->id(), request->resource().name(), request->subject().id(), request->resource().expiration());
-            std::clog << std::format("client {} created nerve {} in subject {}\n", request->user().token(), nerve->id(), request->subject().id());
-
-            if (nerve->id() == 0)
-            {
-                status = grpc::Status{grpc::StatusCode::NOT_FOUND, "nerve not found"};
-            }
-            else
-            {
-                status = grpc::Status{grpc::StatusCode::OK, {}};
-            }
-        }
-    }
-    catch (client_exception const& exp)
-    {
-        std::cerr << std::format("client {} {}\n", request->user().token(), exp.what());
-        status = grpc::Status{grpc::StatusCode::UNAVAILABLE, exp.what()};
     }
     catch (std::exception const& exp)
     {

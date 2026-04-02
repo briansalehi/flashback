@@ -64,7 +64,6 @@ public:
     // grpc::Status GetRelevantSubjects(grpc::ServerContext* context, GetRelevantSubjectsRequest const* request, GetRelevantSubjectsResponse* response) override;
 
     // nerves
-    grpc::Status CreateNerve(grpc::ServerContext* context, CreateNerveRequest const* request, CreateNerveResponse* response) override;
     grpc::Status GetNerves(grpc::ServerContext* context, GetNervesRequest const* request, GetNervesResponse* response) override;
 
     // providers

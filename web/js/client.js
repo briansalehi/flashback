@@ -375,10 +375,12 @@ class FlashbackClient {
         });
     }
 
-    async createResource(name, type, pattern, link, production, expiration) {
+    async createResource(subjectId, name, type, pattern, link, production, expiration) {
         return new Promise((resolve, reject) => {
             const request = new proto.flashback.CreateResourceRequest();
             const user = this.getAuthenticatedUser();
+            const subject = new proto.flashback.Subject();
+            subject.setId(subjectId);
             const resource = new proto.flashback.Resource();
             resource.setName(name);
             resource.setType(type);
@@ -386,6 +388,7 @@ class FlashbackClient {
             resource.setLink(link);
             resource.setProduction(production);
             resource.setExpiration(expiration);
+            request.setSubject(subject);
             request.setResource(resource);
             request.setUser(user);
 
@@ -945,39 +948,6 @@ class FlashbackClient {
                     reject(this.handleError(err));
                 } else {
                     resolve();
-                }
-            });
-        });
-    }
-
-    async createNerve(subjectId, resourceName, resourceExpiration) {
-        return new Promise((resolve, reject) => {
-            const request = new proto.flashback.CreateNerveRequest();
-            const user = this.getAuthenticatedUser();
-            request.setUser(user);
-            const subject = new proto.flashback.Subject();
-            subject.setId(subjectId);
-            request.setSubject(subject);
-            const resource = new proto.flashback.Resource();
-            resource.setName(resourceName);
-            resource.setExpiration(resourceExpiration);
-            request.setResource(resource);
-
-            this.client.createNerve(request, this.getMetadata(), (err, response) => {
-                if (err) {
-                    console.error("CreateNerve error:", err);
-                    reject(this.handleError(err));
-                } else {
-                    const resource = response.getResource();
-                    resolve({
-                        id: resource.getId(),
-                        name: resource.getName(),
-                        type: resource.getType(),
-                        pattern: resource.getPattern(),
-                        production: resource.getProduction(),
-                        expiration: resource.getExpiration(),
-                        link: resource.getLink()
-                    });
                 }
             });
         });

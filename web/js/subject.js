@@ -835,13 +835,7 @@ window.addEventListener('DOMContentLoaded', () => {
             UI.setButtonLoading('save-resource-btn', true);
 
             try {
-                if (type === '8') {
-                    // Resource type 8 is Knowledge/Nerve
-                    await client.createNerve(parseInt(subjectId), name, expiration);
-                } else {
-                    const resource = await client.createResource(name, parseInt(type), parseInt(pattern), url, production, expiration);
-                    await client.addResourceToSubject(subjectId, resource.id);
-                }
+                const resource = await client.createResource(parseInt(subjectId), name, parseInt(type), parseInt(pattern), url, production, expiration);
 
                 closeResourceModal();
                 UI.setButtonLoading('save-resource-btn', false);

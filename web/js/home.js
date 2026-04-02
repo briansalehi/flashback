@@ -228,20 +228,21 @@ window.addEventListener('DOMContentLoaded', () => {
             const subjectId = subjectIdInput.value;
             const name = nameInput.value;
             const expirationDate = expirationInput.value;
+            const type = 8;
+            const pattern = 6;
+            // Convert date string to epoch seconds
+            const expirationEpoch = Math.floor(new Date(expirationDate).getTime() / 1000);
 
             if (!subjectId) {
                 UI.showError('Please select a subject');
                 return;
             }
 
-            // Convert date string to epoch seconds
-            const expirationEpoch = Math.floor(new Date(expirationDate).getTime() / 1000);
-
             UI.hideMessage('error-message');
             UI.setButtonLoading('save-nerve-btn', true);
 
             try {
-                await client.createNerve(parseInt(subjectId), name, expirationEpoch);
+                await client.createResource(parseInt(subjectId), name, type, pattern, '', expirationEpoch, expirationEpoch);
 
                 closeNerveModal();
                 UI.setButtonLoading('save-nerve-btn', false);
