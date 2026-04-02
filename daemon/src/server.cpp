@@ -2704,8 +2704,7 @@ grpc::Status server::EditTopic(grpc::ServerContext* context, EditTopicRequest co
             {
                 modified = true;
                 std::clog << std::format("client {} edited level of topic {} in subject {} from {} to {}\n", request->user().token(), request->topic().position(),
-                                         request->target().position(), request->subject().id(), database::level_to_string(request->topic().level()),
-                                         database::level_to_string(request->target().level()));
+                                         request->subject().id(), database::level_to_string(request->topic().level()), database::level_to_string(request->target().level()));
                 m_database->change_topic_level(request->subject().id(), request->topic().position(), request->topic().level(), request->target().level());
             }
 

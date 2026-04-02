@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict nYA4onVHBzcgIeJejT8S2A5iXI2cwziAYhcXrZ2VXvzYJNk6uCP6CW69m1PlejZ
+\restrict VGqeLXJFqTy9kMQ34Mrj66wkq7DcSLs40NdiosdvXnltDNfBbo37lGGZqpxlXSU
 
 -- Dumped from database version 18.3
 -- Dumped by pg_dump version 18.3
@@ -470,8 +470,8 @@ declare free_position integer;
 begin
     if topic_level <> target_level then
         select max(position) + 1 into free_position from topics where subject = subject_id and level = target_level;
-        update topics set level = target_level, position = free_position where subject = subject_id and level = topic_level and position = topic_position;
-        call reorder_topic(subject_id, target_level, free_position, target_position);
+        update topics set level = target_level, position = coalesce(free_position, 1) where subject = subject_id and level = topic_level and position = topic_position;
+        call reorder_topic(subject_id, target_level, coalesce(free_position, 1), topic_position);
     end if;
 end; $$;
 
@@ -4373,5 +4373,5 @@ GRANT ALL ON SCHEMA public TO brian;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict nYA4onVHBzcgIeJejT8S2A5iXI2cwziAYhcXrZ2VXvzYJNk6uCP6CW69m1PlejZ
+\unrestrict VGqeLXJFqTy9kMQ34Mrj66wkq7DcSLs40NdiosdvXnltDNfBbo37lGGZqpxlXSU
 
