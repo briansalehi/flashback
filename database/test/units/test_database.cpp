@@ -6851,3 +6851,7 @@ TEST_F(test_database, change_user_email)
 TEST_F(test_database, user_is_verified)
 {
 }
+
+TEST_F(test_database, user_is_authorized)
+{
+}

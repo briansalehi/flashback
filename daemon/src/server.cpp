@@ -250,6 +250,11 @@ grpc::Status server::ResetPassword(grpc::ServerContext* context, ResetPasswordRe
             std::clog << std::format("client {} tried to set an empty password\n", request->user().token());
             status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid password"};
         }
+        else if (!user_is_authorized(request->user()))
+        {
+            std::clog << std::format("client {} unauthorized access to reset password\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not authorized"};
+        }
         else
         {
             std::string const hash{calculate_hash(request->user().password())};
@@ -293,6 +298,11 @@ grpc::Status server::EditUser(grpc::ServerContext* context, EditUserRequest cons
             std::clog << std::format("client {} tried to set an empty email on their account\n", request->user().token());
             status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "empty email not allowed"};
         }
+        else if (!user_is_authorized(request->user()))
+        {
+            std::clog << std::format("client {} unauthorized access to edit user\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not authorized"};
+        }
         else
         {
             std::shared_ptr<User> const user{m_database->get_user(request->user().token(), request->user().device())};
@@ -334,6 +344,11 @@ grpc::Status server::SendVerification(grpc::ServerContext* context, SendVerifica
         if (!request->has_user() || !session_is_valid(request->user()))
         {
             status = grpc::Status{grpc::StatusCode::UNAUTHENTICATED, "invalid user"};
+        }
+        else if (!user_is_authorized(request->user()))
+        {
+            std::clog << std::format("client {} unauthorized access to send verification\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not authorized"};
         }
         else
         {
@@ -385,6 +400,11 @@ grpc::Status server::VerifyUser(grpc::ServerContext* context, VerifyUserRequest 
         {
             status = grpc::Status{grpc::StatusCode::UNAUTHENTICATED, "invalid user"};
         }
+        else if (!user_is_authorized(request->user()))
+        {
+            std::clog << std::format("client {} unauthorized access to verify user\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not authorized"};
+        }
         else
         {
             std::shared_ptr<User> const user{m_database->get_user(request->user().token(), request->user().device())};
@@ -431,6 +451,11 @@ grpc::Status server::CreateRoadmap(grpc::ServerContext* context, CreateRoadmapRe
             std::clog << std::format("client {} tried to create a roadmap with empty name\n", request->user().token());
             status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "empty name not allowed"};
         }
+        else if (!user_is_authorized(request->user()))
+        {
+            std::clog << std::format("client {} unauthorized access to create roadmap\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not authorized"};
+        }
         else
         {
             std::shared_ptr<User> const user{m_database->get_user(request->user().token(), request->user().device())};
@@ -468,6 +493,11 @@ grpc::Status server::GetRoadmaps(grpc::ServerContext* context, GetRoadmapsReques
         {
             status = grpc::Status{grpc::StatusCode::UNAUTHENTICATED, "invalid user"};
         }
+        else if (!user_is_authorized(request->user()))
+        {
+            std::clog << std::format("client {} unauthorized access to get roadmaps\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not authorized"};
+        }
         else
         {
             std::shared_ptr<User> const user{m_database->get_user(request->user().token(), request->user().device())};
@@ -504,6 +534,11 @@ grpc::Status server::GetStudyResources(grpc::ServerContext* context, GetStudyRes
         if (!request->has_user() || !session_is_valid(request->user()))
         {
             status = grpc::Status{grpc::StatusCode::UNAUTHENTICATED, "invalid user"};
+        }
+        else if (!user_is_authorized(request->user()))
+        {
+            std::clog << std::format("client {} unauthorized access to get study resource\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not authorized"};
         }
         else
         {
@@ -547,6 +582,11 @@ grpc::Status server::RenameRoadmap(grpc::ServerContext* context, RenameRoadmapRe
             std::clog << std::format("client {} tried to rename an invalid roadmap\n", request->user().token());
             status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid roadmap"};
         }
+        else if (!user_is_authorized(request->user()))
+        {
+            std::clog << std::format("client {} unauthorized access to get rename roadmap\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not authorized"};
+        }
         else
         {
             std::clog << std::format("client {} renamed roadmap {}\n", request->user().token(), request->roadmap().id());
@@ -581,6 +621,11 @@ grpc::Status server::RemoveRoadmap(grpc::ServerContext* context, RemoveRoadmapRe
             std::clog << std::format("client {} tried to remove an invalid roadmap\n", request->user().token());
             status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid roadmap"};
         }
+        else if (!user_is_authorized(request->user()))
+        {
+            std::clog << std::format("client {} unauthorized access to get remove roadmap\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not authorized"};
+        }
         else
         {
             std::clog << std::format("client {} removed roadmap {}\n", request->user().token(), request->roadmap().id());
@@ -610,6 +655,11 @@ grpc::Status server::SearchRoadmaps(grpc::ServerContext* context, SearchRoadmaps
         if (!request->has_user() || !session_is_valid(request->user()))
         {
             status = grpc::Status{grpc::StatusCode::UNAUTHENTICATED, "invalid user"};
+        }
+        else if (!user_is_authorized(request->user()))
+        {
+            std::clog << std::format("client {} unauthorized access to get search roadmaps\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not authorized"};
         }
         else
         {
@@ -649,6 +699,11 @@ grpc::Status server::CloneRoadmap(grpc::ServerContext* context, CloneRoadmapRequ
         else if (!request->has_roadmap())
         {
             status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid roadmap"};
+        }
+        else if (!user_is_authorized(request->user()))
+        {
+            std::clog << std::format("client {} unauthorized access to get clone a roadmap\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not authorized"};
         }
         else
         {
@@ -696,6 +751,11 @@ grpc::Status server::GetMilestones(grpc::ServerContext* context, GetMilestonesRe
         {
             status = grpc::Status{grpc::StatusCode::UNAUTHENTICATED, "invalid user"};
         }
+        else if (!user_is_authorized(request->user()))
+        {
+            std::clog << std::format("client {} unauthorized access to get milestones\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not authorized"};
+        }
         else
         {
             for (Milestone const& milestone: m_database->get_milestones(request->roadmap_id()))
@@ -740,6 +800,11 @@ grpc::Status server::AddMilestone(grpc::ServerContext* context, AddMilestoneRequ
             std::clog << std::format("client {} tried to add a milestone with an invalid roadmap\n", request->user().token());
             status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid roadmap"};
         }
+        else if (!user_is_authorized(request->user()))
+        {
+            std::clog << std::format("client {} unauthorized access to add a milestone\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not authorized"};
+        }
         else
         {
             if (request->position() > 0)
@@ -779,6 +844,11 @@ grpc::Status server::AddRequirement(grpc::ServerContext* context, AddRequirement
         {
             status = grpc::Status{grpc::StatusCode::UNAUTHENTICATED, "invalid user"};
         }
+        else if (!user_is_authorized(request->user()))
+        {
+            std::clog << std::format("client {} unauthorized access to add add a requirement\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not authorized"};
+        }
         else
         {
             std::clog << std::format("client {} added milestone {} as a requirement for milestone {} in roadmap {}\n", request->user().token(), request->milestone().position(),
@@ -808,6 +878,11 @@ grpc::Status server::GetRequirements(grpc::ServerContext* context, GetRequiremen
         if (!request->has_user() || !session_is_valid(request->user()))
         {
             status = grpc::Status{grpc::StatusCode::UNAUTHENTICATED, "invalid user"};
+        }
+        else if (!user_is_authorized(request->user()))
+        {
+            std::clog << std::format("client {} unauthorized access to get requirements\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not authorized"};
         }
         else
         {
@@ -847,6 +922,11 @@ grpc::Status server::CreateSubject(grpc::ServerContext* context, CreateSubjectRe
             std::clog << std::format("client {} tried to create a subject without verification\n", request->user().token());
             status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not verified"};
         }
+        else if (!user_is_authorized(request->user()))
+        {
+            std::clog << std::format("client {} unauthorized access to create a subject\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not authorized"};
+        }
         else
         {
             Subject const subject{m_database->create_subject(request->name())};
@@ -885,6 +965,11 @@ grpc::Status server::SearchSubjects(grpc::ServerContext* context, SearchSubjects
         {
             std::clog << std::format("client {} tried to search subjects with empty search string\n", request->user().token());
             status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid search string"};
+        }
+        else if (!user_is_authorized(request->user()))
+        {
+            std::clog << std::format("client {} unauthorized access to x\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not authorized"};
         }
         else
         {
@@ -941,6 +1026,11 @@ grpc::Status server::ReorderMilestone(grpc::ServerContext* context, ReorderMiles
             std::clog << std::format("client {} tried to reorder milestones of a roadmap without verification\n", request->user().token());
             status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not verified"};
         }
+        else if (!user_is_authorized(request->user()))
+        {
+            std::clog << std::format("client {} unauthorized access to reorder milestones of a roadmap\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not authorized"};
+        }
         else
         {
             std::clog << std::format("client {} reordered milestone {} to {} in roadmap {}\n", request->user().token(), request->current_position(), request->target_position(), request->roadmap().id());
@@ -985,6 +1075,11 @@ grpc::Status server::RemoveMilestone(grpc::ServerContext* context, RemoveMilesto
             std::clog << std::format("client {} tried to remove a milestone without verification\n", request->user().token());
             status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not verified"};
         }
+        else if (!user_is_authorized(request->user()))
+        {
+            std::clog << std::format("client {} unauthorized access to remove a milestone\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not authorized"};
+        }
         else
         {
             std::clog << std::format("client {} removed milestone {} in roadmap {}\n", request->user().token(), request->roadmap().id(), request->milestone().id(), request->roadmap().id());
@@ -1028,6 +1123,11 @@ grpc::Status server::ChangeMilestoneLevel(grpc::ServerContext* context, ChangeMi
         {
             std::clog << std::format("client {} tried to change the level of a milestone without verification\n", request->user().token());
             status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not verified"};
+        }
+        else if (!user_is_authorized(request->user()))
+        {
+            std::clog << std::format("client {} unauthorized access to change the level of a milestone\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not authorized"};
         }
         else
         {
@@ -1074,6 +1174,11 @@ grpc::Status server::RenameSubject(grpc::ServerContext* context, RenameSubjectRe
             std::clog << std::format("client {} tried to rename a subject without verification\n", request->user().token());
             status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not verified"};
         }
+        else if (!user_is_authorized(request->user()))
+        {
+            std::clog << std::format("client {} unauthorized access to rename a subject\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not authorized"};
+        }
         else
         {
             std::clog << std::format("client {} renamed subject {} to {}\n", request->user().token(), request->id(), request->name());
@@ -1113,6 +1218,11 @@ grpc::Status server::RemoveSubject(grpc::ServerContext* context, RemoveSubjectRe
             std::clog << std::format("client {} tried to remove a subject without verification\n", request->user().token());
             status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not verified"};
         }
+        else if (!user_is_authorized(request->user()))
+        {
+            std::clog << std::format("client {} unauthorized access to remove a subject\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not authorized"};
+        }
         else
         {
             std::clog << std::format("client {} removed subject {}\n", request->user().token(), request->subject().id());
@@ -1151,6 +1261,11 @@ grpc::Status server::MergeSubjects(grpc::ServerContext* context, MergeSubjectsRe
             std::clog << std::format("client {} tried to x without verification\n", request->user().token());
             status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not verified"};
         }
+        else if (!user_is_authorized(request->user()))
+        {
+            std::clog << std::format("client {} unauthorized access to x\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not authorized"};
+        }
         else
         {
             std::clog << std::format("client {} merged subject {} to {}\n", request->user().token(), request->source_subject().id(), request->target_subject().id());
@@ -1182,6 +1297,11 @@ grpc::Status server::GetResources(grpc::ServerContext* context, GetResourcesRequ
         else if (request->subject().id() == 0)
         {
             status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid"};
+        }
+        else if (!user_is_authorized(request->user()))
+        {
+            std::clog << std::format("client {} unauthorized access to x\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not authorized"};
         }
         else
         {
@@ -1229,6 +1349,11 @@ grpc::Status server::CreateResource(grpc::ServerContext* context, CreateResource
         {
             std::clog << std::format("client {} tried to x without verification\n", request->user().token());
             status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not verified"};
+        }
+        else if (!user_is_authorized(request->user()))
+        {
+            std::clog << std::format("client {} unauthorized access to x\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not authorized"};
         }
         else
         {
@@ -1285,6 +1410,11 @@ grpc::Status server::AddResourceToSubject(grpc::ServerContext* context, AddResou
             std::clog << std::format("client {} tried to x without verification\n", request->user().token());
             status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not verified"};
         }
+        else if (!user_is_authorized(request->user()))
+        {
+            std::clog << std::format("client {} unauthorized access to x\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not authorized"};
+        }
         else
         {
             std::clog << std::format("client {} added resource {} to subject {}\n", request->user().token(), request->resource().id(), request->subject().id());
@@ -1333,6 +1463,11 @@ grpc::Status server::DropResourceFromSubject(grpc::ServerContext* context, DropR
             std::clog << std::format("client {} tried to x without verification\n", request->user().token());
             status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not verified"};
         }
+        else if (!user_is_authorized(request->user()))
+        {
+            std::clog << std::format("client {} unauthorized access to x\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not authorized"};
+        }
         else
         {
             std::clog << std::format("client {} dropped resource {} from subject {}\n", request->user().token(), request->resource().id(), request->subject().id());
@@ -1365,6 +1500,11 @@ grpc::Status server::SearchResources(grpc::ServerContext* context, SearchResourc
         else if (request->search_token().empty())
         {
             status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid"};
+        }
+        else if (!user_is_authorized(request->user()))
+        {
+            std::clog << std::format("client {} unauthorized access to x\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not authorized"};
         }
         else
         {
@@ -1414,6 +1554,11 @@ grpc::Status server::MergeResources(grpc::ServerContext* context, MergeResources
             std::clog << std::format("client {} tried to x without verification\n", request->user().token());
             status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not verified"};
         }
+        else if (!user_is_authorized(request->user()))
+        {
+            std::clog << std::format("client {} unauthorized access to x\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not authorized"};
+        }
         else
         {
             std::clog << std::format("client {} merged resource {} to {}\n", request->user().token(), request->source().id(), request->target().id());
@@ -1446,6 +1591,16 @@ grpc::Status server::RemoveResource(grpc::ServerContext* context, RemoveResource
         else if (request->resource().id() == 0)
         {
             status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid"};
+        }
+        else if (!user_is_verified(request->user()))
+        {
+            std::clog << std::format("client {} tried to x without verification\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not verified"};
+        }
+        else if (!user_is_authorized(request->user()))
+        {
+            std::clog << std::format("client {} unauthorized access to x\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not authorized"};
         }
         else
         {
@@ -1484,6 +1639,11 @@ grpc::Status server::EditResource(grpc::ServerContext* context, EditResourceRequ
         {
             std::clog << std::format("client {} tried to x without verification\n", request->user().token());
             status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not verified"};
+        }
+        else if (!user_is_authorized(request->user()))
+        {
+            std::clog << std::format("client {} unauthorized access to x\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not authorized"};
         }
         else
         {
@@ -1564,6 +1724,11 @@ grpc::Status server::GetNerves(grpc::ServerContext* context, GetNervesRequest co
         {
             status = grpc::Status{grpc::StatusCode::UNAUTHENTICATED, "invalid user"};
         }
+        else if (!user_is_authorized(request->user()))
+        {
+            std::clog << std::format("client {} unauthorized access to x\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not authorized"};
+        }
         else
         {
             std::shared_ptr<User> const user{m_database->get_user(request->user().token(), request->user().device())};
@@ -1614,6 +1779,11 @@ grpc::Status server::CreateProvider(grpc::ServerContext* context, CreateProvider
             std::clog << std::format("client {} tried to x without verification\n", request->user().token());
             status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not verified"};
         }
+        else if (!user_is_authorized(request->user()))
+        {
+            std::clog << std::format("client {} unauthorized access to x\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not authorized"};
+        }
         else
         {
             Provider provider{m_database->create_provider(request->provider().name())};
@@ -1658,6 +1828,11 @@ grpc::Status server::AddProvider(grpc::ServerContext* context, AddProviderReques
             std::clog << std::format("client {} tried to x without verification\n", request->user().token());
             status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not verified"};
         }
+        else if (!user_is_authorized(request->user()))
+        {
+            std::clog << std::format("client {} unauthorized access to x\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not authorized"};
+        }
         else
         {
             std::clog << std::format("client {} added provider {} to resource {}\n", request->user().token(), request->provider().id(), request->resource().id());
@@ -1701,6 +1876,11 @@ grpc::Status server::DropProvider(grpc::ServerContext* context, DropProviderRequ
             std::clog << std::format("client {} tried to x without verification\n", request->user().token());
             status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not verified"};
         }
+        else if (!user_is_authorized(request->user()))
+        {
+            std::clog << std::format("client {} unauthorized access to x\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not authorized"};
+        }
         else
         {
             std::clog << std::format("client {} dropped provider {} to resource {}\n", request->user().token(), request->provider().id(), request->resource().id());
@@ -1734,6 +1914,11 @@ grpc::Status server::SearchProviders(grpc::ServerContext* context, SearchProvide
         else if (request->search_token().empty())
         {
             status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "empty search not possible"};
+        }
+        else if (!user_is_authorized(request->user()))
+        {
+            std::clog << std::format("client {} unauthorized access to x\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not authorized"};
         }
         else
         {
@@ -1779,6 +1964,11 @@ grpc::Status server::RenameProvider(grpc::ServerContext* context, RenameProvider
             std::clog << std::format("client {} tried to x without verification\n", request->user().token());
             status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not verified"};
         }
+        else if (!user_is_authorized(request->user()))
+        {
+            std::clog << std::format("client {} unauthorized access to x\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not authorized"};
+        }
         else
         {
             std::clog << std::format("client {} renamed provider {}\n", request->user().token(), 0, request->provider().id());
@@ -1817,6 +2007,11 @@ grpc::Status server::RemoveProvider(grpc::ServerContext* context, RemoveProvider
         {
             std::clog << std::format("client {} tried to x without verification\n", request->user().token());
             status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not verified"};
+        }
+        else if (!user_is_authorized(request->user()))
+        {
+            std::clog << std::format("client {} unauthorized access to x\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not authorized"};
         }
         else
         {
@@ -1861,6 +2056,11 @@ grpc::Status server::MergeProviders(grpc::ServerContext* context, MergeProviders
             std::clog << std::format("client {} tried to x without verification\n", request->user().token());
             status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not verified"};
         }
+        else if (!user_is_authorized(request->user()))
+        {
+            std::clog << std::format("client {} unauthorized access to x\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not authorized"};
+        }
         else
         {
             std::clog << std::format("client {} merged provider {} to {}\n", request->user().token(), 0, request->source().id(), request->target().id());
@@ -1903,6 +2103,11 @@ grpc::Status server::CreatePresenter(grpc::ServerContext* context, CreatePresent
         {
             std::clog << std::format("client {} tried to x without verification\n", request->user().token());
             status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not verified"};
+        }
+        else if (!user_is_authorized(request->user()))
+        {
+            std::clog << std::format("client {} unauthorized access to x\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not authorized"};
         }
         else
         {
@@ -1948,6 +2153,11 @@ grpc::Status server::AddPresenter(grpc::ServerContext* context, AddPresenterRequ
             std::clog << std::format("client {} tried to x without verification\n", request->user().token());
             status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not verified"};
         }
+        else if (!user_is_authorized(request->user()))
+        {
+            std::clog << std::format("client {} unauthorized access to x\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not authorized"};
+        }
         else
         {
             std::clog << std::format("client {} created presenter {} to resource {}\n", request->user().token(), 0, request->presenter().id(), request->resource().id());
@@ -1991,6 +2201,11 @@ grpc::Status server::DropPresenter(grpc::ServerContext* context, DropPresenterRe
             std::clog << std::format("client {} tried to x without verification\n", request->user().token());
             status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not verified"};
         }
+        else if (!user_is_authorized(request->user()))
+        {
+            std::clog << std::format("client {} unauthorized access to x\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not authorized"};
+        }
         else
         {
             std::clog << std::format("client {} dropped presenter {} from resource {}\n", request->user().token(), 0, request->presenter().id(), request->resource().id());
@@ -2024,6 +2239,11 @@ grpc::Status server::SearchPresenters(grpc::ServerContext* context, SearchPresen
         else if (request->search_token().empty())
         {
             status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "empty search is not allowed"};
+        }
+        else if (!user_is_authorized(request->user()))
+        {
+            std::clog << std::format("client {} unauthorized access to x\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not authorized"};
         }
         else
         {
@@ -2069,6 +2289,11 @@ grpc::Status server::RenamePresenter(grpc::ServerContext* context, RenamePresent
             std::clog << std::format("client {} tried to x without verification\n", request->user().token());
             status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not verified"};
         }
+        else if (!user_is_authorized(request->user()))
+        {
+            std::clog << std::format("client {} unauthorized access to x\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not authorized"};
+        }
         else
         {
             std::clog << std::format("client {} renamed presenter {}\n", request->user().token(), request->presenter().id());
@@ -2107,6 +2332,11 @@ grpc::Status server::RemovePresenter(grpc::ServerContext* context, RemovePresent
         {
             std::clog << std::format("client {} tried to x without verification\n", request->user().token());
             status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not verified"};
+        }
+        else if (!user_is_authorized(request->user()))
+        {
+            std::clog << std::format("client {} unauthorized access to x\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not authorized"};
         }
         else
         {
@@ -2151,6 +2381,11 @@ grpc::Status server::MergePresenters(grpc::ServerContext* context, MergePresente
             std::clog << std::format("client {} tried to x without verification\n", request->user().token());
             status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not verified"};
         }
+        else if (!user_is_authorized(request->user()))
+        {
+            std::clog << std::format("client {} unauthorized access to x\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not authorized"};
+        }
         else
         {
             std::clog << std::format("client {} merged presenter {} to {}\n", request->user().token(), request->source().id(), request->target().id());
@@ -2184,6 +2419,11 @@ grpc::Status server::GetTopics(grpc::ServerContext* context, GetTopicsRequest co
         else if (request->subject().id() == 0)
         {
             status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid subject"};
+        }
+        else if (!user_is_authorized(request->user()))
+        {
+            std::clog << std::format("client {} unauthorized access to x\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not authorized"};
         }
         else
         {
@@ -2230,6 +2470,11 @@ grpc::Status server::CreateTopic(grpc::ServerContext* context, CreateTopicReques
         {
             std::clog << std::format("client {} tried to x without verification\n", request->user().token());
             status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not verified"};
+        }
+        else if (!user_is_authorized(request->user()))
+        {
+            std::clog << std::format("client {} unauthorized access to x\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not authorized"};
         }
         else
         {
@@ -2279,6 +2524,11 @@ grpc::Status server::ReorderTopic(grpc::ServerContext* context, ReorderTopicRequ
             std::clog << std::format("client {} tried to x without verification\n", request->user().token());
             status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not verified"};
         }
+        else if (!user_is_authorized(request->user()))
+        {
+            std::clog << std::format("client {} unauthorized access to x\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not authorized"};
+        }
         else
         {
             std::clog << std::format("client {} reordered topic {} to {} in subject {}\n", request->user().token(), request->topic().position(), request->target().position(),
@@ -2322,6 +2572,11 @@ grpc::Status server::RemoveTopic(grpc::ServerContext* context, RemoveTopicReques
         {
             std::clog << std::format("client {} tried to x without verification\n", request->user().token());
             status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not verified"};
+        }
+        else if (!user_is_authorized(request->user()))
+        {
+            std::clog << std::format("client {} unauthorized access to x\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not authorized"};
         }
         else
         {
@@ -2369,6 +2624,11 @@ grpc::Status server::MergeTopics(grpc::ServerContext* context, MergeTopicsReques
         {
             std::clog << std::format("client {} tried to x without verification\n", request->user().token());
             status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not verified"};
+        }
+        else if (!user_is_authorized(request->user()))
+        {
+            std::clog << std::format("client {} unauthorized access to x\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not authorized"};
         }
         else
         {
@@ -2422,6 +2682,11 @@ grpc::Status server::EditTopic(grpc::ServerContext* context, EditTopicRequest co
         {
             std::clog << std::format("client {} tried to x without verification\n", request->user().token());
             status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not verified"};
+        }
+        else if (!user_is_authorized(request->user()))
+        {
+            std::clog << std::format("client {} unauthorized access to x\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not authorized"};
         }
         else
         {
@@ -2498,6 +2763,11 @@ grpc::Status server::MoveTopic(grpc::ServerContext* context, MoveTopicRequest co
             std::clog << std::format("client {} tried to x without verification\n", request->user().token());
             status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not verified"};
         }
+        else if (!user_is_authorized(request->user()))
+        {
+            std::clog << std::format("client {} unauthorized access to x\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not authorized"};
+        }
         else
         {
             std::clog << std::format("client {} moved topic {} in subject {} to topic {} in subject {}\n", request->user().token(), request->source_topic().position(),
@@ -2537,6 +2807,11 @@ grpc::Status server::SearchTopics(grpc::ServerContext* context, SearchTopicsRequ
         else if (request->search_token().empty())
         {
             status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "empty search not allowed"};
+        }
+        else if (!user_is_authorized(request->user()))
+        {
+            std::clog << std::format("client {} unauthorized access to x\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not authorized"};
         }
         else
         {
@@ -2578,6 +2853,11 @@ grpc::Status server::GetSections(grpc::ServerContext* context, GetSectionsReques
         else if (request->resource().id() == 0)
         {
             status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid resource"};
+        }
+        else if (!user_is_authorized(request->user()))
+        {
+            std::clog << std::format("client {} unauthorized access to x\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not authorized"};
         }
         else
         {
@@ -2624,6 +2904,11 @@ grpc::Status server::CreateSection(grpc::ServerContext* context, CreateSectionRe
         {
             std::clog << std::format("client {} tried to x without verification\n", request->user().token());
             status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not verified"};
+        }
+        else if (!user_is_authorized(request->user()))
+        {
+            std::clog << std::format("client {} unauthorized access to x\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not authorized"};
         }
         else
         {
@@ -2673,6 +2958,11 @@ grpc::Status server::ReorderSection(grpc::ServerContext* context, ReorderSection
             std::clog << std::format("client {} tried to x without verification\n", request->user().token());
             status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not verified"};
         }
+        else if (!user_is_authorized(request->user()))
+        {
+            std::clog << std::format("client {} unauthorized access to x\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not authorized"};
+        }
         else
         {
             std::clog << std::format("client {} reordered section {} to {} in resource {}\n", request->user().token(), request->source().position(), request->target().position(),
@@ -2716,6 +3006,11 @@ grpc::Status server::RemoveSection(grpc::ServerContext* context, RemoveSectionRe
         {
             std::clog << std::format("client {} tried to x without verification\n", request->user().token());
             status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not verified"};
+        }
+        else if (!user_is_authorized(request->user()))
+        {
+            std::clog << std::format("client {} unauthorized access to x\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not authorized"};
         }
         else
         {
@@ -2764,6 +3059,11 @@ grpc::Status server::MergeSections(grpc::ServerContext* context, MergeSectionsRe
             std::clog << std::format("client {} tried to x without verification\n", request->user().token());
             status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not verified"};
         }
+        else if (!user_is_authorized(request->user()))
+        {
+            std::clog << std::format("client {} unauthorized access to x\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not authorized"};
+        }
         else
         {
             std::clog << std::format("client {} merged sections {} and {} in resource {}\n", request->user().token(), request->source().position(), request->target().position(),
@@ -2808,6 +3108,11 @@ grpc::Status server::EditSection(grpc::ServerContext* context, EditSectionReques
         {
             std::clog << std::format("client {} tried to x without verification\n", request->user().token());
             status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not verified"};
+        }
+        else if (!user_is_authorized(request->user()))
+        {
+            std::clog << std::format("client {} unauthorized access to x\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not authorized"};
         }
         else
         {
@@ -2883,6 +3188,11 @@ grpc::Status server::MoveSection(grpc::ServerContext* context, MoveSectionReques
             std::clog << std::format("client {} tried to x without verification\n", request->user().token());
             status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not verified"};
         }
+        else if (!user_is_authorized(request->user()))
+        {
+            std::clog << std::format("client {} unauthorized access to x\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not authorized"};
+        }
         else
         {
             std::clog << std::format("client {} moved section {} in resource {} to section {} in resource {}\n", request->user().token(), request->source_section().position(),
@@ -2921,6 +3231,11 @@ grpc::Status server::SearchSections(grpc::ServerContext* context, SearchSections
         else if (request->search_token().empty())
         {
             status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "empty search token not allowed"};
+        }
+        else if (!user_is_authorized(request->user()))
+        {
+            std::clog << std::format("client {} unauthorized access to x\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not authorized"};
         }
         else
         {
@@ -2971,6 +3286,11 @@ grpc::Status server::CreateCard(grpc::ServerContext* context, CreateCardRequest 
             std::clog << std::format("client {} tried to x without verification\n", request->user().token());
             status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not verified"};
         }
+        else if (!user_is_authorized(request->user()))
+        {
+            std::clog << std::format("client {} unauthorized access to x\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not authorized"};
+        }
         else
         {
             Card* card{response->mutable_card()};
@@ -3018,6 +3338,11 @@ grpc::Status server::AddCardToSection(grpc::ServerContext* context, AddCardToSec
         {
             std::clog << std::format("client {} tried to x without verification\n", request->user().token());
             status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not verified"};
+        }
+        else if (!user_is_authorized(request->user()))
+        {
+            std::clog << std::format("client {} unauthorized access to x\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not authorized"};
         }
         else
         {
@@ -3067,6 +3392,11 @@ grpc::Status server::AddCardToTopic(grpc::ServerContext* context, AddCardToTopic
             std::clog << std::format("client {} tried to x without verification\n", request->user().token());
             status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not verified"};
         }
+        else if (!user_is_authorized(request->user()))
+        {
+            std::clog << std::format("client {} unauthorized access to x\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not authorized"};
+        }
         else
         {
             std::clog << std::format("client {} added card {} to topic {} in subject {}\n", request->user().token(), request->card().id(), request->topic().position(),
@@ -3112,6 +3442,11 @@ grpc::Status server::RemoveCard(grpc::ServerContext* context, RemoveCardRequest 
         {
             std::clog << std::format("client {} tried to x without verification\n", request->user().token());
             status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not verified"};
+        }
+        else if (!user_is_authorized(request->user()))
+        {
+            std::clog << std::format("client {} unauthorized access to x\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not authorized"};
         }
         else
         {
@@ -3160,6 +3495,11 @@ grpc::Status server::MergeCards(grpc::ServerContext* context, MergeCardsRequest 
             std::clog << std::format("client {} tried to x without verification\n", request->user().token());
             status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not verified"};
         }
+        else if (!user_is_authorized(request->user()))
+        {
+            std::clog << std::format("client {} unauthorized access to x\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not authorized"};
+        }
         else
         {
             std::clog << std::format("client {} merged cards {} and {}\n", request->user().token(), request->source().id(), request->target().id());
@@ -3197,6 +3537,11 @@ grpc::Status server::SearchCards(grpc::ServerContext* context, SearchCardsReques
         else if (request->search_token().empty())
         {
             status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "empty search token not allowed"};
+        }
+        else if (!user_is_authorized(request->user()))
+        {
+            std::clog << std::format("client {} unauthorized access to x\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not authorized"};
         }
         else
         {
@@ -3255,6 +3600,11 @@ grpc::Status server::MoveCardToSection(grpc::ServerContext* context, MoveCardToS
             std::clog << std::format("client {} tried to x without verification\n", request->user().token());
             status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not verified"};
         }
+        else if (!user_is_authorized(request->user()))
+        {
+            std::clog << std::format("client {} unauthorized access to x\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not authorized"};
+        }
         else
         {
             std::clog << std::format("client {} moved card {} to section {} in resource {}\n", request->user().token(), request->card().id(), request->target().position(),
@@ -3299,6 +3649,11 @@ grpc::Status server::MarkSectionAsReviewed(grpc::ServerContext* context, MarkSec
             std::clog << std::format("client {} tried to x without verification\n", request->user().token());
             status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not verified"};
         }
+        else if (!user_is_authorized(request->user()))
+        {
+            std::clog << std::format("client {} unauthorized access to x\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not authorized"};
+        }
         else
         {
             std::clog << std::format("client {} marked section {} in resource {} as reviewed\n", request->user().token(), request->section().position(), request->resource().id());
@@ -3341,6 +3696,11 @@ grpc::Status server::MarkSectionAsCompleted(grpc::ServerContext* context, MarkSe
         {
             std::clog << std::format("client {} tried to mark a section as completed without verification\n", request->user().token());
             status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not verified"};
+        }
+        else if (!user_is_authorized(request->user()))
+        {
+            std::clog << std::format("client {} unauthorized access to x\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not authorized"};
         }
         else
         {
@@ -3388,6 +3748,11 @@ grpc::Status server::GetPracticeCards(grpc::ServerContext* context, GetPracticeC
         {
             std::clog << std::format("client {} tried to x without verification\n", request->user().token());
             status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not verified"};
+        }
+        else if (!user_is_authorized(request->user()))
+        {
+            std::clog << std::format("client {} unauthorized access to x\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not authorized"};
         }
         else
         {
@@ -3437,6 +3802,11 @@ grpc::Status server::GetPracticeTopics(grpc::ServerContext* context, GetPractice
         {
             std::clog << std::format("client {} tried to x without verification\n", request->user().token());
             status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not verified"};
+        }
+        else if (!user_is_authorized(request->user()))
+        {
+            std::clog << std::format("client {} unauthorized access to x\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not authorized"};
         }
         else
         {
@@ -3498,6 +3868,11 @@ grpc::Status server::MoveCardToTopic(grpc::ServerContext* context, MoveCardToTop
             std::clog << std::format("client {} tried to x without verification\n", request->user().token());
             status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not verified"};
         }
+        else if (!user_is_authorized(request->user()))
+        {
+            std::clog << std::format("client {} unauthorized access to x\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not authorized"};
+        }
         else
         {
             std::clog << std::format("client {} moved card {} to topic {} in subject {}\n", request->user().token(), request->card().id(), request->target_topic().position(),
@@ -3547,6 +3922,11 @@ grpc::Status server::CreateAssessment(grpc::ServerContext* context, CreateAssess
             std::clog << std::format("client {} tried to x without verification\n", request->user().token());
             status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not verified"};
         }
+        else if (!user_is_authorized(request->user()))
+        {
+            std::clog << std::format("client {} unauthorized access to x\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not authorized"};
+        }
         else
         {
             std::clog << std::format("client {} created assessment {} in topic {} in subject {}\n", request->user().token(), request->card().id(), request->topic().position(),
@@ -3585,6 +3965,11 @@ grpc::Status server::GetAssessments(grpc::ServerContext* context, GetAssessments
         else if (request->topic().position() == 0)
         {
             status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid topic"};
+        }
+        else if (!user_is_authorized(request->user()))
+        {
+            std::clog << std::format("client {} unauthorized access to x\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not authorized"};
         }
         else
         {
@@ -3638,6 +4023,11 @@ grpc::Status server::ExpandAssessment(grpc::ServerContext* context, ExpandAssess
             std::clog << std::format("client {} tried to x without verification\n", request->user().token());
             status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not verified"};
         }
+        else if (!user_is_authorized(request->user()))
+        {
+            std::clog << std::format("client {} unauthorized access to x\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not authorized"};
+        }
         else
         {
             std::clog << std::format("client {} expanded assessment {} with topic {} {} in subject {}\n", request->user().token(), request->card().id(),
@@ -3686,6 +4076,11 @@ grpc::Status server::DiminishAssessment(grpc::ServerContext* context, DiminishAs
             std::clog << std::format("client {} tried to x without verification\n", request->user().token());
             status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not verified"};
         }
+        else if (!user_is_authorized(request->user()))
+        {
+            std::clog << std::format("client {} unauthorized access to x\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not authorized"};
+        }
         else
         {
             std::clog << std::format("client {} diminished assessment {} with topic {} {} in subject {}\n", request->user().token(), request->card().id(),
@@ -3724,6 +4119,11 @@ grpc::Status server::IsAssimilated(grpc::ServerContext* context, IsAssimilatedRe
         else if (request->topic().position() == 0)
         {
             status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid topic"};
+        }
+        else if (!user_is_authorized(request->user()))
+        {
+            std::clog << std::format("client {} unauthorized access to x\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not authorized"};
         }
         else
         {
@@ -3765,6 +4165,11 @@ grpc::Status server::GetTopicCoverage(grpc::ServerContext* context, GetTopicCove
         {
             status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid assessment"};
         }
+        else if (!user_is_authorized(request->user()))
+        {
+            std::clog << std::format("client {} unauthorized access to x\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not authorized"};
+        }
         else
         {
             for (Topic const& topic: m_database->get_topic_coverage(request->subject().id(), request->assessment().card().id()))
@@ -3801,6 +4206,11 @@ grpc::Status server::GetSubjectAssessments(grpc::ServerContext* context, GetSubj
         else if (request->subject().id() == 0)
         {
             status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid subject"};
+        }
+        else if (!user_is_authorized(request->user()))
+        {
+            std::clog << std::format("client {} unauthorized access to x\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not authorized"};
         }
         else
         {
@@ -3844,6 +4254,11 @@ grpc::Status server::EditCard(grpc::ServerContext* context, EditCardRequest cons
         {
             std::clog << std::format("client {} tried to x without verification\n", request->user().token());
             status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not verified"};
+        }
+        else if (!user_is_authorized(request->user()))
+        {
+            std::clog << std::format("client {} unauthorized access to x\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not authorized"};
         }
         else
         {
@@ -3906,6 +4321,11 @@ grpc::Status server::CreateBlock(grpc::ServerContext* context, CreateBlockReques
             std::clog << std::format("client {} tried to x without verification\n", request->user().token());
             status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not verified"};
         }
+        else if (!user_is_authorized(request->user()))
+        {
+            std::clog << std::format("client {} unauthorized access to x\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not authorized"};
+        }
         else
         {
             Block* block{response->mutable_block()};
@@ -3940,6 +4360,11 @@ grpc::Status server::GetBlocks(grpc::ServerContext* context, GetBlocksRequest co
         else if (request->card().id() == 0)
         {
             status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid card"};
+        }
+        else if (!user_is_authorized(request->user()))
+        {
+            std::clog << std::format("client {} unauthorized access to x\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not authorized"};
         }
         else
         {
@@ -3986,6 +4411,11 @@ grpc::Status server::RemoveBlock(grpc::ServerContext* context, RemoveBlockReques
         {
             std::clog << std::format("client {} tried to x without verification\n", request->user().token());
             status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not verified"};
+        }
+        else if (!user_is_authorized(request->user()))
+        {
+            std::clog << std::format("client {} unauthorized access to x\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not authorized"};
         }
         else
         {
@@ -4038,6 +4468,11 @@ grpc::Status server::EditBlock(grpc::ServerContext* context, EditBlockRequest co
         {
             std::clog << std::format("client {} tried to x without verification\n", request->user().token());
             status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not verified"};
+        }
+        else if (!user_is_authorized(request->user()))
+        {
+            std::clog << std::format("client {} unauthorized access to x\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not authorized"};
         }
         else
         {
@@ -4122,6 +4557,11 @@ grpc::Status server::ReorderBlock(grpc::ServerContext* context, ReorderBlockRequ
             std::clog << std::format("client {} tried to x without verification\n", request->user().token());
             status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not verified"};
         }
+        else if (!user_is_authorized(request->user()))
+        {
+            std::clog << std::format("client {} unauthorized access to x\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not authorized"};
+        }
         else
         {
             std::clog << std::format("client {} reordered block {} to {} in card {}\n", request->user().token(), request->block().position(), request->target().position(),
@@ -4170,6 +4610,11 @@ grpc::Status server::MergeBlocks(grpc::ServerContext* context, MergeBlocksReques
             std::clog << std::format("client {} tried to x without verification\n", request->user().token());
             status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not verified"};
         }
+        else if (!user_is_authorized(request->user()))
+        {
+            std::clog << std::format("client {} unauthorized access to x\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not authorized"};
+        }
         else
         {
             std::clog << std::format("client {} merged blocks {} and {} in card {}\n", request->user().token(), request->block().position(), request->target().position(),
@@ -4214,6 +4659,11 @@ grpc::Status server::SplitBlock(grpc::ServerContext* context, SplitBlockRequest 
             std::clog << std::format("client {} tried to x without verification\n", request->user().token());
             status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not verified"};
         }
+        else if (!user_is_authorized(request->user()))
+        {
+            std::clog << std::format("client {} unauthorized access to x\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not authorized"};
+        }
         else
         {
             for (auto const& [position, block]: m_database->split_block(request->card().id(), request->block().position()))
@@ -4257,6 +4707,11 @@ grpc::Status server::MarkCardAsReviewed(grpc::ServerContext* context, MarkCardAs
             std::clog << std::format("client {} tried to x without verification\n", request->user().token());
             status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not verified"};
         }
+        else if (!user_is_authorized(request->user()))
+        {
+            std::clog << std::format("client {} unauthorized access to x\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not authorized"};
+        }
         else
         {
             std::clog << std::format("client {} marked card {} as reviewed\n", request->user().token(), request->card().id());
@@ -4294,6 +4749,11 @@ grpc::Status server::GetSectionCards(grpc::ServerContext* context, flashback::Ge
         else if (request->section().position() == 0)
         {
             status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid section"};
+        }
+        else if (!user_is_authorized(request->user()))
+        {
+            std::clog << std::format("client {} unauthorized access to x\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not authorized"};
         }
         else
         {
@@ -4336,6 +4796,11 @@ grpc::Status server::GetTopicCards(grpc::ServerContext* context, flashback::GetT
         else if (request->topic().position() == 0)
         {
             status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid topic"};
+        }
+        else if (!user_is_authorized(request->user()))
+        {
+            std::clog << std::format("client {} unauthorized access to x\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not authorized"};
         }
         else
         {
@@ -4392,6 +4857,11 @@ grpc::Status server::MoveBlock(grpc::ServerContext* context, MoveBlockRequest co
             std::clog << std::format("client {} tried to x without verification\n", request->user().token());
             status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not verified"};
         }
+        else if (!user_is_authorized(request->user()))
+        {
+            std::clog << std::format("client {} unauthorized access to x\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not authorized"};
+        }
         else
         {
             std::clog << std::format("client {} moved block from position {} in card {} to position {} in card {}\n", request->user().token(), request->block().position(), request->card().id(), request->target_block().position(), request->target_card().id());
@@ -4429,6 +4899,11 @@ grpc::Status server::Study(grpc::ServerContext* context, StudyRequest const* req
         else if (request->duration() < 3)
         {
             status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid duration", "reading a card less than 3 seconds is not acceptable"};
+        }
+        else if (!user_is_authorized(request->user()))
+        {
+            std::clog << std::format("client {} unauthorized access to x\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not authorized"};
         }
         else
         {
@@ -4478,6 +4953,11 @@ grpc::Status server::MakeProgress(grpc::ServerContext* context, MakeProgressRequ
             std::clog << std::format("client {} tried to x without verification\n", request->user().token());
             status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not verified"};
         }
+        else if (!user_is_authorized(request->user()))
+        {
+            std::clog << std::format("client {} unauthorized access to x\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not authorized"};
+        }
         else
         {
             std::clog << std::format("client {} made progress on card {} in subject {} level {} in {} seconds\n", request->user().token(), request->card().id(),
@@ -4509,6 +4989,11 @@ grpc::Status server::GetProgressWeight(grpc::ServerContext* context, GetProgress
         if (!request->has_user() || !session_is_valid(request->user()))
         {
             status = grpc::Status{grpc::StatusCode::UNAUTHENTICATED, "invalid user"};
+        }
+        else if (!user_is_authorized(request->user()))
+        {
+            std::clog << std::format("client {} unauthorized access to x\n", request->user().token());
+            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not authorized"};
         }
         else
         {
@@ -4647,4 +5132,9 @@ bool server::session_is_valid(User const& user) const
 bool server::user_is_verified(User const& user) const
 {
     return m_database->user_is_verified(user.token(), user.device());
+}
+
+bool server::user_is_authorized(User const& user) const
+{
+    return m_database->user_is_authorized(user.token(), user.device());
 }

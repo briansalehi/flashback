@@ -215,6 +215,11 @@ bool database::user_is_verified(std::string_view token, std::string_view device)
     return query("select user_is_verified($1, $2)", token, device).at(0).at(0).as<bool>();
 }
 
+bool database::user_is_authorized(std::string_view token, std::string_view device) const
+{
+    return query("select user_is_authorized($1, $2)", token, device).at(0).at(0).as<bool>();
+}
+
 Roadmap database::create_roadmap(uint64_t const user_id, std::string name) const
 {
     if (name.empty())

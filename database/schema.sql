@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict ooXcExsfFNFUYPrBDUJuTDI0THdNam5AziusvJ9rJFQtqA4BQBP3xbU54Q6vfu0
+\restrict nYA4onVHBzcgIeJejT8S2A5iXI2cwziAYhcXrZ2VXvzYJNk6uCP6CW69m1PlejZ
 
 -- Dumped from database version 18.3
 -- Dumped by pg_dump version 18.3
@@ -466,9 +466,12 @@ ALTER PROCEDURE flashback.change_section_pattern(IN resource_id integer, IN reso
 CREATE PROCEDURE flashback.change_topic_level(IN subject_id integer, IN topic_position integer, IN topic_level flashback.expertise_level, IN target_level flashback.expertise_level)
     LANGUAGE plpgsql
     AS $$
+declare free_position integer;
 begin
     if topic_level <> target_level then
-        update topics set level = target_level where subject = subject_id and level = topic_level and position = topic_position;
+        select max(position) + 1 into free_position from topics where subject = subject_id and level = target_level;
+        update topics set level = target_level, position = free_position where subject = subject_id and level = topic_level and position = topic_position;
+        call reorder_topic(subject_id, target_level, free_position, target_position);
     end if;
 end; $$;
 
@@ -3301,6 +3304,22 @@ CREATE FUNCTION flashback.user_is_active(email character varying) RETURNS boolea
 ALTER FUNCTION flashback.user_is_active(email character varying) OWNER TO flashback;
 
 --
+-- Name: user_is_authorized(character varying, character varying); Type: FUNCTION; Schema: flashback; Owner: flashback
+--
+
+CREATE FUNCTION flashback.user_is_authorized(user_token character varying, user_device character varying) RETURNS boolean
+    LANGUAGE plpgsql
+    AS $$
+declare current_state user_state; 
+begin
+    select u.state into current_state from users u join sessions s on s.user = u.id where u.id = s.user and s.token = user_token and s.device = user_device;
+    return coalesce(current_state, 'inactive'::user_state) = 'active'::user_state;
+end; $$;
+
+
+ALTER FUNCTION flashback.user_is_authorized(user_token character varying, user_device character varying) OWNER TO flashback;
+
+--
 -- Name: user_is_verified(character varying, character varying); Type: FUNCTION; Schema: flashback; Owner: flashback
 --
 
@@ -4354,5 +4373,5 @@ GRANT ALL ON SCHEMA public TO brian;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict ooXcExsfFNFUYPrBDUJuTDI0THdNam5AziusvJ9rJFQtqA4BQBP3xbU54Q6vfu0
+\unrestrict nYA4onVHBzcgIeJejT8S2A5iXI2cwziAYhcXrZ2VXvzYJNk6uCP6CW69m1PlejZ
 
