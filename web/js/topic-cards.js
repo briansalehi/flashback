@@ -1,9 +1,11 @@
+let currentSubjectName = UI.getUrlParam('subjectName');
+
 function displayBreadcrumb() {
     const subjectId = UI.getUrlParam('subjectId');
-    const subjectName = UI.getUrlParam('subjectName');
+    const subjectName = currentSubjectName || UI.getUrlParam('subjectName');
     const roadmapId = UI.getUrlParam('roadmapId');
     const roadmapName = UI.getUrlParam('roadmapName');
-    const topicName = UI.getUrlParam('name');
+    const topicName = currentTopicName || UI.getUrlParam('name');
 
     const breadcrumbItems = [];
 
@@ -37,15 +39,17 @@ window.addEventListener('DOMContentLoaded', () => {
     const subjectId = parseInt(UI.getUrlParam('subjectId'));
     const topicPosition = parseInt(UI.getUrlParam('topicPosition'));
     const topicLevel = parseInt(UI.getUrlParam('topicLevel'));
-    const topicName = UI.getUrlParam('name');
+    
+    currentTopicName = UI.getUrlParam('name');
+    currentTopicLevel = topicLevel;
 
     if (isNaN(subjectId) || isNaN(topicPosition) || isNaN(topicLevel)) {
         window.location.href = '/home.html';
         return;
     }
 
-    document.getElementById('topic-name').textContent = topicName || 'Topic';
-    document.title = `${topicName || 'Topic'} - Flashback`;
+    document.getElementById('topic-name').textContent = currentTopicName || 'Topic';
+    document.title = `${currentTopicName || 'Topic'} - Flashback`;
 
     // Display topic level badge
     const levelNames = ['Surface', 'Depth', 'Origin'];
@@ -73,8 +77,8 @@ window.addEventListener('DOMContentLoaded', () => {
         editTopicBtn.addEventListener('click', () => {
             UI.toggleElement('edit-topic-modal', true);
             document.body.style.overflow = 'hidden';
-            document.getElementById('edit-topic-name').value = topicName || '';
-            document.getElementById('edit-topic-level').value = topicLevel;
+            document.getElementById('edit-topic-name').value = currentTopicName || '';
+            document.getElementById('edit-topic-level').value = currentTopicLevel;
             setTimeout(() => {
                 document.getElementById('edit-topic-name').focus();
             }, 100);
@@ -107,6 +111,10 @@ window.addEventListener('DOMContentLoaded', () => {
             try {
                 await client.editTopic(subjectId, topicLevel, topicPosition, newName, newLevel);
 
+                // Update the global state
+                currentTopicName = newName;
+                currentTopicLevel = newLevel;
+
                 // Update the page title and topic name display
                 document.getElementById('topic-name').textContent = newName;
                 document.title = `${newName} - Flashback`;
@@ -123,6 +131,11 @@ window.addEventListener('DOMContentLoaded', () => {
                 currentUrl.searchParams.set('name', newName);
                 currentUrl.searchParams.set('topicLevel', newLevel);
                 window.history.replaceState({}, '', currentUrl);
+
+                // Update breadcrumb and re-render cards and assessments to update links with the new topic name
+                displayBreadcrumb();
+                renderCards(currentCardsData);
+                renderAssessments(currentAssessmentsData);
 
                 closeEditTopic();
                 UI.setButtonLoading('save-edit-topic-btn', false);
@@ -472,6 +485,10 @@ window.addEventListener('DOMContentLoaded', () => {
 });
 
 let newlyCreatedCardId = null;
+let currentCardsData = [];
+let currentAssessmentsData = [];
+let currentTopicName = UI.getUrlParam('name');
+let currentTopicLevel = parseInt(UI.getUrlParam('topicLevel'));
 
 // Global state for merge cards
 let mergeState = {
@@ -499,6 +516,7 @@ async function loadCards() {
         const topicLevel = parseInt(UI.getUrlParam('topicLevel'));
 
         const cards = await client.getTopicCards(subjectId, topicPosition, topicLevel);
+        currentCardsData = cards;
 
         UI.toggleElement('loading', false);
 
@@ -523,10 +541,10 @@ function renderCards(cards) {
     const roadmapId = UI.getUrlParam('roadmapId') || '';
     const roadmapName = UI.getUrlParam('roadmapName') || '';
     const subjectId = UI.getUrlParam('subjectId') || '';
-    const subjectName = UI.getUrlParam('subjectName') || '';
+    const subjectName = currentSubjectName || UI.getUrlParam('subjectName') || '';
     const topicPosition = UI.getUrlParam('topicPosition') || '';
-    const topicLevel = UI.getUrlParam('topicLevel') || '';
-    const topicName = UI.getUrlParam('name') || '';
+    const topicLevel = currentTopicLevel !== undefined ? currentTopicLevel : (UI.getUrlParam('topicLevel') || '');
+    const topicName = currentTopicName || UI.getUrlParam('name') || '';
     const milestoneLevel = UI.getUrlParam('milestoneLevel') || topicLevel;
 
     cards.forEach(card => {
@@ -936,6 +954,7 @@ async function loadAssessments() {
 
     try {
         const assessments = await client.getAssessments(subjectId, topicLevel, topicPosition);
+        currentAssessmentsData = assessments || [];
 
         UI.toggleElement('assessments-loading', false);
 
@@ -960,10 +979,10 @@ function renderAssessments(assessments) {
     const roadmapId = UI.getUrlParam('roadmapId') || '';
     const roadmapName = UI.getUrlParam('roadmapName') || '';
     const subjectId = UI.getUrlParam('subjectId') || '';
-    const subjectName = UI.getUrlParam('subjectName') || '';
-    const topicName = UI.getUrlParam('name') || '';
+    const subjectName = currentSubjectName || UI.getUrlParam('subjectName') || '';
+    const topicName = currentTopicName || UI.getUrlParam('name') || '';
     const topicPosition = UI.getUrlParam('topicPosition') || '';
-    const topicLevel = UI.getUrlParam('topicLevel') || '';
+    const topicLevel = currentTopicLevel !== undefined ? currentTopicLevel : (UI.getUrlParam('topicLevel') || '');
     const milestoneLevel = UI.getUrlParam('milestoneLevel') || topicLevel;
 
     assessments.forEach(card => {

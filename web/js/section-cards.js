@@ -104,6 +104,7 @@ window.addEventListener('DOMContentLoaded', () => {
     const sectionPosition = parseInt(UI.getUrlParam('sectionPosition'));
     const sectionState = parseInt(UI.getUrlParam('sectionState')) || 0;
     const sectionName = UI.getUrlParam('name');
+    currentSectionName = sectionName;
     const resourceName = UI.getUrlParam('resourceName');
 
     if (isNaN(resourceId) || isNaN(sectionPosition)) {
@@ -369,6 +370,9 @@ window.addEventListener('DOMContentLoaded', () => {
             try {
                 await client.editSection(resourceId, sectionPosition, newName, newLink);
 
+                // Update the global state
+                currentSectionName = newName;
+
                 closeEditSection();
                 UI.setButtonLoading('save-edit-section-btn', false);
 
@@ -382,8 +386,9 @@ window.addEventListener('DOMContentLoaded', () => {
                 currentUrl.searchParams.set('sectionLink', newLink);
                 window.history.replaceState({}, '', currentUrl);
 
-                // Update breadcrumb to reflect the new section name
+                // Update breadcrumb and re-render cards to update links with the new section name
                 displayBreadcrumb();
+                renderCards(currentCardsData);
 
                 UI.showSuccess('Section updated successfully');
             } catch (err) {
@@ -596,6 +601,8 @@ window.addEventListener('DOMContentLoaded', () => {
     loadCards();
 });
 
+let currentSectionName = UI.getUrlParam('name');
+let currentCardsData = [];
 let newlyCreatedCardId = null;
 
 // Global state for merge cards
@@ -623,6 +630,7 @@ async function loadCards() {
         const sectionPosition = UI.getUrlParam('sectionPosition');
 
         const cards = await client.getSectionCards(resourceId, sectionPosition);
+        currentCardsData = cards;
 
         UI.toggleElement('loading', false);
 
@@ -644,7 +652,7 @@ function renderCards(cards) {
     container.innerHTML = '';
 
     const stateNames = ['draft', 'reviewed', 'completed', 'approved', 'released', 'rejected'];
-    const sectionName = UI.getUrlParam('name') || '';
+    const sectionName = currentSectionName || UI.getUrlParam('name') || '';
     const resourceName = UI.getUrlParam('resourceName') || '';
     const resourceId = UI.getUrlParam('resourceId') || '';
     const sectionPosition = UI.getUrlParam('sectionPosition') || '';
@@ -769,7 +777,7 @@ function displayBreadcrumb() {
     const level = UI.getUrlParam('level');
     const currentTab = UI.getUrlParam('tab') || 'resources';
     const sectionPosition = UI.getUrlParam('sectionPosition');
-    const sectionName = UI.getUrlParam('name');
+    const sectionName = currentSectionName || UI.getUrlParam('name');
 
     const breadcrumbItems = [];
 

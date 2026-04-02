@@ -217,14 +217,18 @@ window.addEventListener('DOMContentLoaded', () => {
                 closeRename();
                 UI.setButtonLoading('save-rename-subject-btn', false);
 
+                // Update the global state
+                subjectName = newName;
+
                 // Update the URL and page
-                const newUrl = `subject.html?id=${subjectId}&name=${encodeURIComponent(newName)}&roadmapId=${roadmapId || ''}&roadmapName=${encodeURIComponent(UI.getUrlParam('roadmapName') || '')}&level=${UI.getUrlParam('level') || ''}`;
+                const newUrl = `subject.html?id=${subjectId}&name=${encodeURIComponent(newName)}&roadmapId=${roadmapId || ''}&roadmapName=${encodeURIComponent(roadmapName || '')}&level=${UI.getUrlParam('level') || ''}`;
                 window.history.replaceState({}, '', newUrl);
                 document.getElementById('subject-name').textContent = newName;
                 document.title = `${newName} - Flashback`;
 
                 // Update breadcrumb and re-render resources to update links with the new subject name
                 displayBreadcrumb(roadmapId);
+                renderTopics(currentTopicsData, parseInt(UI.getUrlParam('level') || '0'));
                 renderResources(currentResourcesData);
 
                 UI.showSuccess('Subject renamed successfully');
@@ -1386,7 +1390,7 @@ async function startPracticeMode() {
 async function displayBreadcrumb(roadmapId) {
     if (!roadmapId) return;
     
-    const subjectName = UI.getUrlParam('name') || '';
+    const currentSubjectName = subjectName || UI.getUrlParam('name') || '';
 
     if (roadmapName) {
         const breadcrumbItems = [
