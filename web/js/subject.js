@@ -959,11 +959,12 @@ window.addEventListener('DOMContentLoaded', () => {
 
             UI.setButtonLoading('confirm-add-resource-btn', true);
             try {
+                const resourceName = window.currentlySelectedResource.name;
                 await client.addResourceToSubject(parseInt(subjectId), window.currentlySelectedResource.id);
 
                 closeResourceModal();
                 loadResources(); // Reload the resources list
-                UI.showSuccess(`Resource "${window.currentlySelectedResource.name}" added successfully`);
+                UI.showSuccess(`Resource "${resourceName}" added successfully`);
             } catch (err) {
                 console.error('Add resource failed:', err);
                 UI.showError('Failed to add resource: ' + (err.message || 'Unknown error'));

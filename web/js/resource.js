@@ -555,19 +555,20 @@ window.addEventListener('DOMContentLoaded', () => {
 
                 // Update the page and URL with new data
                 currentResourceData = { id: resourceId, name, type, pattern, link, production, expiration };
-                document.getElementById('resource-name').textContent = name;
+                resourceName = name; // Update global resourceName
+                
+                // Update page header with icon
+                const resourceNameHeader = document.getElementById('resource-name');
+                if (resourceNameHeader) {
+                    const icon = UI.getResourceIcon(type);
+                    resourceNameHeader.innerHTML = `<span class="resource-icon">${icon}</span> ${UI.escapeHtml(name || 'Resource')}`;
+                }
                 document.title = `${name} - Flashback`;
 
-                // Update URL params
-                const subjectId = UI.getUrlParam('subjectId');
-                const subjectName = UI.getUrlParam('subjectName');
-                const roadmapId = UI.getUrlParam('roadmapId');
-                const roadmapName = UI.getUrlParam('roadmapName');
-                const newUrl = `resource.html?id=${resourceId}&name=${encodeURIComponent(name)}&type=${type}&pattern=${pattern}&link=${encodeURIComponent(link)}&production=${production}&expiration=${expiration}&subjectId=${subjectId || ''}&subjectName=${encodeURIComponent(subjectName || '')}&roadmapId=${roadmapId || ''}&roadmapName=${encodeURIComponent(roadmapName || '')}`;
-                window.history.replaceState({}, '', newUrl);
-
-                // Update breadcrumb and re-render sections to update links with the new resource name
-                displayBreadcrumb();
+                // Update URL and breadcrumb
+                updateUrl();
+                
+                // Re-render sections to update links with the new resource name
                 renderSections(currentSections);
 
                 UI.showSuccess('Resource updated successfully');
