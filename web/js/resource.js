@@ -7,6 +7,19 @@ let roadmapId = UI.getUrlParam('roadmapId');
 
 let currentSections = [];
 let isSectionsExpanded = false;
+
+function getDynamicLimit(containerId, itemHeight) {
+    const container = document.getElementById(containerId);
+    if (!container) return 3;
+    
+    const containerTop = container.getBoundingClientRect().top;
+    const viewportHeight = window.innerHeight;
+    const availableHeight = viewportHeight - containerTop - 100; // 100px buffer for bottom padding and toggle button
+    
+    const limit = Math.floor(availableHeight / itemHeight) - 1;
+    return Math.max(1, limit);
+}
+
 let reorderState = {
     active: false,
     sourceIndex: null, // Index in the flattened currentSections
@@ -303,6 +316,19 @@ async function loadTargetResourceSections(resource) {
 })();
 
 window.addEventListener('DOMContentLoaded', () => {
+    let sectionsLoaded = false;
+
+    // Handle window resize
+    let resizeTimeout;
+    window.addEventListener('resize', () => {
+        clearTimeout(resizeTimeout);
+        resizeTimeout = setTimeout(() => {
+            if (sectionsLoaded) {
+                renderSections(currentSections);
+            }
+        }, 200);
+    });
+
     if (!client.isAuthenticated()) {
         window.location.href = '/index.html';
         return;
@@ -692,6 +718,7 @@ async function loadSections() {
 
     try {
         const sections = await client.getSections(resourceId);
+        sectionsLoaded = true;
 
         UI.toggleElement('loading', false);
 
@@ -735,20 +762,21 @@ function renderSections(sections) {
         );
     }
     
-    // Handle expansion/collapsing (show only top 3 by default)
+    // Handle expansion/collapsing (show only as many as fit by default)
     const toggleContainer = document.getElementById('sections-toggle-container');
     const toggleBtn = document.getElementById('sections-toggle-btn');
     
     let displayedSections = filteredSections;
-    if (filteredSections.length > 3 && !reorderState.active) {
-        UI.toggleElement('sections-toggle-container', true);
-        if (!isSectionsExpanded) {
-            displayedSections = filteredSections.slice(0, 3);
-            toggleBtn.textContent = `Show All (${filteredSections.length})`;
-        } else {
-            toggleBtn.textContent = 'Show Less';
-        }
+    const dynamicLimit = getDynamicLimit('sections-list', 50);
+    const needsToggle = filteredSections.length > dynamicLimit;
+    if (!isSectionsExpanded && needsToggle && !reorderState.active) {
+        displayedSections = filteredSections.slice(0, dynamicLimit);
+    }
+    const isActuallyExpanded = isSectionsExpanded;
 
+    if (needsToggle && !reorderState.active) {
+        UI.toggleElement('sections-toggle-container', true);
+        toggleBtn.textContent = isActuallyExpanded ? 'Show Less' : `Show All (${filteredSections.length})`;
         // Add event listener if not already added
         if (!toggleBtn.dataset.listenerAdded) {
             toggleBtn.addEventListener('click', () => {

@@ -4,8 +4,24 @@ let roadmapId = null;
 let roadmapName = null;
 let currentTopicsData = [];
 let currentResourcesData = [];
-let expandedLevels = { 0: false, 1: false, 2: false };
+let expandedLevels = {}; // level -> boolean
 let isResourcesExpanded = false;
+
+function getDynamicLimit(containerId, itemHeight, isTopicList = false) {
+    const container = document.getElementById(containerId);
+    if (!container) return 3;
+    
+    const containerTop = container.getBoundingClientRect().top;
+    const viewportHeight = window.innerHeight;
+    const availableHeight = viewportHeight - containerTop - 100; // 100px buffer for bottom padding and toggle button
+    
+    let limit = Math.floor(availableHeight / itemHeight) - 1;
+    if (isTopicList) {
+        limit -= 1;
+    }
+    return Math.max(1, limit);
+}
+
 let reorderState = {
     active: false,
     sourceIndex: null, // Index in the flattened currentTopicsData (of source subject)
@@ -62,6 +78,8 @@ function enterReorderMode(index) {
     // Re-render to show gaps
     const milestoneLevel = parseInt(UI.getUrlParam('level')) || 0;
     renderTopics(currentTopicsData, milestoneLevel);
+
+    topicsLoaded = true;
 
     // Add/update hint
     updateReorderHint();
@@ -298,10 +316,24 @@ async function loadTargetSubjectTopics(targetId, targetName) {
 })();
 
 window.addEventListener('DOMContentLoaded', () => {
-    const resourceForm = document.getElementById('resource-form');
     let topicsLoaded = false;
     let assessmentsLoaded = false;
     let resourcesLoaded = false;
+
+    // Handle window resize
+    let resizeTimeout;
+    window.addEventListener('resize', () => {
+        clearTimeout(resizeTimeout);
+        resizeTimeout = setTimeout(() => {
+            if (topicsLoaded) {
+                const milestoneLevel = parseInt(UI.getUrlParam('level')) || 0;
+                renderTopics(currentTopicsData, milestoneLevel);
+            }
+            if (resourcesLoaded) {
+                renderResources(currentResourcesData);
+            }
+        }, 200);
+    });
 
     if (!client.isAuthenticated()) {
         window.location.href = '/index.html';
@@ -753,6 +785,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
 
     const topicForm = document.getElementById('topic-form');
+    const resourceForm = document.getElementById('resource-form');
     if (topicForm) {
         topicForm.addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -1278,12 +1311,14 @@ function renderTopics(topics, maxLevel) {
                 return gap;
             };
 
-            // Handle expansion/collapsing (show only top 3 by default per level)
+            // Handle expansion/collapsing (show only as many as fit by default)
             let displayedGroup = sortedGroup;
-            const needsToggle = sortedGroup.length > 3;
+            const dynamicLimit = getDynamicLimit('topics-list', 60, true);
+            const needsToggle = sortedGroup.length > dynamicLimit;
             if (needsToggle && !expandedLevels[level] && !reorderState.active) {
-                displayedGroup = sortedGroup.slice(0, 3);
+                displayedGroup = sortedGroup.slice(0, dynamicLimit);
             }
+            const isActuallyExpanded = expandedLevels[level];
 
             if (reorderState.active && displayedGroup.length === 0) {
                 levelSection.appendChild(createGap(1));
@@ -1394,7 +1429,7 @@ function renderTopics(topics, maxLevel) {
                 toggleBtn.className = 'btn btn-secondary';
                 toggleBtn.style.padding = '0.5rem 2rem';
                 toggleBtn.style.whiteSpace = 'nowrap';
-                toggleBtn.textContent = expandedLevels[level] ? 'Show Less' : `Show All (${sortedGroup.length})`;
+                toggleBtn.textContent = isActuallyExpanded ? 'Show Less' : `Show All (${sortedGroup.length})`;
                 
                 toggleBtn.onclick = () => {
                     expandedLevels[level] = !expandedLevels[level];
@@ -1457,7 +1492,13 @@ function renderResources(resources) {
         );
     }
 
-    const displayResources = isResourcesExpanded ? filteredResources : filteredResources.slice(0, 3);
+    let displayResources = filteredResources;
+    const dynamicLimit = getDynamicLimit('resources-list', 85);
+    const needsToggle = filteredResources.length > dynamicLimit;
+    if (!isResourcesExpanded && needsToggle) {
+        displayResources = filteredResources.slice(0, dynamicLimit);
+    }
+    const isActuallyExpanded = isResourcesExpanded;
 
     displayResources.forEach(resource => {
         const resourceItem = document.createElement('div');
@@ -1516,7 +1557,7 @@ function renderResources(resources) {
     });
 
     // Add expansion toggle
-    if (filteredResources.length > 3) {
+    if (needsToggle) {
         const toggleContainer = document.createElement('div');
         toggleContainer.style.textAlign = 'center';
         toggleContainer.style.marginTop = '1rem';
@@ -1526,7 +1567,7 @@ function renderResources(resources) {
         toggleBtn.className = 'btn btn-secondary';
         toggleBtn.style.padding = '0.5rem 2rem';
         toggleBtn.style.whiteSpace = 'nowrap';
-        toggleBtn.textContent = isResourcesExpanded ? 'Show Less' : `Show All (${filteredResources.length})`;
+        toggleBtn.textContent = isActuallyExpanded ? 'Show Less' : `Show All (${filteredResources.length})`;
 
         toggleBtn.addEventListener('click', () => {
             isResourcesExpanded = !isResourcesExpanded;
