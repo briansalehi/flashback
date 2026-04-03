@@ -52,7 +52,6 @@ service Server {
     rpc CreateSection(CreateSectionRequest) returns (CreateSectionResponse);
     rpc GetSections(GetSectionsRequest) returns (GetSectionsResponse);
     rpc SearchSections(SearchSectionsRequest) returns (SearchSectionsResponse);
-    rpc ReorderSection(ReorderSectionRequest) returns (ReorderSectionResponse);
     rpc RemoveSection(RemoveSectionRequest) returns (RemoveSectionResponse);
     rpc MergeSections(MergeSectionsRequest) returns (MergeSectionsResponse);
     rpc EditSection(EditSectionRequest) returns (EditSectionResponse);

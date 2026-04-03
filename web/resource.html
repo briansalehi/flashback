@@ -359,6 +359,29 @@
 </div>
 
 <script src="proto/flashback.js"></script>
+<!-- Resource Selection Modal -->
+<div id="resource-selection-modal" class="modal-overlay" style="display: none; z-index: 1100;">
+  <div class="modal-content" style="max-width: 500px;">
+    <div class="modal-header">
+      <h2 class="modal-title">Select Target Resource</h2>
+      <button class="modal-close" id="close-resource-modal-btn">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <input
+            type="text"
+            id="reorder-resource-search-input"
+            class="form-input"
+            placeholder="Search resources..."
+            autocomplete="off"
+        >
+      </div>
+      <div id="reorder-resource-search-results" style="max-height: 400px; overflow-y: auto; margin-top: 1rem;">
+        <!-- Resource results will be inserted here -->
+      </div>
+    </div>
+  </div>
+</div>
 <script src="js/ui.js"></script>
 <script src="js/client.js"></script>
 <script src="js/resource.js"></script>

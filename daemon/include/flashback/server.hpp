@@ -96,7 +96,6 @@ public:
     // section page
     grpc::Status GetSections(grpc::ServerContext* context, GetSectionsRequest const* request, GetSectionsResponse* response) override;
     grpc::Status CreateSection(grpc::ServerContext* context, CreateSectionRequest const* request, CreateSectionResponse* response) override;
-    grpc::Status ReorderSection(grpc::ServerContext* context, ReorderSectionRequest const* request, ReorderSectionResponse* response) override;
     grpc::Status RemoveSection(grpc::ServerContext* context, RemoveSectionRequest const* request, RemoveSectionResponse* response) override;
     grpc::Status MergeSections(grpc::ServerContext* context, MergeSectionsRequest const* request, MergeSectionsResponse* response) override;
     grpc::Status EditSection(grpc::ServerContext* context, EditSectionRequest const* request, EditSectionResponse* response) override;

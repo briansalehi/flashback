@@ -1449,32 +1449,6 @@ class FlashbackClient {
         });
     }
 
-    async reorderSection(resourceId, sourcePosition, targetPosition) {
-        return new Promise((resolve, reject) => {
-            const request = new proto.flashback.ReorderSectionRequest();
-            const user = this.getAuthenticatedUser();
-            request.setUser(user);
-            const resource = new proto.flashback.Resource();
-            resource.setId(resourceId);
-            request.setResource(resource);
-            const section = new proto.flashback.Section();
-            section.setPosition(sourcePosition);
-            request.setSource(section);
-            const target = new proto.flashback.Section();
-            target.setPosition(targetPosition);
-            request.setTarget(target);
-
-            this.client.reorderSection(request, this.getMetadata(), (err) => {
-                if (err) {
-                    console.error("ReorderSection error:", err);
-                    reject(this.handleError(err));
-                } else {
-                    resolve();
-                }
-            });
-        });
-    }
-
     async removeSection(resourceId, sectionPosition) {
         return new Promise((resolve, reject) => {
             const request = new proto.flashback.RemoveSectionRequest();

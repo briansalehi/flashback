@@ -2881,59 +2881,6 @@ grpc::Status server::CreateSection(grpc::ServerContext* context, CreateSectionRe
     return status;
 }
 
-grpc::Status server::ReorderSection(grpc::ServerContext* context, ReorderSectionRequest const* request, ReorderSectionResponse* response)
-{
-    grpc::Status status{grpc::StatusCode::INTERNAL, {}};
-
-    try
-    {
-        if (!request->has_user() || !session_is_valid(request->user()))
-        {
-            status = grpc::Status{grpc::StatusCode::UNAUTHENTICATED, "invalid user"};
-        }
-        else if (request->resource().id() == 0)
-        {
-            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid resource"};
-        }
-        else if (request->source().position() == 0)
-        {
-            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid source section"};
-        }
-        else if (request->target().position() == 0)
-        {
-            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid target section"};
-        }
-        else if (!user_is_verified(request->user()))
-        {
-            std::clog << std::format("client {} tried to x without verification\n", request->user().token());
-            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not verified"};
-        }
-        else if (!user_is_authorized(request->user()))
-        {
-            std::clog << std::format("client {} unauthorized access to x\n", request->user().token());
-            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not authorized"};
-        }
-        else
-        {
-            std::clog << std::format("client {} reordered section {} to {} in resource {}\n", request->user().token(), request->source().position(), request->target().position(),
-                                     request->resource().id());
-            m_database->reorder_section(request->resource().id(), request->source().position(), request->target().position());
-            status = grpc::Status{grpc::StatusCode::OK, {}};
-        }
-    }
-    catch (client_exception const& exp)
-    {
-        std::cerr << std::format("client {} {}\n", request->user().token(), exp.what());
-        status = grpc::Status{grpc::StatusCode::UNAVAILABLE, exp.what()};
-    }
-    catch (std::exception const& exp)
-    {
-        std::cerr << std::format("server: {}\n", exp.what());
-    }
-
-    return status;
-}
-
 grpc::Status server::RemoveSection(grpc::ServerContext* context, RemoveSectionRequest const* request, RemoveSectionResponse* response)
 {
     grpc::Status status{grpc::StatusCode::INTERNAL, {}};

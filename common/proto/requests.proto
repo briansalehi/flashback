@@ -130,9 +130,6 @@ message EditResourceResponse { }
 message CreateSectionRequest { User user = 1; Resource resource = 2; Section section = 3; }
 message CreateSectionResponse { Section section = 1; }
 
-message ReorderSectionRequest { User user = 1; Resource resource = 2; Section source = 3; Section target = 4; }
-message ReorderSectionResponse { }
-
 message RemoveSectionRequest { User user = 1; Resource resource = 2; Section section = 3; }
 message RemoveSectionResponse { }
 

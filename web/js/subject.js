@@ -384,8 +384,7 @@ window.addEventListener('DOMContentLoaded', () => {
                 subjectName = newName;
 
                 // Update the URL and page
-                const newUrl = `subject.html?id=${subjectId}&name=${encodeURIComponent(newName)}&roadmapId=${roadmapId || ''}&roadmapName=${encodeURIComponent(roadmapName || '')}&level=${UI.getUrlParam('level') || ''}`;
-                window.history.replaceState({}, '', newUrl);
+                updateUrl();
                 document.getElementById('subject-name').textContent = newName;
                 document.title = `${newName} - Flashback`;
 
@@ -1201,6 +1200,7 @@ function renderTopics(topics, maxLevel) {
                         // After successful move, we should stay in the target subject
                         // but exit reorder mode.
                         reorderState.sourceSubjectId = reorderState.targetSubjectId; // Prevent returning to source
+                        updateUrl();
                         exitReorderMode();
                     });
                 };
@@ -1564,6 +1564,18 @@ async function startPracticeMode() {
     }
 }
 
+function updateUrl() {
+    const params = new URLSearchParams(window.location.search);
+    params.set('id', subjectId);
+    params.set('name', subjectName);
+    if (roadmapId) params.set('roadmapId', roadmapId);
+    if (roadmapName) params.set('roadmapName', roadmapName);
+    
+    const newUrl = `${window.location.pathname}?${params.toString()}`;
+    window.history.replaceState({}, '', newUrl);
+    displayBreadcrumb(roadmapId);
+}
+
 async function displayBreadcrumb(roadmapId) {
     if (!roadmapId) return;
     
@@ -1740,8 +1752,6 @@ async function removeTopic(level, position) {
 
 async function moveTopic(sourceSubjectId, sourceTopicLevel, sourceTopicPosition, targetSubjectId, targetTopicLevel, targetTopicPosition) {
     try {
-        console.log("source subject:", sourceSubjectId, "source level", sourceTopicLevel, "source topic:", sourceTopicPosition)
-        console.log("target subject:", targetSubjectId, "target level", targetTopicLevel, "target topic:", targetTopicPosition)
         await client.moveTopic(sourceSubjectId, sourceTopicLevel, sourceTopicPosition, targetSubjectId, targetTopicLevel, targetTopicPosition);
         
         // After move, the target subject is already the current subjectId
