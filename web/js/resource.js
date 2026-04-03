@@ -777,8 +777,13 @@ function renderSections(sections) {
                 return;
             }
 
+            let adjustedTargetPos = targetPos;
+            if (reorderState.sourceResourceId === reorderState.targetResourceId && reorderState.sourceSection.position < targetPos) {
+                adjustedTargetPos -= 1;
+            }
+
             window.showConfirmModal('Confirm Move', `Move "${reorderState.sourceSection.name}" to ${reorderState.targetResourceName}?`, async () => {
-                await moveSection(reorderState.sourceResourceId, sourceSection.position, reorderState.targetResourceId, targetPos);
+                await moveSection(reorderState.sourceResourceId, sourceSection.position, reorderState.targetResourceId, adjustedTargetPos);
                 // After successful move, we should stay in the target resource
                 // but exit reorder mode.
                 reorderState.sourceResourceId = reorderState.targetResourceId; // Prevent returning to source

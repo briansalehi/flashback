@@ -235,11 +235,16 @@ document.getElementById('confirm-move-block-btn').onclick = async () => {
 
     UI.setButtonLoading('confirm-move-block-btn', true);
     try {
+        let adjustedTargetPosition = moveBlockState.targetBlockPosition;
+        if (sourceCardId === moveBlockState.targetCardId && sourceBlock.position < moveBlockState.targetBlockPosition) {
+            adjustedTargetPosition -= 1;
+        }
+
         await client.moveBlock(
             sourceCardId,
             sourceBlock.position,
             moveBlockState.targetCardId,
-            moveBlockState.targetBlockPosition
+            adjustedTargetPosition
         );
         closeMoveBlockModal();
         UI.showSuccess('Block moved successfully');

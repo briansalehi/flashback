@@ -1365,6 +1365,8 @@ class FlashbackClient {
             targetTopic.setPosition(targetTopicPosition);
             request.setTargetTopic(targetTopic);
 
+            console.log(sourceSubjectId, sourceTopicLevel, sourceTopicPosition, targetSubjectId, targetTopicLevel, targetTopicPosition)
+
             this.client.moveTopic(request, this.getMetadata(), (err) => {
                 if (err) {
                     console.error("MoveTopic error:", err);
@@ -1489,6 +1491,8 @@ class FlashbackClient {
             const targetSection = new proto.flashback.Section();
             targetSection.setPosition(targetSectionPosition);
             request.setTargetSection(targetSection);
+
+            console.log(sourceResourceId, sourceSectionPosition, targetResourceId, targetSectionPosition)
 
             this.client.moveSection(request, this.getMetadata(), (err) => {
                 if (err) {

@@ -1258,9 +1258,16 @@ function renderTopics(topics, maxLevel) {
                         return;
                     }
 
+                    let adjustedTargetPosition = targetPosition;
+                    if (reorderState.sourceSubjectId === reorderState.targetSubjectId && 
+                        reorderState.sourceTopic.level === targetLevel && 
+                        reorderState.sourceTopic.position < targetPosition) {
+                        adjustedTargetPosition -= 1;
+                    }
+
                     window.showConfirmModal('Confirm Move', `Move "${reorderState.sourceTopic.name}" to ${levelInfo[targetLevel].name} level in ${reorderState.targetSubjectName}?`, async () => {
                         await moveTopic(reorderState.sourceSubjectId, reorderState.sourceTopic.level, reorderState.sourceTopic.position, 
-                                        reorderState.targetSubjectId, targetLevel, targetPosition);
+                                        reorderState.targetSubjectId, targetLevel, adjustedTargetPosition);
                         // After successful move, we should stay in the target subject
                         // but exit reorder mode.
                         reorderState.sourceSubjectId = reorderState.targetSubjectId; // Prevent returning to source

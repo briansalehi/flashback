@@ -614,8 +614,13 @@ function renderMilestones(milestones) {
                 return;
             }
 
+            let adjustedTargetPos = targetPos;
+            if (sourcePos < targetPos) {
+                adjustedTargetPos -= 1;
+            }
+
             window.showConfirmModal('Confirm Reorder', 'Are you sure you want to move this subject here?', async () => {
-                await reorderMilestone(sourcePos, targetPos);
+                await reorderMilestone(sourcePos, adjustedTargetPos);
                 exitReorderMode();
             });
         };
