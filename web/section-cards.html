@@ -483,39 +483,94 @@
           <button type="button" id="close-move-card-modal-btn" class="modal-close" aria-label="Close modal">&times;</button>
         </div>
         <div class="modal-body" style="padding: 1rem 0;">
-          <p style="color: var(--text-muted); margin-bottom: 1rem;">
-            Moving: <strong id="moving-card-headline"></strong>
-          </p>
-          <div class="form-group">
-            <label class="form-label" for="section-search-input">Search for target section</label>
-            <input
-                type="text"
-                id="section-search-input"
-                class="form-input"
-                placeholder="Type to search sections..."
-                autocomplete="off"
-            >
+          <div id="move-card-info">
+            <div style="margin-bottom: 1.5rem; padding: 0 1.5rem;">
+              <p style="color: var(--text-muted); margin-bottom: 0.25rem; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em;">Moving Card</p>
+              <strong id="moving-card-headline" style="font-size: 1.1rem;"></strong>
+            </div>
+
+            <div class="modal-section-separator"></div>
+
+            <div style="margin-bottom: 1.5rem; padding: 1rem; margin-left: 1.5rem; margin-right: 1.5rem; background: rgba(255, 255, 255, 0.05); border-radius: var(--radius-md); border: 1px solid rgba(255, 255, 255, 0.1);">
+              <div style="display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap;">
+                <div>
+                  <p style="color: var(--text-muted); margin-bottom: 0.25rem; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em;">Target Resource</p>
+                  <strong id="target-resource-name"></strong>
+                </div>
+                <button type="button" id="change-resource-btn" class="btn btn-secondary btn-sm" style="padding: 0.4rem 0.75rem; font-size: 0.8rem;">Change Resource</button>
+              </div>
+            </div>
+
+            <div class="modal-section-separator"></div>
           </div>
-          <div id="section-search-loading" style="display: none; text-align: center; padding: 1rem;">
-            <div class="loading" style="width: 24px; height: 24px; border-width: 3px; margin: 0 auto;"></div>
-            <p class="text-muted" style="margin-top: 0.5rem; font-size: 0.875rem;">Searching...</p>
-          </div>
-          <div id="section-search-results" style="margin-top: 1rem; display: none;">
-            <h4 style="font-size: 0.9rem; font-weight: 600; margin-bottom: 0.5rem;">Select target section:</h4>
-            <div id="sections-list" style="max-height: 300px; overflow-y: auto;">
-              <!-- sections will be inserted here -->
+
+          <!-- Resource Selection Section (Hidden by default) -->
+          <div id="resource-selection-section" style="display: none; margin-bottom: 1.5rem; padding: 0 1.5rem;">
+            <div class="modal-step-title">Step 1: Select Target Resource</div>
+            <div class="form-group">
+              <label class="form-label" for="reorder-resource-search-input">Search all resources</label>
+              <input
+                  type="text"
+                  id="reorder-resource-search-input"
+                  class="form-input"
+                  placeholder="Search resources..."
+                  autocomplete="off"
+              >
+            </div>
+            <div id="subject-resources-section" style="display: none; margin-bottom: 1.5rem;">
+              <h4 class="section-title" id="subject-resources-title" style="font-size: 0.8rem; color: var(--color-text-muted); margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.05em;">Resources in Subject</h4>
+              <div id="subject-resources-list" class="search-results-list">
+                <!-- Subject resources will be inserted here -->
+              </div>
+            </div>
+            <div id="reorder-resource-search-results" class="search-results-list">
+              <!-- Resource results will be inserted here -->
+            </div>
+            <div style="margin-top: 1rem;">
+              <button type="button" id="cancel-resource-selection-btn" class="btn btn-secondary btn-sm">Back to Sections</button>
             </div>
           </div>
-          <div id="section-search-empty"
-               style="display: none; text-align: center; padding: 1rem; color: var(--text-muted); font-size: 0.875rem;">
-            No sections found
-          </div>
-            <div class="modal-actions">
-              <button id="confirm-move-card-btn" class="btn btn-primary" style="display: none;">
-                Move Card to Section
-              </button>
-              <button id="cancel-move-card-btn" class="btn btn-secondary">Cancel</button>
+
+          <!-- Section Selection Section -->
+          <div id="section-selection-section" style="padding: 0 1.5rem;">
+            <div class="modal-step-title">Step 2: Select Target Section</div>
+            <div class="form-group">
+              <label class="form-label" for="section-search-input">Search or select target section</label>
+              <input
+                  type="text"
+                  id="section-search-input"
+                  class="form-input"
+                  placeholder="Type to search sections..."
+                  autocomplete="off"
+              >
             </div>
+            <div id="resource-sections-section" style="display: none; margin-top: 1rem;">
+              <h4 style="font-size: 0.9rem; font-weight: 600; margin-bottom: 0.5rem; color: var(--color-text-muted); text-transform: uppercase; letter-spacing: 0.05em;">Sections in Resource</h4>
+              <div id="resource-sections-list" class="search-results-list">
+                <!-- Sections will be listed here -->
+              </div>
+            </div>
+            <div id="section-search-loading" style="display: none; text-align: center; padding: 1rem;">
+              <div class="loading" style="width: 24px; height: 24px; border-width: 3px; margin: 0 auto;"></div>
+              <p class="text-muted" style="margin-top: 0.5rem; font-size: 0.875rem;">Searching...</p>
+            </div>
+            <div id="section-search-results" style="margin-top: 1rem; display: none;">
+              <h4 style="font-size: 0.9rem; font-weight: 600; margin-bottom: 0.5rem; color: var(--color-text-muted); text-transform: uppercase; letter-spacing: 0.05em;">Search Results</h4>
+              <div id="sections-list" class="search-results-list">
+                <!-- sections will be inserted here -->
+              </div>
+            </div>
+            <div id="section-search-empty"
+                 style="display: none; text-align: center; padding: 1rem; color: var(--text-muted); font-size: 0.875rem;">
+              No sections found
+            </div>
+          </div>
+          <div class="modal-actions" style="padding: 1rem 1.5rem;">
+            <button id="confirm-move-card-btn" class="btn btn-primary" style="display: none;">
+              Move Card to Section
+            </button>
+            <button id="cancel-move-card-btn" class="btn btn-secondary">Cancel</button>
+          </div>
         </div>
       </div>
     </div>
@@ -810,6 +865,7 @@
     </div>
   </div>
 </div>
+
 
 <script src="proto/flashback.js"></script>
 <script src="js/ui.js"></script>

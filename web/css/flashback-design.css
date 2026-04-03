@@ -1987,6 +1987,40 @@ a:hover {
 }
 
 /* Modern Search Result Items */
+.search-results-list {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.modal-section-separator {
+    height: 1px;
+    background: linear-gradient(to right, transparent, var(--border-color), transparent);
+    margin: var(--space-md) 0;
+    border: none;
+}
+
+.modal-step-title {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--color-primary-start);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: var(--space-xs);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.modal-step-title::before {
+    content: '';
+    display: inline-block;
+    width: 4px;
+    height: 4px;
+    background: var(--color-primary-start);
+    border-radius: 50%;
+}
+
 .search-result-item {
     display: flex;
     justify-content: space-between;
@@ -2026,12 +2060,13 @@ a:hover {
 @media (max-width: 480px) {
     .modal-overlay {
         padding: var(--space-sm);
+        padding-top: calc(var(--space-md) + var(--safe-area-top));
     }
     
     .modal-content {
         padding: var(--space-md);
         border-radius: var(--radius-lg);
-        max-height: 96dvh; /* Use dvh for better mobile keyboard handling */
+        max-height: calc(100dvh - var(--space-md) - var(--space-sm) - var(--safe-area-top) - 10px);
     }
 
     .modal-actions {

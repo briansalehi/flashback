@@ -548,35 +548,90 @@
           <h3 class="modal-title">Move Card to Topic</h3>
           <button id="close-move-card-modal-btn" class="modal-close" aria-label="Close">&times;</button>
         </div>
-        <div class="modal-body">
-          <p style="color: var(--text-muted); margin-bottom: 1rem;">
-            Moving: <strong id="moving-card-headline"></strong>
-          </p>
-          <div class="form-group">
-            <label class="form-label" for="topic-search-input">Search for target topic</label>
-            <input
-                type="text"
-                id="topic-search-input"
-                class="form-input"
-                placeholder="Type to search topics..."
-                autocomplete="off"
-            >
+        <div class="modal-body" style="padding: 1rem 0;">
+          <div id="move-card-info">
+            <div style="margin-bottom: 1.5rem; padding: 0 1.5rem;">
+              <p style="color: var(--text-muted); margin-bottom: 0.25rem; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em;">Moving Card</p>
+              <strong id="moving-card-headline" style="font-size: 1.1rem;"></strong>
+            </div>
+
+            <div class="modal-section-separator"></div>
+
+            <div style="margin-bottom: 1.5rem; padding: 1rem; margin-left: 1.5rem; margin-right: 1.5rem; background: rgba(255, 255, 255, 0.05); border-radius: var(--radius-md); border: 1px solid rgba(255, 255, 255, 0.1);">
+              <div style="display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap;">
+                <div>
+                  <p style="color: var(--text-muted); margin-bottom: 0.25rem; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em;">Target Subject</p>
+                  <strong id="target-subject-name"></strong>
+                </div>
+                <button type="button" id="change-subject-btn" class="btn btn-secondary btn-sm" style="padding: 0.4rem 0.75rem; font-size: 0.8rem;">Change Subject</button>
+              </div>
+            </div>
+
+            <div class="modal-section-separator"></div>
           </div>
-          <div id="topic-search-loading" style="display: none; text-align: center; padding: 1rem;">
-            <div class="loading" style="width: 24px; height: 24px; border-width: 3px; margin: 0 auto;"></div>
-            <p class="text-muted" style="margin-top: 0.5rem; font-size: 0.875rem;">Searching...</p>
-          </div>
-          <div id="topic-search-results" style="margin-top: 1rem; display: none;">
-            <h4 style="font-size: 0.9rem; font-weight: 600; margin-bottom: 0.5rem;">Select target topic:</h4>
-            <div id="topics-list">
-              <!-- topics will be inserted here -->
+
+          <!-- Subject Selection Section (Hidden by default) -->
+          <div id="subject-selection-section" style="display: none; margin-bottom: 1.5rem; padding: 0 1.5rem;">
+            <div class="modal-step-title">Step 1: Select Target Subject</div>
+            <div class="form-group">
+              <label class="form-label" for="reorder-subject-search-input">Search all subjects</label>
+              <input
+                  type="text"
+                  id="reorder-subject-search-input"
+                  class="form-input"
+                  placeholder="Search subjects..."
+                  autocomplete="off"
+              >
+            </div>
+            <div id="roadmap-subjects-section" style="display: none; margin-bottom: 1.5rem;">
+              <h4 class="section-title" id="roadmap-subjects-title" style="font-size: 0.8rem; color: var(--color-text-muted); margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.05em;">Subjects in Roadmap</h4>
+              <div id="roadmap-subjects-list" class="search-results-list">
+                <!-- Roadmap subjects will be inserted here -->
+              </div>
+            </div>
+            <div id="reorder-subject-search-results" class="search-results-list">
+              <!-- Subject results will be inserted here -->
+            </div>
+            <div style="margin-top: 1rem;">
+              <button type="button" id="cancel-subject-selection-btn" class="btn btn-secondary btn-sm">Back to Topics</button>
             </div>
           </div>
-          <div id="topic-search-empty"
-               style="display: none; text-align: center; padding: 1rem; color: var(--text-muted); font-size: 0.875rem;">
-            No topics found
+
+          <!-- Topic Selection Section -->
+          <div id="topic-selection-section" style="padding: 0 1.5rem;">
+            <div class="modal-step-title">Step 2: Select Target Topic</div>
+            <div class="form-group">
+              <label class="form-label" for="topic-search-input">Search or select target topic</label>
+              <input
+                  type="text"
+                  id="topic-search-input"
+                  class="form-input"
+                  placeholder="Type to search topics..."
+                  autocomplete="off"
+              >
+            </div>
+            <div id="subject-topics-section" style="display: none; margin-top: 1rem;">
+              <h4 style="font-size: 0.9rem; font-weight: 600; margin-bottom: 0.5rem; color: var(--color-text-muted); text-transform: uppercase; letter-spacing: 0.05em;">Topics in Subject</h4>
+              <div id="subject-topics-list" class="search-results-list">
+                <!-- Topics will be listed here -->
+              </div>
+            </div>
+            <div id="topic-search-loading" style="display: none; text-align: center; padding: 1rem;">
+              <div class="loading" style="width: 24px; height: 24px; border-width: 3px; margin: 0 auto;"></div>
+              <p class="text-muted" style="margin-top: 0.5rem; font-size: 0.875rem;">Searching...</p>
+            </div>
+            <div id="topic-search-results" style="margin-top: 1rem; display: none;">
+              <h4 style="font-size: 0.9rem; font-weight: 600; margin-bottom: 0.5rem; color: var(--color-text-muted); text-transform: uppercase; letter-spacing: 0.05em;">Search Results</h4>
+              <div id="topics-list" class="search-results-list">
+                <!-- topics will be inserted here -->
+              </div>
+            </div>
+            <div id="topic-search-empty"
+                 style="display: none; text-align: center; padding: 1rem; color: var(--text-muted); font-size: 0.875rem;">
+              No topics found
+            </div>
           </div>
-          <div class="modal-actions">
+          <div class="modal-actions" style="padding: 1rem 1.5rem;">
             <button id="confirm-move-card-btn" class="btn btn-primary" style="display: none;">
               Move Card to Topic
             </button>
@@ -625,6 +680,7 @@
     </div>
   </div>
 </div>
+
 
 <script src="proto/flashback.js"></script>
 <script src="js/ui.js"></script>

@@ -2,6 +2,8 @@
 let currentResourceData = null;
 let resourceId = UI.getUrlParam('id');
 let resourceName = UI.getUrlParam('name') || '';
+let subjectId = UI.getUrlParam('subjectId');
+let roadmapId = UI.getUrlParam('roadmapId');
 
 let currentSections = [];
 let isSectionsExpanded = false;
@@ -130,7 +132,59 @@ window.openResourceSelectionModal = function() {
     }
     const container = document.getElementById('reorder-resource-search-results');
     if (container) container.innerHTML = '';
+
+    // Also clear and load subject resources if subjectId exists
+    const subjectContainer = document.getElementById('subject-resources-list');
+    const subjectSection = document.getElementById('subject-resources-section');
+    if (subjectContainer) subjectContainer.innerHTML = '';
+    
+    if (subjectId) {
+        if (subjectSection) subjectSection.style.display = 'block';
+        loadSubjectResources();
+    } else {
+        if (subjectSection) subjectSection.style.display = 'none';
+    }
 };
+
+async function loadSubjectResources() {
+    try {
+        const resources = await client.getResources(subjectId);
+        displaySubjectResourceResults(resources);
+    } catch (err) {
+        console.error('Load subject resources failed:', err);
+    }
+}
+
+function displaySubjectResourceResults(resources) {
+    const container = document.getElementById('subject-resources-list');
+    if (!container) return;
+    container.innerHTML = '';
+    
+    if (resources.length === 0) {
+        container.innerHTML = '<div class="no-results" style="padding: 1rem; text-align: center; opacity: 0.6;">No resources in this subject.</div>';
+        return;
+    }
+
+    resources.forEach(res => {
+        if (res.id === reorderState.sourceResourceId) {
+            return;
+        }
+
+        const item = document.createElement('div');
+        item.className = 'search-result-item';
+        const icon = UI.getResourceIcon(res.type);
+        item.innerHTML = `
+            <div class="search-result-name"><span class="resource-icon" style="margin-right: 8px;">${icon}</span> ${UI.escapeHtml(res.name)}</div>
+        `;
+        
+        item.onclick = async () => {
+            closeResourceSelectionModal();
+            await loadTargetResourceSections(res);
+        };
+        
+        container.appendChild(item);
+    });
+}
 
 function closeResourceSelectionModal() {
     UI.toggleElement('resource-selection-modal', false);
@@ -151,22 +205,20 @@ function displayReorderResourceResults(resources) {
     container.innerHTML = '';
     
     resources.forEach(res => {
+        if (res.id === reorderState.sourceResourceId) {
+            return;
+        }
+
         const item = document.createElement('div');
         item.className = 'search-result-item';
-        item.style.padding = '0.75rem';
-        item.style.cursor = 'pointer';
-        item.style.borderBottom = '1px solid var(--border-color)';
         item.innerHTML = `
-            <div style="font-weight: 500; color: var(--text-primary);">${UI.escapeHtml(res.name)}</div>
+            <div class="search-result-name">${UI.escapeHtml(res.name)}</div>
         `;
         
         item.onclick = async () => {
             closeResourceSelectionModal();
             await loadTargetResourceSections(res);
         };
-        
-        item.onmouseenter = () => item.style.background = 'rgba(255,255,255,0.05)';
-        item.onmouseleave = () => item.style.background = '';
         
         container.appendChild(item);
     });
@@ -607,12 +659,15 @@ window.addEventListener('DOMContentLoaded', () => {
             const query = e.target.value.trim();
             clearTimeout(searchTimeout);
             
+            const subjectSection = document.getElementById('subject-resources-section');
             if (!query) {
+                if (subjectSection) subjectSection.style.display = subjectId ? 'block' : 'none';
                 const container = document.getElementById('reorder-resource-search-results');
                 if (container) container.innerHTML = '';
                 return;
             }
 
+            if (subjectSection) subjectSection.style.display = 'none';
             searchTimeout = setTimeout(() => {
                 searchReorderResources(query);
             }, 300);

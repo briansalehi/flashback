@@ -124,7 +124,69 @@ window.openSubjectSelectionModal = function() {
     }
     const container = document.getElementById('reorder-subject-search-results');
     if (container) container.innerHTML = '';
+    
+    // Also clear and load roadmap subjects if roadmapId exists
+    const roadmapContainer = document.getElementById('roadmap-subjects-list');
+    const roadmapSection = document.getElementById('roadmap-subjects-section');
+    if (roadmapContainer) roadmapContainer.innerHTML = '';
+    
+    if (roadmapId) {
+        if (roadmapSection) roadmapSection.style.display = 'block';
+        loadRoadmapSubjects();
+    } else {
+        if (roadmapSection) roadmapSection.style.display = 'none';
+    }
 };
+
+async function loadRoadmapSubjects() {
+    try {
+        const data = await client.getMilestones(roadmapId);
+        if (data && data.milestones) {
+            // Filter to get unique subjects (since a subject might appear multiple times in a roadmap)
+            const seen = new Set();
+            const uniqueSubjects = [];
+            data.milestones.forEach(ms => {
+                if (!seen.has(ms.id)) {
+                    seen.add(ms.id);
+                    uniqueSubjects.push({ id: ms.id, name: ms.name });
+                }
+            });
+            displayRoadmapSubjectResults(uniqueSubjects);
+        }
+    } catch (err) {
+        console.error('Load roadmap subjects failed:', err);
+    }
+}
+
+function displayRoadmapSubjectResults(subjects) {
+    const container = document.getElementById('roadmap-subjects-list');
+    if (!container) return;
+    container.innerHTML = '';
+    
+    if (subjects.length === 0) {
+        container.innerHTML = '<div class="no-results" style="padding: 1rem; text-align: center; opacity: 0.6;">No subjects in this roadmap.</div>';
+        return;
+    }
+
+    subjects.forEach(subject => {
+        if (parseInt(subject.id) === parseInt(reorderState.sourceSubjectId)) {
+            return;
+        }
+
+        const item = document.createElement('div');
+        item.className = 'search-result-item';
+        item.innerHTML = `
+            <div class="search-result-name">${UI.escapeHtml(subject.name)}</div>
+        `;
+        
+        item.onclick = async () => {
+            closeSubjectSelectionModal();
+            await loadTargetSubjectTopics(subject.id, subject.name);
+        };
+        
+        container.appendChild(item);
+    });
+}
 
 function closeSubjectSelectionModal() {
     UI.toggleElement('subject-selection-modal', false);
@@ -145,22 +207,20 @@ function displayReorderSubjectResults(subjects) {
     container.innerHTML = '';
     
     subjects.forEach(subject => {
+        if (parseInt(subject.id) === parseInt(reorderState.sourceSubjectId)) {
+            return;
+        }
+
         const item = document.createElement('div');
         item.className = 'search-result-item';
-        item.style.padding = '0.75rem';
-        item.style.cursor = 'pointer';
-        item.style.borderBottom = '1px solid var(--border-color)';
         item.innerHTML = `
-            <div style="font-weight: 500; color: var(--text-primary);">${UI.escapeHtml(subject.name)}</div>
+            <div class="search-result-name">${UI.escapeHtml(subject.name)}</div>
         `;
         
         item.onclick = async () => {
             closeSubjectSelectionModal();
             await loadTargetSubjectTopics(subject.id, subject.name);
         };
-        
-        item.onmouseenter = () => item.style.background = 'rgba(255,255,255,0.05)';
-        item.onmouseleave = () => item.style.background = '';
         
         container.appendChild(item);
     });
@@ -305,12 +365,15 @@ window.addEventListener('DOMContentLoaded', () => {
             const query = e.target.value.trim();
             clearTimeout(searchTimeout);
             
+            const roadmapSection = document.getElementById('roadmap-subjects-section');
             if (!query) {
+                if (roadmapSection) roadmapSection.style.display = roadmapId ? 'block' : 'none';
                 const container = document.getElementById('reorder-subject-search-results');
                 if (container) container.innerHTML = '';
                 return;
             }
 
+            if (roadmapSection) roadmapSection.style.display = 'none';
             searchTimeout = setTimeout(() => {
                 searchReorderSubjects(query);
             }, 300);
@@ -1279,7 +1342,6 @@ function renderTopics(topics, maxLevel) {
                             <span class="item-badge" style="font-size: 10px; height: 18px; min-width: 18px; padding: 0 4px; text-align: center;">${sortedIndex + 1}</span>
                             <h3 class="item-title" style="margin: 0; font-size: var(--font-size-base); overflow-wrap: break-word; word-break: break-word;">${UI.escapeHtml(topic.name)}</h3>
                         </div>
-                        <span class="item-badge" style="background: var(--gradient-primary); font-size: 10px; height: 18px; min-width: auto; padding: 0 6px; margin-left: auto; pointer-events: none; border-radius: var(--radius-sm); text-transform: uppercase; letter-spacing: 0.05em;">${UI.escapeHtml(levelInfo[level].name)}</span>
                     </div>
                 `;
 

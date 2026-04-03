@@ -558,8 +558,13 @@ window.addEventListener('DOMContentLoaded', () => {
                 document.getElementById('section-search-results').style.display = 'none';
                 document.getElementById('section-search-empty').style.display = 'none';
                 document.getElementById('section-search-loading').style.display = 'none';
+                const sectionsSection = document.getElementById('resource-sections-section');
+                if (sectionsSection) sectionsSection.style.display = 'block';
                 return;
             }
+
+            const sectionsSection = document.getElementById('resource-sections-section');
+            if (sectionsSection) sectionsSection.style.display = 'none';
 
             // Show loading state
             document.getElementById('section-search-loading').style.display = 'block';
@@ -570,6 +575,37 @@ window.addEventListener('DOMContentLoaded', () => {
             searchTimeout = setTimeout(async () => {
                 await searchForSections(searchValue);
             }, 300);
+        });
+    }
+
+    // Integrated Resource Selection handlers
+    const changeResourceBtn = document.getElementById('change-resource-btn');
+    const cancelResourceSelectionBtn = document.getElementById('cancel-resource-selection-btn');
+    const resourceSearchInput = document.getElementById('reorder-resource-search-input');
+
+    if (changeResourceBtn) {
+        changeResourceBtn.addEventListener('click', openResourceSelectionModal);
+    }
+
+    if (cancelResourceSelectionBtn) {
+        cancelResourceSelectionBtn.addEventListener('click', closeResourceSelection);
+    }
+
+    if (resourceSearchInput) {
+        let searchTimeout = null;
+        resourceSearchInput.addEventListener('input', (e) => {
+            const query = e.target.value.trim();
+            if (searchTimeout) clearTimeout(searchTimeout);
+            
+            const resourcesSection = document.getElementById('subject-resources-section');
+            if (query.length > 0) {
+                if (resourcesSection) resourcesSection.style.display = 'none';
+                searchTimeout = setTimeout(() => searchResources(query), 300);
+            } else {
+                if (resourcesSection) resourcesSection.style.display = 'block';
+                const resultsContainer = document.getElementById('reorder-resource-search-results');
+                if (resultsContainer) resultsContainer.innerHTML = '';
+            }
         });
     }
 
@@ -602,6 +638,8 @@ window.addEventListener('DOMContentLoaded', () => {
 });
 
 let currentSectionName = UI.getUrlParam('name');
+let currentResourceId = parseInt(UI.getUrlParam('resourceId'));
+let currentSectionPosition = parseInt(UI.getUrlParam('sectionPosition'));
 let currentCardsData = [];
 let newlyCreatedCardId = null;
 
@@ -817,6 +855,11 @@ function displayBreadcrumb() {
 let currentMovingCardId = null;
 let currentMovingCardHeadline = null;
 let currentSelectedMoveSection = null;
+let moveState = {
+    targetResourceId: null,
+    targetResourceName: null,
+    subjectId: UI.getUrlParam('subjectId')
+};
 
 let currentAssigningCardId = null;
 let currentAssigningCardHeadline = null;
@@ -1275,7 +1318,13 @@ window.handleMoveCard = function(cardId, cardHeadline) {
     currentMovingCardHeadline = cardHeadline;
     currentSelectedMoveSection = null;
 
+    // Initialize move state with current resource
+    moveState.targetResourceId = parseInt(UI.getUrlParam('resourceId'));
+    moveState.targetResourceName = UI.getUrlParam('resourceName');
+    updateMoveCardTargetResourceUI();
+
     UI.toggleElement('move-card-modal', true);
+    UI.toggleElement('move-card-info', true);
     document.body.style.overflow = 'hidden';
     document.getElementById('moving-card-headline').textContent = cardHeadline;
     if (typeof renderMathInElement !== 'undefined') {
@@ -1294,6 +1343,9 @@ window.handleMoveCard = function(cardId, cardHeadline) {
     document.getElementById('section-search-loading').style.display = 'none';
     document.getElementById('sections-list').innerHTML = '';
     UI.toggleElement('confirm-move-card-btn', false);
+    
+    // Load initial sections for the current resource
+    loadResourceSections();
 
     setTimeout(() => {
         document.getElementById('section-search-input').focus();
@@ -1303,6 +1355,11 @@ window.handleMoveCard = function(cardId, cardHeadline) {
 function closeMoveCardModal() {
     UI.toggleElement('move-card-modal', false);
     document.body.style.overflow = '';
+
+    UI.toggleElement('move-card-info', true);
+    UI.toggleElement('resource-selection-section', false);
+    UI.toggleElement('section-selection-section', true);
+
     currentMovingCardId = null;
     currentMovingCardHeadline = null;
     currentSelectedMoveSection = null;
@@ -1314,6 +1371,220 @@ function closeMoveCardModal() {
     UI.toggleElement('confirm-move-card-btn', false);
 }
 
+function updateMoveCardTargetResourceUI() {
+    const targetResourceNameElem = document.getElementById('target-resource-name');
+    if (targetResourceNameElem) {
+        targetResourceNameElem.textContent = moveState.targetResourceName;
+    }
+}
+
+function openResourceSelectionModal() {
+    UI.toggleElement('move-card-info', false);
+    UI.toggleElement('section-selection-section', false);
+    UI.toggleElement('resource-selection-section', true);
+    UI.toggleElement('confirm-move-card-btn', false);
+
+    const searchInput = document.getElementById('reorder-resource-search-input');
+    if (searchInput) {
+        searchInput.value = '';
+        searchInput.focus();
+    }
+    const container = document.getElementById('reorder-resource-search-results');
+    if (container) {
+        container.innerHTML = '';
+    }
+
+    const resourcesContainer = document.getElementById('subject-resources-list');
+    const resourcesSection = document.getElementById('subject-resources-section');
+    if (resourcesContainer) resourcesContainer.innerHTML = '';
+    
+    if (moveState.subjectId) {
+        if (resourcesSection) resourcesSection.style.display = 'block';
+        loadSubjectResources();
+    } else {
+        if (resourcesSection) resourcesSection.style.display = 'none';
+    }
+}
+
+function closeResourceSelection() {
+    UI.toggleElement('move-card-info', true);
+    UI.toggleElement('resource-selection-section', false);
+    UI.toggleElement('section-selection-section', true);
+    if (currentSelectedMoveSection) {
+        UI.toggleElement('confirm-move-card-btn', true);
+    }
+}
+
+async function loadSubjectResources() {
+    try {
+        const resources = await client.getResources(moveState.subjectId);
+        displaySubjectResourceResults(resources);
+    } catch (err) {
+        console.error('Load subject resources failed:', err);
+    }
+}
+
+function displaySubjectResourceResults(resources) {
+    const container = document.getElementById('subject-resources-list');
+    if (!container) return;
+    container.innerHTML = '';
+    
+    if (resources.length === 0) {
+        container.innerHTML = '<div class="no-results" style="padding: 1rem; text-align: center; opacity: 0.6;">No resources in this subject.</div>';
+        return;
+    }
+
+    resources.forEach(res => {
+        const item = document.createElement('div');
+        item.className = 'search-result-item';
+        const icon = UI.getResourceIcon(res.type);
+        item.innerHTML = `
+            <div class="search-result-name"><span class="resource-icon" style="margin-right: 8px;">${icon}</span> ${UI.escapeHtml(res.name)}</div>
+        `;
+        
+        item.onclick = async () => {
+            closeResourceSelection();
+            updateTargetResource(res.id, res.name);
+        };
+        
+        container.appendChild(item);
+    });
+}
+
+function updateTargetResource(id, name) {
+    moveState.targetResourceId = id;
+    moveState.targetResourceName = name;
+    
+    const targetNameEl = document.getElementById('target-resource-name');
+    if (targetNameEl) targetNameEl.textContent = name;
+    
+    // Clear previous search and load sections for the new resource
+    const searchInput = document.getElementById('section-search-input');
+    if (searchInput) searchInput.value = '';
+    
+    currentSelectedMoveSection = null;
+    UI.toggleElement('confirm-move-card-btn', false);
+    
+    loadResourceSections();
+}
+
+async function loadResourceSections() {
+    const section = document.getElementById('resource-sections-section');
+    const container = document.getElementById('resource-sections-list');
+    const resultsContainer = document.getElementById('section-search-results');
+    
+    if (!moveState.targetResourceId) {
+        if (section) section.style.display = 'none';
+        return;
+    }
+
+    if (section) section.style.display = 'block';
+    if (resultsContainer) resultsContainer.style.display = 'none';
+    if (container) container.innerHTML = '<div style="padding: 1rem; text-align: center;"><div class="loading" style="width: 20px; height: 20px; border-width: 2px; margin: 0 auto;"></div></div>';
+
+    try {
+        const sections = await client.getSections(moveState.targetResourceId);
+        displayResourceSections(sections);
+    } catch (err) {
+        console.error('Load resource sections failed:', err);
+        if (container) container.innerHTML = '<div class="no-results">Failed to load sections.</div>';
+    }
+}
+
+function displayResourceSections(sections) {
+    const container = document.getElementById('resource-sections-list');
+    if (!container) return;
+    container.innerHTML = '';
+
+    if (sections.length === 0) {
+        container.innerHTML = '<div class="no-results" style="padding: 1rem; text-align: center; opacity: 0.6;">No sections in this resource.</div>';
+        return;
+    }
+
+    sections.forEach(section => {
+        if (moveState.targetResourceId === currentResourceId && section.position === currentSectionPosition) {
+            return;
+        }
+
+        const item = document.createElement('div');
+        item.className = 'search-result-item';
+        if (currentSelectedMoveSection && currentSelectedMoveSection.position === section.position) {
+            item.classList.add('selected');
+        }
+
+        item.innerHTML = `
+            <div class="search-result-name">${UI.escapeHtml(section.name)}</div>
+        `;
+        
+        item.onclick = () => {
+            selectMoveTarget(section);
+            container.querySelectorAll('.search-result-item').forEach(el => el.classList.remove('selected'));
+            item.classList.add('selected');
+        };
+        
+        container.appendChild(item);
+    });
+}
+
+function selectMoveTarget(section) {
+    currentSelectedMoveSection = section;
+    
+    // Show confirm button
+    const confirmBtn = document.getElementById('confirm-move-card-btn');
+    if (confirmBtn) {
+        confirmBtn.style.display = 'block';
+        confirmBtn.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+}
+
+async function searchResources(query) {
+    const resultsContainer = document.getElementById('reorder-resource-search-results');
+    if (!resultsContainer) return;
+
+    if (!query || query.trim().length === 0) {
+        resultsContainer.innerHTML = '';
+        return;
+    }
+
+    resultsContainer.innerHTML = '<div style="text-align: center; padding: 1rem;"><div class="loading" style="width: 24px; height: 24px; border-width: 3px; margin: 0 auto;"></div></div>';
+
+    try {
+        const resources = await client.searchResources(query);
+        displayResourceResults(resources);
+    } catch (err) {
+        console.error('Failed to search resources:', err);
+        resultsContainer.innerHTML = '<div style="text-align: center; padding: 1rem; color: var(--danger-color);">Failed to search resources</div>';
+    }
+}
+
+function displayResourceResults(resources) {
+    const resultsContainer = document.getElementById('reorder-resource-search-results');
+    if (!resultsContainer) return;
+
+    if (!resources || resources.length === 0) {
+        resultsContainer.innerHTML = '<div style="text-align: center; padding: 1rem; color: var(--text-muted);">No resources found</div>';
+        return;
+    }
+
+    resultsContainer.innerHTML = '';
+    resources.forEach(resource => {
+        const item = document.createElement('div');
+        item.className = 'search-result-item';
+
+        item.innerHTML = `
+            <div class="search-result-name">${UI.escapeHtml(resource.name)}</div>
+        `;
+
+        item.onclick = () => {
+            closeResourceSelection();
+            updateTargetResource(resource.id, resource.name);
+            document.getElementById('section-search-input').focus();
+        };
+
+        resultsContainer.appendChild(item);
+    });
+}
+
 async function searchForSections(searchToken) {
     if (!searchToken) {
         return;
@@ -1322,7 +1593,7 @@ async function searchForSections(searchToken) {
     currentSelectedMoveSection = null;
     UI.toggleElement('confirm-move-card-btn', false);
 
-    const resourceId = parseInt(UI.getUrlParam('resourceId'));
+    const resourceId = moveState.targetResourceId;
 
     try {
         const sections = await client.searchSections(resourceId, searchToken);
@@ -1355,6 +1626,10 @@ function displaySectionResults(sections) {
     const searchTerm = searchInput.value.trim();
 
     sections.forEach(section => {
+        if (moveState.targetResourceId === currentResourceId && section.position === currentSectionPosition) {
+            return;
+        }
+
         const sectionItem = document.createElement('div');
         sectionItem.className = 'section-list-item';
         if (currentSelectedMoveSection && currentSelectedMoveSection.position === section.position) {
@@ -1369,26 +1644,15 @@ function displaySectionResults(sections) {
         }
 
         sectionItem.innerHTML = `
-            <div style="font-weight: 600; margin-bottom: 0.25rem;">${highlightedName}</div>
-            <div style="font-size: 0.875rem; color: var(--text-muted);">Position: ${section.position}</div>
+            <div style="font-weight: 600;">${highlightedName}</div>
         `;
 
         sectionItem.addEventListener('click', () => {
-            // Update selection state
-            currentSelectedMoveSection = section;
-
-            // Update UI: highlight selected item
+            selectMoveTarget(section);
             container.querySelectorAll('.section-list-item').forEach(item => {
                 item.classList.remove('selected');
             });
             sectionItem.classList.add('selected');
-
-            // Show confirm button
-            const confirmBtn = document.getElementById('confirm-move-card-btn');
-            if (confirmBtn) {
-                confirmBtn.style.display = 'block';
-                confirmBtn.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-            }
         });
 
         container.appendChild(sectionItem);
@@ -1404,7 +1668,7 @@ async function moveCardToSection(targetSection) {
     const currentSectionPosition = parseInt(UI.getUrlParam('sectionPosition'));
 
     try {
-        await client.moveCardToSection(currentMovingCardId, resourceId, currentSectionPosition, targetSection.position);
+        await client.moveCardToSection(currentMovingCardId, resourceId, currentSectionPosition, moveState.targetResourceId, targetSection.position);
 
         // Close modal and reload cards
         closeMoveCardModal();

@@ -1648,6 +1648,7 @@ class FlashbackClient {
             request.setSubject(subject);
             const topic = new proto.flashback.Topic();
             topic.setPosition(topicPosition);
+            topic.setLevel(topicLevel);
             request.setTopic(topic);
             const targetSubject = new proto.flashback.Subject();
             targetSubject.setId(targetSubjectId);

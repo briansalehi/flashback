@@ -253,8 +253,13 @@ window.addEventListener('DOMContentLoaded', () => {
                 document.getElementById('topic-search-results').style.display = 'none';
                 document.getElementById('topic-search-empty').style.display = 'none';
                 document.getElementById('topic-search-loading').style.display = 'none';
+                const topicsSection = document.getElementById('subject-topics-section');
+                if (topicsSection) topicsSection.style.display = 'block';
                 return;
             }
+
+            const topicsSection = document.getElementById('subject-topics-section');
+            if (topicsSection) topicsSection.style.display = 'none';
 
             // Show loading state
             document.getElementById('topic-search-loading').style.display = 'block';
@@ -265,6 +270,37 @@ window.addEventListener('DOMContentLoaded', () => {
             searchTimeout = setTimeout(async () => {
                 await searchForTopics(searchValue);
             }, 300);
+        });
+    }
+
+    // Integrated Subject Selection handlers
+    const changeSubjectBtn = document.getElementById('change-subject-btn');
+    const cancelSubjectSelectionBtn = document.getElementById('cancel-subject-selection-btn');
+    const subjectSearchInput = document.getElementById('reorder-subject-search-input');
+
+    if (changeSubjectBtn) {
+        changeSubjectBtn.addEventListener('click', openSubjectSelectionModal);
+    }
+
+    if (cancelSubjectSelectionBtn) {
+        cancelSubjectSelectionBtn.addEventListener('click', closeSubjectSelection);
+    }
+
+    if (subjectSearchInput) {
+        let searchTimeout = null;
+        subjectSearchInput.addEventListener('input', (e) => {
+            const query = e.target.value.trim();
+            if (searchTimeout) clearTimeout(searchTimeout);
+            
+            const roadmapSection = document.getElementById('roadmap-subjects-section');
+            if (query.length > 0) {
+                if (roadmapSection) roadmapSection.style.display = 'none';
+                searchTimeout = setTimeout(() => searchSubjects(query), 300);
+            } else {
+                if (roadmapSection) roadmapSection.style.display = 'block';
+                const resultsContainer = document.getElementById('reorder-subject-search-results');
+                if (resultsContainer) resultsContainer.innerHTML = '';
+            }
         });
     }
 
@@ -489,6 +525,8 @@ let currentCardsData = [];
 let currentAssessmentsData = [];
 let currentTopicName = UI.getUrlParam('name');
 let currentTopicLevel = parseInt(UI.getUrlParam('topicLevel'));
+let currentTopicPosition = parseInt(UI.getUrlParam('topicPosition'));
+let currentSubjectId = parseInt(UI.getUrlParam('subjectId'));
 
 // Global state for merge cards
 let mergeState = {
@@ -644,6 +682,11 @@ function renderCards(cards) {
 let currentMovingCardId = null;
 let currentMovingCardHeadline = null;
 let currentSelectedMoveTarget = null;
+let moveState = {
+    targetSubjectId: null,
+    targetSubjectName: null,
+    roadmapId: UI.getUrlParam('roadmapId') || UI.getUrlParam('subjectRoadmapId')
+};
 
 window.enterMergeMode = function(cardId, headline) {
     mergeState.active = true;
@@ -779,8 +822,14 @@ window.handleMoveCard = function(cardId, cardHeadline) {
     currentMovingCardHeadline = cardHeadline;
     currentSelectedMoveTarget = null;
 
+    // Initialize move state with current subject
+    moveState.targetSubjectId = parseInt(UI.getUrlParam('subjectId'));
+    moveState.targetSubjectName = currentSubjectName || UI.getUrlParam('subjectName');
+    updateMoveCardTargetSubjectUI();
+
     // Open modal
     UI.toggleElement('move-card-modal', true);
+    UI.toggleElement('move-card-info', true);
     document.body.style.overflow = 'hidden';
 
     document.getElementById('moving-card-headline').textContent = cardHeadline;
@@ -800,6 +849,9 @@ window.handleMoveCard = function(cardId, cardHeadline) {
     document.getElementById('topic-search-loading').style.display = 'none';
     document.getElementById('topics-list').innerHTML = '';
     UI.toggleElement('confirm-move-card-btn', false);
+    
+    // Load initial topics for the current subject
+    loadSubjectTopics();
 
     setTimeout(() => {
         document.getElementById('topic-search-input').focus();
@@ -809,6 +861,10 @@ window.handleMoveCard = function(cardId, cardHeadline) {
 function closeMoveCardModal() {
     UI.toggleElement('move-card-modal', false);
     document.body.style.overflow = 'auto';
+
+    UI.toggleElement('move-card-info', true);
+    UI.toggleElement('subject-selection-section', false);
+    UI.toggleElement('topic-selection-section', true);
 
     currentMovingCardId = null;
     currentMovingCardHeadline = null;
@@ -821,6 +877,246 @@ function closeMoveCardModal() {
     UI.toggleElement('confirm-move-card-btn', false);
 }
 
+function updateMoveCardTargetSubjectUI() {
+    const targetSubjectNameElem = document.getElementById('target-subject-name');
+    if (targetSubjectNameElem) {
+        targetSubjectNameElem.textContent = moveState.targetSubjectName;
+    }
+}
+
+function openSubjectSelectionModal() {
+    UI.toggleElement('move-card-info', false);
+    UI.toggleElement('topic-selection-section', false);
+    UI.toggleElement('subject-selection-section', true);
+    UI.toggleElement('confirm-move-card-btn', false);
+
+    const searchInput = document.getElementById('reorder-subject-search-input');
+    if (searchInput) {
+        searchInput.value = '';
+        searchInput.focus();
+    }
+    const container = document.getElementById('reorder-subject-search-results');
+    if (container) {
+        container.innerHTML = '';
+    }
+
+    const roadmapContainer = document.getElementById('roadmap-subjects-list');
+    const roadmapSection = document.getElementById('roadmap-subjects-section');
+    if (roadmapContainer) roadmapContainer.innerHTML = '';
+    
+    if (moveState.roadmapId) {
+        if (roadmapSection) roadmapSection.style.display = 'block';
+        loadRoadmapSubjects();
+    } else {
+        if (roadmapSection) roadmapSection.style.display = 'none';
+    }
+}
+
+function closeSubjectSelection() {
+    UI.toggleElement('move-card-info', true);
+    UI.toggleElement('subject-selection-section', false);
+    UI.toggleElement('topic-selection-section', true);
+    if (currentSelectedMoveTarget) {
+        UI.toggleElement('confirm-move-card-btn', true);
+    }
+}
+
+async function loadRoadmapSubjects() {
+    try {
+        const data = await client.getMilestones(moveState.roadmapId);
+        if (data && data.milestones) {
+            // Filter to get unique subjects
+            const seen = new Set();
+            const uniqueSubjects = [];
+            data.milestones.forEach(ms => {
+                if (!seen.has(ms.id)) {
+                    seen.add(ms.id);
+                    uniqueSubjects.push({ id: ms.id, name: ms.name });
+                }
+            });
+            displayRoadmapSubjectResults(uniqueSubjects);
+        }
+    } catch (err) {
+        console.error('Load roadmap subjects failed:', err);
+    }
+}
+
+function displayRoadmapSubjectResults(subjects) {
+    const container = document.getElementById('roadmap-subjects-list');
+    if (!container) return;
+    container.innerHTML = '';
+    
+    if (subjects.length === 0) {
+        container.innerHTML = '<div class="no-results" style="padding: 1rem; text-align: center; opacity: 0.6;">No subjects in this roadmap.</div>';
+        return;
+    }
+
+    subjects.forEach(subject => {
+        const item = document.createElement('div');
+        item.className = 'search-result-item';
+        item.innerHTML = `
+            <div class="search-result-name">${UI.escapeHtml(subject.name)}</div>
+        `;
+        
+        item.onclick = async () => {
+            closeSubjectSelection();
+            updateTargetSubject(subject.id, subject.name);
+        };
+        
+        container.appendChild(item);
+    });
+}
+
+function updateTargetSubject(id, name) {
+    moveState.targetSubjectId = id;
+    moveState.targetSubjectName = name;
+    
+    const targetNameEl = document.getElementById('target-subject-name');
+    if (targetNameEl) targetNameEl.textContent = name;
+    
+    // Clear previous search and load topics for the new subject
+    const searchInput = document.getElementById('topic-search-input');
+    if (searchInput) searchInput.value = '';
+    
+    currentSelectedMoveTarget = null;
+    UI.toggleElement('confirm-move-card-btn', false);
+    
+    loadSubjectTopics();
+}
+
+async function loadSubjectTopics() {
+    const section = document.getElementById('subject-topics-section');
+    const container = document.getElementById('subject-topics-list');
+    const resultsContainer = document.getElementById('topic-search-results');
+    
+    if (!moveState.targetSubjectId) {
+        if (section) section.style.display = 'none';
+        return;
+    }
+
+    if (section) section.style.display = 'block';
+    if (resultsContainer) resultsContainer.style.display = 'none';
+    if (container) container.innerHTML = '<div style="padding: 1rem; text-align: center;"><div class="loading" style="width: 20px; height: 20px; border-width: 2px; margin: 0 auto;"></div></div>';
+
+    try {
+        const topics = await client.getTopics(moveState.targetSubjectId);
+        displaySubjectTopics(topics);
+    } catch (err) {
+        console.error('Load subject topics failed:', err);
+        if (container) container.innerHTML = '<div class="no-results">Failed to load topics.</div>';
+    }
+}
+
+function displaySubjectTopics(topics) {
+    const container = document.getElementById('subject-topics-list');
+    if (!container) return;
+    container.innerHTML = '';
+
+    if (topics.length === 0) {
+        container.innerHTML = '<div class="no-results" style="padding: 1rem; text-align: center; opacity: 0.6;">No topics in this subject.</div>';
+        return;
+    }
+
+    const levelNames = ['Surface', 'Depth', 'Origin'];
+    const groupedTopics = {0: [], 1: [], 2: []};
+    topics.forEach(topic => {
+        if (groupedTopics[topic.level]) groupedTopics[topic.level].push(topic);
+    });
+
+    [0, 1, 2].forEach(level => {
+        const levelTopics = groupedTopics[level].filter(topic => {
+            return !(moveState.targetSubjectId === currentSubjectId && 
+                     topic.level === currentTopicLevel && 
+                     topic.position === currentTopicPosition);
+        });
+        if (levelTopics.length > 0) {
+            const levelHeader = document.createElement('div');
+            levelHeader.style = 'font-size: 0.75rem; font-weight: 700; color: var(--color-text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin: 1rem 0 0.5rem 0.25rem;';
+            levelHeader.textContent = levelNames[level];
+            container.appendChild(levelHeader);
+
+            levelTopics.forEach(topic => {
+                const item = document.createElement('div');
+                item.className = 'search-result-item';
+                if (currentSelectedMoveTarget && currentSelectedMoveTarget.id === topic.id && currentSelectedMoveTarget.level === topic.level && currentSelectedMoveTarget.position === topic.position) {
+                    item.classList.add('selected');
+                }
+
+                item.innerHTML = `
+                    <div class="search-result-name">${UI.escapeHtml(topic.name)}</div>
+                `;
+                
+                item.onclick = () => {
+                    selectMoveTarget(topic);
+                    container.querySelectorAll('.search-result-item').forEach(el => el.classList.remove('selected'));
+                    item.classList.add('selected');
+                };
+                
+                container.appendChild(item);
+            });
+        }
+    });
+}
+
+function selectMoveTarget(topic) {
+    currentSelectedMoveTarget = topic;
+    
+    // Show confirm button
+    const confirmBtn = document.getElementById('confirm-move-card-btn');
+    if (confirmBtn) {
+        confirmBtn.style.display = 'block';
+        confirmBtn.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+}
+
+async function searchSubjects(query) {
+    const resultsContainer = document.getElementById('reorder-subject-search-results');
+    if (!resultsContainer) return;
+
+    if (!query || query.trim().length === 0) {
+        resultsContainer.innerHTML = '';
+        return;
+    }
+
+    resultsContainer.innerHTML = '<div style="text-align: center; padding: 1rem;"><div class="loading" style="width: 24px; height: 24px; border-width: 3px; margin: 0 auto;"></div></div>';
+
+    try {
+        const subjects = await client.searchSubjects(query);
+        displaySubjectResults(subjects);
+    } catch (err) {
+        console.error('Failed to search subjects:', err);
+        resultsContainer.innerHTML = '<div style="text-align: center; padding: 1rem; color: var(--danger-color);">Failed to search subjects</div>';
+    }
+}
+
+function displaySubjectResults(subjects) {
+    const resultsContainer = document.getElementById('reorder-subject-search-results');
+    if (!resultsContainer) return;
+
+    if (!subjects || subjects.length === 0) {
+        resultsContainer.innerHTML = '<div style="text-align: center; padding: 1rem; color: var(--text-muted);">No subjects found</div>';
+        return;
+    }
+
+    resultsContainer.innerHTML = '';
+    subjects.forEach(subject => {
+        const item = document.createElement('div');
+        item.className = 'search-result-item';
+
+        item.innerHTML = `
+            <div class="search-result-name">${UI.escapeHtml(subject.name)}</div>
+        `;
+
+        item.onclick = () => {
+            closeSubjectSelection();
+            updateTargetSubject(subject.id, subject.name);
+            document.getElementById('topic-search-input').focus();
+        };
+
+        resultsContainer.appendChild(item);
+    });
+}
+
 async function searchForTopics(searchToken) {
     if (!searchToken) {
         return;
@@ -829,7 +1125,7 @@ async function searchForTopics(searchToken) {
     currentSelectedMoveTarget = null;
     UI.toggleElement('confirm-move-card-btn', false);
 
-    const subjectId = parseInt(UI.getUrlParam('subjectId'));
+    const subjectId = moveState.targetSubjectId;
 
     try {
         // Search across all levels by trying each level
@@ -871,44 +1167,52 @@ function displayTopicResults(topics) {
     const searchTerm = searchInput.value.trim();
     const levelNames = ['Surface', 'Depth', 'Origin'];
 
+    const groupedTopics = {0: [], 1: [], 2: []};
     topics.forEach(topic => {
-        const topicItem = document.createElement('div');
-        topicItem.className = 'topic-list-item';
-        if (currentSelectedMoveTarget && currentSelectedMoveTarget.id === topic.id && currentSelectedMoveTarget.level === topic.level && currentSelectedMoveTarget.position === topic.position) {
-            topicItem.classList.add('selected');
-        }
+        if (groupedTopics[topic.level]) groupedTopics[topic.level].push(topic);
+    });
 
-        // Highlight matching text
-        let highlightedName = UI.escapeHtml(topic.name);
-        if (searchTerm) {
-            const regex = new RegExp(`(${searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
-            highlightedName = highlightedName.replace(regex, '<mark style="background-color: #fff59d; padding: 0 2px; border-radius: 2px;">$1</mark>');
-        }
-
-        topicItem.innerHTML = `
-            <div style="font-weight: 600; margin-bottom: 0.25rem;">${highlightedName}</div>
-            <div style="font-size: 0.875rem; color: var(--text-muted);">Level: ${levelNames[topic.level] || 'Unknown'} • Position: ${topic.position}</div>
-        `;
-
-        topicItem.addEventListener('click', () => {
-            // Update selection state
-            currentSelectedMoveTarget = topic;
-
-            // Update UI: highlight selected item
-            container.querySelectorAll('.topic-list-item').forEach(item => {
-                item.classList.remove('selected');
-            });
-            topicItem.classList.add('selected');
-
-            // Show confirm button
-            const confirmBtn = document.getElementById('confirm-move-card-btn');
-            if (confirmBtn) {
-                confirmBtn.style.display = 'block';
-                confirmBtn.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-            }
+    [0, 1, 2].forEach(level => {
+        const levelTopics = groupedTopics[level].filter(topic => {
+            return !(moveState.targetSubjectId === currentSubjectId && 
+                     topic.level === currentTopicLevel && 
+                     topic.position === currentTopicPosition);
         });
+        if (levelTopics.length > 0) {
+            const levelHeader = document.createElement('div');
+            levelHeader.style = 'font-size: 0.75rem; font-weight: 700; color: var(--color-text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin: 1rem 0 0.5rem 0.25rem;';
+            levelHeader.textContent = levelNames[level];
+            container.appendChild(levelHeader);
 
-        container.appendChild(topicItem);
+            levelTopics.forEach(topic => {
+                const topicItem = document.createElement('div');
+                topicItem.className = 'topic-list-item';
+                if (currentSelectedMoveTarget && currentSelectedMoveTarget.id === topic.id && currentSelectedMoveTarget.level === topic.level && currentSelectedMoveTarget.position === topic.position) {
+                    topicItem.classList.add('selected');
+                }
+
+                // Highlight matching text
+                let highlightedName = UI.escapeHtml(topic.name);
+                if (searchTerm) {
+                    const regex = new RegExp(`(${searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+                    highlightedName = highlightedName.replace(regex, '<mark style="background-color: #fff59d; padding: 0 2px; border-radius: 2px;">$1</mark>');
+                }
+
+                topicItem.innerHTML = `
+                    <div style="font-weight: 600;">${highlightedName}</div>
+                `;
+
+                topicItem.addEventListener('click', () => {
+                    selectMoveTarget(topic);
+                    container.querySelectorAll('.topic-list-item').forEach(item => {
+                        item.classList.remove('selected');
+                    });
+                    topicItem.classList.add('selected');
+                });
+
+                container.appendChild(topicItem);
+            });
+        }
     });
 }
 
@@ -927,7 +1231,7 @@ async function moveCardToTopic(targetTopic) {
             subjectId,
             currentTopicLevel,
             currentTopicPosition,
-            subjectId, // targetSubjectId (same subject)
+            moveState.targetSubjectId,
             targetTopic.level,
             targetTopic.position
         );

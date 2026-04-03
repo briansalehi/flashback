@@ -1046,14 +1046,15 @@
 
 <script src="proto/flashback.js"></script>
 <!-- Subject Selection Modal -->
-<div id="subject-selection-modal" class="modal-overlay" style="display: none; z-index: 1100;">
-  <div class="modal-content" style="max-width: 500px;">
+<div id="subject-selection-modal" class="modal-overlay" style="display: none;">
+  <div class="modal-content">
     <div class="modal-header">
       <h2 class="modal-title">Select Target Subject</h2>
       <button class="modal-close" id="close-subject-modal-btn">&times;</button>
     </div>
     <div class="modal-body">
-      <div class="form-group">
+      <div class="form-group" style="margin-bottom: 1.5rem;">
+        <label class="form-label" for="reorder-subject-search-input">Search all subjects</label>
         <input
             type="text"
             id="reorder-subject-search-input"
@@ -1062,7 +1063,16 @@
             autocomplete="off"
         >
       </div>
-      <div id="reorder-subject-search-results" style="max-height: 400px; overflow-y: auto; margin-top: 1rem;">
+
+      <div class="modal-section-separator"></div>
+
+      <div id="roadmap-subjects-section" style="display: none; margin-bottom: 1.5rem;">
+        <h3 class="section-title" id="roadmap-subjects-title" style="font-size: 0.9rem; color: var(--color-text-muted); margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.05em;">Subjects in Roadmap</h3>
+        <div id="roadmap-subjects-list" class="search-results-list">
+          <!-- Roadmap subjects will be inserted here -->
+        </div>
+      </div>
+      <div id="reorder-subject-search-results" class="search-results-list">
         <!-- Subject results will be inserted here -->
       </div>
     </div>
