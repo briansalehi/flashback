@@ -950,9 +950,9 @@ std::map<uint64_t, Card> database::search_cards(uint64_t const subject_id, exper
     return matched;
 }
 
-void database::move_card_to_section(uint64_t const card_id, uint64_t const resource_id, uint64_t const section_position, uint64_t const target_section_position) const
+void database::move_card_to_section(uint64_t const card_id, uint64_t const resource_id, uint64_t const section_position, uint64_t const target_resource_id, uint64_t const target_section_position) const
 {
-    exec("call move_card_to_section($1, $2, $3, $4)", card_id, resource_id, section_position, target_section_position);
+    exec("call move_card_to_section($1, $2, $3, $4, $5)", card_id, resource_id, section_position, target_resource_id, target_section_position);
 }
 
 void database::move_card_to_topic(uint64_t const card_id, uint64_t const subject_id, uint64_t const topic_position, expertise_level const topic_level,

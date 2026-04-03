@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict YejpYdvelpyp7HyzeBJJGTYfhtrcwEeBRIHzgf9mG0AOJpVPtrLVc8y5Lu0liXK
+\restrict Ezlifaa1dUzvlCwjR4svq5zpvsiHsFdLwcgF6XW3aerlg6LsiDkK63H1LZJDheb
 
 -- Dumped from database version 18.3
 -- Dumped by pg_dump version 18.3
@@ -2457,31 +2457,27 @@ end; $$;
 ALTER PROCEDURE flashback.move_block(IN card_id integer, IN block_position integer, IN target_card integer, IN target_position integer) OWNER TO flashback;
 
 --
--- Name: move_card_to_section(integer, integer, integer, integer); Type: PROCEDURE; Schema: flashback; Owner: flashback
+-- Name: move_card_to_section(integer, integer, integer, integer, integer); Type: PROCEDURE; Schema: flashback; Owner: flashback
 --
 
-CREATE PROCEDURE flashback.move_card_to_section(IN card_id integer, IN resource_id integer, IN current_section integer, IN target_section integer)
+CREATE PROCEDURE flashback.move_card_to_section(IN card_id integer, IN resource_id integer, IN current_section integer, IN target_resource_id integer, IN target_section integer)
     LANGUAGE plpgsql
     AS $$
-declare card_position integer;
 declare last_position integer;
 begin
-    select coalesce(position, 1) into card_position from section_cards where resource = resource_id and section = current_section and card = card_id;
-
-    if current_section <> target_section then
-        select coalesce(max(position), 0) + 1 into last_position from section_cards where resource = resource_id and section = target_section;
-
-        update section_cards set section = target_section, position = last_position where resource = resource_id and section = current_section and card = card_id;
-
-        update section_cards t set position = tt.updated_position from (
-            select position, row_number() over (order by position) as updated_position from section_cards where resource = resource_id and section = current_section
-        ) tt where t.resource = resource_id and t.section = current_section and t.position = tt.position;
+    if resource_id = target_resource_id and current_section = target_section then
+        return;
     end if;
+    select coalesce(max(position), 0) + 1 into last_position from section_cards where resource = target_resource_id and section = target_section;
+    update section_cards set resource = target_resource_id, section = target_section, position = last_position where resource = resource_id and section = current_section and card = card_id;
+    update section_cards t set position = tt.updated_position from (
+        select position, row_number() over (order by position) as updated_position from section_cards where resource = resource_id and section = current_section
+    ) tt where t.resource = resource_id and t.section = current_section and t.position = tt.position;
 end;
 $$;
 
 
-ALTER PROCEDURE flashback.move_card_to_section(IN card_id integer, IN resource_id integer, IN current_section integer, IN target_section integer) OWNER TO flashback;
+ALTER PROCEDURE flashback.move_card_to_section(IN card_id integer, IN resource_id integer, IN current_section integer, IN target_resource_id integer, IN target_section integer) OWNER TO flashback;
 
 --
 -- Name: move_card_to_topic(integer, integer, integer, flashback.expertise_level, integer, integer, flashback.expertise_level); Type: PROCEDURE; Schema: flashback; Owner: flashback
@@ -2518,16 +2514,24 @@ CREATE PROCEDURE flashback.move_section(IN resource_id integer, IN section_posit
 declare source_top_position integer;
 declare target_top_position integer;
 begin
-    select max(coalesce(position, 0)) + 1 into source_top_position from sections where resource = resource_id;
-
-    select max(coalesce(position, 0)) + 1 into target_top_position from sections where resource = target_resource_id;
-
-    if target_section_position > 0 and section_position > 0 then
-        call reorder_section(resource_id, section_position, source_top_position);
-
-        update sections set resource = target_resource_id, position = target_top_position where resource = resource_id and position = source_top_position;
-
-        call reorder_section(target_resource_id, target_top_position, target_section_position);
+    if resource_id = target_resource_id and section_position = target_section_position then
+        return;
+    end if;
+    if section_position > 0 and target_section_position > 0 then
+        if resource_id = target_resource_id then
+            call reorder_section(resource_id, section_position, target_section_position);
+        else
+            select max(coalesce(position, 0)) into source_top_position from sections where resource = resource_id;
+            select max(coalesce(position, 0)) + 1 into target_top_position from sections where resource = target_resource_id;
+            if source_top_position > 1 then
+                call reorder_section(resource_id, section_position, source_top_position);
+            end if;
+            update sections set resource = target_resource_id, position = coalesce(target_top_position, 1) where resource = resource_id and position = source_top_position;
+            select max(position) into target_top_position from sections where resource = target_resource_id;
+            if target_section_position < target_top_position then
+                call reorder_section(target_resource_id, target_top_position, target_section_position);
+            end if;
+        end if;
     end if;
 end; $$;
 
@@ -2547,21 +2551,19 @@ begin
     if subject_id = target_subject_id and topic_level = target_level and topic_position = target_topic_position then
         return;
     end if;
-
-    select max(coalesce(position, 0)) + 1 into source_top_position from topics where subject = subject_id and level = topic_level;
-
+    select max(coalesce(position, 0)) into source_top_position from topics where subject = subject_id and level = topic_level;
     select max(coalesce(position, 0)) + 1 into target_top_position from topics where subject = target_subject_id and level = target_level;
-
     if topic_position > 0 and target_topic_position > 0 then
         if subject_id = target_subject_id and topic_level = target_level and topic_position <> target_topic_position then
             call reorder_topic(subject_id, topic_level, topic_position, target_topic_position);
         else
-            call reorder_topic(subject_id, topic_level, topic_position, coalesce(source_top_position, 1));
-
-            update topics set subject = target_subject_id, level = target_level, position = coalesce(target_top_position, 1) where subject = subject_id and level = topic_level and position = coalesce(source_top_position, 1);
-
+            if source_top_position > 1 then
+                call reorder_topic(subject_id, topic_level, topic_position, source_top_position);
+            end if;
+            update topics set subject = target_subject_id, level = target_level, position = coalesce(target_top_position, 1) where subject = subject_id and level = topic_level and position = source_top_position;
+            select max(position) into target_top_position from topics where subject = target_subject_id and level = target_level;
             if target_topic_position < target_top_position then
-                call reorder_topic(target_subject_id, target_level, coalesce(target_top_position, 1), target_topic_position);
+                call reorder_topic(target_subject_id, target_level, target_top_position, target_topic_position);
             end if;
         end if;
     end if;
@@ -4383,5 +4385,5 @@ GRANT ALL ON SCHEMA public TO brian;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict YejpYdvelpyp7HyzeBJJGTYfhtrcwEeBRIHzgf9mG0AOJpVPtrLVc8y5Lu0liXK
+\unrestrict Ezlifaa1dUzvlCwjR4svq5zpvsiHsFdLwcgF6XW3aerlg6LsiDkK63H1LZJDheb
 

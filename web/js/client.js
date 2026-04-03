@@ -1546,7 +1546,7 @@ class FlashbackClient {
         });
     }
 
-    async moveCardToSection(cardId, resourceId, sourcePosition, targetPosition) {
+    async moveCardToSection(cardId, resourceId, sourcePosition, targetResourceId, targetPosition) {
         return new Promise((resolve, reject) => {
             const request = new proto.flashback.MoveCardToSectionRequest();
             const user = this.getAuthenticatedUser();
@@ -1555,14 +1555,17 @@ class FlashbackClient {
             card.setId(cardId);
             const resource = new proto.flashback.Resource();
             resource.setId(resourceId);
-            const source = new proto.flashback.Section();
-            source.setPosition(sourcePosition);
-            const target = new proto.flashback.Section();
-            target.setPosition(targetPosition);
+            const targetResource = new proto.flashback.Resource();
+            targetResource.setId(targetResourceId);
+            const sourceSection = new proto.flashback.Section();
+            sourceSection.setPosition(sourcePosition);
+            const targetSection = new proto.flashback.Section();
+            targetSection.setPosition(targetPosition);
             request.setCard(card);
             request.setResource(resource);
-            request.setSource(source);
-            request.setTarget(target);
+            request.setTargetResource(targetResource);
+            request.setSourceSection(sourceSection);
+            request.setTargetSection(targetSection);
 
             this.client.moveCardToSection(request, this.getMetadata(), (err) => {
                 if (err) {

@@ -196,7 +196,7 @@ message GetStudyResourcesResponse { repeated StudyResource study = 1; }
 message EditSectionRequest { User user = 1; Resource resource = 2; Section section = 3; }
 message EditSectionResponse { }
 
-message MoveCardToSectionRequest { User user = 1; Card card = 2;; Resource resource = 3; Section source = 4; Section target = 5; }
+message MoveCardToSectionRequest { User user = 1; Card card = 2;; Resource resource = 3; Section source_section = 4; Resource target_resource = 5; Section target_section = 6; }
 message MoveCardToSectionResponse { }
 
 message SearchSectionsRequest { User user = 1; Resource resource = 2; string search_token = 3; }

@@ -3482,31 +3482,36 @@ grpc::Status server::MoveCardToSection(grpc::ServerContext* context, MoveCardToS
         }
         else if (request->resource().id() == 0)
         {
-            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid resource"};
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid source resource"};
         }
-        else if (request->source().position() == 0)
+        else if (request->target_resource().id() == 0)
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid target resource"};
+        }
+        else if (request->source_section().position() == 0)
         {
             status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid source section"};
         }
-        else if (request->target().position() == 0)
+        else if (request->target_section().position() == 0)
         {
             status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid target section"};
         }
         else if (!user_is_verified(request->user()))
         {
-            std::clog << std::format("client {} tried to x without verification\n", request->user().token());
+            std::clog << std::format("client {} tried to move a card in a resource without verification\n", request->user().token());
             status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not verified"};
         }
         else if (!user_is_authorized(request->user()))
         {
-            std::clog << std::format("client {} unauthorized access to x\n", request->user().token());
+            std::clog << std::format("client {} unauthorized access to move a card in a resource\n", request->user().token());
             status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not authorized"};
         }
         else
         {
-            std::clog << std::format("client {} moved card {} to section {} in resource {}\n", request->user().token(), request->card().id(), request->target().position(),
-                                     request->resource().id());
-            m_database->move_card_to_section(request->card().id(), request->resource().id(), request->source().position(), request->target().position());
+            std::clog << std::format("client {} moved card {} from section {} in resource {} to section {} in resource {}\n", request->user().token(), request->card().id(),
+                                     request->source_section().position(), request->resource().id(), request->target_section().position(), request->target_resource().id());
+            m_database->move_card_to_section(request->card().id(), request->resource().id(), request->source_section().position(), request->target_resource().id(),
+                                             request->target_section().position());
             status = grpc::Status{grpc::StatusCode::OK, {}};
         }
     }
