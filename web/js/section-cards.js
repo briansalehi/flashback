@@ -29,6 +29,8 @@ async function markSectionAsReviewed() {
         if (markSectionReviewedBtn) {
             markSectionReviewedBtn.title = 'Mark as Completed';
             markSectionReviewedBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-check-check"><path d="m4 9 5 5 11-11"></path><path d="m4 15 5 5 11-11"></path></svg>';
+            // Update originalText for UI.setButtonLoading to restore correctly
+            markSectionReviewedBtn.dataset.originalText = markSectionReviewedBtn.innerHTML;
         }
 
         // Re-render cards to update their links with the new section state
