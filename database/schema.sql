@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict wfBOzXjeo1uSbtc6gcdVIRW48BV6nyqPxC1FiiegkWZxp9ZqWKpxUx24BhxBiUe
+\restrict YejpYdvelpyp7HyzeBJJGTYfhtrcwEeBRIHzgf9mG0AOJpVPtrLVc8y5Lu0liXK
 
 -- Dumped from database version 18.3
 -- Dumped by pg_dump version 18.3
@@ -2544,17 +2544,25 @@ CREATE PROCEDURE flashback.move_topic(IN subject_id integer, IN topic_level flas
 declare source_top_position integer;
 declare target_top_position integer;
 begin
+    if subject_id = target_subject_id and topic_level = target_level and topic_position = target_topic_position then
+        return;
+    end if;
+
     select max(coalesce(position, 0)) + 1 into source_top_position from topics where subject = subject_id and level = topic_level;
 
     select max(coalesce(position, 0)) + 1 into target_top_position from topics where subject = target_subject_id and level = target_level;
 
-    if topic_position > 0 and target_topic_position > 0 and topic_position < coalesce(source_top_position) then
-        call reorder_topic(subject_id, topic_level, topic_position, coalesce(source_top_position, 1));
+    if topic_position > 0 and target_topic_position > 0 then
+        if subject_id = target_subject_id and topic_level = target_level and topic_position <> target_topic_position then
+            call reorder_topic(subject_id, topic_level, topic_position, target_topic_position);
+        else
+            call reorder_topic(subject_id, topic_level, topic_position, coalesce(source_top_position, 1));
 
-        update topics set subject = target_subject_id, level = target_level, position = coalesce(target_top_position, 1) where subject = subject_id and level = topic_level and position = coalesce(source_top_position, 1);
+            update topics set subject = target_subject_id, level = target_level, position = coalesce(target_top_position, 1) where subject = subject_id and level = topic_level and position = coalesce(source_top_position, 1);
 
-        if target_topic_position < target_top_position then
-            call reorder_topic(target_subject_id, target_level, coalesce(target_top_position, 1), target_topic_position);
+            if target_topic_position < target_top_position then
+                call reorder_topic(target_subject_id, target_level, coalesce(target_top_position, 1), target_topic_position);
+            end if;
         end if;
     end if;
 end; $$;
@@ -4375,5 +4383,5 @@ GRANT ALL ON SCHEMA public TO brian;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict wfBOzXjeo1uSbtc6gcdVIRW48BV6nyqPxC1FiiegkWZxp9ZqWKpxUx24BhxBiUe
+\unrestrict YejpYdvelpyp7HyzeBJJGTYfhtrcwEeBRIHzgf9mG0AOJpVPtrLVc8y5Lu0liXK
 

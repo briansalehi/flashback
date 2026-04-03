@@ -40,7 +40,6 @@ service Server {
     rpc MergeResources(MergeResourcesRequest) returns (MergeResourcesResponse);
     rpc CreateTopic(CreateTopicRequest) returns (CreateTopicResponse);
     rpc GetTopics(GetTopicsRequest) returns (GetTopicsResponse);
-    rpc ReorderTopic(ReorderTopicRequest) returns (ReorderTopicResponse);
     rpc RemoveTopic(RemoveTopicRequest) returns (RemoveTopicResponse);
     rpc MergeTopics(MergeTopicsRequest) returns (MergeTopicsResponse);
     rpc EditTopic(EditTopicRequest) returns (EditTopicResponse);

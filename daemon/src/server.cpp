@@ -2501,59 +2501,6 @@ grpc::Status server::CreateTopic(grpc::ServerContext* context, CreateTopicReques
     return status;
 }
 
-grpc::Status server::ReorderTopic(grpc::ServerContext* context, ReorderTopicRequest const* request, ReorderTopicResponse* response)
-{
-    grpc::Status status{grpc::StatusCode::INTERNAL, {}};
-
-    try
-    {
-        if (!request->has_user() || !session_is_valid(request->user()))
-        {
-            status = grpc::Status{grpc::StatusCode::UNAUTHENTICATED, "invalid user"};
-        }
-        else if (request->subject().id() == 0)
-        {
-            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid subject"};
-        }
-        else if (request->topic().position() == 0)
-        {
-            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid source topic"};
-        }
-        else if (request->target().position() == 0)
-        {
-            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid target topic"};
-        }
-        else if (!user_is_verified(request->user()))
-        {
-            std::clog << std::format("client {} tried to x without verification\n", request->user().token());
-            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not verified"};
-        }
-        else if (!user_is_authorized(request->user()))
-        {
-            std::clog << std::format("client {} unauthorized access to x\n", request->user().token());
-            status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not authorized"};
-        }
-        else
-        {
-            std::clog << std::format("client {} reordered topic {} to {} in subject {}\n", request->user().token(), request->topic().position(), request->target().position(),
-                                     request->subject().id());
-            m_database->reorder_topic(request->subject().id(), request->topic().level(), request->topic().position(), request->target().position());
-            status = grpc::Status{grpc::StatusCode::OK, {}};
-        }
-    }
-    catch (client_exception const& exp)
-    {
-        std::cerr << std::format("client {} {}\n", request->user().token(), exp.what());
-        status = grpc::Status{grpc::StatusCode::UNAVAILABLE, exp.what()};
-    }
-    catch (std::exception const& exp)
-    {
-        std::cerr << std::format("server: {}\n", exp.what());
-    }
-
-    return status;
-}
-
 grpc::Status server::RemoveTopic(grpc::ServerContext* context, RemoveTopicRequest const* request, RemoveTopicResponse* response)
 {
     grpc::Status status{grpc::StatusCode::INTERNAL, {}};

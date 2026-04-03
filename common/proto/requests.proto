@@ -106,9 +106,6 @@ message CreateTopicResponse { Topic topic = 1; }
 message GetTopicsRequest { User user = 1; Subject subject = 2; expertise_level level = 3; }
 message GetTopicsResponse { repeated Topic topic = 1; }
 
-message ReorderTopicRequest { User user = 1; Subject subject = 2; Topic topic = 3; Topic target = 4; }
-message ReorderTopicResponse { }
-
 message RemoveTopicRequest { User user = 1; Subject subject = 2; Topic topic = 3; }
 message RemoveTopicResponse { }
 

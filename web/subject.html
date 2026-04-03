@@ -1045,6 +1045,30 @@
 </div>
 
 <script src="proto/flashback.js"></script>
+<!-- Subject Selection Modal -->
+<div id="subject-selection-modal" class="modal-overlay" style="display: none; z-index: 1100;">
+  <div class="modal-content" style="max-width: 500px;">
+    <div class="modal-header">
+      <h2 class="modal-title">Select Target Subject</h2>
+      <button class="modal-close" id="close-subject-modal-btn">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <input
+            type="text"
+            id="reorder-subject-search-input"
+            class="form-input"
+            placeholder="Search subjects..."
+            autocomplete="off"
+        >
+      </div>
+      <div id="reorder-subject-search-results" style="max-height: 400px; overflow-y: auto; margin-top: 1rem;">
+        <!-- Subject results will be inserted here -->
+      </div>
+    </div>
+  </div>
+</div>
+
 <script src="js/ui.js"></script>
 <script src="js/client.js"></script>
 <script src="js/subject.js"></script>

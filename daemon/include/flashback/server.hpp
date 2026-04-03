@@ -87,7 +87,6 @@ public:
     // topic page
     grpc::Status GetTopics(grpc::ServerContext* context, GetTopicsRequest const* request, GetTopicsResponse* response) override;
     grpc::Status CreateTopic(grpc::ServerContext* context, CreateTopicRequest const* request, CreateTopicResponse* response) override;
-    grpc::Status ReorderTopic(grpc::ServerContext* context, ReorderTopicRequest const* request, ReorderTopicResponse* response) override;
     grpc::Status RemoveTopic(grpc::ServerContext* context, RemoveTopicRequest const* request, RemoveTopicResponse* response) override;
     grpc::Status MergeTopics(grpc::ServerContext* context, MergeTopicsRequest const* request, MergeTopicsResponse* response) override;
     grpc::Status EditTopic(grpc::ServerContext* context, EditTopicRequest const* request, EditTopicResponse* response) override;

@@ -8,33 +8,63 @@ let expandedLevels = { 0: false, 1: false, 2: false };
 let isResourcesExpanded = false;
 let reorderState = {
     active: false,
-    sourceIndex: null, // Index in the flattened currentTopicsData
+    sourceIndex: null, // Index in the flattened currentTopicsData (of source subject)
+    sourceTopic: null,
+    sourceSubjectId: null,
+    sourceSubjectName: null,
+    targetSubjectId: null,
+    targetSubjectName: null,
     longPressTimer: null,
     preventClick: false,
     startPos: { x: 0, y: 0 }
 };
 
+function updateReorderHint() {
+    let hint = document.getElementById('reorder-hint');
+    if (!hint) {
+        hint = document.createElement('div');
+        hint.id = 'reorder-hint';
+        hint.className = 'reorder-hint';
+        document.body.appendChild(hint);
+    }
+    
+    hint.innerHTML = `
+        <div style="display: flex; flex-direction: column; gap: 4px;">
+            <span style="font-weight: 600; font-size: 0.95rem;">Moving "${UI.escapeHtml(reorderState.sourceTopic.name)}"</span>
+            <span style="font-size: 0.8rem; opacity: 0.9;">Target Subject: <strong>${UI.escapeHtml(reorderState.targetSubjectName)}</strong></span>
+        </div>
+        <div style="display: flex; gap: 8px;">
+            <button class="btn btn-secondary btn-sm" onclick="openSubjectSelectionModal()" style="padding: 4px 12px; font-size: 0.85rem; background: rgba(255,255,255,0.2); border: none;">Change Subject</button>
+            <button class="btn btn-secondary btn-sm" onclick="exitReorderMode()" style="padding: 4px 12px; font-size: 0.85rem; background: rgba(255,255,255,0.2); border: none;">Cancel</button>
+        </div>
+    `;
+}
+
 function enterReorderMode(index) {
     if (reorderState.active) return;
     
     reorderState.active = true;
-    reorderState.sourceIndex = index;
-    reorderState.preventClick = true;
     
-    // Add hint at the top of the list
-    const hint = document.createElement('div');
-    hint.id = 'reorder-hint';
-    hint.className = 'reorder-hint';
-    hint.innerHTML = `
-        <span style="font-weight: 600; font-size: 0.95rem;">Select target location (same level) to move this topic</span>
-        <button class="btn btn-secondary btn-sm" onclick="exitReorderMode()" style="padding: 4px 12px; font-size: 0.85rem; background: rgba(255,255,255,0.2); border: none;">Cancel</button>
-    `;
-    document.body.appendChild(hint);
+    // Clear topics search when entering reorder mode
+    const searchInput = document.getElementById('topics-search-input');
+    if (searchInput) searchInput.value = '';
+
+    reorderState.sourceIndex = index;
+    reorderState.sourceTopic = currentTopicsData[index];
+    reorderState.sourceSubjectId = parseInt(subjectId);
+    reorderState.sourceSubjectName = subjectName;
+    reorderState.targetSubjectId = parseInt(subjectId);
+    reorderState.targetSubjectName = subjectName;
+    reorderState.preventClick = true;
     
     if (navigator.vibrate) navigator.vibrate(50);
 
     // Re-render to show gaps
-    renderTopics(currentTopicsData, Object.keys(expandedLevels).length - 1);
+    const milestoneLevel = parseInt(UI.getUrlParam('level')) || 0;
+    renderTopics(currentTopicsData, milestoneLevel);
+
+    // Add/update hint
+    updateReorderHint();
 
     // Ensure source topic remains in view after gaps are added
     requestAnimationFrame(() => {
@@ -45,16 +75,116 @@ function enterReorderMode(index) {
     });
 }
 
-window.exitReorderMode = function() {
+window.exitReorderMode = async function() {
+    const wasSubjectChanged = reorderState.active && (reorderState.sourceSubjectId !== reorderState.targetSubjectId);
+    const originalSourceSubjectId = reorderState.sourceSubjectId;
+    const originalSourceSubjectName = reorderState.sourceSubjectName;
+    const originalSourceTopicIndex = reorderState.sourceIndex;
+
     reorderState.active = false;
     reorderState.sourceIndex = null;
+    reorderState.sourceTopic = null;
+    reorderState.sourceSubjectId = null;
+    reorderState.sourceSubjectName = null;
+    reorderState.targetSubjectId = null;
+    reorderState.targetSubjectName = null;
     
     const hint = document.getElementById('reorder-hint');
     if (hint) hint.remove();
 
+    if (wasSubjectChanged) {
+        // Return to source subject
+        subjectId = originalSourceSubjectId.toString();
+        subjectName = originalSourceSubjectName;
+        // Update page header
+        const subjectNameTitle = document.getElementById('subject-name');
+        if (subjectNameTitle) subjectNameTitle.textContent = subjectName;
+    }
+
     // Re-render to remove gaps
-    renderTopics(currentTopicsData, Object.keys(expandedLevels).length - 1);
+    await loadTopics();
+
+    if (wasSubjectChanged) {
+        // Scroll to the source topic
+        requestAnimationFrame(() => {
+            const sourceItem = document.getElementById(`topic-${originalSourceTopicIndex}`);
+            if (sourceItem) {
+                sourceItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        });
+    }
 };
+
+window.openSubjectSelectionModal = function() {
+    UI.toggleElement('subject-selection-modal', true);
+    const searchInput = document.getElementById('reorder-subject-search-input');
+    if (searchInput) {
+        searchInput.value = '';
+        searchInput.focus();
+    }
+    const container = document.getElementById('reorder-subject-search-results');
+    if (container) container.innerHTML = '';
+};
+
+function closeSubjectSelectionModal() {
+    UI.toggleElement('subject-selection-modal', false);
+}
+
+async function searchReorderSubjects(token) {
+    try {
+        const subjects = await client.searchSubjects(token);
+        displayReorderSubjectResults(subjects);
+    } catch (err) {
+        console.error('Search subjects failed:', err);
+    }
+}
+
+function displayReorderSubjectResults(subjects) {
+    const container = document.getElementById('reorder-subject-search-results');
+    if (!container) return;
+    container.innerHTML = '';
+    
+    subjects.forEach(subject => {
+        const item = document.createElement('div');
+        item.className = 'search-result-item';
+        item.style.padding = '0.75rem';
+        item.style.cursor = 'pointer';
+        item.style.borderBottom = '1px solid var(--border-color)';
+        item.innerHTML = `
+            <div style="font-weight: 500; color: var(--text-primary);">${UI.escapeHtml(subject.name)}</div>
+        `;
+        
+        item.onclick = async () => {
+            closeSubjectSelectionModal();
+            await loadTargetSubjectTopics(subject.id, subject.name);
+        };
+        
+        item.onmouseenter = () => item.style.background = 'rgba(255,255,255,0.05)';
+        item.onmouseleave = () => item.style.background = '';
+        
+        container.appendChild(item);
+    });
+}
+
+async function loadTargetSubjectTopics(targetId, targetName) {
+    reorderState.targetSubjectId = targetId;
+    reorderState.targetSubjectName = targetName;
+    
+    // Clear topics search when switching subjects in reorder mode
+    const searchInput = document.getElementById('topics-search-input');
+    if (searchInput) searchInput.value = '';
+
+    // Temporarily change global subjectId and subjectName to load/render topics
+    subjectId = targetId.toString();
+    subjectName = targetName;
+    
+    // Update page header
+    const subjectNameTitle = document.getElementById('subject-name');
+    if (subjectNameTitle) subjectNameTitle.textContent = subjectName;
+
+    updateReorderHint();
+    await loadTopics();
+}
 
 // Confirmation Modal Functions
 (function() {
@@ -161,6 +291,39 @@ window.addEventListener('DOMContentLoaded', () => {
     const renameSubjectModal = document.getElementById('rename-subject-modal');
     const cancelRenameSubjectBtn = document.getElementById('cancel-rename-subject-btn');
     const closeRenameSubjectModalBtn = document.getElementById('close-rename-subject-modal-btn');
+
+    // Subject selection modal handlers
+    const closeSubjectModalBtn = document.getElementById('close-subject-modal-btn');
+    if (closeSubjectModalBtn) {
+        closeSubjectModalBtn.addEventListener('click', closeSubjectSelectionModal);
+    }
+
+    const reorderSubjectSearchInput = document.getElementById('reorder-subject-search-input');
+    if (reorderSubjectSearchInput) {
+        let searchTimeout;
+        reorderSubjectSearchInput.addEventListener('input', (e) => {
+            const query = e.target.value.trim();
+            clearTimeout(searchTimeout);
+            
+            if (!query) {
+                const container = document.getElementById('reorder-subject-search-results');
+                if (container) container.innerHTML = '';
+                return;
+            }
+
+            searchTimeout = setTimeout(() => {
+                searchReorderSubjects(query);
+            }, 300);
+        });
+    }
+
+    // Close on backdrop click
+    const subjectSelectionModal = document.getElementById('subject-selection-modal');
+    if (subjectSelectionModal) {
+        subjectSelectionModal.addEventListener('click', (e) => {
+            if (e.target === subjectSelectionModal) closeSubjectSelectionModal();
+        });
+    }
 
     if (renameSubjectBtn) {
         renameSubjectBtn.addEventListener('click', (e) => {
@@ -938,13 +1101,13 @@ async function loadTopics() {
         UI.toggleElement('topics-loading', false);
         topicsLoaded = true;
 
-        if (allTopics.length === 0) {
+        if (allTopics.length === 0 && !reorderState.active) {
             UI.toggleElement('topics-empty-state', true);
             UI.toggleElement('topics-search-container', false);
         } else {
             UI.toggleElement('topics-list', true);
-            // Show the topics search bar when topics are loaded; tab switching controls visibility elsewhere
-            UI.toggleElement('topics-search-container', true);
+            // Show the topics search bar when topics are loaded and not reordering
+            UI.toggleElement('topics-search-container', !reorderState.active);
             renderTopics(allTopics, milestoneLevel);
         }
     } catch (err) {
@@ -955,6 +1118,9 @@ async function loadTopics() {
 }
 
 function renderTopics(topics, maxLevel) {
+    if (reorderState.active) {
+        maxLevel = 2; // Always show all levels in reorder mode
+    }
     currentTopicsData = topics;
     const container = document.getElementById('topics-list');
     const searchInput = document.getElementById('topics-search-input');
@@ -998,7 +1164,7 @@ function renderTopics(topics, maxLevel) {
     }
 
     levelsToShow.forEach(level => {
-        if (topicsByLevel[level] && topicsByLevel[level].length > 0) {
+        if ((topicsByLevel[level] && topicsByLevel[level].length > 0) || reorderState.active) {
             const levelSection = document.createElement('div');
             levelSection.className = 'level-section';
 
@@ -1012,24 +1178,29 @@ function renderTopics(topics, maxLevel) {
             // Sort topics by position within each level
             const sortedGroup = topicsByLevel[level].sort((a, b) => a.topic.position - b.topic.position);
 
-            const sourceTopic = reorderState.active ? currentTopicsData[reorderState.sourceIndex] : null;
+            const sourceTopic = reorderState.active ? reorderState.sourceTopic : null;
 
             const createGap = (pos) => {
                 const gap = document.createElement('div');
                 gap.className = 'target-block-gap';
                 gap.onclick = (e) => {
                     e.stopPropagation();
-                    const sourceLevel = parseInt(sourceTopic.level);
-                    const sourcePosition = parseInt(sourceTopic.position);
+                    const targetLevel = level;
                     const targetPosition = pos;
 
-                    if (sourceLevel === level && sourcePosition === targetPosition) {
+                    if (reorderState.sourceSubjectId === reorderState.targetSubjectId && 
+                        reorderState.sourceTopic.level === targetLevel && 
+                        (targetPosition === reorderState.sourceTopic.position || targetPosition === reorderState.sourceTopic.position + 1)) {
                         exitReorderMode();
                         return;
                     }
 
-                    window.showConfirmModal('Confirm Reorder', 'Are you sure you want to move this topic here?', async () => {
-                        await reorderTopic(sourceLevel, sourcePosition, targetPosition);
+                    window.showConfirmModal('Confirm Move', `Move "${reorderState.sourceTopic.name}" to ${levelInfo[targetLevel].name} level in ${reorderState.targetSubjectName}?`, async () => {
+                        await moveTopic(reorderState.sourceSubjectId, reorderState.sourceTopic.level, reorderState.sourceTopic.position, 
+                                        reorderState.targetSubjectId, targetLevel, targetPosition);
+                        // After successful move, we should stay in the target subject
+                        // but exit reorder mode.
+                        reorderState.sourceSubjectId = reorderState.targetSubjectId; // Prevent returning to source
                         exitReorderMode();
                     });
                 };
@@ -1043,11 +1214,15 @@ function renderTopics(topics, maxLevel) {
                 displayedGroup = sortedGroup.slice(0, 3);
             }
 
+            if (reorderState.active && displayedGroup.length === 0) {
+                levelSection.appendChild(createGap(1));
+            }
+
             displayedGroup.forEach((item, sortedIndex) => {
                 const topic = item.topic;
                 const globalIndex = item.globalIndex;
 
-                if (reorderState.active && parseInt(sourceTopic.level) === level && topic.position !== sourceTopic.position && topic.position !== sourceTopic.position + 1) {
+                if (reorderState.active && (reorderState.sourceSubjectId !== reorderState.targetSubjectId || parseInt(reorderState.sourceTopic.level) !== level || (topic.position !== reorderState.sourceTopic.position && topic.position !== reorderState.sourceTopic.position + 1))) {
                     levelSection.appendChild(createGap(topic.position));
                 }
                 
@@ -1131,13 +1306,15 @@ function renderTopics(topics, maxLevel) {
                 levelSection.appendChild(topicItem);
 
                 // Add gap after the last block
-                if (reorderState.active && parseInt(sourceTopic.level) === level && sortedIndex === displayedGroup.length - 1 && topic.position + 1 !== sourceTopic.position && topic.position + 1 !== sourceTopic.position + 1) {
+                if (reorderState.active && (reorderState.sourceSubjectId !== reorderState.targetSubjectId || parseInt(reorderState.sourceTopic.level) !== level) && sortedIndex === displayedGroup.length - 1) {
+                    levelSection.appendChild(createGap(topic.position + 1));
+                } else if (reorderState.active && parseInt(reorderState.sourceTopic.level) === level && sortedIndex === displayedGroup.length - 1 && topic.position + 1 !== reorderState.sourceTopic.position && topic.position + 1 !== reorderState.sourceTopic.position + 1) {
                     levelSection.appendChild(createGap(topic.position + 1));
                 }
             });
 
             // Add toggle button if level group is long
-            if (needsToggle) {
+            if (needsToggle && !reorderState.active) {
                 const toggleContainer = document.createElement('div');
                 toggleContainer.style.textAlign = 'center';
                 toggleContainer.style.marginTop = '1rem';
@@ -1561,13 +1738,18 @@ async function removeTopic(level, position) {
     }
 }
 
-async function reorderTopic(level, sourcePosition, targetPosition) {
+async function moveTopic(sourceSubjectId, sourceTopicLevel, sourceTopicPosition, targetSubjectId, targetTopicLevel, targetTopicPosition) {
     try {
-        await client.reorderTopic(parseInt(subjectId), level, sourcePosition, targetPosition);
+        console.log("source subject:", sourceSubjectId, "source level", sourceTopicLevel, "source topic:", sourceTopicPosition)
+        console.log("target subject:", targetSubjectId, "target level", targetTopicLevel, "target topic:", targetTopicPosition)
+        await client.moveTopic(sourceSubjectId, sourceTopicLevel, sourceTopicPosition, targetSubjectId, targetTopicLevel, targetTopicPosition);
+        
+        // After move, the target subject is already the current subjectId
         await loadTopics();
+        UI.showSuccess('Topic moved successfully');
     } catch (err) {
-        console.error('Reorder topic failed:', err);
-        UI.showError('Failed to reorder topic: ' + (err.message || 'Unknown error'));
+        console.error('Move topic failed:', err);
+        UI.showError('Failed to move topic: ' + (err.message || 'Unknown error'));
     }
 }
 

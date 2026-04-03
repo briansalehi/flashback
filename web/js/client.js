@@ -1317,34 +1317,6 @@ class FlashbackClient {
         });
     }
 
-    async reorderTopic(subjectId, topicLevel, sourcePosition, targetPosition) {
-        return new Promise((resolve, reject) => {
-            const request = new proto.flashback.ReorderTopicRequest();
-            const user = this.getAuthenticatedUser();
-            request.setUser(user);
-            const subject = new proto.flashback.Subject();
-            subject.setId(subjectId);
-            request.setSubject(subject);
-            const topic = new proto.flashback.Topic();
-            topic.setPosition(sourcePosition);
-            topic.setLevel(topicLevel);
-            request.setTopic(topic);
-            const target = new proto.flashback.Topic();
-            target.setPosition(targetPosition);
-            target.setLevel(topicLevel);
-            request.setTarget(target);
-
-            this.client.reorderTopic(request, this.getMetadata(), (err) => {
-                if (err) {
-                    console.error("ReorderTopic error:", err);
-                    reject(this.handleError(err));
-                } else {
-                    resolve();
-                }
-            });
-        });
-    }
-
     async removeTopic(subjectId, topicLevel, topicPosition) {
         return new Promise((resolve, reject) => {
             const request = new proto.flashback.RemoveTopicRequest();
