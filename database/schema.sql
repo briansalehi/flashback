@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict VGqeLXJFqTy9kMQ34Mrj66wkq7DcSLs40NdiosdvXnltDNfBbo37lGGZqpxlXSU
+\restrict wfBOzXjeo1uSbtc6gcdVIRW48BV6nyqPxC1FiiegkWZxp9ZqWKpxUx24BhxBiUe
 
 -- Dumped from database version 18.3
 -- Dumped by pg_dump version 18.3
@@ -2535,10 +2535,10 @@ end; $$;
 ALTER PROCEDURE flashback.move_section(IN resource_id integer, IN section_position integer, IN target_resource_id integer, IN target_section_position integer) OWNER TO flashback;
 
 --
--- Name: move_topic(integer, flashback.expertise_level, integer, integer, integer); Type: PROCEDURE; Schema: flashback; Owner: flashback
+-- Name: move_topic(integer, flashback.expertise_level, integer, integer, flashback.expertise_level, integer); Type: PROCEDURE; Schema: flashback; Owner: flashback
 --
 
-CREATE PROCEDURE flashback.move_topic(IN subject_id integer, IN topic_level flashback.expertise_level, IN topic_position integer, IN target_subject_id integer, IN target_topic_position integer)
+CREATE PROCEDURE flashback.move_topic(IN subject_id integer, IN topic_level flashback.expertise_level, IN topic_position integer, IN target_subject_id integer, IN target_level flashback.expertise_level, IN target_topic_position integer)
     LANGUAGE plpgsql
     AS $$
 declare source_top_position integer;
@@ -2546,19 +2546,21 @@ declare target_top_position integer;
 begin
     select max(coalesce(position, 0)) + 1 into source_top_position from topics where subject = subject_id and level = topic_level;
 
-    select max(coalesce(position, 0)) + 1 into target_top_position from topics where subject = target_subject_id and level = topic_level;
+    select max(coalesce(position, 0)) + 1 into target_top_position from topics where subject = target_subject_id and level = target_level;
 
-    if target_topic_position > 0 and topic_position > 0 then
-        call reorder_topic(subject_id, topic_level, topic_position, source_top_position);
+    if topic_position > 0 and target_topic_position > 0 and topic_position < coalesce(source_top_position) then
+        call reorder_topic(subject_id, topic_level, topic_position, coalesce(source_top_position, 1));
 
-        update topics set subject = target_subject_id, position = target_top_position where subject = subject_id and level = topic_level and position = source_top_position;
+        update topics set subject = target_subject_id, level = target_level, position = coalesce(target_top_position, 1) where subject = subject_id and level = topic_level and position = coalesce(source_top_position, 1);
 
-        call reorder_topic(target_subject_id, topic_level, target_top_position, target_topic_position);
+        if target_topic_position < target_top_position then
+            call reorder_topic(target_subject_id, target_level, coalesce(target_top_position, 1), target_topic_position);
+        end if;
     end if;
 end; $$;
 
 
-ALTER PROCEDURE flashback.move_topic(IN subject_id integer, IN topic_level flashback.expertise_level, IN topic_position integer, IN target_subject_id integer, IN target_topic_position integer) OWNER TO flashback;
+ALTER PROCEDURE flashback.move_topic(IN subject_id integer, IN topic_level flashback.expertise_level, IN topic_position integer, IN target_subject_id integer, IN target_level flashback.expertise_level, IN target_topic_position integer) OWNER TO flashback;
 
 --
 -- Name: remove_block(integer, integer); Type: PROCEDURE; Schema: flashback; Owner: flashback
@@ -4373,5 +4375,5 @@ GRANT ALL ON SCHEMA public TO brian;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict VGqeLXJFqTy9kMQ34Mrj66wkq7DcSLs40NdiosdvXnltDNfBbo37lGGZqpxlXSU
+\unrestrict wfBOzXjeo1uSbtc6gcdVIRW48BV6nyqPxC1FiiegkWZxp9ZqWKpxUx24BhxBiUe
 

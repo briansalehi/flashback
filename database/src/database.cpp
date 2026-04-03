@@ -738,9 +738,9 @@ void database::rename_topic(uint64_t const subject_id, expertise_level const lev
     exec("call rename_topic($1, $2, $3, $4)", subject_id, level_to_string(level), position, name);
 }
 
-void database::move_topic(uint64_t const subject_id, expertise_level const level, uint64_t const position, uint64_t const target_subject_id, uint64_t const target_position) const
+void database::move_topic(uint64_t const subject_id, expertise_level const level, uint64_t const position, uint64_t const target_subject_id, expertise_level const target_level, uint64_t const target_position) const
 {
-    exec("call move_topic($1, $2, $3, $4, $5)", subject_id, level_to_string(level), position, target_subject_id, target_position);
+    exec("call move_topic($1, $2, $3, $4, $5, $6)", subject_id, level_to_string(level), position, target_subject_id, level_to_string(target_level), target_position);
 }
 
 std::map<uint64_t, Topic> database::search_topics(uint64_t const subject_id, expertise_level const level, std::string_view search_pattern) const

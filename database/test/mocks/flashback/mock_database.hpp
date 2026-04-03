@@ -115,7 +115,7 @@ public:
     MOCK_METHOD(void, remove_topic, (uint64_t, flashback::expertise_level, uint64_t), (const, override));
     MOCK_METHOD(void, merge_topics, (uint64_t, flashback::expertise_level, uint64_t, uint64_t), (const, override));
     MOCK_METHOD(void, rename_topic, (uint64_t, flashback::expertise_level, uint64_t, std::string), (const, override));
-    MOCK_METHOD(void, move_topic, (uint64_t, flashback::expertise_level, uint64_t, uint64_t, uint64_t), (const, override));
+    MOCK_METHOD(void, move_topic, (uint64_t, flashback::expertise_level, uint64_t, uint64_t, expertise_level, uint64_t), (const, override));
     MOCK_METHOD((std::map<uint64_t, Topic>), search_topics, (uint64_t, flashback::expertise_level, std::string_view), (const, override));
     MOCK_METHOD(void, change_topic_level, (uint64_t, uint64_t, flashback::expertise_level, flashback::expertise_level), (const, override));
 

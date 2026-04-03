@@ -95,7 +95,7 @@ public:
     void remove_topic(uint64_t subject_id, expertise_level level, uint64_t position) const override;
     void merge_topics(uint64_t subject_id, expertise_level level, uint64_t source_position, uint64_t target_position) const override;
     void rename_topic(uint64_t subject_id, expertise_level level, uint64_t position, std::string name) const override;
-    void move_topic(uint64_t subject_id, expertise_level level, uint64_t position, uint64_t target_subject_id, uint64_t target_position) const override;
+    void move_topic(uint64_t subject_id, expertise_level level, uint64_t position, uint64_t target_subject_id, expertise_level target_level, uint64_t target_position) const override;
     [[nodiscard]] std::map<uint64_t, Topic> search_topics(uint64_t subject_id, expertise_level level, std::string_view search_pattern) const override;
     void change_topic_level(uint64_t subject_id, uint64_t position, flashback::expertise_level level, flashback::expertise_level target) const override;
 

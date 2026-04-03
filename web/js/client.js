@@ -1369,21 +1369,29 @@ class FlashbackClient {
         });
     }
 
-    async moveTopic(subjectId, sourceLevel, sourcePosition, targetLevel, targetPosition) {
+    async moveTopic(sourceSubjectId, sourceTopicLevel, sourceTopicPosition, targetSubjectId, targetTopicLevel, targetTopicPosition) {
         return new Promise((resolve, reject) => {
             const request = new proto.flashback.MoveTopicRequest();
             const user = this.getAuthenticatedUser();
             request.setUser(user);
-            const subject = new proto.flashback.Subject();
-            subject.setId(subjectId);
-            const source = new proto.flashback.Topic();
-            source.setLevel(sourceLevel);
-            source.setPosition(sourcePosition);
-            request.setSource(source);
-            const target = new proto.flashback.Topic();
-            target.setLevel(targetLevel);
-            target.setPosition(targetPosition);
-            request.setTarget(target);
+
+            const sourceSubject = new proto.flashback.Subject();
+            sourceSubject.setId(sourceSubjectId);
+            request.setSourceSubject(sourceSubject);
+
+            const targetSubject = new proto.flashback.Subject();
+            targetSubject.setId(targetSubjectId);
+            request.setTargetSubject(targetSubject);
+
+            const sourceTopic = new proto.flashback.Topic();
+            sourceTopic.setLevel(sourceTopicLevel);
+            sourceTopic.setPosition(sourceTopicPosition);
+            request.setSourceTopic(sourceTopic);
+
+            const targetTopic = new proto.flashback.Topic();
+            targetTopic.setLevel(targetTopicLevel);
+            targetTopic.setPosition(targetTopicPosition);
+            request.setTargetTopic(targetTopic);
 
             this.client.moveTopic(request, this.getMetadata(), (err) => {
                 if (err) {

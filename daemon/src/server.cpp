@@ -810,13 +810,15 @@ grpc::Status server::AddMilestone(grpc::ServerContext* context, AddMilestoneRequ
             if (request->position() > 0)
             {
                 Milestone const milestone = m_database->add_milestone(request->subject_id(), request->subject_level(), request->roadmap_id(), request->position());
-                std::clog << std::format("client {} added milestone {} to roadmap {} in position {}\n", request->user().token(), request->subject_id(), request->roadmap_id(), request->position());
+                std::clog << std::format("client {} added milestone {} to roadmap {} in position {}\n", request->user().token(), request->subject_id(), request->roadmap_id(),
+                                         request->position());
                 *response->mutable_milestone() = milestone;
             }
             else
             {
                 Milestone const milestone = m_database->add_milestone(request->subject_id(), request->subject_level(), request->roadmap_id());
-                std::clog << std::format("client {} added milestone {} to roadmap {} in position {}\n", request->user().token(), request->subject_id(), request->roadmap_id(), request->position());
+                std::clog << std::format("client {} added milestone {} to roadmap {} in position {}\n", request->user().token(), request->subject_id(), request->roadmap_id(),
+                                         request->position());
                 *response->mutable_milestone() = milestone;
             }
             status = grpc::Status{grpc::StatusCode::OK, {}};
@@ -1033,7 +1035,8 @@ grpc::Status server::ReorderMilestone(grpc::ServerContext* context, ReorderMiles
         }
         else
         {
-            std::clog << std::format("client {} reordered milestone {} to {} in roadmap {}\n", request->user().token(), request->current_position(), request->target_position(), request->roadmap().id());
+            std::clog << std::format("client {} reordered milestone {} to {} in roadmap {}\n", request->user().token(), request->current_position(), request->target_position(),
+                                     request->roadmap().id());
             m_database->reorder_milestone(request->roadmap().id(), request->current_position(), request->target_position());
             status = grpc::Status{grpc::StatusCode::OK, {}};
         }
@@ -1082,7 +1085,8 @@ grpc::Status server::RemoveMilestone(grpc::ServerContext* context, RemoveMilesto
         }
         else
         {
-            std::clog << std::format("client {} removed milestone {} in roadmap {}\n", request->user().token(), request->roadmap().id(), request->milestone().id(), request->roadmap().id());
+            std::clog << std::format("client {} removed milestone {} in roadmap {}\n", request->user().token(), request->roadmap().id(), request->milestone().id(),
+                                     request->roadmap().id());
             m_database->remove_milestone(request->roadmap().id(), request->milestone().id());
             status = grpc::Status{grpc::StatusCode::OK, {}};
         }
@@ -2759,12 +2763,12 @@ grpc::Status server::MoveTopic(grpc::ServerContext* context, MoveTopicRequest co
         }
         else if (!user_is_verified(request->user()))
         {
-            std::clog << std::format("client {} tried to x without verification\n", request->user().token());
+            std::clog << std::format("client {} tried to move a topic without verification\n", request->user().token());
             status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not verified"};
         }
         else if (!user_is_authorized(request->user()))
         {
-            std::clog << std::format("client {} unauthorized access to x\n", request->user().token());
+            std::clog << std::format("client {} unauthorized access to move a topic\n", request->user().token());
             status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "user is not authorized"};
         }
         else
@@ -2772,7 +2776,7 @@ grpc::Status server::MoveTopic(grpc::ServerContext* context, MoveTopicRequest co
             std::clog << std::format("client {} moved topic {} in subject {} to topic {} in subject {}\n", request->user().token(), request->source_topic().position(),
                                      request->source_subject().id(), request->target_topic().position(), request->target_subject().id());
             m_database->move_topic(request->source_subject().id(), request->source_topic().level(), request->source_topic().position(), request->target_subject().id(),
-                                   request->target_topic().position());
+                                   request->target_topic().level(), request->target_topic().position());
             status = grpc::Status{grpc::StatusCode::OK, {}};
         }
     }
@@ -4175,7 +4179,8 @@ grpc::Status server::GetTopicCoverage(grpc::ServerContext* context, GetTopicCove
             {
                 *response->add_topic() = topic;
             }
-            std::clog << std::format("client {} collected {} topics in subject {} covered by assessment {}\n", request->user().token(), response->topic_size(), request->subject().id(), request->assessment().card().id());
+            std::clog << std::format("client {} collected {} topics in subject {} covered by assessment {}\n", request->user().token(), response->topic_size(),
+                                     request->subject().id(), request->assessment().card().id());
             status = grpc::Status{grpc::StatusCode::OK, {}};
         }
     }
@@ -4186,7 +4191,8 @@ grpc::Status server::GetTopicCoverage(grpc::ServerContext* context, GetTopicCove
     }
     catch (std::exception const& exp)
     {
-        std::cerr << std::format("server: failed to collect topics in subject {} covered by assessment {}, reason: {}\n", request->subject().id(), request->assessment().card().id(), exp.what());
+        std::cerr << std::format("server: failed to collect topics in subject {} covered by assessment {}, reason: {}\n", request->subject().id(),
+                                 request->assessment().card().id(), exp.what());
     }
 
     return status;
@@ -4863,7 +4869,8 @@ grpc::Status server::MoveBlock(grpc::ServerContext* context, MoveBlockRequest co
         }
         else
         {
-            std::clog << std::format("client {} moved block from position {} in card {} to position {} in card {}\n", request->user().token(), request->block().position(), request->card().id(), request->target_block().position(), request->target_card().id());
+            std::clog << std::format("client {} moved block from position {} in card {} to position {} in card {}\n", request->user().token(), request->block().position(),
+                                     request->card().id(), request->target_block().position(), request->target_card().id());
             m_database->move_block(request->card().id(), request->block().position(), request->target_card().id(), request->target_block().position());
             status = grpc::Status{grpc::StatusCode::OK, {}};
         }
