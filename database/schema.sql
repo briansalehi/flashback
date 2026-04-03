@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict Ezlifaa1dUzvlCwjR4svq5zpvsiHsFdLwcgF6XW3aerlg6LsiDkK63H1LZJDheb
+\restrict 6jbEKZgPtTVDTrJbk5ojbZFQeS1gL0Udn1ZLhAWdTCMTCyaDtBeLOHul9ny0HVD
 
 -- Dumped from database version 18.3
 -- Dumped by pg_dump version 18.3
@@ -3227,6 +3227,7 @@ CREATE FUNCTION flashback.split_block(card_id integer, block_position integer) R
 declare parts_count integer;
 declare block_type content_type;
 declare block_extension varchar(20);
+declare safe_margin integer;
 begin
     create temp table block_parts as
     select row_number() over () - 1 + block_position as position, part
@@ -3236,15 +3237,19 @@ begin
 
     select count(b.position) into parts_count from block_parts b;
 
+    select max(b.position) + parts_count into safe_margin from blocks b where b.card = card_id;
+
     select b.type, b.extension into block_type, block_extension from blocks b where b.card = card_id and b.position = block_position;
 
-    update blocks b set position = b.position + parts_count - 1 where b.card = card_id and b.position > block_position;
+    update blocks b set position = b.position + safe_margin where b.card = card_id and b.position > block_position;
 
     delete from blocks b where b.card = card_id and b.position = block_position;
 
     insert into blocks (card, position, content, type, extension) select card_id, block_parts.position, part, block_type, block_extension from block_parts;
 
     drop table block_parts;
+
+    update blocks b set position = b.position - safe_margin + parts_count - 1 where b.card = card_id and b.position > safe_margin;
 
     return query select b.position, b.type, b.extension, b.metadata, b.content from blocks b where b.card = card_id and b.position between block_position and block_position + parts_count - 1;
 end; $$;
@@ -4385,5 +4390,5 @@ GRANT ALL ON SCHEMA public TO brian;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict Ezlifaa1dUzvlCwjR4svq5zpvsiHsFdLwcgF6XW3aerlg6LsiDkK63H1LZJDheb
+\unrestrict 6jbEKZgPtTVDTrJbk5ojbZFQeS1gL0Udn1ZLhAWdTCMTCyaDtBeLOHul9ny0HVD
 
