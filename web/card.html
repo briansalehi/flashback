@@ -51,7 +51,14 @@
       .code-toolbar > .toolbar {
           top: 0.4rem !important;
           right: 0 !important;
+          opacity: 0 !important;
+          pointer-events: none;
+          transition: opacity var(--transition-base);
+      }
+
+      .content-block.selected .code-toolbar > .toolbar {
           opacity: 1 !important;
+          pointer-events: auto;
       }
 
       :not(pre) > code[class*="language-"] {
