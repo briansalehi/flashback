@@ -464,7 +464,7 @@ window.addEventListener('DOMContentLoaded', () => {
                 if (btn && btn.style.display !== 'none') btn.click();
             }
         });
-        UI.Shortcuts.register('g', 'Merge Block', () => {
+        UI.Shortcuts.register('v', 'Merge Block', () => {
             if (selectedBlockIndex !== null) {
                 window.enterMergeMode(selectedBlockIndex);
             }

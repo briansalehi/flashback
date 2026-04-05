@@ -125,7 +125,28 @@ const UI = {
         register(key, description, action) {
             this.shortcuts[key] = { description, action };
         },
+        scrollToTop() {
+            const visibleOverlays = Array.from(document.querySelectorAll('.modal-overlay')).filter(m => m.style.display !== 'none');
+            if (visibleOverlays.length > 0) {
+                const modalBody = visibleOverlays[visibleOverlays.length - 1].querySelector('.modal-body, .modal-content');
+                if (modalBody) modalBody.scrollTo({ top: 0, behavior: 'smooth' });
+            } else {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        },
+        scrollToBottom() {
+            const visibleOverlays = Array.from(document.querySelectorAll('.modal-overlay')).filter(m => m.style.display !== 'none');
+            if (visibleOverlays.length > 0) {
+                const modalBody = visibleOverlays[visibleOverlays.length - 1].querySelector('.modal-body, .modal-content');
+                if (modalBody) modalBody.scrollTo({ top: modalBody.scrollHeight, behavior: 'smooth' });
+            } else {
+                window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' });
+            }
+        },
         init() {
+            this.lastKeyPress = null;
+            this.lastKeyPressTime = 0;
+
             document.addEventListener('keydown', (e) => {
                 // Esc key should cancel any modal and key operation
                 if (e.key === 'Escape') {
@@ -209,9 +230,10 @@ const UI = {
                 // Don't trigger if user is typing in an input or textarea (unless Alt is pressed)
                 if ((e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') && !e.altKey) return;
 
-                // Make sure these shortcuts won't trigger when pressed with Ctrl, Alt, or Shift keys
+                // Make sure these shortcuts won't trigger when pressed with Ctrl or Alt keys
                 // EXCEPT Alt key is allowed for some shortcuts (like Alt + Number)
-                if (e.ctrlKey || e.shiftKey) return;
+                // Shift is allowed for single characters (e.g., 'G')
+                if (e.ctrlKey || (e.shiftKey && e.key.length > 1)) return;
                 
                 // If Alt is pressed, we only allow it for specific shortcuts (e.g. breadcrumbs)
                 if (e.altKey && !/[0-9]/.test(e.key.toLowerCase())) return;
@@ -221,7 +243,27 @@ const UI = {
                     // This will fall through to shortcut handling
                 }
 
-                const key = (e.altKey ? 'alt+' : '') + e.key.toLowerCase();
+                // Handle gg shortcut
+                if (e.key === 'g' && !e.altKey && !e.ctrlKey && !e.shiftKey) {
+                    const now = Date.now();
+                    if (this.lastKeyPress === 'g' && (now - this.lastKeyPressTime) < 500) {
+                        this.lastKeyPress = null;
+                        this.lastKeyPressTime = 0;
+                        if (this.shortcuts['gg']) {
+                            e.preventDefault();
+                            this.shortcuts['gg'].action();
+                            return;
+                        }
+                    }
+                    this.lastKeyPress = 'g';
+                    this.lastKeyPressTime = now;
+                    // Note: don't return here, 'g' might be a single-key shortcut
+                } else {
+                    this.lastKeyPress = e.key;
+                    this.lastKeyPressTime = Date.now();
+                }
+
+                const key = (e.altKey ? 'alt+' : '') + (e.key.length === 1 ? e.key : e.key.toLowerCase());
                 if (key === '?') {
                     this.showHelp();
                     return;
@@ -230,6 +272,13 @@ const UI = {
                 if (this.shortcuts[key]) {
                     e.preventDefault();
                     this.shortcuts[key].action();
+                } else if (this.shortcuts[key.toLowerCase()]) {
+                    // Fallback to lowercase for convenience (e.g. Shift+A works for 'a')
+                    // EXCEPT for 'G' which we specifically want to handle separately
+                    if (key !== 'G') {
+                        e.preventDefault();
+                        this.shortcuts[key.toLowerCase()].action();
+                    }
                 }
             });
 
@@ -270,6 +319,8 @@ const UI = {
                     window.scrollBy({ top: -300, behavior: 'smooth' });
                 }
             });
+            this.register('gg', 'Go to Top', () => this.scrollToTop());
+            this.register('G', 'Go to Bottom', () => this.scrollToBottom());
         },
         showHelp() {
             if (document.getElementById('shortcuts-help-modal')) {
