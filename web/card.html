@@ -22,24 +22,36 @@
           color: #ccc;
           background: none !important;
           font-family: 'JetBrains Mono', Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;
-          font-size: var(--font-size-sm);
+          font-size: inherit;
+          line-height: inherit;
           text-align: left;
           white-space: pre;
           word-spacing: normal;
           word-break: normal;
           word-wrap: normal;
-          line-height: 1.6;
           tab-size: 4;
           border: none !important;
           box-shadow: none !important;
       }
 
+      pre[class*="language-"] code {
+          font-size: inherit;
+          line-height: inherit;
+      }
+
       pre[class*="language-"] {
-          padding: 0;
+          padding: var(--space-lg) 0 var(--space-sm) 0 !important;
           margin: 0;
           overflow: auto;
           border: none !important;
           box-shadow: none !important;
+      }
+
+      /* Language indicator positioning */
+      .code-toolbar > .toolbar {
+          top: 0.4rem !important;
+          right: 0 !important;
+          opacity: 1 !important;
       }
 
       :not(pre) > code[class*="language-"] {

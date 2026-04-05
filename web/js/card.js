@@ -2167,8 +2167,30 @@ function renderBlocks(blocks) {
             return false;
         };
 
+        const isClickOnScrollbar = (e) => {
+            const touch = e.touches ? e.touches[0] : e;
+            let target = e.target;
+            // Traverse up to find a scrollable element
+            while (target && target !== blockItem) {
+                const style = window.getComputedStyle(target);
+                const overflowX = style.getPropertyValue('overflow-x');
+                const overflowY = style.getPropertyValue('overflow-y');
+                const isScrollableX = (overflowX === 'auto' || overflowX === 'scroll') && target.scrollWidth > target.clientWidth;
+                const isScrollableY = (overflowY === 'auto' || overflowY === 'scroll') && target.scrollHeight > target.clientHeight;
+                
+                if (isScrollableX || isScrollableY) {
+                    const rect = target.getBoundingClientRect();
+                    if (isScrollableX && touch.clientY > rect.top + target.clientTop + target.clientHeight) return true;
+                    if (isScrollableY && touch.clientX > rect.left + target.clientLeft + target.clientWidth) return true;
+                }
+                target = target.parentElement;
+            }
+            return false;
+        };
+
         const startLongPressTimer = (e) => {
             if (reorderState.active) return;
+            if (isClickOnScrollbar(e)) return;
             const touch = e.touches ? e.touches[0] : e;
             reorderState.startPos = { x: touch.clientX, y: touch.clientY };
             reorderState.longPressTimer = setTimeout(() => {
@@ -2191,6 +2213,15 @@ function renderBlocks(blocks) {
 
         blockItem.addEventListener('mouseup', clearLongPressTimer);
         blockItem.addEventListener('mouseleave', clearLongPressTimer);
+        blockItem.addEventListener('mousemove', (e) => {
+            if (reorderState.longPressTimer) {
+                const dx = e.clientX - reorderState.startPos.x;
+                const dy = e.clientY - reorderState.startPos.y;
+                if (Math.sqrt(dx * dx + dy * dy) > 10) {
+                    clearLongPressTimer();
+                }
+            }
+        });
 
         blockItem.addEventListener('touchstart', (e) => {
             if (e.target.closest('button') || e.target.closest('input') || e.target.closest('textarea') || e.target.closest('select') || e.target.closest('.block-edit')) return;
@@ -2212,6 +2243,7 @@ function renderBlocks(blocks) {
 
         blockItem.addEventListener('click', async (e) => {
             if (reorderState.active || mergeState.active) {
+                if (isClickOnScrollbar(e)) return;
                 await handleReorderClick();
                 return;
             }
@@ -2261,7 +2293,7 @@ function renderBlocks(blocks) {
         } else if (block.type === 1) { // code
             // Map extension to Prism language
             const language = mapExtensionToLanguage(block.extension);
-            contentHtml = `<pre class="content-block-text" style="overflow-x: auto;"><code class="language-${language} show-language">${UI.escapeHtml(block.content)}</code></pre>`;
+            contentHtml = `<pre class="content-block-text language-${language}"><code class="language-${language} show-language">${UI.escapeHtml(block.content)}</code></pre>`;
         } else if (block.type === 2) { // image
             contentHtml = `<img src="${UI.escapeHtml(block.content)}" alt="Block image" style="max-width: 100%; height: auto; border-radius: var(--radius-md);" />`;
         } else if (block.type === 4) { // diagram
