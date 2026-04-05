@@ -525,7 +525,13 @@ window.addEventListener('DOMContentLoaded', () => {
                 const badge = document.createElement('span');
                 badge.className = 'shortcut-badge';
                 badge.textContent = key;
-                btn.style.position = 'relative'; // Ensure relative positioning for absolute badge
+                
+                // Only set relative if not already positioned (to avoid breaking fixed/absolute buttons)
+                const currentPos = window.getComputedStyle(btn).position;
+                if (currentPos === 'static') {
+                    btn.style.position = 'relative';
+                }
+                
                 btn.appendChild(badge);
             }
         };
