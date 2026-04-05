@@ -32,46 +32,8 @@
           cursor: default;
       }
 
-      .floating-add-btn {
-          position: fixed;
-          bottom: 2rem;
-          left: 2rem;
-          background: var(--gradient-primary);
-          color: white;
-          border: 1px solid rgba(255, 255, 255, 0.2);
-          border-radius: var(--radius-full);
-          padding: 0.75rem 1.5rem;
-          display: flex;
-          align-items: center;
-          gap: 0.5rem;
-          font-weight: 600;
-          box-shadow: 0 8px 32px rgba(102, 126, 234, 0.4), var(--shadow-lg);
-          cursor: pointer;
-          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-          z-index: 100;
-          backdrop-filter: blur(10px);
-      }
-
-      .floating-add-btn:hover {
-          transform: translateY(-4px) scale(1.05);
-          box-shadow: 0 12px 40px rgba(102, 126, 234, 0.6), var(--shadow-xl);
-          background: var(--gradient-primary-hover);
-      }
-
-      .floating-add-btn:active {
-          transform: translateY(-2px) scale(0.98);
-      }
 
       @media (max-width: 600px) {
-          .floating-add-btn .btn-text {
-              display: none;
-          }
-          .floating-add-btn {
-              padding: 1rem;
-              bottom: 1.5rem;
-              left: 1.5rem;
-          }
-
           .section-title-group {
               flex-wrap: wrap;
               gap: 0.5rem !important;

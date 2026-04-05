@@ -70,46 +70,8 @@
           cursor: default;
       }
 
-      .floating-add-btn {
-          position: fixed;
-          bottom: 2rem;
-          left: 2rem;
-          background: var(--gradient-primary);
-          color: white;
-          border: 1px solid rgba(255, 255, 255, 0.2);
-          border-radius: var(--radius-full);
-          padding: 0.75rem 1.5rem;
-          display: flex;
-          align-items: center;
-          gap: 0.5rem;
-          font-weight: 600;
-          box-shadow: 0 8px 32px rgba(102, 126, 234, 0.4), var(--shadow-lg);
-          cursor: pointer;
-          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-          z-index: 100;
-          backdrop-filter: blur(10px);
-      }
-
-      .floating-add-btn:hover {
-          transform: translateY(-4px) scale(1.05);
-          box-shadow: 0 12px 40px rgba(102, 126, 234, 0.6), var(--shadow-xl);
-          background: var(--gradient-primary-hover);
-      }
-
-      .floating-add-btn:active {
-          transform: translateY(-2px) scale(0.98);
-      }
 
       @media (max-width: 600px) {
-          .floating-add-btn .btn-text {
-              display: none;
-          }
-          .floating-add-btn {
-              padding: 1rem;
-              bottom: 1.5rem;
-              left: 1.5rem;
-          }
-
           .card-header-container {
               flex-wrap: wrap;
               gap: 0.5rem !important;
@@ -226,7 +188,7 @@
       <p class="text-muted mt-md">Loading card...</p>
     </div>
 
-      <div id="card-content" class="blocks-container" style="display: none;">
+    <div id="card-content" class="blocks-container" style="display: none;">
       <div class="card-header-container" style="display: flex; flex-wrap: wrap; gap: 1rem; justify-content: flex-start; align-items: center;">
         <div class="card-title-group" style="min-width: 250px;">
           <h1 id="card-headline" class="card-headline-display" style="margin: 0; text-align: left;"></h1>
@@ -246,20 +208,14 @@
           </div>
         </div>
         <div class="card-header-buttons" style="display: flex; gap: 0.5rem; flex-shrink: 0;">
-          <!-- Add Block now floating -->
         </div>
       </div>
-
-      <!-- Floating Add Button -->
-      <button id="add-block-btn" class="floating-add-btn" title="Add Block to Card" style="display: none;">
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-        <span class="btn-text">Add Block</span>
-      </button>
 
       <div id="blocks-list">
         <!-- blocks will be inserted here -->
       </div>
     </div>
+
 
     <div id="empty-state" style="display: none; text-align: center; padding: 4rem 2rem;">
       <h3 style="color: var(--text-muted);">No content yet</h3>
@@ -278,8 +234,8 @@
         </div>
 
         <form id="block-form" style="display: flex; flex-direction: column; flex: 1; min-height: 0;">
-          <div class="modal-body">
-            <div class="form-group">
+          <div class="modal-body" style="display: flex; flex-direction: column; overflow: hidden;">
+            <div class="form-group" style="flex-shrink: 0;">
             <label class="form-label" for="block-type">Block Type</label>
             <select id="block-type" class="form-input" required>
               <option value="0">Text</option>
@@ -290,7 +246,7 @@
             </select>
           </div>
 
-          <div class="form-group">
+          <div class="form-group" style="flex-shrink: 0;">
             <label class="form-label" for="block-extension">Extension</label>
             <input
                 type="text"
@@ -301,7 +257,7 @@
             >
           </div>
 
-          <div class="form-group">
+          <div class="form-group" style="flex-shrink: 0;">
             <label class="form-label" for="block-metadata">Metadata (optional)</label>
             <input
                 type="text"
@@ -311,12 +267,12 @@
             >
           </div>
 
-          <div class="form-group">
+          <div class="form-group" style="flex: 1; display: flex; flex-direction: column; margin-bottom: 0;">
             <label class="form-label" for="block-content">Content</label>
             <textarea
                 id="block-content"
                 class="form-input"
-                rows="10"
+                style="flex: 1; min-height: 150px; max-height: 350px; overflow-y: auto; font-family: monospace; resize: none;"
                 placeholder="Enter block content here..."
                 required
             ></textarea>
@@ -344,8 +300,8 @@
           <button type="button" id="close-edit-block-modal-btn" class="modal-close" aria-label="Close modal">&times;</button>
         </div>
         <form id="edit-block-modal-form" style="display: flex; flex-direction: column; flex: 1; min-height: 0;">
-          <div class="modal-body">
-            <div style="margin-bottom: 1rem;">
+          <div class="modal-body" style="display: flex; flex-direction: column; overflow: hidden;">
+            <div style="margin-bottom: 1rem; flex-shrink: 0;">
               <label class="form-label">Type: <span style="color: red;">*</span></label>
               <select id="edit-block-type" class="form-input" style="width: 100%;">
                 <option value="0">Text</option>
@@ -355,20 +311,20 @@
                 <option value="4">Diagram</option>
               </select>
             </div>
-            <div style="margin-bottom: 1rem;">
+            <div style="margin-bottom: 1rem; flex-shrink: 0;">
               <label class="form-label">Extension: <span style="color: red;">*</span></label>
               <input type="text" id="edit-block-extension" class="form-input" style="width: 100%;" placeholder="e.g., js, py, cpp" required>
             </div>
-            <div style="margin-bottom: 1rem;">
+            <div style="margin-bottom: 1rem; flex-shrink: 0;">
               <label class="form-label">Metadata (optional):</label>
               <input type="text" id="edit-block-metadata" class="form-input" style="width: 100%;" placeholder="e.g., Important, Note, Warning">
             </div>
-            <div style="margin-bottom: 1rem;">
+            <div style="margin-bottom: 0; flex: 1; display: flex; flex-direction: column;">
               <label class="form-label">Content: <span style="color: red;">*</span></label>
               <p style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 0.5rem;">
                 💡 Tip: Leave a blank line (press Enter twice) to split this block into multiple blocks
               </p>
-              <textarea id="edit-block-content" class="form-input" style="width: 100%; min-height: 250px; font-family: monospace;" placeholder="Enter block content..." required></textarea>
+              <textarea id="edit-block-content" class="form-input" style="width: 100%; flex: 1; min-height: 150px; max-height: 350px; overflow-y: auto; font-family: monospace; resize: none;" placeholder="Enter block content..." required></textarea>
             </div>
           </div>
           <div class="modal-actions">
@@ -492,6 +448,7 @@
           </div>
         </div>
         <div class="modal-actions" style="padding: 0 1.5rem 1.5rem; justify-content: flex-end; gap: 1rem;">
+          <button id="back-to-cards-btn" class="btn btn-secondary" style="display: none; padding: 0.5rem 1.5rem; margin-right: auto;">Back</button>
           <button id="confirm-move-block-btn" class="btn btn-primary" style="display: none; padding: 0.5rem 1.5rem;">Confirm Move</button>
           <button id="cancel-move-block-modal-btn" class="btn btn-secondary" style="padding: 0.5rem 1.5rem;">Cancel</button>
         </div>
@@ -516,6 +473,12 @@
     </div>
   </div>
 </main>
+
+<!-- Floating Add Button -->
+<button id="add-block-btn" class="floating-add-btn" title="Add Block to Card">
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+  <span class="btn-text">Add Block</span>
+</button>
 
 <script src="proto/flashback.js"></script>
 <script src="js/ui.js"></script>

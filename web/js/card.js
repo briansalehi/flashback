@@ -1,3 +1,58 @@
+let selectedBlockIndex = null;
+
+function selectBlock(index) {
+    if (index < 0 || index >= currentBlocks.length) return;
+
+    if (reorderState.active) {
+        if (reorderState.sourceIndex === index) {
+            window.exitReorderMode();
+        }
+        return;
+    }
+
+    if (mergeState.active) {
+        if (mergeState.sourceIndex === index) {
+            window.exitMergeMode();
+            return;
+        }
+        const sourcePos = currentBlocks[mergeState.sourceIndex].position;
+        const targetPos = currentBlocks[index].position;
+        window.showConfirmModal('Confirm Merge', 'Are you sure you want to merge these blocks? You can split them again by entering two adjacent newlines where you want them to split when editing the block.', async () => {
+            await mergeBlocksHandler(sourcePos, targetPos);
+            window.exitMergeMode();
+        });
+        return;
+    }
+
+    // If clicking same block, unselect
+    if (selectedBlockIndex === index) {
+        unselectBlock();
+        return;
+    }
+
+    // Clear previous selection
+    unselectBlock();
+
+    selectedBlockIndex = index;
+    const blockEl = document.getElementById(`block-${index}`);
+    if (blockEl) {
+        blockEl.classList.add('selected');
+        blockEl.classList.add('show-actions');
+        blockEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+}
+
+function unselectBlock() {
+    if (selectedBlockIndex !== null) {
+        const prevBlockEl = document.getElementById(`block-${selectedBlockIndex}`);
+        if (prevBlockEl) {
+            prevBlockEl.classList.remove('selected');
+            prevBlockEl.classList.remove('show-actions');
+        }
+        selectedBlockIndex = null;
+    }
+}
+
 // Timer to track card reading duration
 let cardStartTime = null;
 
@@ -45,6 +100,7 @@ window.enterMoveBlockMode = async function(index) {
     moveBlockState.sourceIndex = index;
     moveBlockState.targetCardId = null;
     moveBlockState.targetBlockPosition = null;
+    moveBlockState.highlightedCardIndex = -1;
 
     const modal = document.getElementById('move-block-modal');
     const cardsList = document.getElementById('move-target-cards-list');
@@ -97,7 +153,7 @@ window.enterMoveBlockMode = async function(index) {
                 <div class="headline-text">${UI.escapeHtml(card.headline)}</div>
                 <div class="card-state-tag ${stateName}">${stateName}</div>
             `;
-            cardOption.onclick = () => selectTargetCard(card.id, card.headline);
+            cardOption.onclick = (e) => selectTargetCard(card.id, card.headline, e.currentTarget);
             cardsList.appendChild(cardOption);
         });
         
@@ -116,18 +172,26 @@ window.enterMoveBlockMode = async function(index) {
     }
 };
 
-async function selectTargetCard(cardId, headline) {
+async function selectTargetCard(cardId, headline, element) {
     moveBlockState.targetCardId = cardId;
     moveBlockState.targetBlockPosition = null;
     
     document.querySelectorAll('#move-target-cards-list .headline-option').forEach(el => el.classList.remove('selected'));
-    event.currentTarget.classList.add('selected');
+    if (element) {
+        element.classList.add('selected');
+    } else if (event && event.currentTarget) {
+        event.currentTarget.classList.add('selected');
+    }
 
+    const step1 = document.getElementById('move-block-step-1');
     const step2 = document.getElementById('move-block-step-2');
+    const backBtn = document.getElementById('back-to-cards-btn');
     const blocksList = document.getElementById('move-target-blocks-list');
     const confirmBtn = document.getElementById('confirm-move-block-btn');
 
+    step1.style.display = 'none';
     step2.style.display = 'block';
+    if (backBtn) backBtn.style.display = 'inline-block';
     confirmBtn.style.display = 'none';
     blocksList.innerHTML = '<div class="loading-spinner"></div>';
     
@@ -211,8 +275,37 @@ function selectTargetPosition(position, element) {
 // Modal closing handlers
 const closeMoveBlockModal = () => {
     UI.toggleElement('move-block-modal', false);
-    moveBlockState = { sourceIndex: null, targetCardId: null, targetBlockPosition: null };
+    moveBlockState = { sourceIndex: null, targetCardId: null, targetBlockPosition: null, highlightedCardIndex: -1 };
+    
+    // Reset steps
+    const step1 = document.getElementById('move-block-step-1');
+    const step2 = document.getElementById('move-block-step-2');
+    const backBtn = document.getElementById('back-to-cards-btn');
+    const confirmBtn = document.getElementById('confirm-move-block-btn');
+    
+    if (step1) step1.style.display = 'block';
+    if (step2) step2.style.display = 'none';
+    if (backBtn) backBtn.style.display = 'none';
+    if (confirmBtn) confirmBtn.style.display = 'none';
 };
+
+const backToCards = () => {
+    const step1 = document.getElementById('move-block-step-1');
+    const step2 = document.getElementById('move-block-step-2');
+    const backBtn = document.getElementById('back-to-cards-btn');
+    const confirmBtn = document.getElementById('confirm-move-block-btn');
+    
+    if (step1) step1.style.display = 'block';
+    if (step2) step2.style.display = 'none';
+    if (backBtn) backBtn.style.display = 'none';
+    if (confirmBtn) confirmBtn.style.display = 'none';
+    
+    moveBlockState.targetCardId = null;
+    moveBlockState.targetBlockPosition = null;
+};
+
+const backBtn = document.getElementById('back-to-cards-btn');
+if (backBtn) backBtn.onclick = backToCards;
 
 document.getElementById('close-move-block-modal-btn').onclick = closeMoveBlockModal;
 document.getElementById('cancel-move-block-modal-btn').onclick = closeMoveBlockModal;
@@ -289,12 +382,12 @@ window.addEventListener('DOMContentLoaded', () => {
 
     // Global click-to-hide listener for block actions
     const closeAllBlockActions = (e) => {
-        const blocks = document.querySelectorAll('.content-block.show-actions');
-        blocks.forEach(blockItem => {
-            if (!blockItem.contains(e.target) && !e.target.closest('.block-actions-overlay')) {
-                blockItem.classList.remove('show-actions');
+        if (selectedBlockIndex !== null) {
+            const blockItem = document.getElementById(`block-${selectedBlockIndex}`);
+            if (blockItem && !blockItem.contains(e.target) && !e.target.closest('.block-actions-overlay')) {
+                unselectBlock();
             }
-        });
+        }
     };
 
     document.addEventListener('mousedown', (e) => {
@@ -316,6 +409,150 @@ window.addEventListener('DOMContentLoaded', () => {
     // Render breadcrumbs
     if (typeof UI !== 'undefined' && UI.renderBreadcrumbs) {
         UI.renderBreadcrumbs(breadcrumbItems);
+    }
+
+    // Register Keyboard Shortcuts
+    if (typeof UI !== 'undefined' && UI.Shortcuts) {
+        UI.Shortcuts.register('a', 'Add Block', () => {
+            const btn = document.getElementById('add-block-btn');
+            if (btn && btn.style.display !== 'none') btn.click();
+        });
+        UI.Shortcuts.register('n', 'Next Card/Topic/Chapter/Page', () => {
+            const nextKeywords = ['Next', 'Chapter', 'Page'];
+            const nextBtns = document.querySelectorAll('button.btn-primary, .nav-actions button');
+            for (const btn of nextBtns) {
+                const text = btn.textContent;
+                if (nextKeywords.some(kw => text.includes(kw))) {
+                    btn.click();
+                    break;
+                }
+            }
+        });
+        UI.Shortcuts.register('p', 'Previous Card/Topic/Chapter/Page', () => {
+            const prevKeywords = ['Previous', 'Chapter', 'Page'];
+            const prevBtns = document.querySelectorAll('button.btn-secondary, .nav-actions button');
+            for (const btn of prevBtns) {
+                const text = btn.textContent;
+                if (prevKeywords.some(kw => text.includes(kw))) {
+                    btn.click();
+                    break;
+                }
+            }
+        });
+        UI.Shortcuts.register('m', 'Mark as Reviewed / Move Block', () => {
+            if (selectedBlockIndex !== null) {
+                window.enterMoveBlockMode(selectedBlockIndex);
+            } else {
+                const btn = document.getElementById('mark-reviewed-btn');
+                if (btn && btn.style.display !== 'none') btn.click();
+            }
+        });
+        UI.Shortcuts.register('e', 'Edit Card / Edit Block', () => {
+            if (selectedBlockIndex !== null) {
+                window.openEditBlockModal(selectedBlockIndex);
+            } else {
+                const btn = document.getElementById('edit-headline-btn');
+                if (btn && btn.style.display !== 'none') btn.click();
+            }
+        });
+        UI.Shortcuts.register('delete', 'Delete Card / Remove Block', () => {
+            if (selectedBlockIndex !== null) {
+                const pos = currentBlocks[selectedBlockIndex].position;
+                window.showRemoveBlockModal(pos);
+            } else {
+                const btn = document.getElementById('remove-card-btn');
+                if (btn && btn.style.display !== 'none') btn.click();
+            }
+        });
+        UI.Shortcuts.register('g', 'Merge Block', () => {
+            if (selectedBlockIndex !== null) {
+                window.enterMergeMode(selectedBlockIndex);
+            }
+        });
+        UI.Shortcuts.register('arrowdown', 'Select Next Block', () => {
+            if (isMoveModalVisible()) {
+                updateMoveModalHighlight('down');
+            } else if (mergeState.active || selectedBlockIndex !== null) {
+                const nextIndex = (selectedBlockIndex === null) ? 0 : Math.min(selectedBlockIndex + 1, currentBlocks.length - 1);
+                selectBlock(nextIndex);
+            }
+        });
+        UI.Shortcuts.register('arrowup', 'Select Previous Block', () => {
+            if (isMoveModalVisible()) {
+                updateMoveModalHighlight('up');
+            } else if (mergeState.active || selectedBlockIndex !== null) {
+                const prevIndex = (selectedBlockIndex === null) ? 0 : Math.max(selectedBlockIndex - 1, 0);
+                selectBlock(prevIndex);
+            }
+        });
+
+        // Track changes for edit modals
+        const blockContent = document.getElementById('edit-block-content');
+        if (blockContent) {
+            blockContent.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    e.stopPropagation(); // Prevent global Esc handler
+                    window.closeEditBlockModal();
+                }
+            });
+        }
+
+        const cardHeadline = document.getElementById('edit-card-headline');
+        if (cardHeadline) {
+            cardHeadline.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    e.stopPropagation(); // Prevent global Esc handler
+                    closeEditCardModal();
+                }
+            });
+        }
+
+        UI.Shortcuts.register('0', 'Unselect Block', () => unselectBlock());
+        for (let i = 1; i <= 9; i++) {
+            UI.Shortcuts.register(i.toString(), `Select Block ${i}`, () => selectBlock(i - 1));
+            UI.Shortcuts.register(`alt+${i}`, `Select Breadcrumb ${i}`, () => {
+                const items = document.querySelectorAll('.breadcrumb-item a, .breadcrumb-item span.breadcrumb-text');
+                if (items && items[i-1]) {
+                    items[i-1].click();
+                }
+            });
+        }
+
+        // Add badges to buttons
+        const addBadge = (id, key) => {
+            const btn = document.getElementById(id);
+            if (btn) {
+                const badge = document.createElement('span');
+                badge.className = 'shortcut-badge';
+                badge.textContent = key;
+                btn.style.position = 'relative'; // Ensure relative positioning for absolute badge
+                btn.appendChild(badge);
+            }
+        };
+        addBadge('add-block-btn', 'a');
+        addBadge('mark-reviewed-btn', 'm');
+        addBadge('edit-headline-btn', 'e');
+        addBadge('remove-card-btn', 'Del');
+
+        // Esc unselects block
+        window.addEventListener('escapePressed', () => {
+            if (reorderState.active) {
+                window.exitReorderMode();
+            } else if (mergeState.active) {
+                window.exitMergeMode();
+            } else if (isMoveModalVisible()) {
+                closeMoveBlockModal();
+            } else {
+                unselectBlock();
+            }
+        });
+
+        // Watch for shortcut setting changes
+        window.addEventListener('shortcutsChanged', (e) => {
+            if (!e.detail.enabled) {
+                unselectBlock();
+            }
+        });
     }
 
     const headlineEl = document.getElementById('card-headline');
@@ -433,12 +670,22 @@ window.addEventListener('DOMContentLoaded', () => {
 
     // Generic confirmation modal setup
     const confirmModal = document.getElementById('confirm-modal');
+    let lastFocusedElement = null;
+
     if (confirmModal) {
         const closeConfirmModal = () => {
             confirmModal.style.display = 'none';
             document.body.style.overflow = '';
             // Clear callback to avoid leaks or accidental double-calls
             confirmModal._confirmCallback = null;
+
+            // Restore focus
+            if (lastFocusedElement) {
+                setTimeout(() => {
+                    lastFocusedElement.focus();
+                    lastFocusedElement = null;
+                }, 100);
+            }
         };
 
         confirmModal.addEventListener('click', (e) => {
@@ -475,8 +722,21 @@ window.addEventListener('DOMContentLoaded', () => {
             if (titleEl) titleEl.textContent = title;
             if (messageEl) messageEl.textContent = message;
             confirmModal._confirmCallback = callback;
+            
+            // Store last focused element to restore it later
+            lastFocusedElement = document.activeElement;
+            
+            // Blur active element to ensure Esc works in global handler
+            if (document.activeElement) document.activeElement.blur();
+            
             confirmModal.style.display = 'flex';
             document.body.style.overflow = 'hidden';
+
+            // Auto-focus confirm button
+            const confirmBtn = document.getElementById('confirm-modal-btn');
+            if (confirmBtn) {
+                setTimeout(() => confirmBtn.focus(), 100);
+            }
         };
     }
 
@@ -503,6 +763,15 @@ window.addEventListener('DOMContentLoaded', () => {
             if (headlineInput) {
                 editCardOriginalValue = headlineEl ? (headlineEl.getAttribute('data-original-text') || headlineEl.textContent) : '';
                 headlineInput.value = editCardOriginalValue;
+                
+                const saveBtn = document.getElementById('save-edit-card-btn');
+                if (saveBtn) saveBtn.disabled = true;
+
+                headlineInput.oninput = () => {
+                    adjustTextareaHeight(headlineInput);
+                    if (saveBtn) saveBtn.disabled = headlineInput.value.trim() === editCardOriginalValue.trim();
+                };
+
                 setTimeout(() => {
                     headlineInput.focus();
                     adjustTextareaHeight(headlineInput);
@@ -584,6 +853,24 @@ window.addEventListener('DOMContentLoaded', () => {
             const contentTextarea = document.getElementById('edit-block-content');
             const splitBtn = document.getElementById('save-split-block-modal-btn');
 
+            const metadataInput = document.getElementById('edit-block-metadata');
+            const saveBtn = document.getElementById('save-edit-block-modal-btn');
+
+            const checkChanges = () => {
+                const currentType = parseInt(typeSelect.value);
+                const currentExtension = extensionInput.value;
+                const currentMetadata = metadataInput.value;
+                const currentContent = contentTextarea.value;
+                
+                const hasChanges = currentType !== editBlockState.originalType ||
+                                 currentExtension !== editBlockState.originalExtension ||
+                                 currentMetadata !== editBlockState.originalMetadata ||
+                                 currentContent !== editBlockState.originalContent;
+                
+                if (saveBtn) saveBtn.disabled = !hasChanges;
+                if (splitBtn) splitBtn.disabled = !hasChanges;
+            };
+
             const handleTypeChange = () => {
                 const type = parseInt(typeSelect.value);
                 if (type === 0) { // Text
@@ -595,6 +882,7 @@ window.addEventListener('DOMContentLoaded', () => {
                 } else {
                     extensionInput.disabled = false;
                 }
+                checkChanges();
             };
 
             const handleContentChange = () => {
@@ -604,16 +892,22 @@ window.addEventListener('DOMContentLoaded', () => {
                 } else {
                     splitBtn.style.display = 'none';
                 }
+                adjustTextareaHeight(contentTextarea);
+                checkChanges();
             };
 
             typeSelect.onchange = handleTypeChange;
+            extensionInput.oninput = checkChanges;
+            metadataInput.oninput = checkChanges;
             contentTextarea.oninput = handleContentChange;
 
             handleTypeChange();
             handleContentChange();
+            checkChanges();
 
             setTimeout(() => {
                 contentTextarea.focus();
+                adjustTextareaHeight(contentTextarea);
             }, 100);
         }
     };
@@ -843,6 +1137,12 @@ window.addEventListener('DOMContentLoaded', () => {
         UI.toggleElement('add-block-modal', true);
         document.body.style.overflow = 'hidden';
 
+        const contentInput = document.getElementById('block-content');
+        if (contentInput) {
+            contentInput.value = '';
+            contentInput.oninput = () => adjustTextareaHeight(contentInput);
+        }
+
         // Set initial state for extension field based on default type (Text)
         const typeSelect = document.getElementById('block-type');
         const extensionInput = document.getElementById('block-extension');
@@ -865,7 +1165,10 @@ window.addEventListener('DOMContentLoaded', () => {
 
         setTimeout(() => {
             const contentInput = document.getElementById('block-content');
-            if (contentInput) contentInput.focus();
+            if (contentInput) {
+                contentInput.focus();
+                adjustTextareaHeight(contentInput);
+            }
         }, 100);
     };
 
@@ -1824,8 +2127,16 @@ function renderBlocks(blocks) {
         if (mergeState.active && index === mergeState.sourceIndex) {
             blockItem.classList.add('merge-source');
         }
+        if (selectedBlockIndex === index && (!mergeState.active || index !== mergeState.sourceIndex)) {
+            blockItem.classList.add('selected');
+            blockItem.classList.add('show-actions');
+        }
         blockItem.id = `block-${index}`;
         blockItem.dataset.position = block.position;
+        blockItem.onclick = (e) => {
+            if (e.target.closest('button') || e.target.closest('input') || e.target.closest('textarea') || e.target.closest('select') || e.target.closest('.block-edit')) return;
+            selectBlock(index);
+        };
 
         const handleReorderClick = async () => {
             if (reorderState.active) {
@@ -1913,22 +2224,8 @@ function renderBlocks(blocks) {
                 return;
             }
 
-            const isShowing = blockItem.classList.contains('show-actions');
-            
-            // Close all other blocks
-            document.querySelectorAll('.content-block.show-actions').forEach(el => {
-                if (el !== blockItem) el.classList.remove('show-actions');
-            });
-            
-            if (isShowing) {
-                blockItem.classList.remove('show-actions');
-            } else {
-                blockItem.classList.add('show-actions');
-            }
-            
-            // Do NOT stop propagation here to allow global click listener to handle other cases, 
-            // but since we are inside a content-block, the global listener's !closest('.content-block') check 
-            // will prevent it from closing what we just toggled.
+            // selectBlock(index) was already called by blockItem.onclick, 
+            // which now also handles show-actions.
         });
 
         const typeName = blockTypes[block.type] || 'text';
@@ -2147,8 +2444,60 @@ let mergeState = {
 let moveBlockState = {
     sourceIndex: null,
     targetCardId: null,
-    targetBlockPosition: null
+    targetBlockPosition: null,
+    highlightedCardIndex: -1,
+    highlightedGapIndex: -1
 };
+
+function isMoveModalVisible() {
+    const modal = document.getElementById('move-block-modal');
+    return modal && modal.style.display !== 'none';
+}
+
+function updateMoveModalHighlight(direction) {
+    const step2 = document.getElementById('move-block-step-2');
+    const isStep2 = step2 && step2.style.display !== 'none';
+
+    if (isStep2) {
+        const gaps = document.querySelectorAll('#move-target-blocks-list .target-block-gap');
+        if (gaps.length === 0) return;
+
+        if (moveBlockState.highlightedGapIndex !== -1 && gaps[moveBlockState.highlightedGapIndex]) {
+            gaps[moveBlockState.highlightedGapIndex].classList.remove('highlighted');
+        }
+
+        if (direction === 'down') {
+            moveBlockState.highlightedGapIndex = (moveBlockState.highlightedGapIndex + 1) % gaps.length;
+        } else if (direction === 'up') {
+            moveBlockState.highlightedGapIndex = (moveBlockState.highlightedGapIndex - 1 + gaps.length) % gaps.length;
+        }
+
+        const newGap = gaps[moveBlockState.highlightedGapIndex];
+        if (newGap) {
+            newGap.classList.add('highlighted');
+            newGap.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+    } else {
+        const options = document.querySelectorAll('#move-target-cards-list .headline-option');
+        if (options.length === 0) return;
+
+        if (moveBlockState.highlightedCardIndex !== -1 && options[moveBlockState.highlightedCardIndex]) {
+            options[moveBlockState.highlightedCardIndex].classList.remove('highlighted');
+        }
+
+        if (direction === 'down') {
+            moveBlockState.highlightedCardIndex = (moveBlockState.highlightedCardIndex + 1) % options.length;
+        } else if (direction === 'up') {
+            moveBlockState.highlightedCardIndex = (moveBlockState.highlightedCardIndex - 1 + options.length) % options.length;
+        }
+
+        const newOption = options[moveBlockState.highlightedCardIndex];
+        if (newOption) {
+            newOption.classList.add('highlighted');
+            newOption.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+    }
+}
 
 window.enterReorderMode = function(index) {
     if (reorderState.active || mergeState.active) return;

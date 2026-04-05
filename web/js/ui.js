@@ -90,6 +90,9 @@ const UI = {
         const el = document.getElementById(elementId);
         if (el) {
             el.style.display = show ? 'block' : 'none';
+            if (!show && document.activeElement && el.contains(document.activeElement)) {
+                document.activeElement.blur();
+            }
         }
     },
     
@@ -106,6 +109,223 @@ const UI = {
             .split(/\s+/)
             .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
             .join(' ');
+    },
+
+    /**
+     * Keyboard Shortcuts Manager
+     */
+    Shortcuts: {
+        shortcuts: {},
+        isEnabled() {
+            // Shortcuts are disabled by default
+            const setting = localStorage.getItem('flashback_shortcuts_enabled');
+            const mobileView = window.innerWidth <= 768;
+            return setting === 'true' && !mobileView;
+        },
+        register(key, description, action) {
+            this.shortcuts[key] = { description, action };
+        },
+        init() {
+            document.addEventListener('keydown', (e) => {
+                // Esc key should cancel any modal and key operation
+                if (e.key === 'Escape') {
+                    // Find the topmost visible modal
+                    const visibleOverlays = Array.from(document.querySelectorAll('.modal-overlay')).filter(m => m.style.display !== 'none');
+                    if (visibleOverlays.length > 0) {
+                        const topmostOverlay = visibleOverlays[visibleOverlays.length - 1];
+                        
+                        // Prefer visible "Back" buttons in step-based modals
+                        const backBtn = topmostOverlay.querySelector('#back-to-cards-btn, .btn-back');
+                        if (backBtn && backBtn.style.display !== 'none' && backBtn.offsetHeight > 0) {
+                            backBtn.click();
+                            return;
+                        }
+
+                        // Otherwise find close or cancel button
+                        const closeBtns = Array.from(topmostOverlay.querySelectorAll('.modal-close, [id^="cancel-"], [id^="close-"], .btn-secondary'));
+                        const closeBtn = closeBtns.find(btn => btn.style.display !== 'none' && btn.offsetHeight > 0);
+
+                        if (closeBtn) {
+                            closeBtn.click();
+                        } else {
+                            topmostOverlay.style.display = 'none';
+                        }
+                    } else {
+                        // Trigger custom event for other scripts to handle Escape when no modal is open
+                        window.dispatchEvent(new CustomEvent('escapePressed'));
+                    }
+                    return;
+                }
+
+                // Ctrl+Enter for Save in Edit/Add modals
+                if (e.ctrlKey && e.key === 'Enter') {
+                    const visibleOverlays = Array.from(document.querySelectorAll('.modal-overlay')).filter(m => m.style.display !== 'none');
+                    if (visibleOverlays.length > 0) {
+                        const activeModal = visibleOverlays[visibleOverlays.length - 1];
+                        // Find a primary/save button
+                        const primaryBtn = activeModal.querySelector('.btn-primary, #save-edit-block-modal-btn, #save-block-btn, #save-edit-card-btn');
+                        if (primaryBtn) {
+                            e.preventDefault();
+                            primaryBtn.click();
+                            return;
+                        }
+                    }
+                }
+
+                // Enter handler (only if no modifiers)
+                if (e.key === 'Enter' && !e.ctrlKey && !e.shiftKey && !e.altKey) {
+                    // If a button is focused, let the browser handle it (standard behavior)
+                    if (e.target.tagName === 'BUTTON') {
+                        return;
+                    }
+
+                    const visibleOverlays = Array.from(document.querySelectorAll('.modal-overlay')).filter(m => m.style.display !== 'none');
+                    if (visibleOverlays.length > 0) {
+                        const activeModal = visibleOverlays[visibleOverlays.length - 1];
+                        
+                        // If we are in a textarea, Enter should be allowed (standard behavior)
+                        if (e.target.tagName === 'TEXTAREA') {
+                            return;
+                        }
+
+                        // For confirmation/remove/review/move modals, we auto-click the confirm button if no button is focused
+                        if (activeModal.id.includes('confirm') || activeModal.id.includes('remove') || activeModal.id.includes('review') || activeModal.id.includes('move')) {
+                            const confirmBtn = activeModal.querySelector('#confirm-modal-btn, #confirm-remove-block-btn, #confirm-remove-card-btn, #confirm-review-btn, #confirm-move-block-btn, .btn-primary, .btn-danger, .headline-option.highlighted, .target-block-gap.highlighted');
+                            
+                            if (confirmBtn) {
+                                e.preventDefault();
+                                confirmBtn.click();
+                                return;
+                            }
+                        } else {
+                            // For other modals (like Edit), Enter alone should NOT trigger save (forcing Ctrl+Enter or focused button)
+                            // We do nothing here, allowing standard behavior (which might be nothing if it's just an input)
+                        }
+                    }
+                }
+
+                if (!this.isEnabled()) return;
+                
+                // Don't trigger if user is typing in an input or textarea (unless Alt is pressed)
+                if ((e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') && !e.altKey) return;
+
+                // Make sure these shortcuts won't trigger when pressed with Ctrl, Alt, or Shift keys
+                // EXCEPT Alt key is allowed for some shortcuts (like Alt + Number)
+                if (e.ctrlKey || e.shiftKey) return;
+                
+                // If Alt is pressed, we only allow it for specific shortcuts (e.g. breadcrumbs)
+                if (e.altKey && !/[0-9]/.test(e.key.toLowerCase())) return;
+                
+                // If NOT Alt is pressed, but it's a number, it's for block selection
+                if (!e.altKey && /[0-9]/.test(e.key)) {
+                    // This will fall through to shortcut handling
+                }
+
+                const key = (e.altKey ? 'alt+' : '') + e.key.toLowerCase();
+                if (key === '?') {
+                    this.showHelp();
+                    return;
+                }
+
+                if (this.shortcuts[key]) {
+                    e.preventDefault();
+                    this.shortcuts[key].action();
+                }
+            });
+
+            // Global scrolling shortcuts
+            this.register('j', 'Scroll Down', () => {
+                const visibleOverlays = Array.from(document.querySelectorAll('.modal-overlay')).filter(m => m.style.display !== 'none');
+                if (visibleOverlays.length > 0) {
+                    const modalBody = visibleOverlays[visibleOverlays.length - 1].querySelector('.modal-body, .modal-content');
+                    if (modalBody) modalBody.scrollBy({ top: 100, behavior: 'smooth' });
+                } else {
+                    window.scrollBy({ top: 100, behavior: 'smooth' });
+                }
+            });
+            this.register('k', 'Scroll Up', () => {
+                const visibleOverlays = Array.from(document.querySelectorAll('.modal-overlay')).filter(m => m.style.display !== 'none');
+                if (visibleOverlays.length > 0) {
+                    const modalBody = visibleOverlays[visibleOverlays.length - 1].querySelector('.modal-body, .modal-content');
+                    if (modalBody) modalBody.scrollBy({ top: -100, behavior: 'smooth' });
+                } else {
+                    window.scrollBy({ top: -100, behavior: 'smooth' });
+                }
+            });
+            this.register('d', 'Jump Down', () => {
+                const visibleOverlays = Array.from(document.querySelectorAll('.modal-overlay')).filter(m => m.style.display !== 'none');
+                if (visibleOverlays.length > 0) {
+                    const modalBody = visibleOverlays[visibleOverlays.length - 1].querySelector('.modal-body, .modal-content');
+                    if (modalBody) modalBody.scrollBy({ top: 300, behavior: 'smooth' });
+                } else {
+                    window.scrollBy({ top: 300, behavior: 'smooth' });
+                }
+            });
+            this.register('u', 'Jump Up', () => {
+                const visibleOverlays = Array.from(document.querySelectorAll('.modal-overlay')).filter(m => m.style.display !== 'none');
+                if (visibleOverlays.length > 0) {
+                    const modalBody = visibleOverlays[visibleOverlays.length - 1].querySelector('.modal-body, .modal-content');
+                    if (modalBody) modalBody.scrollBy({ top: -300, behavior: 'smooth' });
+                } else {
+                    window.scrollBy({ top: -300, behavior: 'smooth' });
+                }
+            });
+        },
+        showHelp() {
+            if (document.getElementById('shortcuts-help-modal')) {
+                UI.toggleElement('shortcuts-help-modal', true);
+                return;
+            }
+
+            const modalOverlay = document.createElement('div');
+            modalOverlay.id = 'shortcuts-help-modal';
+            modalOverlay.className = 'modal-overlay';
+            modalOverlay.style.display = 'flex';
+
+            let shortcutsList = '';
+            for (const [key, data] of Object.entries(this.shortcuts)) {
+                shortcutsList += `
+                    <div style="display: flex; justify-content: space-between; padding: var(--space-xs) 0; border-bottom: 1px solid var(--border-color);">
+                        <span style="font-family: 'JetBrains Mono', monospace; color: var(--color-primary-start); font-weight: bold;">[${key}]</span>
+                        <span style="color: var(--color-text-secondary);">${data.description}</span>
+                    </div>
+                `;
+            }
+
+            modalOverlay.innerHTML = `
+                <div class="modal-content" style="max-width: 400px;">
+                    <div class="modal-header">
+                        <h2 class="modal-title">Keyboard Shortcuts</h2>
+                        <button id="close-shortcuts-help-btn" class="modal-close">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        ${shortcutsList}
+                        <div style="display: flex; justify-content: space-between; padding: var(--space-xs) 0; border-bottom: 1px solid var(--border-color);">
+                            <span style="font-family: 'JetBrains Mono', monospace; color: var(--color-primary-start); font-weight: bold;">[?]</span>
+                            <span style="color: var(--color-text-secondary);">Show this help</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; padding: var(--space-xs) 0; border-bottom: 1px solid var(--border-color);">
+                            <span style="font-family: 'JetBrains Mono', monospace; color: var(--color-primary-start); font-weight: bold;">[Esc]</span>
+                            <span style="color: var(--color-text-secondary);">Cancel / Close</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            document.body.appendChild(modalOverlay);
+            document.getElementById('close-shortcuts-help-btn').onclick = () => {
+                UI.toggleElement('shortcuts-help-modal', false);
+            };
+            
+            // Close on overlay click
+            modalOverlay.onclick = (e) => {
+                if (e.target === modalOverlay) UI.toggleElement('shortcuts-help-modal', false);
+            };
+        }
+    },
+
+    autoInitShortcuts() {
+        this.Shortcuts.init();
     },
 
     /**
@@ -236,3 +456,9 @@ const UI = {
         container.appendChild(breadcrumbList);
     }
 };
+
+document.addEventListener('DOMContentLoaded', () => {
+    if (typeof UI !== 'undefined' && UI.autoInitShortcuts) {
+        UI.autoInitShortcuts();
+    }
+});
