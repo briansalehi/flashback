@@ -20,7 +20,7 @@
       code[class*="language-"],
       pre[class*="language-"] {
           color: #ccc;
-          background: none;
+          background: none !important;
           font-family: 'JetBrains Mono', Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;
           font-size: var(--font-size-sm);
           text-align: left;
@@ -30,12 +30,16 @@
           word-wrap: normal;
           line-height: 1.6;
           tab-size: 4;
+          border: none !important;
+          box-shadow: none !important;
       }
 
       pre[class*="language-"] {
           padding: 0;
           margin: 0;
           overflow: auto;
+          border: none !important;
+          box-shadow: none !important;
       }
 
       :not(pre) > code[class*="language-"] {
@@ -43,6 +47,8 @@
           padding: 0.1em 0.3em;
           border-radius: 0.3em;
           white-space: normal;
+          border: none !important;
+          box-shadow: none !important;
       }
 
       /* Card page specific styles only */

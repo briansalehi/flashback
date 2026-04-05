@@ -2261,7 +2261,7 @@ function renderBlocks(blocks) {
         } else if (block.type === 1) { // code
             // Map extension to Prism language
             const language = mapExtensionToLanguage(block.extension);
-            contentHtml = `<pre class="content-block-text" style="background: rgba(0, 0, 0, 0.3); padding: var(--space-md); border-radius: var(--radius-md); overflow-x: auto;"><code class="language-${language} show-language">${UI.escapeHtml(block.content)}</code></pre>`;
+            contentHtml = `<pre class="content-block-text" style="overflow-x: auto;"><code class="language-${language} show-language">${UI.escapeHtml(block.content)}</code></pre>`;
         } else if (block.type === 2) { // image
             contentHtml = `<img src="${UI.escapeHtml(block.content)}" alt="Block image" style="max-width: 100%; height: auto; border-radius: var(--radius-md);" />`;
         } else if (block.type === 4) { // diagram
