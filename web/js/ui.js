@@ -9,7 +9,7 @@ const UI = {
             alert('Error: ' + message);
         }
     },
-    
+
     showSuccess(message, elementId = 'success-message') {
         const successEl = document.getElementById(elementId);
         if (successEl) {
@@ -336,28 +336,30 @@ const UI = {
             let shortcutsList = '';
             for (const [key, data] of Object.entries(this.shortcuts)) {
                 shortcutsList += `
-                    <div style="display: flex; justify-content: space-between; padding: var(--space-xs) 0; border-bottom: 1px solid var(--border-color);">
-                        <span style="font-family: 'JetBrains Mono', monospace; color: var(--color-primary-start); font-weight: bold;">[${key}]</span>
-                        <span style="color: var(--color-text-secondary);">${data.description}</span>
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: var(--space-xs) 0; border-bottom: 1px solid var(--border-color); gap: var(--space-md);">
+                        <span style="font-family: 'JetBrains Mono', monospace; color: var(--color-primary-start); font-weight: bold; white-space: nowrap;">[${key}]</span>
+                        <span style="color: var(--color-text-secondary); text-align: right;">${data.description}</span>
                     </div>
                 `;
             }
 
             modalOverlay.innerHTML = `
-                <div class="modal-content" style="max-width: 400px;">
+                <div class="modal-content" style="max-width: 600px;">
                     <div class="modal-header">
                         <h2 class="modal-title">Keyboard Shortcuts</h2>
                         <button id="close-shortcuts-help-btn" class="modal-close">&times;</button>
                     </div>
                     <div class="modal-body">
-                        ${shortcutsList}
-                        <div style="display: flex; justify-content: space-between; padding: var(--space-xs) 0; border-bottom: 1px solid var(--border-color);">
-                            <span style="font-family: 'JetBrains Mono', monospace; color: var(--color-primary-start); font-weight: bold;">[?]</span>
-                            <span style="color: var(--color-text-secondary);">Show this help</span>
-                        </div>
-                        <div style="display: flex; justify-content: space-between; padding: var(--space-xs) 0; border-bottom: 1px solid var(--border-color);">
-                            <span style="font-family: 'JetBrains Mono', monospace; color: var(--color-primary-start); font-weight: bold;">[Esc]</span>
-                            <span style="color: var(--color-text-secondary);">Cancel / Close</span>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 0 var(--space-md);">
+                            ${shortcutsList}
+                            <div style="display: flex; justify-content: space-between; align-items: center; padding: var(--space-xs) 0; border-bottom: 1px solid var(--border-color); gap: var(--space-md);">
+                                <span style="font-family: 'JetBrains Mono', monospace; color: var(--color-primary-start); font-weight: bold; white-space: nowrap;">[?]</span>
+                                <span style="color: var(--color-text-secondary); text-align: right;">Show this help</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; align-items: center; padding: var(--space-xs) 0; border-bottom: 1px solid var(--border-color); gap: var(--space-md);">
+                                <span style="font-family: 'JetBrains Mono', monospace; color: var(--color-primary-start); font-weight: bold; white-space: nowrap;">[Esc]</span>
+                                <span style="color: var(--color-text-secondary); text-align: right;">Cancel / Close</span>
+                            </div>
                         </div>
                     </div>
                 </div>
