@@ -1,0 +1,37 @@
+#!/usr/bin/sh
+
+exec 1>&2
+
+cmake_version="$(sed -nE '/^project/s/.* VERSION ([0-9.]+) .*/\1/p' CMakeLists.txt)"
+tauri_version="$(sed -nE 's/.*"version": "([0-9.]+)".*/\1/p' app/src-tauri/tauri.conf.json)"
+cargo_version="$(sed -nE '/^\[package\]/,/^\[/{s/^version = "([0-9.]+)"/\1/p}' app/src-tauri/Cargo.toml)"
+
+if [ -z "${cmake_version}" ]
+then
+    echo -e "\e[1;31mVersion is not specified in CMakeLists.txt\e[0m"
+    exit 2
+fi
+
+if [ -z "${tauri_version}" ]
+then
+    echo -e "\e[1;31mVersion is not specified in app/src-tauri/tauri.conf.json\e[0m"
+    exit 3
+fi
+
+if [ -z "${cargo_version}" ]
+then
+    echo -e "\e[1;31mVersion is not specified in app/src-tauri/Cargo.toml\e[0m"
+    exit 4
+fi
+
+if [ "${cmake_version}" != "${tauri_version}" ]
+then
+    echo -e "\e[1;31mVersion mismatch: CMakeLists.txt (${cmake_version}) != tauri.conf.json (${tauri_version})\e[0m"
+    exit 5
+fi
+
+if [ "${cmake_version}" != "${cargo_version}" ]
+then
+    echo -e "\e[1;31mVersion mismatch: CMakeLists.txt (${cmake_version}) != Cargo.toml (${cargo_version})\e[0m"
+    exit 6
+fi
