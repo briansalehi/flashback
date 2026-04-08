@@ -934,7 +934,9 @@ async function loadTopicsForSubject(subjectId) {
     currentSubjectTopics = [];
     document.getElementById('topic-search-input').value = '';
     document.getElementById('topic-search-empty').style.display = 'none';
-    
+    const createTopicSuggestionOnLoad = document.getElementById('create-topic-suggestion');
+    if (createTopicSuggestionOnLoad) createTopicSuggestionOnLoad.style.display = 'none';
+
     try {
         const allTopics = [];
         for (let level = 0; level <= 2; level++) {
@@ -959,8 +961,12 @@ async function loadTopicsForSubject(subjectId) {
 function filterTopics(searchTerm) {
     if (!currentSubjectTopics) return;
 
-    const filteredTopics = currentSubjectTopics.filter(topic => 
+    const filteredTopics = currentSubjectTopics.filter(topic =>
         topic.name.toLowerCase().includes(searchTerm)
+    );
+
+    const hasExactMatch = currentSubjectTopics.some(topic =>
+        topic.name.toLowerCase() === searchTerm
     );
 
     if (filteredTopics.length === 0) {
@@ -970,6 +976,11 @@ function filterTopics(searchTerm) {
         document.getElementById('topics-by-level').style.display = 'block';
         document.getElementById('topic-search-empty').style.display = 'none';
         renderTopicsForAssignment(filteredTopics);
+    }
+
+    const createTopicSuggestion = document.getElementById('create-topic-suggestion');
+    if (createTopicSuggestion) {
+        createTopicSuggestion.style.display = (searchTerm && !hasExactMatch) ? 'block' : 'none';
     }
 }
 
@@ -1174,6 +1185,8 @@ function closeAssignTopicModal() {
     if (topicsByLevel) topicsByLevel.innerHTML = '';
     const topicSearchEmpty = document.getElementById('topic-search-empty');
     if (topicSearchEmpty) topicSearchEmpty.style.display = 'none';
+    const createTopicSuggestion = document.getElementById('create-topic-suggestion');
+    if (createTopicSuggestion) createTopicSuggestion.style.display = 'none';
 
     UI.toggleElement('topic-search-mode', true);
     UI.toggleElement('topic-create-mode', false);
