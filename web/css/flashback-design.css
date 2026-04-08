@@ -1287,7 +1287,7 @@ input:checked + .slider:before {
     background: rgba(0, 0, 0, 0.2);
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: var(--radius-lg);
-    padding: 0 var(--space-md);
+    padding: var(--space-xs) var(--space-md);
     margin-bottom: var(--space-md);
     position: relative;
     transition: all var(--transition-base);
