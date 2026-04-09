@@ -1372,7 +1372,7 @@ grpc::Status server::CreateResource(grpc::ServerContext* context, CreateResource
             if (resource->type() == Resource::nerve)
             {
                 Resource* nerve = response->mutable_resource();
-                *nerve = m_database->create_nerve(user->id(), resource->name(), request->subject().id(), resource->expiration());
+                *nerve = m_database->create_nerve(user->id(), resource->name(), request->subject().id(), 0);
                 std::clog << std::format("client {} created nerve {} in subject {}\n", request->user().token(), nerve->id(), request->subject().id());
             }
 
@@ -1682,19 +1682,6 @@ grpc::Status server::EditResource(grpc::ServerContext* context, EditResourceRequ
                 modified = true;
             }
 
-            if (resource.production() != request->resource().production())
-            {
-                std::clog << std::format("client {} changed production of resource {}\n", request->user().token(), request->resource().id());
-                m_database->edit_resource_production(request->resource().id(), request->resource().production());
-                modified = true;
-            }
-
-            if (resource.expiration() != request->resource().expiration())
-            {
-                std::clog << std::format("client {} changed expiration of resource {}\n", request->user().token(), request->resource().id());
-                m_database->edit_resource_expiration(request->resource().id(), request->resource().expiration());
-                modified = true;
-            }
 
             if (modified)
             {

@@ -504,15 +504,13 @@ window.addEventListener('DOMContentLoaded', () => {
                 const resourceType = UI.getUrlParam('resourceType') || '0';
                 const resourcePattern = UI.getUrlParam('resourcePattern') || '0';
                 const resourceLink = UI.getUrlParam('resourceLink') || '';
-                const resourceProduction = UI.getUrlParam('resourceProduction') || '0';
-                const resourceExpiration = UI.getUrlParam('resourceExpiration') || '0';
                 const subjectId = UI.getUrlParam('subjectId') || '';
                 const subjectName = UI.getUrlParam('subjectName') || '';
                 const roadmapId = UI.getUrlParam('roadmapId') || '';
                 const roadmapName = UI.getUrlParam('roadmapName') || '';
                 const milestoneLevel = UI.getUrlParam('level') || '';
                 const currentTab = UI.getUrlParam('tab') || 'resources';
-                window.location.href = `resource.html?id=${resourceId}&name=${encodeURIComponent(resourceName)}&type=${resourceType}&pattern=${resourcePattern}&link=${encodeURIComponent(resourceLink)}&production=${resourceProduction}&expiration=${resourceExpiration}&subjectId=${subjectId}&subjectName=${encodeURIComponent(subjectName)}&roadmapId=${roadmapId}&roadmapName=${encodeURIComponent(roadmapName)}&level=${milestoneLevel}&tab=${currentTab}`;
+                window.location.href = `resource.html?id=${resourceId}&name=${encodeURIComponent(resourceName)}&type=${resourceType}&pattern=${resourcePattern}&link=${encodeURIComponent(resourceLink)}&subjectId=${subjectId}&subjectName=${encodeURIComponent(subjectName)}&roadmapId=${roadmapId}&roadmapName=${encodeURIComponent(roadmapName)}&level=${milestoneLevel}&tab=${currentTab}`;
             } catch (err) {
                 console.error('Remove section failed:', err);
                 UI.showError(err.message || 'Failed to remove section');
@@ -840,13 +838,11 @@ function displayBreadcrumb() {
         const resourceType = UI.getUrlParam('resourceType') || '0';
         const resourcePattern = UI.getUrlParam('resourcePattern') || '0';
         const resourceLink = UI.getUrlParam('resourceLink') || '';
-        const resourceProduction = UI.getUrlParam('resourceProduction') || '0';
-        const resourceExpiration = UI.getUrlParam('resourceExpiration') || '0';
-        
+
         breadcrumbItems.push({
             name: resourceName,
             icon: UI.getResourceIcon(parseInt(resourceType)),
-            url: `resource.html?id=${resourceId}&name=${encodeURIComponent(resourceName)}&type=${resourceType}&pattern=${resourcePattern}&link=${encodeURIComponent(resourceLink)}&production=${resourceProduction}&expiration=${resourceExpiration}&subjectId=${subjectId || ''}&subjectName=${encodeURIComponent(subjectName || '')}&roadmapId=${roadmapId || ''}&roadmapName=${encodeURIComponent(roadmapName || '')}&level=${level || ''}&tab=${currentTab}`
+            url: `resource.html?id=${resourceId}&name=${encodeURIComponent(resourceName)}&type=${resourceType}&pattern=${resourcePattern}&link=${encodeURIComponent(resourceLink)}&subjectId=${subjectId || ''}&subjectName=${encodeURIComponent(subjectName || '')}&roadmapId=${roadmapId || ''}&roadmapName=${encodeURIComponent(roadmapName || '')}&level=${level || ''}&tab=${currentTab}`
         });
     }
 

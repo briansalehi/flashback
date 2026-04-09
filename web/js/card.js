@@ -1350,13 +1350,11 @@ function displayContextBreadcrumb(subjectName, topicName, resourceName, sectionN
                 const resourceType = UI.getUrlParam('resourceType') || '0';
                 const resourcePattern = UI.getUrlParam('resourcePattern') || '0';
                 const resourceLink = UI.getUrlParam('resourceLink') || '';
-                const resourceProduction = UI.getUrlParam('resourceProduction') || '0';
-                const resourceExpiration = UI.getUrlParam('resourceExpiration') || '0';
-                
+
                 breadcrumbItems.push({
                     name: resourceName,
                     icon: UI.getResourceIcon(parseInt(resourceType)),
-                    url: `resource.html?id=${resourceId}&name=${encodeURIComponent(resourceName)}&type=${resourceType}&pattern=${resourcePattern}&link=${encodeURIComponent(resourceLink)}&production=${resourceProduction}&expiration=${resourceExpiration}&subjectId=${subjectId}&subjectName=${encodeURIComponent(localSubjectName)}&roadmapId=${roadmapId}&roadmapName=${encodeURIComponent(roadmapName)}&level=${milestoneLevel}&tab=${currentTab}`
+                    url: `resource.html?id=${resourceId}&name=${encodeURIComponent(resourceName)}&type=${resourceType}&pattern=${resourcePattern}&link=${encodeURIComponent(resourceLink)}&subjectId=${subjectId}&subjectName=${encodeURIComponent(localSubjectName)}&roadmapId=${roadmapId}&roadmapName=${encodeURIComponent(roadmapName)}&level=${milestoneLevel}&tab=${currentTab}`
                 });
             }
 
@@ -1364,13 +1362,11 @@ function displayContextBreadcrumb(subjectName, topicName, resourceName, sectionN
                 const resourceType = UI.getUrlParam('resourceType') || '0';
                 const resourcePattern = UI.getUrlParam('resourcePattern') || '0';
                 const resourceLink = UI.getUrlParam('resourceLink') || '';
-                const resourceProduction = UI.getUrlParam('resourceProduction') || '0';
-                const resourceExpiration = UI.getUrlParam('resourceExpiration') || '0';
                 const sectionState = UI.getUrlParam('sectionState') || '0';
-                
+
                 breadcrumbItems.push({
                     name: sectionName,
-                    url: `section-cards.html?resourceId=${resourceId}&sectionPosition=${sectionPosition}&sectionState=${sectionState}&name=${encodeURIComponent(sectionName)}&resourceName=${encodeURIComponent(resourceName)}&resourceType=${resourceType}&resourcePattern=${resourcePattern}&resourceLink=${encodeURIComponent(resourceLink)}&resourceProduction=${resourceProduction}&resourceExpiration=${resourceExpiration}&subjectId=${subjectId}&subjectName=${encodeURIComponent(localSubjectName)}&roadmapId=${roadmapId}&roadmapName=${encodeURIComponent(roadmapName)}&level=${milestoneLevel}&tab=${currentTab}`
+                    url: `section-cards.html?resourceId=${resourceId}&sectionPosition=${sectionPosition}&sectionState=${sectionState}&name=${encodeURIComponent(sectionName)}&resourceName=${encodeURIComponent(resourceName)}&resourceType=${resourceType}&resourcePattern=${resourcePattern}&resourceLink=${encodeURIComponent(resourceLink)}&subjectId=${subjectId}&subjectName=${encodeURIComponent(localSubjectName)}&roadmapId=${roadmapId}&roadmapName=${encodeURIComponent(roadmapName)}&level=${milestoneLevel}&tab=${currentTab}`
                 });
             }
         }
@@ -1682,8 +1678,6 @@ async function addSelectiveNavigation({ contextType, cards, currentIndex }) {
             const resourceType = UI.getUrlParam('resourceType') || '0';
             const resourcePattern = UI.getUrlParam('resourcePattern') || '0';
             const resourceLink = UI.getUrlParam('resourceLink') || '';
-            const resourceProduction = UI.getUrlParam('resourceProduction') || '0';
-            const resourceExpiration = UI.getUrlParam('resourceExpiration') || '0';
             const subjectId = UI.getUrlParam('subjectId') || '';
             const subjectName = UI.getUrlParam('subjectName') || '';
             const roadmapId = UI.getUrlParam('roadmapId') || '';
@@ -1697,7 +1691,7 @@ async function addSelectiveNavigation({ contextType, cards, currentIndex }) {
             if (currentIndex === 0 && sIndex > 0) {
                 const prevSection = sorted[sIndex - 1];
                 addNavButton('Previous Chapter', false, async () => {
-                    window.location.href = `section-cards.html?resourceId=${resourceId}&sectionPosition=${prevSection.position}&name=${encodeURIComponent(prevSection.name)}&resourceName=${encodeURIComponent(resourceName)}&resourceType=${resourceType}&resourcePattern=${resourcePattern}&resourceLink=${encodeURIComponent(resourceLink)}&resourceProduction=${resourceProduction}&resourceExpiration=${resourceExpiration}&subjectId=${subjectId}&subjectName=${encodeURIComponent(subjectName)}&roadmapId=${roadmapId}&roadmapName=${encodeURIComponent(roadmapName)}`;
+                    window.location.href = `section-cards.html?resourceId=${resourceId}&sectionPosition=${prevSection.position}&name=${encodeURIComponent(prevSection.name)}&resourceName=${encodeURIComponent(resourceName)}&resourceType=${resourceType}&resourcePattern=${resourcePattern}&resourceLink=${encodeURIComponent(resourceLink)}&subjectId=${subjectId}&subjectName=${encodeURIComponent(subjectName)}&roadmapId=${roadmapId}&roadmapName=${encodeURIComponent(roadmapName)}`;
                 });
             } else if (currentIndex > 0) {
                 addNavButton('Previous Card', false, async () => {
@@ -1709,7 +1703,7 @@ async function addSelectiveNavigation({ contextType, cards, currentIndex }) {
             if (currentIndex === cards.length - 1 && sIndex + 1 < sorted.length) {
                 const nextSection = sorted[sIndex + 1];
                 addNavButton('Next Chapter', true, async () => {
-                    window.location.href = `section-cards.html?resourceId=${resourceId}&sectionPosition=${nextSection.position}&name=${encodeURIComponent(nextSection.name)}&resourceName=${encodeURIComponent(resourceName)}&resourceType=${resourceType}&resourcePattern=${resourcePattern}&resourceLink=${encodeURIComponent(resourceLink)}&resourceProduction=${resourceProduction}&resourceExpiration=${resourceExpiration}&subjectId=${subjectId}&subjectName=${encodeURIComponent(subjectName)}&roadmapId=${roadmapId}&roadmapName=${encodeURIComponent(roadmapName)}`;
+                    window.location.href = `section-cards.html?resourceId=${resourceId}&sectionPosition=${nextSection.position}&name=${encodeURIComponent(nextSection.name)}&resourceName=${encodeURIComponent(resourceName)}&resourceType=${resourceType}&resourcePattern=${resourcePattern}&resourceLink=${encodeURIComponent(resourceLink)}&subjectId=${subjectId}&subjectName=${encodeURIComponent(subjectName)}&roadmapId=${roadmapId}&roadmapName=${encodeURIComponent(roadmapName)}`;
                 });
             } else if (currentIndex + 1 < cards.length) {
                 addNavButton('Next Card', true, async () => {
@@ -2711,10 +2705,8 @@ async function confirmRemoveCard() {
             const resourceType = UI.getUrlParam('resourceType') || '0';
             const resourcePattern = UI.getUrlParam('resourcePattern') || '0';
             const resourceLink = UI.getUrlParam('resourceLink') || '';
-            const resourceProduction = UI.getUrlParam('resourceProduction') || '0';
-            const resourceExpiration = UI.getUrlParam('resourceExpiration') || '0';
 
-            window.location.href = `section-cards.html?resourceId=${resourceId}&sectionPosition=${sectionPosition}&name=${encodeURIComponent(sectionName)}&resourceName=${encodeURIComponent(resourceName)}&resourceType=${resourceType}&resourcePattern=${resourcePattern}&resourceLink=${encodeURIComponent(resourceLink)}&resourceProduction=${resourceProduction}&resourceExpiration=${resourceExpiration}&subjectId=${subjectId}&subjectName=${encodeURIComponent(subjectName)}&roadmapId=${roadmapId}&roadmapName=${encodeURIComponent(roadmapName)}`;
+            window.location.href = `section-cards.html?resourceId=${resourceId}&sectionPosition=${sectionPosition}&name=${encodeURIComponent(sectionName)}&resourceName=${encodeURIComponent(resourceName)}&resourceType=${resourceType}&resourcePattern=${resourcePattern}&resourceLink=${encodeURIComponent(resourceLink)}&subjectId=${subjectId}&subjectName=${encodeURIComponent(subjectName)}&roadmapId=${roadmapId}&roadmapName=${encodeURIComponent(roadmapName)}`;
         } else if (topicPosition !== '' && topicLevel !== '') {
             // Navigate back to topic cards page
             window.location.href = `topic-cards.html?subjectId=${subjectId}&topicPosition=${topicPosition}&topicLevel=${topicLevel}&name=${encodeURIComponent(topicName)}&subjectName=${encodeURIComponent(subjectName)}&roadmapId=${roadmapId}&roadmapName=${encodeURIComponent(roadmapName)}`;

@@ -365,9 +365,7 @@ class FlashbackClient {
                         type: res.getType(),
                         pattern: res.getPattern(),
                         name: res.getName(),
-                        link: res.getLink(),
-                        production: res.getProduction(),
-                        expiration: res.getExpiration()
+                        link: res.getLink()
                     }));
                     resolve(resources);
                 }
@@ -375,7 +373,7 @@ class FlashbackClient {
         });
     }
 
-    async createResource(subjectId, name, type, pattern, link, production, expiration) {
+    async createResource(subjectId, name, type, pattern, link) {
         return new Promise((resolve, reject) => {
             const request = new proto.flashback.CreateResourceRequest();
             const user = this.getAuthenticatedUser();
@@ -386,8 +384,6 @@ class FlashbackClient {
             resource.setType(type);
             resource.setPattern(pattern);
             resource.setLink(link);
-            resource.setProduction(production);
-            resource.setExpiration(expiration);
             request.setSubject(subject);
             request.setResource(resource);
             request.setUser(user);
@@ -403,9 +399,7 @@ class FlashbackClient {
                         type: resource.getType(),
                         pattern: resource.getPattern(),
                         name: resource.getName(),
-                        link: resource.getLink(),
-                        production: resource.getProduction(),
-                        expiration: resource.getExpiration()
+                        link: resource.getLink()
                     });
                 }
             });
@@ -563,8 +557,6 @@ class FlashbackClient {
                         name: study.getResource().getName(),
                         type: study.getResource().getType(),
                         pattern: study.getResource().getPattern(),
-                        production: study.getResource().getProduction(),
-                        expiration: study.getResource().getExpiration(),
                         link: study.getResource().getLink(),
                         order: study.getOrder(),
                         milestone: {
@@ -975,8 +967,6 @@ class FlashbackClient {
                         name: nerve.getResource().getName(),
                         type: nerve.getResource().getType(),
                         pattern: nerve.getResource().getPattern(),
-                        production: nerve.getResource().getProduction(),
-                        expiration: nerve.getResource().getExpiration(),
                         link: nerve.getResource().getLink(),
                         milestone: {
                             id: nerve.getMilestone().getId(),
@@ -1307,8 +1297,6 @@ class FlashbackClient {
                         name: result.getResource().getName(),
                         type: result.getResource().getType(),
                         pattern: result.getResource().getPattern(),
-                        production: result.getResource().getProduction(),
-                        expiration: result.getResource().getExpiration(),
                         link: result.getResource().getLink(),
                         position: result.getPosition()
                     })));
@@ -1423,7 +1411,7 @@ class FlashbackClient {
         });
     }
 
-    async editResource(resourceId, resourceType, resourcePattern, resourceName, resourceProduction, resourceExpiration, resourceLink) {
+    async editResource(resourceId, resourceType, resourcePattern, resourceName, resourceLink) {
         return new Promise((resolve, reject) => {
             const request = new proto.flashback.EditResourceRequest();
             const user = this.getAuthenticatedUser();
@@ -1433,8 +1421,6 @@ class FlashbackClient {
             resource.setType(resourceType);
             resource.setPattern(resourcePattern);
             resource.setName(resourceName);
-            resource.setProduction(resourceProduction);
-            resource.setExpiration(resourceExpiration);
             resource.setLink(resourceLink);
             request.setResource(resource);
 

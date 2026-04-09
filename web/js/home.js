@@ -150,11 +150,7 @@ window.addEventListener('DOMContentLoaded', () => {
             }
             document.body.style.overflow = 'hidden';
 
-            // Set default expiration date to today
-            const expirationInput = document.getElementById('nerve-expiration');
-            if (expirationInput && !expirationInput.value) {
-                expirationInput.value = UI.getLocalISODate();
-            }
+
         });
     }
 
@@ -221,17 +217,13 @@ window.addEventListener('DOMContentLoaded', () => {
 
             const subjectIdInput = document.getElementById('nerve-subject-id');
             const nameInput = document.getElementById('nerve-name');
-            const expirationInput = document.getElementById('nerve-expiration');
 
-            if (!subjectIdInput || !nameInput || !expirationInput) return;
+            if (!subjectIdInput || !nameInput) return;
 
             const subjectId = subjectIdInput.value;
             const name = nameInput.value;
-            const expirationDate = expirationInput.value;
             const type = 8;
             const pattern = 6;
-            // Convert date string to epoch seconds
-            const expirationEpoch = Math.floor(new Date(expirationDate).getTime() / 1000);
 
             if (!subjectId) {
                 UI.showError('Please select a subject');
@@ -242,7 +234,7 @@ window.addEventListener('DOMContentLoaded', () => {
             UI.setButtonLoading('save-nerve-btn', true);
 
             try {
-                await client.createResource(parseInt(subjectId), name, type, pattern, '', expirationEpoch, expirationEpoch);
+                await client.createResource(parseInt(subjectId), name, type, pattern, '');
 
                 closeNerveModal();
                 UI.setButtonLoading('save-nerve-btn', false);
@@ -434,9 +426,6 @@ function renderStudyingResources(resources) {
         resourceItem.className = 'item-block compact';
         resourceItem.style.cursor = 'pointer';
 
-        const productionDate = resource.production ? new Date(resource.production * 1000).toLocaleDateString() : 'N/A';
-        const expirationDate = resource.expiration ? new Date(resource.expiration * 1000).toLocaleDateString() : 'N/A';
-
         const typeName = typeNames[resource.type] || 'Unknown';
         const patternName = patternNames[resource.pattern] || 'Unknown';
 
@@ -459,19 +448,11 @@ function renderStudyingResources(resources) {
                         </a>
                     </div>
                 </div>
-                <div class="item-footer" style="margin-top: 0; padding-top: 0.25rem; border-top: none; justify-content: flex-start; gap: var(--space-md); opacity: 0.8; pointer-events: none; align-items: center;">
-                    <div class="item-meta" style="font-size: 11px;">
-                        <span>📅 ${UI.escapeHtml(productionDate)}</span>
-                    </div>
-                    <div class="item-meta" style="font-size: 11px;">
-                        <span>⏰ ${UI.escapeHtml(expirationDate)}</span>
-                    </div>
-                </div>
             </div>
         `;
 
         resourceItem.addEventListener('click', () => {
-            window.location.href = `resource.html?id=${resource.id}&name=${encodeURIComponent(resource.name)}&type=${resource.type}&pattern=${resource.pattern}&link=${encodeURIComponent(resource.link)}&production=${resource.production}&expiration=${resource.expiration}&subjectId=${subjectId}&subjectName=${encodeURIComponent(subjectName)}&level=${level}`;
+            window.location.href = `resource.html?id=${resource.id}&name=${encodeURIComponent(resource.name)}&type=${resource.type}&pattern=${resource.pattern}&link=${encodeURIComponent(resource.link)}&subjectId=${subjectId}&subjectName=${encodeURIComponent(subjectName)}&level=${level}`;
         });
 
         container.appendChild(resourceItem);
@@ -541,10 +522,6 @@ function renderNerves(nerves) {
         nerveItem.className = 'item-block compact';
         nerveItem.style.cursor = 'pointer';
 
-        // Convert epoch seconds to readable dates
-        const productionDate = nerve.production ? new Date(nerve.production * 1000).toLocaleDateString() : 'N/A';
-        const expirationDate = nerve.expiration ? new Date(nerve.expiration * 1000).toLocaleDateString() : 'N/A';
-
         const typeName = 'Knowledge';
         const patternName = 'Memories';
 
@@ -574,19 +551,11 @@ function renderNerves(nerves) {
                         </a>
                     </div>
                 </div>
-                <div class="item-footer" style="margin-top: 0; padding-top: 0.25rem; border-top: none; justify-content: flex-start; gap: var(--space-md); opacity: 0.8; pointer-events: none; align-items: center;">
-                    <div class="item-meta" style="font-size: 11px;">
-                        <span>📅 ${UI.escapeHtml(productionDate)}</span>
-                    </div>
-                    <div class="item-meta" style="font-size: 11px;">
-                        <span>⏰ ${UI.escapeHtml(expirationDate)}</span>
-                    </div>
-                </div>
             </div>
         `;
 
         nerveItem.addEventListener('click', () => {
-            window.location.href = `resource.html?id=${nerve.id}&name=${encodeURIComponent(nerve.name)}&type=${nerve.type}&pattern=${nerve.pattern}&link=${encodeURIComponent(nerve.link)}&production=${nerve.production}&expiration=${nerve.expiration}&subjectId=${subjectId}&subjectName=${encodeURIComponent(subjectName)}&level=${level}`;
+            window.location.href = `resource.html?id=${nerve.id}&name=${encodeURIComponent(nerve.name)}&type=${nerve.type}&pattern=${nerve.pattern}&link=${encodeURIComponent(nerve.link)}&subjectId=${subjectId}&subjectName=${encodeURIComponent(subjectName)}&level=${level}`;
         });
 
         container.appendChild(nerveItem);

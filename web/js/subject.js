@@ -842,14 +842,11 @@ window.addEventListener('DOMContentLoaded', () => {
         const typeText = typeSelect.options[typeSelect.selectedIndex].text;
         
         const urlGroup = document.getElementById('resource-url').closest('.form-group');
-        const productionGroup = document.getElementById('resource-production').closest('.form-group');
 
         if (typeValue === '8') {
             if (urlGroup) urlGroup.style.display = 'none';
-            if (productionGroup) productionGroup.style.display = 'none';
         } else {
             if (urlGroup) urlGroup.style.display = 'block';
-            if (productionGroup) productionGroup.style.display = 'block';
         }
 
         if (typeValue) {
@@ -1044,9 +1041,7 @@ window.addEventListener('DOMContentLoaded', () => {
         if (typeDisplay) typeDisplay.style.display = 'none';
 
         const urlGroup = document.getElementById('resource-url').closest('.form-group');
-        const productionGroup = document.getElementById('resource-production').closest('.form-group');
         if (urlGroup) urlGroup.style.display = 'block';
-        if (productionGroup) productionGroup.style.display = 'block';
     }
 
     if (resourceForm) {
@@ -1082,23 +1077,16 @@ window.addEventListener('DOMContentLoaded', () => {
             const type = document.getElementById('resource-type').value;
             const pattern = document.getElementById('resource-pattern').value;
             const url = document.getElementById('resource-url').value.trim();
-            const productionDate = document.getElementById('resource-production').value || UI.getLocalISODate();
-            const expirationDate = document.getElementById('resource-expiration').value || UI.getLocalISODate(new Date(new Date().setFullYear(new Date().getFullYear() + 5)));
-
             if (!name || !type || !pattern) {
                 UI.showError('Please fill required fields');
                 return;
             }
 
-            // Convert dates to epoch seconds
-            const production = Math.floor(new Date(productionDate).getTime() / 1000);
-            const expiration = Math.floor(new Date(expirationDate).getTime() / 1000);
-
             UI.hideMessage('error-message');
             UI.setButtonLoading('save-resource-btn', true);
 
             try {
-                const resource = await client.createResource(parseInt(subjectId), name, parseInt(type), parseInt(pattern), url, production, expiration);
+                const resource = await client.createResource(parseInt(subjectId), name, parseInt(type), parseInt(pattern), url);
 
                 closeResourceModal();
                 UI.setButtonLoading('save-resource-btn', false);
@@ -1124,21 +1112,6 @@ window.addEventListener('DOMContentLoaded', () => {
                     checkResourceDuplicate();
                 }
 
-                // Set default dates for new resource
-                const todayString = UI.getLocalISODate();
-
-                const productionInput = document.getElementById('resource-production');
-                const expirationInput = document.getElementById('resource-expiration');
-
-                if (productionInput && !productionInput.value) {
-                    productionInput.value = todayString;
-                }
-                if (expirationInput && !expirationInput.value) {
-                    // Set default expiration to 5 years from today
-                    const fiveYearsLater = new Date();
-                    fiveYearsLater.setFullYear(fiveYearsLater.getFullYear() + 5);
-                    expirationInput.value = UI.getLocalISODate(fiveYearsLater);
-                }
 
                 setTimeout(() => {
                     if (resourceNameInput) {
@@ -1505,10 +1478,6 @@ function renderResources(resources) {
         resourceItem.className = 'item-block compact';
         resourceItem.style.cursor = 'pointer';
 
-        // Convert epoch seconds to readable dates
-        const productionDate = resource.production ? new Date(resource.production * 1000).toLocaleDateString() : 'N/A';
-        const expirationDate = resource.expiration ? new Date(resource.expiration * 1000).toLocaleDateString() : 'N/A';
-
         const typeName = typeNames[resource.type] || 'Unknown';
         const patternName = patternNames[resource.pattern] || 'Unknown';
 
@@ -1528,14 +1497,6 @@ function renderResources(resources) {
                         <button class="btn btn-secondary drop-resource-btn" data-resource-id="${resource.id}" style="background-color: #dc3545; color: white; padding: 0.4rem 0.8rem; font-size: 12px; height: 34px; min-width: auto; white-space: nowrap; border: none; border-radius: var(--radius-md); font-weight: 600;">Drop</button>
                     </div>
                 </div>
-                <div class="item-footer" style="margin-top: 0; padding-top: 0.25rem; border-top: none; justify-content: flex-start; gap: var(--space-md); opacity: 0.8; align-items: center; pointer-events: none;">
-                    <div class="item-meta" style="font-size: 11px;">
-                        <span>📅 ${UI.escapeHtml(productionDate)}</span>
-                    </div>
-                    <div class="item-meta" style="font-size: 11px;">
-                        <span>⏰ ${UI.escapeHtml(expirationDate)}</span>
-                    </div>
-                </div>
             </div>
         `;
 
@@ -1543,7 +1504,7 @@ function renderResources(resources) {
         resourceItem.addEventListener('click', () => {
             const currentTab = UI.getUrlParam('tab') || 'topics';
             const level = UI.getUrlParam('level') || '0';
-            window.location.href = `resource.html?id=${resource.id}&name=${encodeURIComponent(resource.name)}&type=${resource.type}&pattern=${resource.pattern}&link=${encodeURIComponent(resource.link)}&production=${resource.production}&expiration=${resource.expiration}&subjectId=${subjectId || ''}&subjectName=${encodeURIComponent(subjectName || '')}&roadmapId=${roadmapId || ''}&roadmapName=${encodeURIComponent(roadmapName || '')}&level=${level}&tab=${currentTab}`;
+            window.location.href = `resource.html?id=${resource.id}&name=${encodeURIComponent(resource.name)}&type=${resource.type}&pattern=${resource.pattern}&link=${encodeURIComponent(resource.link)}&subjectId=${subjectId || ''}&subjectName=${encodeURIComponent(subjectName || '')}&roadmapId=${roadmapId || ''}&roadmapName=${encodeURIComponent(roadmapName || '')}&level=${level}&tab=${currentTab}`;
         });
 
         // Add drop button handler

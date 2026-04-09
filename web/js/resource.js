@@ -355,9 +355,7 @@ window.addEventListener('DOMContentLoaded', () => {
         name: resourceName || '',
         type: parseInt(UI.getUrlParam('type') || '0'),
         pattern: parseInt(UI.getUrlParam('pattern') || '0'),
-        link: UI.getUrlParam('link') || '',
-        production: UI.getUrlParam('production') || '',
-        expiration: UI.getUrlParam('expiration') || ''
+        link: UI.getUrlParam('link') || ''
     };
 
     // Display breadcrumb
@@ -486,17 +484,6 @@ window.addEventListener('DOMContentLoaded', () => {
             document.getElementById('edit-resource-type').value = currentResourceData.type;
             document.getElementById('edit-resource-link').value = currentResourceData.link;
 
-            // Convert epoch seconds to date string (YYYY-MM-DD)
-            const productionDate = currentResourceData.production
-                ? new Date(currentResourceData.production * 1000).toISOString().split('T')[0]
-                : '';
-            const expirationDate = currentResourceData.expiration
-                ? new Date(currentResourceData.expiration * 1000).toISOString().split('T')[0]
-                : '';
-
-            document.getElementById('edit-resource-production').value = productionDate;
-            document.getElementById('edit-resource-expiration').value = expirationDate;
-
             // Update pattern options based on type and set current pattern
             updatePatternOptions(currentResourceData.type, currentResourceData.pattern);
 
@@ -558,29 +545,23 @@ window.addEventListener('DOMContentLoaded', () => {
             const type = parseInt(document.getElementById('edit-resource-type').value);
             const pattern = parseInt(document.getElementById('edit-resource-pattern').value);
             const link = document.getElementById('edit-resource-link').value.trim();
-            const productionDate = document.getElementById('edit-resource-production').value;
-            const expirationDate = document.getElementById('edit-resource-expiration').value;
 
-            if (!name || !productionDate || !expirationDate) {
+            if (!name) {
                 UI.showError('Please fill all required fields');
                 return;
             }
-
-            // Convert dates to epoch seconds
-            const production = Math.floor(new Date(productionDate).getTime() / 1000);
-            const expiration = Math.floor(new Date(expirationDate).getTime() / 1000);
 
             UI.hideMessage('error-message');
             UI.setButtonLoading('save-edit-resource-btn', true);
 
             try {
-                await client.editResource(resourceId, type, pattern, name, production, expiration, link);
+                await client.editResource(resourceId, type, pattern, name, link);
 
                 closeEditResource();
                 UI.setButtonLoading('save-edit-resource-btn', false);
 
                 // Update the page and URL with new data
-                currentResourceData = { id: resourceId, name, type, pattern, link, production, expiration };
+                currentResourceData = { id: resourceId, name, type, pattern, link };
                 resourceName = name; // Update global resourceName
                 
                 // Update page header with icon
@@ -933,8 +914,6 @@ function renderSections(sections) {
             const resourceType = UI.getUrlParam('type');
             const resourcePattern = UI.getUrlParam('pattern');
             const resourceLink = UI.getUrlParam('link');
-            const resourceProduction = UI.getUrlParam('production');
-            const resourceExpiration = UI.getUrlParam('expiration');
             const subjectId = UI.getUrlParam('subjectId');
             const subjectName = UI.getUrlParam('subjectName');
             const roadmapId = UI.getUrlParam('roadmapId');
@@ -965,8 +944,6 @@ function updateUrl() {
         params.set('type', currentResourceData.type);
         params.set('pattern', currentResourceData.pattern);
         params.set('link', currentResourceData.link || '');
-        params.set('production', currentResourceData.production || '');
-        params.set('expiration', currentResourceData.expiration || '');
     }
     
     const newUrl = `${window.location.pathname}?${params.toString()}`;
