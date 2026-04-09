@@ -158,6 +158,81 @@
           </div>
         </div>
       </div>
+      <!-- Provider and Presenters row -->
+      <div id="resource-meta-row" style="display: flex; flex-wrap: wrap; gap: 1rem; align-items: center; margin-top: 0.25rem; width: 100%;">
+        <div style="display: flex; align-items: center; gap: 0.4rem; font-size: 0.875rem; color: var(--color-text-muted);">
+          <span>Publisher:</span>
+          <span id="resource-provider-display" style="color: var(--color-text);">—</span>
+          <button id="edit-provider-btn" class="btn btn-icon" title="Edit Publisher" style="background: none; border: none; padding: 0.2rem; color: var(--color-text-muted); cursor: pointer; display: inline-flex; align-items: center;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>
+          </button>
+        </div>
+        <div style="display: flex; align-items: center; gap: 0.4rem; font-size: 0.875rem; color: var(--color-text-muted);">
+          <span>Authors:</span>
+          <span id="resource-presenters-display" style="color: var(--color-text);">—</span>
+          <button id="add-presenter-btn" class="btn btn-icon" title="Add Author" style="background: none; border: none; padding: 0.2rem; color: var(--color-text-muted); cursor: pointer; display: inline-flex; align-items: center;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Edit Provider Modal -->
+    <div id="edit-provider-modal" class="modal-overlay" style="display: none;">
+      <div class="modal-content" style="max-width: 500px;">
+        <div class="modal-header">
+          <h2 class="modal-title">Set Publisher</h2>
+          <button type="button" id="close-edit-provider-modal-btn" class="modal-close" aria-label="Close modal">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label" for="provider-search-input">Search or create publisher</label>
+            <input type="text" id="provider-search-input" class="form-input" placeholder="Type to search publishers..." autocomplete="off">
+          </div>
+          <div id="provider-search-results" class="search-results-list" style="margin-bottom: 1rem;"></div>
+          <div id="provider-create-option" style="display: none; padding: 0.5rem; border-top: 1px solid var(--color-border); margin-top: 0.5rem;">
+            <button id="provider-create-btn" class="btn btn-secondary" style="width: 100%; text-align: left;">
+              Create new publisher: "<span id="provider-create-name"></span>"
+            </button>
+          </div>
+          <div id="current-provider-section" style="display: none; border-top: 1px solid var(--color-border); padding-top: 1rem; margin-top: 0.5rem;">
+            <p style="font-size: 0.875rem; color: var(--color-text-muted); margin-bottom: 0.5rem;">Current publisher:</p>
+            <div style="display: flex; align-items: center; justify-content: space-between;">
+              <span id="current-provider-name" style="font-weight: 500;"></span>
+              <button id="drop-provider-btn" class="btn btn-secondary" style="color: var(--color-danger, #ef4444); padding: 0.25rem 0.75rem; font-size: 0.8rem;">Remove</button>
+            </div>
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button type="button" id="cancel-edit-provider-btn" class="btn btn-secondary" style="padding: 0.5rem 1.5rem;">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Add Presenter Modal -->
+    <div id="add-presenter-modal" class="modal-overlay" style="display: none;">
+      <div class="modal-content" style="max-width: 500px;">
+        <div class="modal-header">
+          <h2 class="modal-title">Manage Authors</h2>
+          <button type="button" id="close-add-presenter-modal-btn" class="modal-close" aria-label="Close modal">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div id="current-presenters-list" style="margin-bottom: 1rem;"></div>
+          <div class="form-group">
+            <label class="form-label" for="presenter-search-input">Search or create author</label>
+            <input type="text" id="presenter-search-input" class="form-input" placeholder="Type to search authors..." autocomplete="off">
+          </div>
+          <div id="presenter-search-results" class="search-results-list" style="margin-bottom: 1rem;"></div>
+          <div id="presenter-create-option" style="display: none; padding: 0.5rem; border-top: 1px solid var(--color-border); margin-top: 0.5rem;">
+            <button id="presenter-create-btn" class="btn btn-secondary" style="width: 100%; text-align: left;">
+              Create new author: "<span id="presenter-create-name"></span>"
+            </button>
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button type="button" id="cancel-add-presenter-btn" class="btn btn-secondary" style="padding: 0.5rem 1.5rem;">Done</button>
+        </div>
+      </div>
     </div>
 
     <button id="add-section-btn" class="floating-add-btn" title="Add Section">

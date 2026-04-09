@@ -4,6 +4,8 @@ let resourceId = UI.getUrlParam('id');
 let resourceName = UI.getUrlParam('name') || '';
 let subjectId = UI.getUrlParam('subjectId');
 let roadmapId = UI.getUrlParam('roadmapId');
+let currentProvider = null;
+let currentPresenters = [];
 
 let currentSections = [];
 let isSectionsExpanded = false;
@@ -361,6 +363,12 @@ window.addEventListener('DOMContentLoaded', () => {
     // Display breadcrumb
     displayBreadcrumb();
 
+    // Initialize provider/presenter display
+    renderProviderDisplay();
+    renderPresentersDisplay();
+    setupProviderHandlers();
+    setupPresenterHandlers();
+
     const signoutBtn = document.getElementById('signout-btn');
     if (signoutBtn) {
         signoutBtn.addEventListener('click', async (e) => {
@@ -645,7 +653,8 @@ window.addEventListener('DOMContentLoaded', () => {
     }
 
     loadSections();
-    
+    loadProviderAndPresenters();
+
     // Search event listener
     const sectionsSearchInput = document.getElementById('sections-search-input');
     if (sectionsSearchInput) {
@@ -690,6 +699,23 @@ window.addEventListener('DOMContentLoaded', () => {
         });
     }
 });
+
+async function loadProviderAndPresenters() {
+    const sid = UI.getUrlParam('subjectId');
+    if (!sid || !resourceId) return;
+    try {
+        const resources = await client.getResources(sid);
+        const res = resources.find(r => String(r.id) === String(resourceId));
+        if (res) {
+            currentProvider = res.provider || null;
+            currentPresenters = res.presenters || [];
+            renderProviderDisplay();
+            renderPresentersDisplay();
+        }
+    } catch (err) {
+        console.error('Load provider/presenters failed:', err);
+    }
+}
 
 async function loadSections() {
     UI.toggleElement('loading', true);
@@ -999,5 +1025,321 @@ async function moveSection(sourceResourceId, sourceSectionPosition, targetResour
     } catch (err) {
         console.error('Move section failed:', err);
         UI.showError('Failed to move section: ' + (err.message || 'Unknown error'));
+    }
+}
+
+// Provider display and management
+function renderProviderDisplay() {
+    const display = document.getElementById('resource-provider-display');
+    if (!display) return;
+    if (currentProvider) {
+        display.textContent = currentProvider.name;
+    } else {
+        display.textContent = '—';
+    }
+}
+
+function renderPresentersDisplay() {
+    const display = document.getElementById('resource-presenters-display');
+    if (!display) return;
+    if (currentPresenters.length > 0) {
+        display.innerHTML = currentPresenters.map(p =>
+            `<span class="presenter-tag" data-id="${p.id}" style="cursor:pointer; text-decoration:underline dotted; margin-right:0.25rem;" title="Click to remove">${UI.escapeHtml(p.name)}</span>`
+        ).join(', ');
+        display.querySelectorAll('.presenter-tag').forEach(tag => {
+            tag.addEventListener('click', async () => {
+                const presenterId = parseInt(tag.dataset.id);
+                const presenterName = tag.textContent;
+                if (!confirm(`Remove "${presenterName}" from authors?`)) return;
+                try {
+                    await client.dropPresenter(resourceId, presenterId);
+                    currentPresenters = currentPresenters.filter(p => p.id !== presenterId);
+                    renderPresentersDisplay();
+                    UI.showSuccess('Author removed');
+                } catch (err) {
+                    console.error('Drop presenter failed:', err);
+                    UI.showError(err.message || 'Failed to remove author');
+                }
+            });
+        });
+    } else {
+        display.textContent = '—';
+    }
+}
+
+function renderCurrentPresentersList() {
+    const container = document.getElementById('current-presenters-list');
+    if (!container) return;
+    if (currentPresenters.length === 0) {
+        container.innerHTML = '<p style="font-size:0.875rem; color:var(--color-text-muted); margin:0 0 0.5rem;">No authors assigned yet.</p>';
+        return;
+    }
+    container.innerHTML = '<p style="font-size:0.875rem; color:var(--color-text-muted); margin:0 0 0.5rem;">Current authors:</p>' +
+        currentPresenters.map(p =>
+            `<div style="display:flex; align-items:center; justify-content:space-between; padding:0.25rem 0; border-bottom: 1px solid var(--color-border, rgba(255,255,255,0.1));">
+                <span>${UI.escapeHtml(p.name)}</span>
+                <button class="btn btn-secondary remove-presenter-btn" data-id="${p.id}" style="padding:0.15rem 0.5rem; font-size:0.75rem; color:var(--color-danger, #ef4444);">Remove</button>
+            </div>`
+        ).join('');
+    container.querySelectorAll('.remove-presenter-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+            const presenterId = parseInt(btn.dataset.id);
+            try {
+                await client.dropPresenter(resourceId, presenterId);
+                currentPresenters = currentPresenters.filter(p => p.id !== presenterId);
+                renderCurrentPresentersList();
+                renderPresentersDisplay();
+                UI.showSuccess('Author removed');
+            } catch (err) {
+                console.error('Drop presenter failed:', err);
+                UI.showError(err.message || 'Failed to remove author');
+            }
+        });
+    });
+}
+
+function setupProviderHandlers() {
+    const editProviderBtn = document.getElementById('edit-provider-btn');
+    const editProviderModal = document.getElementById('edit-provider-modal');
+    const closeEditProviderBtn = document.getElementById('close-edit-provider-modal-btn');
+    const cancelEditProviderBtn = document.getElementById('cancel-edit-provider-btn');
+    const providerSearchInput = document.getElementById('provider-search-input');
+    const providerSearchResults = document.getElementById('provider-search-results');
+    const providerCreateOption = document.getElementById('provider-create-option');
+    const providerCreateBtn = document.getElementById('provider-create-btn');
+    const providerCreateName = document.getElementById('provider-create-name');
+    const dropProviderBtn = document.getElementById('drop-provider-btn');
+    const currentProviderSection = document.getElementById('current-provider-section');
+    const currentProviderNameEl = document.getElementById('current-provider-name');
+
+    const openProviderModal = () => {
+        if (editProviderModal) {
+            editProviderModal.style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+        }
+        if (providerSearchInput) {
+            providerSearchInput.value = '';
+            providerSearchInput.focus();
+        }
+        if (providerSearchResults) providerSearchResults.innerHTML = '';
+        if (providerCreateOption) providerCreateOption.style.display = 'none';
+
+        if (currentProvider) {
+            if (currentProviderSection) currentProviderSection.style.display = 'block';
+            if (currentProviderNameEl) currentProviderNameEl.textContent = currentProvider.name;
+        } else {
+            if (currentProviderSection) currentProviderSection.style.display = 'none';
+        }
+    };
+
+    const closeProviderModal = () => {
+        if (editProviderModal) {
+            editProviderModal.style.display = 'none';
+            document.body.style.overflow = '';
+        }
+        if (providerSearchInput) providerSearchInput.value = '';
+        if (providerSearchResults) providerSearchResults.innerHTML = '';
+        if (providerCreateOption) providerCreateOption.style.display = 'none';
+    };
+
+    if (editProviderBtn) editProviderBtn.addEventListener('click', openProviderModal);
+    if (closeEditProviderBtn) closeEditProviderBtn.addEventListener('click', closeProviderModal);
+    if (cancelEditProviderBtn) cancelEditProviderBtn.addEventListener('click', closeProviderModal);
+    if (editProviderModal) {
+        editProviderModal.addEventListener('click', (e) => {
+            if (e.target === editProviderModal) closeProviderModal();
+        });
+    }
+
+    if (dropProviderBtn) {
+        dropProviderBtn.addEventListener('click', async () => {
+            if (!currentProvider) return;
+            try {
+                await client.dropProvider(resourceId, currentProvider.id);
+                currentProvider = null;
+                renderProviderDisplay();
+                closeProviderModal();
+                UI.showSuccess('Publisher removed');
+            } catch (err) {
+                console.error('Drop provider failed:', err);
+                UI.showError(err.message || 'Failed to remove publisher');
+            }
+        });
+    }
+
+    let providerSearchTimeout;
+    if (providerSearchInput) {
+        providerSearchInput.addEventListener('input', () => {
+            const query = providerSearchInput.value.trim();
+            clearTimeout(providerSearchTimeout);
+            if (providerSearchResults) providerSearchResults.innerHTML = '';
+            if (providerCreateOption) providerCreateOption.style.display = 'none';
+
+            if (!query) return;
+
+            if (providerCreateName) providerCreateName.textContent = query;
+            if (providerCreateOption) providerCreateOption.style.display = 'block';
+
+            providerSearchTimeout = setTimeout(async () => {
+                try {
+                    const results = await client.searchProviders(query);
+                    if (providerSearchResults) {
+                        providerSearchResults.innerHTML = '';
+                        results.forEach(provider => {
+                            const item = document.createElement('div');
+                            item.className = 'search-result-item';
+                            item.innerHTML = `<div class="search-result-name">${UI.escapeHtml(provider.name)}</div>`;
+                            item.addEventListener('click', async () => {
+                                try {
+                                    await client.addProvider(resourceId, provider.id);
+                                    currentProvider = { id: provider.id, name: provider.name };
+                                    renderProviderDisplay();
+                                    closeProviderModal();
+                                    UI.showSuccess('Publisher set');
+                                } catch (err) {
+                                    console.error('Add provider failed:', err);
+                                    UI.showError(err.message || 'Failed to set publisher');
+                                }
+                            });
+                            providerSearchResults.appendChild(item);
+                        });
+                    }
+                } catch (err) {
+                    console.error('Search providers failed:', err);
+                }
+            }, 300);
+        });
+    }
+
+    if (providerCreateBtn) {
+        providerCreateBtn.addEventListener('click', async () => {
+            const name = providerSearchInput ? providerSearchInput.value.trim() : '';
+            if (!name) return;
+            try {
+                const provider = await client.createProvider(name);
+                await client.addProvider(resourceId, provider.id);
+                currentProvider = { id: provider.id, name: provider.name };
+                renderProviderDisplay();
+                closeProviderModal();
+                UI.showSuccess('Publisher created and set');
+            } catch (err) {
+                console.error('Create provider failed:', err);
+                UI.showError(err.message || 'Failed to create publisher');
+            }
+        });
+    }
+}
+
+function setupPresenterHandlers() {
+    const addPresenterBtn = document.getElementById('add-presenter-btn');
+    const addPresenterModal = document.getElementById('add-presenter-modal');
+    const closeAddPresenterBtn = document.getElementById('close-add-presenter-modal-btn');
+    const cancelAddPresenterBtn = document.getElementById('cancel-add-presenter-btn');
+    const presenterSearchInput = document.getElementById('presenter-search-input');
+    const presenterSearchResults = document.getElementById('presenter-search-results');
+    const presenterCreateOption = document.getElementById('presenter-create-option');
+    const presenterCreateBtn = document.getElementById('presenter-create-btn');
+    const presenterCreateName = document.getElementById('presenter-create-name');
+
+    const openPresenterModal = () => {
+        if (addPresenterModal) {
+            addPresenterModal.style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+        }
+        if (presenterSearchInput) {
+            presenterSearchInput.value = '';
+            presenterSearchInput.focus();
+        }
+        if (presenterSearchResults) presenterSearchResults.innerHTML = '';
+        if (presenterCreateOption) presenterCreateOption.style.display = 'none';
+        renderCurrentPresentersList();
+    };
+
+    const closePresenterModal = () => {
+        if (addPresenterModal) {
+            addPresenterModal.style.display = 'none';
+            document.body.style.overflow = '';
+        }
+        if (presenterSearchInput) presenterSearchInput.value = '';
+        if (presenterSearchResults) presenterSearchResults.innerHTML = '';
+        if (presenterCreateOption) presenterCreateOption.style.display = 'none';
+    };
+
+    if (addPresenterBtn) addPresenterBtn.addEventListener('click', openPresenterModal);
+    if (closeAddPresenterBtn) closeAddPresenterBtn.addEventListener('click', closePresenterModal);
+    if (cancelAddPresenterBtn) cancelAddPresenterBtn.addEventListener('click', closePresenterModal);
+    if (addPresenterModal) {
+        addPresenterModal.addEventListener('click', (e) => {
+            if (e.target === addPresenterModal) closePresenterModal();
+        });
+    }
+
+    let presenterSearchTimeout;
+    if (presenterSearchInput) {
+        presenterSearchInput.addEventListener('input', () => {
+            const query = presenterSearchInput.value.trim();
+            clearTimeout(presenterSearchTimeout);
+            if (presenterSearchResults) presenterSearchResults.innerHTML = '';
+            if (presenterCreateOption) presenterCreateOption.style.display = 'none';
+
+            if (!query) return;
+
+            if (presenterCreateName) presenterCreateName.textContent = query;
+            if (presenterCreateOption) presenterCreateOption.style.display = 'block';
+
+            presenterSearchTimeout = setTimeout(async () => {
+                try {
+                    const results = await client.searchPresenters(query);
+                    if (presenterSearchResults) {
+                        presenterSearchResults.innerHTML = '';
+                        results.forEach(presenter => {
+                            if (currentPresenters.some(p => p.id === presenter.id)) return;
+                            const item = document.createElement('div');
+                            item.className = 'search-result-item';
+                            item.innerHTML = `<div class="search-result-name">${UI.escapeHtml(presenter.name)}</div>`;
+                            item.addEventListener('click', async () => {
+                                try {
+                                    await client.addPresenter(resourceId, presenter.id);
+                                    currentPresenters.push({ id: presenter.id, name: presenter.name });
+                                    renderPresentersDisplay();
+                                    renderCurrentPresentersList();
+                                    if (presenterSearchInput) presenterSearchInput.value = '';
+                                    if (presenterSearchResults) presenterSearchResults.innerHTML = '';
+                                    if (presenterCreateOption) presenterCreateOption.style.display = 'none';
+                                    UI.showSuccess('Author added');
+                                } catch (err) {
+                                    console.error('Add presenter failed:', err);
+                                    UI.showError(err.message || 'Failed to add author');
+                                }
+                            });
+                            presenterSearchResults.appendChild(item);
+                        });
+                    }
+                } catch (err) {
+                    console.error('Search presenters failed:', err);
+                }
+            }, 300);
+        });
+    }
+
+    if (presenterCreateBtn) {
+        presenterCreateBtn.addEventListener('click', async () => {
+            const name = presenterSearchInput ? presenterSearchInput.value.trim() : '';
+            if (!name) return;
+            try {
+                const presenter = await client.createPresenter(name);
+                await client.addPresenter(resourceId, presenter.id);
+                currentPresenters.push({ id: presenter.id, name: presenter.name });
+                renderPresentersDisplay();
+                renderCurrentPresentersList();
+                if (presenterSearchInput) presenterSearchInput.value = '';
+                if (presenterSearchResults) presenterSearchResults.innerHTML = '';
+                if (presenterCreateOption) presenterCreateOption.style.display = 'none';
+                UI.showSuccess('Author created and added');
+            } catch (err) {
+                console.error('Create presenter failed:', err);
+                UI.showError(err.message || 'Failed to create author');
+            }
+        });
     }
 }

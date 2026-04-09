@@ -2288,7 +2288,7 @@ grpc::Status server::RenamePresenter(grpc::ServerContext* context, RenamePresent
         else
         {
             std::clog << std::format("client {} renamed presenter {}\n", request->user().token(), request->presenter().id());
-            m_database->rename_presenter(request->resource().id(), request->presenter().name());
+            m_database->rename_presenter(request->presenter().id(), request->presenter().name());
             status = grpc::Status{grpc::StatusCode::OK, {}};
         }
     }
@@ -2332,7 +2332,7 @@ grpc::Status server::RemovePresenter(grpc::ServerContext* context, RemovePresent
         else
         {
             std::clog << std::format("client {} removed presenter {}\n", request->user().token(), request->presenter().id());
-            m_database->remove_presenter(request->resource().id());
+            m_database->remove_presenter(request->presenter().id());
             status = grpc::Status{grpc::StatusCode::OK, {}};
         }
     }
