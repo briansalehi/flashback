@@ -409,10 +409,10 @@ class FlashbackClient {
                         name: resource.getName(),
                         link: resource.getLink(),
                         provider: {
-                            id: res.getResource().getProvider().getId(),
-                            name: res.getResource().getProvider().getName()
+                            id: resource.getProvider().getId(),
+                            name: resource.getProvider().getName()
                         },
-                        presenters: res.getResource().getPresentersList().map(presenter => ({
+                        presenters: resource.getPresentersList().map(presenter => ({
                             id: presenter.getId(),
                             name: presenter.getName()
                         }))
@@ -575,10 +575,10 @@ class FlashbackClient {
                         pattern: study.getResource().getPattern(),
                         link: study.getResource().getLink(),
                         provider: {
-                            id: res.getResource().getProvider().getId(),
-                            name: res.getResource().getProvider().getName()
+                            id: study.getResource().getProvider().getId(),
+                            name: study.getResource().getProvider().getName()
                         },
-                        presenters: res.getResource().getPresentersList().map(presenter => ({
+                        presenters: study.getResource().getPresentersList().map(presenter => ({
                             id: presenter.getId(),
                             name: presenter.getName()
                         })),
@@ -993,10 +993,10 @@ class FlashbackClient {
                         pattern: nerve.getResource().getPattern(),
                         link: nerve.getResource().getLink(),
                         provider: {
-                            id: res.getResource().getProvider().getId(),
-                            name: res.getResource().getProvider().getName()
+                            id: nerve.getResource().getProvider().getId(),
+                            name: nerve.getResource().getProvider().getName()
                         },
-                        presenters: res.getResource().getPresentersList().map(presenter => ({
+                        presenters: nerve.getResource().getPresentersList().map(presenter => ({
                             id: presenter.getId(),
                             name: presenter.getName()
                         })),
@@ -1331,10 +1331,10 @@ class FlashbackClient {
                         pattern: result.getResource().getPattern(),
                         link: result.getResource().getLink(),
                         provider: {
-                            id: res.getResource().getProvider().getId(),
-                            name: res.getResource().getProvider().getName()
+                            id: result.getResource().getProvider().getId(),
+                            name: result.getResource().getProvider().getName()
                         },
-                        presenters: res.getResource().getPresentersList().map(presenter => ({
+                        presenters: result.getResource().getPresentersList().map(presenter => ({
                             id: presenter.getId(),
                             name: presenter.getName()
                         })),
