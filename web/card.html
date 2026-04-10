@@ -40,7 +40,7 @@
       }
 
       pre[class*="language-"] {
-          padding: var(--space-lg) 0 var(--space-sm) 0 !important;
+          padding: var(--space-lg) 0 var(--space-lg) 0 !important;
           margin: 0;
           overflow: auto;
           border: none !important;
@@ -182,6 +182,13 @@
           .card-header-buttons button {
               width: 100%;
               justify-content: center;
+          }
+      }
+
+      /* Sync code block font size with text blocks on desktop */
+      @media (min-width: 768px) {
+          pre.content-block-text[class*="language-"] {
+              font-size: var(--font-size-lg);
           }
       }
 
