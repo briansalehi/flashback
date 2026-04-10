@@ -183,7 +183,7 @@ public:
     [[nodiscard]] virtual std::vector<Card> get_subject_assessments(uint64_t subject_id, expertise_level max_level) const = 0;
 
     // nerves
-    [[nodiscard]] virtual Resource create_nerve(uint64_t user_id, std::string resource_name, uint64_t subject_id, uint64_t expiration) const = 0;
+    [[nodiscard]] virtual Resource create_nerve(uint64_t user_id, std::string resource_name, uint64_t subject_id) const = 0;
     [[nodiscard]] virtual std::vector<Resource> get_nerves(uint64_t user_id) const = 0;
 
     // anomaly detection

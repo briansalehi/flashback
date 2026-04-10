@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict 6jbEKZgPtTVDTrJbk5ojbZFQeS1gL0Udn1ZLhAWdTCMTCyaDtBeLOHul9ny0HVD
+\restrict f5Nhxws98qTjQJMoCtRDTBRErGwhfpatcpM5UWGguCNszGWILkh4jvK9IybCO1s
 
 -- Dumped from database version 18.3
 -- Dumped by pg_dump version 18.3
@@ -596,10 +596,10 @@ $$;
 ALTER FUNCTION flashback.create_card(headline text) OWNER TO flashback;
 
 --
--- Name: create_nerve(integer, character varying, integer, integer); Type: FUNCTION; Schema: flashback; Owner: flashback
+-- Name: create_nerve(integer, character varying, integer); Type: FUNCTION; Schema: flashback; Owner: flashback
 --
 
-CREATE FUNCTION flashback.create_nerve(user_id integer, resource_name character varying, subject_id integer, expiration integer) RETURNS integer
+CREATE FUNCTION flashback.create_nerve(user_id integer, resource_name character varying, subject_id integer) RETURNS integer
     LANGUAGE plpgsql
     AS $$
 declare user_name character varying;
@@ -607,7 +607,7 @@ declare resource_id integer;
 begin
     select name into user_name from users where id = user_id;
 
-    resource_id := create_resource(resource_name, 'nerve'::resource_type, 'synapse'::section_pattern, null::character varying, cast(extract(epoch from now()) as integer), expiration);
+    resource_id := create_resource(resource_name, 'nerve'::resource_type, 'synapse'::section_pattern, null::character varying);
 
     insert into shelves (resource, subject) values (resource_id, subject_id);
 
@@ -617,7 +617,7 @@ begin
 end; $$;
 
 
-ALTER FUNCTION flashback.create_nerve(user_id integer, resource_name character varying, subject_id integer, expiration integer) OWNER TO flashback;
+ALTER FUNCTION flashback.create_nerve(user_id integer, resource_name character varying, subject_id integer) OWNER TO flashback;
 
 --
 -- Name: create_presenter(character varying); Type: FUNCTION; Schema: flashback; Owner: flashback
@@ -656,16 +656,16 @@ $$;
 ALTER FUNCTION flashback.create_provider(provider_name character varying) OWNER TO flashback;
 
 --
--- Name: create_resource(character varying, flashback.resource_type, flashback.section_pattern, character varying, integer, integer); Type: FUNCTION; Schema: flashback; Owner: flashback
+-- Name: create_resource(character varying, flashback.resource_type, flashback.section_pattern, character varying); Type: FUNCTION; Schema: flashback; Owner: flashback
 --
 
-CREATE FUNCTION flashback.create_resource(resource_name character varying, resource_type flashback.resource_type, resource_pattern flashback.section_pattern, resource_link character varying, resource_production integer, resource_expiration integer) RETURNS integer
+CREATE FUNCTION flashback.create_resource(resource_name character varying, resource_type flashback.resource_type, resource_pattern flashback.section_pattern, resource_link character varying) RETURNS integer
     LANGUAGE plpgsql
     AS $$
 declare resource_id integer;
 begin
-    insert into resources (name, type, pattern, link, production, expiration)
-    values (resource_name, resource_type, resource_pattern, nullif(resource_link, ''), resource_production, resource_expiration)
+    insert into resources (name, type, pattern, link)
+    values (resource_name, resource_type, resource_pattern, nullif(resource_link, ''))
     returning id into resource_id;
 
     return resource_id;
@@ -673,7 +673,7 @@ end;
 $$;
 
 
-ALTER FUNCTION flashback.create_resource(resource_name character varying, resource_type flashback.resource_type, resource_pattern flashback.section_pattern, resource_link character varying, resource_production integer, resource_expiration integer) OWNER TO flashback;
+ALTER FUNCTION flashback.create_resource(resource_name character varying, resource_type flashback.resource_type, resource_pattern flashback.section_pattern, resource_link character varying) OWNER TO flashback;
 
 --
 -- Name: create_roadmap(integer, character varying); Type: FUNCTION; Schema: flashback; Owner: flashback
@@ -2517,6 +2517,7 @@ begin
     if resource_id = target_resource_id and section_position = target_section_position then
         return;
     end if;
+
     if section_position > 0 and target_section_position > 0 then
         if resource_id = target_resource_id then
             call reorder_section(resource_id, section_position, target_section_position);
@@ -2551,8 +2552,25 @@ begin
     if subject_id = target_subject_id and topic_level = target_level and topic_position = target_topic_position then
         return;
     end if;
+
     select max(coalesce(position, 0)) into source_top_position from topics where subject = subject_id and level = topic_level;
     select max(coalesce(position, 0)) + 1 into target_top_position from topics where subject = target_subject_id and level = target_level;
+
+    
+    -- add resource to subject shelf when it does not already exist
+    insert into shelves (resource, subject)
+    select distinct resource, target_subject_id
+    from shelves 
+    where resource in (
+        select distinct sc.resource
+        from topic_cards tc
+        join section_cards sc on sc.card = tc.card
+        where tc.subject = subject_id and tc.level = topic_level and tc.position = topic_position
+    )
+    and resource not in (
+        select resource from shelves where subject = target_subject_id
+    );
+
     if topic_position > 0 and target_topic_position > 0 then
         if subject_id = target_subject_id and topic_level = target_level and topic_position <> target_topic_position then
             call reorder_topic(subject_id, topic_level, topic_position, target_topic_position);
@@ -3582,9 +3600,7 @@ CREATE TABLE flashback.resources (
     name flashback.citext NOT NULL,
     type flashback.resource_type NOT NULL,
     pattern flashback.section_pattern NOT NULL,
-    link character varying(2000),
-    production integer NOT NULL,
-    expiration integer NOT NULL
+    link character varying(2000)
 );
 
 
@@ -4390,5 +4406,5 @@ GRANT ALL ON SCHEMA public TO brian;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict 6jbEKZgPtTVDTrJbk5ojbZFQeS1gL0Udn1ZLhAWdTCMTCyaDtBeLOHul9ny0HVD
+\unrestrict f5Nhxws98qTjQJMoCtRDTBRErGwhfpatcpM5UWGguCNszGWILkh4jvK9IybCO1s
 

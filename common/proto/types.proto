@@ -24,10 +24,8 @@ message Resource {
     section_pattern pattern = 3;
     string name = 4;
     string link = 5;
-    reserved 6, 7;
-    reserved "production", "expiration";
-    Provider provider = 8;
-    repeated Presenter presenters = 9;
+    Provider provider = 6;
+    repeated Presenter presenters = 7;
 }
 
 message Card {

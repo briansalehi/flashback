@@ -1676,7 +1676,7 @@ TEST_F(test_database, create_nerve)
 
     ASSERT_NO_THROW(subject = m_database->create_subject(subject.name()));
     ASSERT_THAT(subject.id(), Gt(0));
-    EXPECT_NO_THROW(resource = m_database->create_nerve(m_user->id(), resource.name(), subject.id(), expiration.count()));
+    EXPECT_NO_THROW(resource = m_database->create_nerve(m_user->id(), resource.name(), subject.id()));
     EXPECT_THAT(resource.id(), Gt(0));
 }
 
@@ -1694,7 +1694,7 @@ TEST_F(test_database, get_nerves)
 
     ASSERT_NO_THROW(subject = m_database->create_subject(subject.name()));
     ASSERT_THAT(subject.id(), Gt(0));
-    EXPECT_NO_THROW(resource = m_database->create_nerve(m_user->id(), resource.name(), subject.id(), expiration.count()));
+    EXPECT_NO_THROW(resource = m_database->create_nerve(m_user->id(), resource.name(), subject.id()));
     EXPECT_THAT(resource.id(), Gt(0));
     EXPECT_NO_THROW(resources = m_database->get_resources(m_user->id(), subject.id()));
     ASSERT_THAT(resources, SizeIs(1));
@@ -5546,7 +5546,7 @@ TEST_F(test_database, get_study_resources)
     ASSERT_THAT(second_resource.id(), Gt(0));
     ASSERT_NO_THROW(m_database->add_resource_to_subject(first_resource.id(), subject.id()));
     ASSERT_NO_THROW(m_database->add_resource_to_subject(second_resource.id(), subject.id()));
-    ASSERT_NO_THROW(third_resource = m_database->create_nerve(m_user->id(), third_resource.name(), subject.id(), 0));
+    ASSERT_NO_THROW(third_resource = m_database->create_nerve(m_user->id(), third_resource.name(), subject.id()));
     ASSERT_THAT(third_resource.id(), Gt(0));
     ASSERT_NO_THROW(first_section = m_database->create_section(first_resource.id(), 0, first_section.name(), first_section.link()));
     ASSERT_THAT(first_section.position(), Eq(1));
@@ -5834,7 +5834,7 @@ TEST_F(test_database, get_progress_weight)
     ASSERT_THAT(second_resource.id(), Gt(0));
     ASSERT_NO_THROW(m_database->add_resource_to_subject(first_resource.id(), subject.id()));
     ASSERT_NO_THROW(m_database->add_resource_to_subject(second_resource.id(), subject.id()));
-    ASSERT_NO_THROW(third_resource = m_database->create_nerve(m_user->id(), third_resource.name(), subject.id(), 0));
+    ASSERT_NO_THROW(third_resource = m_database->create_nerve(m_user->id(), third_resource.name(), subject.id()));
     ASSERT_THAT(third_resource.id(), Gt(0));
     ASSERT_NO_THROW(first_section = m_database->create_section(first_resource.id(), 0, first_section.name(), first_section.link()));
     ASSERT_THAT(first_section.position(), Eq(1));

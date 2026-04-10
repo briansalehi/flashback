@@ -1591,7 +1591,7 @@ TEST_F(test_server, CreateNerve)
     subject.set_name("C++");
 
     EXPECT_CALL(*m_mock_database, get_user(A<std::string_view>(), A<std::string_view>())).WillRepeatedly(Invoke([this]() { return std::make_unique<flashback::User>(*m_user); }));
-    EXPECT_CALL(*m_mock_database, create_nerve(A<uint64_t>(), A<std::string>(), A<uint64_t>(), A<uint64_t>())).Times(1).WillRepeatedly(Return(resource));
+    EXPECT_CALL(*m_mock_database, create_nerve(A<uint64_t>(), A<std::string>(), A<uint64_t>())).Times(1).WillRepeatedly(Return(resource));
 
     request.clear_user();
     EXPECT_NO_THROW(status = m_server->CreateNerve(&context, &request, &response));

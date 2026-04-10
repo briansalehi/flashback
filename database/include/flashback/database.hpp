@@ -145,7 +145,7 @@ public:
     void move_block(uint64_t card_id, uint64_t block_position, uint64_t target_card_id, uint64_t target_position) const override;
 
     // nerves
-    [[nodiscard]] Resource create_nerve(uint64_t user_id, std::string resource_name, uint64_t subject_id, uint64_t expiration) const override;
+    [[nodiscard]] Resource create_nerve(uint64_t user_id, std::string resource_name, uint64_t subject_id) const override;
     [[nodiscard]] std::vector<Resource> get_nerves(uint64_t user_id) const override;
 
     // practices

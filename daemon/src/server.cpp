@@ -1372,7 +1372,7 @@ grpc::Status server::CreateResource(grpc::ServerContext* context, CreateResource
             if (resource->type() == Resource::nerve)
             {
                 Resource* nerve = response->mutable_resource();
-                *nerve = m_database->create_nerve(user->id(), resource->name(), request->subject().id(), 0);
+                *nerve = m_database->create_nerve(user->id(), resource->name(), request->subject().id());
                 std::clog << std::format("client {} created nerve {} in subject {}\n", request->user().token(), nerve->id(), request->subject().id());
             }
 

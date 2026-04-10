@@ -1099,13 +1099,13 @@ void database::move_block(uint64_t const card_id, uint64_t const block_position,
     exec("call move_block($1, $2, $3, $4)", card_id, block_position, target_card_id, target_position);
 }
 
-Resource database::create_nerve(uint64_t const user_id, std::string resource_name, uint64_t const subject_id, uint64_t const expiration) const
+Resource database::create_nerve(uint64_t const user_id, std::string resource_name, uint64_t const subject_id) const
 {
     Resource resource{};
     resource.clear_id();
     resource.set_name(resource_name);
 
-    if (pqxx::result const result{query("select create_nerve($1, $2, $3, $4) as id", user_id, std::move(resource_name), subject_id, expiration)}; result.size() == 1)
+    if (pqxx::result const result{query("select create_nerve($1, $2, $3) as id", user_id, std::move(resource_name), subject_id)}; result.size() == 1)
     {
         resource.set_id(result.at(0).at("id").as<uint64_t>());
     }
