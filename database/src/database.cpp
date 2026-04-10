@@ -456,8 +456,7 @@ Resource database::create_resource(Resource const& resource) const
     if (!resource.name().empty())
     {
         pqxx::row const row{
-            query("select create_resource($1, $2, $3, $4, $5, $6) as id", resource.name(), resource_type_to_string(resource.type()), section_pattern_to_string(resource.pattern()),
-                  resource.link(), resource.production(), resource.expiration()).at(0)
+            query("select create_resource($1, $2, $3, $4) as id", resource.name(), resource_type_to_string(resource.type()), section_pattern_to_string(resource.pattern()), resource.link()).at(0)
         };
         generated_resource.set_id(row.at("id").as<uint64_t>());
     }
@@ -473,7 +472,7 @@ void database::add_resource_to_subject(uint64_t const resource_id, uint64_t cons
 std::vector<Resource> database::get_resources(uint64_t user_id, uint64_t const subject_id) const
 {
     std::vector<Resource> resources{};
-    for (pqxx::row const& row: query("select id, name, type, pattern, link, production, expiration from get_resources($1, $2)", user_id, subject_id))
+    for (pqxx::row const& row: query("select id, name, type, pattern, link from get_resources($1, $2)", user_id, subject_id))
     {
         Resource resource{};
         resource.set_id(row.at("id").as<uint64_t>());
@@ -481,8 +480,6 @@ std::vector<Resource> database::get_resources(uint64_t user_id, uint64_t const s
         resource.set_type(to_resource_type(row.at("type").as<std::string>()));
         resource.set_pattern(to_section_pattern(row.at("pattern").as<std::string>()));
         resource.set_link(row.at("link").is_null() ? "" : row.at("link").as<std::string>());
-        resource.set_production(row.at("production").as<uint64_t>());
-        resource.set_expiration(row.at("expiration").as<uint64_t>());
         resources.push_back(resource);
     }
     return resources;
@@ -491,7 +488,7 @@ std::vector<Resource> database::get_resources(uint64_t user_id, uint64_t const s
 Resource database::get_resource(uint64_t resource_id) const
 {
     Resource resource{};
-    if (pqxx::result const result{query("select id, name, type, pattern, link, production, expiration from get_resource($1)", resource_id)}; result.size() == 1)
+    if (pqxx::result const result{query("select id, name, type, pattern, link from get_resource($1)", resource_id)}; result.size() == 1)
     {
         pqxx::row const& row{result.at(0)};
         resource.set_id(row.at("id").as<uint64_t>());
@@ -499,8 +496,6 @@ Resource database::get_resource(uint64_t resource_id) const
         resource.set_type(to_resource_type(row.at("type").as<std::string>()));
         resource.set_pattern(to_section_pattern(row.at("pattern").as<std::string>()));
         resource.set_link(row.at("link").is_null() ? "" : row.at("link").as<std::string>());
-        resource.set_production(row.at("production").as<uint64_t>());
-        resource.set_expiration(row.at("expiration").as<uint64_t>());
     }
     return resource;
 }
@@ -516,7 +511,7 @@ std::map<uint64_t, Resource> database::search_resources(std::string_view search_
 
     if (!search_pattern.empty())
     {
-        for (pqxx::row const& row: query("select similarity, id, name, type, pattern, link, production, expiration from search_resources($1) order by similarity", search_pattern))
+        for (pqxx::row const& row: query("select similarity, id, name, type, pattern, link from search_resources($1) order by similarity", search_pattern))
         {
             uint64_t const similarity{row.at("similarity").as<uint64_t>()};
             Resource resource{};
@@ -525,8 +520,6 @@ std::map<uint64_t, Resource> database::search_resources(std::string_view search_
             resource.set_type(to_resource_type(row.at("type").as<std::string>()));
             resource.set_pattern(to_section_pattern(row.at("pattern").as<std::string>()));
             resource.set_link(row.at("link").is_null() ? "" : row.at("link").as<std::string>());
-            resource.set_production(row.at("production").as<uint64_t>());
-            resource.set_expiration(row.at("expiration").as<uint64_t>());
             matched.insert({similarity, resource});
         }
     }
@@ -547,16 +540,6 @@ void database::change_resource_type(uint64_t const resource_id, Resource::resour
 void database::change_section_pattern(uint64_t const resource_id, Resource::section_pattern const pattern) const
 {
     exec("call change_section_pattern($1, $2)", resource_id, section_pattern_to_string(pattern));
-}
-
-void database::edit_resource_production(uint64_t const resource_id, uint64_t const production) const
-{
-    exec("call edit_resource_production($1, $2)", resource_id, production);
-}
-
-void database::edit_resource_expiration(uint64_t const resource_id, uint64_t const expiration) const
-{
-    exec("call edit_resource_expiration($1, $2)", resource_id, expiration);
 }
 
 void database::rename_resource(uint64_t const resource_id, std::string name) const
@@ -1116,7 +1099,7 @@ Resource database::create_nerve(uint64_t const user_id, std::string resource_nam
 std::vector<Resource> database::get_nerves(uint64_t user_id) const
 {
     std::vector<Resource> resources{};
-    for (pqxx::row const& row: query("select id, name, type, pattern, link, production, expiration from get_nerves($1)", user_id))
+    for (pqxx::row const& row: query("select id, name, type, pattern, link from get_nerves($1)", user_id))
     {
         Resource resource{};
         resource.set_id(row.at("id").as<uint64_t>());
@@ -1124,8 +1107,6 @@ std::vector<Resource> database::get_nerves(uint64_t user_id) const
         resource.set_type(to_resource_type(row.at("type").as<std::string>()));
         resource.set_pattern(to_section_pattern(row.at("pattern").as<std::string>()));
         resource.set_link(row.at("link").is_null() ? "" : row.at("link").as<std::string>());
-        resource.set_production(row.at("production").as<uint64_t>());
-        resource.set_expiration(row.at("expiration").as<uint64_t>());
         resources.push_back(resource);
     }
     return resources;
@@ -1198,7 +1179,7 @@ std::vector<Card> database::get_practice_cards(uint64_t const user_id, uint64_t 
 std::map<uint64_t, Resource> database::get_study_resources(uint64_t const user_id) const
 {
     std::map<uint64_t, Resource> resources;
-    for (pqxx::row const& row: query("select position, id, name, type, pattern, link, production, expiration from get_study_resources($1) order by position", user_id))
+    for (pqxx::row const& row: query("select position, id, name, type, pattern, link from get_study_resources($1) order by position", user_id))
     {
         Resource resource{};
         auto const position(row.at("position").as<uint64_t>());
@@ -1207,8 +1188,6 @@ std::map<uint64_t, Resource> database::get_study_resources(uint64_t const user_i
         resource.set_type(to_resource_type(row.at("type").as<std::string>()));
         resource.set_pattern(to_section_pattern(row.at("pattern").as<std::string>()));
         resource.set_link(row.at("link").is_null() ? "" : row.at("link").as<std::string>());
-        resource.set_production(row.at("production").as<uint64_t>());
-        resource.set_expiration(row.at("expiration").as<uint64_t>());
         resources.insert({position, resource});
     }
     return resources;
@@ -1262,7 +1241,7 @@ void database::study(uint64_t user_id, uint64_t card_id, std::chrono::seconds du
 std::vector<Weight> database::get_progress_weight(uint64_t const user_id) const
 {
     std::vector<Weight> weights;
-    for (pqxx::row const& row: query("select id, name, type, pattern, production, expiration, link, percentage from get_progress_weight($1)", user_id))
+    for (pqxx::row const& row: query("select id, name, type, pattern, link, percentage from get_progress_weight($1)", user_id))
     {
         Weight weight{};
         auto resource{std::make_unique<Resource>()};
@@ -1271,8 +1250,6 @@ std::vector<Weight> database::get_progress_weight(uint64_t const user_id) const
         resource->set_type(to_resource_type(row.at("type").as<std::string>()));
         resource->set_pattern(to_section_pattern(row.at("pattern").as<std::string>()));
         resource->set_link(row.at("link").is_null() ? "" : row.at("link").as<std::string>());
-        resource->set_production(row.at("production").as<uint64_t>());
-        resource->set_expiration(row.at("expiration").as<uint64_t>());
         weight.set_allocated_resource(resource.release());
         weight.set_percentage(row.at("percentage").as<uint64_t>());
         weights.push_back(weight);

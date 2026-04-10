@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict f5Nhxws98qTjQJMoCtRDTBRErGwhfpatcpM5UWGguCNszGWILkh4jvK9IybCO1s
+\restrict lyduiVQhFN0FQtHMkqVaKyfd2McKcUzqSLUJ8fwVfMZZhdcXy62fO3DX0psVNXR
 
 -- Dumped from database version 18.3
 -- Dumped by pg_dump version 18.3
@@ -984,21 +984,6 @@ $$;
 ALTER PROCEDURE flashback.edit_card_headline(IN card integer, IN new_headline character varying) OWNER TO flashback;
 
 --
--- Name: edit_resource_expiration(integer, integer); Type: PROCEDURE; Schema: flashback; Owner: flashback
---
-
-CREATE PROCEDURE flashback.edit_resource_expiration(IN resource_id integer, IN resource_expiration integer)
-    LANGUAGE plpgsql
-    AS $$
-begin
-    update resources set expiration = resource_expiration where id = resource_id;
-end;
-$$;
-
-
-ALTER PROCEDURE flashback.edit_resource_expiration(IN resource_id integer, IN resource_expiration integer) OWNER TO flashback;
-
---
 -- Name: edit_resource_link(integer, character varying); Type: PROCEDURE; Schema: flashback; Owner: flashback
 --
 
@@ -1023,21 +1008,6 @@ CREATE PROCEDURE flashback.edit_resource_presenter(IN resource integer, IN autho
 
 
 ALTER PROCEDURE flashback.edit_resource_presenter(IN resource integer, IN author character varying) OWNER TO flashback;
-
---
--- Name: edit_resource_production(integer, integer); Type: PROCEDURE; Schema: flashback; Owner: flashback
---
-
-CREATE PROCEDURE flashback.edit_resource_production(IN resource_id integer, IN resource_production integer)
-    LANGUAGE plpgsql
-    AS $$
-begin
-    update resources set production = resource_production where id = resource_id;
-end;
-$$;
-
-
-ALTER PROCEDURE flashback.edit_resource_production(IN resource_id integer, IN resource_production integer) OWNER TO flashback;
 
 --
 -- Name: edit_resource_provider(integer, character varying); Type: PROCEDURE; Schema: flashback; Owner: flashback
@@ -1460,17 +1430,17 @@ ALTER FUNCTION flashback.get_practice_topics(user_id integer, roadmap_id integer
 -- Name: get_progress_weight(integer); Type: FUNCTION; Schema: flashback; Owner: flashback
 --
 
-CREATE FUNCTION flashback.get_progress_weight(user_id integer) RETURNS TABLE(id integer, name flashback.citext, type flashback.resource_type, pattern flashback.section_pattern, production integer, expiration integer, link character varying, percentage bigint)
+CREATE FUNCTION flashback.get_progress_weight(user_id integer) RETURNS TABLE(id integer, name flashback.citext, type flashback.resource_type, pattern flashback.section_pattern, link character varying, percentage bigint)
     LANGUAGE plpgsql
     AS $$
 begin
     return query
-    select r.id, r.name, r.type, r.pattern, r.production, r.expiration, r.link, count(p.card) * 100 / count(c.card)
+    select r.id, r.name, r.type, r.pattern, r.link, count(p.card) * 100 / count(c.card)
     from progress p right
     join section_cards c on c.card = p.card
     join resources r on r.id = c.resource
     where p."user" = user_id and p.last_practice >= CURRENT_DATE::timestamp
-    group by r.id, r.name, r.type, r.pattern, r.production, r.expiration, r.link;
+    group by r.id, r.name, r.type, r.pattern, r.link;
 end; $$;
 
 
@@ -1521,11 +1491,11 @@ ALTER FUNCTION flashback.get_requirements(roadmap_id integer, subject_id integer
 -- Name: get_resource(integer); Type: FUNCTION; Schema: flashback; Owner: flashback
 --
 
-CREATE FUNCTION flashback.get_resource(resource_id integer) RETURNS TABLE(id integer, name flashback.citext, type flashback.resource_type, pattern flashback.section_pattern, production integer, expiration integer, link character varying)
+CREATE FUNCTION flashback.get_resource(resource_id integer) RETURNS TABLE(id integer, name flashback.citext, type flashback.resource_type, pattern flashback.section_pattern, link character varying)
     LANGUAGE plpgsql
     AS $$
 begin
-    return query select r.id, r.name, r.type, r.pattern, r.production, r.expiration, r.link from resources r where r.id = resource_id;
+    return query select r.id, r.name, r.type, r.pattern, r.link from resources r where r.id = resource_id;
 end;
 $$;
 
@@ -1552,12 +1522,12 @@ ALTER FUNCTION flashback.get_resource_state(resource_id integer) OWNER TO flashb
 -- Name: get_resources(integer, integer); Type: FUNCTION; Schema: flashback; Owner: flashback
 --
 
-CREATE FUNCTION flashback.get_resources(user_id integer, subject_id integer) RETURNS TABLE(id integer, name flashback.citext, type flashback.resource_type, pattern flashback.section_pattern, production integer, expiration integer, link character varying)
+CREATE FUNCTION flashback.get_resources(user_id integer, subject_id integer) RETURNS TABLE(id integer, name flashback.citext, type flashback.resource_type, pattern flashback.section_pattern, link character varying)
     LANGUAGE plpgsql
     AS $$
 begin
     return query
-    select r.id, r.name, r.type, r.pattern, r.production, r.expiration, r.link
+    select r.id, r.name, r.type, r.pattern, r.link
     from resources r
     join shelves s on s.resource = r.id and s.subject = subject_id
     where (r.type <> 'nerve'::resource_type or r.id in (select n.resource from nerves n where n."user" = user_id));
@@ -1656,12 +1626,12 @@ ALTER FUNCTION flashback.get_sections(resource_id integer) OWNER TO flashback;
 -- Name: get_study_resources(integer); Type: FUNCTION; Schema: flashback; Owner: flashback
 --
 
-CREATE FUNCTION flashback.get_study_resources(user_id integer) RETURNS TABLE("position" bigint, id integer, name flashback.citext, type flashback.resource_type, pattern flashback.section_pattern, link character varying, production integer, expiration integer)
+CREATE FUNCTION flashback.get_study_resources(user_id integer) RETURNS TABLE("position" bigint, id integer, name flashback.citext, type flashback.resource_type, pattern flashback.section_pattern, link character varying)
     LANGUAGE plpgsql
     AS $$
 begin
     return query
-    select row_number() over (order by max(i.last_study) desc), r.id, r.name, r.type, r.pattern, r.link, r.production, r.expiration
+    select row_number() over (order by max(i.last_study) desc), r.id, r.name, r.type, r.pattern, r.link
     from roadmaps a
     join milestones m on m.roadmap = a.id
     join shelves h on h.subject = m.subject
@@ -1671,7 +1641,7 @@ begin
     join section_cards c on c.resource = r.id and c.section = s.position
     join studies i on i.card = c.card and i."user" = a."user"
     where a."user" = user_id and (r.type != 'nerve'::resource_type or n.resource is not null)
-    group by r.id, r.name, r.type, r.pattern, r.link, r.production, r.expiration;
+    group by r.id, r.name, r.type, r.pattern, r.link;
 end; $$;
 
 
@@ -3131,14 +3101,14 @@ ALTER FUNCTION flashback.search_providers(token character varying) OWNER TO flas
 -- Name: search_resources(character varying); Type: FUNCTION; Schema: flashback; Owner: flashback
 --
 
-CREATE FUNCTION flashback.search_resources(search_pattern character varying) RETURNS TABLE(similarity bigint, id integer, name flashback.citext, type flashback.resource_type, pattern flashback.section_pattern, link character varying, production integer, expiration integer)
+CREATE FUNCTION flashback.search_resources(search_pattern character varying) RETURNS TABLE(similarity bigint, id integer, name flashback.citext, type flashback.resource_type, pattern flashback.section_pattern, link character varying)
     LANGUAGE plpgsql
     AS $$
 begin
     set pg_trgm.similarity_threshold = 0.11;
 
     return query
-    select row_number() over (order by r.name <-> search_pattern, r.production desc, r.expiration desc), r.id, r.name, r.type, r.pattern, r.link, r.production, r.expiration
+    select row_number() over (order by r.name <-> search_pattern), r.id, r.name, r.type, r.pattern, r.link
     from resources r
     where r.name % search_pattern
     limit 20;
@@ -4406,5 +4376,5 @@ GRANT ALL ON SCHEMA public TO brian;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict f5Nhxws98qTjQJMoCtRDTBRErGwhfpatcpM5UWGguCNszGWILkh4jvK9IybCO1s
+\unrestrict lyduiVQhFN0FQtHMkqVaKyfd2McKcUzqSLUJ8fwVfMZZhdcXy62fO3DX0psVNXR
 
