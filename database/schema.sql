@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict Q3JxwtvmlFVDz7lfJy2fqYgcen1Olohi34MUFpfHhd6bzY3es1DJNV4kXQ6chdf
+\restrict hdoINwmQKMcN1OBhQbcvBA3elBOcL8fPjTY59DV7ger64HdSYpmeZR2dCP0ptJI
 
 -- Dumped from database version 18.3
 -- Dumped by pg_dump version 18.3
@@ -1427,6 +1427,24 @@ $$;
 ALTER FUNCTION flashback.get_practice_topics(user_id integer, roadmap_id integer, milestone_id integer, milestone_level flashback.expertise_level) OWNER TO flashback;
 
 --
+-- Name: get_presenters(integer); Type: FUNCTION; Schema: flashback; Owner: flashback
+--
+
+CREATE FUNCTION flashback.get_presenters(resource_id integer) RETURNS TABLE(id integer, name flashback.citext)
+    LANGUAGE plpgsql
+    AS $$
+begin
+    return query
+    select p.id, p.name
+    from authors i
+    join presenters p on p.id = i.presenter
+    where i.resource = resource_id;
+end; $$;
+
+
+ALTER FUNCTION flashback.get_presenters(resource_id integer) OWNER TO flashback;
+
+--
 -- Name: get_progress_weight(integer); Type: FUNCTION; Schema: flashback; Owner: flashback
 --
 
@@ -1445,6 +1463,24 @@ end; $$;
 
 
 ALTER FUNCTION flashback.get_progress_weight(user_id integer) OWNER TO flashback;
+
+--
+-- Name: get_provider(integer); Type: FUNCTION; Schema: flashback; Owner: flashback
+--
+
+CREATE FUNCTION flashback.get_provider(resource_id integer) RETURNS TABLE(id integer, name flashback.citext)
+    LANGUAGE plpgsql
+    AS $$
+begin
+    return query
+    select p.id, p.name
+    from producers i
+    join providers p on p.id = i.provider
+    where i.resource = resource_id;
+end; $$;
+
+
+ALTER FUNCTION flashback.get_provider(resource_id integer) OWNER TO flashback;
 
 --
 -- Name: get_related_milestone(integer, integer); Type: FUNCTION; Schema: flashback; Owner: flashback
@@ -4376,5 +4412,5 @@ GRANT ALL ON SCHEMA public TO brian;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict Q3JxwtvmlFVDz7lfJy2fqYgcen1Olohi34MUFpfHhd6bzY3es1DJNV4kXQ6chdf
+\unrestrict hdoINwmQKMcN1OBhQbcvBA3elBOcL8fPjTY59DV7ger64HdSYpmeZR2dCP0ptJI
 

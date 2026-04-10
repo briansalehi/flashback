@@ -102,6 +102,7 @@ public:
     void add_provider(uint64_t resource_id, uint64_t provider_id) const override;
     void drop_provider(uint64_t resource_id, uint64_t provider_id) const override;
     [[nodiscard]] std::map<uint64_t, Provider> search_providers(std::string_view search_pattern) const override;
+    [[nodiscard]] Provider get_provider(std::uint64_t resource_id) const override;
     void rename_provider(uint64_t provider_id, std::string name) const override;
     void remove_provider(uint64_t provider_id) const override;
     void merge_providers(uint64_t source_id, uint64_t target_id) const override;
@@ -111,6 +112,7 @@ public:
     void add_presenter(uint64_t resource_id, uint64_t presenter_id) const override;
     void drop_presenter(uint64_t resource_id, uint64_t presenter_id) const override;
     [[nodiscard]] std::map<uint64_t, Presenter> search_presenters(std::string_view search_pattern) const override;
+    [[nodiscard]] std::vector<Presenter> get_presenters(std::uint64_t resource_id) const override;
     void rename_presenter(uint64_t presenter_id, std::string name) const override;
     void remove_presenter(uint64_t presenter_id) const override;
     void merge_presenters(uint64_t source_id, uint64_t target_id) const override;

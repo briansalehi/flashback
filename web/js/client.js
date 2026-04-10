@@ -365,7 +365,15 @@ class FlashbackClient {
                         type: res.getType(),
                         pattern: res.getPattern(),
                         name: res.getName(),
-                        link: res.getLink()
+                        link: res.getLink(),
+                        provider: {
+                            id: res.getProvider().getId(),
+                            name: res.getProvider().getName()
+                        },
+                        presenters: res.getPresentersList().map(presenter => ({
+                            id: presenter.getId(),
+                            name: presenter.getName()
+                        }))
                     }));
                     resolve(resources);
                 }
@@ -399,7 +407,15 @@ class FlashbackClient {
                         type: resource.getType(),
                         pattern: resource.getPattern(),
                         name: resource.getName(),
-                        link: resource.getLink()
+                        link: resource.getLink(),
+                        provider: {
+                            id: res.getResource().getProvider().getId(),
+                            name: res.getResource().getProvider().getName()
+                        },
+                        presenters: res.getResource().getPresentersList().map(presenter => ({
+                            id: presenter.getId(),
+                            name: presenter.getName()
+                        }))
                     });
                 }
             });
@@ -558,6 +574,14 @@ class FlashbackClient {
                         type: study.getResource().getType(),
                         pattern: study.getResource().getPattern(),
                         link: study.getResource().getLink(),
+                        provider: {
+                            id: res.getResource().getProvider().getId(),
+                            name: res.getResource().getProvider().getName()
+                        },
+                        presenters: res.getResource().getPresentersList().map(presenter => ({
+                            id: presenter.getId(),
+                            name: presenter.getName()
+                        })),
                         order: study.getOrder(),
                         milestone: {
                             id: study.getMilestone().getId(),
@@ -968,6 +992,14 @@ class FlashbackClient {
                         type: nerve.getResource().getType(),
                         pattern: nerve.getResource().getPattern(),
                         link: nerve.getResource().getLink(),
+                        provider: {
+                            id: res.getResource().getProvider().getId(),
+                            name: res.getResource().getProvider().getName()
+                        },
+                        presenters: res.getResource().getPresentersList().map(presenter => ({
+                            id: presenter.getId(),
+                            name: presenter.getName()
+                        })),
                         milestone: {
                             id: nerve.getMilestone().getId(),
                             name: nerve.getMilestone().getName(),
@@ -1298,6 +1330,14 @@ class FlashbackClient {
                         type: result.getResource().getType(),
                         pattern: result.getResource().getPattern(),
                         link: result.getResource().getLink(),
+                        provider: {
+                            id: res.getResource().getProvider().getId(),
+                            name: res.getResource().getProvider().getName()
+                        },
+                        presenters: res.getResource().getPresentersList().map(presenter => ({
+                            id: presenter.getId(),
+                            name: presenter.getName()
+                        })),
                         position: result.getPosition()
                     })));
                 }
@@ -2063,492 +2103,317 @@ class FlashbackClient {
         });
     }
 
-    /*
-    // getProgressWeight { User user = 1; }  { repeated Weight weight = 1; }
-    async xxx() {
+    async createProvider(name) {
         return new Promise((resolve, reject) => {
-            const request = new proto.flashback.xxxRequest();
+            const request = new proto.flashback.CreateProviderRequest();
             const user = this.getAuthenticatedUser();
+            const provider = new proto.flashback.Provider();
+            provider.setName(name);
             request.setUser(user);
+            request.setProvider(provider);
 
-            this.client.xxx(request, this.getMetadata(), (err, response) => {
+            this.client.createProvider(request, this.getMetadata(), (err, response) => {
                 if (err) {
-                    console.error("xxx error:", err);
+                    console.error("CreateProvider error:", err);
                     reject(this.handleError(err));
                 } else {
-                    const xxx = response.xxx();
-                    resolve(response.getXXXList().map(x => ({
-                    })));
+                    const provider = response.getProvider();
                     resolve({
+                        id: provider.getId(),
+                        name: provider.getName()
                     });
+                }
+            });
+        });
+    }
+
+    async searchProviders(searchToken) {
+        return new Promise((resolve, reject) => {
+            const request = new proto.flashback.SearchProvidersRequest();
+            const user = this.getAuthenticatedUser();
+            request.setUser(user);
+            request.setSearchToken(searchToken);
+
+            this.client.searchProviders(request, this.getMetadata(), (err, response) => {
+                if (err) {
+                    console.error("SearchProviders error:", err);
+                    reject(this.handleError(err));
+                } else {
+                    resolve(response.getResultList().map(result => ({
+                        id: result.getProvider().getId(),
+                        name: result.getProvider().getName(),
+                        position: result.getPosition()
+                    })));
+                }
+            });
+        });
+    }
+
+    async addProvider(resourceId, providerId) {
+        return new Promise((resolve, reject) => {
+            const request = new proto.flashback.AddProviderRequest();
+            const user = this.getAuthenticatedUser();
+            const resource = new proto.flashback.Resource();
+            resource.setId(resourceId);
+            const provider = new proto.flashback.Provider();
+            provider.setId(providerId);
+            request.setUser(user);
+            request.setResource(resource);
+            request.setProvider(provider);
+
+            this.client.addProvider(request, this.getMetadata(), (err) => {
+                if (err) {
+                    console.error("AddProvider error:", err);
+                    reject(this.handleError(err));
+                } else {
                     resolve();
                 }
             });
         });
     }
 
-    // createProvider { User user = 1; Provider provider = 2; }  { Provider provider = 1; }
-    async xxx() {
+    async dropProvider(resourceId, providerId) {
         return new Promise((resolve, reject) => {
-            const request = new proto.flashback.xxxRequest();
+            const request = new proto.flashback.DropProviderRequest();
             const user = this.getAuthenticatedUser();
+            const resource = new proto.flashback.Resource();
+            resource.setId(resourceId);
+            const provider = new proto.flashback.Provider();
+            provider.setId(providerId);
             request.setUser(user);
+            request.setResource(resource);
+            request.setProvider(provider);
 
-            this.client.xxx(request, this.getMetadata(), (err, response) => {
+            this.client.dropProvider(request, this.getMetadata(), (err) => {
                 if (err) {
-                    console.error("xxx error:", err);
+                    console.error("DropProvider error:", err);
                     reject(this.handleError(err));
                 } else {
-                    const xxx = response.xxx();
-                    resolve(response.getXXXList().map(x => ({
-                    })));
-                    resolve({
-                    });
                     resolve();
                 }
             });
         });
     }
 
-    // searchProviders { User user = 1; string search_token = 2; }  { ProviderSearchResult result = 1; }
-    async xxx() {
+    async renameProvider(providerId, name) {
         return new Promise((resolve, reject) => {
-            const request = new proto.flashback.xxxRequest();
+            const request = new proto.flashback.RenameProviderRequest();
             const user = this.getAuthenticatedUser();
+            const provider = new proto.flashback.Provider();
+            provider.setId(providerId);
+            provider.setName(name);
             request.setUser(user);
+            request.setProvider(provider);
 
-            this.client.xxx(request, this.getMetadata(), (err, response) => {
+            this.client.renameProvider(request, this.getMetadata(), (err) => {
                 if (err) {
-                    console.error("xxx error:", err);
+                    console.error("RenameProvider error:", err);
                     reject(this.handleError(err));
                 } else {
-                    const xxx = response.xxx();
-                    resolve(response.getXXXList().map(x => ({
-                    })));
-                    resolve({
-                    });
                     resolve();
                 }
             });
         });
     }
 
-    // addProvider { User user = 1; Resource resource = 2; Provider provider = 3; }  { }
-    async xxx() {
+    async removeProvider(providerId) {
         return new Promise((resolve, reject) => {
-            const request = new proto.flashback.xxxRequest();
+            const request = new proto.flashback.RemoveProviderRequest();
             const user = this.getAuthenticatedUser();
+            const provider = new proto.flashback.Provider();
+            provider.setId(providerId);
             request.setUser(user);
+            request.setProvider(provider);
 
-            this.client.xxx(request, this.getMetadata(), (err, response) => {
+            this.client.removeProvider(request, this.getMetadata(), (err) => {
                 if (err) {
-                    console.error("xxx error:", err);
+                    console.error("RemoveProvider error:", err);
                     reject(this.handleError(err));
                 } else {
-                    const xxx = response.xxx();
-                    resolve(response.getXXXList().map(x => ({
-                    })));
-                    resolve({
-                    });
                     resolve();
                 }
             });
         });
     }
 
-    // dropProvider { User user = 1; Resource resource = 2; Provider provider = 3; }  { }
-    async xxx() {
+    async mergeProviders(sourceId, targetId) {
         return new Promise((resolve, reject) => {
-            const request = new proto.flashback.xxxRequest();
+            const request = new proto.flashback.MergeProvidersRequest();
             const user = this.getAuthenticatedUser();
+            const source = new proto.flashback.Provider();
+            source.setId(sourceId);
+            const target = new proto.flashback.Provider();
+            target.setId(targetId);
             request.setUser(user);
+            request.setSource(source);
+            request.setTarget(target);
 
-            this.client.xxx(request, this.getMetadata(), (err, response) => {
+            this.client.mergeProviders(request, this.getMetadata(), (err) => {
                 if (err) {
-                    console.error("xxx error:", err);
+                    console.error("MergeProviders error:", err);
                     reject(this.handleError(err));
                 } else {
-                    const xxx = response.xxx();
-                    resolve(response.getXXXList().map(x => ({
-                    })));
-                    resolve({
-                    });
                     resolve();
                 }
             });
         });
     }
 
-    // renameProvider { User user = 1; Provider provider = 2; }  { }
-    async xxx() {
+    async createPresenter(name) {
         return new Promise((resolve, reject) => {
-            const request = new proto.flashback.xxxRequest();
+            const request = new proto.flashback.CreatePresenterRequest();
             const user = this.getAuthenticatedUser();
+            const presenter = new proto.flashback.Presenter();
+            presenter.setName(name);
             request.setUser(user);
+            request.setPresenter(presenter);
 
-            this.client.xxx(request, this.getMetadata(), (err, response) => {
+            this.client.createPresenter(request, this.getMetadata(), (err, response) => {
                 if (err) {
-                    console.error("xxx error:", err);
+                    console.error("CreatePresenter error:", err);
                     reject(this.handleError(err));
                 } else {
-                    const xxx = response.xxx();
-                    resolve(response.getXXXList().map(x => ({
-                    })));
+                    const presenter = response.getPresenter();
                     resolve({
+                        id: presenter.getId(),
+                        name: presenter.getName()
                     });
+                }
+            });
+        });
+    }
+
+    async searchPresenters(searchToken) {
+        return new Promise((resolve, reject) => {
+            const request = new proto.flashback.SearchPresentersRequest();
+            const user = this.getAuthenticatedUser();
+            request.setUser(user);
+            request.setSearchToken(searchToken);
+
+            this.client.searchPresenters(request, this.getMetadata(), (err, response) => {
+                if (err) {
+                    console.error("SearchPresenters error:", err);
+                    reject(this.handleError(err));
+                } else {
+                    resolve(response.getResultList().map(result => ({
+                        id: result.getPresenter().getId(),
+                        name: result.getPresenter().getName(),
+                        position: result.getPosition()
+                    })));
+                }
+            });
+        });
+    }
+
+    async addPresenter(resourceId, presenterId) {
+        return new Promise((resolve, reject) => {
+            const request = new proto.flashback.AddPresenterRequest();
+            const user = this.getAuthenticatedUser();
+            const resource = new proto.flashback.Resource();
+            resource.setId(resourceId);
+            const presenter = new proto.flashback.Presenter();
+            presenter.setId(presenterId);
+            request.setUser(user);
+            request.setResource(resource);
+            request.setPresenter(presenter);
+
+            this.client.addPresenter(request, this.getMetadata(), (err) => {
+                if (err) {
+                    console.error("AddPresenter error:", err);
+                    reject(this.handleError(err));
+                } else {
                     resolve();
                 }
             });
         });
     }
 
-    // removeProvider { User user = 1; Provider provider = 2; }  { }
-    async xxx() {
+    async dropPresenter(resourceId, presenterId) {
         return new Promise((resolve, reject) => {
-            const request = new proto.flashback.xxxRequest();
+            const request = new proto.flashback.DropPresenterRequest();
             const user = this.getAuthenticatedUser();
+            const resource = new proto.flashback.Resource();
+            resource.setId(resourceId);
+            const presenter = new proto.flashback.Presenter();
+            presenter.setId(presenterId);
             request.setUser(user);
+            request.setResource(resource);
+            request.setPresenter(presenter);
 
-            this.client.xxx(request, this.getMetadata(), (err, response) => {
+            this.client.dropPresenter(request, this.getMetadata(), (err) => {
                 if (err) {
-                    console.error("xxx error:", err);
+                    console.error("DropPresenter error:", err);
                     reject(this.handleError(err));
                 } else {
-                    const xxx = response.xxx();
-                    resolve(response.getXXXList().map(x => ({
-                    })));
-                    resolve({
-                    });
                     resolve();
                 }
             });
         });
     }
 
-    // createPresenter { User user = 1; Presenter presenter = 2; }  { Presenter presenter = 1; }
-    async xxx() {
+    async renamePresenter(presenterId, name) {
         return new Promise((resolve, reject) => {
-            const request = new proto.flashback.xxxRequest();
+            const request = new proto.flashback.RenamePresenterRequest();
             const user = this.getAuthenticatedUser();
+            const presenter = new proto.flashback.Presenter();
+            presenter.setId(presenterId);
+            presenter.setName(name);
             request.setUser(user);
+            request.setPresenter(presenter);
 
-            this.client.xxx(request, this.getMetadata(), (err, response) => {
+            this.client.renamePresenter(request, this.getMetadata(), (err) => {
                 if (err) {
-                    console.error("xxx error:", err);
+                    console.error("RenamePresenter error:", err);
                     reject(this.handleError(err));
                 } else {
-                    const xxx = response.xxx();
-                    resolve(response.getXXXList().map(x => ({
-                    })));
-                    resolve({
-                    });
                     resolve();
                 }
             });
         });
     }
 
-    // searchPresenters { User user = 1; string search_token = 2; }  { PresenterSearchResult result = 1; }
-    async xxx() {
+    async removePresenter(presenterId) {
         return new Promise((resolve, reject) => {
-            const request = new proto.flashback.xxxRequest();
+            const request = new proto.flashback.RemovePresenterRequest();
             const user = this.getAuthenticatedUser();
+            const presenter = new proto.flashback.Presenter();
+            presenter.setId(presenterId);
             request.setUser(user);
+            request.setPresenter(presenter);
 
-            this.client.xxx(request, this.getMetadata(), (err, response) => {
+            this.client.removePresenter(request, this.getMetadata(), (err) => {
                 if (err) {
-                    console.error("xxx error:", err);
+                    console.error("RemovePresenter error:", err);
                     reject(this.handleError(err));
                 } else {
-                    const xxx = response.xxx();
-                    resolve(response.getXXXList().map(x => ({
-                    })));
-                    resolve({
-                    });
                     resolve();
                 }
             });
         });
     }
 
-    // addPresenter { User user = 1; Resource resource = 2; Presenter presenter = 3; }  { }
-    async xxx() {
+    async mergePresenters(sourceId, targetId) {
         return new Promise((resolve, reject) => {
-            const request = new proto.flashback.xxxRequest();
+            const request = new proto.flashback.MergePresentersRequest();
             const user = this.getAuthenticatedUser();
+            const source = new proto.flashback.Presenter();
+            source.setId(sourceId);
+            const target = new proto.flashback.Presenter();
+            target.setId(targetId);
             request.setUser(user);
+            request.setSource(source);
+            request.setTarget(target);
 
-            this.client.xxx(request, this.getMetadata(), (err, response) => {
+            this.client.mergePresenters(request, this.getMetadata(), (err) => {
                 if (err) {
-                    console.error("xxx error:", err);
+                    console.error("MergePresenters error:", err);
                     reject(this.handleError(err));
                 } else {
-                    const xxx = response.xxx();
-                    resolve(response.getXXXList().map(x => ({
-                    })));
-                    resolve({
-                    });
                     resolve();
                 }
             });
         });
     }
-
-    // dropPresenter { User user = 1; Resource resource = 2; Presenter presenter = 3; }  { }
-    async xxx() {
-        return new Promise((resolve, reject) => {
-            const request = new proto.flashback.xxxRequest();
-            const user = this.getAuthenticatedUser();
-            request.setUser(user);
-
-            this.client.xxx(request, this.getMetadata(), (err, response) => {
-                if (err) {
-                    console.error("xxx error:", err);
-                    reject(this.handleError(err));
-                } else {
-                    const xxx = response.xxx();
-                    resolve(response.getXXXList().map(x => ({
-                    })));
-                    resolve({
-                    });
-                    resolve();
-                }
-            });
-        });
-    }
-
-    // renamePresenter { User user = 1; Resource resource = 2; Presenter presenter = 3; }  { }
-    async xxx() {
-        return new Promise((resolve, reject) => {
-            const request = new proto.flashback.xxxRequest();
-            const user = this.getAuthenticatedUser();
-            request.setUser(user);
-
-            this.client.xxx(request, this.getMetadata(), (err, response) => {
-                if (err) {
-                    console.error("xxx error:", err);
-                    reject(this.handleError(err));
-                } else {
-                    const xxx = response.xxx();
-                    resolve(response.getXXXList().map(x => ({
-                    })));
-                    resolve({
-                    });
-                    resolve();
-                }
-            });
-        });
-    }
-
-    // removePresenter { User user = 1; Resource resource = 2; Presenter presenter = 3; }  { }
-    async xxx() {
-        return new Promise((resolve, reject) => {
-            const request = new proto.flashback.xxxRequest();
-            const user = this.getAuthenticatedUser();
-            request.setUser(user);
-
-            this.client.xxx(request, this.getMetadata(), (err, response) => {
-                if (err) {
-                    console.error("xxx error:", err);
-                    reject(this.handleError(err));
-                } else {
-                    const xxx = response.xxx();
-                    resolve(response.getXXXList().map(x => ({
-                    })));
-                    resolve({
-                    });
-                    resolve();
-                }
-            });
-        });
-    }
-
-    // mergeProviders { User user = 1; Provider source = 2; Provider target = 3; }  { }
-    async xxx() {
-        return new Promise((resolve, reject) => {
-            const request = new proto.flashback.xxxRequest();
-            const user = this.getAuthenticatedUser();
-            request.setUser(user);
-
-            this.client.xxx(request, this.getMetadata(), (err, response) => {
-                if (err) {
-                    console.error("xxx error:", err);
-                    reject(this.handleError(err));
-                } else {
-                    const xxx = response.xxx();
-                    resolve(response.getXXXList().map(x => ({
-                    })));
-                    resolve({
-                    });
-                    resolve();
-                }
-            });
-        });
-    }
-
-    // mergePresenters { User user = 1; Presenter source = 2; Presenter target = 3; }  { }
-    async xxx() {
-        return new Promise((resolve, reject) => {
-            const request = new proto.flashback.xxxRequest();
-            const user = this.getAuthenticatedUser();
-            request.setUser(user);
-
-            this.client.xxx(request, this.getMetadata(), (err, response) => {
-                if (err) {
-                    console.error("xxx error:", err);
-                    reject(this.handleError(err));
-                } else {
-                    const xxx = response.xxx();
-                    resolve(response.getXXXList().map(x => ({
-                    })));
-                    resolve({
-                    });
-                    resolve();
-                }
-            });
-        });
-    }
-
-    // mergeSubjects { User user = 1; Subject source_subject = 2; Subject target_subject = 3; }  { }
-    async xxx() {
-        return new Promise((resolve, reject) => {
-            const request = new proto.flashback.xxxRequest();
-            const user = this.getAuthenticatedUser();
-            request.setUser(user);
-
-            this.client.xxx(request, this.getMetadata(), (err, response) => {
-                if (err) {
-                    console.error("xxx error:", err);
-                    reject(this.handleError(err));
-                } else {
-                    const xxx = response.xxx();
-                    resolve(response.getXXXList().map(x => ({
-                    })));
-                    resolve({
-                    });
-                    resolve();
-                }
-            });
-        });
-    }
-
-    // mergeResources { User user = 1; Resource source = 2; Resource target = 3; }  { }
-    async xxx() {
-        return new Promise((resolve, reject) => {
-            const request = new proto.flashback.xxxRequest();
-            const user = this.getAuthenticatedUser();
-            request.setUser(user);
-
-            this.client.xxx(request, this.getMetadata(), (err, response) => {
-                if (err) {
-                    console.error("xxx error:", err);
-                    reject(this.handleError(err));
-                } else {
-                    const xxx = response.xxx();
-                    resolve(response.getXXXList().map(x => ({
-                    })));
-                    resolve({
-                    });
-                    resolve();
-                }
-            });
-        });
-    }
-
-    // mergeTopics { User user = 1; Subject subject = 2; Topic source = 3; Topic target = 4; }  { }
-    async xxx() {
-        return new Promise((resolve, reject) => {
-            const request = new proto.flashback.xxxRequest();
-            const user = this.getAuthenticatedUser();
-            request.setUser(user);
-
-            this.client.xxx(request, this.getMetadata(), (err, response) => {
-                if (err) {
-                    console.error("xxx error:", err);
-                    reject(this.handleError(err));
-                } else {
-                    const xxx = response.xxx();
-                    resolve(response.getXXXList().map(x => ({
-                    })));
-                    resolve({
-                    });
-                    resolve();
-                }
-            });
-        });
-    }
-
-    // mergeSections { User user = 1; Resource resource = 2; Section source = 3; Section target = 4; }  { }
-    async xxx() {
-        return new Promise((resolve, reject) => {
-            const request = new proto.flashback.xxxRequest();
-            const user = this.getAuthenticatedUser();
-            request.setUser(user);
-
-            this.client.xxx(request, this.getMetadata(), (err, response) => {
-                if (err) {
-                    console.error("xxx error:", err);
-                    reject(this.handleError(err));
-                } else {
-                    const xxx = response.xxx();
-                    resolve(response.getXXXList().map(x => ({
-                    })));
-                    resolve({
-                    });
-                    resolve();
-                }
-            });
-        });
-    }
-
-    // addRequirement { User user = 1; Roadmap roadmap = 2; Milestone milestone = 3; Milestone required_milestone = 4; }  { }
-    async xxx() {
-        return new Promise((resolve, reject) => {
-            const request = new proto.flashback.xxxRequest();
-            const user = this.getAuthenticatedUser();
-            request.setUser(user);
-
-            this.client.xxx(request, this.getMetadata(), (err, response) => {
-                if (err) {
-                    console.error("xxx error:", err);
-                    reject(this.handleError(err));
-                } else {
-                    const xxx = response.xxx();
-                    resolve(response.getXXXList().map(x => ({
-                    })));
-                    resolve({
-                    });
-                    resolve();
-                }
-            });
-        });
-    }
-
-    // getRequirements { User user = 1; Roadmap roadmap = 2; Milestone milestone = 3; }  { repeated Milestone milestones = 1; bool success = 2; string details = 3; uint32 code = 4; }
-    async xxx() {
-        return new Promise((resolve, reject) => {
-            const request = new proto.flashback.xxxRequest();
-            const user = this.getAuthenticatedUser();
-            request.setUser(user);
-
-            this.client.xxx(request, this.getMetadata(), (err, response) => {
-                if (err) {
-                    console.error("xxx error:", err);
-                    reject(this.handleError(err));
-                } else {
-                    const xxx = response.xxx();
-                    resolve(response.getXXXList().map(x => ({
-                    })));
-                    resolve({
-                    });
-                    resolve();
-                }
-            });
-        });
-    }
-
-    // estimateCardTime { User user = 1; }  { }
-    */
 }
 
 const client = new FlashbackClient();

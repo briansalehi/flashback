@@ -752,6 +752,21 @@ void database::change_topic_level(uint64_t const subject_id, uint64_t const posi
     exec("call change_topic_level($1, $2, $3, $4)", subject_id, position, level_to_string(level), level_to_string(target));
 }
 
+Provider database::get_provider(std::uint64_t resource_id) const
+{
+    Provider provider{};
+    provider.clear_name();
+    provider.clear_id();
+
+    if (pqxx::result const result{query("select get_provider($1) as id", resource_id)}; result.size() == 1)
+    {
+        provider.set_id(result.at(0).at("id").as<uint64_t>());
+        provider.set_name(result.at(0).at("name").as<std::string>());
+    }
+
+    return provider;
+}
+
 Provider database::create_provider(std::string name) const
 {
     Provider provider{};
@@ -812,6 +827,21 @@ void database::remove_provider(uint64_t const provider_id) const
 void database::merge_providers(uint64_t const source_id, uint64_t const target_id) const
 {
     exec("call merge_providers($1, $2)", source_id, target_id);
+}
+
+std::vector<Presenter> database::get_presenters(std::uint64_t resource_id) const
+{
+    std::vector<Presenter> presenters{};
+
+    for (pqxx::row const& result: query("select get_presenters($1) as id", resource_id))
+    {
+        Presenter presenter{};
+        presenter.set_id(result.at("id").as<uint64_t>());
+        presenter.set_name(result.at("name").as<std::string>());
+        presenters.push_back(std::move(presenter));
+    }
+
+    return presenters;
 }
 
 Presenter database::create_presenter(std::string name) const

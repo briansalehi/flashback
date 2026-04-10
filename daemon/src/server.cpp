@@ -1313,6 +1313,11 @@ grpc::Status server::GetResources(grpc::ServerContext* context, GetResourcesRequ
             for (Resource const& r: m_database->get_resources(user->id(), request->subject().id()))
             {
                 Resource* resource = response->add_resources();
+                *resource->mutable_provider() = m_database->get_provider(resource->id());
+                for (Presenter const& presenter: m_database->get_presenters(resource->id()))
+                {
+                    *resource->add_presenters() = presenter;
+                }
                 *resource = r;
             }
             std::clog << std::format("client {} collected {} resources\n", request->user().token(), response->resources_size());
@@ -1915,9 +1920,10 @@ grpc::Status server::SearchProviders(grpc::ServerContext* context, SearchProvide
         {
             for (auto const& [position, provider]: m_database->search_providers(request->search_token()))
             {
-                auto* result{response->mutable_result()};
-                *result->mutable_provider() = provider;
-                result->set_position(position);
+                ProviderSearchResult result{};
+                result.set_position(position);
+                *result.mutable_provider() = provider;
+                *response->add_result() = result;
             }
             std::clog << std::format("client {} collected {} providers by searching\n", request->user().token(), 0, request->search_token());
             status = grpc::Status{grpc::StatusCode::OK, {}};
@@ -2240,9 +2246,10 @@ grpc::Status server::SearchPresenters(grpc::ServerContext* context, SearchPresen
         {
             for (auto const& [position, presenter]: m_database->search_presenters(request->search_token()))
             {
-                auto* result{response->mutable_result()};
-                *result->mutable_presenter() = presenter;
-                result->set_position(position);
+                PresenterSearchResult result{};
+                result.set_position(position);
+                *result.mutable_presenter() = presenter;
+                *response->add_result() = result;
             }
             std::clog << std::format("client {} collected {} presenters by searching {}\n", request->user().token(), 0, request->search_token());
             status = grpc::Status{grpc::StatusCode::OK, {}};
