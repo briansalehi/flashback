@@ -82,8 +82,6 @@ public:
     virtual void edit_resource_link(uint64_t resource_id, std::string link) const = 0;
     virtual void change_resource_type(uint64_t resource_id, Resource::resource_type type) const = 0;
     virtual void change_section_pattern(uint64_t resource_id, Resource::section_pattern pattern) const = 0;
-    virtual void edit_resource_production(uint64_t resource_id, uint64_t production) const = 0;
-    virtual void edit_resource_expiration(uint64_t resource_id, uint64_t expiration) const = 0;
     virtual void rename_resource(uint64_t resource_id, std::string name) const = 0;
     virtual void remove_resource(uint64_t resource_id) const = 0;
     virtual void merge_resources(uint64_t source_id, uint64_t target_id) const = 0;

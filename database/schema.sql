@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict lyduiVQhFN0FQtHMkqVaKyfd2McKcUzqSLUJ8fwVfMZZhdcXy62fO3DX0psVNXR
+\restrict Q3JxwtvmlFVDz7lfJy2fqYgcen1Olohi34MUFpfHhd6bzY3es1DJNV4kXQ6chdf
 
 -- Dumped from database version 18.3
 -- Dumped by pg_dump version 18.3
@@ -1254,12 +1254,12 @@ ALTER FUNCTION flashback.get_milestones(roadmap_id integer) OWNER TO flashback;
 -- Name: get_nerves(integer); Type: FUNCTION; Schema: flashback; Owner: flashback
 --
 
-CREATE FUNCTION flashback.get_nerves(user_id integer) RETURNS TABLE(id integer, name flashback.citext, type flashback.resource_type, pattern flashback.section_pattern, link character varying, production integer, expiration integer)
+CREATE FUNCTION flashback.get_nerves(user_id integer) RETURNS TABLE(id integer, name flashback.citext, type flashback.resource_type, pattern flashback.section_pattern, link character varying)
     LANGUAGE plpgsql
     AS $$
 begin
     return query
-    select r.id, r.name, r.type, r.pattern, r.link, r.production, r.expiration
+    select r.id, r.name, r.type, r.pattern, r.link
     from resources r
     join nerves n on n.resource = r.id
     where n."user" = user_id;
@@ -4376,5 +4376,5 @@ GRANT ALL ON SCHEMA public TO brian;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict lyduiVQhFN0FQtHMkqVaKyfd2McKcUzqSLUJ8fwVfMZZhdcXy62fO3DX0psVNXR
+\unrestrict Q3JxwtvmlFVDz7lfJy2fqYgcen1Olohi34MUFpfHhd6bzY3es1DJNV4kXQ6chdf
 

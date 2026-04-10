@@ -74,7 +74,6 @@ TEST_F(test_server, SignUpNonExistingUser)
 
     EXPECT_NO_THROW(status = m_server->SignUp(m_server_context.get(), signup_request.get(), signup_response.get()));
     EXPECT_TRUE(status.ok());
-    EXPECT_TRUE(signup_response->success());
     EXPECT_TRUE(signup_response->has_user());
     EXPECT_EQ(signup_response->user().id(), 0) << "Client ID should be unknown to client";
     EXPECT_TRUE(signup_response->user().hash().empty()) << "Hash should never be leaked into client side";
@@ -112,7 +111,6 @@ TEST_F(test_server, SignUpExistingUser)
 
     EXPECT_NO_THROW(status = m_server->SignUp(m_server_context.get(), request.get(), response.get()));
     EXPECT_TRUE(status.ok());
-    EXPECT_FALSE(response->success()) << "Signing up a user that already exists should fail";
     EXPECT_FALSE(response->has_user());
     EXPECT_EQ(response->user().id(), 0);
     EXPECT_TRUE(response->user().name().empty());
@@ -143,13 +141,11 @@ TEST_F(test_server, SignUpWithIncompleteCredentials)
 
     EXPECT_NO_THROW(status = m_server->SignUp(m_server_context.get(), request.get(), response.get()));
     EXPECT_TRUE(status.ok());
-    EXPECT_FALSE(response->success()) << "Signing up with an undefined user should fail";
     EXPECT_FALSE(response->has_user());
 
     request->set_allocated_user(user.release());
     EXPECT_NO_THROW(status = m_server->SignUp(m_server_context.get(), request.get(), response.get()));
     EXPECT_TRUE(status.ok());
-    EXPECT_FALSE(response->success()) << "Signing up with a user without a name should fail";
     EXPECT_FALSE(response->has_user());
 
     user = std::make_unique<flashback::User>();
@@ -157,7 +153,6 @@ TEST_F(test_server, SignUpWithIncompleteCredentials)
     request->set_allocated_user(user.release());
     EXPECT_NO_THROW(status = m_server->SignUp(m_server_context.get(), request.get(), response.get()));
     EXPECT_TRUE(status.ok());
-    EXPECT_FALSE(response->success()) << "Signing up with a user without email should fail";
     EXPECT_FALSE(response->has_user());
 
     user = std::make_unique<flashback::User>();
@@ -166,7 +161,6 @@ TEST_F(test_server, SignUpWithIncompleteCredentials)
     request->set_allocated_user(user.release());
     EXPECT_NO_THROW(status = m_server->SignUp(m_server_context.get(), request.get(), response.get()));
     EXPECT_TRUE(status.ok());
-    EXPECT_FALSE(response->success()) << "Signing up with a user without device should fail";
     EXPECT_FALSE(response->has_user());
 
     user = std::make_unique<flashback::User>();
@@ -176,7 +170,6 @@ TEST_F(test_server, SignUpWithIncompleteCredentials)
     request->set_allocated_user(user.release());
     EXPECT_NO_THROW(status = m_server->SignUp(m_server_context.get(), request.get(), response.get()));
     EXPECT_TRUE(status.ok());
-    EXPECT_FALSE(response->success()) << "Signing up with a user without password should fail";
     EXPECT_FALSE(response->has_user());
 }
 
@@ -222,7 +215,6 @@ TEST_F(test_server, SignIn)
 
     request->set_allocated_user(user_before_signin.release());
     EXPECT_NO_THROW(m_server->SignIn(m_server_context.get(), request.get(), response.get()));
-    EXPECT_TRUE(response->success());
     EXPECT_TRUE(response->has_user());
     EXPECT_EQ(response->user().id(), 0) << "Client ID should be unknown to client";
     EXPECT_FALSE(response->user().name().empty());
@@ -291,7 +283,6 @@ TEST_F(test_server, SignInWithInvalidCredentials)
 
     request->set_allocated_user(user_before_signin.release());
     EXPECT_NO_THROW(m_server->SignIn(m_server_context.get(), request.get(), response.get()));
-    EXPECT_FALSE(response->success());
     EXPECT_FALSE(response->has_user());
 }
 
@@ -307,7 +298,6 @@ TEST_F(test_server, SignInWithIncompleteCredentials)
     std::unique_ptr<flashback::User> user{nullptr};
     EXPECT_EQ(user, nullptr);
     EXPECT_NO_THROW(m_server->SignIn(m_server_context.get(), request.get(), response.get()));
-    EXPECT_FALSE(response->success());
     EXPECT_FALSE(response->has_user());
 
     user = std::make_unique<flashback::User>();
@@ -320,7 +310,6 @@ TEST_F(test_server, SignInWithIncompleteCredentials)
     EXPECT_TRUE(user->hash().empty());
     request->set_allocated_user(user.release());
     EXPECT_NO_THROW(m_server->SignIn(m_server_context.get(), request.get(), response.get()));
-    EXPECT_FALSE(response->success());
     EXPECT_FALSE(response->has_user());
 
     user = std::make_unique<flashback::User>();
@@ -334,7 +323,6 @@ TEST_F(test_server, SignInWithIncompleteCredentials)
     EXPECT_TRUE(user->hash().empty());
     request->set_allocated_user(user.release());
     EXPECT_NO_THROW(m_server->SignIn(m_server_context.get(), request.get(), response.get()));
-    EXPECT_FALSE(response->success());
     EXPECT_FALSE(response->has_user());
 
     user = std::make_unique<flashback::User>();
@@ -349,7 +337,6 @@ TEST_F(test_server, SignInWithIncompleteCredentials)
     EXPECT_TRUE(user->hash().empty());
     request->set_allocated_user(user.release());
     EXPECT_NO_THROW(m_server->SignIn(m_server_context.get(), request.get(), response.get()));
-    EXPECT_FALSE(response->success());
     EXPECT_FALSE(response->has_user());
 
     user = std::make_unique<flashback::User>();
@@ -365,7 +352,6 @@ TEST_F(test_server, SignInWithIncompleteCredentials)
     EXPECT_TRUE(user->hash().empty());
     request->set_allocated_user(user.release());
     EXPECT_NO_THROW(m_server->SignIn(m_server_context.get(), request.get(), response.get()));
-    EXPECT_FALSE(response->success());
     EXPECT_FALSE(response->has_user());
 }
 
@@ -684,8 +670,6 @@ TEST_F(test_server, CreateSubject)
     EXPECT_CALL(*m_mock_database, create_subject(testing::A<std::string>())).Times(1).WillOnce(testing::Return(returning_subject));
     EXPECT_NO_THROW(status = m_server->CreateSubject(m_server_context.get(), &request, &response));
     EXPECT_TRUE(status.ok());
-    EXPECT_TRUE(response.success());
-    EXPECT_EQ(response.code(), 0);
 }
 
 TEST_F(test_server, SearchSubjects)
@@ -752,8 +736,6 @@ TEST_F(test_server, RenameSubject)
 
     EXPECT_NO_THROW(status = m_server->RenameSubject(&context, &request, &response));
     EXPECT_TRUE(status.ok());
-    EXPECT_FALSE(response.success()) << "Renaming to an empty string should not succeed";
-    EXPECT_GT(response.code(), 0) << "Renaming to an empty string should result in error code greater than zero";
 
     request.set_allocated_user(requesting_user.release());
     request.set_id(1);
@@ -761,8 +743,6 @@ TEST_F(test_server, RenameSubject)
 
     EXPECT_NO_THROW(status = m_server->RenameSubject(&context, &request, &response));
     EXPECT_TRUE(status.ok());
-    EXPECT_TRUE(response.success());
-    EXPECT_EQ(response.code(), 0);
 }
 
 TEST_F(test_server, AddMilestone)
@@ -799,7 +779,6 @@ TEST_F(test_server, AddMilestone)
 
     EXPECT_NO_THROW(status = m_server->AddMilestone(&context, &request, &response));
     EXPECT_TRUE(status.ok());
-    EXPECT_TRUE(response.success()) << "Milestone without position should be added";
     EXPECT_EQ(response.milestone().id(), milestone.id());
     EXPECT_EQ(response.milestone().level(), milestone.level());
     EXPECT_EQ(response.milestone().position(), milestone.position());
@@ -808,7 +787,6 @@ TEST_F(test_server, AddMilestone)
 
     EXPECT_NO_THROW(status = m_server->AddMilestone(&context, &request, &response));
     EXPECT_TRUE(status.ok());
-    EXPECT_TRUE(response.success()) << "Milestone with position should be added";
     EXPECT_EQ(response.milestone().id(), milestone.id());
     EXPECT_EQ(response.milestone().level(), milestone.level());
     EXPECT_EQ(response.milestone().position(), milestone.position());
@@ -853,9 +831,6 @@ TEST_F(test_server, GetMilestones)
     EXPECT_CALL(*m_mock_database, get_milestones(A<uint64_t>())).Times(1).WillOnce(Return(database_provided_milestones));
     EXPECT_NO_THROW(status = m_server->GetMilestones(&context, &request, &response));
     EXPECT_TRUE(status.ok());
-    EXPECT_TRUE(response.success());
-    EXPECT_TRUE(response.details().empty());
-    EXPECT_EQ(response.code(), 0);
     EXPECT_EQ(response.milestones().size(), database_provided_milestones.size());
 
     for (auto const& milestone: response.milestones())
@@ -904,9 +879,6 @@ TEST_F(test_server, AddRequirement)
     EXPECT_CALL(*m_mock_database, add_requirement(A<uint64_t>(), A<flashback::Milestone>(), A<flashback::Milestone>())).Times(1);
     EXPECT_NO_THROW(status = m_server->AddRequirement(&context, &request, &response));
     EXPECT_TRUE(status.ok());
-    EXPECT_TRUE(response.success());
-    EXPECT_TRUE(response.details().empty());
-    EXPECT_EQ(response.code(), 0);
 }
 
 TEST_F(test_server, GetRequirements)
@@ -948,19 +920,14 @@ WillOnce(Return(required_milestones));
 
     EXPECT_NO_THROW(status = m_server->GetRequirements(&context, &request, &response));
     EXPECT_TRUE(status.ok());
-    EXPECT_FALSE(response.success()) << "Requesting requirements with invalid user should be declined";
 
     request.set_allocated_user(requesting_user.release());
     EXPECT_NO_THROW(status = m_server->GetRequirements(&context, &request, &response));
     EXPECT_TRUE(status.ok());
-    EXPECT_FALSE(response.success()) << "Requesting requirements with invalid milestone should be declined";
 
     request.set_allocated_milestone(milestone.release());
     EXPECT_NO_THROW(status = m_server->GetRequirements(&context, &request, &response));
     EXPECT_TRUE(status.ok());
-    EXPECT_TRUE(response.success());
-    EXPECT_TRUE(response.details().empty());
-    EXPECT_EQ(response.code(), 0);
 }
 
 TEST_F(test_server, CloneRoadmap)
@@ -1025,37 +992,26 @@ WillOnce(Return(std::make_unique<flashback::User>(*m_user))).WillOnce(Return(std
 
     EXPECT_NO_THROW(status = m_server->ReorderMilestone(&context, &request, &response));
     EXPECT_TRUE(status.ok());
-    EXPECT_FALSE(response.success()) << "Requesting to reorder a milestone from invalid user should be declined";
-    EXPECT_EQ(response.code(), 3) << "Error code for invalid user should be a constant number";
 
     request.set_allocated_user(requesting_user.release());
     EXPECT_NO_THROW(status = m_server->ReorderMilestone(&context, &request, &response));
     EXPECT_TRUE(status.ok());
-    EXPECT_FALSE(response.success()) << "Requesting to reorder an invalid roadmap from a legitimate user should be declined";
-    EXPECT_EQ(response.code(), 4);
 
     request.set_allocated_roadmap(roadmap.release());
     request.set_current_position(0);
     request.set_target_position(0);
     EXPECT_NO_THROW(status = m_server->ReorderMilestone(&context, &request, &response));
     EXPECT_TRUE(status.ok());
-    EXPECT_FALSE(response.success()) << "Requesting to reorder a milestone with incorrect position should be declined";
-    EXPECT_EQ(response.code(), 5);
 
     request.set_current_position(1);
     request.set_target_position(1);
     EXPECT_NO_THROW(status = m_server->ReorderMilestone(&context, &request, &response));
     EXPECT_TRUE(status.ok());
-    EXPECT_FALSE(response.success()) << "Requesting to reorder a milestone from a position to the same position should be declined";
-    EXPECT_EQ(response.code(), 6);
 
     request.set_current_position(1);
     request.set_target_position(3);
     EXPECT_NO_THROW(status = m_server->ReorderMilestone(&context, &request, &response));
     EXPECT_TRUE(status.ok());
-    EXPECT_TRUE(response.success()) << "Reordering two milestones from a position to another valid position should work";
-    EXPECT_TRUE(response.details().empty());
-    EXPECT_EQ(response.code(), 0);
 }
 
 TEST_F(test_server, RemoveMilestone)
@@ -1082,30 +1038,18 @@ WillOnce(Return(std::make_unique<flashback::User>(*m_user))).WillOnce(Return(std
 
     EXPECT_NO_THROW(status = m_server->RemoveMilestone(&context, &request, &response));
     EXPECT_TRUE(status.ok());
-    EXPECT_FALSE(response.success()) << "Request to remove a milestone from an invalid user should be declined";
-    EXPECT_EQ(response.code(), 3) << "The error for invalid user should have a constant value";
-    EXPECT_FALSE(response.details().empty());
 
     request.set_allocated_user(user.release());
     EXPECT_NO_THROW(status = m_server->RemoveMilestone(&context, &request, &response));
     EXPECT_TRUE(status.ok());
-    EXPECT_FALSE(response.success()) << "Request to remove a milestone with invalid roadmap should be declined";
-    EXPECT_EQ(response.code(), 4);
-    EXPECT_FALSE(response.details().empty());
 
     request.set_allocated_roadmap(roadmap.release());
     EXPECT_NO_THROW(status = m_server->RemoveMilestone(&context, &request, &response));
     EXPECT_TRUE(status.ok());
-    EXPECT_FALSE(response.success()) << "Request to remove a milestone with invalid milestone should be declined";
-    EXPECT_EQ(response.code(), 5);
-    EXPECT_FALSE(response.details().empty());
 
     request.set_allocated_milestone(milestone.release());
     EXPECT_NO_THROW(status = m_server->RemoveMilestone(&context, &request, &response));
     EXPECT_TRUE(status.ok());
-    EXPECT_TRUE(response.success()) << "Request to remove a milestone with valid user credentials, valid roadmap and valid milestone should work";
-    EXPECT_EQ(response.code(), 0);
-    EXPECT_TRUE(response.details().empty());
 }
 
 TEST_F(test_server, ChangeMilestoneLevel)
@@ -1132,30 +1076,18 @@ WillOnce(Return(std::make_unique<flashback::User>(*m_user))).WillOnce(Return(std
 
     EXPECT_NO_THROW(status = m_server->ChangeMilestoneLevel(&context, &request, &response));
     EXPECT_TRUE(status.ok());
-    EXPECT_FALSE(response.success()) << "Request to change milestone level from an invalid user should be declined";
-    EXPECT_FALSE(response.details().empty());
-    EXPECT_EQ(response.code(), 3);
 
     request.set_allocated_user(user.release());
     EXPECT_NO_THROW(status = m_server->ChangeMilestoneLevel(&context, &request, &response));
     EXPECT_TRUE(status.ok());
-    EXPECT_FALSE(response.success()) << "Request to change milestone level with invalid roadmap should be declined";
-    EXPECT_FALSE(response.details().empty());
-    EXPECT_EQ(response.code(), 4);
 
     request.set_allocated_roadmap(roadmap.release());
     EXPECT_NO_THROW(status = m_server->ChangeMilestoneLevel(&context, &request, &response));
     EXPECT_TRUE(status.ok());
-    EXPECT_FALSE(response.success()) << "Request to change milestone level with invalid milestone should be declined";
-    EXPECT_FALSE(response.details().empty());
-    EXPECT_EQ(response.code(), 5);
 
     request.set_allocated_milestone(milestone.release());
     EXPECT_NO_THROW(status = m_server->ChangeMilestoneLevel(&context, &request, &response));
     EXPECT_TRUE(status.ok());
-    EXPECT_TRUE(response.success()) << "Request to change milestone with valid credentials, valid roadmap, and valid milestone should work";
-    EXPECT_TRUE(response.details().empty());
-    EXPECT_EQ(response.code(), 0);
 }
 
 TEST_F(test_server, RemoveSubject)
@@ -1179,23 +1111,14 @@ TEST_F(test_server, RemoveSubject)
 
     EXPECT_NO_THROW(status = m_server->RemoveSubject(&context, &request, &response));
     EXPECT_TRUE(status.ok());
-    EXPECT_FALSE(response.success()) << "Request to remove a subject with an invalid user should be declined";
-    EXPECT_FALSE(response.details().empty());
-    EXPECT_EQ(response.code(), 3);
 
     request.set_allocated_user(user.release());
     EXPECT_NO_THROW(status = m_server->RemoveSubject(&context, &request, &response));
     EXPECT_TRUE(status.ok());
-    EXPECT_FALSE(response.success()) << "Request to remove an invalid subject should be declined";
-    EXPECT_FALSE(response.details().empty());
-    EXPECT_EQ(response.code(), 4);
 
     request.set_allocated_subject(subject.release());
     EXPECT_NO_THROW(status = m_server->RemoveSubject(&context, &request, &response));
     EXPECT_TRUE(status.ok());
-    EXPECT_TRUE(response.success()) << "Request to remove a subject with valid credentials and valid subject should work";
-    EXPECT_TRUE(response.details().empty());
-    EXPECT_EQ(response.code(), 0);
 }
 
 TEST_F(test_server, MergeSubjects)
@@ -1219,30 +1142,18 @@ WillOnce(Return(std::make_unique<flashback::User>(*m_user))).WillOnce(Return(std
 
     EXPECT_NO_THROW(status = m_server->MergeSubjects(&context, &request, &response));
     EXPECT_TRUE(status.ok());
-    EXPECT_FALSE(response.success()) << "Request to merge two subjects from an invalid user should be declined";
-    EXPECT_FALSE(response.details().empty());
-    EXPECT_EQ(response.code(), 3) << "Invalid user should be indicated by an error";
 
     request.set_allocated_user(user.release());
     EXPECT_NO_THROW(status = m_server->MergeSubjects(&context, &request, &response));
     EXPECT_TRUE(status.ok());
-    EXPECT_FALSE(response.success()) << "Request to merge two invalid subjects should be declined";
-    EXPECT_FALSE(response.details().empty());
-    EXPECT_EQ(response.code(), 4);
 
     request.set_allocated_source_subject(source_subject.release());
     EXPECT_NO_THROW(status = m_server->MergeSubjects(&context, &request, &response));
     EXPECT_TRUE(status.ok());
-    EXPECT_FALSE(response.success()) << "Request to merge two invalid subjects should be declined";
-    EXPECT_FALSE(response.details().empty());
-    EXPECT_EQ(response.code(), 4);
 
     request.set_allocated_target_subject(target_subject.release());
     EXPECT_NO_THROW(status = m_server->MergeSubjects(&context, &request, &response));
     EXPECT_TRUE(status.ok());
-    EXPECT_TRUE(response.success()) << "Request to merge two valid subjects should work";
-    EXPECT_TRUE(response.details().empty());
-    EXPECT_EQ(response.code(), 0);
 }
 
 MATCHER_P(HasResourceId, expected_resource, "") { return arg.id() == expected_resource.id(); }
@@ -1264,9 +1175,6 @@ TEST_F(test_server, GetResources)
     request.clear_subject();
     EXPECT_NO_THROW(status = m_server->GetResources(&context, &request, &response));
     EXPECT_THAT(status.ok(), IsTrue());
-    EXPECT_THAT(response.success(), IsFalse());
-    EXPECT_THAT(response.code(), Eq(3)) << "Invalid user should have a specific error code";
-    EXPECT_THAT(response.details().empty(), IsFalse());
     EXPECT_THAT(response.resources(), IsEmpty());
 
     subject->set_id(1);
@@ -1276,9 +1184,6 @@ TEST_F(test_server, GetResources)
     user.reset(nullptr);
     EXPECT_NO_THROW(status = m_server->GetResources(&context, &request, &response));
     EXPECT_THAT(status.ok(), IsTrue());
-    EXPECT_THAT(response.success(), IsTrue());
-    EXPECT_THAT(response.code(), Eq(0));
-    EXPECT_THAT(response.details().empty(), IsTrue());
     EXPECT_THAT(response.resources(), SizeIs(resources.size()));
 }
 
@@ -1298,9 +1203,6 @@ TEST_F(test_server, CreateResource)
     request.clear_resource();
     EXPECT_NO_THROW(status = m_server->CreateResource(&context, &request, &response));
     EXPECT_THAT(status.ok(), IsTrue());
-    EXPECT_THAT(response.success(), IsFalse());
-    EXPECT_THAT(response.code(), Eq(3));
-    EXPECT_THAT(response.details().empty(), IsFalse());
 
     request.set_allocated_user(user.release());
     user.reset(nullptr);
@@ -1308,9 +1210,6 @@ TEST_F(test_server, CreateResource)
     resource.reset(nullptr);
     EXPECT_NO_THROW(status = m_server->CreateResource(&context, &request, &response));
     EXPECT_THAT(status.ok(), IsTrue());
-    EXPECT_THAT(response.success(), IsTrue());
-    EXPECT_THAT(response.code(), Eq(0));
-    EXPECT_THAT(response.details().empty(), IsTrue());
 }
 
 TEST_F(test_server, AddResourceToSubject)
@@ -1330,9 +1229,6 @@ TEST_F(test_server, AddResourceToSubject)
     request.clear_resource();
     EXPECT_NO_THROW(status = m_server->AddResourceToSubject(&context, &request, &response));
     EXPECT_THAT(status.ok(), IsTrue());
-    EXPECT_THAT(response.success(), IsFalse());
-    EXPECT_THAT(response.code(), Eq(3));
-    EXPECT_THAT(response.details().empty(), IsFalse());
 
     subject->set_id(1);
     resource->set_id(1);
@@ -1344,9 +1240,6 @@ TEST_F(test_server, AddResourceToSubject)
     resource.reset(nullptr);
     EXPECT_NO_THROW(status = m_server->AddResourceToSubject(&context, &request, &response));
     EXPECT_THAT(status.ok(), IsTrue());
-    EXPECT_THAT(response.success(), IsTrue());
-    EXPECT_THAT(response.code(), Eq(0));
-    EXPECT_THAT(response.details().empty(), IsTrue());
 }
 
 TEST_F(test_server, DropResourceFromSubject)
@@ -1366,9 +1259,6 @@ TEST_F(test_server, DropResourceFromSubject)
     request.clear_resource();
     EXPECT_NO_THROW(status = m_server->DropResourceFromSubject(&context, &request, &response));
     EXPECT_THAT(status.ok(), IsTrue());
-    EXPECT_THAT(response.success(), IsFalse());
-    EXPECT_THAT(response.code(), Eq(3));
-    EXPECT_THAT(response.details().empty(), IsFalse());
 
     subject->set_id(1);
     resource->set_id(1);
@@ -1380,9 +1270,6 @@ TEST_F(test_server, DropResourceFromSubject)
     resource.reset(nullptr);
     EXPECT_NO_THROW(status = m_server->DropResourceFromSubject(&context, &request, &response));
     EXPECT_THAT(status.ok(), IsTrue());
-    EXPECT_THAT(response.success(), IsTrue());
-    EXPECT_THAT(response.code(), Eq(0));
-    EXPECT_THAT(response.details().empty(), IsTrue());
 }
 
 TEST_F(test_server, SearchRsources)
@@ -1400,9 +1287,6 @@ TEST_F(test_server, SearchRsources)
     request.clear_search_token();
     EXPECT_NO_THROW(status = m_server->SearchResources(&context, &request, &response));
     EXPECT_THAT(status.ok(), IsTrue());
-    EXPECT_THAT(response.success(), IsFalse());
-    EXPECT_THAT(response.code(), Eq(3));
-    EXPECT_THAT(response.details().empty(), IsFalse());
     EXPECT_THAT(response.results(), IsEmpty());
 
     flashback::User* user{request.mutable_user()};
@@ -1410,9 +1294,6 @@ TEST_F(test_server, SearchRsources)
     request.set_search_token("Some Resource");
     EXPECT_NO_THROW(status = m_server->SearchResources(&context, &request, &response));
     EXPECT_THAT(status.ok(), IsTrue());
-    EXPECT_THAT(response.success(), IsTrue());
-    EXPECT_THAT(response.code(), Eq(0));
-    EXPECT_THAT(response.details().empty(), IsTrue());
     EXPECT_THAT(response.results(), SizeIs(search_results.size()));
 }
 
@@ -1435,9 +1316,6 @@ TEST_F(test_server, MergeResources)
     request.clear_target();
     EXPECT_NO_THROW(status = m_server->MergeResources(&context, &request, &response));
     EXPECT_THAT(status.ok(), IsTrue());
-    EXPECT_THAT(response.success(), IsFalse());
-    EXPECT_THAT(response.code(), Eq(3));
-    EXPECT_THAT(response.details().empty(), IsFalse());
 
     flashback::User* user{request.mutable_user()};
     flashback::Resource* source{request.mutable_source()};
@@ -1447,9 +1325,6 @@ TEST_F(test_server, MergeResources)
     *target = resource_target;
     EXPECT_NO_THROW(status = m_server->MergeResources(&context, &request, &response));
     EXPECT_THAT(status.ok(), IsTrue());
-    EXPECT_THAT(response.success(), IsTrue());
-    EXPECT_THAT(response.code(), Eq(0));
-    EXPECT_THAT(response.details().empty(), IsTrue());
 }
 
 TEST_F(test_server, RemoveResource)
@@ -1466,9 +1341,6 @@ TEST_F(test_server, RemoveResource)
     request.clear_resource();
     EXPECT_NO_THROW(status = m_server->RemoveResource(&context, &request, &response));
     EXPECT_THAT(status.ok(), IsTrue());
-    EXPECT_THAT(response.success(), IsFalse());
-    EXPECT_THAT(response.code(), Eq(3));
-    EXPECT_THAT(response.details().empty(), IsFalse());
 
     flashback::User* user{request.mutable_user()};
     flashback::Resource* resource{request.mutable_resource()};
@@ -1476,9 +1348,6 @@ TEST_F(test_server, RemoveResource)
     resource->set_id(1);
     EXPECT_NO_THROW(status = m_server->RemoveResource(&context, &request, &response));
     EXPECT_THAT(status.ok(), IsTrue());
-    EXPECT_THAT(response.success(), IsTrue());
-    EXPECT_THAT(response.code(), Eq(0));
-    EXPECT_THAT(response.details().empty(), IsTrue());
 }
 
 TEST_F(test_server, EditResource)
@@ -1493,8 +1362,6 @@ TEST_F(test_server, EditResource)
     existing_resource.set_link("https://flashback.eu.com");
     existing_resource.set_type(flashback::Resource::book);
     existing_resource.set_pattern(flashback::Resource::chapter);
-    existing_resource.set_production(std::chrono::system_clock::now().time_since_epoch().count());
-    existing_resource.set_expiration(std::chrono::system_clock::now().time_since_epoch().count() + 10000);
 
     EXPECT_CALL(*m_mock_database, get_user(A<std::string_view>(), A<std::string_view>())).WillRepeatedly(Invoke([this]() { return std::make_unique<flashback::User>(*m_user); }));
     EXPECT_CALL(*m_mock_database, get_resource(A<uint64_t>())).WillRepeatedly(Return(existing_resource));
@@ -1503,9 +1370,6 @@ TEST_F(test_server, EditResource)
     request.clear_resource();
     EXPECT_NO_THROW(status = m_server->EditResource(&context, &request, &response));
     EXPECT_THAT(status.ok(), IsTrue());
-    EXPECT_THAT(response.success(), IsFalse());
-    EXPECT_THAT(response.code(), Eq(3));
-    EXPECT_THAT(response.details().empty(), IsFalse());
 
     flashback::User* user{request.mutable_user()};
     *user = *m_user;
@@ -1514,99 +1378,30 @@ TEST_F(test_server, EditResource)
 
     EXPECT_NO_THROW(status = m_server->EditResource(&context, &request, &response));
     EXPECT_THAT(status.ok(), IsTrue());
-    EXPECT_THAT(response.success(), IsFalse());
-    EXPECT_THAT(response.code(), Eq(5));
-    EXPECT_THAT(response.details().empty(), IsFalse());
 
     resource->set_name("Another C++ Book");
     EXPECT_CALL(*m_mock_database, rename_resource(A<uint64_t>(), A<std::string>())).Times(1);
     EXPECT_NO_THROW(status = m_server->EditResource(&context, &request, &response));
     EXPECT_THAT(status.ok(), IsTrue());
-    EXPECT_THAT(response.success(), IsTrue());
-    EXPECT_THAT(response.code(), Eq(0));
-    EXPECT_THAT(response.details().empty(), IsTrue());
     resource->set_name(existing_resource.name());
 
     resource->set_link("https:://example.com");
     EXPECT_CALL(*m_mock_database, edit_resource_link(A<uint64_t>(), A<std::string>())).Times(1);
     EXPECT_NO_THROW(status = m_server->EditResource(&context, &request, &response));
     EXPECT_THAT(status.ok(), IsTrue());
-    EXPECT_THAT(response.success(), IsTrue());
-    EXPECT_THAT(response.code(), Eq(0));
-    EXPECT_THAT(response.details().empty(), IsTrue());
     resource->set_link(existing_resource.link());
 
     resource->set_type(flashback::Resource::channel);
     EXPECT_CALL(*m_mock_database, change_resource_type(A<uint64_t>(), A<flashback::Resource::resource_type>())).Times(1);
     EXPECT_NO_THROW(status = m_server->EditResource(&context, &request, &response));
     EXPECT_THAT(status.ok(), IsTrue());
-    EXPECT_THAT(response.success(), IsTrue());
-    EXPECT_THAT(response.code(), Eq(0));
-    EXPECT_THAT(response.details().empty(), IsTrue());
     resource->set_type(existing_resource.type());
 
     resource->set_pattern(flashback::Resource::episode);
     EXPECT_CALL(*m_mock_database, change_section_pattern(A<uint64_t>(), A<flashback::Resource::section_pattern>())).Times(1);
     EXPECT_NO_THROW(status = m_server->EditResource(&context, &request, &response));
     EXPECT_THAT(status.ok(), IsTrue());
-    EXPECT_THAT(response.success(), IsTrue());
-    EXPECT_THAT(response.code(), Eq(0));
-    EXPECT_THAT(response.details().empty(), IsTrue());
     resource->set_pattern(existing_resource.pattern());
-
-    resource->set_production(std::chrono::system_clock::now().time_since_epoch().count() - 1000);
-    EXPECT_CALL(*m_mock_database, edit_resource_production(A<uint64_t>(), A<uint64_t>())).Times(1);
-    EXPECT_NO_THROW(status = m_server->EditResource(&context, &request, &response));
-    EXPECT_THAT(status.ok(), IsTrue());
-    EXPECT_THAT(response.success(), IsTrue());
-    EXPECT_THAT(response.code(), Eq(0));
-    EXPECT_THAT(response.details().empty(), IsTrue());
-    resource->set_production(existing_resource.production());
-
-    resource->set_expiration(std::chrono::system_clock::now().time_since_epoch().count() - 1000);
-    EXPECT_CALL(*m_mock_database, edit_resource_expiration(A<uint64_t>(), A<uint64_t>())).Times(1);
-    EXPECT_NO_THROW(status = m_server->EditResource(&context, &request, &response));
-    EXPECT_THAT(status.ok(), IsTrue());
-    EXPECT_THAT(response.success(), IsTrue());
-    EXPECT_THAT(response.code(), Eq(0));
-    EXPECT_THAT(response.details().empty(), IsTrue());
-    resource->set_expiration(existing_resource.expiration());
-}
-
-TEST_F(test_server, CreateNerve)
-{
-    grpc::Status status{};
-    grpc::ServerContext context{};
-    flashback::CreateNerveRequest request{};
-    flashback::CreateNerveResponse response{};
-    flashback::Subject subject{};
-    flashback::Resource resource{};
-    resource.set_id(1);
-    resource.set_name("C++");
-    resource.clear_link();
-    resource.set_type(flashback::Resource::nerve);
-    resource.set_pattern(flashback::Resource::synapse);
-    resource.set_expiration(std::chrono::system_clock::now().time_since_epoch().count());
-    resource.clear_production();
-    subject.set_name("C++");
-
-    EXPECT_CALL(*m_mock_database, get_user(A<std::string_view>(), A<std::string_view>())).WillRepeatedly(Invoke([this]() { return std::make_unique<flashback::User>(*m_user); }));
-    EXPECT_CALL(*m_mock_database, create_nerve(A<uint64_t>(), A<std::string>(), A<uint64_t>())).Times(1).WillRepeatedly(Return(resource));
-
-    request.clear_user();
-    EXPECT_NO_THROW(status = m_server->CreateNerve(&context, &request, &response));
-    EXPECT_THAT(status.ok(), IsFalse());
-    EXPECT_THAT(status.error_message().empty(), IsFalse());
-    EXPECT_THAT(status.error_code(), Eq(grpc::StatusCode::UNAUTHENTICATED));
-
-    *request.mutable_user() = *m_user;
-    *request.mutable_resource() = resource;
-    *request.mutable_subject() = subject;
-
-    EXPECT_NO_THROW(status = m_server->CreateNerve(&context, &request, &response));
-    EXPECT_THAT(status.ok(), IsTrue());
-    EXPECT_THAT(status.error_code(), Eq(grpc::StatusCode::OK));
-    EXPECT_THAT(status.error_message(), IsEmpty());
 }
 
 TEST_F(test_server, GetNerves)
@@ -1623,8 +1418,6 @@ TEST_F(test_server, GetNerves)
     nerve.clear_link();
     nerve.set_type(flashback::Resource::nerve);
     nerve.set_pattern(flashback::Resource::synapse);
-    nerve.set_production(std::chrono::system_clock::now().time_since_epoch().count());
-    nerve.clear_expiration();
     expected_nerves.push_back(nerve);
 
     EXPECT_CALL(*m_mock_database, get_user(A<std::string_view>(), A<std::string_view>())).WillRepeatedly(Invoke([this]() { return std::make_unique<flashback::User>(*m_user); }));
@@ -2075,7 +1868,7 @@ TEST_F(test_server, GetTopics)
     topics.insert({topic.position(), topic});
 
     EXPECT_CALL(*m_mock_database, get_user(A<std::string_view>(), A<std::string_view>())).WillRepeatedly(Invoke([this]() { return std::make_unique<flashback::User>(*m_user); }));
-    EXPECT_CALL(*m_mock_database, get_topics(A<uint64_t>(), A<flashback::expertise_level>())).Times(1).WillOnce(Return(topics));
+    EXPECT_CALL(*m_mock_database, get_topics(A<uint64_t>(), An<flashback::expertise_level>())).Times(1).WillOnce(Return(topics));
 
     request.clear_user();
     EXPECT_NO_THROW(status = m_server->GetTopics(&context, &request, &response));
@@ -2108,7 +1901,7 @@ TEST_F(test_server, CreateTopic)
     topic.set_level(flashback::expertise_level::depth);
 
     EXPECT_CALL(*m_mock_database, get_user(A<std::string_view>(), A<std::string_view>())).WillRepeatedly(Invoke([this]() { return std::make_unique<flashback::User>(*m_user); }));
-    EXPECT_CALL(*m_mock_database, create_topic(A<uint64_t>(), A<std::string>(), A<flashback::expertise_level>(), A<uint64_t>())).Times(1).WillOnce(Return(topic));
+    EXPECT_CALL(*m_mock_database, create_topic(A<uint64_t>(), A<std::string>(), An<flashback::expertise_level>(), A<uint64_t>())).Times(1).WillOnce(Return(topic));
 
     request.clear_user();
     EXPECT_NO_THROW(status = m_server->CreateTopic(&context, &request, &response));
@@ -2121,44 +1914,6 @@ TEST_F(test_server, CreateTopic)
     *request.mutable_topic() = topic;
 
     EXPECT_NO_THROW(status = m_server->CreateTopic(&context, &request, &response));
-    EXPECT_THAT(status.ok(), IsTrue());
-    EXPECT_THAT(status.error_message(), IsEmpty());
-}
-
-TEST_F(test_server, ReorderTopic)
-{
-    grpc::Status status{};
-    grpc::ServerContext context{};
-    flashback::ReorderTopicRequest request{};
-    flashback::ReorderTopicResponse response{};
-    flashback::Subject subject{};
-    flashback::Topic topic{};
-    flashback::Topic target{};
-
-    subject.set_name("C++");
-    subject.set_id(1);
-    topic.set_name("Coroutines");
-    topic.set_position(1);
-    topic.set_level(flashback::expertise_level::depth);
-    target.set_name("Reflection");
-    target.set_position(1);
-    target.set_level(flashback::expertise_level::origin);
-
-    EXPECT_CALL(*m_mock_database, get_user(A<std::string_view>(), A<std::string_view>())).WillRepeatedly(Invoke([this]() { return std::make_unique<flashback::User>(*m_user); }));
-    EXPECT_CALL(*m_mock_database, reorder_topic(A<uint64_t>(), A<flashback::expertise_level>(), A<uint64_t>(), A<uint64_t>())).Times(1);
-
-    request.clear_user();
-    EXPECT_NO_THROW(status = m_server->ReorderTopic(&context, &request, &response));
-    EXPECT_THAT(status.ok(), IsFalse());
-    EXPECT_THAT(status.error_message().empty(), IsFalse());
-    EXPECT_THAT(status.error_code(), Eq(grpc::StatusCode::UNAUTHENTICATED));
-
-    *request.mutable_user() = *m_user;
-    *request.mutable_subject() = subject;
-    *request.mutable_topic() = topic;
-    *request.mutable_target() = target;
-
-    EXPECT_NO_THROW(status = m_server->ReorderTopic(&context, &request, &response));
     EXPECT_THAT(status.ok(), IsTrue());
     EXPECT_THAT(status.error_message(), IsEmpty());
 }
@@ -2179,7 +1934,7 @@ TEST_F(test_server, RemoveTopic)
     topic.set_level(flashback::expertise_level::depth);
 
     EXPECT_CALL(*m_mock_database, get_user(A<std::string_view>(), A<std::string_view>())).WillRepeatedly(Invoke([this]() { return std::make_unique<flashback::User>(*m_user); }));
-    EXPECT_CALL(*m_mock_database, remove_topic(A<uint64_t>(), A<flashback::expertise_level>(), A<uint64_t>())).Times(1);
+    EXPECT_CALL(*m_mock_database, remove_topic(A<uint64_t>(), An<flashback::expertise_level>(), A<uint64_t>())).Times(1);
 
     request.clear_user();
     EXPECT_NO_THROW(status = m_server->RemoveTopic(&context, &request, &response));
@@ -2216,7 +1971,7 @@ TEST_F(test_server, MergeTopics)
     target.set_level(flashback::expertise_level::origin);
 
     EXPECT_CALL(*m_mock_database, get_user(A<std::string_view>(), A<std::string_view>())).WillRepeatedly(Invoke([this]() { return std::make_unique<flashback::User>(*m_user); }));
-    EXPECT_CALL(*m_mock_database, merge_topics(A<uint64_t>(), A<flashback::expertise_level>(), A<uint64_t>(), A<uint64_t>())).Times(1);
+    EXPECT_CALL(*m_mock_database, merge_topics(A<uint64_t>(), An<flashback::expertise_level>(), A<uint64_t>(), A<uint64_t>())).Times(1);
 
     request.clear_user();
     EXPECT_NO_THROW(status = m_server->MergeTopics(&context, &request, &response));
@@ -2250,7 +2005,7 @@ TEST_F(test_server, EditTopic)
     topic.set_level(flashback::expertise_level::depth);
 
     EXPECT_CALL(*m_mock_database, get_user(A<std::string_view>(), A<std::string_view>())).WillRepeatedly(Invoke([this]() { return std::make_unique<flashback::User>(*m_user); }));
-    EXPECT_CALL(*m_mock_database, get_topic(A<uint64_t>(), A<flashback::expertise_level>(), A<uint64_t>())).Times(3).WillRepeatedly(Return(topic));
+    EXPECT_CALL(*m_mock_database, get_topic(A<uint64_t>(), An<flashback::expertise_level>(), A<uint64_t>())).Times(3).WillRepeatedly(Return(topic));
 
     request.clear_user();
     EXPECT_NO_THROW(status = m_server->EditTopic(&context, &request, &response));
@@ -2269,14 +2024,14 @@ TEST_F(test_server, EditTopic)
     EXPECT_THAT(status.error_code(), Eq(grpc::StatusCode::ALREADY_EXISTS));
 
     modified_topic->set_name("Reflection");
-    EXPECT_CALL(*m_mock_database, rename_topic(A<uint64_t>(), A<flashback::expertise_level>(), A<uint64_t>(), A<std::string>())).Times(1);
+    EXPECT_CALL(*m_mock_database, rename_topic(A<uint64_t>(), An<flashback::expertise_level>(), A<uint64_t>(), A<std::string>())).Times(1);
     EXPECT_NO_THROW(status = m_server->EditTopic(&context, &request, &response));
     EXPECT_THAT(status.ok(), IsTrue());
     EXPECT_THAT(status.error_message(), IsEmpty());
 
     modified_topic->set_name(topic.name());
     modified_topic->set_level(flashback::expertise_level::origin);
-    EXPECT_CALL(*m_mock_database, change_topic_level(A<uint64_t>(), A<uint64_t>(), A<flashback::expertise_level>(), A<flashback::expertise_level>())).Times(1);
+    EXPECT_CALL(*m_mock_database, change_topic_level(A<uint64_t>(), A<uint64_t>(), An<flashback::expertise_level>(), An<flashback::expertise_level>())).Times(1);
     EXPECT_NO_THROW(status = m_server->EditTopic(&context, &request, &response));
     EXPECT_THAT(status.ok(), IsTrue());
     EXPECT_THAT(status.error_message(), IsEmpty());
@@ -2305,7 +2060,7 @@ TEST_F(test_server, MoveTopic)
     target_topic.set_level(flashback::expertise_level::surface);
 
     EXPECT_CALL(*m_mock_database, get_user(A<std::string_view>(), A<std::string_view>())).WillRepeatedly(Invoke([this]() { return std::make_unique<flashback::User>(*m_user); }));
-    EXPECT_CALL(*m_mock_database, move_topic(A<uint64_t>(), A<flashback::expertise_level>(), A<uint64_t>(), A<uint64_t>(), A<uint64_t>())).Times(1);
+    EXPECT_CALL(*m_mock_database, move_topic(A<uint64_t>(), An<flashback::expertise_level>(), A<uint64_t>(), A<uint64_t>(), An<flashback::expertise_level>(), A<uint64_t>())).Times(1);
 
     request.clear_user();
     EXPECT_NO_THROW(status = m_server->MoveTopic(&context, &request, &response));
@@ -2341,7 +2096,7 @@ TEST_F(test_server, SearchTopics)
     topic.set_level(flashback::expertise_level::origin);
 
     EXPECT_CALL(*m_mock_database, get_user(A<std::string_view>(), A<std::string_view>())).WillRepeatedly(Invoke([this]() { return std::make_unique<flashback::User>(*m_user); }));
-    EXPECT_CALL(*m_mock_database, search_topics(A<uint64_t>(), A<flashback::expertise_level>(), A<std::string_view>())).Times(1).WillOnce(Return(results));
+    EXPECT_CALL(*m_mock_database, search_topics(A<uint64_t>(), An<flashback::expertise_level>(), A<std::string_view>())).Times(1).WillOnce(Return(results));
 
     request.clear_user();
     EXPECT_NO_THROW(status = m_server->SearchTopics(&context, &request, &response));
@@ -2420,42 +2175,6 @@ TEST_F(test_server, CreateSection)
     *request.mutable_section() = section;
 
     EXPECT_NO_THROW(status = m_server->CreateSection(&context, &request, &response));
-    EXPECT_THAT(status.ok(), IsTrue());
-    EXPECT_THAT(status.error_message(), IsEmpty());
-}
-
-TEST_F(test_server, ReorderSection)
-{
-    grpc::Status status{};
-    grpc::ServerContext context{};
-    flashback::ReorderSectionRequest request{};
-    flashback::ReorderSectionResponse response{};
-    flashback::Resource resource{};
-    flashback::Section source{};
-    flashback::Section target{};
-
-    resource.set_name("C++ Resource");
-    resource.set_id(1);
-    source.set_name("Reflections");
-    source.set_position(4);
-    target.set_name("Contracts");
-    target.set_position(2);
-
-    EXPECT_CALL(*m_mock_database, get_user(A<std::string_view>(), A<std::string_view>())).WillRepeatedly(Invoke([this]() { return std::make_unique<flashback::User>(*m_user); }));
-    EXPECT_CALL(*m_mock_database, reorder_section(A<uint64_t>(), A<uint64_t>(), A<uint64_t>())).Times(1);
-
-    request.clear_user();
-    EXPECT_NO_THROW(status = m_server->ReorderSection(&context, &request, &response));
-    EXPECT_THAT(status.ok(), IsFalse());
-    EXPECT_THAT(status.error_message().empty(), IsFalse());
-    EXPECT_THAT(status.error_code(), Eq(grpc::StatusCode::UNAUTHENTICATED));
-
-    *request.mutable_user() = *m_user;
-    *request.mutable_resource() = resource;
-    *request.mutable_source() = source;
-    *request.mutable_target() = target;
-
-    EXPECT_NO_THROW(status = m_server->ReorderSection(&context, &request, &response));
     EXPECT_THAT(status.ok(), IsTrue());
     EXPECT_THAT(status.error_message(), IsEmpty());
 }
@@ -2729,7 +2448,7 @@ TEST_F(test_server, AddCardToTopic)
     topic.set_level(flashback::expertise_level::depth);
 
     EXPECT_CALL(*m_mock_database, get_user(A<std::string_view>(), A<std::string_view>())).WillRepeatedly(Invoke([this]() { return std::make_unique<flashback::User>(*m_user); }));
-    EXPECT_CALL(*m_mock_database, add_card_to_topic(A<uint64_t>(), A<uint64_t>(), A<uint64_t>(), A<flashback::expertise_level>())).Times(1);
+    EXPECT_CALL(*m_mock_database, add_card_to_topic(A<uint64_t>(), A<uint64_t>(), A<uint64_t>(), An<flashback::expertise_level>())).Times(1);
 
     request.clear_user();
     EXPECT_NO_THROW(status = m_server->AddCardToTopic(&context, &request, &response));
@@ -2837,7 +2556,7 @@ TEST_F(test_server, SearchCards)
     result.insert({1, card});
 
     EXPECT_CALL(*m_mock_database, get_user(A<std::string_view>(), A<std::string_view>())).WillRepeatedly(Invoke([this]() { return std::make_unique<flashback::User>(*m_user); }));
-    EXPECT_CALL(*m_mock_database, search_cards(A<uint64_t>(), A<flashback::expertise_level>(), A<std::string_view>())).Times(1).WillOnce(Return(result));
+    EXPECT_CALL(*m_mock_database, search_cards(A<uint64_t>(), An<flashback::expertise_level>(), A<std::string_view>())).Times(1).WillOnce(Return(result));
 
     request.clear_user();
     EXPECT_NO_THROW(status = m_server->SearchCards(&context, &request, &response));
@@ -2889,16 +2608,18 @@ TEST_F(test_server, MoveCardToSection)
     flashback::MoveCardToSectionRequest request{};
     flashback::MoveCardToSectionResponse response{};
     flashback::Resource resource{};
-    flashback::Section source{};
-    flashback::Section target{};
+    flashback::Resource target_resource{};
+    flashback::Section source_section{};
+    flashback::Section target_section{};
     flashback::Card card{};
     resource.set_id(1);
-    source.set_position(1);
-    target.set_position(3);
+    target_resource.set_id(2);
+    source_section.set_position(1);
+    target_section.set_position(3);
     card.set_id(1);
 
     EXPECT_CALL(*m_mock_database, get_user(A<std::string_view>(), A<std::string_view>())).WillRepeatedly(Invoke([this]() { return std::make_unique<flashback::User>(*m_user); }));
-    EXPECT_CALL(*m_mock_database, move_card_to_section(A<uint64_t>(), A<uint64_t>(), A<uint64_t>(), A<uint64_t>())).Times(1);
+    EXPECT_CALL(*m_mock_database, move_card_to_section(A<uint64_t>(), A<uint64_t>(), A<uint64_t>(), A<uint64_t>(), A<uint64_t>())).Times(1);
 
     request.clear_user();
     EXPECT_NO_THROW(status = m_server->MoveCardToSection(&context, &request, &response));
@@ -2908,8 +2629,9 @@ TEST_F(test_server, MoveCardToSection)
 
     *request.mutable_user() = *m_user;
     *request.mutable_resource() = resource;
-    *request.mutable_source() = source;
-    *request.mutable_target() = target;
+    *request.mutable_source_section() = source_section;
+    *request.mutable_target_resource() = target_resource;
+    *request.mutable_target_section() = target_section;
     *request.mutable_card() = card;
 
     EXPECT_NO_THROW(status = m_server->MoveCardToSection(&context, &request, &response));
@@ -2965,7 +2687,7 @@ TEST_F(test_server, GetPracticeCards)
     cards.push_back(card);
 
     EXPECT_CALL(*m_mock_database, get_user(A<std::string_view>(), A<std::string_view>())).WillRepeatedly(Invoke([this]() { return std::make_unique<flashback::User>(*m_user); }));
-    EXPECT_CALL(*m_mock_database, get_practice_cards(A<uint64_t>(), A<uint64_t>(), A<uint64_t>(), A<flashback::expertise_level>(), A<uint64_t>())).Times(1).WillOnce(Return(cards));
+    EXPECT_CALL(*m_mock_database, get_practice_cards(A<uint64_t>(), A<uint64_t>(), A<uint64_t>(), An<flashback::expertise_level>(), A<uint64_t>())).Times(1).WillOnce(Return(cards));
 
     request.clear_user();
     EXPECT_NO_THROW(status = m_server->GetPracticeCards(&context, &request, &response));
@@ -3004,7 +2726,7 @@ TEST_F(test_server, MoveCardToTopic)
 
     EXPECT_CALL(*m_mock_database, get_user(A<std::string_view>(), A<std::string_view>())).WillRepeatedly(Invoke([this]() { return std::make_unique<flashback::User>(*m_user); }));
     EXPECT_CALL(*m_mock_database,
-                move_card_to_topic(A<uint64_t>(), A<uint64_t>(), A<uint64_t>(), A<flashback::expertise_level>(), A<uint64_t>(), A<uint64_t>(), A<flashback::expertise_level>())).
+                move_card_to_topic(A<uint64_t>(), A<uint64_t>(), A<uint64_t>(), An<flashback::expertise_level>(), A<uint64_t>(), A<uint64_t>(), An<flashback::expertise_level>())).
         Times(1);
 
     request.clear_user();
@@ -3040,7 +2762,7 @@ TEST_F(test_server, CreateAssessment)
     card.set_id(1);
 
     EXPECT_CALL(*m_mock_database, get_user(A<std::string_view>(), A<std::string_view>())).WillRepeatedly(Invoke([this]() { return std::make_unique<flashback::User>(*m_user); }));
-    EXPECT_CALL(*m_mock_database, create_assessment(A<uint64_t>(), A<flashback::expertise_level>(), A<uint64_t>(), A<uint64_t>())).Times(1);
+    EXPECT_CALL(*m_mock_database, create_assessment(A<uint64_t>(), An<flashback::expertise_level>(), A<uint64_t>(), A<uint64_t>())).Times(1);
 
     request.clear_user();
     EXPECT_NO_THROW(status = m_server->CreateAssessment(&context, &request, &response));
@@ -3078,7 +2800,7 @@ TEST_F(test_server, GetAssessments)
     assessments.push_back(assessment);
 
     EXPECT_CALL(*m_mock_database, get_user(A<std::string_view>(), A<std::string_view>())).WillRepeatedly(Invoke([this]() { return std::make_unique<flashback::User>(*m_user); }));
-    EXPECT_CALL(*m_mock_database, get_assessments(A<uint64_t>(), A<uint64_t>(), A<flashback::expertise_level>(), A<uint64_t>())).Times(1).WillOnce(Return(assessments));
+    EXPECT_CALL(*m_mock_database, get_assessments(A<uint64_t>(), A<uint64_t>(), An<flashback::expertise_level>(), A<uint64_t>())).Times(1).WillOnce(Return(assessments));
 
     request.clear_user();
     EXPECT_NO_THROW(status = m_server->GetAssessments(&context, &request, &response));
@@ -3110,7 +2832,7 @@ TEST_F(test_server, ExpandAssessment)
     card.set_id(1);
 
     EXPECT_CALL(*m_mock_database, get_user(A<std::string_view>(), A<std::string_view>())).WillRepeatedly(Invoke([this]() { return std::make_unique<flashback::User>(*m_user); }));
-    EXPECT_CALL(*m_mock_database, expand_assessment(A<uint64_t>(), A<uint64_t>(), A<flashback::expertise_level>(), A<uint64_t>())).Times(1);
+    EXPECT_CALL(*m_mock_database, expand_assessment(A<uint64_t>(), A<uint64_t>(), An<flashback::expertise_level>(), A<uint64_t>())).Times(1);
 
     request.clear_user();
     EXPECT_NO_THROW(status = m_server->ExpandAssessment(&context, &request, &response));
@@ -3143,7 +2865,7 @@ TEST_F(test_server, DiminishAssessment)
     card.set_id(1);
 
     EXPECT_CALL(*m_mock_database, get_user(A<std::string_view>(), A<std::string_view>())).WillRepeatedly(Invoke([this]() { return std::make_unique<flashback::User>(*m_user); }));
-    EXPECT_CALL(*m_mock_database, diminish_assessment(A<uint64_t>(), A<uint64_t>(), A<flashback::expertise_level>(), A<uint64_t>())).Times(1);
+    EXPECT_CALL(*m_mock_database, diminish_assessment(A<uint64_t>(), A<uint64_t>(), An<flashback::expertise_level>(), A<uint64_t>())).Times(1);
 
     request.clear_user();
     EXPECT_NO_THROW(status = m_server->DiminishAssessment(&context, &request, &response));
@@ -3174,7 +2896,7 @@ TEST_F(test_server, IsAssimilated)
     topic.set_level(flashback::expertise_level::depth);
 
     EXPECT_CALL(*m_mock_database, get_user(A<std::string_view>(), A<std::string_view>())).WillRepeatedly(Invoke([this]() { return std::make_unique<flashback::User>(*m_user); }));
-    EXPECT_CALL(*m_mock_database, is_assimilated(A<uint64_t>(), A<uint64_t>(), A<flashback::expertise_level>(), A<uint64_t>())).Times(1).WillOnce(Return(true));
+    EXPECT_CALL(*m_mock_database, is_assimilated(A<uint64_t>(), A<uint64_t>(), An<flashback::expertise_level>(), A<uint64_t>())).Times(1).WillOnce(Return(true));
 
     request.clear_user();
     EXPECT_NO_THROW(status = m_server->IsAssimilated(&context, &request, &response));
@@ -3626,14 +3348,17 @@ TEST_F(test_server, MakeProgress)
     flashback::MakeProgressRequest request{};
     flashback::MakeProgressResponse response{};
     flashback::Card card{};
+    flashback::Milestone milestone{};
     auto constexpr headline{"Is it worth criticizing it?"};
     auto constexpr state{flashback::Card::draft};
     card.set_id(1);
     card.set_headline(headline);
     card.set_state(state);
+    milestone.set_id(1);
+    milestone.set_position(1);
 
     EXPECT_CALL(*m_mock_database, get_user(A<std::string_view>(), A<std::string_view>())).WillRepeatedly(Invoke([this]() { return std::make_unique<flashback::User>(*m_user); }));
-    EXPECT_CALL(*m_mock_database, make_progress(A<uint64_t>(), A<uint64_t>(), A<uint64_t>(), A<flashback::practice_mode>())).Times(1);
+    EXPECT_CALL(*m_mock_database, make_progress(A<uint64_t>(), A<uint64_t>(), An<flashback::expertise_level>(), A<uint64_t>(), A<uint64_t>())).Times(1);
 
     request.clear_user();
     EXPECT_NO_THROW(status = m_server->MakeProgress(&context, &request, &response));
@@ -3643,8 +3368,8 @@ TEST_F(test_server, MakeProgress)
 
     *request.mutable_user() = *m_user;
     *request.mutable_card() = card;
+    *request.mutable_milestone() = milestone;
     request.set_duration(100);
-    request.set_mode(flashback::practice_mode::progressive);
 
     EXPECT_NO_THROW(status = m_server->MakeProgress(&context, &request, &response));
     EXPECT_THAT(status.ok(), IsTrue());

@@ -834,15 +834,11 @@ TEST_F(test_database, create_resource)
     constexpr auto link{R"(https://example.com)"};
     auto const now{std::chrono::system_clock::now().time_since_epoch()};
     auto const later{std::chrono::system_clock::time_point(std::chrono::system_clock::now() + std::chrono::years{3}).time_since_epoch()};
-    auto const production{std::chrono::duration_cast<std::chrono::seconds>(now).count()};
-    auto const expiration{std::chrono::duration_cast<std::chrono::seconds>(later).count()};
     flashback::Resource resource{};
     resource.set_name(name);
     resource.set_type(type);
     resource.set_pattern(pattern);
     resource.set_link(link);
-    resource.set_production(production);
-    resource.set_expiration(expiration);
 
     EXPECT_NO_THROW(resource = m_database->create_resource(resource));
     EXPECT_THAT(resource.id(), Gt(0));
@@ -850,8 +846,6 @@ TEST_F(test_database, create_resource)
     EXPECT_THAT(resource.type(), Eq(type));
     EXPECT_THAT(resource.pattern(), Eq(pattern));
     EXPECT_THAT(resource.link(), Eq(link));
-    EXPECT_THAT(resource.production(), Eq(production));
-    EXPECT_THAT(resource.expiration(), Eq(expiration));
 
     resource.clear_id();
     resource.clear_name();
@@ -861,8 +855,6 @@ TEST_F(test_database, create_resource)
     EXPECT_THAT(resource.type(), Eq(type));
     EXPECT_THAT(resource.pattern(), Eq(pattern));
     EXPECT_THAT(resource.link(), Eq(link));
-    EXPECT_THAT(resource.production(), Eq(production));
-    EXPECT_THAT(resource.expiration(), Eq(expiration));
 }
 
 TEST_F(test_database, add_resource_to_subject)
@@ -871,14 +863,10 @@ TEST_F(test_database, add_resource_to_subject)
     flashback::Resource resource{};
     auto const now{std::chrono::system_clock::now().time_since_epoch()};
     auto const later{std::chrono::system_clock::time_point(std::chrono::system_clock::now() + std::chrono::years{3}).time_since_epoch()};
-    auto const production{std::chrono::duration_cast<std::chrono::seconds>(now).count()};
-    auto const expiration{std::chrono::duration_cast<std::chrono::seconds>(later).count()};
     resource.set_name("Introduction to Algorithms");
     resource.set_type(flashback::Resource::book);
     resource.set_pattern(flashback::Resource::chapter);
     resource.set_link(R"(https://example.com)");
-    resource.set_production(production);
-    resource.set_expiration(expiration);
     subject.set_name("Algorithms");
 
     ASSERT_NO_THROW(resource = m_database->create_resource(resource));
@@ -897,21 +885,15 @@ TEST_F(test_database, get_resources)
     std::vector<flashback::Resource> resources{};
     auto const now{std::chrono::system_clock::now().time_since_epoch()};
     auto const later{std::chrono::system_clock::time_point(std::chrono::system_clock::now() + std::chrono::years{3}).time_since_epoch()};
-    auto const production{std::chrono::duration_cast<std::chrono::seconds>(now).count()};
-    auto const expiration{std::chrono::duration_cast<std::chrono::seconds>(later).count()};
     resource.set_name("Introduction to Algorithms");
     resource.set_type(flashback::Resource::book);
     resource.set_pattern(flashback::Resource::chapter);
     resource.set_link(R"(https://example.com)");
-    resource.set_production(production);
-    resource.set_expiration(expiration);
     flashback::Resource secondary_resource{};
     secondary_resource.set_name("You Don't Know JS");
     secondary_resource.set_type(flashback::Resource::book);
     secondary_resource.set_pattern(flashback::Resource::chapter);
     secondary_resource.set_link(R"(https://example.com)");
-    secondary_resource.set_production(production);
-    secondary_resource.set_expiration(expiration);
     subject.set_name("Algorithms");
 
     ASSERT_NO_THROW(resource = m_database->create_resource(resource));
@@ -933,8 +915,6 @@ TEST_F(test_database, get_resources)
     EXPECT_THAT(resources.at(0).type(), Eq(resource.type()));
     EXPECT_THAT(resources.at(0).pattern(), Eq(resource.pattern()));
     EXPECT_THAT(resources.at(0).link(), Eq(resource.link()));
-    EXPECT_THAT(resources.at(0).production(), Eq(resource.production()));
-    EXPECT_THAT(resources.at(0).expiration(), Eq(resource.expiration()));
 }
 
 TEST_F(test_database, drop_resource_from_subject)
@@ -945,22 +925,16 @@ TEST_F(test_database, drop_resource_from_subject)
     std::vector<flashback::Resource> resources{};
     auto const now{std::chrono::system_clock::now().time_since_epoch()};
     auto const later{std::chrono::system_clock::time_point(std::chrono::system_clock::now() + std::chrono::years{3}).time_since_epoch()};
-    auto const production{std::chrono::duration_cast<std::chrono::seconds>(now).count()};
-    auto const expiration{std::chrono::duration_cast<std::chrono::seconds>(later).count()};
     flashback::Resource resource{};
     resource.set_name("Introduction to Algorithms");
     resource.set_type(flashback::Resource::book);
     resource.set_pattern(flashback::Resource::chapter);
     resource.set_link(R"(https://example.com)");
-    resource.set_production(production);
-    resource.set_expiration(expiration);
     flashback::Resource secondary_resource{};
     secondary_resource.set_name("You Don't Know JS");
     secondary_resource.set_type(flashback::Resource::book);
     secondary_resource.set_pattern(flashback::Resource::chapter);
     secondary_resource.set_link(R"(https://example.com)");
-    secondary_resource.set_production(production);
-    secondary_resource.set_expiration(expiration);
     subject.set_name("JavaScript");
 
     ASSERT_NO_THROW(resource = m_database->create_resource(resource));
@@ -991,8 +965,6 @@ TEST_F(test_database, search_resources)
     constexpr auto irrelevant_name{"Irrelevant"};
     auto const now{std::chrono::system_clock::now().time_since_epoch()};
     auto const later{std::chrono::system_clock::time_point(std::chrono::system_clock::now() + std::chrono::years{3}).time_since_epoch()};
-    auto const production{std::chrono::duration_cast<std::chrono::seconds>(now).count()};
-    auto const expiration{std::chrono::duration_cast<std::chrono::seconds>(later).count()};
     std::vector<flashback::Resource> resources{};
     std::map<uint64_t, flashback::Resource> matched_resources{};
     flashback::Subject subject{};
@@ -1008,8 +980,6 @@ TEST_F(test_database, search_resources)
         resource.set_type(flashback::Resource::book);
         resource.set_pattern(flashback::Resource::chapter);
         resource.set_link(R"(https://example.com)");
-        resource.set_production(production);
-        resource.set_expiration(expiration);
         ASSERT_NO_THROW(resource = m_database->create_resource(resource));
         ASSERT_THAT(resource.id(), Gt(0));
         ASSERT_NO_THROW(m_database->add_resource_to_subject(resource.id(), subject.id()));
@@ -1033,15 +1003,11 @@ TEST_F(test_database, edit_resource_link)
     std::vector<flashback::Resource> resources{};
     auto const now{std::chrono::system_clock::now().time_since_epoch()};
     auto const later{std::chrono::system_clock::time_point(std::chrono::system_clock::now() + std::chrono::years{3}).time_since_epoch()};
-    auto const production{std::chrono::duration_cast<std::chrono::seconds>(now).count()};
-    auto const expiration{std::chrono::duration_cast<std::chrono::seconds>(later).count()};
     flashback::Resource resource{};
     resource.set_name("Introduction to Algorithms");
     resource.set_type(flashback::Resource::book);
     resource.set_pattern(flashback::Resource::chapter);
     resource.set_link(R"(https://example.com)");
-    resource.set_production(production);
-    resource.set_expiration(expiration);
     subject.set_name("JavaScript");
 
     ASSERT_NO_THROW(resource = m_database->create_resource(resource));
@@ -1073,15 +1039,11 @@ TEST_F(test_database, change_resource_type)
     std::vector<flashback::Resource> resources{};
     auto const now{std::chrono::system_clock::now().time_since_epoch()};
     auto const later{std::chrono::system_clock::time_point(std::chrono::system_clock::now() + std::chrono::years{3}).time_since_epoch()};
-    auto const production{std::chrono::duration_cast<std::chrono::seconds>(now).count()};
-    auto const expiration{std::chrono::duration_cast<std::chrono::seconds>(later).count()};
     flashback::Resource resource{};
     resource.set_name("Introduction to Algorithms");
     resource.set_type(flashback::Resource::book);
     resource.set_pattern(flashback::Resource::chapter);
     resource.set_link(R"(https://example.com)");
-    resource.set_production(production);
-    resource.set_expiration(expiration);
     subject.set_name("JavaScript");
 
     ASSERT_NO_THROW(resource = m_database->create_resource(resource));
@@ -1113,15 +1075,11 @@ TEST_F(test_database, change_section_pattern)
     std::vector<flashback::Resource> resources{};
     auto const now{std::chrono::system_clock::now().time_since_epoch()};
     auto const later{std::chrono::system_clock::time_point(std::chrono::system_clock::now() + std::chrono::years{3}).time_since_epoch()};
-    auto const production{std::chrono::duration_cast<std::chrono::seconds>(now).count()};
-    auto const expiration{std::chrono::duration_cast<std::chrono::seconds>(later).count()};
     flashback::Resource resource{};
     resource.set_name("Introduction to Algorithms");
     resource.set_type(flashback::Resource::book);
     resource.set_pattern(flashback::Resource::chapter);
     resource.set_link(R"(https://example.com)");
-    resource.set_production(production);
-    resource.set_expiration(expiration);
     subject.set_name("JavaScript");
 
     ASSERT_NO_THROW(resource = m_database->create_resource(resource));
@@ -1144,86 +1102,6 @@ TEST_F(test_database, change_section_pattern)
     EXPECT_THAT(resources.at(0).pattern(), Eq(modified_pattern));
 }
 
-TEST_F(test_database, edit_resource_production)
-{
-    using testing::SizeIs;
-
-    flashback::Subject subject{};
-    std::vector<flashback::Resource> resources{};
-    auto const now{std::chrono::system_clock::now().time_since_epoch()};
-    auto const later{std::chrono::system_clock::time_point(std::chrono::system_clock::now() + std::chrono::years{3}).time_since_epoch()};
-    auto const production{std::chrono::duration_cast<std::chrono::seconds>(now).count()};
-    auto const modified_production{std::chrono::duration_cast<std::chrono::seconds>(now + std::chrono::days{2}).count()};
-    auto const expiration{std::chrono::duration_cast<std::chrono::seconds>(later).count()};
-    flashback::Resource resource{};
-    resource.set_name("Introduction to Algorithms");
-    resource.set_type(flashback::Resource::book);
-    resource.set_pattern(flashback::Resource::chapter);
-    resource.set_link(R"(https://example.com)");
-    resource.set_production(production);
-    resource.set_expiration(expiration);
-    subject.set_name("JavaScript");
-
-    ASSERT_NO_THROW(resource = m_database->create_resource(resource));
-    ASSERT_THAT(resource.id(), Gt(0));
-    ASSERT_NO_THROW(subject = m_database->create_subject(subject.name()));
-    ASSERT_THAT(subject.id(), Gt(0));
-    ASSERT_NO_THROW(m_database->add_resource_to_subject(resource.id(), subject.id()));
-    ASSERT_NO_THROW(resources = m_database->get_resources(m_user->id(), subject.id()));
-    ASSERT_THAT(resources, SizeIs(1));
-    ASSERT_NO_THROW(resources.at(0).id());
-    ASSERT_THAT(resources.at(0).id(), Eq(resource.id()));
-    EXPECT_THAT(resources.at(0).production(), Eq(resource.production()));
-    EXPECT_THAT(resources.at(0).production(), Ne(modified_production));
-    EXPECT_NO_THROW(m_database->edit_resource_production(resource.id(), modified_production));
-    ASSERT_NO_THROW(resources = m_database->get_resources(m_user->id(), subject.id()));
-    ASSERT_THAT(resources, SizeIs(1));
-    ASSERT_NO_THROW(resources.at(0).id());
-    ASSERT_THAT(resources.at(0).id(), Eq(resource.id()));
-    EXPECT_THAT(resources.at(0).production(), Ne(resource.production()));
-    EXPECT_THAT(resources.at(0).production(), Eq(modified_production));
-}
-
-TEST_F(test_database, edit_resource_expiration)
-{
-    using testing::SizeIs;
-
-    flashback::Subject subject{};
-    std::vector<flashback::Resource> resources{};
-    auto const now{std::chrono::system_clock::now().time_since_epoch()};
-    auto const later{std::chrono::system_clock::time_point(std::chrono::system_clock::now() + std::chrono::years{3}).time_since_epoch()};
-    auto const production{std::chrono::duration_cast<std::chrono::seconds>(now).count()};
-    auto const expiration{std::chrono::duration_cast<std::chrono::seconds>(later).count()};
-    auto const modified_expiration{std::chrono::duration_cast<std::chrono::seconds>(later + std::chrono::days{2}).count()};
-    flashback::Resource resource{};
-    resource.set_name("Introduction to Algorithms");
-    resource.set_type(flashback::Resource::book);
-    resource.set_pattern(flashback::Resource::chapter);
-    resource.set_link(R"(https://example.com)");
-    resource.set_production(production);
-    resource.set_expiration(expiration);
-    subject.set_name("JavaScript");
-
-    ASSERT_NO_THROW(resource = m_database->create_resource(resource));
-    ASSERT_THAT(resource.id(), Gt(0));
-    ASSERT_NO_THROW(subject = m_database->create_subject(subject.name()));
-    ASSERT_THAT(subject.id(), Gt(0));
-    ASSERT_NO_THROW(m_database->add_resource_to_subject(resource.id(), subject.id()));
-    ASSERT_NO_THROW(resources = m_database->get_resources(m_user->id(), subject.id()));
-    ASSERT_THAT(resources, SizeIs(1));
-    ASSERT_NO_THROW(resources.at(0).id());
-    ASSERT_THAT(resources.at(0).id(), Eq(resource.id()));
-    EXPECT_THAT(resources.at(0).expiration(), Eq(resource.expiration()));
-    EXPECT_THAT(resources.at(0).expiration(), Ne(modified_expiration));
-    EXPECT_NO_THROW(m_database->edit_resource_expiration(resource.id(), modified_expiration));
-    ASSERT_NO_THROW(resources = m_database->get_resources(m_user->id(), subject.id()));
-    ASSERT_THAT(resources, SizeIs(1));
-    ASSERT_NO_THROW(resources.at(0).id());
-    ASSERT_THAT(resources.at(0).id(), Eq(resource.id()));
-    EXPECT_THAT(resources.at(0).expiration(), Ne(resource.expiration()));
-    EXPECT_THAT(resources.at(0).expiration(), Eq(modified_expiration));
-}
-
 TEST_F(test_database, rename_resource)
 {
     using testing::SizeIs;
@@ -1232,16 +1110,12 @@ TEST_F(test_database, rename_resource)
     std::vector<flashback::Resource> resources{};
     auto const now{std::chrono::system_clock::now().time_since_epoch()};
     auto const later{std::chrono::system_clock::time_point(std::chrono::system_clock::now() + std::chrono::years{3}).time_since_epoch()};
-    auto const production{std::chrono::duration_cast<std::chrono::seconds>(now).count()};
-    auto const expiration{std::chrono::duration_cast<std::chrono::seconds>(later).count()};
     auto const modified_name{"The End of Algorithms"};
     flashback::Resource resource{};
     resource.set_name("Introduction to Algorithms");
     resource.set_type(flashback::Resource::book);
     resource.set_pattern(flashback::Resource::chapter);
     resource.set_link(R"(https://example.com)");
-    resource.set_production(production);
-    resource.set_expiration(expiration);
     subject.set_name("JavaScript");
 
     ASSERT_NO_THROW(resource = m_database->create_resource(resource));
@@ -1272,22 +1146,16 @@ TEST_F(test_database, remove_resource)
     std::vector<flashback::Resource> resources{};
     auto const now{std::chrono::system_clock::now().time_since_epoch()};
     auto const later{std::chrono::system_clock::time_point(std::chrono::system_clock::now() + std::chrono::years{3}).time_since_epoch()};
-    auto const production{std::chrono::duration_cast<std::chrono::seconds>(now).count()};
-    auto const expiration{std::chrono::duration_cast<std::chrono::seconds>(later).count()};
     flashback::Resource resource{};
     resource.set_name("Introduction to Algorithms");
     resource.set_type(flashback::Resource::book);
     resource.set_pattern(flashback::Resource::chapter);
     resource.set_link(R"(https://example.com)");
-    resource.set_production(production);
-    resource.set_expiration(expiration);
     flashback::Resource secondary_resource{};
     secondary_resource.set_name("You Don't Know JS");
     secondary_resource.set_type(flashback::Resource::book);
     secondary_resource.set_pattern(flashback::Resource::chapter);
     secondary_resource.set_link(R"(https://example.com)");
-    secondary_resource.set_production(production);
-    secondary_resource.set_expiration(expiration);
     subject.set_name("JavaScript");
 
     ASSERT_NO_THROW(resource = m_database->create_resource(resource));
@@ -1313,22 +1181,16 @@ TEST_F(test_database, merge_resources)
     std::vector<flashback::Resource> resources{};
     auto const now{std::chrono::system_clock::now().time_since_epoch()};
     auto const later{std::chrono::system_clock::time_point(std::chrono::system_clock::now() + std::chrono::years{3}).time_since_epoch()};
-    auto const production{std::chrono::duration_cast<std::chrono::seconds>(now).count()};
-    auto const expiration{std::chrono::duration_cast<std::chrono::seconds>(later).count()};
     flashback::Resource resource{};
     resource.set_name("Introduction to Algorithms");
     resource.set_type(flashback::Resource::book);
     resource.set_pattern(flashback::Resource::chapter);
     resource.set_link(R"(https://example.com)");
-    resource.set_production(production);
-    resource.set_expiration(expiration);
     flashback::Resource secondary_resource{};
     secondary_resource.set_name("You Don't Know JS");
     secondary_resource.set_type(flashback::Resource::book);
     secondary_resource.set_pattern(flashback::Resource::chapter);
     secondary_resource.set_link(R"(https://example.com)");
-    secondary_resource.set_production(production);
-    secondary_resource.set_expiration(expiration);
     subject.set_name("JavaScript");
 
     ASSERT_NO_THROW(resource = m_database->create_resource(resource));
@@ -1363,15 +1225,11 @@ TEST_F(test_database, add_provider)
     std::vector<flashback::Resource> resources{};
     auto const now{std::chrono::system_clock::now().time_since_epoch()};
     auto const later{std::chrono::system_clock::time_point(std::chrono::system_clock::now() + std::chrono::years{3}).time_since_epoch()};
-    auto const production{std::chrono::duration_cast<std::chrono::seconds>(now).count()};
-    auto const expiration{std::chrono::duration_cast<std::chrono::seconds>(later).count()};
     flashback::Resource resource{};
     resource.set_name("Introduction to Algorithms");
     resource.set_type(flashback::Resource::book);
     resource.set_pattern(flashback::Resource::chapter);
     resource.set_link(R"(https://example.com)");
-    resource.set_production(production);
-    resource.set_expiration(expiration);
     flashback::Provider provider{};
     provider.set_name("Brian Salehi");
 
@@ -1389,15 +1247,11 @@ TEST_F(test_database, drop_provider)
     std::vector<flashback::Resource> resources{};
     auto const now{std::chrono::system_clock::now().time_since_epoch()};
     auto const later{std::chrono::system_clock::time_point(std::chrono::system_clock::now() + std::chrono::years{3}).time_since_epoch()};
-    auto const production{std::chrono::duration_cast<std::chrono::seconds>(now).count()};
-    auto const expiration{std::chrono::duration_cast<std::chrono::seconds>(later).count()};
     flashback::Resource resource{};
     resource.set_name("Introduction to Algorithms");
     resource.set_type(flashback::Resource::book);
     resource.set_pattern(flashback::Resource::chapter);
     resource.set_link(R"(https://example.com)");
-    resource.set_production(production);
-    resource.set_expiration(expiration);
     flashback::Provider provider{};
     provider.set_name("Brian Salehi");
 
@@ -1425,15 +1279,11 @@ TEST_F(test_database, add_presenter)
     std::vector<flashback::Resource> resources{};
     auto const now{std::chrono::system_clock::now().time_since_epoch()};
     auto const later{std::chrono::system_clock::time_point(std::chrono::system_clock::now() + std::chrono::years{3}).time_since_epoch()};
-    auto const production{std::chrono::duration_cast<std::chrono::seconds>(now).count()};
-    auto const expiration{std::chrono::duration_cast<std::chrono::seconds>(later).count()};
     flashback::Resource resource{};
     resource.set_name("Introduction to Algorithms");
     resource.set_type(flashback::Resource::book);
     resource.set_pattern(flashback::Resource::chapter);
     resource.set_link(R"(https://example.com)");
-    resource.set_production(production);
-    resource.set_expiration(expiration);
     flashback::Presenter presenter{};
     presenter.set_name("Brian Salehi");
 
@@ -1451,15 +1301,11 @@ TEST_F(test_database, drop_presenter)
     std::vector<flashback::Resource> resources{};
     auto const now{std::chrono::system_clock::now().time_since_epoch()};
     auto const later{std::chrono::system_clock::time_point(std::chrono::system_clock::now() + std::chrono::years{3}).time_since_epoch()};
-    auto const production{std::chrono::duration_cast<std::chrono::seconds>(now).count()};
-    auto const expiration{std::chrono::duration_cast<std::chrono::seconds>(later).count()};
     flashback::Resource resource{};
     resource.set_name("Introduction to Algorithms");
     resource.set_type(flashback::Resource::book);
     resource.set_pattern(flashback::Resource::chapter);
     resource.set_link(R"(https://example.com)");
-    resource.set_production(production);
-    resource.set_expiration(expiration);
     flashback::Presenter presenter{};
     presenter.set_name("Brian Salehi");
 
@@ -1672,7 +1518,6 @@ TEST_F(test_database, create_nerve)
     subject.set_name("C++");
     flashback::Resource resource{};
     resource.set_name("Brian's Knowledge in C++");
-    auto const expiration{std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch() + std::chrono::years{4})};
 
     ASSERT_NO_THROW(subject = m_database->create_subject(subject.name()));
     ASSERT_THAT(subject.id(), Gt(0));
@@ -1690,7 +1535,6 @@ TEST_F(test_database, get_nerves)
     resource.set_name("C++");
     std::vector<flashback::Resource> resources{};
     std::string const expected_name{resource.name()};
-    auto const expiration{std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch() + std::chrono::years{4})};
 
     ASSERT_NO_THROW(subject = m_database->create_subject(subject.name()));
     ASSERT_THAT(subject.id(), Gt(0));
@@ -1704,8 +1548,6 @@ TEST_F(test_database, get_nerves)
     EXPECT_THAT(resources.at(0).type(), Eq(flashback::Resource::nerve));
     EXPECT_THAT(resources.at(0).pattern(), Eq(flashback::Resource::synapse));
     EXPECT_TRUE(resources.at(0).link().empty());
-    EXPECT_THAT(resources.at(0).production(), Gt(0));
-    EXPECT_THAT(resources.at(0).expiration(), Eq(expiration.count()));
     EXPECT_NO_THROW(resources = m_database->get_nerves(m_user->id()));
     ASSERT_THAT(resources, SizeIs(1));
     ASSERT_NO_THROW(resources.at(0).id());
@@ -1714,16 +1556,12 @@ TEST_F(test_database, get_nerves)
     EXPECT_THAT(resources.at(0).type(), Eq(flashback::Resource::nerve));
     EXPECT_THAT(resources.at(0).pattern(), Eq(flashback::Resource::synapse));
     EXPECT_TRUE(resources.at(0).link().empty());
-    EXPECT_THAT(resources.at(0).production(), Gt(0));
-    EXPECT_THAT(resources.at(0).expiration(), Eq(expiration.count()));
 }
 
 TEST_F(test_database, create_section)
 {
     using testing::SizeIs;
 
-    auto const production{std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch())};
-    auto const expiration{std::chrono::duration_cast<std::chrono::seconds>(production + std::chrono::years{4})};
     std::map<uint64_t, flashback::Section> sections{};
     flashback::Section section{};
     flashback::Resource resource{};
@@ -1731,8 +1569,6 @@ TEST_F(test_database, create_section)
     resource.set_type(flashback::Resource::book);
     resource.set_pattern(flashback::Resource::chapter);
     resource.clear_link();
-    resource.set_production(production.count());
-    resource.set_expiration(expiration.count());
 
     ASSERT_NO_THROW(resource = m_database->create_resource(resource));
     ASSERT_THAT(resource.id(), Gt(0));
@@ -1753,8 +1589,6 @@ TEST_F(test_database, get_sections)
 {
     using testing::SizeIs;
 
-    auto const production{std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch())};
-    auto const expiration{std::chrono::duration_cast<std::chrono::seconds>(production + std::chrono::years{4})};
     std::map<uint64_t, flashback::Section> sections{};
     flashback::Section section{};
     flashback::Resource resource{};
@@ -1762,8 +1596,6 @@ TEST_F(test_database, get_sections)
     resource.set_type(flashback::Resource::book);
     resource.set_pattern(flashback::Resource::chapter);
     resource.clear_link();
-    resource.set_production(production.count());
-    resource.set_expiration(expiration.count());
 
     ASSERT_NO_THROW(resource = m_database->create_resource(resource));
     ASSERT_THAT(resource.id(), Gt(0));
@@ -1785,8 +1617,6 @@ TEST_F(test_database, remove_section)
 {
     using testing::SizeIs;
 
-    auto const production{std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch())};
-    auto const expiration{std::chrono::duration_cast<std::chrono::seconds>(production + std::chrono::years{4})};
     std::map<uint64_t, flashback::Section> sections{};
     flashback::Section section{};
     flashback::Resource resource{};
@@ -1794,8 +1624,6 @@ TEST_F(test_database, remove_section)
     resource.set_type(flashback::Resource::book);
     resource.set_pattern(flashback::Resource::chapter);
     resource.clear_link();
-    resource.set_production(production.count());
-    resource.set_expiration(expiration.count());
 
     ASSERT_NO_THROW(resource = m_database->create_resource(resource));
     ASSERT_THAT(resource.id(), Gt(0));
@@ -1821,8 +1649,6 @@ TEST_F(test_database, reorder_section)
 {
     using testing::SizeIs;
 
-    auto const production{std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch())};
-    auto const expiration{std::chrono::duration_cast<std::chrono::seconds>(production + std::chrono::years{4})};
     std::map<uint64_t, flashback::Section> sections{};
     flashback::Section section{};
     flashback::Resource resource{};
@@ -1830,8 +1656,6 @@ TEST_F(test_database, reorder_section)
     resource.set_type(flashback::Resource::book);
     resource.set_pattern(flashback::Resource::chapter);
     resource.clear_link();
-    resource.set_production(production.count());
-    resource.set_expiration(expiration.count());
 
     ASSERT_NO_THROW(resource = m_database->create_resource(resource));
     ASSERT_THAT(resource.id(), Gt(0));
@@ -1870,8 +1694,6 @@ TEST_F(test_database, merge_sections)
 {
     using testing::SizeIs;
 
-    auto const production{std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch())};
-    auto const expiration{std::chrono::duration_cast<std::chrono::seconds>(production + std::chrono::years{4})};
     std::map<uint64_t, flashback::Section> sections{};
     flashback::Section section{};
     flashback::Resource resource{};
@@ -1879,8 +1701,6 @@ TEST_F(test_database, merge_sections)
     resource.set_type(flashback::Resource::book);
     resource.set_pattern(flashback::Resource::chapter);
     resource.clear_link();
-    resource.set_production(production.count());
-    resource.set_expiration(expiration.count());
 
     ASSERT_NO_THROW(resource = m_database->create_resource(resource));
     ASSERT_THAT(resource.id(), Gt(0));
@@ -1910,8 +1730,6 @@ TEST_F(test_database, rename_section)
 {
     using testing::SizeIs;
 
-    auto const production{std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch())};
-    auto const expiration{std::chrono::duration_cast<std::chrono::seconds>(production + std::chrono::years{4})};
     std::map<uint64_t, flashback::Section> sections{};
     flashback::Section section{};
     flashback::Resource resource{};
@@ -1919,8 +1737,6 @@ TEST_F(test_database, rename_section)
     resource.set_type(flashback::Resource::book);
     resource.set_pattern(flashback::Resource::chapter);
     resource.clear_link();
-    resource.set_production(production.count());
-    resource.set_expiration(expiration.count());
 
     ASSERT_NO_THROW(resource = m_database->create_resource(resource));
     ASSERT_THAT(resource.id(), Gt(0));
@@ -1951,8 +1767,6 @@ TEST_F(test_database, move_section)
 {
     using testing::SizeIs;
 
-    auto const production{std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch())};
-    auto const expiration{std::chrono::duration_cast<std::chrono::seconds>(production + std::chrono::years{4})};
     std::map<uint64_t, flashback::Section> sections{};
     flashback::Section section{};
     flashback::Resource resource{};
@@ -1960,15 +1774,11 @@ TEST_F(test_database, move_section)
     resource.set_type(flashback::Resource::book);
     resource.set_pattern(flashback::Resource::chapter);
     resource.clear_link();
-    resource.set_production(production.count());
-    resource.set_expiration(expiration.count());
     flashback::Resource target_resource{};
     target_resource.set_name("Rust");
     target_resource.set_type(flashback::Resource::book);
     target_resource.set_pattern(flashback::Resource::chapter);
     target_resource.clear_link();
-    target_resource.set_production(production.count());
-    target_resource.set_expiration(expiration.count());
 
     ASSERT_NO_THROW(resource = m_database->create_resource(resource));
     ASSERT_THAT(resource.id(), Gt(0));
@@ -2010,8 +1820,6 @@ TEST_F(test_database, search_sections)
 {
     using testing::SizeIs;
 
-    auto const production{std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch())};
-    auto const expiration{std::chrono::duration_cast<std::chrono::seconds>(production + std::chrono::years{4})};
     std::map<uint64_t, flashback::Section> sections{};
     flashback::Section section{};
     flashback::Resource resource{};
@@ -2019,8 +1827,6 @@ TEST_F(test_database, search_sections)
     resource.set_type(flashback::Resource::book);
     resource.set_pattern(flashback::Resource::chapter);
     resource.clear_link();
-    resource.set_production(production.count());
-    resource.set_expiration(expiration.count());
 
     ASSERT_NO_THROW(resource = m_database->create_resource(resource));
     ASSERT_THAT(resource.id(), Gt(0));
@@ -2047,8 +1853,6 @@ TEST_F(test_database, edit_section_link)
 {
     using testing::SizeIs;
 
-    auto const production{std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch())};
-    auto const expiration{std::chrono::duration_cast<std::chrono::seconds>(production + std::chrono::years{4})};
     constexpr auto link{R"(https://example.com)"};
     std::map<uint64_t, flashback::Section> sections{};
     flashback::Section section{};
@@ -2057,8 +1861,6 @@ TEST_F(test_database, edit_section_link)
     resource.set_type(flashback::Resource::book);
     resource.set_pattern(flashback::Resource::chapter);
     resource.clear_link();
-    resource.set_production(production.count());
-    resource.set_expiration(expiration.count());
     section.set_name("C++ Book");
     section.clear_position();
     section.set_link(link);
@@ -2314,12 +2116,12 @@ TEST_F(test_database, move_topic)
     ASSERT_NO_THROW(topics.at(1).position());
     EXPECT_NO_THROW(topics = m_database->get_topics(target_subject.id(), level));
     EXPECT_THAT(topics, SizeIs(3));
-    EXPECT_NO_THROW(m_database->move_topic(subject.id(), level, 1, target_subject.id(), 4));
+    EXPECT_NO_THROW(m_database->move_topic(subject.id(), level, 1, target_subject.id(), level, 4));
     EXPECT_NO_THROW(topics = m_database->get_topics(subject.id(), level));
     EXPECT_THAT(topics, SizeIs(2));
     EXPECT_NO_THROW(topics = m_database->get_topics(target_subject.id(), level));
     EXPECT_THAT(topics, SizeIs(4));
-    EXPECT_NO_THROW(m_database->move_topic(subject.id(), level, 1, target_subject.id(), 1));
+    EXPECT_NO_THROW(m_database->move_topic(subject.id(), level, 1, target_subject.id(), level, 1));
     EXPECT_NO_THROW(topics = m_database->get_topics(subject.id(), level));
     EXPECT_THAT(topics, SizeIs(1));
     EXPECT_NO_THROW(topics = m_database->get_topics(target_subject.id(), level));
@@ -2411,15 +2213,11 @@ TEST_F(test_database, add_card_to_section)
     flashback::Resource resource{};
     flashback::Section section{};
     flashback::Card card{};
-    std::chrono::seconds const production{std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch())};
-    std::chrono::seconds const expiration{production + std::chrono::years{1}};
     resource.clear_id();
     resource.set_name("C++ Book");
     resource.set_type(flashback::Resource::book);
     resource.set_pattern(flashback::Resource::chapter);
     resource.set_link(R"(https://flashback.eu.com)");
-    resource.set_production(production.count());
-    resource.set_expiration(expiration.count());
     section.clear_position();
     section.set_name("Chapter 1");
     section.set_link(R"(https://flashback.eu.com/chapter1)");
@@ -2443,15 +2241,11 @@ TEST_F(test_database, add_card_to_topic)
     flashback::Card card{};
     flashback::Subject subject{};
     flashback::Topic topic{};
-    std::chrono::seconds const production{std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch())};
-    std::chrono::seconds const expiration{production + std::chrono::years{1}};
     resource.clear_id();
     resource.set_name("C++ Book");
     resource.set_type(flashback::Resource::book);
     resource.set_pattern(flashback::Resource::chapter);
     resource.set_link(R"(https://flashback.eu.com)");
-    resource.set_production(production.count());
-    resource.set_expiration(expiration.count());
     section.clear_position();
     section.set_name("Chapter 1");
     section.set_link(R"(https://flashback.eu.com/chapter1)");
@@ -2486,15 +2280,11 @@ TEST_F(test_database, get_section_cards)
     flashback::Card card{};
     flashback::Subject subject{};
     flashback::Topic topic{};
-    std::chrono::seconds const production{std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch())};
-    std::chrono::seconds const expiration{production + std::chrono::years{1}};
     resource.clear_id();
     resource.set_name("C++ Book");
     resource.set_type(flashback::Resource::book);
     resource.set_pattern(flashback::Resource::chapter);
     resource.set_link(R"(https://flashback.eu.com)");
-    resource.set_production(production.count());
-    resource.set_expiration(expiration.count());
     section.clear_position();
     section.set_name("Chapter 1");
     section.set_link(R"(https://flashback.eu.com/chapter1)");
@@ -2533,15 +2323,11 @@ TEST_F(test_database, get_topic_cards)
     flashback::Card card{};
     flashback::Subject subject{};
     flashback::Topic topic{};
-    std::chrono::seconds const production{std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch())};
-    std::chrono::seconds const expiration{production + std::chrono::years{1}};
     resource.clear_id();
     resource.set_name("C++ Book");
     resource.set_type(flashback::Resource::book);
     resource.set_pattern(flashback::Resource::chapter);
     resource.set_link(R"(https://flashback.eu.com)");
-    resource.set_production(production.count());
-    resource.set_expiration(expiration.count());
     section.clear_position();
     section.set_name("Chapter 1");
     section.set_link(R"(https://flashback.eu.com/chapter1)");
@@ -2582,15 +2368,11 @@ TEST_F(test_database, edit_card_headline)
     flashback::Card third_card{};
     flashback::Subject subject{};
     flashback::Topic topic{};
-    std::chrono::seconds const production{std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch())};
-    std::chrono::seconds const expiration{production + std::chrono::years{1}};
     resource.clear_id();
     resource.set_name("C++ Book");
     resource.set_type(flashback::Resource::book);
     resource.set_pattern(flashback::Resource::chapter);
     resource.set_link(R"(https://flashback.eu.com)");
-    resource.set_production(production.count());
-    resource.set_expiration(expiration.count());
     section.clear_position();
     section.set_name("Chapter 1");
     section.set_link(R"(https://flashback.eu.com/chapter1)");
@@ -2655,15 +2437,11 @@ TEST_F(test_database, remove_card)
     flashback::Card third_card{};
     flashback::Subject subject{};
     flashback::Topic topic{};
-    std::chrono::seconds const production{std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch())};
-    std::chrono::seconds const expiration{production + std::chrono::years{1}};
     resource.clear_id();
     resource.set_name("C++ Book");
     resource.set_type(flashback::Resource::book);
     resource.set_pattern(flashback::Resource::chapter);
     resource.set_link(R"(https://flashback.eu.com)");
-    resource.set_production(production.count());
-    resource.set_expiration(expiration.count());
     section.clear_position();
     section.set_name("Chapter 1");
     section.set_link(R"(https://flashback.eu.com/chapter1)");
@@ -2724,15 +2502,11 @@ TEST_F(test_database, merge_cards)
     flashback::Card third_card{};
     flashback::Subject subject{};
     flashback::Topic topic{};
-    std::chrono::seconds const production{std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch())};
-    std::chrono::seconds const expiration{production + std::chrono::years{1}};
     resource.clear_id();
     resource.set_name("C++ Book");
     resource.set_type(flashback::Resource::book);
     resource.set_pattern(flashback::Resource::chapter);
     resource.set_link(R"(https://flashback.eu.com)");
-    resource.set_production(production.count());
-    resource.set_expiration(expiration.count());
     section.clear_position();
     section.set_name("Chapter 1");
     section.set_link(R"(https://flashback.eu.com/chapter1)");
@@ -2798,15 +2572,11 @@ TEST_F(test_database, search_cards)
     flashback::Card third_card{};
     flashback::Subject subject{};
     flashback::Topic topic{};
-    std::chrono::seconds const production{std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch())};
-    std::chrono::seconds const expiration{production + std::chrono::years{1}};
     resource.clear_id();
     resource.set_name("C++ Book");
     resource.set_type(flashback::Resource::book);
     resource.set_pattern(flashback::Resource::chapter);
     resource.set_link(R"(https://flashback.eu.com)");
-    resource.set_production(production.count());
-    resource.set_expiration(expiration.count());
     section.clear_position();
     section.set_name("Chapter 1");
     section.set_link(R"(https://flashback.eu.com/chapter1)");
@@ -2870,15 +2640,11 @@ TEST_F(test_database, move_card_to_section)
     flashback::Card third_card{};
     flashback::Subject subject{};
     flashback::Topic topic{};
-    std::chrono::seconds const production{std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch())};
-    std::chrono::seconds const expiration{production + std::chrono::years{1}};
     resource.clear_id();
     resource.set_name("C++ Book");
     resource.set_type(flashback::Resource::book);
     resource.set_pattern(flashback::Resource::chapter);
     resource.set_link(R"(https://flashback.eu.com)");
-    resource.set_production(production.count());
-    resource.set_expiration(expiration.count());
     first_section.clear_position();
     first_section.set_name("Chapter 1");
     first_section.set_link(R"(https://flashback.eu.com/chapter1)");
@@ -2930,7 +2696,7 @@ TEST_F(test_database, move_card_to_section)
     ASSERT_THAT(section_cards, testing::SizeIs(2));
     ASSERT_NO_THROW(section_cards = m_database->get_section_cards(resource.id(), second_section.position()));
     ASSERT_THAT(section_cards, testing::SizeIs(1));
-    EXPECT_NO_THROW(m_database->move_card_to_section(first_card.id(), resource.id(), first_section.position(), second_section.position()));
+    EXPECT_NO_THROW(m_database->move_card_to_section(first_card.id(), resource.id(), first_section.position(), resource.id(), second_section.position()));
     ASSERT_NO_THROW(topic_cards = m_database->get_topic_cards(subject.id(), topic.position(), topic.level()));
     ASSERT_THAT(topic_cards, testing::SizeIs(3));
     ASSERT_NO_THROW(section_cards = m_database->get_section_cards(resource.id(), first_section.position()));
@@ -2952,15 +2718,11 @@ TEST_F(test_database, move_card_to_topic)
     flashback::Topic first_topic{};
     flashback::Topic second_topic{};
     flashback::Topic third_topic{};
-    std::chrono::seconds const production{std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch())};
-    std::chrono::seconds const expiration{production + std::chrono::years{1}};
     resource.clear_id();
     resource.set_name("C++ Book");
     resource.set_type(flashback::Resource::book);
     resource.set_pattern(flashback::Resource::chapter);
     resource.set_link(R"(https://flashback.eu.com)");
-    resource.set_production(production.count());
-    resource.set_expiration(expiration.count());
     first_section.clear_position();
     first_section.set_name("Chapter 1");
     first_section.set_link(R"(https://flashback.eu.com/chapter1)");
@@ -3059,15 +2821,11 @@ TEST_F(test_database, create_block)
     flashback::Block third_block{};
     flashback::Block fourth_block{};
     flashback::Block fifth_block{};
-    std::chrono::seconds const production{std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch())};
-    std::chrono::seconds const expiration{production + std::chrono::years{1}};
     resource.clear_id();
     resource.set_name("C++ Book");
     resource.set_type(flashback::Resource::book);
     resource.set_pattern(flashback::Resource::chapter);
     resource.set_link(R"(https://flashback.eu.com)");
-    resource.set_production(production.count());
-    resource.set_expiration(expiration.count());
     first_section.clear_position();
     first_section.set_name("Chapter 1");
     first_section.set_link(R"(https://flashback.eu.com/chapter1)");
@@ -3187,15 +2945,11 @@ TEST_F(test_database, get_blocks)
     flashback::Block third_block{};
     flashback::Block fourth_block{};
     flashback::Block fifth_block{};
-    std::chrono::seconds const production{std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch())};
-    std::chrono::seconds const expiration{production + std::chrono::years{1}};
     resource.clear_id();
     resource.set_name("C++ Book");
     resource.set_type(flashback::Resource::book);
     resource.set_pattern(flashback::Resource::chapter);
     resource.set_link(R"(https://flashback.eu.com)");
-    resource.set_production(production.count());
-    resource.set_expiration(expiration.count());
     first_section.clear_position();
     first_section.set_name("Chapter 1");
     first_section.set_link(R"(https://flashback.eu.com/chapter1)");
@@ -3322,15 +3076,11 @@ TEST_F(test_database, remove_block)
     flashback::Block third_block{};
     flashback::Block fourth_block{};
     flashback::Block fifth_block{};
-    std::chrono::seconds const production{std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch())};
-    std::chrono::seconds const expiration{production + std::chrono::years{1}};
     resource.clear_id();
     resource.set_name("C++ Book");
     resource.set_type(flashback::Resource::book);
     resource.set_pattern(flashback::Resource::chapter);
     resource.set_link(R"(https://flashback.eu.com)");
-    resource.set_production(production.count());
-    resource.set_expiration(expiration.count());
     first_section.clear_position();
     first_section.set_name("Chapter 1");
     first_section.set_link(R"(https://flashback.eu.com/chapter1)");
@@ -3473,15 +3223,11 @@ TEST_F(test_database, edit_block_content)
     flashback::Block third_block{};
     flashback::Block fourth_block{};
     flashback::Block fifth_block{};
-    std::chrono::seconds const production{std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch())};
-    std::chrono::seconds const expiration{production + std::chrono::years{1}};
     resource.clear_id();
     resource.set_name("C++ Book");
     resource.set_type(flashback::Resource::book);
     resource.set_pattern(flashback::Resource::chapter);
     resource.set_link(R"(https://flashback.eu.com)");
-    resource.set_production(production.count());
-    resource.set_expiration(expiration.count());
     first_section.clear_position();
     first_section.set_name("Chapter 1");
     first_section.set_link(R"(https://flashback.eu.com/chapter1)");
@@ -3615,15 +3361,11 @@ TEST_F(test_database, edit_block_type)
     flashback::Block third_block{};
     flashback::Block fourth_block{};
     flashback::Block fifth_block{};
-    std::chrono::seconds const production{std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch())};
-    std::chrono::seconds const expiration{production + std::chrono::years{1}};
     resource.clear_id();
     resource.set_name("C++ Book");
     resource.set_type(flashback::Resource::book);
     resource.set_pattern(flashback::Resource::chapter);
     resource.set_link(R"(https://flashback.eu.com)");
-    resource.set_production(production.count());
-    resource.set_expiration(expiration.count());
     first_section.clear_position();
     first_section.set_name("Chapter 1");
     first_section.set_link(R"(https://flashback.eu.com/chapter1)");
@@ -3755,15 +3497,11 @@ TEST_F(test_database, edit_block_extension)
     flashback::Block third_block{};
     flashback::Block fourth_block{};
     flashback::Block fifth_block{};
-    std::chrono::seconds const production{std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch())};
-    std::chrono::seconds const expiration{production + std::chrono::years{1}};
     resource.clear_id();
     resource.set_name("C++ Book");
     resource.set_type(flashback::Resource::book);
     resource.set_pattern(flashback::Resource::chapter);
     resource.set_link(R"(https://flashback.eu.com)");
-    resource.set_production(production.count());
-    resource.set_expiration(expiration.count());
     first_section.clear_position();
     first_section.set_name("Chapter 1");
     first_section.set_link(R"(https://flashback.eu.com/chapter1)");
@@ -3897,15 +3635,11 @@ TEST_F(test_database, edit_block_metadata)
     flashback::Block third_block{};
     flashback::Block fourth_block{};
     flashback::Block fifth_block{};
-    std::chrono::seconds const production{std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch())};
-    std::chrono::seconds const expiration{production + std::chrono::years{1}};
     resource.clear_id();
     resource.set_name("C++ Book");
     resource.set_type(flashback::Resource::book);
     resource.set_pattern(flashback::Resource::chapter);
     resource.set_link(R"(https://flashback.eu.com)");
-    resource.set_production(production.count());
-    resource.set_expiration(expiration.count());
     first_section.clear_position();
     first_section.set_name("Chapter 1");
     first_section.set_link(R"(https://flashback.eu.com/chapter1)");
@@ -4039,15 +3773,11 @@ TEST_F(test_database, reorder_block)
     flashback::Block third_block{};
     flashback::Block fourth_block{};
     flashback::Block fifth_block{};
-    std::chrono::seconds const production{std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch())};
-    std::chrono::seconds const expiration{production + std::chrono::years{1}};
     resource.clear_id();
     resource.set_name("C++ Book");
     resource.set_type(flashback::Resource::book);
     resource.set_pattern(flashback::Resource::chapter);
     resource.set_link(R"(https://flashback.eu.com)");
-    resource.set_production(production.count());
-    resource.set_expiration(expiration.count());
     first_section.clear_position();
     first_section.set_name("Chapter 1");
     first_section.set_link(R"(https://flashback.eu.com/chapter1)");
@@ -4189,15 +3919,11 @@ TEST_F(test_database, merge_blocks)
     flashback::Block third_block{};
     flashback::Block fourth_block{};
     flashback::Block fifth_block{};
-    std::chrono::seconds const production{std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch())};
-    std::chrono::seconds const expiration{production + std::chrono::years{1}};
     resource.clear_id();
     resource.set_name("C++ Book");
     resource.set_type(flashback::Resource::book);
     resource.set_pattern(flashback::Resource::chapter);
     resource.set_link(R"(https://flashback.eu.com)");
-    resource.set_production(production.count());
-    resource.set_expiration(expiration.count());
     first_section.clear_position();
     first_section.set_name("Chapter 1");
     first_section.set_link(R"(https://flashback.eu.com/chapter1)");
@@ -4347,15 +4073,11 @@ TEST_F(test_database, split_block)
     flashback::Block third_block{};
     flashback::Block fourth_block{};
     flashback::Block fifth_block{};
-    std::chrono::seconds const production{std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch())};
-    std::chrono::seconds const expiration{production + std::chrono::years{1}};
     resource.clear_id();
     resource.set_name("C++ Book");
     resource.set_type(flashback::Resource::book);
     resource.set_pattern(flashback::Resource::chapter);
     resource.set_link(R"(https://flashback.eu.com)");
-    resource.set_production(production.count());
-    resource.set_expiration(expiration.count());
     first_section.clear_position();
     first_section.set_name("Chapter 1");
     first_section.set_link(R"(https://flashback.eu.com/chapter1)");
@@ -4509,15 +4231,11 @@ TEST_F(test_database, move_block)
     flashback::Block third_block{};
     flashback::Block fourth_block{};
     flashback::Block fifth_block{};
-    std::chrono::seconds const production{std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch())};
-    std::chrono::seconds const expiration{production + std::chrono::years{1}};
     resource.clear_id();
     resource.set_name("C++ Book");
     resource.set_type(flashback::Resource::book);
     resource.set_pattern(flashback::Resource::chapter);
     resource.set_link(R"(https://flashback.eu.com)");
-    resource.set_production(production.count());
-    resource.set_expiration(expiration.count());
     first_section.clear_position();
     first_section.set_name("Chapter 1");
     first_section.set_link(R"(https://flashback.eu.com/chapter1)");
@@ -5387,8 +5105,6 @@ TEST_F(test_database, mark_section_as_reviewed)
     resource.set_type(flashback::Resource::book);
     resource.set_pattern(flashback::Resource::chapter);
     resource.set_link("https://flashback.eu.com");
-    resource.set_production(std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count());
-    resource.set_expiration(std::chrono::duration_cast<std::chrono::seconds>((std::chrono::system_clock::now() + std::chrono::years(3)).time_since_epoch()).count());
     first_section.set_name("Class");
     second_section.set_name("Struct");
     third_section.set_name("Lambda");
@@ -5416,8 +5132,6 @@ TEST_F(test_database, mark_section_as_completed)
     resource.set_type(flashback::Resource::book);
     resource.set_pattern(flashback::Resource::chapter);
     resource.set_link("https://flashback.eu.com");
-    resource.set_production(std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count());
-    resource.set_expiration(std::chrono::duration_cast<std::chrono::seconds>((std::chrono::system_clock::now() + std::chrono::years(3)).time_since_epoch()).count());
     first_section.set_name("Class");
     second_section.set_name("Struct");
     third_section.set_name("Lambda");
@@ -5446,8 +5160,6 @@ TEST_F(test_database, get_resource_state)
     resource.set_type(flashback::Resource::book);
     resource.set_pattern(flashback::Resource::chapter);
     resource.set_link("https://flashback.eu.com");
-    resource.set_production(std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count());
-    resource.set_expiration(std::chrono::duration_cast<std::chrono::seconds>((std::chrono::system_clock::now() + std::chrono::years(3)).time_since_epoch()).count());
     first_section.set_name("Class");
     second_section.set_name("Struct");
     third_section.set_name("Lambda");
@@ -5477,8 +5189,6 @@ TEST_F(test_database, study)
     resource.set_type(flashback::Resource::book);
     resource.set_pattern(flashback::Resource::chapter);
     resource.set_link("https://flashback.eu.com");
-    resource.set_production(std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count());
-    resource.set_expiration(std::chrono::duration_cast<std::chrono::seconds>((std::chrono::system_clock::now() + std::chrono::years(3)).time_since_epoch()).count());
     section.set_name("Class");
     card.set_headline("Is this a study?");
 
@@ -5604,8 +5314,6 @@ TEST_F(test_database, mark_card_as_reviewed)
     resource.set_type(flashback::Resource::book);
     resource.set_pattern(flashback::Resource::chapter);
     resource.set_link("https://flashback.eu.com");
-    resource.set_production(std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count());
-    resource.set_expiration(std::chrono::duration_cast<std::chrono::seconds>((std::chrono::system_clock::now() + std::chrono::years(3)).time_since_epoch()).count());
     section.set_name("Class");
     card.set_headline("Some random headline");
 
@@ -5639,8 +5347,6 @@ TEST_F(test_database, mark_card_as_completed)
     resource.set_type(flashback::Resource::book);
     resource.set_pattern(flashback::Resource::chapter);
     resource.set_link("https://flashback.eu.com");
-    resource.set_production(std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count());
-    resource.set_expiration(std::chrono::duration_cast<std::chrono::seconds>((std::chrono::system_clock::now() + std::chrono::years(3)).time_since_epoch()).count());
     section.set_name("Class");
     card.set_headline("Some random headline");
 
@@ -5687,8 +5393,6 @@ TEST_F(test_database, mark_card_as_approved)
     resource.set_type(flashback::Resource::book);
     resource.set_pattern(flashback::Resource::chapter);
     resource.set_link("https://flashback.eu.com");
-    resource.set_production(std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count());
-    resource.set_expiration(std::chrono::duration_cast<std::chrono::seconds>((std::chrono::system_clock::now() + std::chrono::years(3)).time_since_epoch()).count());
     section.set_name("Class");
     card.set_headline("Some random headline");
 
@@ -5736,8 +5440,6 @@ TEST_F(test_database, mark_card_as_released)
     resource.set_type(flashback::Resource::book);
     resource.set_pattern(flashback::Resource::chapter);
     resource.set_link("https://flashback.eu.com");
-    resource.set_production(std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count());
-    resource.set_expiration(std::chrono::duration_cast<std::chrono::seconds>((std::chrono::system_clock::now() + std::chrono::years(3)).time_since_epoch()).count());
     section.set_name("Class");
     card.set_headline("Some random headline");
 
@@ -6776,8 +6478,6 @@ TEST_F(test_database, get_section)
     resource.set_type(flashback::Resource::book);
     resource.set_pattern(flashback::Resource::chapter);
     resource.clear_link();
-    resource.set_production(std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count());
-    resource.set_expiration(std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count() + 1000);
 
     ASSERT_NO_THROW(resource = m_database->create_resource(resource));
     ASSERT_THAT(resource.id(), Gt(0));

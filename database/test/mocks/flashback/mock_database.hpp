@@ -11,10 +11,8 @@ class mock_database final: public basic_database
 public:
     MOCK_METHOD(void, rename_user, (uint64_t, std::string_view), (const, override));
     MOCK_METHOD(void, verify_user, (uint64_t), (const, override));
-    MOCK_METHOD(void, set_verification, (uint64_t), (const, override));
+    MOCK_METHOD(void, set_verification, (uint64_t, uint64_t), (const, override));
     MOCK_METHOD(void, change_user_email, (uint64_t, std::string_view), (const, override));
-    MOCK_METHOD(void, make_progress, (uint64_t, uint64_t, expertise_level, uint64_t, uint64_t), (const, override));
-    MOCK_METHOD(std::vector<Topic>, get_practice_topics, (uint64_t, uint64_t, uint64_t, expertise_level), (const, override));
     MOCK_METHOD(bool, user_is_verified, (std::string_view, std::string_view), (const, override));
     MOCK_METHOD(bool, user_is_authorized, (std::string_view, std::string_view), (const, override));
 
@@ -144,10 +142,10 @@ public:
     MOCK_METHOD(void, move_block, (uint64_t, uint64_t, uint64_t, uint64_t), (const, override));
 
     // practices
-    MOCK_METHOD(void, make_progress, (uint64_t, uint64_t, uint64_t, practice_mode), (const, override));
+    MOCK_METHOD(void, make_progress, (uint64_t, uint64_t, expertise_level, uint64_t, uint64_t), (const, override));
     MOCK_METHOD(expertise_level, get_user_cognitive_level, (uint64_t, uint64_t, uint64_t), (const, override));
     MOCK_METHOD(practice_mode, get_practice_mode, (uint64_t, uint64_t, expertise_level), (const, override));
-    MOCK_METHOD((std::vector<Topic>), get_practice_topics, (uint64_t, uint64_t, uint64_t), (const, override));
+    MOCK_METHOD(std::vector<Topic>, get_practice_topics, (uint64_t, uint64_t, uint64_t, expertise_level), (const, override));
     MOCK_METHOD(std::vector<Card>, get_practice_cards, (uint64_t, uint64_t, uint64_t, expertise_level, uint64_t), (const, override));
     MOCK_METHOD(void, study, (uint64_t, uint64_t, std::chrono::seconds), (const, override));
     MOCK_METHOD((std::map<uint64_t, Resource>), get_study_resources, (uint64_t), (const, override));

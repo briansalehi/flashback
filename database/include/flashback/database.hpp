@@ -70,8 +70,6 @@ public:
     void edit_resource_link(uint64_t resource_id, std::string link) const override;
     void change_resource_type(uint64_t resource_id, Resource::resource_type type) const override;
     void change_section_pattern(uint64_t resource_id, Resource::section_pattern pattern) const override;
-    void edit_resource_production(uint64_t resource_id, uint64_t production) const override;
-    void edit_resource_expiration(uint64_t resource_id, uint64_t expiration) const override;
     void rename_resource(uint64_t resource_id, std::string name) const override;
     void remove_resource(uint64_t resource_id) const override;
     void merge_resources(uint64_t source_id, uint64_t target_id) const override;
