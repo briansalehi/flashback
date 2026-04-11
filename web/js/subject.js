@@ -5,7 +5,6 @@ let roadmapName = null;
 let currentTopicsData = [];
 let currentResourcesData = [];
 let expandedLevels = {}; // level -> boolean
-let isResourcesExpanded = false;
 
 function getDynamicLimit(containerId, itemHeight, isTopicList = false) {
     const container = document.getElementById(containerId);
@@ -1465,21 +1464,21 @@ function renderResources(resources) {
         );
     }
 
-    let displayResources = filteredResources;
-    const dynamicLimit = getDynamicLimit('resources-list', 85);
-    const needsToggle = filteredResources.length > dynamicLimit;
-    if (!isResourcesExpanded && needsToggle) {
-        displayResources = filteredResources.slice(0, dynamicLimit);
-    }
-    const isActuallyExpanded = isResourcesExpanded;
-
-    displayResources.forEach(resource => {
+    filteredResources.forEach(resource => {
         const resourceItem = document.createElement('div');
         resourceItem.className = 'item-block compact';
         resourceItem.style.cursor = 'pointer';
 
         const typeName = typeNames[resource.type] || 'Unknown';
         const patternName = patternNames[resource.pattern] || 'Unknown';
+
+        const providers = resource.providers || [];
+        const presenters = resource.presenters || [];
+        const metaHtml = (providers.length > 0 || presenters.length > 0) ? `
+            <div style="display: flex; flex-wrap: wrap; gap: 0.75rem; font-size: 0.72rem; color: var(--color-text-muted); margin-top: 0.15rem; pointer-events: none;">
+                ${providers.length > 0 ? `<span>from <span style="color: var(--color-text);">${providers.map(p => UI.escapeHtml(p.name)).join(', ')}</span></span>` : ''}
+                ${presenters.length > 0 ? `<span>by <span style="color: var(--color-text);">${presenters.map(p => UI.escapeHtml(p.name)).join(', ')}</span></span>` : ''}
+            </div>` : '';
 
         resourceItem.innerHTML = `
             <div style="width: 100%; display: flex; flex-direction: column; gap: 0.25rem; pointer-events: none;">
@@ -1497,6 +1496,7 @@ function renderResources(resources) {
                         <button class="btn btn-secondary drop-resource-btn" data-resource-id="${resource.id}" style="background-color: #dc3545; color: white; padding: 0.4rem 0.8rem; font-size: 12px; height: 34px; min-width: auto; white-space: nowrap; border: none; border-radius: var(--radius-md); font-weight: 600;">Drop</button>
                     </div>
                 </div>
+                ${metaHtml}
             </div>
         `;
 
@@ -1517,27 +1517,6 @@ function renderResources(resources) {
         container.appendChild(resourceItem);
     });
 
-    // Add expansion toggle
-    if (needsToggle) {
-        const toggleContainer = document.createElement('div');
-        toggleContainer.style.textAlign = 'center';
-        toggleContainer.style.marginTop = '1rem';
-        toggleContainer.style.marginBottom = '2rem';
-
-        const toggleBtn = document.createElement('button');
-        toggleBtn.className = 'btn btn-secondary';
-        toggleBtn.style.padding = '0.5rem 2rem';
-        toggleBtn.style.whiteSpace = 'nowrap';
-        toggleBtn.textContent = isActuallyExpanded ? 'Show Less' : `Show All (${filteredResources.length})`;
-
-        toggleBtn.addEventListener('click', () => {
-            isResourcesExpanded = !isResourcesExpanded;
-            renderResources(resources);
-        });
-
-        toggleContainer.appendChild(toggleBtn);
-        container.appendChild(toggleContainer);
-    }
 }
 
 function checkTopicDuplicate() {

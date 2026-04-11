@@ -433,6 +433,14 @@ function renderStudyingResources(resources) {
         const subjectName = resource.milestone.name || '';
         const level = resource.milestone.level || '';
 
+        const resProviders = resource.providers || [];
+        const resPresenters = resource.presenters || [];
+        const resMetaHtml = (resProviders.length > 0 || resPresenters.length > 0) ? `
+            <div style="display: flex; flex-wrap: wrap; gap: 0.75rem; font-size: 0.72rem; color: var(--color-text-muted); margin-top: 0.15rem; pointer-events: none;">
+                ${resProviders.length > 0 ? `<span>from <span style="color: var(--color-text);">${resProviders.map(p => UI.escapeHtml(p.name)).join(', ')}</span></span>` : ''}
+                ${resPresenters.length > 0 ? `<span>by <span style="color: var(--color-text);">${resPresenters.map(p => UI.escapeHtml(p.name)).join(', ')}</span></span>` : ''}
+            </div>` : '';
+
         resourceItem.innerHTML = `
             <div style="width: 100%; display: flex; flex-direction: column; gap: 0.25rem; pointer-events: none;">
                 <div class="item-header" style="margin-bottom: 0; align-items: flex-start; flex-wrap: wrap; gap: var(--space-xs); pointer-events: auto;">
@@ -448,6 +456,7 @@ function renderStudyingResources(resources) {
                         </a>
                     </div>
                 </div>
+                ${resMetaHtml}
             </div>
         `;
 
@@ -535,6 +544,14 @@ function renderNerves(nerves) {
             </span>
         ` : '';
 
+        const nerveProviders = nerve.providers || [];
+        const nervePresenters = nerve.presenters || [];
+        const nerveMetaHtml = (nerveProviders.length > 0 || nervePresenters.length > 0) ? `
+            <div style="display: flex; flex-wrap: wrap; gap: 0.75rem; font-size: 0.72rem; color: var(--color-text-muted); margin-top: 0.15rem; pointer-events: none;">
+                ${nerveProviders.length > 0 ? `<span>from <span style="color: var(--color-text);">${nerveProviders.map(p => UI.escapeHtml(p.name)).join(', ')}</span></span>` : ''}
+                ${nervePresenters.length > 0 ? `<span>by <span style="color: var(--color-text);">${nervePresenters.map(p => UI.escapeHtml(p.name)).join(', ')}</span></span>` : ''}
+            </div>` : '';
+
         nerveItem.innerHTML = `
             <div style="width: 100%; display: flex; flex-direction: column; gap: 0.25rem; pointer-events: none;">
                 <div class="item-header" style="margin-bottom: 0; align-items: flex-start; flex-wrap: wrap; gap: var(--space-xs); pointer-events: auto;">
@@ -551,6 +568,7 @@ function renderNerves(nerves) {
                         </a>
                     </div>
                 </div>
+                ${nerveMetaHtml}
             </div>
         `;
 

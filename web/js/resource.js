@@ -8,19 +8,7 @@ let currentProviders = [];
 let currentPresenters = [];
 
 let currentSections = [];
-let isSectionsExpanded = false;
 
-function getDynamicLimit(containerId, itemHeight) {
-    const container = document.getElementById(containerId);
-    if (!container) return 3;
-    
-    const containerTop = container.getBoundingClientRect().top;
-    const viewportHeight = window.innerHeight;
-    const availableHeight = viewportHeight - containerTop - 100; // 100px buffer for bottom padding and toggle button
-    
-    const limit = Math.floor(availableHeight / itemHeight) - 1;
-    return Math.max(1, limit);
-}
 
 let reorderState = {
     active: false,
@@ -364,10 +352,20 @@ window.addEventListener('DOMContentLoaded', () => {
     displayBreadcrumb();
 
     // Initialize provider/presenter display
-    renderProviderDisplay();
-    renderPresentersDisplay();
-    setupProviderHandlers();
-    setupPresenterHandlers();
+    const isNerve = currentResourceData.type === 8;
+    if (isNerve) {
+        const providerDiv = document.getElementById('edit-provider-btn')?.closest('div');
+        if (providerDiv) providerDiv.style.display = 'none';
+        const presenterDisplay = document.getElementById('resource-presenters-display');
+        if (presenterDisplay) presenterDisplay.textContent = 'You';
+        const presenterBtn = document.getElementById('add-presenter-btn');
+        if (presenterBtn) presenterBtn.style.display = 'none';
+    } else {
+        renderProviderDisplay();
+        renderPresentersDisplay();
+        setupProviderHandlers();
+        setupPresenterHandlers();
+    }
 
     const signoutBtn = document.getElementById('signout-btn');
     if (signoutBtn) {
@@ -653,7 +651,7 @@ window.addEventListener('DOMContentLoaded', () => {
     }
 
     loadSections();
-    loadProviderAndPresenters();
+    if (!isNerve) loadProviderAndPresenters();
 
     // Search event listener
     const sectionsSearchInput = document.getElementById('sections-search-input');
@@ -773,28 +771,9 @@ function renderSections(sections) {
     const toggleContainer = document.getElementById('sections-toggle-container');
     const toggleBtn = document.getElementById('sections-toggle-btn');
     
-    let displayedSections = filteredSections;
-    const dynamicLimit = getDynamicLimit('sections-list', 50);
-    const needsToggle = filteredSections.length > dynamicLimit;
-    if (!isSectionsExpanded && needsToggle && !reorderState.active) {
-        displayedSections = filteredSections.slice(0, dynamicLimit);
-    }
-    const isActuallyExpanded = isSectionsExpanded;
+    UI.toggleElement('sections-toggle-container', false);
 
-    if (needsToggle && !reorderState.active) {
-        UI.toggleElement('sections-toggle-container', true);
-        toggleBtn.textContent = isActuallyExpanded ? 'Show Less' : `Show All (${filteredSections.length})`;
-        // Add event listener if not already added
-        if (!toggleBtn.dataset.listenerAdded) {
-            toggleBtn.addEventListener('click', () => {
-                isSectionsExpanded = !isSectionsExpanded;
-                renderSections(currentSections);
-            });
-            toggleBtn.dataset.listenerAdded = 'true';
-        }
-    } else {
-        UI.toggleElement('sections-toggle-container', false);
-    }
+    const displayedSections = filteredSections;
 
     const stateNames = ['draft', 'reviewed', 'completed'];
 
