@@ -545,11 +545,15 @@ grpc::Status server::GetStudyResources(grpc::ServerContext* context, GetStudyRes
             std::shared_ptr<User> const user{m_database->get_user(request->user().token(), request->user().device())};
             for (auto const& [position, resource]: m_database->get_study_resources(user->id()))
             {
-                Milestone const milestone = m_database->get_related_milestone(user->id(), resource.id());
-                StudyResource* study{response->add_study()};
-                *study->mutable_resource() = resource;
-                *study->mutable_milestone() = milestone;
+                StudyResource* study = response->add_study();
                 study->set_order(position);
+                *resource.mutable_provider = m_database->get_provider(resource.id());
+                for (Presenter const& presenter: m_database->get_presenters(resource.id()))
+                {
+                    *resource.add_presenters() = presenter;
+                }
+                *study->mutable_resource() = resource;
+                *study->mutable_milestone() = m_database->get_related_milestone(user->id(), resource.id());
             }
             std::clog << std::format("client {} collected {} study resources\n", user->token(), response->study_size());
             status = grpc::Status{grpc::StatusCode::OK, {}};
@@ -1310,15 +1314,14 @@ grpc::Status server::GetResources(grpc::ServerContext* context, GetResourcesRequ
         else
         {
             std::shared_ptr<User> const user{m_database->get_user(request->user().token(), request->user().device())};
-            for (Resource const& r: m_database->get_resources(user->id(), request->subject().id()))
+            for (Resource const& resource: m_database->get_resources(user->id(), request->subject().id()))
             {
-                Resource* resource = response->add_resources();
-                *resource->mutable_provider() = m_database->get_provider(resource->id());
-                for (Presenter const& presenter: m_database->get_presenters(resource->id()))
+                *resource.mutable_provider() = m_database->get_provider(resource.id());
+                for (Presenter const& presenter: m_database->get_presenters(resource.id()))
                 {
-                    *resource->add_presenters() = presenter;
+                    *resource.add_presenters() = presenter;
                 }
-                *resource = r;
+                *response->add_resources() = resource;
             }
             std::clog << std::format("client {} collected {} resources\n", request->user().token(), response->resources_size());
             status = grpc::Status{grpc::StatusCode::OK, {}};
@@ -1519,10 +1522,14 @@ grpc::Status server::SearchResources(grpc::ServerContext* context, SearchResourc
         {
             for (auto const& [position, resource]: m_database->search_resources(request->search_token()))
             {
-                ResourceSearchResult* result{response->add_results()};
-                auto* allocated_resource{result->mutable_resource()};
-                *allocated_resource = resource;
+                ResourceSearchResult* result = response->add_results();
                 result->set_position(position);
+                *resource.mutable_provider() = m_database->get_provider(resource.id());
+                for (Presenter const& presenter: m_database->get_presenters(resource.id()))
+                {
+                    *resource.add_presenters() = presenter;
+                }
+                *result->mutable_resource() = resource;
             }
             std::clog << std::format("client {} collected {} resources by searching\n", request->user().token(), response->results_size(), request->search_token());
             status = grpc::Status{grpc::StatusCode::OK, {}};
@@ -1730,10 +1737,14 @@ grpc::Status server::GetNerves(grpc::ServerContext* context, GetNervesRequest co
             std::shared_ptr<User> const user{m_database->get_user(request->user().token(), request->user().device())};
             for (auto const& resource: m_database->get_nerves(user->id()))
             {
-                Milestone const milestone = m_database->get_related_milestone(user->id(), resource.id());
                 Nerve* nerve = response->add_nerve();
+                *resource.mutable_provider() = m_database->get_provider(resource.id());
+                for (Presenter const& presenter: m_database->get_presenters(resource.id()))
+                {
+                    *resource.add_presenters() = presenter;
+                }
+                *nerve->mutable_milestone() = m_database->get_related_milestone(user->id(), resource.id());
                 *nerve->mutable_resource() = resource;
-                *nerve->mutable_milestone() = milestone;
             }
             std::clog << std::format("client {} collected {} nerves\n", request->user().token(), response->nerve_size());
             status = grpc::Status{grpc::StatusCode::OK, {}};
