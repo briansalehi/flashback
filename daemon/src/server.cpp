@@ -543,15 +543,21 @@ grpc::Status server::GetStudyResources(grpc::ServerContext* context, GetStudyRes
         else
         {
             std::shared_ptr<User> const user{m_database->get_user(request->user().token(), request->user().device())};
-            for (auto const& [position, resource]: m_database->get_study_resources(user->id()))
+            for (auto [position, resource]: m_database->get_study_resources(user->id()))
             {
                 StudyResource* study = response->add_study();
                 study->set_order(position);
-                *resource.mutable_provider = m_database->get_provider(resource.id());
+
+                for (Provider const& provider: m_database->get_providers(resource.id()))
+                {
+                    *resource.add_providers() = provider;
+                }
+
                 for (Presenter const& presenter: m_database->get_presenters(resource.id()))
                 {
                     *resource.add_presenters() = presenter;
                 }
+
                 *study->mutable_resource() = resource;
                 *study->mutable_milestone() = m_database->get_related_milestone(user->id(), resource.id());
             }
@@ -1314,9 +1320,13 @@ grpc::Status server::GetResources(grpc::ServerContext* context, GetResourcesRequ
         else
         {
             std::shared_ptr<User> const user{m_database->get_user(request->user().token(), request->user().device())};
-            for (Resource const& resource: m_database->get_resources(user->id(), request->subject().id()))
+            for (Resource resource: m_database->get_resources(user->id(), request->subject().id()))
             {
-                *resource.mutable_provider() = m_database->get_provider(resource.id());
+                for (Provider const& provider: m_database->get_providers(resource.id()))
+                {
+                    *resource.add_providers() = provider;
+                }
+
                 for (Presenter const& presenter: m_database->get_presenters(resource.id()))
                 {
                     *resource.add_presenters() = presenter;
@@ -1382,6 +1392,16 @@ grpc::Status server::CreateResource(grpc::ServerContext* context, CreateResource
                 Resource* nerve = response->mutable_resource();
                 *nerve = m_database->create_nerve(user->id(), resource->name(), request->subject().id());
                 std::clog << std::format("client {} created nerve {} in subject {}\n", request->user().token(), nerve->id(), request->subject().id());
+            }
+
+            for (Provider const& provider: m_database->get_providers(resource.id()))
+            {
+                *resource.add_providers() = provider;
+            }
+
+            for (Presenter const& presenter: m_database->get_presenters(resource->id()))
+            {
+                *resource->add_presenters() = presenter;
             }
 
             status = grpc::Status{grpc::StatusCode::OK, {}};
@@ -1520,11 +1540,16 @@ grpc::Status server::SearchResources(grpc::ServerContext* context, SearchResourc
         }
         else
         {
-            for (auto const& [position, resource]: m_database->search_resources(request->search_token()))
+            for (auto [position, resource]: m_database->search_resources(request->search_token()))
             {
                 ResourceSearchResult* result = response->add_results();
                 result->set_position(position);
-                *resource.mutable_provider() = m_database->get_provider(resource.id());
+
+                for (Provider const& provider: m_database->get_providers(resource.id()))
+                {
+                    *resource.add_providers() = provider;
+                }
+
                 for (Presenter const& presenter: m_database->get_presenters(resource.id()))
                 {
                     *resource.add_presenters() = presenter;
@@ -1735,10 +1760,15 @@ grpc::Status server::GetNerves(grpc::ServerContext* context, GetNervesRequest co
         else
         {
             std::shared_ptr<User> const user{m_database->get_user(request->user().token(), request->user().device())};
-            for (auto const& resource: m_database->get_nerves(user->id()))
+            for (auto resource: m_database->get_nerves(user->id()))
             {
                 Nerve* nerve = response->add_nerve();
-                *resource.mutable_provider() = m_database->get_provider(resource.id());
+
+                for (Provider const& provider: m_database->get_providers(resource.id()))
+                {
+                    *resource.add_providers() = provider;
+                }
+
                 for (Presenter const& presenter: m_database->get_presenters(resource.id()))
                 {
                     *resource.add_presenters() = presenter;

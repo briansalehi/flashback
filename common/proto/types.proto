@@ -24,7 +24,7 @@ message Resource {
     section_pattern pattern = 3;
     string name = 4;
     string link = 5;
-    Provider provider = 6;
+    repeated Provider providers = 6;
     repeated Presenter presenters = 7;
 }
 

@@ -752,19 +752,19 @@ void database::change_topic_level(uint64_t const subject_id, uint64_t const posi
     exec("call change_topic_level($1, $2, $3, $4)", subject_id, position, level_to_string(level), level_to_string(target));
 }
 
-Provider database::get_provider(std::uint64_t resource_id) const
+std::vector<Provider> database::get_providers(std::uint64_t resource_id) const
 {
-    Provider provider{};
-    provider.clear_name();
-    provider.clear_id();
+    std::vector<Provider> providers{};
 
-    if (pqxx::result const result{query("select get_provider($1) as id", resource_id)}; result.size() == 1)
+    for (pqxx::row const& result: query("select id, name from get_providers($1)", resource_id))
     {
-        provider.set_id(result.at(0).at("id").as<uint64_t>());
-        provider.set_name(result.at(0).at("name").as<std::string>());
+        Provider provider{};
+        provider.set_id(result.at("id").as<uint64_t>());
+        provider.set_name(result.at("name").as<std::string>());
+        providers.push_back(std::move(provider));
     }
 
-    return provider;
+    return providers;
 }
 
 Provider database::create_provider(std::string name) const
@@ -833,7 +833,7 @@ std::vector<Presenter> database::get_presenters(std::uint64_t resource_id) const
 {
     std::vector<Presenter> presenters{};
 
-    for (pqxx::row const& result: query("select get_presenters($1) as id", resource_id))
+    for (pqxx::row const& result: query("select id, name from get_presenters($1)", resource_id))
     {
         Presenter presenter{};
         presenter.set_id(result.at("id").as<uint64_t>());

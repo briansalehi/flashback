@@ -72,7 +72,7 @@ public:
     MOCK_METHOD(Milestone, get_related_milestone, (uint64_t, uint64_t), (const, override));
 
     // providers
-    MOCK_METHOD(Provider, get_provider, (std::uint64_t), (const, override));
+    MOCK_METHOD(std::vector<Provider>, get_providers, (std::uint64_t), (const, override));
     MOCK_METHOD(Provider, create_provider, (std::string), (const, override));
     MOCK_METHOD(void, add_provider, (uint64_t, uint64_t), (const, override));
     MOCK_METHOD(void, drop_provider, (uint64_t, uint64_t), (const, override));

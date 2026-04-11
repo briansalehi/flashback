@@ -93,7 +93,7 @@ public:
     virtual void add_provider(uint64_t resource_id, uint64_t provider_id) const = 0;
     virtual void drop_provider(uint64_t resource_id, uint64_t provider_id) const = 0;
     [[nodiscard]] virtual std::map<uint64_t, Provider> search_providers(std::string_view search_pattern) const = 0;
-    [[nodiscard]] virtual Provider get_provider(std::uint64_t resource_id) const = 0;
+    [[nodiscard]] virtual std::vector<Provider> get_providers(std::uint64_t resource_id) const = 0;
     virtual void rename_provider(uint64_t provider_id, std::string name) const = 0;
     virtual void remove_provider(uint64_t provider_id) const = 0;
     virtual void merge_providers(uint64_t source_id, uint64_t target_id) const =0;

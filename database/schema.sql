@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict hdoINwmQKMcN1OBhQbcvBA3elBOcL8fPjTY59DV7ger64HdSYpmeZR2dCP0ptJI
+\restrict gcDfateffsgKOrSeiSpP6a1f0W0DtMVAXBBBfGDrztgd0pQDJ0IIr6tZcI1nKqi
 
 -- Dumped from database version 18.3
 -- Dumped by pg_dump version 18.3
@@ -326,7 +326,7 @@ CREATE PROCEDURE flashback.add_presenter(IN resource_id integer, IN presenter_id
     LANGUAGE plpgsql
     AS $$
 begin
-    insert into authors (resource, presenter) values (resource_id, presenter_id);
+    insert into authors (resource, presenter) values (resource_id, presenter_id) on conflict on constraint authors_pkey do nothing;
 end;
 $$;
 
@@ -341,7 +341,7 @@ CREATE PROCEDURE flashback.add_provider(IN resource_id integer, IN provider_id i
     LANGUAGE plpgsql
     AS $$
 begin
-    insert into producers (resource, provider) values (resource_id, provider_id);
+    insert into producers (resource, provider) values (resource_id, provider_id) on conflict on constraint producers_pkey do nothing;
 end;
 $$;
 
@@ -1465,10 +1465,10 @@ end; $$;
 ALTER FUNCTION flashback.get_progress_weight(user_id integer) OWNER TO flashback;
 
 --
--- Name: get_provider(integer); Type: FUNCTION; Schema: flashback; Owner: flashback
+-- Name: get_providers(integer); Type: FUNCTION; Schema: flashback; Owner: flashback
 --
 
-CREATE FUNCTION flashback.get_provider(resource_id integer) RETURNS TABLE(id integer, name flashback.citext)
+CREATE FUNCTION flashback.get_providers(resource_id integer) RETURNS TABLE(id integer, name flashback.citext)
     LANGUAGE plpgsql
     AS $$
 begin
@@ -1480,7 +1480,7 @@ begin
 end; $$;
 
 
-ALTER FUNCTION flashback.get_provider(resource_id integer) OWNER TO flashback;
+ALTER FUNCTION flashback.get_providers(resource_id integer) OWNER TO flashback;
 
 --
 -- Name: get_related_milestone(integer, integer); Type: FUNCTION; Schema: flashback; Owner: flashback
@@ -4412,5 +4412,5 @@ GRANT ALL ON SCHEMA public TO brian;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict hdoINwmQKMcN1OBhQbcvBA3elBOcL8fPjTY59DV7ger64HdSYpmeZR2dCP0ptJI
+\unrestrict gcDfateffsgKOrSeiSpP6a1f0W0DtMVAXBBBfGDrztgd0pQDJ0IIr6tZcI1nKqi
 
