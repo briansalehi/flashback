@@ -360,21 +360,25 @@ class FlashbackClient {
                     console.error('GetResources error:', err);
                     reject(this.handleError(err));
                 } else {
-                    const resources = response.getResourcesList().map(res => ({
-                        id: res.getId(),
-                        type: res.getType(),
-                        pattern: res.getPattern(),
-                        name: res.getName(),
-                        link: res.getLink(),
-                        provider: {
-                            id: res.getProvider().getId(),
-                            name: res.getProvider().getName()
-                        },
-                        presenters: res.getPresentersList().map(presenter => ({
-                            id: presenter.getId(),
-                            name: presenter.getName()
-                        }))
-                    }));
+                    const resources = response.getResourcesList().map(resource => {
+                        const provider = resource && resource.getProvider();
+
+                        return {
+                            id: resource && resource.getId(),
+                            type: resource && resource.getType(),
+                            pattern: resource && resource.getPattern(),
+                            name: resource && resource.getName(),
+                            link: resource && resource.getLink(),
+                            provider: provider ? {
+                                id: provider.getId(),
+                                name: provider.getName()
+                            } : null,
+                            presenters: resource ? resource.getPresentersList().map(presenter => ({
+                                id: presenter.getId(),
+                                name: presenter.getName()
+                            })) : []
+                        };
+                    });
                     resolve(resources);
                 }
             });
@@ -402,20 +406,22 @@ class FlashbackClient {
                     reject(this.handleError(err));
                 } else {
                     const resource = response.getResource();
+                    const provider = resource && resource.getProvider();
+
                     resolve({
-                        id: resource.getId(),
-                        type: resource.getType(),
-                        pattern: resource.getPattern(),
-                        name: resource.getName(),
-                        link: resource.getLink(),
-                        provider: {
-                            id: resource.getProvider().getId(),
-                            name: resource.getProvider().getName()
-                        },
-                        presenters: resource.getPresentersList().map(presenter => ({
+                        id: resource && resource.getId(),
+                        type: resource && resource.getType(),
+                        pattern: resource && resource.getPattern(),
+                        name: resource && resource.getName(),
+                        link: resource && resource.getLink(),
+                        provider: provider ? {
+                            id: provider.getId(),
+                            name: provider.getName()
+                        } : null,
+                        presenters: resource ? resource.getPresentersList().map(presenter => ({
                             id: presenter.getId(),
                             name: presenter.getName()
-                        }))
+                        })) : []
                     });
                 }
             });
@@ -568,27 +574,33 @@ class FlashbackClient {
                     console.error("GetStudyResources error:", err);
                     reject(this.handleError(err));
                 } else {
-                    resolve(response.getStudyList().map(study => ({
-                        id: study.getResource().getId(),
-                        name: study.getResource().getName(),
-                        type: study.getResource().getType(),
-                        pattern: study.getResource().getPattern(),
-                        link: study.getResource().getLink(),
-                        provider: {
-                            id: study.getResource().getProvider().getId(),
-                            name: study.getResource().getProvider().getName()
-                        },
-                        presenters: study.getResource().getPresentersList().map(presenter => ({
-                            id: presenter.getId(),
-                            name: presenter.getName()
-                        })),
-                        order: study.getOrder(),
-                        milestone: {
-                            id: study.getMilestone().getId(),
-                            name: study.getMilestone().getName(),
-                            level: study.getMilestone().getLevel()
-                        }
-                    })));
+                    resolve(response.getStudyList().map(study => {
+                        const resource = study.getResource();
+                        const provider = resource && resource.getProvider();
+                        const milestone = study.getMilestone();
+
+                        return {
+                            id: resource && resource.getId(),
+                            name: resource && resource.getName(),
+                            type: resource && resource.getType(),
+                            pattern: resource && resource.getPattern(),
+                            link: resource && resource.getLink(),
+                            provider: provider ? {
+                                id: provider.getId(),
+                                name: provider.getName()
+                            } : null,
+                            presenters: resource ? resource.getPresentersList().map(presenter => ({
+                                id: presenter.getId(),
+                                name: presenter.getName()
+                            })) : [],
+                            order: study.getOrder(),
+                            milestone: milestone ? {
+                                id: milestone.getId(),
+                                name: milestone.getName(),
+                                level: milestone.getLevel()
+                            } : null
+                        };
+                    }));
                 }
             });
         });
@@ -986,26 +998,32 @@ class FlashbackClient {
                     console.error("GetNerves error:", err);
                     reject(this.handleError(err));
                 } else {
-                    resolve(response.getNerveList().map(nerve => ({
-                        id: nerve.getResource().getId(),
-                        name: nerve.getResource().getName(),
-                        type: nerve.getResource().getType(),
-                        pattern: nerve.getResource().getPattern(),
-                        link: nerve.getResource().getLink(),
-                        provider: {
-                            id: nerve.getResource().getProvider().getId(),
-                            name: nerve.getResource().getProvider().getName()
-                        },
-                        presenters: nerve.getResource().getPresentersList().map(presenter => ({
-                            id: presenter.getId(),
-                            name: presenter.getName()
-                        })),
-                        milestone: {
-                            id: nerve.getMilestone().getId(),
-                            name: nerve.getMilestone().getName(),
-                            level: nerve.getMilestone().getLevel()
-                        }
-                    })));
+                    resolve(response.getNerveList().map(nerve => {
+                        const resource = nerve.getResource();
+                        const provider = resource && resource.getProvider();
+                        const milestone = nerve.getMilestone();
+
+                        return {
+                            id: resource && resource.getId(),
+                            name: resource && resource.getName(),
+                            type: resource && resource.getType(),
+                            pattern: resource && resource.getPattern(),
+                            link: resource && resource.getLink(),
+                            provider: provider ? {
+                                id: provider.getId(),
+                                name: provider.getName()
+                            } : null,
+                            presenters: resource ? resource.getPresentersList().map(presenter => ({
+                                id: presenter.getId(),
+                                name: presenter.getName()
+                            })) : [],
+                            milestone: milestone ? {
+                                id: milestone.getId(),
+                                name: milestone.getName(),
+                                level: milestone.getLevel()
+                            } : null
+                        };
+                    }));
                 }
             });
         });
@@ -1324,22 +1342,27 @@ class FlashbackClient {
                     console.error("SearchResources error:", err);
                     reject(this.handleError(err));
                 } else {
-                    resolve(response.getResultsList().map(result => ({
-                        id: result.getResource().getId(),
-                        name: result.getResource().getName(),
-                        type: result.getResource().getType(),
-                        pattern: result.getResource().getPattern(),
-                        link: result.getResource().getLink(),
-                        provider: {
-                            id: result.getResource().getProvider().getId(),
-                            name: result.getResource().getProvider().getName()
-                        },
-                        presenters: result.getResource().getPresentersList().map(presenter => ({
-                            id: presenter.getId(),
-                            name: presenter.getName()
-                        })),
-                        position: result.getPosition()
-                    })));
+                    resolve(response.getResultsList().map(result => {
+                        const resource = result.getResource();
+                        const provider = resource && resource.getProvider();
+
+                        return {
+                            id: resource && resource.getId(),
+                            name: resource && resource.getName(),
+                            type: resource && resource.getType(),
+                            pattern: resource && resource.getPattern(),
+                            link: resource && resource.getLink(),
+                            provider: provider ? {
+                                id: provider.getId(),
+                                name: provider.getName()
+                            } : null,
+                            presenters: resource ? resource.getPresentersList().map(presenter => ({
+                                id: presenter.getId(),
+                                name: presenter.getName()
+                            })) : [],
+                            position: result.getPosition()
+                        };
+                    }));
                 }
             });
         });
