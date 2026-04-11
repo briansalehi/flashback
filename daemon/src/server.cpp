@@ -1394,9 +1394,9 @@ grpc::Status server::CreateResource(grpc::ServerContext* context, CreateResource
                 std::clog << std::format("client {} created nerve {} in subject {}\n", request->user().token(), nerve->id(), request->subject().id());
             }
 
-            for (Provider const& provider: m_database->get_providers(resource.id()))
+            for (Provider const& provider: m_database->get_providers(resource->id()))
             {
-                *resource.add_providers() = provider;
+                *resource->add_providers() = provider;
             }
 
             for (Presenter const& presenter: m_database->get_presenters(resource->id()))

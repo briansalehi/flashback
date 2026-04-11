@@ -4,7 +4,7 @@ let resourceId = UI.getUrlParam('id');
 let resourceName = UI.getUrlParam('name') || '';
 let subjectId = UI.getUrlParam('subjectId');
 let roadmapId = UI.getUrlParam('roadmapId');
-let currentProvider = null;
+let currentProviders = [];
 let currentPresenters = [];
 
 let currentSections = [];
@@ -707,7 +707,7 @@ async function loadProviderAndPresenters() {
         const resources = await client.getResources(sid);
         const res = resources.find(r => String(r.id) === String(resourceId));
         if (res) {
-            currentProvider = res.provider || null;
+            currentProviders = res.providers || [];
             currentPresenters = res.presenters || [];
             renderProviderDisplay();
             renderPresentersDisplay();
@@ -1032,11 +1032,60 @@ async function moveSection(sourceResourceId, sourceSectionPosition, targetResour
 function renderProviderDisplay() {
     const display = document.getElementById('resource-provider-display');
     if (!display) return;
-    if (currentProvider) {
-        display.textContent = currentProvider.name;
+    if (currentProviders.length > 0) {
+        display.innerHTML = currentProviders.map(p =>
+            `<span class="provider-tag" data-id="${p.id}" style="cursor:pointer; text-decoration:underline dotted; margin-right:0.25rem;" title="Click to remove">${UI.escapeHtml(p.name)}</span>`
+        ).join(', ');
+        display.querySelectorAll('.provider-tag').forEach(tag => {
+            tag.addEventListener('click', async () => {
+                const providerId = parseInt(tag.dataset.id);
+                const providerName = tag.textContent;
+                if (!confirm(`Remove "${providerName}" from publishers?`)) return;
+                try {
+                    await client.dropProvider(resourceId, providerId);
+                    currentProviders = currentProviders.filter(p => p.id !== providerId);
+                    renderProviderDisplay();
+                    UI.showSuccess('Publisher removed');
+                } catch (err) {
+                    console.error('Drop provider failed:', err);
+                    UI.showError(err.message || 'Failed to remove publisher');
+                }
+            });
+        });
     } else {
         display.textContent = '—';
     }
+}
+
+function renderCurrentProvidersList() {
+    const container = document.getElementById('current-providers-list');
+    if (!container) return;
+    if (currentProviders.length === 0) {
+        container.innerHTML = '<p style="font-size:0.875rem; color:var(--color-text-muted); margin:0 0 0.5rem;">No publishers assigned yet.</p>';
+        return;
+    }
+    container.innerHTML = '<p style="font-size:0.875rem; color:var(--color-text-muted); margin:0 0 0.5rem;">Current publishers:</p>' +
+        currentProviders.map(p =>
+            `<div style="display:flex; align-items:center; justify-content:space-between; padding:0.25rem 0; border-bottom: 1px solid var(--color-border, rgba(255,255,255,0.1));">
+                <span>${UI.escapeHtml(p.name)}</span>
+                <button class="btn btn-secondary remove-provider-btn" data-id="${p.id}" style="padding:0.15rem 0.5rem; font-size:0.75rem; color:var(--color-danger, #ef4444);">Remove</button>
+            </div>`
+        ).join('');
+    container.querySelectorAll('.remove-provider-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+            const providerId = parseInt(btn.dataset.id);
+            try {
+                await client.dropProvider(resourceId, providerId);
+                currentProviders = currentProviders.filter(p => p.id !== providerId);
+                renderCurrentProvidersList();
+                renderProviderDisplay();
+                UI.showSuccess('Publisher removed');
+            } catch (err) {
+                console.error('Drop provider failed:', err);
+                UI.showError(err.message || 'Failed to remove publisher');
+            }
+        });
+    });
 }
 
 function renderPresentersDisplay() {
@@ -1108,9 +1157,6 @@ function setupProviderHandlers() {
     const providerCreateOption = document.getElementById('provider-create-option');
     const providerCreateBtn = document.getElementById('provider-create-btn');
     const providerCreateName = document.getElementById('provider-create-name');
-    const dropProviderBtn = document.getElementById('drop-provider-btn');
-    const currentProviderSection = document.getElementById('current-provider-section');
-    const currentProviderNameEl = document.getElementById('current-provider-name');
 
     const openProviderModal = () => {
         if (editProviderModal) {
@@ -1123,13 +1169,7 @@ function setupProviderHandlers() {
         }
         if (providerSearchResults) providerSearchResults.innerHTML = '';
         if (providerCreateOption) providerCreateOption.style.display = 'none';
-
-        if (currentProvider) {
-            if (currentProviderSection) currentProviderSection.style.display = 'block';
-            if (currentProviderNameEl) currentProviderNameEl.textContent = currentProvider.name;
-        } else {
-            if (currentProviderSection) currentProviderSection.style.display = 'none';
-        }
+        renderCurrentProvidersList();
     };
 
     const closeProviderModal = () => {
@@ -1148,22 +1188,6 @@ function setupProviderHandlers() {
     if (editProviderModal) {
         editProviderModal.addEventListener('click', (e) => {
             if (e.target === editProviderModal) closeProviderModal();
-        });
-    }
-
-    if (dropProviderBtn) {
-        dropProviderBtn.addEventListener('click', async () => {
-            if (!currentProvider) return;
-            try {
-                await client.dropProvider(resourceId, currentProvider.id);
-                currentProvider = null;
-                renderProviderDisplay();
-                closeProviderModal();
-                UI.showSuccess('Publisher removed');
-            } catch (err) {
-                console.error('Drop provider failed:', err);
-                UI.showError(err.message || 'Failed to remove publisher');
-            }
         });
     }
 
@@ -1186,19 +1210,23 @@ function setupProviderHandlers() {
                     if (providerSearchResults) {
                         providerSearchResults.innerHTML = '';
                         results.forEach(provider => {
+                            if (currentProviders.some(p => p.id === provider.id)) return;
                             const item = document.createElement('div');
                             item.className = 'search-result-item';
                             item.innerHTML = `<div class="search-result-name">${UI.escapeHtml(provider.name)}</div>`;
                             item.addEventListener('click', async () => {
                                 try {
                                     await client.addProvider(resourceId, provider.id);
-                                    currentProvider = { id: provider.id, name: provider.name };
+                                    currentProviders.push({ id: provider.id, name: provider.name });
                                     renderProviderDisplay();
-                                    closeProviderModal();
-                                    UI.showSuccess('Publisher set');
+                                    renderCurrentProvidersList();
+                                    if (providerSearchInput) providerSearchInput.value = '';
+                                    if (providerSearchResults) providerSearchResults.innerHTML = '';
+                                    if (providerCreateOption) providerCreateOption.style.display = 'none';
+                                    UI.showSuccess('Publisher added');
                                 } catch (err) {
                                     console.error('Add provider failed:', err);
-                                    UI.showError(err.message || 'Failed to set publisher');
+                                    UI.showError(err.message || 'Failed to add publisher');
                                 }
                             });
                             providerSearchResults.appendChild(item);
@@ -1218,10 +1246,13 @@ function setupProviderHandlers() {
             try {
                 const provider = await client.createProvider(name);
                 await client.addProvider(resourceId, provider.id);
-                currentProvider = { id: provider.id, name: provider.name };
+                currentProviders.push({ id: provider.id, name: provider.name });
                 renderProviderDisplay();
-                closeProviderModal();
-                UI.showSuccess('Publisher created and set');
+                renderCurrentProvidersList();
+                if (providerSearchInput) providerSearchInput.value = '';
+                if (providerSearchResults) providerSearchResults.innerHTML = '';
+                if (providerCreateOption) providerCreateOption.style.display = 'none';
+                UI.showSuccess('Publisher created and added');
             } catch (err) {
                 console.error('Create provider failed:', err);
                 UI.showError(err.message || 'Failed to create publisher');

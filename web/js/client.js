@@ -361,18 +361,16 @@ class FlashbackClient {
                     reject(this.handleError(err));
                 } else {
                     const resources = response.getResourcesList().map(resource => {
-                        const provider = resource && resource.getProvider();
-
                         return {
                             id: resource && resource.getId(),
                             type: resource && resource.getType(),
                             pattern: resource && resource.getPattern(),
                             name: resource && resource.getName(),
                             link: resource && resource.getLink(),
-                            provider: provider ? {
-                                id: provider.getId(),
-                                name: provider.getName()
-                            } : null,
+                            providers: resource ? resource.getProvidersList().map(p => ({
+                                id: p.getId(),
+                                name: p.getName()
+                            })) : [],
                             presenters: resource ? resource.getPresentersList().map(presenter => ({
                                 id: presenter.getId(),
                                 name: presenter.getName()
@@ -406,7 +404,6 @@ class FlashbackClient {
                     reject(this.handleError(err));
                 } else {
                     const resource = response.getResource();
-                    const provider = resource && resource.getProvider();
 
                     resolve({
                         id: resource && resource.getId(),
@@ -414,10 +411,10 @@ class FlashbackClient {
                         pattern: resource && resource.getPattern(),
                         name: resource && resource.getName(),
                         link: resource && resource.getLink(),
-                        provider: provider ? {
-                            id: provider.getId(),
-                            name: provider.getName()
-                        } : null,
+                        providers: resource ? resource.getProvidersList().map(p => ({
+                            id: p.getId(),
+                            name: p.getName()
+                        })) : [],
                         presenters: resource ? resource.getPresentersList().map(presenter => ({
                             id: presenter.getId(),
                             name: presenter.getName()
@@ -576,7 +573,6 @@ class FlashbackClient {
                 } else {
                     resolve(response.getStudyList().map(study => {
                         const resource = study.getResource();
-                        const provider = resource && resource.getProvider();
                         const milestone = study.getMilestone();
 
                         return {
@@ -585,10 +581,10 @@ class FlashbackClient {
                             type: resource && resource.getType(),
                             pattern: resource && resource.getPattern(),
                             link: resource && resource.getLink(),
-                            provider: provider ? {
-                                id: provider.getId(),
-                                name: provider.getName()
-                            } : null,
+                            providers: resource ? resource.getProvidersList().map(p => ({
+                                id: p.getId(),
+                                name: p.getName()
+                            })) : [],
                             presenters: resource ? resource.getPresentersList().map(presenter => ({
                                 id: presenter.getId(),
                                 name: presenter.getName()
@@ -1000,7 +996,6 @@ class FlashbackClient {
                 } else {
                     resolve(response.getNerveList().map(nerve => {
                         const resource = nerve.getResource();
-                        const provider = resource && resource.getProvider();
                         const milestone = nerve.getMilestone();
 
                         return {
@@ -1009,10 +1004,10 @@ class FlashbackClient {
                             type: resource && resource.getType(),
                             pattern: resource && resource.getPattern(),
                             link: resource && resource.getLink(),
-                            provider: provider ? {
-                                id: provider.getId(),
-                                name: provider.getName()
-                            } : null,
+                            providers: resource ? resource.getProvidersList().map(p => ({
+                                id: p.getId(),
+                                name: p.getName()
+                            })) : [],
                             presenters: resource ? resource.getPresentersList().map(presenter => ({
                                 id: presenter.getId(),
                                 name: presenter.getName()
@@ -1344,7 +1339,6 @@ class FlashbackClient {
                 } else {
                     resolve(response.getResultsList().map(result => {
                         const resource = result.getResource();
-                        const provider = resource && resource.getProvider();
 
                         return {
                             id: resource && resource.getId(),
@@ -1352,10 +1346,10 @@ class FlashbackClient {
                             type: resource && resource.getType(),
                             pattern: resource && resource.getPattern(),
                             link: resource && resource.getLink(),
-                            provider: provider ? {
-                                id: provider.getId(),
-                                name: provider.getName()
-                            } : null,
+                            providers: resource ? resource.getProvidersList().map(p => ({
+                                id: p.getId(),
+                                name: p.getName()
+                            })) : [],
                             presenters: resource ? resource.getPresentersList().map(presenter => ({
                                 id: presenter.getId(),
                                 name: presenter.getName()
