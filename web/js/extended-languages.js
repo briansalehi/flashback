@@ -131,7 +131,7 @@ Prism.languages.clangd = {
     'section': {
         pattern: /(^|\n)(?:CompileFlags|Diagnostics|InlayHints|Index|Hover|Style|If)(?=\s*:)/,
         lookbehind: true,
-        alias: 'keyword'
+        alias: 'attr-name'
     },
 
     // YAML boolean values (Yes/No/True/False)
