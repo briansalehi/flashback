@@ -131,7 +131,7 @@ Prism.languages.clangd = {
     'section': {
         pattern: /(^|\n)(?:CompileFlags|Diagnostics|InlayHints|Index|Hover|Style|If)(?=\s*:)/,
         lookbehind: true,
-        alias: 'class-name'
+        alias: 'keyword'
     },
 
     // YAML boolean values (Yes/No/True/False)
@@ -166,7 +166,7 @@ Prism.languages.clangd = {
     // Clang-tidy check patterns, glob values, and plain scalar values
     // e.g., bugprone-*, modernize-*, Strict, clang  (anything not matched above)
     'value': {
-        pattern: /\b\w[\w*.-]*/,
+        pattern: /\b\w[\w*+.-]*/,
         alias: 'attr-value'
     },
 
