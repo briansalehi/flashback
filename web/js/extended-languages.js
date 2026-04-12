@@ -126,9 +126,11 @@ Prism.languages.clangd = {
         greedy: true
     },
 
-    // Top-level clangd section names (CompileFlags:, Diagnostics:, etc.)
+    // Top-level section names — must be at line start (no indentation)
+    // Uses (^|\n) lookbehind so Prism reliably anchors to line boundaries
     'section': {
-        pattern: /^(?:CompileFlags|Diagnostics|InlayHints|Index|Hover|Style)(?=\s*:)/m,
+        pattern: /(^|\n)(?:CompileFlags|Diagnostics|InlayHints|Index|Hover|Style|If)(?=\s*:)/,
+        lookbehind: true,
         alias: 'class-name'
     },
 
@@ -149,7 +151,7 @@ Prism.languages.clangd = {
         greedy: true
     },
 
-    // Compiler flags and glob patterns (e.g., -std=c++17, -Wall, -W*, -Wno-*)
+    // Compiler flags and options starting with - (e.g., -std=c++17, -Wall, -W*)
     'flag': {
         pattern: /-\w[\w=+.*\/-]*/,
         alias: 'symbol'
@@ -159,6 +161,13 @@ Prism.languages.clangd = {
     'key': {
         pattern: /\b\w[\w.-]*(?=\s*:)/,
         alias: 'attr-name'
+    },
+
+    // Clang-tidy check patterns, glob values, and plain scalar values
+    // e.g., bugprone-*, modernize-*, Strict, clang  (anything not matched above)
+    'value': {
+        pattern: /\b\w[\w*.-]*/,
+        alias: 'attr-value'
     },
 
     // Numbers
