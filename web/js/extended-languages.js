@@ -118,3 +118,52 @@ Prism.languages.pgsql['dollar-string'].inside['plpgsql-body'].inside = Prism.lan
 Prism.languages.psql = Prism.languages.pgsql;
 Prism.languages.postgres = Prism.languages.pgsql;
 Prism.languages.postgresql = Prism.languages.pgsql;
+
+// .clangd (clangd language server configuration file)
+Prism.languages.clangd = {
+    'comment': {
+        pattern: /#.*/,
+        greedy: true
+    },
+
+    // Top-level clangd section names (CompileFlags:, Diagnostics:, etc.)
+    'section': {
+        pattern: /^(?:CompileFlags|Diagnostics|InlayHints|Index|Hover|Style)(?=\s*:)/m,
+        alias: 'class-name'
+    },
+
+    // YAML boolean values (Yes/No/True/False)
+    'boolean': {
+        pattern: /\b(?:[Yy]es|[Nn]o|[Tt]rue|[Ff]alse)\b/
+    },
+
+    // YAML null
+    'null': {
+        pattern: /\bnull\b|~/,
+        alias: 'keyword'
+    },
+
+    // Quoted strings
+    'string': {
+        pattern: /(["'])(?:\\[\s\S]|(?!\1)[^\\])*\1/,
+        greedy: true
+    },
+
+    // Compiler flags and glob patterns (e.g., -std=c++17, -Wall, -W*, -Wno-*)
+    'flag': {
+        pattern: /-\w[\w=+.*\/-]*/,
+        alias: 'symbol'
+    },
+
+    // Configuration keys (identifiers followed by a colon)
+    'key': {
+        pattern: /\b\w[\w.-]*(?=\s*:)/,
+        alias: 'attr-name'
+    },
+
+    // Numbers
+    'number': /\b\d+(?:\.\d+)?\b/,
+
+    // YAML flow sequence/mapping and list punctuation
+    'punctuation': /[:\[\],{}]/
+};
