@@ -176,3 +176,69 @@ Prism.languages.clangd = {
     // YAML flow sequence/mapping and list punctuation
     'punctuation': /[:\[\],{}]/
 };
+
+// systemd unit files (.service, .timer, .socket, .swap, .mount, .scope, .slice, etc.)
+Prism.languages.systemd = {
+    'comment': {
+        pattern: /^[#;].*/m,
+        greedy: true
+    },
+
+    // Section headers: [Unit], [Service], [Install], [Timer], [Socket], etc.
+    'section': {
+        pattern: /(^|\n)\[[\w.-]+\]/,
+        lookbehind: true,
+        alias: 'important'
+    },
+
+    // Systemd specifiers (%n, %u, %h, %i, %t, %f, etc.) and escaped literal %%
+    'specifier': {
+        pattern: /%%|%[a-zA-Z]/,
+        alias: 'variable'
+    },
+
+    // Environment and credential variables: $VAR, ${VAR}
+    'variable': {
+        pattern: /\$(?:\{[^}]*\}|\w+)/,
+        alias: 'variable'
+    },
+
+    // Boolean values
+    'boolean': {
+        pattern: /\b(?:yes|no|true|false|on|off)\b/i
+    },
+
+    // Systemd unit references (foo.service, bar@baz.timer, etc.)
+    'unit-name': {
+        pattern: /\b[\w@.-]+\.(?:service|socket|timer|path|target|mount|automount|swap|slice|scope|device)\b/,
+        alias: 'builtin'
+    },
+
+    // Absolute paths, optionally prefixed with -, +, @, or ! modifiers
+    'path': {
+        pattern: /[-@+!]{0,2}\/[^\s#;]*/,
+        alias: 'string'
+    },
+
+    // Keys (option names before = or +=), anchored to line start
+    'key': {
+        pattern: /(^|\n)[A-Za-z][A-Za-z0-9_-]*\+?(?=\s*=)/,
+        lookbehind: true,
+        alias: 'attr-name'
+    },
+
+    // Numbers with optional time or size units
+    'number': {
+        pattern: /\b\d+(?:\.\d+)?(?:%|ms|us|µs|s|min|h|d|w|M|y|K|G|T|B)?\b/
+    },
+
+    'operator': /=/,
+    'punctuation': /[[\]{}]/
+};
+
+[
+    'service', 'timer', 'unit', 'socket', 'swap', 'mount',
+    'special', 'exec', 'kill', 'resource-control', 'scope', 'slice'
+].forEach(function(ext) {
+    Prism.languages[ext] = Prism.languages.systemd;
+});
