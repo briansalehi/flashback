@@ -203,21 +203,21 @@ Prism.languages.systemd = {
         alias: 'variable'
     },
 
-    // Boolean values
+    // Boolean values — use (?![-\w]) to avoid matching 'on' in 'on-failure' etc.
     'boolean': {
-        pattern: /\b(?:yes|no|true|false|on|off)\b/i
+        pattern: /\b(?:yes|no|true|false|on|off)(?![-\w])/i
     },
 
     // Systemd unit references (foo.service, bar@baz.timer, etc.)
     'unit-name': {
         pattern: /\b[\w@.-]+\.(?:service|socket|timer|path|target|mount|automount|swap|slice|scope|device)\b/,
-        alias: 'builtin'
+        alias: 'symbol'
     },
 
     // Absolute paths, optionally prefixed with -, +, @, or ! modifiers
     'path': {
         pattern: /[-@+!]{0,2}\/[^\s#;]*/,
-        alias: 'string'
+        alias: 'url'
     },
 
     // Keys (option names before = or +=), anchored to line start
