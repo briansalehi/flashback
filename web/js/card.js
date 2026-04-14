@@ -1622,6 +1622,7 @@ async function addSelectiveNavigation({ contextType, cards, currentIndex }) {
             btn.style.cssText = 'padding: 0.5rem 1rem; white-space: nowrap;';
         }
         btn.addEventListener('click', async () => {
+            UI.showPageLoading();
             await recordStudyAndNavigate(onClick);
         });
         buttonContainer.appendChild(btn);
@@ -1758,6 +1759,7 @@ function addPracticeNavigation(cardIndex, totalCards) {
         prevTopicBtn.className = 'btn btn-secondary';
         prevTopicBtn.style.cssText = 'padding: 0.5rem 1rem; white-space: nowrap;';
         prevTopicBtn.addEventListener('click', async () => {
+            UI.showPageLoading();
             await recordProgressAndNavigate(async () => {
                 await loadPreviousTopic();
             });
@@ -1769,6 +1771,7 @@ function addPracticeNavigation(cardIndex, totalCards) {
         prevBtn.className = 'btn btn-secondary';
         prevBtn.style.cssText = 'padding: 0.5rem 1rem; white-space: nowrap;';
         prevBtn.addEventListener('click', async () => {
+            UI.showPageLoading();
             await recordProgressAndNavigate(async () => {
                 await loadPreviousCard(cardIndex, totalCards);
             });
@@ -1784,6 +1787,7 @@ function addPracticeNavigation(cardIndex, totalCards) {
         nextBtn.className = 'btn btn-primary';
         nextBtn.style.cssText = 'padding: 0.5rem 1rem; white-space: nowrap;';
         nextBtn.addEventListener('click', async () => {
+            UI.showPageLoading();
             await recordProgressAndNavigate(async () => {
                 await loadNextCard(cardIndex, totalCards);
             });
@@ -1796,6 +1800,7 @@ function addPracticeNavigation(cardIndex, totalCards) {
         nextTopicBtn.className = 'btn btn-primary';
         nextTopicBtn.style.cssText = 'padding: 0.5rem 1rem; white-space: nowrap;';
         nextTopicBtn.addEventListener('click', async () => {
+            UI.showPageLoading();
             await recordProgressAndNavigate(async () => {
                 await loadNextTopic();
             });
@@ -1809,6 +1814,7 @@ function addPracticeNavigation(cardIndex, totalCards) {
         finishBtn.className = 'btn btn-primary';
         finishBtn.style.cssText = 'padding: 0.5rem 1rem; white-space: nowrap;';
         finishBtn.addEventListener('click', async () => {
+            UI.showPageLoading();
             await recordProgressAndNavigate(async () => {
                 // Finish practice and go back to roadmap
                 const roadmapId = UI.getUrlParam('roadmapId') || practiceState.roadmapId || '';

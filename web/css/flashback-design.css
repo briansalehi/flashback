@@ -820,6 +820,44 @@ a:hover {
     to { transform: rotate(360deg); }
 }
 
+/* Page-level loading overlay — shown during navigation on slow connections */
+.page-loading-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 15, 15, 0.6);
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-md);
+    z-index: 9999;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease;
+}
+
+.page-loading-overlay.visible {
+    opacity: 1;
+    pointer-events: all;
+}
+
+.page-loading-overlay .page-loading-spinner {
+    width: 48px;
+    height: 48px;
+    border: 4px solid rgba(102, 126, 234, 0.25);
+    border-top-color: var(--color-primary-start);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+.page-loading-overlay .page-loading-label {
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-sm);
+    letter-spacing: 0.05em;
+}
+
 /* ============================================
    RESPONSIVE GRID
    ============================================ */

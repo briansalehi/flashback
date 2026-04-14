@@ -382,6 +382,33 @@ const UI = {
     },
 
     /**
+     * Show a full-page translucent loading overlay.
+     * Call before initiating navigation on slow connections.
+     */
+    showPageLoading() {
+        let overlay = document.getElementById('page-loading-overlay');
+        if (!overlay) {
+            overlay = document.createElement('div');
+            overlay.id = 'page-loading-overlay';
+            overlay.className = 'page-loading-overlay';
+            overlay.innerHTML =
+                '<div class="page-loading-spinner"></div>' +
+                '<span class="page-loading-label">Loading…</span>';
+            document.body.appendChild(overlay);
+        }
+        // rAF ensures the transition plays from opacity:0 → 1
+        requestAnimationFrame(() => overlay.classList.add('visible'));
+    },
+
+    /** Hide the full-page loading overlay (e.g. on bfcache restore). */
+    hidePageLoading() {
+        const overlay = document.getElementById('page-loading-overlay');
+        if (overlay) {
+            overlay.classList.remove('visible');
+        }
+    },
+
+    /**
      * Get icon for a resource type
      * @param {number} type - Resource type ID
      * @returns {string} SVG icon string
@@ -484,6 +511,7 @@ const UI = {
             if (item.url) {
                 content = document.createElement('a');
                 content.href = item.url;
+                content.addEventListener('click', () => UI.showPageLoading());
             } else {
                 content = document.createElement('span');
                 content.className = 'breadcrumb-text';
@@ -513,5 +541,14 @@ const UI = {
 document.addEventListener('DOMContentLoaded', () => {
     if (typeof UI !== 'undefined' && UI.autoInitShortcuts) {
         UI.autoInitShortcuts();
+    }
+});
+
+// Hide the page-level loading overlay when the browser restores a page from
+// the back-forward cache (bfcache), so the overlay doesn't linger after
+// pressing the browser Back button.
+window.addEventListener('pageshow', (e) => {
+    if (e.persisted && typeof UI !== 'undefined') {
+        UI.hidePageLoading();
     }
 });
