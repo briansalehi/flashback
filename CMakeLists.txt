@@ -6,7 +6,7 @@ include(CTest)
 
 add_subdirectory(common)
 add_subdirectory(database)
-add_subdirectory(daemon)
+add_subdirectory(server)
 add_subdirectory(web)
 add_subdirectory(app)
 
