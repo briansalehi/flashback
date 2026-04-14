@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict BkvmSRJCGAeTUB4weyeE5UI6zx86uxeNtUiG44Rwg8MT5DdRpbPq5nOxexN9T6F
+\restrict HVecWVSs5NcdpLaH3wFuMjeU9damyrbH591Sfdi33NBt5ReGO8vtldeKj1NSsYj
 
 -- Dumped from database version 18.3
 -- Dumped by pg_dump version 18.3
@@ -2492,20 +2492,34 @@ ALTER PROCEDURE flashback.move_card_to_section(IN card_id integer, IN resource_i
 CREATE PROCEDURE flashback.move_card_to_topic(IN card_id integer, IN subject_id integer, IN topic_position integer, IN topic_level flashback.expertise_level, IN target_subject integer, IN target_topic integer, IN target_level flashback.expertise_level)
     LANGUAGE plpgsql
     AS $$
-declare last_position integer;
-begin
-    if (subject_id <> target_subject) or (subject_id = target_subject and topic_position <> target_topic)
-    then
-        select coalesce(max(position), 0) + 1 into last_position from topic_cards where subject = target_subject and topic = target_topic and level = target_level;
+  declare last_position integer;
+  begin
+      if (subject_id <> target_subject) or (subject_id = target_subject and topic_position <> target_topic)
+      then
+          select coalesce(max(position), 0) + 1 into last_position
+          from topic_cards
+          where subject = target_subject and topic = target_topic and level = target_level;
 
-        update topic_cards set subject = target_subject, topic = target_topic, position = coalesce(last_position, 1), level = target_level where subject = subject_id and topic = topic_position and level = topic_level and card = card_id;
+          update topic_cards
+          set subject = target_subject, topic = target_topic, position = coalesce(last_position, 1), level = target_level
+          where subject = subject_id and topic = topic_position and level = topic_level and card = card_id;
 
-        update topic_cards t set position = tt.updated_position from (
-            select position, row_number() over (order by position) as updated_position from topic_cards where subject = subject_id and topic = topic_position and level = topic_level
-        ) tt where t.subject = subject_id and t.topic = topic_position and t.level = topic_level and t.position = tt.position;
-    end if;
-end;
-$$;
+          -- Pass 1: move remaining positions to negative range (unique positives → unique negatives, no conflict)
+          update topic_cards set position = -position
+          where subject = subject_id and topic = topic_position and level = topic_level;
+
+          -- Pass 2: renumber from negatives to sequential positives (no overlap possible)
+          update topic_cards t set position = tt.updated_position
+          from (
+              select position, row_number() over (order by -position) as updated_position
+              from topic_cards
+              where subject = subject_id and topic = topic_position and level = topic_level
+          ) tt
+          where t.subject = subject_id and t.topic = topic_position and t.level = topic_level
+          and t.position = tt.position;
+      end if;
+  end;
+  $$;
 
 
 ALTER PROCEDURE flashback.move_card_to_topic(IN card_id integer, IN subject_id integer, IN topic_position integer, IN topic_level flashback.expertise_level, IN target_subject integer, IN target_topic integer, IN target_level flashback.expertise_level) OWNER TO flashback;
@@ -4412,5 +4426,5 @@ GRANT ALL ON SCHEMA public TO brian;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict BkvmSRJCGAeTUB4weyeE5UI6zx86uxeNtUiG44Rwg8MT5DdRpbPq5nOxexN9T6F
+\unrestrict HVecWVSs5NcdpLaH3wFuMjeU9damyrbH591Sfdi33NBt5ReGO8vtldeKj1NSsYj
 
