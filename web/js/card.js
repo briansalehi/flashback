@@ -2353,12 +2353,11 @@ function renderBlocks(blocks) {
         displayDiv.innerHTML = `
             ${metadataHtml}
             <div class="block-actions-overlay">
-                <button class="block-action-btn block-edit-btn">
+                <button class="block-action-btn block-edit-btn" title="Edit block">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
                         <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
                     </svg>
-                    Edit
                 </button>
                 <button class="block-action-btn block-merge-btn">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -2376,12 +2375,11 @@ function renderBlocks(blocks) {
                     </svg>
                     Move
                 </button>
-                <button class="block-action-btn block-remove-btn" data-position="${block.position}" data-index="${index}">
+                <button class="block-action-btn block-remove-btn" data-position="${block.position}" data-index="${index}" title="Remove block">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <polyline points="3 6 5 6 21 6"></polyline>
                         <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
                     </svg>
-                    Remove
                 </button>
             </div>
             ${contentHtml}

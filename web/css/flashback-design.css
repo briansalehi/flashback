@@ -820,6 +820,15 @@ a:hover {
     to { transform: rotate(360deg); }
 }
 
+@keyframes item-highlight-pulse {
+    0%   { box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.8); background-color: rgba(102, 126, 234, 0.12); }
+    70%  { box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2); background-color: rgba(102, 126, 234, 0.04); }
+    100% { box-shadow: 0 0 0 0px rgba(102, 126, 234, 0);   background-color: transparent; }
+}
+.item-newly-created {
+    animation: item-highlight-pulse 2s ease-out forwards;
+}
+
 /* Page-level loading overlay — shown during navigation on slow connections */
 .page-loading-overlay {
     position: fixed;
@@ -2302,21 +2311,25 @@ input:checked + .slider:before {
     }
 
     .modal-actions {
-        flex-direction: column-reverse;
-        gap: 0.75rem;
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 0.5rem;
     }
 
     .modal-actions .btn {
-        width: 100%;
+        flex: 1 1 auto;
+        min-width: 0;
         margin: 0 !important;
-        padding: 0.75rem 1rem !important;
+        padding: 0.6rem 0.75rem !important;
         justify-content: center;
+        font-size: var(--font-size-sm);
     }
 }
 
 .modal-actions {
     display: flex;
-    gap: 1rem;
+    flex-wrap: wrap;
+    gap: 0.5rem;
     margin-top: 1.5rem;
     justify-content: flex-end;
 }

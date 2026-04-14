@@ -274,7 +274,7 @@ window.addEventListener('DOMContentLoaded', () => {
                 clearSearchResults();
                 UI.setButtonLoading('save-milestone-btn', false);
 
-                loadMilestones();
+                loadMilestones(subjectId);
             } catch (err) {
                 console.error('Add milestone failed:', err);
                 UI.showError(err.message || 'Failed to add subject to roadmap');
@@ -542,7 +542,13 @@ function clearSearchResults() {
     UI.toggleElement('milestone-addition-group', false);
 }
 
-async function loadMilestones() {
+function highlightAndScrollTo(element) {
+    element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    element.classList.add('item-newly-created');
+    element.addEventListener('animationend', () => element.classList.remove('item-newly-created'), { once: true });
+}
+
+async function loadMilestones(highlightSubjectId = null) {
     UI.toggleElement('loading', true);
     UI.toggleElement('milestones-container', false);
     UI.toggleElement('empty-state', false);
@@ -571,7 +577,7 @@ async function loadMilestones() {
             if (searchContainer && renameBtn && renameBtn.style.display !== 'none') {
                 searchContainer.style.display = 'block';
             }
-            renderMilestones(response.milestones);
+            renderMilestones(response.milestones, highlightSubjectId);
 
             // Re-apply search if exists
             const searchInput = document.getElementById('milestone-search-input');
@@ -586,7 +592,7 @@ async function loadMilestones() {
     }
 }
 
-function renderMilestones(milestones) {
+function renderMilestones(milestones, highlightSubjectId = null) {
     currentMilestones = milestones;
     const container = document.getElementById('milestones-container');
     container.innerHTML = '';
@@ -639,6 +645,7 @@ function renderMilestones(milestones) {
         }
         milestoneCard.id = `milestone-${index}`;
         milestoneCard.dataset.position = milestone.position;
+        milestoneCard.dataset.subjectId = milestone.id;
 
 
         const startLongPressTimer = (e) => {
@@ -750,6 +757,10 @@ function renderMilestones(milestones) {
         }
 
         container.appendChild(milestoneCard);
+
+        if (highlightSubjectId !== null && String(milestone.id) === String(highlightSubjectId)) {
+            requestAnimationFrame(() => highlightAndScrollTo(milestoneCard));
+        }
 
         if (reorderState.active && index === milestones.length - 1 && milestone.position + 1 !== sourceMilestone.position && milestone.position + 1 !== sourceMilestone.position + 1) {
             container.appendChild(createGap(milestone.position + 1));

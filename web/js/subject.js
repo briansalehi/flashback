@@ -6,6 +6,12 @@ let currentTopicsData = [];
 let currentResourcesData = [];
 let expandedLevels = {}; // level -> boolean
 
+function highlightAndScrollTo(element) {
+    element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    element.classList.add('item-newly-created');
+    element.addEventListener('animationend', () => element.classList.remove('item-newly-created'), { once: true });
+}
+
 function getDynamicLimit(containerId, itemHeight, isTopicList = false) {
     const container = document.getElementById(containerId);
     if (!container) return 3;
@@ -808,7 +814,7 @@ window.addEventListener('DOMContentLoaded', () => {
                 closeTopicModal();
                 UI.setButtonLoading('save-topic-btn', false);
 
-                loadTopics();
+                loadTopics(name, level);
             } catch (err) {
                 console.error('Add topic failed:', err);
                 UI.showError(err.message || 'Failed to add topic');
@@ -989,10 +995,11 @@ window.addEventListener('DOMContentLoaded', () => {
             UI.setButtonLoading('confirm-add-resource-btn', true);
             try {
                 const resourceName = window.currentlySelectedResource.name;
-                await client.addResourceToSubject(parseInt(subjectId), window.currentlySelectedResource.id);
+                const addedId = window.currentlySelectedResource.id;
+                await client.addResourceToSubject(parseInt(subjectId), addedId);
 
                 closeResourceModal();
-                loadResources(); // Reload the resources list
+                loadResources(addedId); // Reload the resources list and highlight the added item
                 UI.showSuccess(`Resource "${resourceName}" added successfully`);
             } catch (err) {
                 console.error('Add resource failed:', err);
@@ -1090,7 +1097,7 @@ window.addEventListener('DOMContentLoaded', () => {
                 closeResourceModal();
                 UI.setButtonLoading('save-resource-btn', false);
 
-                loadResources();
+                loadResources(resource.id);
             } catch (err) {
                 console.error('Add resource failed:', err);
                 UI.showError(err.message || 'Failed to add resource');
@@ -1152,7 +1159,7 @@ window.addEventListener('DOMContentLoaded', () => {
     });
 });
 
-async function loadTopics() {
+async function loadTopics(highlightName = null, highlightLevel = null) {
     UI.toggleElement('topics-loading', true);
     UI.toggleElement('topics-list', false);
     UI.toggleElement('topics-empty-state', false);
@@ -1176,7 +1183,9 @@ async function loadTopics() {
             UI.toggleElement('topics-list', true);
             // Show the topics search bar when topics are loaded and not reordering
             UI.toggleElement('topics-search-container', !reorderState.active);
-            renderTopics(allTopics, milestoneLevel);
+            // Ensure the highlighted level group is expanded so the new item is visible
+            if (highlightLevel !== null) expandedLevels[highlightLevel] = true;
+            renderTopics(allTopics, milestoneLevel, highlightName, highlightLevel);
         }
     } catch (err) {
         console.error('Loading topics failed:', err);
@@ -1185,7 +1194,7 @@ async function loadTopics() {
     }
 }
 
-function renderTopics(topics, maxLevel) {
+function renderTopics(topics, maxLevel, highlightName = null, highlightLevel = null) {
     if (reorderState.active) {
         maxLevel = 2; // Always show all levels in reorder mode
     }
@@ -1383,6 +1392,11 @@ function renderTopics(topics, maxLevel) {
 
                 levelSection.appendChild(topicItem);
 
+                if (highlightName !== null && topic.name === highlightName &&
+                    (highlightLevel === null || topic.level === highlightLevel)) {
+                    requestAnimationFrame(() => highlightAndScrollTo(topicItem));
+                }
+
                 // Add gap after the last block
                 if (reorderState.active && (reorderState.sourceSubjectId !== reorderState.targetSubjectId || parseInt(reorderState.sourceTopic.level) !== level) && sortedIndex === displayedGroup.length - 1) {
                     levelSection.appendChild(createGap(topic.position + 1));
@@ -1418,7 +1432,7 @@ function renderTopics(topics, maxLevel) {
     });
 }
 
-async function loadResources() {
+async function loadResources(highlightId = null) {
     UI.toggleElement('resources-loading', true);
     UI.toggleElement('resources-list', false);
     UI.toggleElement('resources-empty-state', false);
@@ -1437,7 +1451,7 @@ async function loadResources() {
             UI.toggleElement('resources-list', true);
             // Show the resources search bar when resources are loaded; tab switching controls visibility elsewhere
             UI.toggleElement('resources-search-container', true);
-            renderResources(currentResourcesData);
+            renderResources(currentResourcesData, highlightId);
         }
     } catch (err) {
         console.error('Loading resources failed:', err);
@@ -1446,7 +1460,7 @@ async function loadResources() {
     }
 }
 
-function renderResources(resources) {
+function renderResources(resources, highlightId = null) {
     const container = document.getElementById('resources-list');
     const searchInput = document.getElementById('resources-search-input');
     const searchTerm = searchInput ? searchInput.value.toLowerCase().trim() : '';
@@ -1494,7 +1508,7 @@ function renderResources(resources) {
                         <a href="${UI.escapeHtml(resource.link)}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()" class="external-link-icon" title="Open Link" style="display: flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 50%; background: rgba(255,255,255,0.05); transition: background 0.2s;">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
                         </a>
-                        <button class="btn btn-secondary drop-resource-btn" data-resource-id="${resource.id}" style="background-color: #dc3545; color: white; padding: 0.4rem 0.8rem; font-size: 12px; height: 34px; min-width: auto; white-space: nowrap; border: none; border-radius: var(--radius-md); font-weight: 600;">Drop</button>
+                        <button class="btn btn-secondary drop-resource-btn" data-resource-id="${resource.id}" title="Drop resource" style="background-color: #dc3545; color: white; padding: 0.4rem; font-size: 12px; height: 34px; width: 34px; min-width: auto; white-space: nowrap; border: none; border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button>
                     </div>
                 </div>
                 ${metaHtml}
@@ -1517,6 +1531,10 @@ function renderResources(resources) {
         });
 
         container.appendChild(resourceItem);
+
+        if (highlightId !== null && resource.id === highlightId) {
+            requestAnimationFrame(() => highlightAndScrollTo(resourceItem));
+        }
     });
 
 }
