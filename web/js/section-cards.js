@@ -596,7 +596,7 @@ window.addEventListener('DOMContentLoaded', () => {
         resourceSearchInput.addEventListener('input', (e) => {
             const query = e.target.value.trim();
             if (searchTimeout) clearTimeout(searchTimeout);
-            
+
             const resourcesSection = document.getElementById('subject-resources-section');
             if (query.length > 0) {
                 if (resourcesSection) resourcesSection.style.display = 'none';
@@ -784,6 +784,7 @@ function renderCards(cards) {
                 showMergeConfirmModal(card.id, card.headline);
                 return;
             }
+            UI.showPageLoading();
             const milestoneLevel = UI.getUrlParam('level') || '';
             const sectionState = UI.getUrlParam('sectionState') || '0';
             window.location.href = `card.html?cardId=${card.id}&headline=${encodeURIComponent(card.headline)}&state=${card.state}&sectionState=${sectionState}&practiceMode=selective&resourceName=${encodeURIComponent(resourceName)}&sectionName=${encodeURIComponent(sectionName)}&resourceId=${resourceId}&sectionPosition=${sectionPosition}&roadmapId=${roadmapId}&roadmapName=${encodeURIComponent(roadmapName)}&subjectId=${subjectId}&subjectName=${encodeURIComponent(subjectName)}&level=${milestoneLevel}`;
@@ -883,7 +884,7 @@ window.handleAssignToTopic = async function(cardId, cardHeadline) {
             errorColor: 'var(--color-error)'
         });
     }
-    
+
     // Reset subject search
     document.getElementById('subject-search-input').value = '';
     document.getElementById('subject-search-results').style.display = 'none';
@@ -1028,12 +1029,12 @@ function displaySubjectResults(subjects) {
             currentSelectedTopic = null;
             UI.toggleElement('confirm-assign-topic-btn', false);
             document.getElementById('subject-search-results').style.display = 'none';
-            
+
             UI.toggleElement('subject-selection-info', true);
             UI.toggleElement('subject-search-container', false);
             UI.toggleElement('topics-section', true);
             document.getElementById('selected-subject-name').textContent = subject.name;
-            
+
             await loadTopicsForSubject(subject.id);
         });
 
@@ -1048,7 +1049,7 @@ function renderTopicsForAssignment(topics) {
     const searchTerm = document.getElementById('topic-search-input').value.toLowerCase().trim();
 
     const levelNames = ['Surface', 'Depth', 'Origin'];
-    
+
     // Group by level
     const grouped = topics.reduce((acc, topic) => {
         if (!acc[topic.level]) acc[topic.level] = [];
@@ -1061,7 +1062,7 @@ function renderTopicsForAssignment(topics) {
         if (grouped[level] && grouped[level].length > 0) {
             const levelDiv = document.createElement('div');
             levelDiv.className = 'topic-level-group';
-            
+
             const levelHeader = document.createElement('div');
             levelHeader.className = 'topic-level-header';
             levelHeader.innerHTML = `
@@ -1135,7 +1136,7 @@ async function createAndAssignTopic() {
     }
 
     const level = parseInt(document.querySelector('input[name="new-topic-level"]:checked').value);
-    
+
     UI.setButtonLoading('confirm-create-assign-topic-btn', true);
 
     try {
@@ -1167,14 +1168,14 @@ function closeAssignTopicModal() {
     currentSubjectTopics = [];
     UI.toggleElement('confirm-assign-topic-btn', false);
     UI.toggleElement('confirm-create-assign-topic-btn', false);
-    
+
     const subjectSearchInput = document.getElementById('subject-search-input');
     if (subjectSearchInput) subjectSearchInput.value = '';
     const subjectSearchResults = document.getElementById('subject-search-results');
     if (subjectSearchResults) subjectSearchResults.style.display = 'none';
     const subjectsList = document.getElementById('subjects-list');
     if (subjectsList) subjectsList.innerHTML = '';
-    
+
     const topicSearchInput = document.getElementById('topic-search-input');
     if (topicSearchInput) topicSearchInput.value = '';
     const topicsByLevel = document.getElementById('topics-by-level');
@@ -1199,7 +1200,7 @@ window.enterMergeMode = function(cardId, headline) {
     mergeState.active = true;
     mergeState.sourceId = cardId;
     mergeState.sourceHeadline = headline;
-    
+
     // Add hint at the top of the list
     const hint = document.createElement('div');
     hint.id = 'reorder-hint';
@@ -1210,7 +1211,7 @@ window.enterMergeMode = function(cardId, headline) {
         <button class="btn btn-secondary btn-sm" onclick="window.exitMergeMode()" style="padding: 0.4rem 1.5rem; font-size: 0.85rem; background: rgba(255,255,255,0.2); border: none; white-space: nowrap;">Cancel</button>
     `;
     document.body.appendChild(hint);
-    
+
     loadCards();
 };
 
@@ -1219,12 +1220,12 @@ window.exitMergeMode = function() {
     mergeState.sourceId = null;
     mergeState.sourceHeadline = null;
     document.body.classList.remove('merge-mode-active');
-    
+
     const hint = document.getElementById('reorder-hint');
     if (hint) {
         hint.remove();
     }
-    
+
     loadCards();
 };
 
@@ -1354,7 +1355,7 @@ window.handleMoveCard = function(cardId, cardHeadline) {
     document.getElementById('section-search-loading').style.display = 'none';
     document.getElementById('sections-list').innerHTML = '';
     UI.toggleElement('confirm-move-card-btn', false);
-    
+
     // Load initial sections for the current resource
     loadResourceSections();
 
@@ -1408,7 +1409,7 @@ function openResourceSelectionModal() {
     const resourcesContainer = document.getElementById('subject-resources-list');
     const resourcesSection = document.getElementById('subject-resources-section');
     if (resourcesContainer) resourcesContainer.innerHTML = '';
-    
+
     if (moveState.subjectId) {
         if (resourcesSection) resourcesSection.style.display = 'block';
         loadSubjectResources();
@@ -1439,7 +1440,7 @@ function displaySubjectResourceResults(resources) {
     const container = document.getElementById('subject-resources-list');
     if (!container) return;
     container.innerHTML = '';
-    
+
     if (resources.length === 0) {
         container.innerHTML = '<div class="no-results" style="padding: 1rem; text-align: center; opacity: 0.6;">No resources in this subject.</div>';
         return;
@@ -1452,12 +1453,12 @@ function displaySubjectResourceResults(resources) {
         item.innerHTML = `
             <div class="search-result-name"><span class="resource-icon" style="margin-right: 8px;">${icon}</span> ${UI.escapeHtml(res.name)}</div>
         `;
-        
+
         item.onclick = async () => {
             closeResourceSelection();
             updateTargetResource(res.id, res.name);
         };
-        
+
         container.appendChild(item);
     });
 }
@@ -1465,17 +1466,17 @@ function displaySubjectResourceResults(resources) {
 function updateTargetResource(id, name) {
     moveState.targetResourceId = id;
     moveState.targetResourceName = name;
-    
+
     const targetNameEl = document.getElementById('target-resource-name');
     if (targetNameEl) targetNameEl.textContent = name;
-    
+
     // Clear previous search and load sections for the new resource
     const searchInput = document.getElementById('section-search-input');
     if (searchInput) searchInput.value = '';
-    
+
     currentSelectedMoveSection = null;
     UI.toggleElement('confirm-move-card-btn', false);
-    
+
     loadResourceSections();
 }
 
@@ -1483,7 +1484,7 @@ async function loadResourceSections() {
     const section = document.getElementById('resource-sections-section');
     const container = document.getElementById('resource-sections-list');
     const resultsContainer = document.getElementById('section-search-results');
-    
+
     if (!moveState.targetResourceId) {
         if (section) section.style.display = 'none';
         return;
@@ -1526,20 +1527,20 @@ function displayResourceSections(sections) {
         item.innerHTML = `
             <div class="search-result-name">${UI.escapeHtml(section.name)}</div>
         `;
-        
+
         item.onclick = () => {
             selectMoveTarget(section);
             container.querySelectorAll('.search-result-item').forEach(el => el.classList.remove('selected'));
             item.classList.add('selected');
         };
-        
+
         container.appendChild(item);
     });
 }
 
 function selectMoveTarget(section) {
     currentSelectedMoveSection = section;
-    
+
     // Show confirm button
     const confirmBtn = document.getElementById('confirm-move-card-btn');
     if (confirmBtn) {

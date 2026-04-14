@@ -16,11 +16,11 @@ function updateRoadmapTitle(name) {
 
 function enterReorderMode(index) {
     if (reorderState.active) return;
-    
+
     reorderState.active = true;
     reorderState.sourceIndex = index;
     reorderState.preventClick = true;
-    
+
     // Add hint at the top of the list
     const hint = document.createElement('div');
     hint.id = 'reorder-hint';
@@ -30,7 +30,7 @@ function enterReorderMode(index) {
         <button class="btn btn-secondary btn-sm" onclick="exitReorderMode()" style="padding: 4px 12px; font-size: 0.85rem; background: rgba(255,255,255,0.2); border: none;">Cancel</button>
     `;
     document.body.appendChild(hint);
-    
+
     if (navigator.vibrate) navigator.vibrate(50);
 
     // Re-render to show gaps
@@ -48,7 +48,7 @@ function enterReorderMode(index) {
 window.exitReorderMode = function() {
     reorderState.active = false;
     reorderState.sourceIndex = null;
-    
+
     const hint = document.getElementById('reorder-hint');
     if (hint) hint.remove();
 
@@ -117,7 +117,7 @@ window.addEventListener('DOMContentLoaded', () => {
     const roadmapName = UI.getUrlParam('name');
     const suggestCreateBtn = document.getElementById('suggest-create-subject-btn');
     const rdSubjectSearchInput = document.getElementById('subject-search-input');
-    
+
     if (!roadmapId) {
         window.location.href = '/home.html';
         return;
@@ -144,12 +144,12 @@ window.addEventListener('DOMContentLoaded', () => {
             // Show the form
             UI.toggleElement('add-milestone-form-overlay', true);
             document.body.style.overflow = 'hidden'; // Prevent scrolling background
-            
+
             // Initial state
             UI.toggleElement('search-results', false);
             if (suggestCreateBtn) suggestCreateBtn.disabled = true;
             UI.toggleElement('milestone-addition-group', false);
-            
+
             // Use setTimeout to ensure the element is visible before focusing
             setTimeout(() => {
                 const searchInput = document.getElementById('subject-search-input');
@@ -172,7 +172,7 @@ window.addEventListener('DOMContentLoaded', () => {
         UI.clearForm('milestone-form');
         clearSearchResults();
     };
-    
+
     if (closeAddMilestoneModalBtn) closeAddMilestoneModalBtn.addEventListener('click', closeAddMilestoneModal);
     if (cancelMilestoneBtn) cancelMilestoneBtn.addEventListener('click', closeAddMilestoneModal);
 
@@ -230,10 +230,10 @@ window.addEventListener('DOMContentLoaded', () => {
                 // After creating, automatically select it
                 if (suggestCreateBtn) suggestCreateBtn.disabled = true;
                 UI.toggleElement('search-results', true);
-                
+
                 // Render just this one new subject as selected
                 renderSearchResults([{ id: newSubjectId, name: name }]);
-                
+
                 // Select it
                 const firstResult = document.querySelector('.search-result-item');
                 if (firstResult) firstResult.click();
@@ -426,7 +426,7 @@ window.addEventListener('DOMContentLoaded', () => {
     if (confirmRemoveMilestoneBtn) {
         confirmRemoveMilestoneBtn.addEventListener('click', async () => {
             if (!milestoneIdToRemove) return;
-            
+
             UI.hideMessage('error-message');
             UI.setButtonLoading('confirm-remove-milestone-btn', true);
 
@@ -513,11 +513,11 @@ function renderSearchResults(subjects) {
                 item.classList.remove('selected');
                 item.querySelector('.select-indicator').style.display = 'none';
             });
-            
+
             // Set new selection
             resultItem.classList.add('selected');
             resultItem.querySelector('.select-indicator').style.display = 'block';
-            
+
             // Hide create button when a result is selected to save space
             UI.toggleElement('create-subject-suggestion', false);
 
@@ -572,7 +572,7 @@ async function loadMilestones() {
                 searchContainer.style.display = 'block';
             }
             renderMilestones(response.milestones);
-            
+
             // Re-apply search if exists
             const searchInput = document.getElementById('milestone-search-input');
             if (searchInput && searchInput.value) {
@@ -712,6 +712,7 @@ function renderMilestones(milestones) {
             }
 
             if (!e.target.closest('button') && !e.target.closest('select') && !e.target.closest('input')) {
+                UI.showPageLoading();
                 const roadmapId = UI.getUrlParam('id');
                 const roadmapName = UI.getUrlParam('name');
                 window.location.href = `subject.html?id=${milestone.id}&name=${encodeURIComponent(milestone.name)}&level=${milestone.level}&roadmapId=${roadmapId}&roadmapName=${encodeURIComponent(roadmapName || '')}`;
@@ -812,7 +813,7 @@ function filterMilestones(searchTerm) {
     });
 
     UI.toggleElement('no-milestones-found', !hasResults && searchTerm !== '');
-    
+
     // Hide empty state if we're searching, even if no results found in search
     if (searchTerm !== '') {
         UI.toggleElement('empty-state', false);

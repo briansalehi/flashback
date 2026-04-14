@@ -1,4 +1,3 @@
-// Store current resource data
 let currentResourceData = null;
 let resourceId = UI.getUrlParam('id');
 let resourceName = UI.getUrlParam('name') || '';
@@ -32,7 +31,7 @@ function updateReorderHint() {
         hint.className = 'reorder-hint';
         document.body.appendChild(hint);
     }
-    
+
     hint.innerHTML = `
         <div style="display: flex; flex-direction: column; gap: 4px;">
             <span style="font-weight: 600; font-size: 0.95rem;">Moving "${UI.escapeHtml(reorderState.sourceSection.name)}"</span>
@@ -47,7 +46,7 @@ function updateReorderHint() {
 
 function enterReorderMode(index) {
     if (reorderState.active) return;
-    
+
     reorderState.active = true;
 
     // Clear sections search when entering reorder mode
@@ -62,7 +61,7 @@ function enterReorderMode(index) {
     reorderState.targetResourceId = resourceId;
     reorderState.targetResourceName = resourceName;
     reorderState.preventClick = true;
-    
+
     if (navigator.vibrate) navigator.vibrate(50);
 
     // Re-render to show gaps
@@ -93,7 +92,7 @@ window.exitReorderMode = async function() {
     reorderState.sourceResourceName = null;
     reorderState.targetResourceId = null;
     reorderState.targetResourceName = null;
-    
+
     const hint = document.getElementById('reorder-hint');
     if (hint) hint.remove();
 
@@ -140,7 +139,7 @@ window.openResourceSelectionModal = function() {
     const subjectContainer = document.getElementById('subject-resources-list');
     const subjectSection = document.getElementById('subject-resources-section');
     if (subjectContainer) subjectContainer.innerHTML = '';
-    
+
     if (subjectId) {
         if (subjectSection) subjectSection.style.display = 'block';
         loadSubjectResources();
@@ -162,7 +161,7 @@ function displaySubjectResourceResults(resources) {
     const container = document.getElementById('subject-resources-list');
     if (!container) return;
     container.innerHTML = '';
-    
+
     if (resources.length === 0) {
         container.innerHTML = '<div class="no-results" style="padding: 1rem; text-align: center; opacity: 0.6;">No resources in this subject.</div>';
         return;
@@ -179,12 +178,12 @@ function displaySubjectResourceResults(resources) {
         item.innerHTML = `
             <div class="search-result-name"><span class="resource-icon" style="margin-right: 8px;">${icon}</span> ${UI.escapeHtml(res.name)}</div>
         `;
-        
+
         item.onclick = async () => {
             closeResourceSelectionModal();
             await loadTargetResourceSections(res);
         };
-        
+
         container.appendChild(item);
     });
 }
@@ -206,7 +205,7 @@ function displayReorderResourceResults(resources) {
     const container = document.getElementById('reorder-resource-search-results');
     if (!container) return;
     container.innerHTML = '';
-    
+
     resources.forEach(res => {
         if (res.id === reorderState.sourceResourceId) {
             return;
@@ -217,12 +216,12 @@ function displayReorderResourceResults(resources) {
         item.innerHTML = `
             <div class="search-result-name">${UI.escapeHtml(res.name)}</div>
         `;
-        
+
         item.onclick = async () => {
             closeResourceSelectionModal();
             await loadTargetResourceSections(res);
         };
-        
+
         container.appendChild(item);
     });
 }
@@ -230,7 +229,7 @@ function displayReorderResourceResults(resources) {
 async function loadTargetResourceSections(resource) {
     reorderState.targetResourceId = resource.id;
     reorderState.targetResourceName = resource.name;
-    
+
     // Clear sections search when switching resources in reorder mode
     const searchInput = document.getElementById('sections-search-input');
     if (searchInput) searchInput.value = '';
@@ -238,10 +237,10 @@ async function loadTargetResourceSections(resource) {
     // Temporarily change global resourceId and resourceName to load/render sections
     resourceId = resource.id;
     resourceName = resource.name;
-    
+
     // Store full resource data
     currentResourceData = resource;
-    
+
     // Update page header
     const resourceNameHeader = document.getElementById('resource-name');
     if (resourceNameHeader) {
@@ -569,7 +568,7 @@ window.addEventListener('DOMContentLoaded', () => {
                 // Update the page and URL with new data
                 currentResourceData = { id: resourceId, name, type, pattern, link };
                 resourceName = name; // Update global resourceName
-                
+
                 // Update page header with icon
                 const resourceNameHeader = document.getElementById('resource-name');
                 if (resourceNameHeader) {
@@ -580,7 +579,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
                 // Update URL and breadcrumb
                 updateUrl();
-                
+
                 // Re-render sections to update links with the new resource name
                 renderSections(currentSections);
 
@@ -673,7 +672,7 @@ window.addEventListener('DOMContentLoaded', () => {
         reorderResourceSearchInput.addEventListener('input', (e) => {
             const query = e.target.value.trim();
             clearTimeout(searchTimeout);
-            
+
             const subjectSection = document.getElementById('subject-resources-section');
             if (!query) {
                 if (subjectSection) subjectSection.style.display = subjectId ? 'block' : 'none';
@@ -762,15 +761,15 @@ function renderSections(sections) {
     // Filter by search term
     let filteredSections = currentSections;
     if (searchTerm) {
-        filteredSections = currentSections.filter(section => 
+        filteredSections = currentSections.filter(section =>
             section.name.toLowerCase().includes(searchTerm)
         );
     }
-    
+
     // Handle expansion/collapsing (show only as many as fit by default)
     const toggleContainer = document.getElementById('sections-toggle-container');
     const toggleBtn = document.getElementById('sections-toggle-btn');
-    
+
     UI.toggleElement('sections-toggle-container', false);
 
     const displayedSections = filteredSections;
@@ -916,6 +915,7 @@ function renderSections(sections) {
                 return;
             }
 
+            UI.showPageLoading();
             const resourceType = UI.getUrlParam('type');
             const resourcePattern = UI.getUrlParam('pattern');
             const resourceLink = UI.getUrlParam('link');
@@ -950,7 +950,7 @@ function updateUrl() {
         params.set('pattern', currentResourceData.pattern);
         params.set('link', currentResourceData.link || '');
     }
-    
+
     const newUrl = `${window.location.pathname}?${params.toString()}`;
     window.history.replaceState({}, '', newUrl);
     displayBreadcrumb();

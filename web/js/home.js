@@ -461,6 +461,7 @@ function renderStudyingResources(resources) {
         `;
 
         resourceItem.addEventListener('click', () => {
+            UI.showPageLoading();
             window.location.href = `resource.html?id=${resource.id}&name=${encodeURIComponent(resource.name)}&type=${resource.type}&pattern=${resource.pattern}&link=${encodeURIComponent(resource.link)}&subjectId=${subjectId}&subjectName=${encodeURIComponent(subjectName)}&level=${level}`;
         });
 
@@ -573,6 +574,7 @@ function renderNerves(nerves) {
         `;
 
         nerveItem.addEventListener('click', () => {
+            UI.showPageLoading();
             window.location.href = `resource.html?id=${nerve.id}&name=${encodeURIComponent(nerve.name)}&type=${nerve.type}&pattern=${nerve.pattern}&link=${encodeURIComponent(nerve.link)}&subjectId=${subjectId}&subjectName=${encodeURIComponent(subjectName)}&level=${level}`;
         });
 

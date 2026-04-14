@@ -1375,6 +1375,7 @@ function renderTopics(topics, maxLevel) {
                     }
                     if (e.target.closest('button')) return;
 
+                    UI.showPageLoading();
                     const milestoneLevel = UI.getUrlParam('level') || '0';
                     const currentTab = UI.getUrlParam('tab') || 'topics';
                     window.location.href = `topic-cards.html?subjectId=${subjectId}&topicPosition=${topic.position}&topicLevel=${topic.level}&name=${encodeURIComponent(topic.name)}&subjectName=${encodeURIComponent(subjectName || '')}&roadmapId=${roadmapId || ''}&roadmapName=${encodeURIComponent(roadmapName || '')}&milestoneLevel=${milestoneLevel}&tab=${currentTab}`;
@@ -1502,6 +1503,7 @@ function renderResources(resources) {
 
         // Make the entire resource item clickable to go to resource page
         resourceItem.addEventListener('click', () => {
+            UI.showPageLoading();
             const currentTab = UI.getUrlParam('tab') || 'topics';
             const level = UI.getUrlParam('level') || '0';
             window.location.href = `resource.html?id=${resource.id}&name=${encodeURIComponent(resource.name)}&type=${resource.type}&pattern=${resource.pattern}&link=${encodeURIComponent(resource.link)}&subjectId=${subjectId || ''}&subjectName=${encodeURIComponent(subjectName || '')}&roadmapId=${roadmapId || ''}&roadmapName=${encodeURIComponent(roadmapName || '')}&level=${level}&tab=${currentTab}`;

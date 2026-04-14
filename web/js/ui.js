@@ -87,6 +87,10 @@ const UI = {
     },
     
     toggleElement(elementId, show) {
+        if (elementId === 'loading') {
+            show ? this.showPageLoading() : this.hidePageLoading();
+            return;
+        }
         const el = document.getElementById(elementId);
         if (el) {
             el.style.display = show ? 'block' : 'none';
@@ -391,13 +395,13 @@ const UI = {
             overlay = document.createElement('div');
             overlay.id = 'page-loading-overlay';
             overlay.className = 'page-loading-overlay';
-            overlay.innerHTML =
-                '<div class="page-loading-spinner"></div>' +
-                '<span class="page-loading-label">Loading…</span>';
+            overlay.innerHTML = '<div class="page-loading-spinner"></div>';
             document.body.appendChild(overlay);
+            // Force reflow so the browser registers the initial opacity:0 state
+            // before adding 'visible', giving the CSS transition a starting point.
+            void overlay.offsetWidth;
         }
-        // rAF ensures the transition plays from opacity:0 → 1
-        requestAnimationFrame(() => overlay.classList.add('visible'));
+        overlay.classList.add('visible');
     },
 
     /** Hide the full-page loading overlay (e.g. on bfcache restore). */
@@ -511,7 +515,6 @@ const UI = {
             if (item.url) {
                 content = document.createElement('a');
                 content.href = item.url;
-                content.addEventListener('click', () => UI.showPageLoading());
             } else {
                 content = document.createElement('span');
                 content.className = 'breadcrumb-text';
@@ -552,3 +555,36 @@ window.addEventListener('pageshow', (e) => {
         UI.hidePageLoading();
     }
 });
+
+// Auto-show the page loading overlay on every same-origin navigation,
+// covering all pages without modifying individual call sites.
+
+// Intercept window.location.href = '...' assignments in JS code.
+// Acts as a catch-all fallback; primary handlers call UI.showPageLoading()
+// explicitly so the overlay is synchronously visible before navigation.
+(function() {
+    const desc = Object.getOwnPropertyDescriptor(Location.prototype, 'href');
+    if (desc && desc.set) {
+        Object.defineProperty(Location.prototype, 'href', {
+            get: desc.get,
+            set(url) {
+                if (typeof UI !== 'undefined') UI.showPageLoading();
+                desc.set.call(this, url);
+            },
+            configurable: true
+        });
+    }
+}());
+
+// Intercept <a href="..."> clicks for same-origin navigation.
+// Runs in capture phase so it fires before page-specific handlers.
+document.addEventListener('click', (e) => {
+    const a = e.target.closest('a[href]');
+    if (!a || a.target === '_blank' || e.defaultPrevented) return;
+    const href = a.getAttribute('href');
+    if (!href || href.startsWith('#') || href.startsWith('javascript:')) return;
+    try {
+        const url = new URL(href, window.location.href);
+        if (url.origin === window.location.origin) UI.showPageLoading();
+    } catch (_) {}
+}, true);
