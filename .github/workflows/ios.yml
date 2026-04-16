@@ -19,9 +19,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 'lts/*'
-      - name: Install frontend dependencies
-        working-directory: app/src-tauri
-        run: npm ci
       - name: Import Distribution Certificate
         env:
           P12_DATA: ${{ secrets.IOS_CERTIFICATE_P12 }}

@@ -4,6 +4,7 @@
 *.deb
 *.tar
 *.lock
+package-lock.json
 *.keystore
 keystore.*
 *.jks
