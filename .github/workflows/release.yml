@@ -74,6 +74,63 @@ jobs:
           name: packages-android
           path: packages/
           retention-days: 1
+  build-ios:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-ios
+      - name: Install Tauri CLI
+        run: cargo install tauri-cli --version "^2"
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 'lts/*'
+      - name: Import Distribution Certificate
+        env:
+          P12_DATA: ${{ secrets.IOS_CERTIFICATE_P12 }}
+          P12_PASSWORD: ${{ secrets.IOS_CERTIFICATE_PASSWORD }}
+        run: |
+          echo "$P12_DATA" | base64 --decode > certificate.p12
+          security create-keychain -p "" build.keychain
+          security import certificate.p12 -k build.keychain -P "$P12_PASSWORD" -A
+          security list-keychains -s build.keychain
+          security default-keychain -s build.keychain
+          security unlock-keychain -p "" build.keychain
+          security set-keychain-settings -t 3600 -u build.keychain
+      - name: Install Provisioning Profile
+        env:
+          PROFILE_DATA: ${{ secrets.IOS_PROVISIONING_PROFILE }}
+        run: |
+          echo "$PROFILE_DATA" | base64 --decode > profile.mobileprovision
+          mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+          cp profile.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/
+      - name: Setup App Store Connect API Key
+        env:
+          API_KEY_DATA: ${{ secrets.APP_STORE_CONNECT_API_KEY }}
+        run: |
+          mkdir -p ~/.appstoreconnect/private_keys
+          echo "$API_KEY_DATA" | base64 --decode > ~/.appstoreconnect/private_keys/AuthKey_${{ secrets.APP_STORE_CONNECT_KEY_ID }}.p8
+      - name: Generate app icons
+        working-directory: app
+        run: cargo tauri icon src-tauri/icons/flashback.png
+      - name: Initialize iOS project
+        working-directory: app
+        run: cargo tauri ios init
+      - name: Copy iOS config files
+        run: cp app/src-tauri/apple/* app/src-tauri/gen/apple/
+      - name: Install xcodegen
+        run: brew install xcodegen
+      - name: Regenerate Xcode project
+        working-directory: app/src-tauri/gen/apple
+        run: xcodegen generate
+      - name: Build iOS
+        working-directory: app
+        run: cargo tauri ios build
+      - name: Upload to App Store Connect
+        run: xcrun altool --upload-app --type ios --file "app/src-tauri/gen/apple/build/Flashback.ipa" --apiKey ${{ secrets.APP_STORE_CONNECT_KEY_ID }} --apiIssuer ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
   publish-artifacts:
     runs-on: ubuntu-latest
     needs: [ build-linux, build-android ]
