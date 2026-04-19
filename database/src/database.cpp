@@ -205,6 +205,11 @@ void database::rename_user(uint64_t user_id, std::string_view name) const
     exec("call rename_user($1, $2)", user_id, name);
 }
 
+void database::delete_account(uint64_t const user_id) const
+{
+    exec("call delete_account($1)", user_id);
+}
+
 void database::change_user_email(uint64_t user_id, std::string_view email) const
 {
     exec("call change_user_email($1, $2)", user_id, email);

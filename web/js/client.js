@@ -1089,6 +1089,44 @@ class FlashbackClient {
         });
     }
 
+    async requestAccountDeletion() {
+        return new Promise((resolve, reject) => {
+            const request = new proto.flashback.RequestAccountDeletionRequest();
+            const user = this.getAuthenticatedUser();
+            request.setUser(user);
+
+            this.client.requestAccountDeletion(request, this.getMetadata(), (err) => {
+                if (err) {
+                    console.error("RequestAccountDeletion error:", err);
+                    reject(this.handleError(err));
+                } else {
+                    resolve();
+                }
+            });
+        });
+    }
+
+    async deleteAccount(email, code) {
+        return new Promise((resolve, reject) => {
+            const request = new proto.flashback.DeleteAccountRequest();
+            const user = this.getAuthenticatedUser();
+            user.setEmail(email);
+            request.setUser(user);
+            request.setCode(code);
+
+            this.client.deleteAccount(request, this.getMetadata(), (err) => {
+                if (err) {
+                    console.error("DeleteAccount error:", err);
+                    reject(this.handleError(err));
+                } else {
+                    localStorage.removeItem('token');
+                    this.token = '';
+                    resolve();
+                }
+            });
+        });
+    }
+
     async editUser(name, email) {
         return new Promise((resolve, reject) => {
             const request = new proto.flashback.EditUserRequest();

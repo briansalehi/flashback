@@ -28,6 +28,12 @@ message ResetPasswordResponse { }
 message EditUserRequest { User user = 1; }
 message EditUserResponse { }
 
+message RequestAccountDeletionRequest { User user = 1; }
+message RequestAccountDeletionResponse { }
+
+message DeleteAccountRequest { User user = 1; uint64 code = 2; }
+message DeleteAccountResponse { }
+
 message CreateRoadmapRequest { User user = 1; string name = 2; }
 message CreateRoadmapResponse { Roadmap roadmap = 1; }
 

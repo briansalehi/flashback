@@ -335,6 +335,84 @@ grpc::Status server::EditUser(grpc::ServerContext* context, EditUserRequest cons
     return status;
 }
 
+grpc::Status server::RequestAccountDeletion(grpc::ServerContext* context, RequestAccountDeletionRequest const* request, RequestAccountDeletionResponse* response)
+{
+    grpc::Status status{grpc::StatusCode::INTERNAL, {}};
+
+    try
+    {
+        if (!request->has_user() || !session_is_valid(request->user()))
+        {
+            status = grpc::Status{grpc::StatusCode::UNAUTHENTICATED, "invalid user"};
+        }
+        else
+        {
+            std::shared_ptr<User> const user{m_database->get_user(request->user().token(), request->user().device())};
+            uint64_t const code{generate_code()};
+            m_database->set_verification(user->id(), code);
+            std::clog << std::format("client {} requested account deletion\n", request->user().token());
+            send_deletion_email("flashback.eu.com", user->email(), code);
+            status = grpc::Status{grpc::StatusCode::OK, {}};
+        }
+    }
+    catch (std::exception const& exp)
+    {
+        std::cerr << std::format("server: failed to send deletion email for client {}: {}\n", request->user().token(), exp.what());
+        status = grpc::Status{grpc::StatusCode::INTERNAL, "failed to send deletion email"};
+    }
+
+    return status;
+}
+
+grpc::Status server::DeleteAccount(grpc::ServerContext* context, DeleteAccountRequest const* request, DeleteAccountResponse* response)
+{
+    grpc::Status status{grpc::StatusCode::INTERNAL, {}};
+
+    try
+    {
+        if (!request->has_user() || !session_is_valid(request->user()))
+        {
+            status = grpc::Status{grpc::StatusCode::UNAUTHENTICATED, "invalid user"};
+        }
+        else if (request->user().email().empty())
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "email is required"};
+        }
+        else if (request->code() == 0)
+        {
+            status = grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, "invalid deletion code"};
+        }
+        else
+        {
+            std::shared_ptr<User> const user{m_database->get_user(request->user().token(), request->user().device())};
+
+            if (user->email() != request->user().email())
+            {
+                std::clog << std::format("client {} provided wrong email for account deletion\n", request->user().token());
+                status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "email does not match"};
+            }
+            else if (user->verification() != request->code())
+            {
+                std::clog << std::format("client {} provided invalid deletion code\n", request->user().token());
+                status = grpc::Status{grpc::StatusCode::PERMISSION_DENIED, "invalid deletion code"};
+            }
+            else
+            {
+                std::clog << std::format("client {} deleted their account\n", request->user().token());
+                m_database->delete_account(user->id());
+                status = grpc::Status{grpc::StatusCode::OK, {}};
+            }
+        }
+    }
+    catch (std::exception const& exp)
+    {
+        std::cerr << std::format("server: failed to delete account for client {}: {}\n", request->user().token(), exp.what());
+        status = grpc::Status{grpc::StatusCode::INTERNAL, "internal error"};
+    }
+
+    return status;
+}
+
 grpc::Status server::SendVerification(grpc::ServerContext* context, SendVerificationRequest const* request, SendVerificationResponse* response)
 {
     grpc::Status status{grpc::StatusCode::INTERNAL, {}};
@@ -4963,6 +5041,72 @@ size_t server::write_callback(void* contents, size_t size, size_t nmemb, std::st
 {
     response->append(static_cast<char*>(contents), size * nmemb);
     return size * nmemb;
+}
+
+void server::send_deletion_email(std::string domain, std::string email, uint64_t const code)
+{
+    CURL* curl = curl_easy_init();
+    if (curl == nullptr)
+    {
+        throw std::runtime_error{"could not initialize sender"};
+    }
+
+    std::ostringstream email_buffer{};
+    std::string email_content{};
+    if (std::ifstream deletion_file("/usr/local/share/flashbackd/templates/deletion.html"); deletion_file.is_open())
+    {
+        email_buffer << deletion_file.rdbuf();
+        email_content = email_buffer.str();
+    }
+    else
+    {
+        throw std::runtime_error{"could not open deletion email template"};
+    }
+
+    auto pos = email_content.find("{}");
+    if (pos == std::string::npos)
+    {
+        throw std::runtime_error{"deletion email template does not contain placeholder"};
+    }
+
+    std::string const link{"https://" + domain + "/delete-account.html?code=" + std::to_string(code)};
+    email_content.replace(pos, 2, link);
+
+    std::clog << std::format("server: sending deletion link to {}\n", email);
+
+    nlohmann::json content;
+    content["from"] = "noreply@" + std::move(domain);
+    content["to"] = std::move(email);
+    content["subject"] = "Flashback - Account Deletion Request";
+    content["text"] = "Click the following link to delete your account: " + link;
+    content["html"] = email_content;
+
+    std::string json{content.dump()};
+    std::string response;
+
+    struct curl_slist* headers = nullptr;
+    headers = curl_slist_append(headers, std::format("Authorization: Bearer {}", std::getenv("EMAIL_API_TOKEN")).c_str());
+    headers = curl_slist_append(headers, "Content-Type: application/json");
+
+    curl_easy_setopt(curl, CURLOPT_URL, "https://api.resend.com/emails");
+    curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+    curl_easy_setopt(curl, CURLOPT_POSTFIELDS, json.c_str());
+    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_callback);
+    curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
+
+    CURLcode const res = curl_easy_perform(curl);
+
+    long httpCode = 0;
+    curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &httpCode);
+
+    curl_slist_free_all(headers);
+    curl_easy_cleanup(curl);
+
+    if (res != CURLE_OK || httpCode != 200)
+    {
+        std::cerr << std::format("server: curl response {}: {}\n", httpCode, response);
+        throw std::runtime_error{"the sender failed to send deletion email"};
+    }
 }
 
 void server::send_verification_email(std::string domain, std::string email, uint64_t const code)

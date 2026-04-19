@@ -13,6 +13,8 @@ service Server {
     rpc VerifyUser(VerifyUserRequest) returns (VerifyUserResponse);
     rpc ResetPassword(ResetPasswordRequest) returns (ResetPasswordResponse);
     rpc EditUser(EditUserRequest) returns (EditUserResponse);
+    rpc RequestAccountDeletion(RequestAccountDeletionRequest) returns (RequestAccountDeletionResponse);
+    rpc DeleteAccount(DeleteAccountRequest) returns (DeleteAccountResponse);
     rpc CreateRoadmap(CreateRoadmapRequest) returns (CreateRoadmapResponse);
     rpc GetRoadmaps(GetRoadmapsRequest) returns (GetRoadmapsResponse);
     rpc RemoveRoadmap(RemoveRoadmapRequest) returns (RemoveRoadmapResponse);

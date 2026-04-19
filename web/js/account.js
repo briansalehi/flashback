@@ -308,6 +308,32 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    const requestDeletionBtn = document.getElementById('request-deletion-btn');
+    const deletionRequestMessage = document.getElementById('deletion-request-message');
+
+    if (requestDeletionBtn) {
+        requestDeletionBtn.addEventListener('click', async () => {
+            hideMessages();
+            requestDeletionBtn.disabled = true;
+            requestDeletionBtn.textContent = 'Sending...';
+
+            try {
+                await client.requestAccountDeletion();
+                requestDeletionBtn.style.display = 'none';
+                if (deletionRequestMessage) {
+                    deletionRequestMessage.textContent = 'Check your email for a confirmation link to complete the deletion.';
+                    deletionRequestMessage.style.display = 'block';
+                    deletionRequestMessage.style.color = 'var(--color-text-muted)';
+                }
+            } catch (err) {
+                console.error('Request deletion error:', err);
+                requestDeletionBtn.disabled = false;
+                requestDeletionBtn.textContent = 'Delete Account';
+                showError(err || 'Failed to send deletion email. Please try again.');
+            }
+        });
+    }
+
     if (signoutBtn) {
         signoutBtn.addEventListener('click', async (e) => {
             e.preventDefault();

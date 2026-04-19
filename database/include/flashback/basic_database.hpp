@@ -29,6 +29,7 @@ public:
     virtual void set_verification(uint64_t user_id, uint64_t code) const = 0;
     virtual bool user_is_verified(std::string_view token, std::string_view device) const = 0;
     virtual bool user_is_authorized(std::string_view token, std::string_view device) const = 0;
+    virtual void delete_account(uint64_t user_id) const = 0;
     //suspend_user
     //ban_user
     //unlock_user

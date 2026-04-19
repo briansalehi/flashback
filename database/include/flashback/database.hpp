@@ -31,6 +31,7 @@ public:
     void revoke_session(uint64_t user_id, std::string_view token) const override;
     void revoke_sessions_except(uint64_t user_id, std::string_view token) const override;
     void rename_user(uint64_t user_id, std::string_view name) const override;
+    void delete_account(uint64_t user_id) const override;
     void change_user_email(uint64_t user_id, std::string_view email) const override;
     [[nodiscard]] bool user_is_verified(std::string_view token, std::string_view device) const override;
     [[nodiscard]] bool user_is_authorized(std::string_view token, std::string_view device) const override;

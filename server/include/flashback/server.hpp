@@ -20,6 +20,8 @@ public:
     grpc::Status SignOut(grpc::ServerContext* context, SignOutRequest const* request, SignOutResponse* response) override;
     grpc::Status SendVerification(grpc::ServerContext* context, SendVerificationRequest const* request, SendVerificationResponse* response) override;
     grpc::Status VerifyUser(grpc::ServerContext* context, VerifyUserRequest const* request, VerifyUserResponse* response) override;
+    grpc::Status RequestAccountDeletion(grpc::ServerContext* context, RequestAccountDeletionRequest const* request, RequestAccountDeletionResponse* response) override;
+    grpc::Status DeleteAccount(grpc::ServerContext* context, DeleteAccountRequest const* request, DeleteAccountResponse* response) override;
 
     // accounts page
     grpc::Status ResetPassword(grpc::ServerContext* context, ResetPasswordRequest const* request, ResetPasswordResponse* response) override;
@@ -157,6 +159,7 @@ protected:
     [[nodiscard]] bool user_is_verified(User const& user) const;
     [[nodiscard]] bool user_is_authorized(User const& user) const;
     void send_verification_email(std::string domain, std::string email, uint64_t code);
+    void send_deletion_email(std::string domain, std::string email, uint64_t code);
 
     std::shared_ptr<basic_database> m_database;
 };

@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="color-scheme" content="dark">
+  <title>Delete Account - Flashback</title>
+
+  <link rel="stylesheet" href="css/flashback-design.css">
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&display=swap" rel="stylesheet">
+
+  <style>
+    body {
+      padding-bottom: var(--space-xl);
+    }
+  </style>
+</head>
+<body>
+<div class="background-pattern"></div>
+
+<div class="menu-overlay"></div>
+
+<header class="header">
+  <div class="container header-content">
+    <a href="home.html" class="logo">Flashback</a>
+    <button class="menu-toggle" aria-label="Toggle menu">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+    <nav class="nav">
+      <a href="home.html">Home</a>
+      <a href="account.html">Account</a>
+      <a href="#" id="signout-btn">Sign Out</a>
+    </nav>
+  </div>
+</header>
+
+<main class="dashboard">
+  <div class="container">
+    <div class="dashboard-header">
+      <h1>Delete Account</h1>
+    </div>
+
+    <div id="error-message" class="error-message" style="display: none;"></div>
+
+    <div class="card" style="max-width: 600px;">
+      <h2 style="margin-bottom: 1rem;">Confirm Account Deletion</h2>
+      <p class="text-muted" style="margin-bottom: 0.75rem;">
+        This action is permanent and cannot be undone. Your account will be removed immediately.
+      </p>
+      <p class="text-muted" style="margin-bottom: 2rem;">
+        Enter your email address to confirm.
+      </p>
+
+      <div class="form-group" style="margin-bottom: 1.5rem;">
+        <label class="form-label" for="confirm-email">Email Address</label>
+        <input
+          type="email"
+          id="confirm-email"
+          class="form-input"
+          placeholder="your.email@example.com"
+          autocomplete="email"
+          style="max-width: 400px;"
+        >
+      </div>
+
+      <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+        <button id="confirm-delete-btn" class="btn btn-secondary" style="background-color: #dc3545; color: white; padding: 0.5rem 1.5rem; white-space: nowrap;">
+          Yes, Delete My Account
+        </button>
+        <a href="account.html" class="btn btn-secondary" style="padding: 0.5rem 1.5rem; white-space: nowrap; text-decoration: none;">
+          Cancel
+        </a>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script src="proto/flashback.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/client.js"></script>
+<script src="js/nav.js"></script>
+<script src="js/delete-account.js"></script>
+</body>
+</html>
