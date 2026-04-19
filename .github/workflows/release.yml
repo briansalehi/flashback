@@ -116,12 +116,12 @@ jobs:
         run: |
           mkdir -p ~/.appstoreconnect/private_keys
           echo "$API_KEY_DATA" | base64 --decode > ~/.appstoreconnect/private_keys/AuthKey_${{ secrets.APP_STORE_CONNECT_KEY_ID }}.p8
-      - name: Generate app icons
-        working-directory: app
-        run: cargo tauri icon src-tauri/icons/flashback.png
       - name: Initialize iOS project
         working-directory: app
         run: cargo tauri ios init
+      - name: Generate app icons
+        working-directory: app
+        run: cargo tauri icon src-tauri/icons/flashback.png
       - name: Copy iOS config files
         run: cp app/src-tauri/apple/* app/src-tauri/gen/apple/
       - name: Install xcodegen
