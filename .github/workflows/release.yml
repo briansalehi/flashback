@@ -77,7 +77,7 @@ jobs:
   build-ios:
     runs-on: macos-15
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6.0.2
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
         with:
@@ -86,6 +86,8 @@ jobs:
         run: cargo install tauri-cli --version "^2"
       - name: Setup Node
         uses: actions/setup-node@v4
+        env:
+          FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
         with:
           node-version: 'lts/*'
       - name: Import Distribution Certificate
@@ -155,24 +157,14 @@ jobs:
         with:
           name: packages-android
           path: packages/
-      - id: package-files
+      - name: Rename packages
         run: |
-          deb_path=$(ls packages/*.deb)
-          rpm_path=$(ls packages/*.rpm)
-          apk_path=packages/flashback.apk
-          aab_path=packages/flashback.aab
-          echo "deb_path=$deb_path" >> $GITHUB_OUTPUT
-          echo "rpm_path=$rpm_path" >> $GITHUB_OUTPUT
-          echo "apk_path=$apk_path" >> $GITHUB_OUTPUT
-          echo "aab_path=$aab_path" >> $GITHUB_OUTPUT
-          version="$(echo $deb_path | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')"
-          echo "version=$version" >> $GITHUB_OUTPUT
-          echo "deb_file=flashback-${version}-amd64.deb" >> $GITHUB_OUTPUT
-          echo "rpm_file=flashback-${version}-amd64.rpm" >> $GITHUB_OUTPUT
-          echo "apk_file=flashback-${version}.apk" >> $GITHUB_OUTPUT
-          echo "aab_file=flashback-${version}.aab" >> $GITHUB_OUTPUT
-      - id: create-release
-        uses: softprops/action-gh-release@v2.6.1
+          version="$(ls packages/*.deb | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')"
+          mv packages/*.deb packages/flashback-${version}-amd64.deb
+          mv packages/*.rpm packages/flashback-${version}-amd64.rpm
+          mv packages/flashback.apk packages/flashback-${version}.apk
+          mv packages/flashback.aab packages/flashback-${version}.aab
+      - uses: softprops/action-gh-release@v2.6.1
         env:
           GITHUB_TOKEN: "${{ secrets.github_token }}"
         with:
@@ -181,27 +173,4 @@ jobs:
           body: "Use one of the installation packages below to install Flashback on your system."
           draft: false
           prerelease: false
-      - uses: actions/upload-release-asset@v1.0.2
-        env:
-          GITHUB_TOKEN: "${{ secrets.github_token }}"
-        with:
-          upload_url: "${{ steps.create-release.outputs.upload_url }}"
-          asset_path: ${{ steps.package-files.outputs.deb_path }}
-          asset_name: ${{ steps.package-files.outputs.deb_file }}
-          asset_content_type: "application/x-deb"
-      - uses: actions/upload-release-asset@v1.0.2
-        env:
-          GITHUB_TOKEN: "${{ secrets.github_token }}"
-        with:
-          upload_url: "${{ steps.create-release.outputs.upload_url }}"
-          asset_path: ${{ steps.package-files.outputs.rpm_path }}
-          asset_name: ${{ steps.package-files.outputs.rpm_file }}
-          asset_content_type: "application/x-rpm"
-      - uses: actions/upload-release-asset@v1.0.2
-        env:
-          GITHUB_TOKEN: "${{ secrets.github_token }}"
-        with:
-          upload_url: "${{ steps.create-release.outputs.upload_url }}"
-          asset_path: ${{ steps.package-files.outputs.apk_path }}
-          asset_name: ${{ steps.package-files.outputs.apk_file }}
-          asset_content_type: "application/vnd.android.package-archive"
+          files: packages/*
