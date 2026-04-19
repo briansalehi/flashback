@@ -100,6 +100,7 @@ jobs:
           security default-keychain -s build.keychain
           security unlock-keychain -p "" build.keychain
           security set-keychain-settings -t 3600 -u build.keychain
+          security set-key-partition-list -S apple-tool:,apple: -s -k "" build.keychain
       - name: Install Provisioning Profile
         env:
           PROFILE_DATA: ${{ secrets.IOS_PROVISIONING_PROFILE }}
@@ -129,11 +130,20 @@ jobs:
       - name: Build iOS
         working-directory: app
         run: cargo tauri ios build
+        timeout-minutes: 30
       - name: Upload to App Store Connect
-        run: xcrun altool --upload-app --type ios --file "app/src-tauri/gen/apple/build/Flashback.ipa" --apiKey ${{ secrets.APP_STORE_CONNECT_KEY_ID }} --apiIssuer ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+        run: |
+          xcrun altool \
+            --upload-app \
+            --type ios \
+            --file "app/src-tauri/gen/apple/build/arm64/Flashback.ipa" \
+            --apiKey ${{ secrets.APP_STORE_CONNECT_KEY_ID }} \
+            --apiIssuer ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
   publish-artifacts:
     runs-on: ubuntu-latest
-    needs: [ build-linux, build-android ]
+    needs:
+      - build-linux
+      - build-android
     permissions:
       contents: write
     steps:
