@@ -639,10 +639,7 @@ function displaySuggestedRoadmaps(roadmaps) {
         roadmapItem.style.cssText = 'padding: 0.75rem; margin-bottom: 0.5rem; background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 4px; cursor: pointer; transition: all 0.2s;';
 
         roadmapItem.innerHTML = `
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-                <span style="font-weight: 500; color: var(--text-primary);">${UI.escapeHtml(roadmap.name)}</span>
-                <span style="font-size: 0.875rem; color: var(--accent-color); font-weight: 600;">Clone</span>
-            </div>
+            <span style="font-weight: 500; color: var(--text-primary);">${UI.escapeHtml(roadmap.name)}</span>
         `;
 
         roadmapItem.addEventListener('click', () => {
