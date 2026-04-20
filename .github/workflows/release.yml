@@ -191,4 +191,4 @@ jobs:
           packageName: com.us.flashback
           releaseFiles: packages/flashback.aab
           track: internal
-          status: draft
+          status: completed
