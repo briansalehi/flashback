@@ -338,3 +338,47 @@ Prism.languages.pam = {
     'number': /\b\d+\b/,
     'punctuation': /[\[\]=]/
 };
+
+// GDB (GNU Debugger) prompt / .gdbinit
+Prism.languages.gdb = {
+    'comment': {
+        pattern: /#.*/,
+        greedy: true
+    },
+
+    // GDB convenience variables and registers: $rax, $eip, $1, $_, $$
+    'variable': {
+        pattern: /\$\w*/,
+        alias: 'variable'
+    },
+
+    // String literals
+    'string': {
+        pattern: /(["'])(?:\\[\s\S]|(?!\1)[^\\])*\1/,
+        greedy: true
+    },
+
+    // Block structure keywords
+    'block-keyword': {
+        pattern: /^[ \t]*\b(?:define|document|if|else|while|commands|end)\b/m,
+        alias: 'important'
+    },
+
+    // GDB commands — common full names and abbreviations
+    'keyword': {
+        pattern: /\b(?:advance|attach|awatch|backtrace|bt|break|b|call|catch|clear|commands|condition|continue|c|delete|d|detach|directory|disable|disassemble|display|down|dump|enable|finish|frame|f|handle|hbreak|help|ignore|info|interrupt|jump|kill|layout|list|l|load|maintenance|next|ni|nexti|n|output|overlay|p|print|printf|ptype|quit|q|rbreak|record|remote|return|reverse-continue|reverse-finish|reverse-next|reverse-nexti|reverse-step|reverse-stepi|run|r|rwatch|save|set|shell|sharedlibrary|show|signal|si|source|step|stepi|s|tbreak|tcatch|tstart|tstop|tty|undisplay|until|u|up|watch|whatis|where|x)\b/,
+        alias: 'keyword'
+    },
+
+    // Common info sub-commands used as qualifiers: info breakpoints, info registers, etc.
+    'builtin': {
+        pattern: /\b(?:address|all-registers|args|auxv|breakpoints|catching|checkpoints|classes|common|copying|dcache|display|exceptions|extensions|files|float|frame|functions|handles|inferiors|line|locals|macro|mem|os|program|record|registers|scope|selectors|sharedlibrary|signals|skip|source|sources|stack|symbol|target|tasks|terminal|threads|tracepoints|tvariables|types|variables|vector|vtbl|warranty|watchpoints)\b/
+    },
+
+    // Hex and integer literals
+    'number': /\b(?:0x[\da-fA-F]+|\d+)\b/,
+
+    'operator': /[-+*\/%&|^~<>=!]+/,
+    'punctuation': /[.,:()\[\]{}]/
+};
+Prism.languages.gdbinit = Prism.languages.gdb;
