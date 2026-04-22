@@ -1201,13 +1201,6 @@ window.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        // Ensure extension is always lower case as user types
-        const extensionInput = document.getElementById('block-extension');
-        if (extensionInput) {
-            extensionInput.addEventListener('input', () => {
-                extensionInput.value = extensionInput.value.toLowerCase();
-            });
-        }
     }
 
     const closeAddBlockModal = () => {
@@ -1258,7 +1251,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
             const blockType = parseInt(document.getElementById('block-type').value);
             const extensionInput = document.getElementById('block-extension');
-            const blockExtension = extensionInput.value.trim().toLowerCase();
+            const blockExtension = extensionInput.value.trim();
             const blockMetadata = document.getElementById('block-metadata').value.trim();
             const blockContent = document.getElementById('block-content').value.trim();
 
