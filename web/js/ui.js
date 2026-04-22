@@ -231,8 +231,8 @@ const UI = {
 
                 if (!this.isEnabled()) return;
                 
-                // Don't trigger if user is typing in an input or textarea (unless Alt is pressed)
-                if ((e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') && !e.altKey) return;
+                // Don't trigger if user is typing in an input, textarea, or select (unless Alt is pressed)
+                if ((e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') && !e.altKey) return;
 
                 // Make sure these shortcuts won't trigger when pressed with Ctrl or Alt keys
                 // EXCEPT Alt key is allowed for some shortcuts (like Alt + Number)
