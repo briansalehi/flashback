@@ -242,3 +242,99 @@ Prism.languages.systemd = {
 ].forEach(function(ext) {
     Prism.languages[ext] = Prism.languages.systemd;
 });
+
+// Modelfile (Ollama model definition files)
+Prism.languages.modelfile = {
+    'comment': {
+        pattern: /^#.*/m,
+        greedy: true
+    },
+
+    // Instruction keywords — must appear at the start of a line
+    'keyword': {
+        pattern: /^(?:FROM|PARAMETER|TEMPLATE|SYSTEM|ADAPTER|LICENSE|MESSAGE)\b/im,
+        alias: 'keyword'
+    },
+
+    // Go template directives: {{ .System }}, {{- if ... -}}, etc.
+    'template-tag': {
+        pattern: /\{\{-?\s*[\s\S]*?-?\}\}/,
+        greedy: true,
+        alias: 'punctuation',
+        inside: {
+            'punctuation': /^\{\{-?|-?\}\}$/,
+            'keyword': /\b(?:if|else|end|range|with|block|define|template|call)\b/,
+            'variable': /\.[\w.]+/,
+            'operator': /\|/
+        }
+    },
+
+    // Triple-quoted strings (heredoc-style): """..."""
+    'triple-string': {
+        pattern: /"""[\s\S]*?"""/,
+        greedy: true,
+        alias: 'string'
+    },
+
+    // Regular quoted strings
+    'string': {
+        pattern: /(["'])(?:\\[\s\S]|(?!\1)[^\\])*\1/,
+        greedy: true
+    },
+
+    // Parameter names like num_ctx, temperature, top_p, etc.
+    'parameter-name': {
+        pattern: /(?<=^PARAMETER\s+)\w+/im,
+        alias: 'attr-name'
+    },
+
+    'number': /\b\d+(?:\.\d+)?\b/,
+    'punctuation': /[{}[\](),]/
+};
+Prism.languages.Modelfile = Prism.languages.modelfile;
+
+// PAM (Pluggable Authentication Modules) configuration
+Prism.languages.pam = {
+    'comment': {
+        pattern: /^#.*/m,
+        greedy: true
+    },
+
+    // Service type: auth, account, password, session
+    'service-type': {
+        pattern: /^(?:auth|account|password|session)(?=\s)/im,
+        alias: 'keyword'
+    },
+
+    // Control flags: required, requisite, sufficient, optional, include, substack
+    'control-flag': {
+        pattern: /(?<=^(?:auth|account|password|session)\s+)(?:required|requisite|sufficient|optional|include|substack|\[[\w=\s]+\])/im,
+        lookbehind: false,
+        alias: 'important'
+    },
+
+    // Module paths: pam_unix.so, /lib/security/pam_env.so, etc.
+    'module': {
+        pattern: /(?:\/[\w./-]+\/)?pam_\w+\.so\b/,
+        alias: 'string'
+    },
+
+    // Module arguments with values: key=value
+    'argument-value': {
+        pattern: /\b\w+=\S+/,
+        alias: 'attr-value',
+        inside: {
+            'operator': /=/,
+            'attr-name': /^\w+/
+        }
+    },
+
+    // Standalone module arguments/flags: try_first_pass, nullok, use_authtok, etc.
+    'argument': {
+        pattern: /\b(?:debug|no_warn|use_first_pass|try_first_pass|use_authtok|nullok|shadow|md5|bigcrypt|broken_shadow|audit|nodelay|likeauth|deny|lock_time|unlock_time|no_lock_time|magic_root|usernotfound|even_deny_root|root_unlock_time|serialize|remember|retry|difok|minlen|dcredit|ucredit|lcredit|ocredit|minclass|maxrepeat|maxsequence|reject_username|enforce_for_root|local_users_only|quiet|silent|syslog|no_log_init|expose_account|motd|noupdate|nowtmp|never_default|open_session|close_session|revoke|stdout|umask|rootok|trust|not_set_pass|ingroup|sense|file|onerr|item|apply|limit|conf|check_host)\b/,
+        alias: 'attr-name'
+    },
+
+    'number': /\b\d+\b/,
+    'punctuation': /[\[\]=]/
+};
