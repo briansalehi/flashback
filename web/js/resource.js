@@ -1135,7 +1135,6 @@ function setupProviderHandlers() {
     const providerSearchResults = document.getElementById('provider-search-results');
     const providerCreateOption = document.getElementById('provider-create-option');
     const providerCreateBtn = document.getElementById('provider-create-btn');
-    const providerCreateName = document.getElementById('provider-create-name');
 
     const openProviderModal = () => {
         if (editProviderModal) {
@@ -1180,7 +1179,6 @@ function setupProviderHandlers() {
 
             if (!query) return;
 
-            if (providerCreateName) providerCreateName.textContent = query;
             if (providerCreateOption) providerCreateOption.style.display = 'block';
 
             providerSearchTimeout = setTimeout(async () => {
@@ -1249,7 +1247,6 @@ function setupPresenterHandlers() {
     const presenterSearchResults = document.getElementById('presenter-search-results');
     const presenterCreateOption = document.getElementById('presenter-create-option');
     const presenterCreateBtn = document.getElementById('presenter-create-btn');
-    const presenterCreateName = document.getElementById('presenter-create-name');
 
     const openPresenterModal = () => {
         if (addPresenterModal) {
@@ -1294,7 +1291,6 @@ function setupPresenterHandlers() {
 
             if (!query) return;
 
-            if (presenterCreateName) presenterCreateName.textContent = query;
             if (presenterCreateOption) presenterCreateOption.style.display = 'block';
 
             presenterSearchTimeout = setTimeout(async () => {
