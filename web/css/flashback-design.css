@@ -2189,9 +2189,21 @@ input:checked + .slider:before {
         max-height: calc(100dvh - 40px);
     }
 
+    #add-block-modal .modal-content,
+    #edit-block-modal .modal-content {
+        height: calc(100dvh - 88px - 2 * var(--space-md) - var(--safe-area-top));
+    }
+
     .modal-body .form-group[style*="display: flex"],
     .modal-body div[style*="display: flex"] {
         display: block !important;
+    }
+
+    /* Keep block content wrappers as flex-column so textarea can grow to fill space */
+    #add-block-modal .modal-body .form-group:last-child,
+    #edit-block-modal .modal-body > div:last-child {
+        display: flex !important;
+        flex-direction: column !important;
     }
 
     .modal-body label.form-label {
