@@ -898,7 +898,6 @@ window.addEventListener('DOMContentLoaded', () => {
                 } else {
                     splitBtn.style.display = 'none';
                 }
-                adjustTextareaHeight(contentTextarea);
                 checkChanges();
             };
 
@@ -913,7 +912,6 @@ window.addEventListener('DOMContentLoaded', () => {
 
             setTimeout(() => {
                 contentTextarea.focus();
-                adjustTextareaHeight(contentTextarea);
             }, 100);
         }
     };
@@ -1146,7 +1144,6 @@ window.addEventListener('DOMContentLoaded', () => {
         const contentInput = document.getElementById('block-content');
         if (contentInput) {
             contentInput.value = '';
-            contentInput.oninput = () => adjustTextareaHeight(contentInput);
         }
 
         // Set initial state for extension field based on default type (Text)
@@ -1173,7 +1170,6 @@ window.addEventListener('DOMContentLoaded', () => {
             const contentInput = document.getElementById('block-content');
             if (contentInput) {
                 contentInput.focus();
-                adjustTextareaHeight(contentInput);
             }
         }, 100);
     };
