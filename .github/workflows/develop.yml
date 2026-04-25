@@ -12,9 +12,11 @@ jobs:
       - name: update repository
         run:  sudo apt update
       - name: prepare
-        run:  sudo apt install --yes --no-install-recommends cmake postgresql libreadline-dev npm make curl patch tar gzip bzip2 sed libboost-system-dev libboost-program-options-dev libgtest-dev libprotobuf-dev libprotoc-dev libgrpc++-dev protobuf-compiler-grpc libsodium-dev libgmock-dev
-      - name: checkout
+        run:  sudo apt install --yes --no-install-recommends cmake postgresql libreadline-dev npm make curl patch tar gzip bzip2 sed libboost-system-dev libboost-program-options-dev libgtest-dev libprotobuf-dev libprotoc-dev libgrpc++-dev protobuf-compiler-grpc libsodium-dev libgmock-dev git
+      - name: checkout flashback
         uses: actions/checkout@v4
+      - name: checkout database
+        run: git clone https://github/briansalehi/flashback-database
       - name: install postgresql
         run:  |
           sudo -u postgres sed -i '/^host\s*all\s*all\s*127.0.0.1/i host flashback_test flashback_client 127.0.0.1/32 trust' /etc/postgresql/*/main/pg_hba.conf
@@ -31,7 +33,7 @@ jobs:
         run:  |
           sudo -u postgres psql -c 'create database flashback_test with owner flashback connection limit 10'
           sudo -u postgres psql -c 'create extension if not exists pg_trgm with schema flashback'
-          sudo -u postgres psql -d flashback_test -f database/schema.sql -q
+          sudo -u postgres ./database/sync-test-database.sh flashback-database
       - name: database post configurations
         run:  |
           sudo -u postgres psql -c 'revoke all on schema public from public'
