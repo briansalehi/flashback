@@ -72,7 +72,7 @@ message PresenterSearchResult { Presenter presenter = 1; uint64 position = 2; }
 message TopicSearchResult { Topic topic = 1; uint64 position = 2; }
 message SectionSearchResult { Section section = 1; uint64 position = 2; }
 message CardSearchResult { Card card = 1; uint64 position = 2; }
-message StudyResource { Resource resource = 1; uint64 order = 2; Milestone milestone = 3; }
+message StudyResource { Resource resource = 1; Milestone milestone = 2; }
 message PracticeTopic { Topic topic = 1; bool collapsed = 2; }
 message Nerve { Resource resource = 1; Milestone milestone = 2; }
 message SectionCard { Card card = 1; bool is_assignable = 2; }

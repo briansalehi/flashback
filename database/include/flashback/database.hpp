@@ -156,7 +156,7 @@ public:
     [[nodiscard]] std::vector<Card> get_practice_cards(uint64_t user_id, uint64_t roadmap_id, uint64_t subject_id, expertise_level level, uint64_t topic_position) const override;
     [[nodiscard]] closure_state get_resource_state(uint64_t resource_id) const override;
     void study(uint64_t user_id, uint64_t card_id, std::chrono::seconds duration) const override;
-    [[nodiscard]] std::map<uint64_t, Resource> get_study_resources(uint64_t user_id) const override;
+    [[nodiscard]] std::vector<Resource> get_study_resources(uint64_t user_id) const override;
     void mark_card_as_reviewed(uint64_t card_id) const override;
     void mark_card_as_completed(uint64_t card_id) const override;
     void mark_section_as_reviewed(uint64_t resource_id, uint64_t section_position) const override;

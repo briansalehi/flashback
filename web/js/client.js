@@ -589,7 +589,6 @@ class FlashbackClient {
                                 id: presenter.getId(),
                                 name: presenter.getName()
                             })) : [],
-                            order: study.getOrder(),
                             milestone: milestone ? {
                                 id: milestone.getId(),
                                 name: milestone.getName(),

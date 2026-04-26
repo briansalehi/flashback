@@ -621,10 +621,9 @@ grpc::Status server::GetStudyResources(grpc::ServerContext* context, GetStudyRes
         else
         {
             std::shared_ptr<User> const user{m_database->get_user(request->user().token(), request->user().device())};
-            for (auto [position, resource]: m_database->get_study_resources(user->id()))
+            for (Resource& resource: m_database->get_study_resources(user->id()))
             {
                 StudyResource* study = response->add_study();
-                study->set_order(position);
 
                 for (Provider const& provider: m_database->get_providers(resource.id()))
                 {

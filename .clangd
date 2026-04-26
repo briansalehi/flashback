@@ -1,0 +1,16 @@
+Diagnostics:
+  ClangTidy:
+    Add:
+      - bugprone-*
+      - modernize-*
+  UnusedIncludes: Strict
+Index:
+  Background: Build
+InlayHints:
+  Enabled: Yes
+  ParameterNames: Yes
+  DeducedTypes: Yes
+  Designators: Yes
+  BlockEnd: Yes
+Hover:
+  ShowAKA: Yes

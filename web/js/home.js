@@ -407,16 +407,13 @@ function renderStudyingResources(resources) {
         );
     }
 
-    // Sort by order
-    const sortedResources = filteredResources.sort((a, b) => (a.order || 0) - (b.order || 0));
-
     // Determine resources to show
-    const resourcesToShow = isStudyingExpanded ? sortedResources : sortedResources.slice(0, 3);
+    const resourcesToShow = isStudyingExpanded ? filteredResources : filteredResources.slice(0, 3);
 
     // Update toggle button visibility and text
-    if (sortedResources.length > 3) {
+    if (filteredResources.length > 3) {
         UI.toggleElement('studying-toggle-container', true);
-        if (toggleBtn) toggleBtn.textContent = isStudyingExpanded ? 'Show Less' : `Show All (${sortedResources.length})`;
+        if (toggleBtn) toggleBtn.textContent = isStudyingExpanded ? 'Show Less' : `Show All (${filteredResources.length})`;
     } else {
         UI.toggleElement('studying-toggle-container', false);
     }

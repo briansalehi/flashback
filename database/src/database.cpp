@@ -1211,9 +1211,9 @@ std::vector<Card> database::get_practice_cards(uint64_t const user_id, uint64_t 
     return cards;
 }
 
-std::map<uint64_t, Resource> database::get_study_resources(uint64_t const user_id) const
+std::vector<Resource> database::get_study_resources(uint64_t const user_id) const
 {
-    std::map<uint64_t, Resource> resources;
+    std::vector<Resource> resources;
     for (pqxx::row const& row: query("select position, id, name, type, pattern, link from get_study_resources($1) order by position", user_id))
     {
         Resource resource{};
@@ -1223,7 +1223,7 @@ std::map<uint64_t, Resource> database::get_study_resources(uint64_t const user_i
         resource.set_type(to_resource_type(row.at("type").as<std::string>()));
         resource.set_pattern(to_section_pattern(row.at("pattern").as<std::string>()));
         resource.set_link(row.at("link").is_null() ? "" : row.at("link").as<std::string>());
-        resources.insert({position, resource});
+        resources.push_back(resource);
     }
     return resources;
 }
