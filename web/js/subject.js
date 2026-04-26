@@ -1363,7 +1363,7 @@ function renderTopics(topics, maxLevel, highlightName = null, highlightLevel = n
                 topicItem.innerHTML = `
                     <div class="item-header" style="margin-bottom: 0; align-items: flex-start; flex-wrap: wrap; gap: var(--space-xs);">
                         <div style="display: flex; align-items: flex-start; gap: var(--space-xs); flex: 1; min-width: 150px; pointer-events: none;">
-                            <span class="item-badge" style="font-size: 10px; height: 18px; min-width: 18px; padding: 0 4px; text-align: center;">${sortedIndex + 1}</span>
+                            <span class="item-badge" style="font-size: 10px; height: 18px; min-width: 18px; padding: 0 4px; text-align: center;">${topic.position}</span>
                             <h3 class="item-title" style="margin: 0; font-size: var(--font-size-base); overflow-wrap: break-word; word-break: break-word;">${UI.escapeHtml(topic.name)}</h3>
                         </div>
                     </div>
