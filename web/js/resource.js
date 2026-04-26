@@ -885,7 +885,7 @@ function renderSections(sections) {
             <div style="width: 100%; display: flex; flex-direction: column; gap: 0.25rem;">
                 <div class="item-header" style="margin-bottom: 0; align-items: center;">
                     <div style="display: flex; align-items: center; gap: var(--space-xs); flex: 1; cursor: pointer;">
-                        <span class="item-badge" style="font-size: 10px; height: 18px; min-width: 18px; padding: 0 4px; text-align: center;">${index + 1}</span>
+                        <span class="item-badge" style="font-size: 10px; height: 18px; min-width: 18px; padding: 0 4px; text-align: center;">${section.position}</span>
                         <h3 class="item-title" style="margin: 0; font-size: var(--font-size-base);">${UI.escapeHtml(section.name)}</h3>
                     </div>
                     <div style="display: flex; align-items: center; gap: 0.5rem;">
