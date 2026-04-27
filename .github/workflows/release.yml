@@ -9,6 +9,7 @@ on:
 jobs:
   build-linux:
     runs-on: ubuntu-latest
+    needs: build-windows
     container:
       image: briansalehi/tauri:latest
     steps:
@@ -34,6 +35,7 @@ jobs:
           retention-days: 1
   build-android:
     runs-on: ubuntu-latest
+    needs: build-windows
     container:
       image: briansalehi/tauri:latest
     steps:
@@ -78,6 +80,7 @@ jobs:
           retention-days: 1
   build-ios:
     runs-on: macos-15
+    needs: build-windows
     steps:
       - uses: actions/checkout@v6.0.2
       - name: Install Rust
@@ -146,18 +149,29 @@ jobs:
     steps:
       - name: Checkout Repository for Windows
         uses: actions/checkout@v6.0.2
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+      - name: Setup Node
+        uses: actions/setup-node@v6.3.0
+        with:
+          node-version: 'lts/*'
+      - name: Install cargo-binstall
+        uses: cargo-bins/cargo-binstall@main
+      - name: Install Tauri CLI
+        run: cargo binstall -y --version "^2" tauri-cli
       - name: Generate Icon
         run: cargo tauri icon app/src-tauri/icons/flashback.png
       - name: Build
         run: cargo tauri build
         timeout-minutes: 20
       - name: Store Artifacts
+        shell: bash
         run: |
           exe_path=$(find app/src-tauri/target/release/bundle/nsis -type f -name "Flashback*.exe")
           msi_path=$(find app/src-tauri/target/release/bundle/msi -type f -name "Flashback*.msi")
           mkdir packages
-          mv $exe_path packages/flashback.exe
-          mv $msi_path packages/flashback.msi
+          mv "$exe_path" packages/flashback.exe
+          mv "$msi_path" packages/flashback.msi
       - name: Upload Artifacts
         uses: actions/upload-artifact@v7.0.0
         with:
