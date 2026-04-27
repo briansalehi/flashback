@@ -10,11 +10,26 @@ jobs:
   build-linux:
     runs-on: ubuntu-latest
     needs: build-windows
-    container:
-      image: briansalehi/tauri:latest
     steps:
-      - name: Checkout Repository for Android
+      - name: Checkout Repository
         uses: actions/checkout@v6.0.2
+      - name: Install System Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes --no-install-recommends \
+            build-essential \
+            file \
+            libayatana-appindicator3-dev \
+            librsvg2-dev \
+            libssl-dev \
+            libwebkit2gtk-4.1-dev \
+            libxdo-dev
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+      - name: Install cargo-binstall
+        uses: cargo-bins/cargo-binstall@main
+      - name: Install Tauri CLI
+        run: cargo binstall -y --version "^2" tauri-cli
       - name: Generate Icon
         run: cargo tauri icon app/src-tauri/icons/flashback.png
       - name: Build Linux Desktop Application
@@ -36,11 +51,28 @@ jobs:
   build-android:
     runs-on: ubuntu-latest
     needs: build-windows
-    container:
-      image: briansalehi/tauri:latest
+    env:
+      NDK_VERSION: 29.0.13846066
     steps:
-      - name: Checkout Repository for Android
+      - name: Checkout Repository
         uses: actions/checkout@v6.0.2
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Install Android SDK Packages
+        run: sdkmanager "platforms;android-36" "build-tools;36.0.0" "ndk;${NDK_VERSION}" "platform-tools"
+      - name: Set NDK_HOME
+        run: echo "NDK_HOME=$ANDROID_HOME/ndk/$NDK_VERSION" >> $GITHUB_ENV
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-linux-android,armv7-linux-androideabi,i686-linux-android,x86_64-linux-android
+      - name: Install cargo-binstall
+        uses: cargo-bins/cargo-binstall@main
+      - name: Install Tauri CLI
+        run: cargo binstall -y --version "^2" tauri-cli
       - name: Initialize Android Project
         run: cargo tauri android init
       - name: Configure Gradle
@@ -87,8 +119,10 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
         with:
           targets: aarch64-apple-ios
+      - name: Install cargo-binstall
+        uses: cargo-bins/cargo-binstall@main
       - name: Install Tauri CLI
-        run: cargo install tauri-cli --version "^2"
+        run: cargo binstall -y --version "^2" tauri-cli
       - name: Setup Node
         uses: actions/setup-node@v6.3.0
         with:

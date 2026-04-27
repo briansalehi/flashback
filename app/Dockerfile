@@ -20,7 +20,8 @@ run rm /tmp/cmdline-tools.zip
 run yes | sdkmanager --licenses
 run sdkmanager "platforms;android-36" "build-tools;36.0.0" "ndk;${NDK_VERSION}" "platform-tools"
 
-run cargo install tauri-cli --version "^${TAURI_CLI_VERSION}" --locked
+run curl -L --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/cargo-bins/cargo-binstall/main/install-from-binstall-release.sh | bash
+run cargo binstall -y --locked --version "^${TAURI_CLI_VERSION}" tauri-cli
 run rm -rf ~/.cargo/{registry,.crates.toml,.crates2.json,.global-cache,.package-cache,.package-cache-mutate}
 
 cmd ["cargo", "tauri", "build"]
