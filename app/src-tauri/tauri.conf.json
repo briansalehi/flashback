@@ -15,7 +15,8 @@
         "titleBarStyle": "Overlay",
         "url": "https://flashback.eu.com",
         "width": 1200,
-        "height": 800
+        "height": 800,
+        "maximized": true
       }
     ],
     "security": {
@@ -24,9 +25,10 @@
   },
   "bundle": {
     "active": true,
-    "targets": ["rpm", "deb"],
+    "targets": ["rpm", "deb", "nsis", "msi"],
     "icon": [
-      "icons/flashback.png"
+      "icons/flashback.png",
+      "icons/icon.ico"
     ]
   }
 }
