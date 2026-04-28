@@ -28,7 +28,7 @@ jobs:
       - name: Install cargo-binstall
         uses: cargo-bins/cargo-binstall@main
       - name: Install Tauri CLI
-        run: cargo binstall -y --version "^2" tauri-cli
+        run: cargo binstall -y --locked --version "^2" tauri-cli
       - name: Generate Icon
         run: cargo tauri icon app/src-tauri/icons/flashback.png
       - name: Build Linux Desktop Application
@@ -72,7 +72,7 @@ jobs:
       - name: Install cargo-binstall
         uses: cargo-bins/cargo-binstall@main
       - name: Install Tauri CLI
-        run: cargo binstall -y --version "^2" tauri-cli
+        run: cargo binstall -y --locked --version "^2" tauri-cli
       - name: Initialize Android Project
         run: cargo tauri android init
       - name: Configure Gradle
@@ -121,7 +121,7 @@ jobs:
       - name: Install cargo-binstall
         uses: cargo-bins/cargo-binstall@main
       - name: Install Tauri CLI
-        run: cargo binstall -y --version "^2" tauri-cli
+        run: cargo binstall -y --locked --version "^2" tauri-cli
       - name: Setup Node
         uses: actions/setup-node@v6.3.0
         with:
@@ -187,26 +187,12 @@ jobs:
       - name: Install cargo-binstall
         uses: cargo-bins/cargo-binstall@main
       - name: Install Tauri CLI
-        run: cargo binstall -y --version "^2" tauri-cli
+        run: cargo binstall -y --locked --version "^2" tauri-cli
       - name: Generate Icon
         run: cargo tauri icon app/src-tauri/icons/flashback.png
       - name: Build
         run: cargo tauri build
         timeout-minutes: 20
-      - name: Store Artifacts
-        shell: bash
-        run: |
-          exe_path=$(find app/src-tauri/target/release/bundle/nsis -type f -name "Flashback*.exe")
-          msi_path=$(find app/src-tauri/target/release/bundle/msi -type f -name "Flashback*.msi")
-          mkdir packages
-          mv "$exe_path" packages/flashback.exe
-          mv "$msi_path" packages/flashback.msi
-      - name: Upload Artifacts
-        uses: actions/upload-artifact@v7.0.0
-        with:
-          name: packages-windows
-          path: packages/
-          retention-days: 1
       - name: Stage MSIX Files
         shell: bash
         run: |
@@ -227,6 +213,20 @@ jobs:
           if (-not $makeAppx) { throw "MakeAppx.exe not found" }
           & $makeAppx pack /d msix-staging /p packages-msix/flashback.msix /nv
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Store Artifacts
+        shell: bash
+        run: |
+          exe_path=$(find app/src-tauri/target/release/bundle/nsis -type f -name "Flashback*.exe")
+          msi_path=$(find app/src-tauri/target/release/bundle/msi -type f -name "Flashback*.msi")
+          mkdir packages
+          mv "$exe_path" packages/flashback.exe
+          mv "$msi_path" packages/flashback.msi
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v7.0.0
+        with:
+          name: packages-windows
+          path: packages/
+          retention-days: 1
       - name: Upload MSIX Artifact
         uses: actions/upload-artifact@v7.0.0
         with:
@@ -273,6 +273,7 @@ jobs:
             packages/*.exe
             packages/*.msi
   publish-google-play:
+    if: false
     runs-on: ubuntu-latest
     needs:
       - build-linux
@@ -294,6 +295,7 @@ jobs:
           track: internal
           status: completed
   publish-app-store:
+    if: false
     runs-on: macos-15
     needs:
       - build-linux
