@@ -215,8 +215,9 @@ jobs:
           version=$(find app/src-tauri/target/release/bundle/msi -name "*.msi" -printf "%f\n" | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1)
           mkdir -p msix-staging/Assets packages-msix
           cp "$exe_path" msix-staging/
-          cp app/src-tauri/icons/Square*Logo.png msix-staging/Assets/
-          cp app/src-tauri/icons/StoreLogo.png msix-staging/Assets/
+          magick app/src-tauri/icons/flashback.png -resize 50x50 msix-staging/Assets/StoreLogo.png
+          magick app/src-tauri/icons/flashback.png -resize 44x44 msix-staging/Assets/Square44x44Logo.png
+          magick app/src-tauri/icons/flashback.png -resize 150x150 msix-staging/Assets/Square150x150Logo.png
           sed -e "s|__VERSION__|${version}.0|g" -e "s|__EXECUTABLE__|${exe_name}|g" \
             app/src-tauri/msix/AppxManifest.xml > msix-staging/AppxManifest.xml
       - name: Build MSIX
