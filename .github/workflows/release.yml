@@ -334,19 +334,63 @@ jobs:
         with:
           name: packages-windows-store
           path: packages/
-      - name: Setup Microsoft Store Developer CLI
-        uses: microsoft/microsoft-store-apppublisher@v1.1
-      - name: Configure MSStore CLI
-        shell: bash
+      - name: Submit to Microsoft Store
+        shell: pwsh
+        env:
+          TENANT_ID: ${{ secrets.MICROSOFT_STORE_TENANT_ID }}
+          CLIENT_ID: ${{ secrets.MICROSOFT_STORE_CLIENT_ID }}
+          CLIENT_SECRET: ${{ secrets.MICROSOFT_STORE_CLIENT_SECRET }}
+          APP_ID: ${{ secrets.MICROSOFT_STORE_PRODUCT_ID }}
         run: |
-          msstore reconfigure \
-            --tenantId "${{ secrets.MICROSOFT_STORE_TENANT_ID }}" \
-            --sellerId "${{ secrets.MICROSOFT_STORE_SELLER_ID }}" \
-            --clientId "${{ secrets.MICROSOFT_STORE_CLIENT_ID }}" \
-            --clientSecret "${{ secrets.MICROSOFT_STORE_CLIENT_SECRET }}"
-      - name: Publish to Microsoft Store
-        shell: bash
-        run: |
-          msstore publish \
-            --appId "${{ secrets.MICROSOFT_STORE_PRODUCT_ID }}" \
-            --inputDirectory packages/
+          $ErrorActionPreference = 'Stop'
+
+          $tokenResponse = Invoke-RestMethod -Method POST `
+            -Uri "https://login.microsoftonline.com/$env:TENANT_ID/oauth2/token" `
+            -Body @{
+              grant_type    = 'client_credentials'
+              client_id     = $env:CLIENT_ID
+              client_secret = $env:CLIENT_SECRET
+              resource      = 'https://manage.devcenter.microsoft.com'
+            }
+          $headers = @{ Authorization = "Bearer $($tokenResponse.access_token)" }
+          $base = "https://manage.devcenter.microsoft.com/v1.0/my/applications/$env:APP_ID"
+
+          $app = Invoke-RestMethod -Uri $base -Headers $headers
+          if ($app.pendingApplicationSubmission) {
+            Write-Host "Cancelling existing pending submission $($app.pendingApplicationSubmission.id)"
+            Invoke-RestMethod -Method DELETE `
+              -Uri "$base/submissions/$($app.pendingApplicationSubmission.id)" `
+              -Headers $headers
+          }
+
+          Write-Host "Creating new submission (cloned from last published)"
+          $submission = Invoke-RestMethod -Method POST -Uri "$base/submissions" -Headers $headers
+
+          $msix = Get-ChildItem packages/*.msixupload | Select-Object -First 1
+          if (-not $msix) { throw "No .msixupload found in packages/" }
+
+          $submission.applicationPackages = @(@{
+            fileName   = $msix.Name
+            fileStatus = 'PendingUpload'
+          })
+          Invoke-RestMethod -Method PUT `
+            -Uri "$base/submissions/$($submission.id)" `
+            -Headers $headers `
+            -ContentType 'application/json' `
+            -Body ($submission | ConvertTo-Json -Depth 100)
+
+          Write-Host "Zipping $($msix.Name) for upload"
+          Compress-Archive -Path $msix.FullName -DestinationPath submission.zip -Force
+
+          Write-Host "Uploading package to submission blob storage"
+          Invoke-WebRequest -Method PUT `
+            -Uri $submission.fileUploadUrl `
+            -InFile submission.zip `
+            -Headers @{ 'x-ms-blob-type' = 'BlockBlob' } | Out-Null
+
+          Write-Host "Committing submission $($submission.id)"
+          Invoke-RestMethod -Method POST `
+            -Uri "$base/submissions/$($submission.id)/commit" `
+            -Headers $headers
+
+          Write-Host "Submission $($submission.id) committed for app $env:APP_ID"

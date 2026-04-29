@@ -11,7 +11,7 @@
             ProcessorArchitecture="x64" />
 
   <Properties>
-    <DisplayName>Flashback</DisplayName>
+    <DisplayName>Flashback Project</DisplayName>
     <PublisherDisplayName>briansalehi</PublisherDisplayName>
     <Logo>Assets\StoreLogo.png</Logo>
   </Properties>
@@ -27,7 +27,7 @@
   <Applications>
     <Application Id="App" Executable="__EXECUTABLE__" EntryPoint="Windows.FullTrustApplication">
       <uap:VisualElements
-        DisplayName="Flashback"
+        DisplayName="Flashback Project"
         Description="Flashback"
         BackgroundColor="transparent"
         Square150x150Logo="Assets\Square150x150Logo.png"
