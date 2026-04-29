@@ -333,18 +333,14 @@ jobs:
         with:
           name: packages-windows-store
           path: packages/
-      - name: Install MSStore CLI
-        run: |
-          dotnet tool install -g MSStore.CLI
-          echo "$HOME/.dotnet/tools" >> $GITHUB_PATH
+      - name: Setup Microsoft Store Developer CLI
+        uses: microsoft/microsoft-store-apppublisher@v1.1
       - name: Configure MSStore CLI
-        env:
-          TENANT_ID: ${{ secrets.MICROSOFT_STORE_TENANT_ID }}
-          SELLER_ID: ${{ secrets.MICROSOFT_STORE_SELLER_ID }}
-          CLIENT_ID: ${{ secrets.MICROSOFT_STORE_CLIENT_ID }}
-          CLIENT_SECRET: ${{ secrets.MICROSOFT_STORE_CLIENT_SECRET }}
         run: |
-          msstore settings --enableTelemetry false
-          msstore reconfigure --tenantId "$TENANT_ID" --sellerId "$SELLER_ID" --clientId "$CLIENT_ID" --clientSecret "$CLIENT_SECRET"
+          msstore reconfigure \
+            --tenantId "${{ secrets.MICROSOFT_STORE_TENANT_ID }}" \
+            --sellerId "${{ secrets.MICROSOFT_STORE_SELLER_ID }}" \
+            --clientId "${{ secrets.MICROSOFT_STORE_CLIENT_ID }}" \
+            --clientSecret "${{ secrets.MICROSOFT_STORE_CLIENT_SECRET }}"
       - name: Publish to Microsoft Store
-        run: msstore publish packages/flashback.msix
+        run: msstore publish "${{ secrets.MICROSOFT_STORE_PRODUCT_ID }}"
