@@ -345,4 +345,8 @@ jobs:
             --clientId "${{ secrets.MICROSOFT_STORE_CLIENT_ID }}" \
             --clientSecret "${{ secrets.MICROSOFT_STORE_CLIENT_SECRET }}"
       - name: Publish to Microsoft Store
-        run: msstore publish "${{ secrets.MICROSOFT_STORE_PRODUCT_ID }}"
+        shell: bash
+        run: |
+          msstore publish \
+            --appId "${{ secrets.MICROSOFT_STORE_PRODUCT_ID }}" \
+            --inputDirectory packages/
