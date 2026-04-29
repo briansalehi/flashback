@@ -8,6 +8,7 @@ on:
   workflow_dispatch:
 jobs:
   build-linux:
+    if: false
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
@@ -48,6 +49,7 @@ jobs:
           path: packages/
           retention-days: 1
   build-android:
+    if: false
     runs-on: ubuntu-latest
     env:
       NDK_VERSION: 29.0.13846066
@@ -111,6 +113,7 @@ jobs:
           path: packages/
           retention-days: 1
   build-ios:
+    if: false
     runs-on: macos-15
     steps:
       - uses: actions/checkout@v6.0.2
@@ -235,6 +238,7 @@ jobs:
           retention-days: 1
   publish-artifacts:
     runs-on: ubuntu-latest
+    if: false
     needs:
       - build-linux
       - build-android
@@ -322,12 +326,9 @@ jobs:
             --apiKey ${{ secrets.APP_STORE_CONNECT_KEY_ID }} \
             --apiIssuer ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
   publish-microsoft-store:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     needs:
-      - build-linux
-      - build-android
       - build-windows
-      - build-ios
     steps:
       - uses: actions/download-artifact@v8.0.1
         with:
