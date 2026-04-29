@@ -337,6 +337,7 @@ jobs:
       - name: Setup Microsoft Store Developer CLI
         uses: microsoft/microsoft-store-apppublisher@v1.1
       - name: Configure MSStore CLI
+        shell: bash
         run: |
           msstore reconfigure \
             --tenantId "${{ secrets.MICROSOFT_STORE_TENANT_ID }}" \
