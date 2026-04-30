@@ -1199,7 +1199,26 @@ window.addEventListener('DOMContentLoaded', () => {
 
     }
 
-    const closeAddBlockModal = () => {
+    const closeAddBlockModal = (force = false) => {
+        if (!force) {
+            const contentEl = document.getElementById('block-content');
+            const metadataEl = document.getElementById('block-metadata');
+            const hasContent =
+                (contentEl && contentEl.value.trim() !== '') ||
+                (metadataEl && metadataEl.value.trim() !== '');
+
+            if (hasContent) {
+                window.showConfirmModal(
+                    'Discard New Block?',
+                    'You have unsaved content. Are you sure you want to discard this block?',
+                    () => {
+                        closeAddBlockModal(true);
+                    }
+                );
+                return;
+            }
+        }
+
         UI.toggleElement('add-block-modal', false);
         document.body.style.overflow = '';
         UI.clearForm('block-form');
@@ -1224,7 +1243,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
     const closeBlockModalBtn = document.getElementById('close-block-modal-btn');
     if (closeBlockModalBtn) {
-        closeBlockModalBtn.addEventListener('click', closeAddBlockModal);
+        closeBlockModalBtn.addEventListener('click', () => closeAddBlockModal());
     }
 
     // Setup add block button
@@ -1237,7 +1256,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
     const cancelBlockBtn = document.getElementById('cancel-block-btn');
     if (cancelBlockBtn) {
-        cancelBlockBtn.addEventListener('click', closeAddBlockModal);
+        cancelBlockBtn.addEventListener('click', () => closeAddBlockModal());
     }
 
     const blockForm = document.getElementById('block-form');
@@ -1262,7 +1281,7 @@ window.addEventListener('DOMContentLoaded', () => {
             try {
                 await client.createBlock(cardId, blockType, blockExtension, blockContent, blockMetadata);
 
-                closeAddBlockModal();
+                closeAddBlockModal(true);
                 UI.setButtonLoading('save-block-btn', false);
 
                 loadBlocks();
